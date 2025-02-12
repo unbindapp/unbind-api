@@ -1,0 +1,7 @@
+package: generated
+generate:
+  - chi-server
+  - types
+import-mapping:
+  # If your spec references external schemas in other packages, configure them here
+output: ../internal/generated/openapi.gen.go
