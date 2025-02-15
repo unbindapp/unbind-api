@@ -1,0 +1,105 @@
+version: '3.9'
+services:
+  db:
+    container_name: unbind_postgres
+    image: postgres:15
+    user: '1000:20'
+    ports:
+      - '127.0.0.1:53337:5432'
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=zitadel
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/dev
+    volumes:
+      - ../.data/postgres:/var/lib/postgresql/data:delegated
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -d zitadel -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:latest
+    restart: always
+    command: start-from-init --masterkey "MasterkeyNeedsToHave32Characters" --tlsMode disabled
+    environment:
+      ZITADEL_EXTERNALPORT: 8082
+      ZITADEL_DATABASE_POSTGRES_HOST: db
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: postgres
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: postgres
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALSECURE: 'false'
+      ZITADEL_FIRSTINSTANCE_MACHINEKEYPATH: /data/zitadel/zitadel-admin-sa.json
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: zitadel-admin-sa
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: Admin
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINEKEY_TYPE: 1
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: 'false'
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: admin@unbind.app
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: Password123!
+      ZITADEL_FIRSTINSTANCE_ORG_NAME: Unbind
+    volumes:
+      - ../.data/zitadel:/data/zitadel
+    networks:
+      - app-network
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:8082:8082'
+
+  # zitadel-setup:
+  #   image: appditto/go-vscode-dev:latest
+  #   environment:
+  #     - ZITADEL_MASTER_KEY=MasterkeyNeedsToHave32Characters
+  #   depends_on:
+  #     - zitadel
+  #   volumes:
+  #     - ../.data/zitadel:/data/zitadel
+  #     - ./scripts/init-zitadel.sh:/scripts/init-zitadel.sh:ro
+  #   entrypoint: ['/bin/sh', '/scripts/init-zitadel.sh']
+  #   networks:
+  #     - app-network
+  #   restart: 'no'
+
+  app:
+    container_name: unbind_go_dev
+    image: appditto/go-vscode-dev:latest
+    security_opt:
+      - 'seccomp:unconfined'
+    environment:
+      - GOPRIVATE=github.com/unbindapp
+      - ZITADEL_MASTER_KEY=MasterkeyNeedsToHave32Characters
+      - PORT=8089
+      - KUBECONFIG=./.data/kubernetes/kubeconfig.yaml
+    ports:
+      - '127.0.0.1:8089:8089'
+    volumes:
+      - ../.:/home/go/app
+      - ${HOME}/.gitconfig:/home/go/.gitconfig
+      - ${HOME}/.ssh:/home/go/.ssh
+    restart: on-failure
+    entrypoint: /bin/zsh
+    stdin_open: true
+    tty: true
+    user: go
+    depends_on:
+      - db
+      # - zitadel-setup
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  kind-data:
