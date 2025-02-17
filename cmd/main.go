@@ -1,9 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -15,6 +15,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/database/repository"
 	"github.com/unbindapp/unbind-api/internal/kubeclient"
+	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/middleware"
 	"github.com/unbindapp/unbind-api/internal/server"
 	"golang.org/x/oauth2"
@@ -36,6 +37,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create ent client: %v", err)
 	}
+	log.Info("🦋 Running migrations...")
+	if err := db.Schema.Create(context.TODO()); err != nil {
+		log.Fatal("Failed to run migrations", "err", err)
+	}
 	repo := repository.NewRepository(db)
 
 	// Create kubernetes client
@@ -55,7 +60,7 @@ func main() {
 			},
 			// ! TODO - adjust redirect when necessary
 			RedirectURL: "http://localhost:8089/auth/callback",
-			Scopes:      []string{"openid", "profile", "email"},
+			Scopes:      []string{"openid", "profile", "email", "offline_access"},
 		},
 	}
 

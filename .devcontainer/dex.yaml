@@ -20,6 +20,12 @@ staticPasswords:
 
 oauth2:
   skipApprovalScreen: true
+  responseTypes:
+    - token
+    - code
+    - id_token
+  # Add this to explicitly enable offline access
+  alwaysIssueOfflineToken: t
 
 staticClients:
   - id: unbind-dev
