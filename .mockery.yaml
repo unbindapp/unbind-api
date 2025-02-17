@@ -1,0 +1,17 @@
+with-expecter: true
+packages:
+  github.com/unbindapp/unbind-api/internal/database/repository:
+    config:
+      dir: ./mocks/repository
+    interfaces:
+      RepositoryInterface:
+        config:
+          filename: repository_mock.go
+          mockName: RepositoryMock
+          outpkg: mocks_repository
+      TxInterface:
+        config:
+          dir: ./mocks/repository/tx
+          filename: tx_mock.go
+          mockName: TxMock
+          outpkg: mocks_repository_tx
