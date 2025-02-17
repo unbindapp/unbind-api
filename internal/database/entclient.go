@@ -4,8 +4,8 @@ import (
 	"database/sql"
 
 	entsql "entgo.io/ent/dialect/sql"
-	"github.com/appditto/pippin_nano_wallet/libs/database/ent"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/unbindapp/unbind-api/ent"
 	_ "modernc.org/sqlite"
 )
 

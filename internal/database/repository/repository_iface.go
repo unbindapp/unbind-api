@@ -4,6 +4,8 @@ package repository
 
 import (
 	"context"
+
+	"github.com/unbindapp/unbind-api/ent"
 )
 
 // RepositoryInterface ...
@@ -19,4 +21,5 @@ type RepositoryInterface interface {
 	//		 Handle error
 	//	}
 	WithTx(ctx context.Context, fn func(tx TxInterface) error) error
+	GetOrCreateUser(ctx context.Context, email, username, subject string) (*ent.User, error)
 }
