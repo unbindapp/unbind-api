@@ -42,6 +42,11 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=unbind
+      - DEX_ISSUER_URL=http://host.docker.internal:5556
+      # Really this is for our dev container junk
+      - DEX_ISSUER_URL_EXTERNAL=http://localhost:5556
+      - DEX_CLIENT_ID=unbind-dev
+      - DEX_CLIENT_SECRET=supersecret
     ports:
       - '127.0.0.1:8089:8089'
     volumes:

@@ -5,7 +5,6 @@ go 1.24.0
 require (
 	entgo.io/ent v0.14.2
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/appditto/pippin_nano_wallet/libs/database v0.0.0-20250128170224-2e063d17a3d2
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/charmbracelet/log v0.4.0

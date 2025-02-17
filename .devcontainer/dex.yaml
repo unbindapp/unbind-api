@@ -1,13 +1,19 @@
-issuer: http://127.0.0.1:5556
+issuer: http://host.docker.internal:5556
 storage:
   type: memory
+
 web:
   http: 0.0.0.0:5556
+
+# Allow multiple issuer URLs
+issuers:
+  - http://host.docker.internal:5556 # For container-to-container
+  - http://127.0.0.1:5556 # For host access
+  - http://localhost:5556
 
 enablePasswordDB: true
 staticPasswords:
   - email: "admin@example.com"
-    # Password is "password"
     hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
     username: "admin"
     userID: "12345678-1234-5678-1234-567812345678"
@@ -16,9 +22,9 @@ oauth2:
   skipApprovalScreen: true
 
 staticClients:
-  - id: my-go-app
+  - id: unbind-dev
     secret: supersecret
-    name: "Local Dev Example"
+    name: "Unbind Dev"
     redirectURIs:
-      - http://localhost:8089/callback
-      - http://127.0.0.1:8089/callback
+      - http://localhost:8089/auth/callback
+      - http://127.0.0.1:8089/auth/callback
