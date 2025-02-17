@@ -13,6 +13,7 @@ services:
       - PGDATA=/var/lib/postgresql/data/dev
     volumes:
       - ../.data/postgres:/var/lib/postgresql/data:delegated
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
