@@ -1,47 +1,46 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/log"
 )
 
-func (m *Middleware) Authenticate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header required", http.StatusUnauthorized)
-			return
-		}
+func (m *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) {
+	authHeader := ctx.Header("Authorization")
+	if authHeader == "" {
+		huma.WriteErr(m.api, ctx, http.StatusUnauthorized, "Authorization header required")
+		return
+	}
 
-		bearerToken := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := m.verifier.Verify(r.Context(), bearerToken)
-		if err != nil {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
+	bearerToken := strings.TrimPrefix(authHeader, "Bearer ")
+	token, err := m.verifier.Verify(ctx.Context(), bearerToken)
+	if err != nil {
+		huma.WriteErr(m.api, ctx, http.StatusUnauthorized, "Invalid token")
+		return
+	}
 
-		var claims struct {
-			Email    string `json:"email"`
-			Username string `json:"preferred_username"`
-			Subject  string `json:"sub"`
-		}
-		if err := token.Claims(&claims); err != nil {
-			http.Error(w, "Failed to parse claims", http.StatusInternalServerError)
-			return
-		}
+	var claims struct {
+		Email    string `json:"email"`
+		Username string `json:"preferred_username"`
+		Subject  string `json:"sub"`
+	}
+	if err := token.Claims(&claims); err != nil {
+		log.Errorf("Failed to parse claims: %v", err)
+		huma.WriteErr(m.api, ctx, http.StatusInternalServerError, "Failed to parse claims")
+		return
+	}
 
-		// Get or create user using Ent
-		user, err := m.repository.GetOrCreateUser(r.Context(), claims.Email, claims.Username, claims.Subject)
-		if err != nil {
-			log.Errorf("Failed to process user: %v", err)
-			http.Error(w, "Failed to process user", http.StatusInternalServerError)
-			return
-		}
+	// Get or create user using Ent
+	user, err := m.repository.GetOrCreateUser(ctx.Context(), claims.Email, claims.Username, claims.Subject)
+	if err != nil {
+		log.Errorf("Failed to process user: %v", err)
+		huma.WriteErr(m.api, ctx, http.StatusInternalServerError, "Failed to process user")
+		return
+	}
 
-		ctx := context.WithValue(r.Context(), "user", user)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	ctx = huma.WithValue(ctx, "user", user)
+	next(ctx)
 }

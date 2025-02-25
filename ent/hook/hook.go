@@ -9,6 +9,18 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 )
 
+// The GithubAppFunc type is an adapter to allow the use of ordinary
+// function as GithubApp mutator.
+type GithubAppFunc func(context.Context, *ent.GithubAppMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GithubAppFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GithubAppMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GithubAppMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

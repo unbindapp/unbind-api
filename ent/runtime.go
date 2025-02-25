@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
@@ -14,6 +15,31 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	githubappMixin := schema.GithubApp{}.Mixin()
+	githubappMixinFields0 := githubappMixin[0].Fields()
+	_ = githubappMixinFields0
+	githubappMixinFields1 := githubappMixin[1].Fields()
+	_ = githubappMixinFields1
+	githubappFields := schema.GithubApp{}.Fields()
+	_ = githubappFields
+	// githubappDescCreatedAt is the schema descriptor for created_at field.
+	githubappDescCreatedAt := githubappMixinFields1[0].Descriptor()
+	// githubapp.DefaultCreatedAt holds the default value on creation for the created_at field.
+	githubapp.DefaultCreatedAt = githubappDescCreatedAt.Default.(func() time.Time)
+	// githubappDescUpdatedAt is the schema descriptor for updated_at field.
+	githubappDescUpdatedAt := githubappMixinFields1[1].Descriptor()
+	// githubapp.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	githubapp.DefaultUpdatedAt = githubappDescUpdatedAt.Default.(func() time.Time)
+	// githubapp.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	githubapp.UpdateDefaultUpdatedAt = githubappDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// githubappDescName is the schema descriptor for name field.
+	githubappDescName := githubappFields[1].Descriptor()
+	// githubapp.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	githubapp.NameValidator = githubappDescName.Validators[0].(func(string) error)
+	// githubappDescID is the schema descriptor for id field.
+	githubappDescID := githubappMixinFields0[0].Descriptor()
+	// githubapp.DefaultID holds the default value on creation for the id field.
+	githubapp.DefaultID = githubappDescID.Default.(func() uuid.UUID)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

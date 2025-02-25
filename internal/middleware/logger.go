@@ -45,7 +45,7 @@ var (
 //	r.Use(middleware.Logger)        // <--<< Logger should come before Recoverer
 //	r.Use(middleware.Recoverer)
 //	r.Get("/", handler)
-func (m *Middleware) Logger(next http.Handler) http.Handler {
+func Logger(next http.Handler) http.Handler {
 	return DefaultLogger(next)
 }
 

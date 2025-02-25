@@ -1,11 +1,23 @@
 package config
 
 import (
+	"net/url"
+	"path"
+	"strings"
+
 	"github.com/caarlos0/env/v11"
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
 type Config struct {
+	// Root
+	ExternalURL string `env:"EXTERNAL_URL" envDefault:"http://localhost:8089"`
+	// Github Specific
+	GithubURL        string `env:"GITHUB_URL" envDefault:"https://github.com"` // Override for github enterprise
+	GithubWebhookURL string
+	// By default we will just use the external URL for the bind and unbind suffixes
+	UnbindSuffix string `env:"UNBIND_SUFFIX"`
 	// Postgres
 	PostgresHost     string `env:"POSTGRES_HOST" envDefault:"localhost"`
 	PostgresPort     int    `env:"POSTGRES_PORT" envDefault:"5432"`
@@ -27,5 +39,20 @@ func NewConfig() *Config {
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatal("Error parsing environment", "err", err)
 	}
+
+	// Get suffix if not present
+	if cfg.UnbindSuffix == "" {
+		suffix, err := utils.ValidateAndExtractDomain(cfg.ExternalURL)
+		if err != nil {
+			log.Fatal("Error extracting domain from external URL", "err", err)
+		}
+		cfg.UnbindSuffix = strings.ToLower(suffix)
+	}
+
+	// Parse github callback URL
+	baseURL, _ := url.Parse(cfg.ExternalURL)
+	baseURL.Path = path.Join(baseURL.Path, "webhook/github")
+	cfg.GithubWebhookURL = baseURL.String()
+
 	return &cfg
 }
