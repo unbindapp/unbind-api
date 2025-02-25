@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
 // for defining context keys was copied from Go 1.7's new use of context in net/http.
@@ -120,7 +121,7 @@ func (l *DefaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 	cW(entry.buf, useColor, nCyan, "%s://%s%s %s\" ", scheme, r.Host, r.RequestURI, r.Proto)
 
 	entry.buf.WriteString("from ")
-	entry.buf.WriteString(r.RemoteAddr)
+	entry.buf.WriteString(utils.GetIPAddress(r))
 	entry.buf.WriteString(" - ")
 
 	return entry
