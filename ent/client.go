@@ -15,6 +15,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/user"
 
 	stdsql "database/sql"
@@ -25,6 +26,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// GithubApp is the client for interacting with the GithubApp builders.
+	GithubApp *GithubAppClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -38,6 +41,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.GithubApp = NewGithubAppClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -129,9 +133,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		GithubApp: NewGithubAppClient(cfg),
+		User:      NewUserClient(cfg),
 	}, nil
 }
 
@@ -149,16 +154,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		GithubApp: NewGithubAppClient(cfg),
+		User:      NewUserClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		GithubApp.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -180,22 +186,159 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.GithubApp.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.GithubApp.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *GithubAppMutation:
+		return c.GithubApp.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// GithubAppClient is a client for the GithubApp schema.
+type GithubAppClient struct {
+	config
+}
+
+// NewGithubAppClient returns a client for the GithubApp from the given config.
+func NewGithubAppClient(c config) *GithubAppClient {
+	return &GithubAppClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `githubapp.Hooks(f(g(h())))`.
+func (c *GithubAppClient) Use(hooks ...Hook) {
+	c.hooks.GithubApp = append(c.hooks.GithubApp, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `githubapp.Intercept(f(g(h())))`.
+func (c *GithubAppClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GithubApp = append(c.inters.GithubApp, interceptors...)
+}
+
+// Create returns a builder for creating a GithubApp entity.
+func (c *GithubAppClient) Create() *GithubAppCreate {
+	mutation := newGithubAppMutation(c.config, OpCreate)
+	return &GithubAppCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GithubApp entities.
+func (c *GithubAppClient) CreateBulk(builders ...*GithubAppCreate) *GithubAppCreateBulk {
+	return &GithubAppCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GithubAppClient) MapCreateBulk(slice any, setFunc func(*GithubAppCreate, int)) *GithubAppCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GithubAppCreateBulk{err: fmt.Errorf("calling to GithubAppClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GithubAppCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GithubAppCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GithubApp.
+func (c *GithubAppClient) Update() *GithubAppUpdate {
+	mutation := newGithubAppMutation(c.config, OpUpdate)
+	return &GithubAppUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GithubAppClient) UpdateOne(ga *GithubApp) *GithubAppUpdateOne {
+	mutation := newGithubAppMutation(c.config, OpUpdateOne, withGithubApp(ga))
+	return &GithubAppUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GithubAppClient) UpdateOneID(id uuid.UUID) *GithubAppUpdateOne {
+	mutation := newGithubAppMutation(c.config, OpUpdateOne, withGithubAppID(id))
+	return &GithubAppUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GithubApp.
+func (c *GithubAppClient) Delete() *GithubAppDelete {
+	mutation := newGithubAppMutation(c.config, OpDelete)
+	return &GithubAppDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GithubAppClient) DeleteOne(ga *GithubApp) *GithubAppDeleteOne {
+	return c.DeleteOneID(ga.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GithubAppClient) DeleteOneID(id uuid.UUID) *GithubAppDeleteOne {
+	builder := c.Delete().Where(githubapp.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GithubAppDeleteOne{builder}
+}
+
+// Query returns a query builder for GithubApp.
+func (c *GithubAppClient) Query() *GithubAppQuery {
+	return &GithubAppQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGithubApp},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GithubApp entity by its id.
+func (c *GithubAppClient) Get(ctx context.Context, id uuid.UUID) (*GithubApp, error) {
+	return c.Query().Where(githubapp.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GithubAppClient) GetX(ctx context.Context, id uuid.UUID) *GithubApp {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GithubAppClient) Hooks() []Hook {
+	return c.hooks.GithubApp
+}
+
+// Interceptors returns the client interceptors.
+func (c *GithubAppClient) Interceptors() []Interceptor {
+	return c.inters.GithubApp
+}
+
+func (c *GithubAppClient) mutate(ctx context.Context, m *GithubAppMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GithubAppCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GithubAppUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GithubAppUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GithubAppDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GithubApp mutation op: %q", m.Op())
 	}
 }
 
@@ -335,10 +478,10 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		User []ent.Hook
+		GithubApp, User []ent.Hook
 	}
 	inters struct {
-		User []ent.Interceptor
+		GithubApp, User []ent.Interceptor
 	}
 )
 

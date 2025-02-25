@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/charmbracelet/log v0.4.0
 	github.com/coreos/go-oidc/v3 v3.12.0
-	github.com/danielgtaylor/huma/v2 v2.28.0
+	github.com/danielgtaylor/huma/v2 v2.29.1-0.20250224183453-44149b0847bb
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
@@ -37,6 +37,8 @@ require (
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/go-github/v69 v69.2.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.13.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

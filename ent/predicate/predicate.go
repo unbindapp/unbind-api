@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// GithubApp is the predicate function for githubapp builders.
+type GithubApp func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

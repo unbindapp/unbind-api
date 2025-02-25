@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -11,9 +10,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/database/repository"
+	"github.com/unbindapp/unbind-api/internal/github"
 	"github.com/unbindapp/unbind-api/internal/kubeclient"
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/middleware"
@@ -50,6 +49,7 @@ func main() {
 	srvImpl := &server.Server{
 		KubeClient: kubeClient,
 		Cfg:        cfg,
+		Repository: repo,
 		// Create an OAuth2 configuration using the Dex
 		OauthConfig: &oauth2.Config{
 			ClientID:     cfg.DexClientID,
@@ -62,37 +62,40 @@ func main() {
 			RedirectURL: "http://localhost:8089/auth/callback",
 			Scopes:      []string{"openid", "profile", "email", "offline_access"},
 		},
-	}
-
-	// Create middleware
-	mw, err := middleware.NewMiddleware(cfg, repo)
-	if err != nil {
-		log.Fatalf("Failed to create middleware: %v", err)
+		GithubClient: github.NewGithubClient(cfg),
 	}
 
 	// New chi router
 	r := chi.NewRouter()
-	r.Use(mw.Logger)
+	r.Use(middleware.Logger)
 	api := humachi.New(r, huma.DefaultConfig("Unbind API", "1.0.0"))
+
+	// Create middleware
+	mw, err := middleware.NewMiddleware(cfg, repo, api)
+	if err != nil {
+		log.Fatalf("Failed to create middleware: %v", err)
+	}
 
 	// Add routes
 	huma.Get(api, "/healthz", srvImpl.HealthCheck)
 
-	r.Group(func(r chi.Router) {
-		huma.Get(api, "/auth/login", srvImpl.Login)
-		huma.Get(api, "/auth/callback", srvImpl.Callback)
-	})
+	// /auth group
+	authGrp := huma.NewGroup(api, "/auth")
+	huma.Get(authGrp, "/login", srvImpl.Login)
+	huma.Get(authGrp, "/callback", srvImpl.Callback)
 
-	// Protected routes
-	r.Group(func(r chi.Router) {
-		r.Use(mw.Authenticate)
+	// /user group
+	userGrp := huma.NewGroup(api, "/user")
+	userGrp.UseMiddleware(mw.Authenticate)
+	huma.Get(userGrp, "/me", srvImpl.Me)
 
-		r.Get("/api/me", func(w http.ResponseWriter, r *http.Request) {
-			user := r.Context().Value("user").(*ent.User)
-			json.NewEncoder(w).Encode(user)
-		})
-	})
-	huma.Get(api, "/teams", srvImpl.ListTeams)
+	ghGroup := huma.NewGroup(api, "/github")
+	ghGroup.UseMiddleware(mw.Authenticate)
+	huma.Post(ghGroup, "/app/manifest", srvImpl.GithubManifestCreate)
+	huma.Post(ghGroup, "/app/connect", srvImpl.GithubAppConnect)
+
+	// !
+	// huma.Get(api, "/teams", srvImpl.ListTeams)
 
 	// Start the server
 	addr := ":8089"
