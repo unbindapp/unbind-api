@@ -93,6 +93,10 @@ func main() {
 	ghGroup.UseMiddleware(mw.Authenticate)
 	huma.Post(ghGroup, "/app/manifest", srvImpl.GithubManifestCreate)
 	huma.Post(ghGroup, "/app/connect", srvImpl.GithubAppConnect)
+	huma.Post(ghGroup, "/app/install/{app_id}", srvImpl.GithubAppInstall)
+
+	webhookGroup := huma.NewGroup(api, "/webhook")
+	huma.Post(webhookGroup, "/github", srvImpl.HandleGithubWebhook)
 
 	// !
 	// huma.Get(api, "/teams", srvImpl.ListTeams)

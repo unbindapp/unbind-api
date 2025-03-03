@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -74,8 +75,9 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			githubapp.Table: githubapp.ValidColumn,
-			user.Table:      user.ValidColumn,
+			githubapp.Table:          githubapp.ValidColumn,
+			githubinstallation.Table: githubinstallation.ValidColumn,
+			user.Table:               user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

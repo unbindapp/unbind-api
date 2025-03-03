@@ -9,7 +9,6 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 )
 
@@ -17,14 +16,12 @@ import (
 type GithubApp struct {
 	config `json:"-"`
 	// ID of the ent.
-	// The primary key of the entity.
-	ID uuid.UUID `json:"id"`
+	// The GitHub App ID
+	ID int64 `json:"id,omitempty"`
 	// The time at which the entity was created.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// The GitHub App ID
-	GithubAppID int64 `json:"github_app_id,omitempty"`
 	// Name of the GitHub App
 	Name string `json:"name,omitempty"`
 	// OAuth client ID of the GitHub App
@@ -34,8 +31,29 @@ type GithubApp struct {
 	// Webhook secret for GitHub events
 	WebhookSecret string `json:"-"`
 	// Private key (PEM) for GitHub App authentication
-	PrivateKey   string `json:"-"`
+	PrivateKey string `json:"-"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the GithubAppQuery when eager-loading is set.
+	Edges        GithubAppEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// GithubAppEdges holds the relations/edges for other nodes in the graph.
+type GithubAppEdges struct {
+	// Installations holds the value of the installations edge.
+	Installations []*GithubInstallation `json:"installations,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// InstallationsOrErr returns the Installations value or an error if the edge
+// was not loaded in eager-loading.
+func (e GithubAppEdges) InstallationsOrErr() ([]*GithubInstallation, error) {
+	if e.loadedTypes[0] {
+		return e.Installations, nil
+	}
+	return nil, &NotLoadedError{edge: "installations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -43,14 +61,12 @@ func (*GithubApp) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case githubapp.FieldGithubAppID:
+		case githubapp.FieldID:
 			values[i] = new(sql.NullInt64)
 		case githubapp.FieldName, githubapp.FieldClientID, githubapp.FieldClientSecret, githubapp.FieldWebhookSecret, githubapp.FieldPrivateKey:
 			values[i] = new(sql.NullString)
 		case githubapp.FieldCreatedAt, githubapp.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case githubapp.FieldID:
-			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -67,11 +83,11 @@ func (ga *GithubApp) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case githubapp.FieldID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
-			} else if value != nil {
-				ga.ID = *value
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
 			}
+			ga.ID = int64(value.Int64)
 		case githubapp.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -83,12 +99,6 @@ func (ga *GithubApp) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				ga.UpdatedAt = value.Time
-			}
-		case githubapp.FieldGithubAppID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field github_app_id", values[i])
-			} else if value.Valid {
-				ga.GithubAppID = value.Int64
 			}
 		case githubapp.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -133,6 +143,11 @@ func (ga *GithubApp) Value(name string) (ent.Value, error) {
 	return ga.selectValues.Get(name)
 }
 
+// QueryInstallations queries the "installations" edge of the GithubApp entity.
+func (ga *GithubApp) QueryInstallations() *GithubInstallationQuery {
+	return NewGithubAppClient(ga.config).QueryInstallations(ga)
+}
+
 // Update returns a builder for updating this GithubApp.
 // Note that you need to call GithubApp.Unwrap() before calling this method if this GithubApp
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -161,9 +176,6 @@ func (ga *GithubApp) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(ga.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("github_app_id=")
-	builder.WriteString(fmt.Sprintf("%v", ga.GithubAppID))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(ga.Name)

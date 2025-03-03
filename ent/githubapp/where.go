@@ -6,52 +6,52 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id uuid.UUID) predicate.GithubApp {
+func ID(id int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id uuid.UUID) predicate.GithubApp {
+func IDEQ(id int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id uuid.UUID) predicate.GithubApp {
+func IDNEQ(id int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...uuid.UUID) predicate.GithubApp {
+func IDIn(ids ...int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...uuid.UUID) predicate.GithubApp {
+func IDNotIn(ids ...int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id uuid.UUID) predicate.GithubApp {
+func IDGT(id int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id uuid.UUID) predicate.GithubApp {
+func IDGTE(id int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id uuid.UUID) predicate.GithubApp {
+func IDLT(id int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id uuid.UUID) predicate.GithubApp {
+func IDLTE(id int64) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldLTE(FieldID, id))
 }
 
@@ -63,11 +63,6 @@ func CreatedAt(v time.Time) predicate.GithubApp {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldEQ(FieldUpdatedAt, v))
-}
-
-// GithubAppID applies equality check predicate on the "github_app_id" field. It's identical to GithubAppIDEQ.
-func GithubAppID(v int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldEQ(FieldGithubAppID, v))
 }
 
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
@@ -173,46 +168,6 @@ func UpdatedAtLT(v time.Time) predicate.GithubApp {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldLTE(FieldUpdatedAt, v))
-}
-
-// GithubAppIDEQ applies the EQ predicate on the "github_app_id" field.
-func GithubAppIDEQ(v int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldEQ(FieldGithubAppID, v))
-}
-
-// GithubAppIDNEQ applies the NEQ predicate on the "github_app_id" field.
-func GithubAppIDNEQ(v int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldNEQ(FieldGithubAppID, v))
-}
-
-// GithubAppIDIn applies the In predicate on the "github_app_id" field.
-func GithubAppIDIn(vs ...int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldIn(FieldGithubAppID, vs...))
-}
-
-// GithubAppIDNotIn applies the NotIn predicate on the "github_app_id" field.
-func GithubAppIDNotIn(vs ...int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldNotIn(FieldGithubAppID, vs...))
-}
-
-// GithubAppIDGT applies the GT predicate on the "github_app_id" field.
-func GithubAppIDGT(v int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldGT(FieldGithubAppID, v))
-}
-
-// GithubAppIDGTE applies the GTE predicate on the "github_app_id" field.
-func GithubAppIDGTE(v int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldGTE(FieldGithubAppID, v))
-}
-
-// GithubAppIDLT applies the LT predicate on the "github_app_id" field.
-func GithubAppIDLT(v int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldLT(FieldGithubAppID, v))
-}
-
-// GithubAppIDLTE applies the LTE predicate on the "github_app_id" field.
-func GithubAppIDLTE(v int64) predicate.GithubApp {
-	return predicate.GithubApp(sql.FieldLTE(FieldGithubAppID, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -538,6 +493,29 @@ func PrivateKeyEqualFold(v string) predicate.GithubApp {
 // PrivateKeyContainsFold applies the ContainsFold predicate on the "private_key" field.
 func PrivateKeyContainsFold(v string) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldContainsFold(FieldPrivateKey, v))
+}
+
+// HasInstallations applies the HasEdge predicate on the "installations" edge.
+func HasInstallations() predicate.GithubApp {
+	return predicate.GithubApp(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, InstallationsTable, InstallationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInstallationsWith applies the HasEdge predicate on the "installations" edge with a given conditions (other predicates).
+func HasInstallationsWith(preds ...predicate.GithubInstallation) predicate.GithubApp {
+	return predicate.GithubApp(func(s *sql.Selector) {
+		step := newInstallationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

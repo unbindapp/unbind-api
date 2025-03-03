@@ -4,8 +4,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 )
 
@@ -17,7 +17,6 @@ type GithubApp struct {
 // Mixin of the GithubApp.
 func (GithubApp) Mixin() []ent.Mixin {
 	return []ent.Mixin{
-		mixin.PKMixin{},
 		mixin.TimeMixin{},
 	}
 }
@@ -25,7 +24,9 @@ func (GithubApp) Mixin() []ent.Mixin {
 // Fields of the GithubApp.
 func (GithubApp) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("github_app_id").
+		field.Int64("id").
+			Immutable().
+			Positive().
 			Unique().
 			Comment("The GitHub App ID"),
 		field.String("name").
@@ -47,14 +48,12 @@ func (GithubApp) Fields() []ent.Field {
 
 // Edges of the GithubApp.
 func (GithubApp) Edges() []ent.Edge {
-	return nil
-}
-
-// Indexes of the GithubApp.
-func (GithubApp) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("github_app_id").
-			Unique(),
+	return []ent.Edge{
+		// O2M with github_installations
+		edge.To("installations", GithubInstallation.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 	}
 }
 

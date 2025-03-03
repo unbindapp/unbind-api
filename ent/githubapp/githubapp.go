@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -18,8 +18,6 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldGithubAppID holds the string denoting the github_app_id field in the database.
-	FieldGithubAppID = "github_app_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldClientID holds the string denoting the client_id field in the database.
@@ -30,8 +28,17 @@ const (
 	FieldWebhookSecret = "webhook_secret"
 	// FieldPrivateKey holds the string denoting the private_key field in the database.
 	FieldPrivateKey = "private_key"
+	// EdgeInstallations holds the string denoting the installations edge name in mutations.
+	EdgeInstallations = "installations"
 	// Table holds the table name of the githubapp in the database.
 	Table = "github_apps"
+	// InstallationsTable is the table that holds the installations relation/edge.
+	InstallationsTable = "github_installations"
+	// InstallationsInverseTable is the table name for the GithubInstallation entity.
+	// It exists in this package in order to avoid circular dependency with the "githubinstallation" package.
+	InstallationsInverseTable = "github_installations"
+	// InstallationsColumn is the table column denoting the installations relation/edge.
+	InstallationsColumn = "github_app_id"
 )
 
 // Columns holds all SQL columns for githubapp fields.
@@ -39,7 +46,6 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldGithubAppID,
 	FieldName,
 	FieldClientID,
 	FieldClientSecret,
@@ -66,8 +72,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// DefaultID holds the default value on creation for the "id" field.
-	DefaultID func() uuid.UUID
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(int64) error
 )
 
 // OrderOption defines the ordering options for the GithubApp queries.
@@ -86,11 +92,6 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
-}
-
-// ByGithubAppID orders the results by the github_app_id field.
-func ByGithubAppID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldGithubAppID, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -116,4 +117,25 @@ func ByWebhookSecret(opts ...sql.OrderTermOption) OrderOption {
 // ByPrivateKey orders the results by the private_key field.
 func ByPrivateKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPrivateKey, opts...).ToFunc()
+}
+
+// ByInstallationsCount orders the results by installations count.
+func ByInstallationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newInstallationsStep(), opts...)
+	}
+}
+
+// ByInstallations orders the results by installations terms.
+func ByInstallations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInstallationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newInstallationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(InstallationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, InstallationsTable, InstallationsColumn),
+	)
 }

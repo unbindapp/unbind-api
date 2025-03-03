@@ -9,5 +9,8 @@ import (
 // GithubApp is the predicate function for githubapp builders.
 type GithubApp func(*sql.Selector)
 
+// GithubInstallation is the predicate function for githubinstallation builders.
+type GithubInstallation func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
