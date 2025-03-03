@@ -91,12 +91,74 @@ func main() {
 
 	ghGroup := huma.NewGroup(api, "/github")
 	ghGroup.UseMiddleware(mw.Authenticate)
-	huma.Post(ghGroup, "/app/manifest", srvImpl.GithubManifestCreate)
-	huma.Post(ghGroup, "/app/connect", srvImpl.GithubAppConnect)
-	huma.Post(ghGroup, "/app/install/{app_id}", srvImpl.GithubAppInstall)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "manifest-create",
+			Summary:     "Create Github manifest",
+			Description: "Create a manifest that the user can use to create a GitHub app",
+			Path:        "/app/manifest",
+			Method:      http.MethodPost,
+		},
+		srvImpl.HandleGithubManifestCreate,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "app-connect",
+			Summary:     "Connect github app",
+			Description: "Connect the new github app to our instance, via manifest code exchange",
+			Path:        "/app/connect",
+			Method:      http.MethodPost,
+		},
+		srvImpl.HandleGithubAppConnect,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "app-install",
+			Summary:     "App Install Redirect",
+			Description: "Redirects to install the github app",
+			Path:        "/app/install/{app_id}",
+			Method:      http.MethodPost,
+		},
+		srvImpl.HandleGithubAppInstall,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "list-apps",
+			Summary:     "List Github Apps",
+			Description: "List all the github apps connected to our instance",
+			Path:        "/apps",
+			Method:      http.MethodGet,
+		},
+		srvImpl.HandleListGithubApps,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "list-app-installations",
+			Summary:     "List Installations",
+			Description: "List all installations for a specific github app",
+			Path:        "/app/{app_id}/installations",
+			Method:      http.MethodGet,
+		},
+		srvImpl.HandleListGithubAppInstallations,
+	)
 
 	webhookGroup := huma.NewGroup(api, "/webhook")
-	huma.Post(webhookGroup, "/github", srvImpl.HandleGithubWebhook)
+	huma.Register(
+		webhookGroup,
+		huma.Operation{
+			OperationID: "github-webhook",
+			Summary:     "Github Webhook",
+			Description: "Handle incoming github webhooks",
+			Path:        "/github",
+			Method:      http.MethodPost,
+		},
+		srvImpl.HandleGithubWebhook,
+	)
 
 	// !
 	// huma.Get(api, "/teams", srvImpl.ListTeams)

@@ -25,7 +25,7 @@ type GithubWebhookOutput struct {
 
 func (s *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhookInput) (*GithubWebhookOutput, error) {
 	// Since we may have multiple apps, we want to validate against every webhook secret to see if it belongs to any of our apps
-	ghApps, err := s.Repository.GetGithubApps(ctx)
+	ghApps, err := s.Repository.GetGithubApps(ctx, false)
 	if err != nil {
 		log.Error("Error getting github apps", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github apps")

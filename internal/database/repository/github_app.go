@@ -14,8 +14,12 @@ func (r *Repository) GetGithubApp(ctx context.Context) (*ent.GithubApp, error) {
 }
 
 // Get all github apps returns a slice of GithubApp entities.
-func (r *Repository) GetGithubApps(ctx context.Context) ([]*ent.GithubApp, error) {
-	return r.DB.GithubApp.Query().All(ctx)
+func (r *Repository) GetGithubApps(ctx context.Context, withInstallations bool) ([]*ent.GithubApp, error) {
+	q := r.DB.GithubApp.Query()
+	if withInstallations {
+		q.WithInstallations()
+	}
+	return q.All(ctx)
 }
 
 func (r *Repository) CreateGithubApp(ctx context.Context, app *github.AppConfig) (*ent.GithubApp, error) {
