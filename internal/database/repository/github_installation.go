@@ -12,6 +12,10 @@ func (r *Repository) GetGithubInstallationByID(ctx context.Context, ID int64) (*
 	return r.DB.GithubInstallation.Query().Where(githubinstallation.ID(ID)).Only(ctx)
 }
 
+func (r *Repository) GetGithubInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error) {
+	return r.DB.GithubInstallation.Query().Where(githubinstallation.GithubAppID(appID)).All(ctx)
+}
+
 func (r *Repository) UpsertGithubInstallation(
 	ctx context.Context,
 	id int64,
