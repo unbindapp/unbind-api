@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 )
 
@@ -32,27 +33,6 @@ func (gau *GithubAppUpdate) Where(ps ...predicate.GithubApp) *GithubAppUpdate {
 // SetUpdatedAt sets the "updated_at" field.
 func (gau *GithubAppUpdate) SetUpdatedAt(t time.Time) *GithubAppUpdate {
 	gau.mutation.SetUpdatedAt(t)
-	return gau
-}
-
-// SetGithubAppID sets the "github_app_id" field.
-func (gau *GithubAppUpdate) SetGithubAppID(i int64) *GithubAppUpdate {
-	gau.mutation.ResetGithubAppID()
-	gau.mutation.SetGithubAppID(i)
-	return gau
-}
-
-// SetNillableGithubAppID sets the "github_app_id" field if the given value is not nil.
-func (gau *GithubAppUpdate) SetNillableGithubAppID(i *int64) *GithubAppUpdate {
-	if i != nil {
-		gau.SetGithubAppID(*i)
-	}
-	return gau
-}
-
-// AddGithubAppID adds i to the "github_app_id" field.
-func (gau *GithubAppUpdate) AddGithubAppID(i int64) *GithubAppUpdate {
-	gau.mutation.AddGithubAppID(i)
 	return gau
 }
 
@@ -126,9 +106,45 @@ func (gau *GithubAppUpdate) SetNillablePrivateKey(s *string) *GithubAppUpdate {
 	return gau
 }
 
+// AddInstallationIDs adds the "installations" edge to the GithubInstallation entity by IDs.
+func (gau *GithubAppUpdate) AddInstallationIDs(ids ...int64) *GithubAppUpdate {
+	gau.mutation.AddInstallationIDs(ids...)
+	return gau
+}
+
+// AddInstallations adds the "installations" edges to the GithubInstallation entity.
+func (gau *GithubAppUpdate) AddInstallations(g ...*GithubInstallation) *GithubAppUpdate {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gau.AddInstallationIDs(ids...)
+}
+
 // Mutation returns the GithubAppMutation object of the builder.
 func (gau *GithubAppUpdate) Mutation() *GithubAppMutation {
 	return gau.mutation
+}
+
+// ClearInstallations clears all "installations" edges to the GithubInstallation entity.
+func (gau *GithubAppUpdate) ClearInstallations() *GithubAppUpdate {
+	gau.mutation.ClearInstallations()
+	return gau
+}
+
+// RemoveInstallationIDs removes the "installations" edge to GithubInstallation entities by IDs.
+func (gau *GithubAppUpdate) RemoveInstallationIDs(ids ...int64) *GithubAppUpdate {
+	gau.mutation.RemoveInstallationIDs(ids...)
+	return gau
+}
+
+// RemoveInstallations removes "installations" edges to GithubInstallation entities.
+func (gau *GithubAppUpdate) RemoveInstallations(g ...*GithubInstallation) *GithubAppUpdate {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gau.RemoveInstallationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -187,7 +203,7 @@ func (gau *GithubAppUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := gau.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(githubapp.Table, githubapp.Columns, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(githubapp.Table, githubapp.Columns, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64))
 	if ps := gau.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -197,12 +213,6 @@ func (gau *GithubAppUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gau.mutation.UpdatedAt(); ok {
 		_spec.SetField(githubapp.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if value, ok := gau.mutation.GithubAppID(); ok {
-		_spec.SetField(githubapp.FieldGithubAppID, field.TypeInt64, value)
-	}
-	if value, ok := gau.mutation.AddedGithubAppID(); ok {
-		_spec.AddField(githubapp.FieldGithubAppID, field.TypeInt64, value)
 	}
 	if value, ok := gau.mutation.Name(); ok {
 		_spec.SetField(githubapp.FieldName, field.TypeString, value)
@@ -218,6 +228,51 @@ func (gau *GithubAppUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gau.mutation.PrivateKey(); ok {
 		_spec.SetField(githubapp.FieldPrivateKey, field.TypeString, value)
+	}
+	if gau.mutation.InstallationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubapp.InstallationsTable,
+			Columns: []string{githubapp.InstallationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gau.mutation.RemovedInstallationsIDs(); len(nodes) > 0 && !gau.mutation.InstallationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubapp.InstallationsTable,
+			Columns: []string{githubapp.InstallationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gau.mutation.InstallationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubapp.InstallationsTable,
+			Columns: []string{githubapp.InstallationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(gau.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, gau.driver, _spec); err != nil {
@@ -244,27 +299,6 @@ type GithubAppUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (gauo *GithubAppUpdateOne) SetUpdatedAt(t time.Time) *GithubAppUpdateOne {
 	gauo.mutation.SetUpdatedAt(t)
-	return gauo
-}
-
-// SetGithubAppID sets the "github_app_id" field.
-func (gauo *GithubAppUpdateOne) SetGithubAppID(i int64) *GithubAppUpdateOne {
-	gauo.mutation.ResetGithubAppID()
-	gauo.mutation.SetGithubAppID(i)
-	return gauo
-}
-
-// SetNillableGithubAppID sets the "github_app_id" field if the given value is not nil.
-func (gauo *GithubAppUpdateOne) SetNillableGithubAppID(i *int64) *GithubAppUpdateOne {
-	if i != nil {
-		gauo.SetGithubAppID(*i)
-	}
-	return gauo
-}
-
-// AddGithubAppID adds i to the "github_app_id" field.
-func (gauo *GithubAppUpdateOne) AddGithubAppID(i int64) *GithubAppUpdateOne {
-	gauo.mutation.AddGithubAppID(i)
 	return gauo
 }
 
@@ -338,9 +372,45 @@ func (gauo *GithubAppUpdateOne) SetNillablePrivateKey(s *string) *GithubAppUpdat
 	return gauo
 }
 
+// AddInstallationIDs adds the "installations" edge to the GithubInstallation entity by IDs.
+func (gauo *GithubAppUpdateOne) AddInstallationIDs(ids ...int64) *GithubAppUpdateOne {
+	gauo.mutation.AddInstallationIDs(ids...)
+	return gauo
+}
+
+// AddInstallations adds the "installations" edges to the GithubInstallation entity.
+func (gauo *GithubAppUpdateOne) AddInstallations(g ...*GithubInstallation) *GithubAppUpdateOne {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gauo.AddInstallationIDs(ids...)
+}
+
 // Mutation returns the GithubAppMutation object of the builder.
 func (gauo *GithubAppUpdateOne) Mutation() *GithubAppMutation {
 	return gauo.mutation
+}
+
+// ClearInstallations clears all "installations" edges to the GithubInstallation entity.
+func (gauo *GithubAppUpdateOne) ClearInstallations() *GithubAppUpdateOne {
+	gauo.mutation.ClearInstallations()
+	return gauo
+}
+
+// RemoveInstallationIDs removes the "installations" edge to GithubInstallation entities by IDs.
+func (gauo *GithubAppUpdateOne) RemoveInstallationIDs(ids ...int64) *GithubAppUpdateOne {
+	gauo.mutation.RemoveInstallationIDs(ids...)
+	return gauo
+}
+
+// RemoveInstallations removes "installations" edges to GithubInstallation entities.
+func (gauo *GithubAppUpdateOne) RemoveInstallations(g ...*GithubInstallation) *GithubAppUpdateOne {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gauo.RemoveInstallationIDs(ids...)
 }
 
 // Where appends a list predicates to the GithubAppUpdate builder.
@@ -412,7 +482,7 @@ func (gauo *GithubAppUpdateOne) sqlSave(ctx context.Context) (_node *GithubApp, 
 	if err := gauo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(githubapp.Table, githubapp.Columns, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewUpdateSpec(githubapp.Table, githubapp.Columns, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64))
 	id, ok := gauo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "GithubApp.id" for update`)}
@@ -440,12 +510,6 @@ func (gauo *GithubAppUpdateOne) sqlSave(ctx context.Context) (_node *GithubApp, 
 	if value, ok := gauo.mutation.UpdatedAt(); ok {
 		_spec.SetField(githubapp.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := gauo.mutation.GithubAppID(); ok {
-		_spec.SetField(githubapp.FieldGithubAppID, field.TypeInt64, value)
-	}
-	if value, ok := gauo.mutation.AddedGithubAppID(); ok {
-		_spec.AddField(githubapp.FieldGithubAppID, field.TypeInt64, value)
-	}
 	if value, ok := gauo.mutation.Name(); ok {
 		_spec.SetField(githubapp.FieldName, field.TypeString, value)
 	}
@@ -460,6 +524,51 @@ func (gauo *GithubAppUpdateOne) sqlSave(ctx context.Context) (_node *GithubApp, 
 	}
 	if value, ok := gauo.mutation.PrivateKey(); ok {
 		_spec.SetField(githubapp.FieldPrivateKey, field.TypeString, value)
+	}
+	if gauo.mutation.InstallationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubapp.InstallationsTable,
+			Columns: []string{githubapp.InstallationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gauo.mutation.RemovedInstallationsIDs(); len(nodes) > 0 && !gauo.mutation.InstallationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubapp.InstallationsTable,
+			Columns: []string{githubapp.InstallationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gauo.mutation.InstallationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubapp.InstallationsTable,
+			Columns: []string{githubapp.InstallationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(gauo.modifiers...)
 	_node = &GithubApp{config: gauo.config}

@@ -21,6 +21,18 @@ func (f GithubAppFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GithubAppMutation", m)
 }
 
+// The GithubInstallationFunc type is an adapter to allow the use of ordinary
+// function as GithubInstallation mutator.
+type GithubInstallationFunc func(context.Context, *ent.GithubInstallationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GithubInstallationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GithubInstallationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GithubInstallationMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

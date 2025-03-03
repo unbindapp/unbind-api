@@ -40,7 +40,7 @@ func (gad *GithubAppDelete) ExecX(ctx context.Context) int {
 }
 
 func (gad *GithubAppDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(githubapp.Table, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewDeleteSpec(githubapp.Table, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64))
 	if ps := gad.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
@@ -18,16 +19,14 @@ func init() {
 	githubappMixin := schema.GithubApp{}.Mixin()
 	githubappMixinFields0 := githubappMixin[0].Fields()
 	_ = githubappMixinFields0
-	githubappMixinFields1 := githubappMixin[1].Fields()
-	_ = githubappMixinFields1
 	githubappFields := schema.GithubApp{}.Fields()
 	_ = githubappFields
 	// githubappDescCreatedAt is the schema descriptor for created_at field.
-	githubappDescCreatedAt := githubappMixinFields1[0].Descriptor()
+	githubappDescCreatedAt := githubappMixinFields0[0].Descriptor()
 	// githubapp.DefaultCreatedAt holds the default value on creation for the created_at field.
 	githubapp.DefaultCreatedAt = githubappDescCreatedAt.Default.(func() time.Time)
 	// githubappDescUpdatedAt is the schema descriptor for updated_at field.
-	githubappDescUpdatedAt := githubappMixinFields1[1].Descriptor()
+	githubappDescUpdatedAt := githubappMixinFields0[1].Descriptor()
 	// githubapp.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	githubapp.DefaultUpdatedAt = githubappDescUpdatedAt.Default.(func() time.Time)
 	// githubapp.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -37,9 +36,44 @@ func init() {
 	// githubapp.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	githubapp.NameValidator = githubappDescName.Validators[0].(func(string) error)
 	// githubappDescID is the schema descriptor for id field.
-	githubappDescID := githubappMixinFields0[0].Descriptor()
-	// githubapp.DefaultID holds the default value on creation for the id field.
-	githubapp.DefaultID = githubappDescID.Default.(func() uuid.UUID)
+	githubappDescID := githubappFields[0].Descriptor()
+	// githubapp.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	githubapp.IDValidator = githubappDescID.Validators[0].(func(int64) error)
+	githubinstallationMixin := schema.GithubInstallation{}.Mixin()
+	githubinstallationMixinFields0 := githubinstallationMixin[0].Fields()
+	_ = githubinstallationMixinFields0
+	githubinstallationFields := schema.GithubInstallation{}.Fields()
+	_ = githubinstallationFields
+	// githubinstallationDescCreatedAt is the schema descriptor for created_at field.
+	githubinstallationDescCreatedAt := githubinstallationMixinFields0[0].Descriptor()
+	// githubinstallation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	githubinstallation.DefaultCreatedAt = githubinstallationDescCreatedAt.Default.(func() time.Time)
+	// githubinstallationDescUpdatedAt is the schema descriptor for updated_at field.
+	githubinstallationDescUpdatedAt := githubinstallationMixinFields0[1].Descriptor()
+	// githubinstallation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	githubinstallation.DefaultUpdatedAt = githubinstallationDescUpdatedAt.Default.(func() time.Time)
+	// githubinstallation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	githubinstallation.UpdateDefaultUpdatedAt = githubinstallationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// githubinstallationDescAccountLogin is the schema descriptor for account_login field.
+	githubinstallationDescAccountLogin := githubinstallationFields[3].Descriptor()
+	// githubinstallation.AccountLoginValidator is a validator for the "account_login" field. It is called by the builders before save.
+	githubinstallation.AccountLoginValidator = githubinstallationDescAccountLogin.Validators[0].(func(string) error)
+	// githubinstallationDescAccountURL is the schema descriptor for account_url field.
+	githubinstallationDescAccountURL := githubinstallationFields[5].Descriptor()
+	// githubinstallation.AccountURLValidator is a validator for the "account_url" field. It is called by the builders before save.
+	githubinstallation.AccountURLValidator = githubinstallationDescAccountURL.Validators[0].(func(string) error)
+	// githubinstallationDescSuspended is the schema descriptor for suspended field.
+	githubinstallationDescSuspended := githubinstallationFields[7].Descriptor()
+	// githubinstallation.DefaultSuspended holds the default value on creation for the suspended field.
+	githubinstallation.DefaultSuspended = githubinstallationDescSuspended.Default.(bool)
+	// githubinstallationDescActive is the schema descriptor for active field.
+	githubinstallationDescActive := githubinstallationFields[8].Descriptor()
+	// githubinstallation.DefaultActive holds the default value on creation for the active field.
+	githubinstallation.DefaultActive = githubinstallationDescActive.Default.(bool)
+	// githubinstallationDescID is the schema descriptor for id field.
+	githubinstallationDescID := githubinstallationFields[0].Descriptor()
+	// githubinstallation.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	githubinstallation.IDValidator = githubinstallationDescID.Validators[0].(func(int64) error)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

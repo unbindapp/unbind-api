@@ -16,6 +16,8 @@ type Tx struct {
 	config
 	// GithubApp is the client for interacting with the GithubApp builders.
 	GithubApp *GithubAppClient
+	// GithubInstallation is the client for interacting with the GithubInstallation builders.
+	GithubInstallation *GithubInstallationClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -150,6 +152,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.GithubApp = NewGithubAppClient(tx.config)
+	tx.GithubInstallation = NewGithubInstallationClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

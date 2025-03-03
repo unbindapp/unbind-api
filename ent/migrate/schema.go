@@ -11,10 +11,9 @@ import (
 var (
 	// GithubAppsColumns holds the columns for the "github_apps" table.
 	GithubAppsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "github_app_id", Type: field.TypeInt64, Unique: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "client_id", Type: field.TypeString},
 		{Name: "client_secret", Type: field.TypeString},
@@ -26,11 +25,41 @@ var (
 		Name:       "github_apps",
 		Columns:    GithubAppsColumns,
 		PrimaryKey: []*schema.Column{GithubAppsColumns[0]},
+	}
+	// GithubInstallationsColumns holds the columns for the "github_installations" table.
+	GithubInstallationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "account_id", Type: field.TypeInt64},
+		{Name: "account_login", Type: field.TypeString},
+		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"Organization", "User"}},
+		{Name: "account_url", Type: field.TypeString},
+		{Name: "repository_selection", Type: field.TypeEnum, Enums: []string{"all", "selected"}, Default: "all"},
+		{Name: "suspended", Type: field.TypeBool, Default: false},
+		{Name: "active", Type: field.TypeBool, Default: true},
+		{Name: "permissions", Type: field.TypeJSON, Nullable: true},
+		{Name: "events", Type: field.TypeJSON, Nullable: true},
+		{Name: "github_app_id", Type: field.TypeInt64},
+	}
+	// GithubInstallationsTable holds the schema information for the "github_installations" table.
+	GithubInstallationsTable = &schema.Table{
+		Name:       "github_installations",
+		Columns:    GithubInstallationsColumns,
+		PrimaryKey: []*schema.Column{GithubInstallationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "github_installations_github_apps_installations",
+				Columns:    []*schema.Column{GithubInstallationsColumns[12]},
+				RefColumns: []*schema.Column{GithubAppsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "githubapp_github_app_id",
+				Name:    "githubinstallation_github_app_id",
 				Unique:  true,
-				Columns: []*schema.Column{GithubAppsColumns[3]},
+				Columns: []*schema.Column{GithubInstallationsColumns[12]},
 			},
 		},
 	}
@@ -52,6 +81,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		GithubAppsTable,
+		GithubInstallationsTable,
 		UsersTable,
 	}
 )
@@ -59,6 +89,10 @@ var (
 func init() {
 	GithubAppsTable.Annotation = &entsql.Annotation{
 		Table: "github_apps",
+	}
+	GithubInstallationsTable.ForeignKeys[0].RefTable = GithubAppsTable
+	GithubInstallationsTable.Annotation = &entsql.Annotation{
+		Table: "github_installations",
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",

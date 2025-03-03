@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -11,19 +12,20 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 )
 
 // GithubAppQuery is the builder for querying GithubApp entities.
 type GithubAppQuery struct {
 	config
-	ctx        *QueryContext
-	order      []githubapp.OrderOption
-	inters     []Interceptor
-	predicates []predicate.GithubApp
-	modifiers  []func(*sql.Selector)
+	ctx               *QueryContext
+	order             []githubapp.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.GithubApp
+	withInstallations *GithubInstallationQuery
+	modifiers         []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -60,6 +62,28 @@ func (gaq *GithubAppQuery) Order(o ...githubapp.OrderOption) *GithubAppQuery {
 	return gaq
 }
 
+// QueryInstallations chains the current query on the "installations" edge.
+func (gaq *GithubAppQuery) QueryInstallations() *GithubInstallationQuery {
+	query := (&GithubInstallationClient{config: gaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(githubapp.Table, githubapp.FieldID, selector),
+			sqlgraph.To(githubinstallation.Table, githubinstallation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, githubapp.InstallationsTable, githubapp.InstallationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first GithubApp entity from the query.
 // Returns a *NotFoundError when no GithubApp was found.
 func (gaq *GithubAppQuery) First(ctx context.Context) (*GithubApp, error) {
@@ -84,8 +108,8 @@ func (gaq *GithubAppQuery) FirstX(ctx context.Context) *GithubApp {
 
 // FirstID returns the first GithubApp ID from the query.
 // Returns a *NotFoundError when no GithubApp ID was found.
-func (gaq *GithubAppQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
-	var ids []uuid.UUID
+func (gaq *GithubAppQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = gaq.Limit(1).IDs(setContextOp(ctx, gaq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -97,7 +121,7 @@ func (gaq *GithubAppQuery) FirstID(ctx context.Context) (id uuid.UUID, err error
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (gaq *GithubAppQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (gaq *GithubAppQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := gaq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -135,8 +159,8 @@ func (gaq *GithubAppQuery) OnlyX(ctx context.Context) *GithubApp {
 // OnlyID is like Only, but returns the only GithubApp ID in the query.
 // Returns a *NotSingularError when more than one GithubApp ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (gaq *GithubAppQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
-	var ids []uuid.UUID
+func (gaq *GithubAppQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = gaq.Limit(2).IDs(setContextOp(ctx, gaq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -152,7 +176,7 @@ func (gaq *GithubAppQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error)
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (gaq *GithubAppQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (gaq *GithubAppQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := gaq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -180,7 +204,7 @@ func (gaq *GithubAppQuery) AllX(ctx context.Context) []*GithubApp {
 }
 
 // IDs executes the query and returns a list of GithubApp IDs.
-func (gaq *GithubAppQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+func (gaq *GithubAppQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if gaq.ctx.Unique == nil && gaq.path != nil {
 		gaq.Unique(true)
 	}
@@ -192,7 +216,7 @@ func (gaq *GithubAppQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error)
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (gaq *GithubAppQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (gaq *GithubAppQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := gaq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -247,16 +271,28 @@ func (gaq *GithubAppQuery) Clone() *GithubAppQuery {
 		return nil
 	}
 	return &GithubAppQuery{
-		config:     gaq.config,
-		ctx:        gaq.ctx.Clone(),
-		order:      append([]githubapp.OrderOption{}, gaq.order...),
-		inters:     append([]Interceptor{}, gaq.inters...),
-		predicates: append([]predicate.GithubApp{}, gaq.predicates...),
+		config:            gaq.config,
+		ctx:               gaq.ctx.Clone(),
+		order:             append([]githubapp.OrderOption{}, gaq.order...),
+		inters:            append([]Interceptor{}, gaq.inters...),
+		predicates:        append([]predicate.GithubApp{}, gaq.predicates...),
+		withInstallations: gaq.withInstallations.Clone(),
 		// clone intermediate query.
 		sql:       gaq.sql.Clone(),
 		path:      gaq.path,
 		modifiers: append([]func(*sql.Selector){}, gaq.modifiers...),
 	}
+}
+
+// WithInstallations tells the query-builder to eager-load the nodes that are connected to
+// the "installations" edge. The optional arguments are used to configure the query builder of the edge.
+func (gaq *GithubAppQuery) WithInstallations(opts ...func(*GithubInstallationQuery)) *GithubAppQuery {
+	query := (&GithubInstallationClient{config: gaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gaq.withInstallations = query
+	return gaq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -335,8 +371,11 @@ func (gaq *GithubAppQuery) prepareQuery(ctx context.Context) error {
 
 func (gaq *GithubAppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*GithubApp, error) {
 	var (
-		nodes = []*GithubApp{}
-		_spec = gaq.querySpec()
+		nodes       = []*GithubApp{}
+		_spec       = gaq.querySpec()
+		loadedTypes = [1]bool{
+			gaq.withInstallations != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*GithubApp).scanValues(nil, columns)
@@ -344,6 +383,7 @@ func (gaq *GithubAppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*G
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &GithubApp{config: gaq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(gaq.modifiers) > 0 {
@@ -358,7 +398,45 @@ func (gaq *GithubAppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*G
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := gaq.withInstallations; query != nil {
+		if err := gaq.loadInstallations(ctx, query, nodes,
+			func(n *GithubApp) { n.Edges.Installations = []*GithubInstallation{} },
+			func(n *GithubApp, e *GithubInstallation) { n.Edges.Installations = append(n.Edges.Installations, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (gaq *GithubAppQuery) loadInstallations(ctx context.Context, query *GithubInstallationQuery, nodes []*GithubApp, init func(*GithubApp), assign func(*GithubApp, *GithubInstallation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*GithubApp)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(githubinstallation.FieldGithubAppID)
+	}
+	query.Where(predicate.GithubInstallation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(githubapp.InstallationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.GithubAppID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "github_app_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (gaq *GithubAppQuery) sqlCount(ctx context.Context) (int, error) {
@@ -374,7 +452,7 @@ func (gaq *GithubAppQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (gaq *GithubAppQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(githubapp.Table, githubapp.Columns, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeUUID))
+	_spec := sqlgraph.NewQuerySpec(githubapp.Table, githubapp.Columns, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64))
 	_spec.From = gaq.sql
 	if unique := gaq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

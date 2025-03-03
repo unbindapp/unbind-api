@@ -8,12 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 )
 
 // GithubAppCreate is the builder for creating a GithubApp entity.
@@ -52,12 +51,6 @@ func (gac *GithubAppCreate) SetNillableUpdatedAt(t *time.Time) *GithubAppCreate 
 	return gac
 }
 
-// SetGithubAppID sets the "github_app_id" field.
-func (gac *GithubAppCreate) SetGithubAppID(i int64) *GithubAppCreate {
-	gac.mutation.SetGithubAppID(i)
-	return gac
-}
-
 // SetName sets the "name" field.
 func (gac *GithubAppCreate) SetName(s string) *GithubAppCreate {
 	gac.mutation.SetName(s)
@@ -89,17 +82,24 @@ func (gac *GithubAppCreate) SetPrivateKey(s string) *GithubAppCreate {
 }
 
 // SetID sets the "id" field.
-func (gac *GithubAppCreate) SetID(u uuid.UUID) *GithubAppCreate {
-	gac.mutation.SetID(u)
+func (gac *GithubAppCreate) SetID(i int64) *GithubAppCreate {
+	gac.mutation.SetID(i)
 	return gac
 }
 
-// SetNillableID sets the "id" field if the given value is not nil.
-func (gac *GithubAppCreate) SetNillableID(u *uuid.UUID) *GithubAppCreate {
-	if u != nil {
-		gac.SetID(*u)
-	}
+// AddInstallationIDs adds the "installations" edge to the GithubInstallation entity by IDs.
+func (gac *GithubAppCreate) AddInstallationIDs(ids ...int64) *GithubAppCreate {
+	gac.mutation.AddInstallationIDs(ids...)
 	return gac
+}
+
+// AddInstallations adds the "installations" edges to the GithubInstallation entity.
+func (gac *GithubAppCreate) AddInstallations(g ...*GithubInstallation) *GithubAppCreate {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return gac.AddInstallationIDs(ids...)
 }
 
 // Mutation returns the GithubAppMutation object of the builder.
@@ -145,10 +145,6 @@ func (gac *GithubAppCreate) defaults() {
 		v := githubapp.DefaultUpdatedAt()
 		gac.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := gac.mutation.ID(); !ok {
-		v := githubapp.DefaultID()
-		gac.mutation.SetID(v)
-	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -158,9 +154,6 @@ func (gac *GithubAppCreate) check() error {
 	}
 	if _, ok := gac.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "GithubApp.updated_at"`)}
-	}
-	if _, ok := gac.mutation.GithubAppID(); !ok {
-		return &ValidationError{Name: "github_app_id", err: errors.New(`ent: missing required field "GithubApp.github_app_id"`)}
 	}
 	if _, ok := gac.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "GithubApp.name"`)}
@@ -182,6 +175,11 @@ func (gac *GithubAppCreate) check() error {
 	if _, ok := gac.mutation.PrivateKey(); !ok {
 		return &ValidationError{Name: "private_key", err: errors.New(`ent: missing required field "GithubApp.private_key"`)}
 	}
+	if v, ok := gac.mutation.ID(); ok {
+		if err := githubapp.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "GithubApp.id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -196,12 +194,9 @@ func (gac *GithubAppCreate) sqlSave(ctx context.Context) (*GithubApp, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
-			_node.ID = *id
-		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
-			return nil, err
-		}
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
 	}
 	gac.mutation.id = &_node.ID
 	gac.mutation.done = true
@@ -211,12 +206,12 @@ func (gac *GithubAppCreate) sqlSave(ctx context.Context) (*GithubApp, error) {
 func (gac *GithubAppCreate) createSpec() (*GithubApp, *sqlgraph.CreateSpec) {
 	var (
 		_node = &GithubApp{config: gac.config}
-		_spec = sqlgraph.NewCreateSpec(githubapp.Table, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeUUID))
+		_spec = sqlgraph.NewCreateSpec(githubapp.Table, sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = gac.conflict
 	if id, ok := gac.mutation.ID(); ok {
 		_node.ID = id
-		_spec.ID.Value = &id
+		_spec.ID.Value = id
 	}
 	if value, ok := gac.mutation.CreatedAt(); ok {
 		_spec.SetField(githubapp.FieldCreatedAt, field.TypeTime, value)
@@ -225,10 +220,6 @@ func (gac *GithubAppCreate) createSpec() (*GithubApp, *sqlgraph.CreateSpec) {
 	if value, ok := gac.mutation.UpdatedAt(); ok {
 		_spec.SetField(githubapp.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
-	}
-	if value, ok := gac.mutation.GithubAppID(); ok {
-		_spec.SetField(githubapp.FieldGithubAppID, field.TypeInt64, value)
-		_node.GithubAppID = value
 	}
 	if value, ok := gac.mutation.Name(); ok {
 		_spec.SetField(githubapp.FieldName, field.TypeString, value)
@@ -249,6 +240,22 @@ func (gac *GithubAppCreate) createSpec() (*GithubApp, *sqlgraph.CreateSpec) {
 	if value, ok := gac.mutation.PrivateKey(); ok {
 		_spec.SetField(githubapp.FieldPrivateKey, field.TypeString, value)
 		_node.PrivateKey = value
+	}
+	if nodes := gac.mutation.InstallationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubapp.InstallationsTable,
+			Columns: []string{githubapp.InstallationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -311,24 +318,6 @@ func (u *GithubAppUpsert) SetUpdatedAt(v time.Time) *GithubAppUpsert {
 // UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
 func (u *GithubAppUpsert) UpdateUpdatedAt() *GithubAppUpsert {
 	u.SetExcluded(githubapp.FieldUpdatedAt)
-	return u
-}
-
-// SetGithubAppID sets the "github_app_id" field.
-func (u *GithubAppUpsert) SetGithubAppID(v int64) *GithubAppUpsert {
-	u.Set(githubapp.FieldGithubAppID, v)
-	return u
-}
-
-// UpdateGithubAppID sets the "github_app_id" field to the value that was provided on create.
-func (u *GithubAppUpsert) UpdateGithubAppID() *GithubAppUpsert {
-	u.SetExcluded(githubapp.FieldGithubAppID)
-	return u
-}
-
-// AddGithubAppID adds v to the "github_app_id" field.
-func (u *GithubAppUpsert) AddGithubAppID(v int64) *GithubAppUpsert {
-	u.Add(githubapp.FieldGithubAppID, v)
 	return u
 }
 
@@ -457,27 +446,6 @@ func (u *GithubAppUpsertOne) UpdateUpdatedAt() *GithubAppUpsertOne {
 	})
 }
 
-// SetGithubAppID sets the "github_app_id" field.
-func (u *GithubAppUpsertOne) SetGithubAppID(v int64) *GithubAppUpsertOne {
-	return u.Update(func(s *GithubAppUpsert) {
-		s.SetGithubAppID(v)
-	})
-}
-
-// AddGithubAppID adds v to the "github_app_id" field.
-func (u *GithubAppUpsertOne) AddGithubAppID(v int64) *GithubAppUpsertOne {
-	return u.Update(func(s *GithubAppUpsert) {
-		s.AddGithubAppID(v)
-	})
-}
-
-// UpdateGithubAppID sets the "github_app_id" field to the value that was provided on create.
-func (u *GithubAppUpsertOne) UpdateGithubAppID() *GithubAppUpsertOne {
-	return u.Update(func(s *GithubAppUpsert) {
-		s.UpdateGithubAppID()
-	})
-}
-
 // SetName sets the "name" field.
 func (u *GithubAppUpsertOne) SetName(v string) *GithubAppUpsertOne {
 	return u.Update(func(s *GithubAppUpsert) {
@@ -564,12 +532,7 @@ func (u *GithubAppUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *GithubAppUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
-	if u.create.driver.Dialect() == dialect.MySQL {
-		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
-		// fields from the database since MySQL does not support the RETURNING clause.
-		return id, errors.New("ent: GithubAppUpsertOne.ID is not supported by MySQL driver. Use GithubAppUpsertOne.Exec instead")
-	}
+func (u *GithubAppUpsertOne) ID(ctx context.Context) (id int64, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -578,7 +541,7 @@ func (u *GithubAppUpsertOne) ID(ctx context.Context) (id uuid.UUID, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *GithubAppUpsertOne) IDX(ctx context.Context) uuid.UUID {
+func (u *GithubAppUpsertOne) IDX(ctx context.Context) int64 {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -633,6 +596,10 @@ func (gacb *GithubAppCreateBulk) Save(ctx context.Context) ([]*GithubApp, error)
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int64(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})
@@ -777,27 +744,6 @@ func (u *GithubAppUpsertBulk) SetUpdatedAt(v time.Time) *GithubAppUpsertBulk {
 func (u *GithubAppUpsertBulk) UpdateUpdatedAt() *GithubAppUpsertBulk {
 	return u.Update(func(s *GithubAppUpsert) {
 		s.UpdateUpdatedAt()
-	})
-}
-
-// SetGithubAppID sets the "github_app_id" field.
-func (u *GithubAppUpsertBulk) SetGithubAppID(v int64) *GithubAppUpsertBulk {
-	return u.Update(func(s *GithubAppUpsert) {
-		s.SetGithubAppID(v)
-	})
-}
-
-// AddGithubAppID adds v to the "github_app_id" field.
-func (u *GithubAppUpsertBulk) AddGithubAppID(v int64) *GithubAppUpsertBulk {
-	return u.Update(func(s *GithubAppUpsert) {
-		s.AddGithubAppID(v)
-	})
-}
-
-// UpdateGithubAppID sets the "github_app_id" field to the value that was provided on create.
-func (u *GithubAppUpsertBulk) UpdateGithubAppID() *GithubAppUpsertBulk {
-	return u.Update(func(s *GithubAppUpsert) {
-		s.UpdateGithubAppID()
 	})
 }
 
