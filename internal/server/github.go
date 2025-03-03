@@ -28,17 +28,6 @@ type GithubCreateManifestResponse struct {
 
 // Create a manifest that the user can use to create a GitHub app
 func (s *Server) GithubManifestCreate(ctx context.Context, input *GithubCreateManifestInput) (*GithubCreateManifestResponse, error) {
-	// ! TODO - for now we only need 1 github app, so lets check uniqueness, in future we may want more for some reason
-	ghApp, err := s.Repository.GetGithubApp(ctx)
-	if ghApp != nil {
-		log.Info("Github app already exists")
-		return nil, huma.Error400BadRequest("Github app already exists")
-	}
-	if err != nil && !ent.IsNotFound(err) {
-		log.Error("Error getting github app", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to get github app")
-	}
-
 	// Create GitHub app manifest
 	manifest := s.GithubClient.CreateAppManifest(input.Body.RedirectURL)
 
