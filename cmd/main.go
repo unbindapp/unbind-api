@@ -59,7 +59,7 @@ func main() {
 				TokenURL: cfg.DexIssuerURL + "/token",
 			},
 			// ! TODO - adjust redirect when necessary
-			RedirectURL: "http://localhost:8089/auth/callback",
+			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalURL),
 			Scopes:      []string{"openid", "profile", "email", "offline_access"},
 		},
 		GithubClient: github.NewGithubClient(cfg),
