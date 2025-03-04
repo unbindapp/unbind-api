@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v69/github"
+	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
 // GitHubAppManifest represents the structure for GitHub App manifest
@@ -22,8 +23,7 @@ type GitHubAppManifest struct {
 
 // HookAttributes contains webhook configuration
 type HookAttributes struct {
-	URL    string `json:"url"`
-	Secret string `json:"secret"`
+	URL string `json:"url"`
 }
 
 // DefaultPermissions contains permission settings
@@ -34,9 +34,15 @@ type DefaultPermissions struct {
 }
 
 // CreateAppManifest generates the GitHub App manifest
-func (g *GithubClient) CreateAppManifest(redirectUrl string) *GitHubAppManifest {
+func (g *GithubClient) CreateAppManifest(redirectUrl string) (*GitHubAppManifest, error) {
+	// Generate a random suffix
+	suffixRand, err := utils.GenerateRandomSimpleID(5)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate random suffix: %w", err)
+	}
+
 	return &GitHubAppManifest{
-		Name:        fmt.Sprintf("unbind-%s", g.cfg.UnbindSuffix),
+		Name:        fmt.Sprintf("unbind-%s-%s", g.cfg.UnbindSuffix, suffixRand),
 		Description: "Application to connect unbind with Github",
 		URL:         g.cfg.ExternalURL,
 		HookAttributes: HookAttributes{
@@ -49,8 +55,8 @@ func (g *GithubClient) CreateAppManifest(redirectUrl string) *GitHubAppManifest 
 			Issues:   "write",
 			Metadata: "read",
 		},
-		DefaultEvents: []string{"push", "pull_request"},
-	}
+		DefaultEvents: []string{"push"},
+	}, nil
 }
 
 // ManifestCodeConversion gets app configruation from github using the code
