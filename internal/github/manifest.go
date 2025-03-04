@@ -28,9 +28,10 @@ type HookAttributes struct {
 
 // DefaultPermissions contains permission settings
 type DefaultPermissions struct {
-	Contents string `json:"contents"`
-	Issues   string `json:"issues"`
-	Metadata string `json:"metadata"`
+	Contents     string `json:"contents"`
+	Issues       string `json:"issues"`
+	Metadata     string `json:"metadata"`
+	PullRequests string `json:"pull_requests"`
 }
 
 // CreateAppManifest generates the GitHub App manifest
@@ -51,11 +52,12 @@ func (g *GithubClient) CreateAppManifest(redirectUrl string) (*GitHubAppManifest
 		RedirectURL: redirectUrl,
 		Public:      false,
 		DefaultPermissions: DefaultPermissions{
-			Contents: "read",
-			Issues:   "write",
-			Metadata: "read",
+			Contents:     "read",
+			Issues:       "write",
+			Metadata:     "read",
+			PullRequests: "read",
 		},
-		DefaultEvents: []string{"push"},
+		DefaultEvents: []string{"push", "pull_request"},
 	}, nil
 }
 
