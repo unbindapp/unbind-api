@@ -15,6 +15,11 @@ func (m *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) {
 		return
 	}
 
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		huma.WriteErr(m.api, ctx, http.StatusUnauthorized, "Authorization header must be a Bearer token")
+		return
+	}
+
 	bearerToken := strings.TrimPrefix(authHeader, "Bearer ")
 	token, err := m.verifier.Verify(ctx.Context(), bearerToken)
 	if err != nil {
