@@ -94,6 +94,28 @@ func main() {
 	huma.Register(
 		ghGroup,
 		huma.Operation{
+			OperationID: "app-create",
+			Summary:     "Create Github app",
+			Description: "Begin the workflow to create a github application",
+			Path:        "/app/create",
+			Method:      http.MethodGet,
+		},
+		srvImpl.HandleGithubAppCreate,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "app-save",
+			Summary:     "Save github app",
+			Description: "Save github app via code exchange and redirect to installation",
+			Path:        "/app/save",
+			Method:      http.MethodGet,
+		},
+		srvImpl.HandleGithubAppSave,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
 			OperationID: "manifest-create",
 			Summary:     "Create Github manifest",
 			Description: "Create a manifest that the user can use to create a GitHub app",
