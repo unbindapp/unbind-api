@@ -3,9 +3,20 @@ package utils
 import (
 	"fmt"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 )
+
+func JoinURLPaths(baseURL string, paths ...string) (string, error) {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	u.Path = path.Join(append([]string{u.Path}, paths...)...)
+	return u.String(), nil
+}
 
 // ValidateAndExtractDomain takes a URL string and:
 // 1. Validates if it's a proper URL (must start with http:// or https://)
