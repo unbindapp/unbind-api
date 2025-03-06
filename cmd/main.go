@@ -17,14 +17,22 @@ import (
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/middleware"
 	"github.com/unbindapp/unbind-api/internal/server"
+	"github.com/valkey-io/valkey-go"
 	"golang.org/x/oauth2"
 )
 
 func main() {
-	godotenv.Load()
+	err := godotenv.Overload()
 
 	// Initialize config
 	cfg := config.NewConfig()
+
+	// Initialize valkey (redis)
+	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
+	if err != nil {
+		panic(err)
+	}
+	defer client.Close()
 
 	// Load database
 	dbConnInfo, err := database.GetSqlDbConn(cfg, false)
@@ -63,6 +71,7 @@ func main() {
 			Scopes:      []string{"openid", "profile", "email", "offline_access"},
 		},
 		GithubClient: github.NewGithubClient(cfg),
+		StringCache:  database.NewStringCache(client, "unbind"),
 	}
 
 	// New chi router
@@ -101,17 +110,6 @@ func main() {
 			Method:      http.MethodGet,
 		},
 		srvImpl.HandleGithubAppCreate,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "app-save",
-			Summary:     "Save github app",
-			Description: "Save github app via code exchange and redirect to installation",
-			Path:        "/app/save",
-			Method:      http.MethodGet,
-		},
-		srvImpl.HandleGithubAppSave,
 	)
 	huma.Register(
 		ghGroup,
@@ -180,6 +178,17 @@ func main() {
 			Method:      http.MethodPost,
 		},
 		srvImpl.HandleGithubWebhook,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "app-save",
+			Summary:     "Save github app",
+			Description: "Save github app via code exchange and redirect to installation",
+			Path:        "/github/app/save",
+			Method:      http.MethodGet,
+		},
+		srvImpl.HandleGithubAppSave,
 	)
 
 	// !

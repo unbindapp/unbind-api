@@ -29,7 +29,7 @@ type GithubCreateManifestResponse struct {
 // Create a manifest that the user can use to create a GitHub app
 func (s *Server) HandleGithubManifestCreate(ctx context.Context, input *GithubCreateManifestInput) (*GithubCreateManifestResponse, error) {
 	// Create GitHub app manifest
-	manifest, err := s.GithubClient.CreateAppManifest(input.Body.RedirectURL)
+	manifest, _, err := s.GithubClient.CreateAppManifest(input.Body.RedirectURL)
 
 	if err != nil {
 		log.Error("Error creating github app manifest", "err", err)

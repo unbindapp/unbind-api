@@ -11,10 +11,15 @@ require (
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/danielgtaylor/huma/v2 v2.29.1-0.20250224183453-44149b0847bb
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/google/go-github/v69 v69.2.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.9.0
+	github.com/valkey-io/valkey-go v1.0.55
+	github.com/valkey-io/valkey-go/mock v1.0.55
+	go.uber.org/mock v0.5.0
+	golang.org/x/oauth2 v0.23.0
 	k8s.io/apimachinery v0.32.2
 	k8s.io/client-go v0.32.2
 	modernc.org/sqlite v1.35.0
@@ -36,8 +41,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/go-github/v69 v69.2.0 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.13.0 // indirect
@@ -69,7 +73,6 @@ require (
 	golang.org/x/exp v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect

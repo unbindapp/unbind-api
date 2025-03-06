@@ -24,6 +24,8 @@ type Config struct {
 	PostgresUser     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	PostgresPassword string `env:"POSTGRES_PASSWORD" envDefault:"postgres"`
 	PostgresDB       string `env:"POSTGRES_DB" envDefault:"unbind"`
+	// Valkey (redis)
+	ValkeyURL string `env:"VALKEY_URL" envDefault:"localhost:6379"`
 	// Dex (OIDC provider)
 	DexIssuerURL         string `env:"DEX_ISSUER_URL"`
 	DexIssuerUrlExternal string `env:"DEX_ISSUER_URL_EXTERNAL"`
