@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/database"
@@ -22,6 +23,7 @@ type Server struct {
 	GithubClient *github.GithubClient
 	Repository   *repository.Repository
 	StringCache  *database.ValkeyCache[string]
+	HttpClient   *http.Client
 }
 
 // HealthCheck is your /health endpoint
@@ -31,7 +33,7 @@ type HealthResponse struct {
 	}
 }
 
-func (s *Server) HealthCheck(ctx context.Context, _ *EmptyInput) (*HealthResponse, error) {
+func (self *Server) HealthCheck(ctx context.Context, _ *EmptyInput) (*HealthResponse, error) {
 	healthResponse := &HealthResponse{}
 	healthResponse.Body.Status = "ok"
 	return healthResponse, nil

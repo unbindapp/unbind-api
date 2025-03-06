@@ -25,14 +25,14 @@ type CallbackResponse struct {
 }
 
 // Callback handles the OAuth2 callback.
-func (s *Server) Callback(ctx context.Context, in *CallbackInput) (*CallbackResponse, error) {
+func (self *Server) Callback(ctx context.Context, in *CallbackInput) (*CallbackResponse, error) {
 	// Validate the code parameter.
 	if in.Code == "" {
 		return nil, huma.Error400BadRequest("No code provided")
 	}
 
 	// Exchange the code for tokens.
-	oauth2Token, err := s.OauthConfig.Exchange(ctx, in.Code)
+	oauth2Token, err := self.OauthConfig.Exchange(ctx, in.Code)
 	if err != nil {
 		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to exchange token: %v", err))
 	}

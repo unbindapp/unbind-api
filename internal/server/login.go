@@ -16,12 +16,12 @@ type OauthLoginResponse struct {
 }
 
 // Login handles the OAuth login redirect.
-func (s *Server) Login(ctx context.Context, _ *EmptyInput) (*OauthLoginResponse, error) {
+func (self *Server) Login(ctx context.Context, _ *EmptyInput) (*OauthLoginResponse, error) {
 	// Generate a random state value for CSRF protection.
 	state := uuid.New().String()
 
 	// Build the OAuth2 authentication URL with the state.
-	authURL := s.OauthConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
+	authURL := self.OauthConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
 
 	// Create a cookie that stores the state value.
 	cookie := &http.Cookie{

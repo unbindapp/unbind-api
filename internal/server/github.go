@@ -27,9 +27,9 @@ type GithubCreateManifestResponse struct {
 }
 
 // Create a manifest that the user can use to create a GitHub app
-func (s *Server) HandleGithubManifestCreate(ctx context.Context, input *GithubCreateManifestInput) (*GithubCreateManifestResponse, error) {
+func (self *Server) HandleGithubManifestCreate(ctx context.Context, input *GithubCreateManifestInput) (*GithubCreateManifestResponse, error) {
 	// Create GitHub app manifest
-	manifest, _, err := s.GithubClient.CreateAppManifest(input.Body.RedirectURL)
+	manifest, _, err := self.GithubClient.CreateAppManifest(input.Body.RedirectURL)
 
 	if err != nil {
 		log.Error("Error creating github app manifest", "err", err)
@@ -39,7 +39,7 @@ func (s *Server) HandleGithubManifestCreate(ctx context.Context, input *GithubCr
 	// Create resp
 	resp := &GithubCreateManifestResponse{}
 	resp.Body.Manifest = manifest
-	resp.Body.PostURL = fmt.Sprintf("%s/settings/apps/new", s.Cfg.GithubURL)
+	resp.Body.PostURL = fmt.Sprintf("%s/settings/apps/new", self.Cfg.GithubURL)
 	return resp, nil
 }
 
@@ -56,15 +56,15 @@ type HandleGithubAppConnectResponse struct {
 	}
 }
 
-func (s *Server) HandleGithubAppConnect(ctx context.Context, input *HandleGithubAppConnectInput) (*HandleGithubAppConnectResponse, error) {
+func (self *Server) HandleGithubAppConnect(ctx context.Context, input *HandleGithubAppConnectInput) (*HandleGithubAppConnectResponse, error) {
 	// Exchange the code for tokens.
-	appConfig, err := s.GithubClient.ManifestCodeConversion(ctx, input.Body.Code)
+	appConfig, err := self.GithubClient.ManifestCodeConversion(ctx, input.Body.Code)
 	if err != nil {
 		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to exchange manifest code: %v", err))
 	}
 
 	// Save the app config
-	ghApp, err := s.Repository.CreateGithubApp(ctx, appConfig)
+	ghApp, err := self.Repository.CreateGithubApp(ctx, appConfig)
 	if err != nil {
 		log.Error("Error saving github app", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to save github app")
@@ -85,8 +85,8 @@ type GithubAppListResponse struct {
 	Body []*ent.GithubApp
 }
 
-func (s *Server) HandleListGithubApps(ctx context.Context, input *GithubAppListInput) (*GithubAppListResponse, error) {
-	apps, err := s.Repository.GetGithubApps(ctx, input.WithInstallations)
+func (self *Server) HandleListGithubApps(ctx context.Context, input *GithubAppListInput) (*GithubAppListResponse, error) {
+	apps, err := self.Repository.GetGithubApps(ctx, input.WithInstallations)
 	if err != nil {
 		log.Error("Error getting github apps", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github apps")
@@ -106,8 +106,8 @@ type GithubAppInstallationListResponse struct {
 	Body []*ent.GithubInstallation
 }
 
-func (s *Server) HandleListGithubAppInstallations(ctx context.Context, input *GithubAppInstallationListInput) (*GithubAppInstallationListResponse, error) {
-	installations, err := s.Repository.GetGithubInstallationsByAppID(ctx, input.AppID)
+func (self *Server) HandleListGithubAppInstallations(ctx context.Context, input *GithubAppInstallationListInput) (*GithubAppInstallationListResponse, error) {
+	installations, err := self.Repository.GetGithubInstallationsByAppID(ctx, input.AppID)
 	if err != nil {
 		log.Error("Error getting github installations", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github installations")
@@ -129,9 +129,9 @@ type HandleGithubAppInstallResponse struct {
 	Cookie string `header:"Set-Cookie"`
 }
 
-func (s *Server) HandleGithubAppInstall(ctx context.Context, input *HandleGithubAppInstallInput) (*HandleGithubAppInstallResponse, error) {
+func (self *Server) HandleGithubAppInstall(ctx context.Context, input *HandleGithubAppInstallInput) (*HandleGithubAppInstallResponse, error) {
 	// Get the app
-	ghApp, err := s.Repository.GetGithubAppByID(ctx, input.AppID)
+	ghApp, err := self.Repository.GetGithubAppByID(ctx, input.AppID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, huma.Error404NotFound("App not found")

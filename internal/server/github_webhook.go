@@ -2,6 +2,9 @@ package server
 
 import (
 	"context"
+	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -23,9 +26,9 @@ type GithubWebhookInput struct {
 type GithubWebhookOutput struct {
 }
 
-func (s *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhookInput) (*GithubWebhookOutput, error) {
+func (self *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhookInput) (*GithubWebhookOutput, error) {
 	// Since we may have multiple apps, we want to validate against every webhook secret to see if it belongs to any of our apps
-	ghApps, err := s.Repository.GetGithubApps(ctx, false)
+	ghApps, err := self.Repository.GetGithubApps(ctx, false)
 	if err != nil {
 		log.Error("Error getting github apps", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github apps")
@@ -101,7 +104,7 @@ func (s *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhookIn
 			}
 
 			// Create or update installation in database
-			_, err = s.Repository.UpsertGithubInstallation(
+			_, err = self.Repository.UpsertGithubInstallation(
 				ctx,
 				installationID,
 				installation.GetAppID(),
@@ -123,24 +126,52 @@ func (s *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhookIn
 
 		case "deleted":
 			// Mark as inactive instead of deleting
-			_, err := s.Repository.SetInstallationActive(ctx, installationID, false)
+			_, err := self.Repository.SetInstallationActive(ctx, installationID, false)
 			if err != nil {
 				log.Error("Error setting installation as inactive", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to set installation as inactive")
 			}
 
 		case "suspended":
-			_, err := s.Repository.SetInstallationSuspended(ctx, installationID, true)
+			_, err := self.Repository.SetInstallationSuspended(ctx, installationID, true)
 			if err != nil {
 				log.Error("Error setting installation as suspended", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to set installation as suspended")
 			}
 
 		case "unsuspended":
-			_, err := s.Repository.SetInstallationSuspended(ctx, installationID, false)
+			_, err := self.Repository.SetInstallationSuspended(ctx, installationID, false)
 			if err != nil {
 				log.Error("Error setting installation as unsuspended", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to set installation as unsuspended")
+			}
+		}
+
+		// Get Client redirect URL
+		redirectURL, err := self.StringCache.Get(ctx, strconv.Itoa(int(installation.GetAppID())))
+		if err != nil {
+			log.Warn("Error getting redirect URL from cache", "err", err)
+		}
+
+		if redirectURL != "" {
+			// Trigger a request to the client with installation completed
+			notifyUrl, err := url.Parse(redirectURL)
+			if err != nil {
+				log.Warn("Error parsing redirect URL", "err", err)
+				return &GithubWebhookOutput{}, nil
+			}
+			q := notifyUrl.Query()
+			q.Add("installationID", strconv.Itoa(int(installationID)))
+			notifyUrl.RawQuery = q.Encode()
+			req, err := http.NewRequestWithContext(ctx, "GET", notifyUrl.String(), nil)
+			if err != nil {
+				log.Warn("Error creating notification request", "err", err)
+				return &GithubWebhookOutput{}, nil
+			}
+			_, err = self.HttpClient.Do(req)
+			if err != nil {
+				log.Warn("Error notifying client of installation", "err", err, "url", notifyUrl.String())
+				return &GithubWebhookOutput{}, nil
 			}
 		}
 	}

@@ -15,8 +15,8 @@ type TeamResponse struct {
 }
 
 // ListTeams handles GET /teams
-func (s *Server) ListTeams(ctx context.Context, _ *EmptyInput) (*TeamResponse, error) {
-	teams, err := s.KubeClient.GetUnbindTeams()
+func (self *Server) ListTeams(ctx context.Context, _ *EmptyInput) (*TeamResponse, error) {
+	teams, err := self.KubeClient.GetUnbindTeams()
 	if err != nil {
 		log.Error("Error getting teams", "err", err)
 		return nil, huma.Error500InternalServerError("Unable to retrieve teams")

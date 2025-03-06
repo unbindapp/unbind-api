@@ -72,6 +72,7 @@ func main() {
 		},
 		GithubClient: github.NewGithubClient(cfg),
 		StringCache:  database.NewStringCache(client, "unbind"),
+		HttpClient:   &http.Client{},
 	}
 
 	// New chi router
