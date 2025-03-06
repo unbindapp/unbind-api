@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -17,13 +18,17 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
+type GithubAppCreateInput struct {
+	RedirectURL string `query:"redirect_url" validate:"required" doc:"The client URL to redirect to after the installation is finished"`
+}
+
 type GithubAppCreateResponse struct {
 	ContentType string `header:"Content-Type"`
 	Body        []byte
 }
 
 // Handler to render GitHub page with form submission
-func (s *Server) HandleGithubAppCreate(ctx context.Context, input *EmptyInput) (*GithubAppCreateResponse, error) {
+func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GithubAppCreateInput) (*GithubAppCreateResponse, error) {
 	// Template for the GitHub form submission page
 	tmpl := `<!DOCTYPE html>
 <html>
@@ -54,24 +59,31 @@ func (s *Server) HandleGithubAppCreate(ctx context.Context, input *EmptyInput) (
 </html>`
 
 	// Build redirect
-	redirect, err := utils.JoinURLPaths(s.Cfg.ExternalURL, "/webhook/github/app/save")
+	redirect, err := utils.JoinURLPaths(self.Cfg.ExternalURL, "/webhook/github/app/save")
 	if err != nil {
 		log.Error("Error building redirect URL", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to build redirect URL")
 	}
 
 	// Create GitHub app manifest
-	manifest, appName, err := s.GithubClient.CreateAppManifest(redirect)
+	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect)
 
 	// Create a unique state to identify this request
 	state := uuid.New().String()
-	err = s.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
+	err = self.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
 	if err != nil {
 		log.Error("Error setting state in cache", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to set state in cache")
 	}
 
-	githubUrl := fmt.Sprintf("%s/settings/apps/new", s.Cfg.GithubURL)
+	// Store redirect URL for this state
+	err = self.StringCache.SetWithExpiration(ctx, state, input.RedirectURL, 30*time.Minute)
+	if err != nil {
+		log.Error("Error setting redirect URL in cache", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to set redirect URL in cache")
+	}
+
+	githubUrl := fmt.Sprintf("%s/settings/apps/new", self.Cfg.GithubURL)
 
 	if err != nil {
 		log.Error("Error creating github app manifest", "err", err)
@@ -132,15 +144,15 @@ type HandleGithubAppSaveResponse struct {
 }
 
 // Save github app and redirect to installation
-func (s *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubAppSaveInput) (*HandleGithubAppSaveResponse, error) {
+func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubAppSaveInput) (*HandleGithubAppSaveResponse, error) {
 	// Exchange the code for tokens.
-	appConfig, err := s.GithubClient.ManifestCodeConversion(ctx, input.Code)
+	appConfig, err := self.GithubClient.ManifestCodeConversion(ctx, input.Code)
 	if err != nil {
 		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to exchange manifest code: %v", err))
 	}
 
 	// Verify state
-	state, err := s.StringCache.Get(ctx, appConfig.GetName())
+	state, err := self.StringCache.Get(ctx, appConfig.GetName())
 	if err != nil {
 		if err == valkey.Nil {
 			return nil, huma.Error400BadRequest("Invalid state")
@@ -153,8 +165,25 @@ func (s *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubApp
 		return nil, huma.Error400BadRequest("Invalid state")
 	}
 
+	// Get redirect URL from cache
+	redirectURL, err := self.StringCache.Get(ctx, input.State)
+	if err != nil {
+		if err == valkey.Nil {
+			return nil, huma.Error400BadRequest("Invalid state")
+		}
+		log.Error("Error getting redirect URL from cache", "err", err)
+		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to get redirect URL: %v", err))
+	}
+	// Erase redirect URL and re-save it with app ID
+	err = self.StringCache.Delete(ctx, input.State)
+	if err != nil {
+		log.Error("Error deleting redirect URL from cache", "err", err)
+		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to delete redirect URL: %v", err))
+	}
+	err = self.StringCache.SetWithExpiration(ctx, strconv.Itoa(int(appConfig.GetID())), redirectURL, 30*time.Minute)
+
 	// Save the app config
-	ghApp, err := s.Repository.CreateGithubApp(ctx, appConfig)
+	ghApp, err := self.Repository.CreateGithubApp(ctx, appConfig)
 	if err != nil {
 		log.Error("Error saving github app", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to save github app")
@@ -171,7 +200,7 @@ func (s *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubApp
 	}
 
 	// Redirect URL - this is where GitHub will send users to install your app
-	redirectURL := fmt.Sprintf(
+	installationURL := fmt.Sprintf(
 		"https://github.com/settings/apps/%s/installations/new?state=%s",
 		url.QueryEscape(ghApp.Name),
 		url.QueryEscape(state),
@@ -179,7 +208,7 @@ func (s *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubApp
 
 	return &HandleGithubAppSaveResponse{
 		Status: http.StatusTemporaryRedirect,
-		Url:    redirectURL,
+		Url:    installationURL,
 		Cookie: cookie.String(),
 	}, nil
 }

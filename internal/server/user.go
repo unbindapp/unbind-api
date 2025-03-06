@@ -15,7 +15,7 @@ type MeResponse struct {
 }
 
 // Me handles GET /me
-func (s *Server) Me(ctx context.Context, _ *EmptyInput) (*MeResponse, error) {
+func (self *Server) Me(ctx context.Context, _ *EmptyInput) (*MeResponse, error) {
 
 	user, ok := ctx.Value("user").(*ent.User)
 	if !ok {
