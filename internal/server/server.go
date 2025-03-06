@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/database/repository"
 	"github.com/unbindapp/unbind-api/internal/github"
 	"github.com/unbindapp/unbind-api/internal/kubeclient"
@@ -20,6 +21,7 @@ type Server struct {
 	OauthConfig  *oauth2.Config
 	GithubClient *github.GithubClient
 	Repository   *repository.Repository
+	StringCache  *database.ValkeyCache[string]
 }
 
 // HealthCheck is your /health endpoint

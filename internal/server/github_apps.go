@@ -8,17 +8,14 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/utils"
+	"github.com/valkey-io/valkey-go"
 )
-
-type GithubAppCreateInput struct {
-	Body struct {
-	}
-}
 
 type GithubAppCreateResponse struct {
 	ContentType string `header:"Content-Type"`
@@ -57,14 +54,23 @@ func (s *Server) HandleGithubAppCreate(ctx context.Context, input *EmptyInput) (
 </html>`
 
 	// Build redirect
-	redirect, err := utils.JoinURLPaths(s.Cfg.ExternalURL, "/github/app/save")
+	redirect, err := utils.JoinURLPaths(s.Cfg.ExternalURL, "/webhook/github/app/save")
 	if err != nil {
 		log.Error("Error building redirect URL", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to build redirect URL")
 	}
 
 	// Create GitHub app manifest
-	manifest, err := s.GithubClient.CreateAppManifest(redirect)
+	manifest, appName, err := s.GithubClient.CreateAppManifest(redirect)
+
+	// Create a unique state to identify this request
+	state := uuid.New().String()
+	err = s.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
+	if err != nil {
+		log.Error("Error setting state in cache", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to set state in cache")
+	}
+
 	githubUrl := fmt.Sprintf("%s/settings/apps/new", s.Cfg.GithubURL)
 
 	if err != nil {
@@ -115,9 +121,8 @@ func (s *Server) HandleGithubAppCreate(ctx context.Context, input *EmptyInput) (
 
 // Connect the new github app to our instance, via manifest code exchange
 type HandleGithubAppSaveInput struct {
-	Body struct {
-		Code string `json:"code"`
-	}
+	Code  string `query:"code" validate:"required"`
+	State string `query:"state" validate:"required"`
 }
 
 type HandleGithubAppSaveResponse struct {
@@ -129,9 +134,23 @@ type HandleGithubAppSaveResponse struct {
 // Save github app and redirect to installation
 func (s *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubAppSaveInput) (*HandleGithubAppSaveResponse, error) {
 	// Exchange the code for tokens.
-	appConfig, err := s.GithubClient.ManifestCodeConversion(ctx, input.Body.Code)
+	appConfig, err := s.GithubClient.ManifestCodeConversion(ctx, input.Code)
 	if err != nil {
 		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to exchange manifest code: %v", err))
+	}
+
+	// Verify state
+	state, err := s.StringCache.Get(ctx, appConfig.GetName())
+	if err != nil {
+		if err == valkey.Nil {
+			return nil, huma.Error400BadRequest("Invalid state")
+		}
+		log.Error("Error getting state from cache", "err", err)
+		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to get state: %v", err))
+	}
+
+	if state != input.State {
+		return nil, huma.Error400BadRequest("Invalid state")
 	}
 
 	// Save the app config
@@ -140,9 +159,6 @@ func (s *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubApp
 		log.Error("Error saving github app", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to save github app")
 	}
-
-	// Create a state parameter to verify the callback
-	state := uuid.New().String()
 
 	// create a cookie that stores the state value
 	cookie := &http.Cookie{

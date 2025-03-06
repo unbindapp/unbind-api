@@ -17,6 +17,12 @@ services:
     networks:
       - app-network
 
+  valkey:
+    container_name: unbind_valkey
+    image: valkey/valkey:8
+    restart: unless-stopped
+    networks: ['app-network']
+
   dex:
     container_name: unbind_dex
     image: ghcr.io/dexidp/dex:v2.41.1
@@ -48,6 +54,7 @@ services:
       - DEX_ISSUER_URL_EXTERNAL=http://localhost:5556
       - DEX_CLIENT_ID=unbind-dev
       - DEX_CLIENT_SECRET=supersecret
+      - VALKEY_URL=valkey:6379
     ports:
       - '127.0.0.1:8089:8089'
     volumes:
