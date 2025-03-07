@@ -68,6 +68,11 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 	// Create GitHub app manifest
 	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect)
 
+	if err != nil {
+		log.Error("Error creating github app manifest", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to create github app manifest")
+	}
+
 	// Create a unique state to identify this request
 	state := uuid.New().String()
 	err = self.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
@@ -83,12 +88,9 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 		return nil, huma.Error500InternalServerError("Failed to set redirect URL in cache")
 	}
 
-	githubUrl := fmt.Sprintf("%s/settings/apps/new", self.Cfg.GithubURL)
-
-	if err != nil {
-		log.Error("Error creating github app manifest", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to create github app manifest")
-	}
+	q := url.Values{}
+	q.Set("state", state)
+	githubUrl := fmt.Sprintf("%s/settings/apps/new?%s", self.Cfg.GithubURL, q.Encode())
 
 	// Create template data struct
 	type templateData struct {
