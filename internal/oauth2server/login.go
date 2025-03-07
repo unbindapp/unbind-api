@@ -142,7 +142,12 @@ func loadHtmlTemplate(name string) (*template.Template, error) {
 	// Load and parse the template from the file
 	tmpl, err := template.ParseFiles(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse template %s: %w", name, err)
+		// try loading from the root
+		filePath = path.Join("app", "tmpl", name)
+		tmpl, err = template.ParseFiles(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse template %s: %w", name, err)
+		}
 	}
 
 	return tmpl, nil
