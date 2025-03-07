@@ -182,15 +182,6 @@ func (s *customTokenStore) GetByAccess(ctx context.Context, access string) (oaut
 		return nil, err
 	}
 
-	// Check if the token has expired
-	if token.ExpiresAt.Before(time.Now()) {
-		return nil, errors.ErrExpiredAccessToken
-	}
-
-	if token.Revoked {
-		return nil, errors.ErrInvalidAccessToken
-	}
-
 	// Get the user associated with the token
 	u, err := token.QueryUser().Only(ctx)
 	if err != nil {
@@ -239,15 +230,6 @@ func (s *customTokenStore) GetByRefresh(ctx context.Context, refresh string) (oa
 
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if the token has expired
-	if token.ExpiresAt.Before(time.Now()) {
-		return nil, errors.ErrExpiredRefreshToken
-	}
-
-	if token.Revoked {
-		return nil, errors.ErrInvalidRefreshToken
 	}
 
 	// Get the user associated with the token
