@@ -3,6 +3,7 @@ package oauth2server
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/unbindapp/unbind-api/internal/log"
 )
@@ -32,8 +33,13 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	// Check if user is authenticated
 	if userID == "" {
 		// User not authenticated, redirect to login
+		// Make sure to properly URL encode all parameters, especially the state
+		encodedState := url.QueryEscape(state)
+		encodedRedirectURI := url.QueryEscape(redirectURI)
+		encodedScope := url.QueryEscape(scope)
+
 		loginURL := fmt.Sprintf("/login?client_id=%s&redirect_uri=%s&response_type=%s&state=%s&scope=%s",
-			clientID, redirectURI, responseType, state, scope)
+			clientID, encodedRedirectURI, responseType, encodedState, encodedScope)
 		http.Redirect(w, r, loginURL, http.StatusFound)
 		return
 	}
