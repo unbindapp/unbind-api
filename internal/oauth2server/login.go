@@ -55,7 +55,7 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 	}
 
 	// Load the template from file
-	tmpl, err := loadHtmlTemplate("login.go.tmpl")
+	tmpl, err := loadHtmlTemplate("login.html")
 	if err != nil {
 		log.Error("Error loading template: ", err)
 		http.Error(w, "Error loading template", http.StatusInternalServerError)
