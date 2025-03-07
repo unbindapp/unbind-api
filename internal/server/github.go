@@ -99,7 +99,7 @@ func (self *Server) HandleListGithubApps(ctx context.Context, input *GithubAppLi
 
 // GET Github app installations
 type GithubAppInstallationListInput struct {
-	AppID int64 `path:"app_id" validate:"required"`
+	AppID int64 `path:"app_id" required:"true"`
 }
 
 type GithubAppInstallationListResponse struct {
@@ -120,7 +120,7 @@ func (self *Server) HandleListGithubAppInstallations(ctx context.Context, input 
 
 // Redirect user to install the app
 type HandleGithubAppInstallInput struct {
-	AppID int64 `path:"app_id" validate:"required"`
+	AppID int64 `path:"app_id" required:"true"`
 }
 
 type HandleGithubAppInstallResponse struct {

@@ -19,7 +19,7 @@ import (
 )
 
 type GitHubAppCreateInput struct {
-	RedirectURL string `query:"redirect_url" validate:"required" doc:"The client URL to redirect to after the installation is finished"`
+	RedirectURL string `query:"redirect_url" required:"true" doc:"The client URL to redirect to after the installation is finished"`
 }
 
 type GithubAppCreateResponse struct {
@@ -135,8 +135,8 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 
 // Connect the new github app to our instance, via manifest code exchange
 type HandleGithubAppSaveInput struct {
-	Code  string `query:"code" validate:"required"`
-	State string `query:"state" validate:"required"`
+	Code  string `query:"code" required:"true"`
+	State string `query:"state" required:"true"`
 }
 
 type HandleGithubAppSaveResponse struct {

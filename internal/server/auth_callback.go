@@ -11,7 +11,7 @@ import (
 
 // CallbackInput defines the query parameters for the callback endpoint.
 type CallbackInput struct {
-	Code string `query:"code" validate:"required"`
+	Code string `query:"code" required:"true"`
 }
 
 // CallbackResponse defines the JSON structure for the response.
