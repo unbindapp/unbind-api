@@ -2,7 +2,6 @@ package oauth
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
@@ -40,7 +39,7 @@ func (s *dbClientStore) Set(id string, client oauth2.ClientInfo) error {
 		UserID: client.GetUserID(),
 		Public: client.IsPublic(),
 	}
-	return s.cache.SetWithExpiration(context.TODO(), id, cacheItem, 30*time.Minute)
+	return s.cache.SetWithExpiration(context.TODO(), id, cacheItem, REFRESH_TOKEN_EXP)
 }
 
 // Cachable implementation of oauth2.ClientInfo.
