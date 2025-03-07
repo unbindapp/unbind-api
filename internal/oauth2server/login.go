@@ -111,7 +111,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	if _, err := self.StringCache.Getdel(self.Ctx, pageKey); err != nil {
 		if err == valkey.Nil {
 			// Return ok empty status
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		log.Error("Error validating request: ", err)
