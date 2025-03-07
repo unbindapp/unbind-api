@@ -445,8 +445,6 @@ func setupOAuthServer(cfg *config.Config) *oauth2server.Oauth2Server {
 			return nil
 		}
 
-		log.Info("Generated ID token", "token", idToken)
-
 		// Return an extra field "id_token"
 		return map[string]interface{}{
 			"id_token": idToken,
