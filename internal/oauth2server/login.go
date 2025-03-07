@@ -185,7 +185,7 @@ const loginTemplate = `<!doctype html>
       input {
         width: 100%;
         color: var(--foreground);
-        background: var(--background);
+        background: var(--input);
         padding: 0.75rem 1rem;
         border: 1px solid var(--border);
         border-radius: var(--border-radius);
