@@ -101,6 +101,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		q.Set("state", state)
 		q.Set("scope", scope)
 		q.Set("error", "invalid_credentials")
+		q.Set("page_key", pageKey)
 
 		http.Redirect(w, r, "/login?"+q.Encode(), http.StatusFound)
 		return
