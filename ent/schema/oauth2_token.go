@@ -25,7 +25,7 @@ func (Oauth2Token) Mixin() []ent.Mixin {
 // Fields of the Oauth2Token.
 func (Oauth2Token) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("access_token").Unique().Sensitive(),
+		field.String("access_token").Sensitive(),
 		field.String("refresh_token").Unique().Sensitive(),
 		field.String("client_id"),
 		field.Time("expires_at"),
