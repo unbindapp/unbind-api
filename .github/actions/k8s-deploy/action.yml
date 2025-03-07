@@ -14,16 +14,24 @@ runs:
       with:
         kustomize-version: "3.5.4"
 
-    - name: Set image
-      working-directory: ./k8s
+    - name: Set image (api)
+      working-directory: ./k8s/api
       shell: bash
       run: |
         kustomize edit set image replaceme=${{ inputs.image }}
-        kustomize build . > ./ci.yaml
+        kustomize build . > ../ci.yaml
+
+    - name: Set image (oauth)
+      working-directory: ./k8s/oauth
+      shell: bash
+      run: |
+        kustomize edit set image replaceme=${{ inputs.image }}
+        kustomize build . > ../ci_oauth.yaml
+
 
     - name: Deploy image to k8s cluster
       uses: bbedward/kubectl@master
       env:
         KUBE_CONFIG_DATA: ${{ inputs.kube_config }}
       with:
-        args: apply -f ./k8s/ci.yaml
+        args: apply -f ./k8s/ci.yaml -f ./k8s/ci_oauth.yaml

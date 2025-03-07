@@ -21,7 +21,7 @@ func (self *Server) Login(ctx context.Context, _ *EmptyInput) (*OauthLoginRespon
 	state := uuid.New().String()
 
 	// Build the OAuth2 authentication URL with the state.
-	authURL := self.OauthConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
+	authURL := self.OauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 
 	// Create a cookie that stores the state value.
 	cookie := &http.Cookie{

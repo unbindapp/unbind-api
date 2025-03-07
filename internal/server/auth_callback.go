@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"golang.org/x/oauth2"
 )
 
 // CallbackInput defines the query parameters for the callback endpoint.
@@ -32,7 +33,7 @@ func (self *Server) Callback(ctx context.Context, in *CallbackInput) (*CallbackR
 	}
 
 	// Exchange the code for tokens.
-	oauth2Token, err := self.OauthConfig.Exchange(ctx, in.Code)
+	oauth2Token, err := self.OauthConfig.Exchange(ctx, in.Code, oauth2.AccessTypeOffline)
 	if err != nil {
 		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to exchange token: %v", err))
 	}

@@ -18,6 +18,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/jwtkey"
+	"github.com/unbindapp/unbind-api/ent/oauth2code"
+	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/user"
 
 	stdsql "database/sql"
@@ -32,6 +35,12 @@ type Client struct {
 	GithubApp *GithubAppClient
 	// GithubInstallation is the client for interacting with the GithubInstallation builders.
 	GithubInstallation *GithubInstallationClient
+	// JWTKey is the client for interacting with the JWTKey builders.
+	JWTKey *JWTKeyClient
+	// Oauth2Code is the client for interacting with the Oauth2Code builders.
+	Oauth2Code *Oauth2CodeClient
+	// Oauth2Token is the client for interacting with the Oauth2Token builders.
+	Oauth2Token *Oauth2TokenClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -47,6 +56,9 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.GithubApp = NewGithubAppClient(c.config)
 	c.GithubInstallation = NewGithubInstallationClient(c.config)
+	c.JWTKey = NewJWTKeyClient(c.config)
+	c.Oauth2Code = NewOauth2CodeClient(c.config)
+	c.Oauth2Token = NewOauth2TokenClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -142,6 +154,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:             cfg,
 		GithubApp:          NewGithubAppClient(cfg),
 		GithubInstallation: NewGithubInstallationClient(cfg),
+		JWTKey:             NewJWTKeyClient(cfg),
+		Oauth2Code:         NewOauth2CodeClient(cfg),
+		Oauth2Token:        NewOauth2TokenClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -164,6 +179,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:             cfg,
 		GithubApp:          NewGithubAppClient(cfg),
 		GithubInstallation: NewGithubInstallationClient(cfg),
+		JWTKey:             NewJWTKeyClient(cfg),
+		Oauth2Code:         NewOauth2CodeClient(cfg),
+		Oauth2Token:        NewOauth2TokenClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -193,17 +211,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.GithubApp.Use(hooks...)
-	c.GithubInstallation.Use(hooks...)
-	c.User.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.GithubApp, c.GithubInstallation, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
+		c.User,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.GithubApp.Intercept(interceptors...)
-	c.GithubInstallation.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.GithubApp, c.GithubInstallation, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
+		c.User,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -213,6 +237,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.GithubApp.mutate(ctx, m)
 	case *GithubInstallationMutation:
 		return c.GithubInstallation.mutate(ctx, m)
+	case *JWTKeyMutation:
+		return c.JWTKey.mutate(ctx, m)
+	case *Oauth2CodeMutation:
+		return c.Oauth2Code.mutate(ctx, m)
+	case *Oauth2TokenMutation:
+		return c.Oauth2Token.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -518,6 +548,437 @@ func (c *GithubInstallationClient) mutate(ctx context.Context, m *GithubInstalla
 	}
 }
 
+// JWTKeyClient is a client for the JWTKey schema.
+type JWTKeyClient struct {
+	config
+}
+
+// NewJWTKeyClient returns a client for the JWTKey from the given config.
+func NewJWTKeyClient(c config) *JWTKeyClient {
+	return &JWTKeyClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `jwtkey.Hooks(f(g(h())))`.
+func (c *JWTKeyClient) Use(hooks ...Hook) {
+	c.hooks.JWTKey = append(c.hooks.JWTKey, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `jwtkey.Intercept(f(g(h())))`.
+func (c *JWTKeyClient) Intercept(interceptors ...Interceptor) {
+	c.inters.JWTKey = append(c.inters.JWTKey, interceptors...)
+}
+
+// Create returns a builder for creating a JWTKey entity.
+func (c *JWTKeyClient) Create() *JWTKeyCreate {
+	mutation := newJWTKeyMutation(c.config, OpCreate)
+	return &JWTKeyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of JWTKey entities.
+func (c *JWTKeyClient) CreateBulk(builders ...*JWTKeyCreate) *JWTKeyCreateBulk {
+	return &JWTKeyCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *JWTKeyClient) MapCreateBulk(slice any, setFunc func(*JWTKeyCreate, int)) *JWTKeyCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &JWTKeyCreateBulk{err: fmt.Errorf("calling to JWTKeyClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*JWTKeyCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &JWTKeyCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for JWTKey.
+func (c *JWTKeyClient) Update() *JWTKeyUpdate {
+	mutation := newJWTKeyMutation(c.config, OpUpdate)
+	return &JWTKeyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *JWTKeyClient) UpdateOne(jk *JWTKey) *JWTKeyUpdateOne {
+	mutation := newJWTKeyMutation(c.config, OpUpdateOne, withJWTKey(jk))
+	return &JWTKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *JWTKeyClient) UpdateOneID(id int) *JWTKeyUpdateOne {
+	mutation := newJWTKeyMutation(c.config, OpUpdateOne, withJWTKeyID(id))
+	return &JWTKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for JWTKey.
+func (c *JWTKeyClient) Delete() *JWTKeyDelete {
+	mutation := newJWTKeyMutation(c.config, OpDelete)
+	return &JWTKeyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *JWTKeyClient) DeleteOne(jk *JWTKey) *JWTKeyDeleteOne {
+	return c.DeleteOneID(jk.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *JWTKeyClient) DeleteOneID(id int) *JWTKeyDeleteOne {
+	builder := c.Delete().Where(jwtkey.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &JWTKeyDeleteOne{builder}
+}
+
+// Query returns a query builder for JWTKey.
+func (c *JWTKeyClient) Query() *JWTKeyQuery {
+	return &JWTKeyQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeJWTKey},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a JWTKey entity by its id.
+func (c *JWTKeyClient) Get(ctx context.Context, id int) (*JWTKey, error) {
+	return c.Query().Where(jwtkey.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *JWTKeyClient) GetX(ctx context.Context, id int) *JWTKey {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *JWTKeyClient) Hooks() []Hook {
+	return c.hooks.JWTKey
+}
+
+// Interceptors returns the client interceptors.
+func (c *JWTKeyClient) Interceptors() []Interceptor {
+	return c.inters.JWTKey
+}
+
+func (c *JWTKeyClient) mutate(ctx context.Context, m *JWTKeyMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&JWTKeyCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&JWTKeyUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&JWTKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&JWTKeyDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown JWTKey mutation op: %q", m.Op())
+	}
+}
+
+// Oauth2CodeClient is a client for the Oauth2Code schema.
+type Oauth2CodeClient struct {
+	config
+}
+
+// NewOauth2CodeClient returns a client for the Oauth2Code from the given config.
+func NewOauth2CodeClient(c config) *Oauth2CodeClient {
+	return &Oauth2CodeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `oauth2code.Hooks(f(g(h())))`.
+func (c *Oauth2CodeClient) Use(hooks ...Hook) {
+	c.hooks.Oauth2Code = append(c.hooks.Oauth2Code, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `oauth2code.Intercept(f(g(h())))`.
+func (c *Oauth2CodeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Oauth2Code = append(c.inters.Oauth2Code, interceptors...)
+}
+
+// Create returns a builder for creating a Oauth2Code entity.
+func (c *Oauth2CodeClient) Create() *Oauth2CodeCreate {
+	mutation := newOauth2CodeMutation(c.config, OpCreate)
+	return &Oauth2CodeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Oauth2Code entities.
+func (c *Oauth2CodeClient) CreateBulk(builders ...*Oauth2CodeCreate) *Oauth2CodeCreateBulk {
+	return &Oauth2CodeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *Oauth2CodeClient) MapCreateBulk(slice any, setFunc func(*Oauth2CodeCreate, int)) *Oauth2CodeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &Oauth2CodeCreateBulk{err: fmt.Errorf("calling to Oauth2CodeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*Oauth2CodeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &Oauth2CodeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Oauth2Code.
+func (c *Oauth2CodeClient) Update() *Oauth2CodeUpdate {
+	mutation := newOauth2CodeMutation(c.config, OpUpdate)
+	return &Oauth2CodeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *Oauth2CodeClient) UpdateOne(o *Oauth2Code) *Oauth2CodeUpdateOne {
+	mutation := newOauth2CodeMutation(c.config, OpUpdateOne, withOauth2Code(o))
+	return &Oauth2CodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *Oauth2CodeClient) UpdateOneID(id uuid.UUID) *Oauth2CodeUpdateOne {
+	mutation := newOauth2CodeMutation(c.config, OpUpdateOne, withOauth2CodeID(id))
+	return &Oauth2CodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Oauth2Code.
+func (c *Oauth2CodeClient) Delete() *Oauth2CodeDelete {
+	mutation := newOauth2CodeMutation(c.config, OpDelete)
+	return &Oauth2CodeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *Oauth2CodeClient) DeleteOne(o *Oauth2Code) *Oauth2CodeDeleteOne {
+	return c.DeleteOneID(o.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *Oauth2CodeClient) DeleteOneID(id uuid.UUID) *Oauth2CodeDeleteOne {
+	builder := c.Delete().Where(oauth2code.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &Oauth2CodeDeleteOne{builder}
+}
+
+// Query returns a query builder for Oauth2Code.
+func (c *Oauth2CodeClient) Query() *Oauth2CodeQuery {
+	return &Oauth2CodeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOauth2Code},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Oauth2Code entity by its id.
+func (c *Oauth2CodeClient) Get(ctx context.Context, id uuid.UUID) (*Oauth2Code, error) {
+	return c.Query().Where(oauth2code.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *Oauth2CodeClient) GetX(ctx context.Context, id uuid.UUID) *Oauth2Code {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Oauth2Code.
+func (c *Oauth2CodeClient) QueryUser(o *Oauth2Code) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(oauth2code.Table, oauth2code.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, oauth2code.UserTable, oauth2code.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *Oauth2CodeClient) Hooks() []Hook {
+	return c.hooks.Oauth2Code
+}
+
+// Interceptors returns the client interceptors.
+func (c *Oauth2CodeClient) Interceptors() []Interceptor {
+	return c.inters.Oauth2Code
+}
+
+func (c *Oauth2CodeClient) mutate(ctx context.Context, m *Oauth2CodeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&Oauth2CodeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&Oauth2CodeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&Oauth2CodeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&Oauth2CodeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Oauth2Code mutation op: %q", m.Op())
+	}
+}
+
+// Oauth2TokenClient is a client for the Oauth2Token schema.
+type Oauth2TokenClient struct {
+	config
+}
+
+// NewOauth2TokenClient returns a client for the Oauth2Token from the given config.
+func NewOauth2TokenClient(c config) *Oauth2TokenClient {
+	return &Oauth2TokenClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `oauth2token.Hooks(f(g(h())))`.
+func (c *Oauth2TokenClient) Use(hooks ...Hook) {
+	c.hooks.Oauth2Token = append(c.hooks.Oauth2Token, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `oauth2token.Intercept(f(g(h())))`.
+func (c *Oauth2TokenClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Oauth2Token = append(c.inters.Oauth2Token, interceptors...)
+}
+
+// Create returns a builder for creating a Oauth2Token entity.
+func (c *Oauth2TokenClient) Create() *Oauth2TokenCreate {
+	mutation := newOauth2TokenMutation(c.config, OpCreate)
+	return &Oauth2TokenCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Oauth2Token entities.
+func (c *Oauth2TokenClient) CreateBulk(builders ...*Oauth2TokenCreate) *Oauth2TokenCreateBulk {
+	return &Oauth2TokenCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *Oauth2TokenClient) MapCreateBulk(slice any, setFunc func(*Oauth2TokenCreate, int)) *Oauth2TokenCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &Oauth2TokenCreateBulk{err: fmt.Errorf("calling to Oauth2TokenClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*Oauth2TokenCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &Oauth2TokenCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Oauth2Token.
+func (c *Oauth2TokenClient) Update() *Oauth2TokenUpdate {
+	mutation := newOauth2TokenMutation(c.config, OpUpdate)
+	return &Oauth2TokenUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *Oauth2TokenClient) UpdateOne(o *Oauth2Token) *Oauth2TokenUpdateOne {
+	mutation := newOauth2TokenMutation(c.config, OpUpdateOne, withOauth2Token(o))
+	return &Oauth2TokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *Oauth2TokenClient) UpdateOneID(id uuid.UUID) *Oauth2TokenUpdateOne {
+	mutation := newOauth2TokenMutation(c.config, OpUpdateOne, withOauth2TokenID(id))
+	return &Oauth2TokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Oauth2Token.
+func (c *Oauth2TokenClient) Delete() *Oauth2TokenDelete {
+	mutation := newOauth2TokenMutation(c.config, OpDelete)
+	return &Oauth2TokenDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *Oauth2TokenClient) DeleteOne(o *Oauth2Token) *Oauth2TokenDeleteOne {
+	return c.DeleteOneID(o.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *Oauth2TokenClient) DeleteOneID(id uuid.UUID) *Oauth2TokenDeleteOne {
+	builder := c.Delete().Where(oauth2token.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &Oauth2TokenDeleteOne{builder}
+}
+
+// Query returns a query builder for Oauth2Token.
+func (c *Oauth2TokenClient) Query() *Oauth2TokenQuery {
+	return &Oauth2TokenQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOauth2Token},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Oauth2Token entity by its id.
+func (c *Oauth2TokenClient) Get(ctx context.Context, id uuid.UUID) (*Oauth2Token, error) {
+	return c.Query().Where(oauth2token.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *Oauth2TokenClient) GetX(ctx context.Context, id uuid.UUID) *Oauth2Token {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Oauth2Token.
+func (c *Oauth2TokenClient) QueryUser(o *Oauth2Token) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(oauth2token.Table, oauth2token.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, oauth2token.UserTable, oauth2token.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *Oauth2TokenClient) Hooks() []Hook {
+	return c.hooks.Oauth2Token
+}
+
+// Interceptors returns the client interceptors.
+func (c *Oauth2TokenClient) Interceptors() []Interceptor {
+	return c.inters.Oauth2Token
+}
+
+func (c *Oauth2TokenClient) mutate(ctx context.Context, m *Oauth2TokenMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&Oauth2TokenCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&Oauth2TokenUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&Oauth2TokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&Oauth2TokenDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Oauth2Token mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -626,6 +1087,38 @@ func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 	return obj
 }
 
+// QueryOauth2Tokens queries the oauth2_tokens edge of a User.
+func (c *UserClient) QueryOauth2Tokens(u *User) *Oauth2TokenQuery {
+	query := (&Oauth2TokenClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(oauth2token.Table, oauth2token.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.Oauth2TokensTable, user.Oauth2TokensColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOauth2Codes queries the oauth2_codes edge of a User.
+func (c *UserClient) QueryOauth2Codes(u *User) *Oauth2CodeQuery {
+	query := (&Oauth2CodeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(oauth2code.Table, oauth2code.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.Oauth2CodesTable, user.Oauth2CodesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -654,10 +1147,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		GithubApp, GithubInstallation, User []ent.Hook
+		GithubApp, GithubInstallation, JWTKey, Oauth2Code, Oauth2Token, User []ent.Hook
 	}
 	inters struct {
-		GithubApp, GithubInstallation, User []ent.Interceptor
+		GithubApp, GithubInstallation, JWTKey, Oauth2Code, Oauth2Token,
+		User []ent.Interceptor
 	}
 )
 

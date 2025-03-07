@@ -39,7 +39,7 @@ func (m *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) {
 	}
 
 	// Get or create user using Ent
-	user, err := m.repository.GetOrCreateUser(ctx.Context(), claims.Email, claims.Username, claims.Subject)
+	user, err := m.repository.GetUserByEmail(ctx.Context(), claims.Email)
 	if err != nil {
 		log.Errorf("Failed to process user: %v", err)
 		huma.WriteErr(m.api, ctx, http.StatusInternalServerError, "Failed to process user")

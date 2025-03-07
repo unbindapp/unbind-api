@@ -12,7 +12,8 @@ import (
 
 type Config struct {
 	// Root
-	ExternalURL string `env:"EXTERNAL_URL" envDefault:"http://localhost:8089"`
+	ExternalURL       string `env:"EXTERNAL_URL" envDefault:"http://localhost:8089"`
+	ExternalOauth2URL string `env:"EXTERNAL_OAUTH2_URL" envDefault:"http://localhost:8090"`
 	// Github Specific
 	GithubURL        string `env:"GITHUB_URL" envDefault:"https://github.com"` // Override for github enterprise
 	GithubWebhookURL string

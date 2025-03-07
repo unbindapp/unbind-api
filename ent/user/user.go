@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -20,12 +21,28 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
-	// FieldUsername holds the string denoting the username field in the database.
-	FieldUsername = "username"
-	// FieldExternalID holds the string denoting the external_id field in the database.
-	FieldExternalID = "external_id"
+	// FieldPasswordHash holds the string denoting the password_hash field in the database.
+	FieldPasswordHash = "password_hash"
+	// EdgeOauth2Tokens holds the string denoting the oauth2_tokens edge name in mutations.
+	EdgeOauth2Tokens = "oauth2_tokens"
+	// EdgeOauth2Codes holds the string denoting the oauth2_codes edge name in mutations.
+	EdgeOauth2Codes = "oauth2_codes"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// Oauth2TokensTable is the table that holds the oauth2_tokens relation/edge.
+	Oauth2TokensTable = "oauth2_tokens"
+	// Oauth2TokensInverseTable is the table name for the Oauth2Token entity.
+	// It exists in this package in order to avoid circular dependency with the "oauth2token" package.
+	Oauth2TokensInverseTable = "oauth2_tokens"
+	// Oauth2TokensColumn is the table column denoting the oauth2_tokens relation/edge.
+	Oauth2TokensColumn = "user_oauth2_tokens"
+	// Oauth2CodesTable is the table that holds the oauth2_codes relation/edge.
+	Oauth2CodesTable = "oauth2_codes"
+	// Oauth2CodesInverseTable is the table name for the Oauth2Code entity.
+	// It exists in this package in order to avoid circular dependency with the "oauth2code" package.
+	Oauth2CodesInverseTable = "oauth2_codes"
+	// Oauth2CodesColumn is the table column denoting the oauth2_codes relation/edge.
+	Oauth2CodesColumn = "user_oauth2_codes"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -34,8 +51,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldEmail,
-	FieldUsername,
-	FieldExternalID,
+	FieldPasswordHash,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -82,12 +98,49 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
 }
 
-// ByUsername orders the results by the username field.
-func ByUsername(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUsername, opts...).ToFunc()
+// ByPasswordHash orders the results by the password_hash field.
+func ByPasswordHash(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPasswordHash, opts...).ToFunc()
 }
 
-// ByExternalID orders the results by the external_id field.
-func ByExternalID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldExternalID, opts...).ToFunc()
+// ByOauth2TokensCount orders the results by oauth2_tokens count.
+func ByOauth2TokensCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOauth2TokensStep(), opts...)
+	}
+}
+
+// ByOauth2Tokens orders the results by oauth2_tokens terms.
+func ByOauth2Tokens(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOauth2TokensStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByOauth2CodesCount orders the results by oauth2_codes count.
+func ByOauth2CodesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOauth2CodesStep(), opts...)
+	}
+}
+
+// ByOauth2Codes orders the results by oauth2_codes terms.
+func ByOauth2Codes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOauth2CodesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newOauth2TokensStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Oauth2TokensInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, Oauth2TokensTable, Oauth2TokensColumn),
+	)
+}
+func newOauth2CodesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Oauth2CodesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, Oauth2CodesTable, Oauth2CodesColumn),
+	)
 }

@@ -11,6 +11,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/oauth2code"
+	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
@@ -49,37 +52,95 @@ func (uu *UserUpdate) SetNillableEmail(s *string) *UserUpdate {
 	return uu
 }
 
-// SetUsername sets the "username" field.
-func (uu *UserUpdate) SetUsername(s string) *UserUpdate {
-	uu.mutation.SetUsername(s)
+// SetPasswordHash sets the "password_hash" field.
+func (uu *UserUpdate) SetPasswordHash(s string) *UserUpdate {
+	uu.mutation.SetPasswordHash(s)
 	return uu
 }
 
-// SetNillableUsername sets the "username" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableUsername(s *string) *UserUpdate {
+// SetNillablePasswordHash sets the "password_hash" field if the given value is not nil.
+func (uu *UserUpdate) SetNillablePasswordHash(s *string) *UserUpdate {
 	if s != nil {
-		uu.SetUsername(*s)
+		uu.SetPasswordHash(*s)
 	}
 	return uu
 }
 
-// SetExternalID sets the "external_id" field.
-func (uu *UserUpdate) SetExternalID(s string) *UserUpdate {
-	uu.mutation.SetExternalID(s)
+// AddOauth2TokenIDs adds the "oauth2_tokens" edge to the Oauth2Token entity by IDs.
+func (uu *UserUpdate) AddOauth2TokenIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddOauth2TokenIDs(ids...)
 	return uu
 }
 
-// SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableExternalID(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetExternalID(*s)
+// AddOauth2Tokens adds the "oauth2_tokens" edges to the Oauth2Token entity.
+func (uu *UserUpdate) AddOauth2Tokens(o ...*Oauth2Token) *UserUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
 	}
+	return uu.AddOauth2TokenIDs(ids...)
+}
+
+// AddOauth2CodeIDs adds the "oauth2_codes" edge to the Oauth2Code entity by IDs.
+func (uu *UserUpdate) AddOauth2CodeIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddOauth2CodeIDs(ids...)
 	return uu
+}
+
+// AddOauth2Codes adds the "oauth2_codes" edges to the Oauth2Code entity.
+func (uu *UserUpdate) AddOauth2Codes(o ...*Oauth2Code) *UserUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uu.AddOauth2CodeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
+}
+
+// ClearOauth2Tokens clears all "oauth2_tokens" edges to the Oauth2Token entity.
+func (uu *UserUpdate) ClearOauth2Tokens() *UserUpdate {
+	uu.mutation.ClearOauth2Tokens()
+	return uu
+}
+
+// RemoveOauth2TokenIDs removes the "oauth2_tokens" edge to Oauth2Token entities by IDs.
+func (uu *UserUpdate) RemoveOauth2TokenIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveOauth2TokenIDs(ids...)
+	return uu
+}
+
+// RemoveOauth2Tokens removes "oauth2_tokens" edges to Oauth2Token entities.
+func (uu *UserUpdate) RemoveOauth2Tokens(o ...*Oauth2Token) *UserUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uu.RemoveOauth2TokenIDs(ids...)
+}
+
+// ClearOauth2Codes clears all "oauth2_codes" edges to the Oauth2Code entity.
+func (uu *UserUpdate) ClearOauth2Codes() *UserUpdate {
+	uu.mutation.ClearOauth2Codes()
+	return uu
+}
+
+// RemoveOauth2CodeIDs removes the "oauth2_codes" edge to Oauth2Code entities by IDs.
+func (uu *UserUpdate) RemoveOauth2CodeIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveOauth2CodeIDs(ids...)
+	return uu
+}
+
+// RemoveOauth2Codes removes "oauth2_codes" edges to Oauth2Code entities.
+func (uu *UserUpdate) RemoveOauth2Codes(o ...*Oauth2Code) *UserUpdate {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uu.RemoveOauth2CodeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -139,11 +200,98 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.Username(); ok {
-		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	if value, ok := uu.mutation.PasswordHash(); ok {
+		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.ExternalID(); ok {
-		_spec.SetField(user.FieldExternalID, field.TypeString, value)
+	if uu.mutation.Oauth2TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2TokensTable,
+			Columns: []string{user.Oauth2TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2token.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedOauth2TokensIDs(); len(nodes) > 0 && !uu.mutation.Oauth2TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2TokensTable,
+			Columns: []string{user.Oauth2TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2token.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.Oauth2TokensIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2TokensTable,
+			Columns: []string{user.Oauth2TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2token.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.Oauth2CodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2CodesTable,
+			Columns: []string{user.Oauth2CodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedOauth2CodesIDs(); len(nodes) > 0 && !uu.mutation.Oauth2CodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2CodesTable,
+			Columns: []string{user.Oauth2CodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.Oauth2CodesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2CodesTable,
+			Columns: []string{user.Oauth2CodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(uu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
@@ -187,37 +335,95 @@ func (uuo *UserUpdateOne) SetNillableEmail(s *string) *UserUpdateOne {
 	return uuo
 }
 
-// SetUsername sets the "username" field.
-func (uuo *UserUpdateOne) SetUsername(s string) *UserUpdateOne {
-	uuo.mutation.SetUsername(s)
+// SetPasswordHash sets the "password_hash" field.
+func (uuo *UserUpdateOne) SetPasswordHash(s string) *UserUpdateOne {
+	uuo.mutation.SetPasswordHash(s)
 	return uuo
 }
 
-// SetNillableUsername sets the "username" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableUsername(s *string) *UserUpdateOne {
+// SetNillablePasswordHash sets the "password_hash" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillablePasswordHash(s *string) *UserUpdateOne {
 	if s != nil {
-		uuo.SetUsername(*s)
+		uuo.SetPasswordHash(*s)
 	}
 	return uuo
 }
 
-// SetExternalID sets the "external_id" field.
-func (uuo *UserUpdateOne) SetExternalID(s string) *UserUpdateOne {
-	uuo.mutation.SetExternalID(s)
+// AddOauth2TokenIDs adds the "oauth2_tokens" edge to the Oauth2Token entity by IDs.
+func (uuo *UserUpdateOne) AddOauth2TokenIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddOauth2TokenIDs(ids...)
 	return uuo
 }
 
-// SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableExternalID(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetExternalID(*s)
+// AddOauth2Tokens adds the "oauth2_tokens" edges to the Oauth2Token entity.
+func (uuo *UserUpdateOne) AddOauth2Tokens(o ...*Oauth2Token) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
 	}
+	return uuo.AddOauth2TokenIDs(ids...)
+}
+
+// AddOauth2CodeIDs adds the "oauth2_codes" edge to the Oauth2Code entity by IDs.
+func (uuo *UserUpdateOne) AddOauth2CodeIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddOauth2CodeIDs(ids...)
 	return uuo
+}
+
+// AddOauth2Codes adds the "oauth2_codes" edges to the Oauth2Code entity.
+func (uuo *UserUpdateOne) AddOauth2Codes(o ...*Oauth2Code) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uuo.AddOauth2CodeIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearOauth2Tokens clears all "oauth2_tokens" edges to the Oauth2Token entity.
+func (uuo *UserUpdateOne) ClearOauth2Tokens() *UserUpdateOne {
+	uuo.mutation.ClearOauth2Tokens()
+	return uuo
+}
+
+// RemoveOauth2TokenIDs removes the "oauth2_tokens" edge to Oauth2Token entities by IDs.
+func (uuo *UserUpdateOne) RemoveOauth2TokenIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveOauth2TokenIDs(ids...)
+	return uuo
+}
+
+// RemoveOauth2Tokens removes "oauth2_tokens" edges to Oauth2Token entities.
+func (uuo *UserUpdateOne) RemoveOauth2Tokens(o ...*Oauth2Token) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uuo.RemoveOauth2TokenIDs(ids...)
+}
+
+// ClearOauth2Codes clears all "oauth2_codes" edges to the Oauth2Code entity.
+func (uuo *UserUpdateOne) ClearOauth2Codes() *UserUpdateOne {
+	uuo.mutation.ClearOauth2Codes()
+	return uuo
+}
+
+// RemoveOauth2CodeIDs removes the "oauth2_codes" edge to Oauth2Code entities by IDs.
+func (uuo *UserUpdateOne) RemoveOauth2CodeIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveOauth2CodeIDs(ids...)
+	return uuo
+}
+
+// RemoveOauth2Codes removes "oauth2_codes" edges to Oauth2Code entities.
+func (uuo *UserUpdateOne) RemoveOauth2Codes(o ...*Oauth2Code) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return uuo.RemoveOauth2CodeIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -307,11 +513,98 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.Username(); ok {
-		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	if value, ok := uuo.mutation.PasswordHash(); ok {
+		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.ExternalID(); ok {
-		_spec.SetField(user.FieldExternalID, field.TypeString, value)
+	if uuo.mutation.Oauth2TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2TokensTable,
+			Columns: []string{user.Oauth2TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2token.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedOauth2TokensIDs(); len(nodes) > 0 && !uuo.mutation.Oauth2TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2TokensTable,
+			Columns: []string{user.Oauth2TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2token.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.Oauth2TokensIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2TokensTable,
+			Columns: []string{user.Oauth2TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2token.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.Oauth2CodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2CodesTable,
+			Columns: []string{user.Oauth2CodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedOauth2CodesIDs(); len(nodes) > 0 && !uuo.mutation.Oauth2CodesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2CodesTable,
+			Columns: []string{user.Oauth2CodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.Oauth2CodesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.Oauth2CodesTable,
+			Columns: []string{user.Oauth2CodesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(uuo.modifiers...)
 	_node = &User{config: uuo.config}

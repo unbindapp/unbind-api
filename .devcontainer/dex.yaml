@@ -1,4 +1,4 @@
-issuer: http://host.docker.internal:5556
+issuer: http://localhost:5556
 storage:
   type: memory
 
@@ -7,25 +7,40 @@ web:
 
 # Allow multiple issuer URLs
 issuers:
-  - http://host.docker.internal:5556 # For container-to-container
-  - http://127.0.0.1:5556 # For host access
+  - http://localhost:5556 # For container-to-container
   - http://localhost:5556
-
-enablePasswordDB: true
-staticPasswords:
-  - email: "admin@example.com"
-    hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-    username: "admin"
-    userID: "12345678-1234-5678-1234-567812345678"
+  - http://127.0.0.1:5556 # For host access
 
 oauth2:
   skipApprovalScreen: true
   responseTypes:
-    - token
     - code
-    - id_token
   # Add this to explicitly enable offline access
-  alwaysIssueOfflineToken: t
+  alwaysIssueOfflineToken: true
+
+connectors:
+  - type: oidc
+    id: unbind-oidc
+    name: "Unbind Built-in OIDC Provider"
+    config:
+      issuer: http://localhost:8090
+      clientID: dex-client
+      clientSecret: dex-secret
+      redirectURI: http://localhost:5556/callback
+      scopes:
+        - openid
+        - profile
+        - email
+        - offline_access
+      discoveryURL: http://localhost:8090/.well-known/openid-configuration
+      providerDiscoveryOverrides:
+        authURL: http://localhost:8090/authorize
+        tokenURL: http://localhost:8090/token
+        jwksURL: http://localhost:8090/.well-known/jwks.json
+      userIDKey: sub
+      claimMapping:
+        email: email
+        name: name
 
 staticClients:
   - id: unbind-dev
@@ -34,3 +49,5 @@ staticClients:
     redirectURIs:
       - http://localhost:8089/auth/callback
       - http://127.0.0.1:8089/auth/callback
+    responseTypes:
+      - code

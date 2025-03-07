@@ -25,11 +25,41 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
-	// Username holds the value of the "username" field.
-	Username string `json:"username,omitempty"`
-	// Dex subject ID
-	ExternalID   string `json:"external_id,omitempty"`
+	// PasswordHash holds the value of the "password_hash" field.
+	PasswordHash string `json:"password_hash,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges        UserEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// Oauth2Tokens holds the value of the oauth2_tokens edge.
+	Oauth2Tokens []*Oauth2Token `json:"oauth2_tokens,omitempty"`
+	// Oauth2Codes holds the value of the oauth2_codes edge.
+	Oauth2Codes []*Oauth2Code `json:"oauth2_codes,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// Oauth2TokensOrErr returns the Oauth2Tokens value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) Oauth2TokensOrErr() ([]*Oauth2Token, error) {
+	if e.loadedTypes[0] {
+		return e.Oauth2Tokens, nil
+	}
+	return nil, &NotLoadedError{edge: "oauth2_tokens"}
+}
+
+// Oauth2CodesOrErr returns the Oauth2Codes value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) Oauth2CodesOrErr() ([]*Oauth2Code, error) {
+	if e.loadedTypes[1] {
+		return e.Oauth2Codes, nil
+	}
+	return nil, &NotLoadedError{edge: "oauth2_codes"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -37,7 +67,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldEmail, user.FieldUsername, user.FieldExternalID:
+		case user.FieldEmail, user.FieldPasswordHash:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -82,17 +112,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Email = value.String
 			}
-		case user.FieldUsername:
+		case user.FieldPasswordHash:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field username", values[i])
+				return fmt.Errorf("unexpected type %T for field password_hash", values[i])
 			} else if value.Valid {
-				u.Username = value.String
-			}
-		case user.FieldExternalID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field external_id", values[i])
-			} else if value.Valid {
-				u.ExternalID = value.String
+				u.PasswordHash = value.String
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -105,6 +129,16 @@ func (u *User) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
+}
+
+// QueryOauth2Tokens queries the "oauth2_tokens" edge of the User entity.
+func (u *User) QueryOauth2Tokens() *Oauth2TokenQuery {
+	return NewUserClient(u.config).QueryOauth2Tokens(u)
+}
+
+// QueryOauth2Codes queries the "oauth2_codes" edge of the User entity.
+func (u *User) QueryOauth2Codes() *Oauth2CodeQuery {
+	return NewUserClient(u.config).QueryOauth2Codes(u)
 }
 
 // Update returns a builder for updating this User.
@@ -139,11 +173,8 @@ func (u *User) String() string {
 	builder.WriteString("email=")
 	builder.WriteString(u.Email)
 	builder.WriteString(", ")
-	builder.WriteString("username=")
-	builder.WriteString(u.Username)
-	builder.WriteString(", ")
-	builder.WriteString("external_id=")
-	builder.WriteString(u.ExternalID)
+	builder.WriteString("password_hash=")
+	builder.WriteString(u.PasswordHash)
 	builder.WriteByte(')')
 	return builder.String()
 }

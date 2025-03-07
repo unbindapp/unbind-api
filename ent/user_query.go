@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -12,6 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/oauth2code"
+	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
@@ -19,11 +22,13 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx        *QueryContext
-	order      []user.OrderOption
-	inters     []Interceptor
-	predicates []predicate.User
-	modifiers  []func(*sql.Selector)
+	ctx              *QueryContext
+	order            []user.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.User
+	withOauth2Tokens *Oauth2TokenQuery
+	withOauth2Codes  *Oauth2CodeQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -58,6 +63,50 @@ func (uq *UserQuery) Unique(unique bool) *UserQuery {
 func (uq *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	uq.order = append(uq.order, o...)
 	return uq
+}
+
+// QueryOauth2Tokens chains the current query on the "oauth2_tokens" edge.
+func (uq *UserQuery) QueryOauth2Tokens() *Oauth2TokenQuery {
+	query := (&Oauth2TokenClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(oauth2token.Table, oauth2token.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.Oauth2TokensTable, user.Oauth2TokensColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOauth2Codes chains the current query on the "oauth2_codes" edge.
+func (uq *UserQuery) QueryOauth2Codes() *Oauth2CodeQuery {
+	query := (&Oauth2CodeClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(oauth2code.Table, oauth2code.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.Oauth2CodesTable, user.Oauth2CodesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first User entity from the query.
@@ -247,16 +296,40 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:     uq.config,
-		ctx:        uq.ctx.Clone(),
-		order:      append([]user.OrderOption{}, uq.order...),
-		inters:     append([]Interceptor{}, uq.inters...),
-		predicates: append([]predicate.User{}, uq.predicates...),
+		config:           uq.config,
+		ctx:              uq.ctx.Clone(),
+		order:            append([]user.OrderOption{}, uq.order...),
+		inters:           append([]Interceptor{}, uq.inters...),
+		predicates:       append([]predicate.User{}, uq.predicates...),
+		withOauth2Tokens: uq.withOauth2Tokens.Clone(),
+		withOauth2Codes:  uq.withOauth2Codes.Clone(),
 		// clone intermediate query.
 		sql:       uq.sql.Clone(),
 		path:      uq.path,
 		modifiers: append([]func(*sql.Selector){}, uq.modifiers...),
 	}
+}
+
+// WithOauth2Tokens tells the query-builder to eager-load the nodes that are connected to
+// the "oauth2_tokens" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithOauth2Tokens(opts ...func(*Oauth2TokenQuery)) *UserQuery {
+	query := (&Oauth2TokenClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withOauth2Tokens = query
+	return uq
+}
+
+// WithOauth2Codes tells the query-builder to eager-load the nodes that are connected to
+// the "oauth2_codes" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithOauth2Codes(opts ...func(*Oauth2CodeQuery)) *UserQuery {
+	query := (&Oauth2CodeClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withOauth2Codes = query
+	return uq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -335,8 +408,12 @@ func (uq *UserQuery) prepareQuery(ctx context.Context) error {
 
 func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, error) {
 	var (
-		nodes = []*User{}
-		_spec = uq.querySpec()
+		nodes       = []*User{}
+		_spec       = uq.querySpec()
+		loadedTypes = [2]bool{
+			uq.withOauth2Tokens != nil,
+			uq.withOauth2Codes != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*User).scanValues(nil, columns)
@@ -344,6 +421,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &User{config: uq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(uq.modifiers) > 0 {
@@ -358,7 +436,84 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := uq.withOauth2Tokens; query != nil {
+		if err := uq.loadOauth2Tokens(ctx, query, nodes,
+			func(n *User) { n.Edges.Oauth2Tokens = []*Oauth2Token{} },
+			func(n *User, e *Oauth2Token) { n.Edges.Oauth2Tokens = append(n.Edges.Oauth2Tokens, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withOauth2Codes; query != nil {
+		if err := uq.loadOauth2Codes(ctx, query, nodes,
+			func(n *User) { n.Edges.Oauth2Codes = []*Oauth2Code{} },
+			func(n *User, e *Oauth2Code) { n.Edges.Oauth2Codes = append(n.Edges.Oauth2Codes, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (uq *UserQuery) loadOauth2Tokens(ctx context.Context, query *Oauth2TokenQuery, nodes []*User, init func(*User), assign func(*User, *Oauth2Token)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Oauth2Token(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.Oauth2TokensColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_oauth2_tokens
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_oauth2_tokens" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_oauth2_tokens" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadOauth2Codes(ctx context.Context, query *Oauth2CodeQuery, nodes []*User, init func(*User), assign func(*User, *Oauth2Code)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Oauth2Code(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.Oauth2CodesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_oauth2_codes
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_oauth2_codes" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_oauth2_codes" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (uq *UserQuery) sqlCount(ctx context.Context) (int, error) {

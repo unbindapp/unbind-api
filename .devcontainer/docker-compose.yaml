@@ -21,6 +21,8 @@ services:
     container_name: unbind_valkey
     image: valkey/valkey:8
     restart: unless-stopped
+    ports:
+      - '127.0.0.1:63234:6379'
     networks: ['app-network']
 
   dex:
@@ -49,7 +51,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=unbind
-      - DEX_ISSUER_URL=http://host.docker.internal:5556
+      - DEX_ISSUER_URL=http://localhost:5556
       # Really this is for our dev container junk
       - DEX_ISSUER_URL_EXTERNAL=http://localhost:5556
       - DEX_CLIENT_ID=unbind-dev

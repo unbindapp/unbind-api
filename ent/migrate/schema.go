@@ -63,14 +63,79 @@ var (
 			},
 		},
 	}
+	// JwtKeysColumns holds the columns for the "jwt_keys" table.
+	JwtKeysColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "label", Type: field.TypeString},
+		{Name: "private_key", Type: field.TypeBytes},
+	}
+	// JwtKeysTable holds the schema information for the "jwt_keys" table.
+	JwtKeysTable = &schema.Table{
+		Name:       "jwt_keys",
+		Columns:    JwtKeysColumns,
+		PrimaryKey: []*schema.Column{JwtKeysColumns[0]},
+	}
+	// Oauth2CodesColumns holds the columns for the "oauth2_codes" table.
+	Oauth2CodesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "auth_code", Type: field.TypeString, Unique: true},
+		{Name: "client_id", Type: field.TypeString},
+		{Name: "scope", Type: field.TypeString},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "revoked", Type: field.TypeBool, Default: false},
+		{Name: "user_oauth2_codes", Type: field.TypeUUID},
+	}
+	// Oauth2CodesTable holds the schema information for the "oauth2_codes" table.
+	Oauth2CodesTable = &schema.Table{
+		Name:       "oauth2_codes",
+		Columns:    Oauth2CodesColumns,
+		PrimaryKey: []*schema.Column{Oauth2CodesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "oauth2_codes_users_oauth2_codes",
+				Columns:    []*schema.Column{Oauth2CodesColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// Oauth2TokensColumns holds the columns for the "oauth2_tokens" table.
+	Oauth2TokensColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "access_token", Type: field.TypeString, Unique: true},
+		{Name: "refresh_token", Type: field.TypeString, Unique: true},
+		{Name: "client_id", Type: field.TypeString},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "revoked", Type: field.TypeBool, Default: false},
+		{Name: "scope", Type: field.TypeString},
+		{Name: "device_info", Type: field.TypeString, Nullable: true},
+		{Name: "user_oauth2_tokens", Type: field.TypeUUID},
+	}
+	// Oauth2TokensTable holds the schema information for the "oauth2_tokens" table.
+	Oauth2TokensTable = &schema.Table{
+		Name:       "oauth2_tokens",
+		Columns:    Oauth2TokensColumns,
+		PrimaryKey: []*schema.Column{Oauth2TokensColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "oauth2_tokens_users_oauth2_tokens",
+				Columns:    []*schema.Column{Oauth2TokensColumns[10]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "email", Type: field.TypeString, Unique: true},
-		{Name: "username", Type: field.TypeString},
-		{Name: "external_id", Type: field.TypeString, Unique: true},
+		{Name: "password_hash", Type: field.TypeString},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -82,6 +147,9 @@ var (
 	Tables = []*schema.Table{
 		GithubAppsTable,
 		GithubInstallationsTable,
+		JwtKeysTable,
+		Oauth2CodesTable,
+		Oauth2TokensTable,
 		UsersTable,
 	}
 )
@@ -93,6 +161,17 @@ func init() {
 	GithubInstallationsTable.ForeignKeys[0].RefTable = GithubAppsTable
 	GithubInstallationsTable.Annotation = &entsql.Annotation{
 		Table: "github_installations",
+	}
+	JwtKeysTable.Annotation = &entsql.Annotation{
+		Table: "jwt_keys",
+	}
+	Oauth2CodesTable.ForeignKeys[0].RefTable = UsersTable
+	Oauth2CodesTable.Annotation = &entsql.Annotation{
+		Table: "oauth2_codes",
+	}
+	Oauth2TokensTable.ForeignKeys[0].RefTable = UsersTable
+	Oauth2TokensTable.Annotation = &entsql.Annotation{
+		Table: "oauth2_tokens",
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",

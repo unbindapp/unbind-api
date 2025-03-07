@@ -12,5 +12,14 @@ type GithubApp func(*sql.Selector)
 // GithubInstallation is the predicate function for githubinstallation builders.
 type GithubInstallation func(*sql.Selector)
 
+// JWTKey is the predicate function for jwtkey builders.
+type JWTKey func(*sql.Selector)
+
+// Oauth2Code is the predicate function for oauth2code builders.
+type Oauth2Code func(*sql.Selector)
+
+// Oauth2Token is the predicate function for oauth2token builders.
+type Oauth2Token func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

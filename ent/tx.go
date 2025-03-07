@@ -18,6 +18,12 @@ type Tx struct {
 	GithubApp *GithubAppClient
 	// GithubInstallation is the client for interacting with the GithubInstallation builders.
 	GithubInstallation *GithubInstallationClient
+	// JWTKey is the client for interacting with the JWTKey builders.
+	JWTKey *JWTKeyClient
+	// Oauth2Code is the client for interacting with the Oauth2Code builders.
+	Oauth2Code *Oauth2CodeClient
+	// Oauth2Token is the client for interacting with the Oauth2Token builders.
+	Oauth2Token *Oauth2TokenClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -153,6 +159,9 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.GithubApp = NewGithubAppClient(tx.config)
 	tx.GithubInstallation = NewGithubInstallationClient(tx.config)
+	tx.JWTKey = NewJWTKeyClient(tx.config)
+	tx.Oauth2Code = NewOauth2CodeClient(tx.config)
+	tx.Oauth2Token = NewOauth2TokenClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
