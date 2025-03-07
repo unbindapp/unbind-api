@@ -190,7 +190,7 @@ func startAPI(cfg *config.Config) {
 		srvImpl.HandleGithubWebhook,
 	)
 	huma.Register(
-		ghGroup,
+		webhookGroup,
 		huma.Operation{
 			OperationID: "app-save",
 			Summary:     "Save GitHub app",
