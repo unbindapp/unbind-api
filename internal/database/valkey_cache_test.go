@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/valkey-io/valkey-go"
 	"github.com/valkey-io/valkey-go/mock"
 	"go.uber.org/mock/gomock"
 )
@@ -101,7 +102,7 @@ func (s *CacheSuite) TestGet_NotFound() {
 
 	// Assert
 	assert.Error(s.T(), err)
-	assert.True(s.T(), errors.Is(err, ErrKeyNotFound))
+	assert.True(s.T(), errors.Is(err, valkey.Nil))
 }
 
 // TestGetWithTTL tests the GetWithTTL method

@@ -112,9 +112,6 @@ func (self *ValkeyCache[T]) SetWithExpiration(ctx context.Context, key string, v
 	return self.client.Do(ctx, cmd).Error()
 }
 
-// ErrKeyNotFound is returned when a key is not found in the cache.
-var ErrKeyNotFound = errors.New("key not found in cache")
-
 // Get retrieves an item from the cache.
 func (c *ValkeyCache[T]) Get(ctx context.Context, key string) (T, error) {
 	var value T
@@ -122,9 +119,6 @@ func (c *ValkeyCache[T]) Get(ctx context.Context, key string) (T, error) {
 	cmd := c.client.B().Get().Key(c.fullKey(key)).Build()
 	result, err := c.client.Do(ctx, cmd).ToString()
 	if err != nil {
-		if err == valkey.Nil {
-			return value, ErrKeyNotFound
-		}
 		return value, err
 	}
 
@@ -140,9 +134,6 @@ func (c *ValkeyCache[T]) GetWithTTL(ctx context.Context, key string) (T, time.Du
 	getCmd := c.client.B().Get().Key(fullKey).Build()
 	result, err := c.client.Do(ctx, getCmd).ToString()
 	if err != nil {
-		if err == valkey.Nil {
-			return value, 0, ErrKeyNotFound
-		}
 		return value, 0, err
 	}
 
@@ -162,7 +153,7 @@ func (c *ValkeyCache[T]) GetWithTTL(ctx context.Context, key string) (T, time.Du
 		ttl = -1
 	} else {
 		// Key doesn't exist or is about to expire
-		return value, 0, ErrKeyNotFound
+		return value, 0, valkey.Nil
 	}
 
 	// Decode value
@@ -249,10 +240,10 @@ func (c *ValkeyCache[T]) GetAll(ctx context.Context) (map[string]T, error) {
 	result := make(map[string]T)
 	for _, key := range keys {
 		value, err := c.Get(ctx, key)
-		if err != nil && !errors.Is(err, ErrKeyNotFound) {
+		if err != nil && !errors.Is(err, valkey.Nil) {
 			return nil, err
 		}
-		if !errors.Is(err, ErrKeyNotFound) {
+		if !errors.Is(err, valkey.Nil) {
 			result[key] = value
 		}
 	}
