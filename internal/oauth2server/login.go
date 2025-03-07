@@ -214,6 +214,31 @@ const loginTemplate = `<!DOCTYPE html>
             display: {{if .ErrorMessage}}block{{else}}none{{end}};
         }
     </style>
+    <script>
+        // Prevent double submission of the form
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            
+            form.addEventListener('submit', function() {
+                // Disable the submit button immediately after first click
+                const submitButton = this.querySelector('button[type="submit"]');
+                if (submitButton.disabled) {
+                    return false;
+                }
+                
+                submitButton.disabled = true;
+                submitButton.textContent = 'Signing in...';
+                
+                // Re-enable after 5 seconds just in case there's an error
+                setTimeout(function() {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Sign in';
+                }, 5000);
+                
+                return true;
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="login-container">
