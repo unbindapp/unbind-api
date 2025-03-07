@@ -25,7 +25,7 @@ type Oauth2Code struct {
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// AuthCode holds the value of the "auth_code" field.
-	AuthCode string `json:"auth_code,omitempty"`
+	AuthCode string `json:"-"`
 	// ClientID holds the value of the "client_id" field.
 	ClientID string `json:"client_id,omitempty"`
 	// Scope holds the value of the "scope" field.
@@ -193,8 +193,7 @@ func (o *Oauth2Code) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(o.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("auth_code=")
-	builder.WriteString(o.AuthCode)
+	builder.WriteString("auth_code=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("client_id=")
 	builder.WriteString(o.ClientID)

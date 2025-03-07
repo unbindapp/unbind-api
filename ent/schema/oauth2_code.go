@@ -27,7 +27,8 @@ func (Oauth2Code) Fields() []ent.Field {
 	return []ent.Field{
 		// Stores the actual code string the OAuth2 flow will look up
 		field.String("auth_code").
-			Unique(),
+			Unique().
+			Sensitive(),
 		// The client ID that requested this code
 		field.String("client_id"),
 		// The scopes associated with this code

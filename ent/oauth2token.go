@@ -25,9 +25,9 @@ type Oauth2Token struct {
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// AccessToken holds the value of the "access_token" field.
-	AccessToken string `json:"access_token,omitempty"`
+	AccessToken string `json:"-"`
 	// RefreshToken holds the value of the "refresh_token" field.
-	RefreshToken string `json:"refresh_token,omitempty"`
+	RefreshToken string `json:"-"`
 	// ClientID holds the value of the "client_id" field.
 	ClientID string `json:"client_id,omitempty"`
 	// ExpiresAt holds the value of the "expires_at" field.
@@ -209,11 +209,9 @@ func (o *Oauth2Token) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(o.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("access_token=")
-	builder.WriteString(o.AccessToken)
+	builder.WriteString("access_token=<sensitive>")
 	builder.WriteString(", ")
-	builder.WriteString("refresh_token=")
-	builder.WriteString(o.RefreshToken)
+	builder.WriteString("refresh_token=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("client_id=")
 	builder.WriteString(o.ClientID)

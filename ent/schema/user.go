@@ -26,7 +26,7 @@ func (User) Mixin() []ent.Mixin {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("email").Unique(),
-		field.String("password_hash"),
+		field.String("password_hash").Sensitive(),
 	}
 }
 
