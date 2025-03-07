@@ -89,18 +89,6 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	scope := r.Form.Get("scope")
 	pageKey := r.Form.Get("page_key")
 
-	// Validate state to prevent double submission
-	if _, err := self.StringCache.Getdel(self.Ctx, pageKey); err != nil {
-		if err == valkey.Nil {
-			// Return ok empty status
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		log.Error("Error validating request: ", err)
-		http.Error(w, "Error validating request", http.StatusInternalServerError)
-		return
-	}
-
 	// Validate credentials against your repository
 	user, err := self.Repository.AuthenticateUser(r.Context(), username, password)
 	if err != nil {
@@ -115,6 +103,18 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		q.Set("error", "invalid_credentials")
 
 		http.Redirect(w, r, "/login?"+q.Encode(), http.StatusFound)
+		return
+	}
+
+	// Validate state to prevent double submission
+	if _, err := self.StringCache.Getdel(self.Ctx, pageKey); err != nil {
+		if err == valkey.Nil {
+			// Return ok empty status
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		log.Error("Error validating request: ", err)
+		http.Error(w, "Error validating request", http.StatusInternalServerError)
 		return
 	}
 
