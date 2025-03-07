@@ -114,8 +114,8 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "app-create",
-			Summary:     "Create Github app",
-			Description: "Begin the workflow to create a github application",
+			Summary:     "Create GitHub App",
+			Description: "Begin the workflow to create a GitHub application",
 			Path:        "/app/create",
 			Method:      http.MethodGet,
 		},
@@ -125,7 +125,7 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "manifest-create",
-			Summary:     "Create Github manifest",
+			Summary:     "Create Github Manifest",
 			Description: "Create a manifest that the user can use to create a GitHub app",
 			Path:        "/app/manifest",
 			Method:      http.MethodPost,
@@ -136,8 +136,8 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "app-connect",
-			Summary:     "Connect github app",
-			Description: "Connect the new github app to our instance, via manifest code exchange",
+			Summary:     "Connect GitHub App",
+			Description: "Connect the new GitHub app to our instance, via manifest code exchange",
 			Path:        "/app/connect",
 			Method:      http.MethodPost,
 		},
@@ -148,7 +148,7 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "app-install",
 			Summary:     "App Install Redirect",
-			Description: "Redirects to install the github app",
+			Description: "Redirects to install the GitHub app",
 			Path:        "/app/install/{app_id}",
 			Method:      http.MethodPost,
 		},
@@ -159,7 +159,7 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "list-apps",
 			Summary:     "List Github Apps",
-			Description: "List all the github apps connected to our instance",
+			Description: "List all the GitHub apps connected to our instance",
 			Path:        "/apps",
 			Method:      http.MethodGet,
 		},
@@ -170,7 +170,7 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "list-app-installations",
 			Summary:     "List Installations",
-			Description: "List all installations for a specific github app",
+			Description: "List all installations for a specific GitHub app",
 			Path:        "/app/{app_id}/installations",
 			Method:      http.MethodGet,
 		},
@@ -183,7 +183,7 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "github-webhook",
 			Summary:     "Github Webhook",
-			Description: "Handle incoming github webhooks",
+			Description: "Handle incoming GitHub webhooks",
 			Path:        "/github",
 			Method:      http.MethodPost,
 		},
@@ -193,8 +193,8 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "app-save",
-			Summary:     "Save github app",
-			Description: "Save github app via code exchange and redirect to installation",
+			Summary:     "Save GitHub app",
+			Description: "Save GitHub app via code exchange and redirect to installation",
 			Path:        "/github/app/save",
 			Method:      http.MethodGet,
 		},

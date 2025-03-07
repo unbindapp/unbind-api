@@ -18,7 +18,7 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-type GithubAppCreateInput struct {
+type GitHubAppCreateInput struct {
 	RedirectURL string `query:"redirect_url" validate:"required" doc:"The client URL to redirect to after the installation is finished"`
 }
 
@@ -28,7 +28,7 @@ type GithubAppCreateResponse struct {
 }
 
 // Handler to render GitHub page with form submission
-func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GithubAppCreateInput) (*GithubAppCreateResponse, error) {
+func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppCreateInput) (*GithubAppCreateResponse, error) {
 	// Template for the GitHub form submission page
 	tmpl := `<!DOCTYPE html>
 <html>
