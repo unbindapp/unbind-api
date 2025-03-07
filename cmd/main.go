@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/unbindapp/unbind-api/cmd/oauth"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/log"
 )
@@ -38,7 +39,7 @@ func main() {
 	if *startAPIFlag {
 		startAPI(cfg)
 	} else if *startOauth2ApiFlag {
-		startOauth2Server(cfg)
+		oauth.StartOauth2Server(cfg)
 	} else if *listUsersFlag {
 		cli := NewCLI(cfg)
 		cli.listUsers()

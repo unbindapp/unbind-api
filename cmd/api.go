@@ -71,7 +71,9 @@ func startAPI(cfg *config.Config) {
 
 	// New chi router
 	r := chi.NewRouter()
+	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
+
 	api := humachi.New(r, huma.DefaultConfig("Unbind API", "1.0.0"))
 
 	// Create middleware
