@@ -203,7 +203,7 @@ func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithub
 
 	// Redirect URL - this is where GitHub will send users to install your app
 	installationURL := fmt.Sprintf(
-		"https://github.com/settings/apps/%s/installations/new?state=%s",
+		"https://github.com/apps/%s/installations/new?state=%s",
 		url.QueryEscape(ghApp.Name),
 		url.QueryEscape(state),
 	)
