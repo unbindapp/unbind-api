@@ -1,2 +1,2 @@
 #!/bin/bash
-./dex serve ./.devcontainer/dex.yaml
+dex serve ./.devcontainer/dex.yaml

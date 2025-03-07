@@ -16,7 +16,6 @@ import (
 	"github.com/go-oauth2/oauth2/v4/manage"
 	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
-	"github.com/go-oauth2/oauth2/v4/store"
 	"github.com/golang-jwt/jwt"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/database"
@@ -25,6 +24,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/middleware"
 	"github.com/unbindapp/unbind-api/internal/oauth2server"
 	"github.com/unbindapp/unbind-api/internal/utils"
+	"github.com/valkey-io/valkey-go"
 )
 
 const ACCESS_TOKEN_EXP = 1 * time.Minute
@@ -33,11 +33,11 @@ var ALLOWED_SCOPES = []string{"openid", "profile", "email", "offline_access"}
 
 // Custom token store that allows multiple refresh tokens per user
 type customTokenStore struct {
-	clientStore *store.ClientStore
+	clientStore *dbClientStore
 	repository  *repository.Repository
 }
 
-func NewCustomTokenStore(clientStore *store.ClientStore, repository *repository.Repository) *customTokenStore {
+func NewCustomTokenStore(clientStore *dbClientStore, repository *repository.Repository) *customTokenStore {
 	return &customTokenStore{
 		clientStore: clientStore,
 		repository:  repository,
@@ -324,7 +324,68 @@ func generateIDToken(ti oauth2.TokenInfo, repo *repository.Repository, issuer st
 	return signed, nil
 }
 
-func setupOAuthServer(cfg *config.Config) *oauth2server.Oauth2Server {
+// Persisent client store
+type CacheClientInto struct {
+	ID     string `json:"id"`
+	Secret string `json:"secret"`
+	Domain string `json:"domain"`
+	UserID string `json:"user_id"`
+	Public bool   `json:"public"`
+}
+
+func (c CacheClientInto) GetID() string {
+	return c.ID
+}
+
+func (c CacheClientInto) GetSecret() string {
+	return c.Secret
+}
+
+func (c CacheClientInto) GetDomain() string {
+	return c.Domain
+}
+
+func (c CacheClientInto) IsPublic() bool {
+	return c.Public
+}
+
+func (c CacheClientInto) GetUserID() string {
+	return c.UserID
+}
+
+type dbClientStore struct {
+	cache *database.ValkeyCache[CacheClientInto]
+}
+
+func NewDBClientStore(cache *database.ValkeyCache[CacheClientInto]) *dbClientStore {
+	return &dbClientStore{
+		cache: cache,
+	}
+}
+
+func (s *dbClientStore) GetByID(ctx context.Context, id string) (oauth2.ClientInfo, error) {
+	cacheItem, err := s.cache.Get(ctx, id)
+	if err != nil {
+		if err == valkey.Nil {
+			return nil, errors.ErrInvalidClient
+		}
+		return nil, err
+	}
+	return cacheItem, nil
+}
+
+func (s *dbClientStore) Set(id string, client oauth2.ClientInfo) error {
+	cacheItem := CacheClientInto{
+		ID:     client.GetID(),
+		Secret: client.GetSecret(),
+		Domain: client.GetDomain(),
+		UserID: client.GetUserID(),
+		Public: client.IsPublic(),
+	}
+	return s.cache.SetWithExpiration(context.TODO(), id, cacheItem, 30*time.Minute)
+}
+
+func setupOAuthServer(cfg *config.Config, valkey valkey.Client) *oauth2server.Oauth2Server {
 	manager := manage.NewDefaultManager()
 
 	// Load database
@@ -350,7 +411,8 @@ func setupOAuthServer(cfg *config.Config) *oauth2server.Oauth2Server {
 	}
 
 	// Use our custom token store
-	clientStore := store.NewClientStore()
+	clientStoreCache := database.NewCache[CacheClientInto](valkey, "auth")
+	clientStore := NewDBClientStore(clientStoreCache)
 	tokenStore := NewCustomTokenStore(clientStore, repo)
 	manager.MapTokenStorage(tokenStore)
 	manager.MapClientStorage(clientStore)
@@ -481,7 +543,14 @@ func setupOAuthServer(cfg *config.Config) *oauth2server.Oauth2Server {
 }
 
 func startOauth2Server(cfg *config.Config) {
-	oauth2Srv := setupOAuthServer(cfg)
+	// Initialize valkey (redis)
+	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
+	if err != nil {
+		log.Fatal("Failed to create valkey client", "err", err)
+	}
+	defer client.Close()
+
+	oauth2Srv := setupOAuthServer(cfg, client)
 
 	// Setup router
 	// New chi router
