@@ -125,6 +125,19 @@ func (c *ValkeyCache[T]) Get(ctx context.Context, key string) (T, error) {
 	return c.coder.Decode(result)
 }
 
+// Get retrieves an item from the cache and deletes it.
+func (c *ValkeyCache[T]) Getdel(ctx context.Context, key string) (T, error) {
+	var value T
+
+	cmd := c.client.B().Getdel().Key(c.fullKey(key)).Build()
+	result, err := c.client.Do(ctx, cmd).ToString()
+	if err != nil {
+		return value, err
+	}
+
+	return c.coder.Decode(result)
+}
+
 // GetWithTTL retrieves an item and its remaining TTL from the cache.
 func (c *ValkeyCache[T]) GetWithTTL(ctx context.Context, key string) (T, time.Duration, error) {
 	var value T

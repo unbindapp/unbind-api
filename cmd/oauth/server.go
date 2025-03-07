@@ -93,10 +93,12 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 
 	// Create Oauth2 server
 	oauth2Server := &oauth2server.Oauth2Server{
-		Repository: repo,
-		Cfg:        cfg,
-		PrivateKey: pkey,
-		Kid:        keyID,
+		Ctx:         ctx,
+		Repository:  repo,
+		Cfg:         cfg,
+		PrivateKey:  pkey,
+		Kid:         keyID,
+		StringCache: database.NewStringCache(valkey, "unbind-oauth-str"),
 	}
 
 	// Create the server

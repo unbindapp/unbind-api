@@ -4,6 +4,11 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/valkey-io/valkey-go"
 )
 
 // LoginPageData holds the data to be passed to the login template
@@ -15,6 +20,7 @@ type LoginPageData struct {
 	Scope        string
 	Error        string
 	ErrorMessage string
+	PageKey      string
 }
 
 // HandleLoginPage renders a styled login form
@@ -26,6 +32,8 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 	state := r.URL.Query().Get("state")
 	scope := r.URL.Query().Get("scope")
 	errorParam := r.URL.Query().Get("error")
+	// Unique key specific to the rendered form
+	pageKey := uuid.NewString()
 
 	// Create page data
 	data := LoginPageData{
@@ -35,6 +43,7 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 		State:        state,
 		Scope:        scope,
 		Error:        errorParam,
+		PageKey:      pageKey,
 	}
 
 	// Set error message based on error code
@@ -44,6 +53,9 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 
 	// Create a template with the HTML and CSS
 	tmpl := template.Must(template.New("login").Parse(loginTemplate))
+
+	// Store the state in cache to prevent double submission
+	self.StringCache.SetWithExpiration(self.Ctx, pageKey, "1", 30*time.Minute)
 
 	// Set content type and render template
 	w.Header().Set("Content-Type", "text/html")
@@ -67,6 +79,19 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	responseType := r.Form.Get("response_type")
 	state := r.Form.Get("state")
 	scope := r.Form.Get("scope")
+	pageKey := r.Form.Get("page_key")
+
+	// Validate state to prevent double submission
+	if _, err := self.StringCache.Getdel(self.Ctx, pageKey); err != nil {
+		if err == valkey.Nil {
+			// Return ok empty status
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		log.Error("Error validating request: ", err)
+		http.Error(w, "Error validating request", http.StatusInternalServerError)
+		return
+	}
 
 	// Validate credentials against your repository
 	user, err := self.Repository.AuthenticateUser(r.Context(), username, password)
@@ -214,31 +239,6 @@ const loginTemplate = `<!DOCTYPE html>
             display: {{if .ErrorMessage}}block{{else}}none{{end}};
         }
     </style>
-    <script>
-        // Prevent double submission of the form
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
-            
-            form.addEventListener('submit', function() {
-                // Disable the submit button immediately after first click
-                const submitButton = this.querySelector('button[type="submit"]');
-                if (submitButton.disabled) {
-                    return false;
-                }
-                
-                submitButton.disabled = true;
-                submitButton.textContent = 'Signing in...';
-                
-                // Re-enable after 5 seconds just in case there's an error
-                setTimeout(function() {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Sign in';
-                }, 5000);
-                
-                return true;
-            });
-        });
-    </script>
 </head>
 <body>
     <div class="login-container">
@@ -258,6 +258,7 @@ const loginTemplate = `<!DOCTYPE html>
             <input type="hidden" name="response_type" value="{{.ResponseType}}">
             <input type="hidden" name="state" value="{{.State}}">
             <input type="hidden" name="scope" value="{{.Scope}}">
+						<input type="hidden" name="page_key" value="{{.PageKey}}">
             
             <div class="form-group">
                 <label for="username">Email</label>

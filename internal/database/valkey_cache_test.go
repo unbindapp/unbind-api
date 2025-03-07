@@ -90,6 +90,21 @@ func (s *CacheSuite) TestGet() {
 	assert.Equal(s.T(), "value1", value)
 }
 
+// TestGet tests the Getdel method
+func (s *CacheSuite) TestGetdel() {
+	// Set up expectation
+	s.mockClient.EXPECT().
+		Do(gomock.Any(), gomock.Any()).
+		Return(mock.Result(mock.ValkeyString("\"value1\""))) // Note the extra quotes for JSON
+
+	// Call method
+	value, err := s.stringCache.Getdel(s.ctx, "key1")
+
+	// Assert
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), "value1", value)
+}
+
 // TestGet_NotFound tests the Get method when key is not found
 func (s *CacheSuite) TestGet_NotFound() {
 	// Set up expectation
