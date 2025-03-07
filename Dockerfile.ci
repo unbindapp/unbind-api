@@ -1,6 +1,7 @@
 # Docker file for github actions CI build
 FROM stablecog/ubuntu:22.04
 
+COPY ./internal/oauth2server/tmpl/* /app/tmpl/
 COPY ./cmd/server /app/server
 
 EXPOSE 8080
