@@ -193,5 +193,37 @@
       </form>
       <div class="error-message">{{.ErrorMessage}}</div>
     </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById("loginForm");
+        const submitButton = document.getElementById("submitButton");
+        let isSubmitting = false;
+
+        form.addEventListener("submit", function(e) {
+          // Prevent double submission
+          if (isSubmitting) {
+            e.preventDefault();
+            return false;
+          }
+          
+          // Set submission flag and disable button
+          isSubmitting = true;
+          submitButton.disabled = true;
+          
+          // Allow the form to submit
+          return true;
+        });
+        
+        // Re-enable if failed
+        window.addEventListener("pageshow", function(event) {
+          if (event.persisted) {
+            isSubmitting = false;
+            submitButton.disabled = false;
+            submitButton.textContent = "Sign in";
+          }
+        });
+      });
+    </script>
   </body>
 </html>
