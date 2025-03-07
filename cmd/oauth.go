@@ -27,8 +27,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
-const ACCESS_TOKEN_EXP = 1 * time.Hour
-const REFRESH_TOKEN_EXP = 24 * time.Hour * 7 // 1 week
+const ACCESS_TOKEN_EXP = 1 * time.Minute
+const REFRESH_TOKEN_EXP = 24 * time.Hour * 14 // 2 weeks
 var ALLOWED_SCOPES = []string{"openid", "profile", "email", "offline_access"}
 
 // Custom token store that allows multiple refresh tokens per user
