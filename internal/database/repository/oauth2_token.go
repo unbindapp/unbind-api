@@ -13,30 +13,12 @@ func (r *Repository) CreateToken(ctx context.Context, accessToken, refreshToken,
 }
 
 func (r *Repository) RevokeAccessToken(ctx context.Context, accessToken string) error {
-	// Mark the token as revoked instead of removing it
-	dbToken, err := r.DB.Oauth2Token.Query().Where(
-		oauth2token.AccessToken(accessToken),
-	).Only(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = dbToken.Update().SetRevoked(true).Save(ctx)
+	_, err := r.DB.Oauth2Token.Update().Where(oauth2token.AccessToken(accessToken)).SetRevoked(true).Save(ctx)
 	return err
 }
 
 func (r *Repository) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
-	// Mark the token as revoked instead of removing it
-	dbToken, err := r.DB.Oauth2Token.Query().Where(
-		oauth2token.RefreshToken(refreshToken),
-	).Only(ctx)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = dbToken.Update().SetRevoked(true).Save(ctx)
+	_, err := r.DB.Oauth2Token.Update().Where(oauth2token.RefreshToken(refreshToken)).SetRevoked(true).Save(ctx)
 	return err
 }
 
@@ -44,7 +26,7 @@ func (r *Repository) GetByAccessToken(ctx context.Context, accessToken string) (
 	return r.DB.Oauth2Token.Query().Where(
 		oauth2token.AccessToken(accessToken),
 		oauth2token.Revoked(false),
-	).Only(ctx)
+	).First(ctx)
 }
 
 func (r *Repository) GetByRefreshToken(ctx context.Context, refreshToken string) (*ent.Oauth2Token, error) {
