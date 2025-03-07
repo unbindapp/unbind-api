@@ -106,7 +106,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "access_token", Type: field.TypeString},
+		{Name: "access_token", Type: field.TypeString, Unique: true},
 		{Name: "refresh_token", Type: field.TypeString, Unique: true},
 		{Name: "client_id", Type: field.TypeString},
 		{Name: "expires_at", Type: field.TypeTime},

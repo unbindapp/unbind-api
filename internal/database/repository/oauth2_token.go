@@ -27,7 +27,7 @@ func (r *Repository) RevokeRefreshToken(ctx context.Context, refreshToken string
 func (r *Repository) GetByAccessToken(ctx context.Context, accessToken string) (*ent.Oauth2Token, error) {
 	return r.DB.Oauth2Token.Query().Where(
 		oauth2token.AccessToken(accessToken),
-	).First(ctx)
+	).Only(ctx)
 }
 
 func (r *Repository) GetByRefreshToken(ctx context.Context, refreshToken string) (*ent.Oauth2Token, error) {
