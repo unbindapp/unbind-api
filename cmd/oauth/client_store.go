@@ -11,11 +11,13 @@ import (
 
 // A custom client store that persists clients in a Valkey cache.
 type dbClientStore struct {
+	ctx   context.Context
 	cache *database.ValkeyCache[CacheClientInto]
 }
 
-func NewDBClientStore(cache *database.ValkeyCache[CacheClientInto]) *dbClientStore {
+func NewDBClientStore(ctx context.Context, cache *database.ValkeyCache[CacheClientInto]) *dbClientStore {
 	return &dbClientStore{
+		ctx:   ctx,
 		cache: cache,
 	}
 }
@@ -39,7 +41,7 @@ func (s *dbClientStore) Set(id string, client oauth2.ClientInfo) error {
 		UserID: client.GetUserID(),
 		Public: client.IsPublic(),
 	}
-	return s.cache.SetWithExpiration(context.TODO(), id, cacheItem, REFRESH_TOKEN_EXP)
+	return s.cache.SetWithExpiration(s.ctx, id, cacheItem, REFRESH_TOKEN_EXP)
 }
 
 // Cachable implementation of oauth2.ClientInfo.

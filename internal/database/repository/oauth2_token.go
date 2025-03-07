@@ -4,7 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 )
 
@@ -32,4 +34,26 @@ func (r *Repository) GetByRefreshToken(ctx context.Context, refreshToken string)
 	return r.DB.Oauth2Token.Query().Where(
 		oauth2token.RefreshToken(refreshToken),
 	).Only(ctx)
+}
+
+func (r *Repository) CleanTokenStore(ctx context.Context) (result error) {
+	_, err := r.DB.Oauth2Token.Delete().Where(
+		oauth2token.Or(
+			oauth2token.Revoked(true),
+			oauth2token.ExpiresAtLT(time.Now()),
+		),
+	).Exec(ctx)
+	if err != nil {
+		multierror.Append(result, err)
+	}
+
+	_, err = r.DB.Oauth2Code.Delete().Where(
+		oauth2code.ExpiresAtLT(time.Now()),
+	).Exec(ctx)
+
+	if err != nil {
+		multierror.Append(result, err)
+	}
+
+	return result
 }

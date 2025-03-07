@@ -27,7 +27,12 @@ require (
 )
 
 require (
+	github.com/go-co-op/gocron v1.37.0 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
 )
 

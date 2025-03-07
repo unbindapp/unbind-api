@@ -53,14 +53,14 @@ func (a *accessTokenGenerator) Token(ctx context.Context, data *oauth2.GenerateB
 }
 
 // The ID token of the oidc flow
-func generateIDToken(ti oauth2.TokenInfo, repo *repository.Repository, issuer string, privateKey *rsa.PrivateKey, kid string) (string, error) {
+func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo *repository.Repository, issuer string, privateKey *rsa.PrivateKey, kid string) (string, error) {
 	now := time.Now()
 
 	// Gather the data we need
 	userID := ti.GetUserID()
 	clientID := ti.GetClientID()
 
-	u, err := repo.GetUserByEmail(context.Background(), userID)
+	u, err := repo.GetUserByEmail(ctx, userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to find user: %w", err)
 	}
