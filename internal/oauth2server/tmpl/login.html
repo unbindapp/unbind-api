@@ -143,20 +143,6 @@
            transition: background-color 5000s ease-in-out 0s;
          }
     </style>
-    <script>
-      document
-        .getElementById("loginForm")
-        .addEventListener("submit", function (e) {
-          // Disable the submit button
-          const submitButton = document.getElementById("submitButton");
-          if (submitButton.disabled) {
-            e.preventDefault();
-            return false;
-          }
-          submitButton.disabled = true;
-          return true;
-        });
-    </script>
   </head>
   <body>
     <div class="login-container">
