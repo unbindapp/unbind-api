@@ -2,9 +2,6 @@ package server
 
 import (
 	"context"
-	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -17,7 +14,7 @@ import (
 
 // Redirect user to install the app
 type GithubWebhookInput struct {
-	RawBody               []byte `contentType:"application/json"`
+	RawBody               []byte
 	Sha1SignatureHeader   string `header:"X-Hub-Signature"`
 	Sha256SignatureHeader string `header:"X-Hub-Signature-256"`
 	EventType             string `header:"X-GitHub-Event"`
@@ -144,34 +141,6 @@ func (self *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhoo
 			if err != nil {
 				log.Error("Error setting installation as unsuspended", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to set installation as unsuspended")
-			}
-		}
-
-		// Get Client redirect URL
-		redirectURL, err := self.StringCache.Get(ctx, strconv.Itoa(int(installation.GetAppID())))
-		if err != nil {
-			log.Warn("Error getting redirect URL from cache", "err", err)
-		}
-
-		if redirectURL != "" {
-			// Trigger a request to the client with installation completed
-			notifyUrl, err := url.Parse(redirectURL)
-			if err != nil {
-				log.Warn("Error parsing redirect URL", "err", err)
-				return &GithubWebhookOutput{}, nil
-			}
-			q := notifyUrl.Query()
-			q.Add("installationID", strconv.Itoa(int(installationID)))
-			notifyUrl.RawQuery = q.Encode()
-			req, err := http.NewRequestWithContext(ctx, "GET", notifyUrl.String(), nil)
-			if err != nil {
-				log.Warn("Error creating notification request", "err", err)
-				return &GithubWebhookOutput{}, nil
-			}
-			_, err = self.HttpClient.Do(req)
-			if err != nil {
-				log.Warn("Error notifying client of installation", "err", err, "url", notifyUrl.String())
-				return &GithubWebhookOutput{}, nil
 			}
 		}
 	}
