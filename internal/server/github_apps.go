@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -81,13 +80,6 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 		return nil, huma.Error500InternalServerError("Failed to set state in cache")
 	}
 
-	// Store redirect URL for this state
-	err = self.StringCache.SetWithExpiration(ctx, state, input.RedirectURL, 30*time.Minute)
-	if err != nil {
-		log.Error("Error setting redirect URL in cache", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to set redirect URL in cache")
-	}
-
 	q := url.Values{}
 	q.Set("state", state)
 	githubUrl := fmt.Sprintf("%s/settings/apps/new?%s", self.Cfg.GithubURL, q.Encode())
@@ -154,7 +146,7 @@ func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithub
 	}
 
 	// Verify state
-	state, err := self.StringCache.Get(ctx, appConfig.GetName())
+	state, err := self.StringCache.Getdel(ctx, appConfig.GetName())
 	if err != nil {
 		if err == valkey.Nil {
 			return nil, huma.Error400BadRequest("Invalid state")
@@ -166,23 +158,6 @@ func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithub
 	if state != input.State {
 		return nil, huma.Error400BadRequest("Invalid state")
 	}
-
-	// Get redirect URL from cache
-	redirectURL, err := self.StringCache.Get(ctx, input.State)
-	if err != nil {
-		if err == valkey.Nil {
-			return nil, huma.Error400BadRequest("Invalid state")
-		}
-		log.Error("Error getting redirect URL from cache", "err", err)
-		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to get redirect URL: %v", err))
-	}
-	// Erase redirect URL and re-save it with app ID
-	err = self.StringCache.Delete(ctx, input.State)
-	if err != nil {
-		log.Error("Error deleting redirect URL from cache", "err", err)
-		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to delete redirect URL: %v", err))
-	}
-	err = self.StringCache.SetWithExpiration(ctx, strconv.Itoa(int(appConfig.GetID())), redirectURL, 30*time.Minute)
 
 	// Save the app config
 	ghApp, err := self.Repository.CreateGithubApp(ctx, appConfig)
