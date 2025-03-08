@@ -66,7 +66,7 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 	}
 
 	// Create GitHub app manifest
-	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect)
+	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect, input.RedirectURL)
 
 	// Create a unique state to identify this request
 	state := uuid.New().String()

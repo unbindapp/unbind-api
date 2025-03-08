@@ -16,6 +16,7 @@ type GitHubAppManifest struct {
 	URL                string             `json:"url"`
 	HookAttributes     HookAttributes     `json:"hook_attributes"`
 	RedirectURL        string             `json:"redirect_url"`
+	SetupUrl           string             `json:"setup_url"`
 	Public             bool               `json:"public"`
 	DefaultPermissions DefaultPermissions `json:"default_permissions"`
 	DefaultEvents      []string           `json:"default_events"`
@@ -35,7 +36,7 @@ type DefaultPermissions struct {
 }
 
 // CreateAppManifest generates the GitHub App manifest
-func (g *GithubClient) CreateAppManifest(redirectUrl string) (manifest *GitHubAppManifest, appName string, err error) {
+func (g *GithubClient) CreateAppManifest(redirectUrl string, setupUrl string) (manifest *GitHubAppManifest, appName string, err error) {
 	// Generate a random suffix
 	suffixRand, err := utils.GenerateRandomSimpleID(5)
 	if err != nil {
@@ -52,6 +53,7 @@ func (g *GithubClient) CreateAppManifest(redirectUrl string) (manifest *GitHubAp
 			URL: g.cfg.GithubWebhookURL,
 		},
 		RedirectURL: redirectUrl,
+		SetupUrl:    setupUrl,
 		Public:      false,
 		DefaultPermissions: DefaultPermissions{
 			Contents:     "read",
