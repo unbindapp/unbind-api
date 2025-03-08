@@ -8,6 +8,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/database/repository"
@@ -73,6 +74,18 @@ func startAPI(cfg *config.Config) {
 	r := chi.NewRouter()
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:3000",
+			"https://app.unbind.app",
+		},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 
 	api := humachi.New(r, huma.DefaultConfig("Unbind API", "1.0.0"))
 
@@ -177,7 +190,7 @@ func startAPI(cfg *config.Config) {
 		srvImpl.HandleGithubWebhook,
 	)
 	huma.Register(
-		ghGroup,
+		webhookGroup,
 		huma.Operation{
 			OperationID: "app-save",
 			Summary:     "Save GitHub app",

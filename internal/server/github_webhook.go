@@ -42,7 +42,6 @@ func (self *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhoo
 	}
 
 	// Validate the payload using the webhook secret.
-	var payload []byte
 	for _, app := range ghApps {
 		err := github.ValidateSignature(signature, input.RawBody, []byte(app.WebhookSecret))
 		if err == nil {
@@ -50,13 +49,14 @@ func (self *Server) HandleGithubWebhook(ctx context.Context, input *GithubWebhoo
 			break
 		}
 	}
-	if err != nil {
-		log.Error("Error validating github webhook", "err", err)
-		return nil, huma.Error400BadRequest("Failed to validate github webhook")
+
+	if ghApp == nil {
+		log.Error("Received webhook with invalid signature", "input", input.RawBody)
+		return nil, huma.Error400BadRequest("Invalid signature")
 	}
 
 	// Parse the webhook event.
-	event, err := github.ParseWebHook(input.EventType, payload)
+	event, err := github.ParseWebHook(input.EventType, input.RawBody)
 	if err != nil {
 		log.Errorf("Could not parse webhook: %v", err)
 		return nil, huma.Error400BadRequest("Failed to parse github webhook")

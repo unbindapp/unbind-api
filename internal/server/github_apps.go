@@ -19,7 +19,7 @@ import (
 )
 
 type GitHubAppCreateInput struct {
-	RedirectURL string `query:"redirect_url" validate:"required" doc:"The client URL to redirect to after the installation is finished"`
+	RedirectURL string `query:"redirect_url" required:"true" doc:"The client URL to redirect to after the installation is finished"`
 }
 
 type GithubAppCreateResponse struct {
@@ -68,6 +68,11 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 	// Create GitHub app manifest
 	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect, input.RedirectURL)
 
+	if err != nil {
+		log.Error("Error creating github app manifest", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to create github app manifest")
+	}
+
 	// Create a unique state to identify this request
 	state := uuid.New().String()
 	err = self.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
@@ -83,12 +88,9 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 		return nil, huma.Error500InternalServerError("Failed to set redirect URL in cache")
 	}
 
-	githubUrl := fmt.Sprintf("%s/settings/apps/new", self.Cfg.GithubURL)
-
-	if err != nil {
-		log.Error("Error creating github app manifest", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to create github app manifest")
-	}
+	q := url.Values{}
+	q.Set("state", state)
+	githubUrl := fmt.Sprintf("%s/settings/apps/new?%s", self.Cfg.GithubURL, q.Encode())
 
 	// Create template data struct
 	type templateData struct {
@@ -133,8 +135,8 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 
 // Connect the new github app to our instance, via manifest code exchange
 type HandleGithubAppSaveInput struct {
-	Code  string `query:"code" validate:"required"`
-	State string `query:"state" validate:"required"`
+	Code  string `query:"code" required:"true"`
+	State string `query:"state" required:"true"`
 }
 
 type HandleGithubAppSaveResponse struct {
@@ -201,7 +203,7 @@ func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithub
 
 	// Redirect URL - this is where GitHub will send users to install your app
 	installationURL := fmt.Sprintf(
-		"https://github.com/settings/apps/%s/installations/new?state=%s",
+		"https://github.com/apps/%s/installations/new?state=%s",
 		url.QueryEscape(ghApp.Name),
 		url.QueryEscape(state),
 	)
