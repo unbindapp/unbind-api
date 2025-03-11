@@ -43,15 +43,7 @@ func (r *Repository) UpsertGithubInstallation(
 		SetPermissions(permissions).
 		SetEvents(events).
 		OnConflictColumns(
-			githubinstallation.FieldAccountID,
-			githubinstallation.FieldAccountLogin,
-			githubinstallation.FieldAccountType,
-			githubinstallation.FieldAccountURL,
-			githubinstallation.FieldRepositorySelection,
-			githubinstallation.FieldSuspended,
-			githubinstallation.FieldActive,
-			githubinstallation.FieldPermissions,
-			githubinstallation.FieldEvents,
+			githubinstallation.FieldID,
 		).
 		UpdateNewValues().
 		Exec(ctx)
