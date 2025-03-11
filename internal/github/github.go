@@ -45,6 +45,7 @@ func NewGithubClient(cfg *config.Config) *GithubClient {
 	}
 }
 
+// Get an authenticated client for a GitHub App installation
 func (self *GithubClient) GetAuthenticatedClient(ctx context.Context, appID int64, installationID int64, appPrivateKey string) (*github.Client, error) {
 	privateKey, err := utils.DecodePrivateKey(appPrivateKey)
 	if err != nil {

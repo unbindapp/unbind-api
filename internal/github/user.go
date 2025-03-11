@@ -28,7 +28,7 @@ func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, instal
 		return nil, fmt.Errorf("Error getting user organizations: %v", err)
 	}
 
-	var adminOrgs []*github.Organization
+	adminOrgs := make([]*github.Organization, 0)
 	for _, org := range orgs {
 		// Check membership status in the organization
 		membership, _, err := authenticatedClient.Organizations.GetOrgMembership(ctx, installation.AccountLogin, org.GetLogin())
@@ -37,6 +37,8 @@ func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, instal
 			log.Errorf("Error getting membership for org %s: %v\n", org.GetLogin(), err)
 			continue
 		}
+
+		log.Infof("User %s has role %s in org %s\n", installation.AccountLogin, membership.GetRole(), org.GetLogin())
 
 		// Check if user has admin role in this organization
 		if strings.EqualFold(membership.GetRole(), "admin") {
