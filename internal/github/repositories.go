@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/internal/log"
 )
 
@@ -30,10 +31,13 @@ func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, install
 
 	adminRepos := make([]*github.Repository, 0)
 	for _, repo := range ghRepositories {
-		if repo.Owner.GetID() == installation.AccountID {
-			adminRepos = append(adminRepos, repo)
-			continue
+		if installation.AccountType == githubinstallation.AccountTypeUser {
+			if repo.GetOwner().GetID() == installation.AccountID {
+				adminRepos = append(adminRepos, repo)
+				continue
+			}
 		}
+		// ! TODO - figure out organization owners?
 		if perms := repo.GetPermissions(); perms != nil {
 			log.Infof("Repo %s perms: %v", repo.GetFullName(), perms)
 			if isAdmin, ok := perms["admin"]; ok && isAdmin {
