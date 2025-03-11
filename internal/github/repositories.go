@@ -22,7 +22,8 @@ func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, install
 	}
 
 	// Get user's organizations
-	ghRepositories, _, err := authenticatedClient.Repositories.ListAll(ctx, nil)
+	// ! TODO - handle pagination
+	ghRepositories, _, err := authenticatedClient.Repositories.ListByUser(ctx, installation.AccountLogin, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user organizations: %v", err)
 	}
