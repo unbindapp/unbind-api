@@ -6,18 +6,15 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/server"
 )
 
 // GET Github app installations
-type GithubAppInstallationListInput struct {
-	AppID int64 `path:"app_id" required:"true"`
-}
-
 type GithubAppInstallationListResponse struct {
 	Body []*ent.GithubInstallation
 }
 
-func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, input *GithubAppInstallationListInput) (*GithubAppInstallationListResponse, error) {
+func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, input *server.EmptyInput) (*GithubAppInstallationListResponse, error) {
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
 		log.Error("Error getting user from context")
