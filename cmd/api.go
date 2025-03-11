@@ -124,28 +124,6 @@ func startAPI(cfg *config.Config) {
 	huma.Register(
 		ghGroup,
 		huma.Operation{
-			OperationID: "manifest-create",
-			Summary:     "Create Github Manifest",
-			Description: "Create a manifest that the user can use to create a GitHub app",
-			Path:        "/app/manifest",
-			Method:      http.MethodPost,
-		},
-		srvImpl.HandleGithubManifestCreate,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "app-connect",
-			Summary:     "Connect GitHub App",
-			Description: "Connect the new GitHub app to our instance, via manifest code exchange",
-			Path:        "/app/connect",
-			Method:      http.MethodPost,
-		},
-		srvImpl.HandleGithubAppConnect,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
 			OperationID: "app-install",
 			Summary:     "App Install Redirect",
 			Description: "Redirects to install the GitHub app",

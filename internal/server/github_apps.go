@@ -18,7 +18,8 @@ import (
 )
 
 type GitHubAppCreateInput struct {
-	RedirectURL string `query:"redirect_url" required:"true" doc:"The client URL to redirect to after the installation is finished"`
+	RedirectURL  string `query:"redirect_url" required:"true" doc:"The client URL to redirect to after the installation is finished"`
+	Organization string `query:"organization" doc:"The organization to install the app for, if any"`
 }
 
 type GithubAppCreateResponse struct {
@@ -64,8 +65,8 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 		return nil, huma.Error500InternalServerError("Failed to build redirect URL")
 	}
 
-	// Create GitHub app manifest
-	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect, input.RedirectURL)
+	// Create GitHub app manifest, if not organization we also want organization read permission
+	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect, input.RedirectURL, input.Organization == "")
 
 	if err != nil {
 		log.Error("Error creating github app manifest", "err", err)
