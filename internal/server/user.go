@@ -15,7 +15,7 @@ func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, fou
 
 type MeResponse struct {
 	Body struct {
-		User *ent.User `json:"user"`
+		Data *ent.User `json:"data"`
 	}
 }
 
@@ -29,6 +29,6 @@ func (self *Server) Me(ctx context.Context, _ *EmptyInput) (*MeResponse, error) 
 	}
 
 	resp := &MeResponse{}
-	resp.Body.User = user
+	resp.Body.Data = user
 	return resp, nil
 }

@@ -10,7 +10,7 @@ import (
 
 type TeamResponse struct {
 	Body struct {
-		Teams []kubeclient.UnbindTeam `json:"teams"`
+		Data []kubeclient.UnbindTeam `json:"data"`
 	}
 }
 
@@ -23,6 +23,6 @@ func (self *Server) ListTeams(ctx context.Context, _ *EmptyInput) (*TeamResponse
 	}
 
 	resp := &TeamResponse{}
-	resp.Body.Teams = teams
+	resp.Body.Data = teams
 	return resp, nil
 }
