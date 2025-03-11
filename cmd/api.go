@@ -161,7 +161,7 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "list-admin-repos",
-			Summary:     "List Repositories for an Installation",
+			Summary:     "List Repositories",
 			Description: "List all repositories the user has admin access of.",
 			Path:        "/repositories",
 			Method:      http.MethodGet,
