@@ -197,17 +197,17 @@ func startAPI(cfg *config.Config) {
 		webhookHandlers.HandleGithubAppSave,
 	)
 
-	// /teams group
-	teamsGrp := huma.NewGroup(api, "/teams")
+	// ! All authenticated routes below here
+	api.UseMiddleware(mw.Authenticate)
+	// /teams
 	teamHandlers := teams_handler.NewHandlerGroup(srvImpl)
-	teamsGrp.UseMiddleware(mw.Authenticate)
 	huma.Register(
-		teamsGrp,
+		api,
 		huma.Operation{
 			OperationID: "list-teams",
 			Summary:     "List Teams",
 			Description: "List all teams the current user is a member of",
-			Path:        "*",
+			Path:        "/teams",
 			Method:      http.MethodGet,
 		},
 		teamHandlers.ListTeams,
