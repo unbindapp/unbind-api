@@ -16,7 +16,9 @@ type GithubAdminOrganizationListInput struct {
 }
 
 type GithubAdminOrganizationListResponse struct {
-	Body []*github.Organization
+	Body struct {
+		Data []*github.Organization `json:"data"`
+	}
 }
 
 func (self *HandlerGroup) HandleListGithubAdminOrganizations(ctx context.Context, input *GithubAdminOrganizationListInput) (*GithubAdminOrganizationListResponse, error) {
@@ -40,6 +42,6 @@ func (self *HandlerGroup) HandleListGithubAdminOrganizations(ctx context.Context
 	}
 
 	resp := &GithubAdminOrganizationListResponse{}
-	resp.Body = adminOrgs
+	resp.Body.Data = adminOrgs
 	return resp, nil
 }

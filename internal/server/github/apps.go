@@ -144,7 +144,9 @@ type GithubAppListInput struct {
 }
 
 type GithubAppListResponse struct {
-	Body []*ent.GithubApp
+	Body struct {
+		Data []*ent.GithubApp `json:"data"`
+	}
 }
 
 func (self *HandlerGroup) HandleListGithubApps(ctx context.Context, input *GithubAppListInput) (*GithubAppListResponse, error) {
@@ -155,6 +157,6 @@ func (self *HandlerGroup) HandleListGithubApps(ctx context.Context, input *Githu
 	}
 
 	resp := &GithubAppListResponse{}
-	resp.Body = apps
+	resp.Body.Data = apps
 	return resp, nil
 }

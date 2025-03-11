@@ -11,7 +11,9 @@ import (
 
 // GET Github admin organizations for installation
 type GithubAdminRepositoryListResponse struct {
-	Body []*github.GithubRepository
+	Body struct {
+		Data []*github.GithubRepository `json:"data"`
+	}
 }
 
 func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context, input *server.EmptyInput) (*GithubAdminRepositoryListResponse, error) {
@@ -29,7 +31,13 @@ func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context,
 		return nil, huma.Error500InternalServerError("Failed to get github installation")
 	}
 	if len(installations) == 0 {
-		return &GithubAdminRepositoryListResponse{Body: []*github.GithubRepository{}}, nil
+		return &GithubAdminRepositoryListResponse{
+			Body: struct {
+				Data []*github.GithubRepository `json:"data"`
+			}{
+				Data: []*github.GithubRepository{},
+			},
+		}, nil
 	}
 
 	adminRepos, err := self.srv.GithubClient.ReadUserAdminRepositories(ctx, installations)
@@ -39,6 +47,6 @@ func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context,
 	}
 
 	resp := &GithubAdminRepositoryListResponse{}
-	resp.Body = adminRepos
+	resp.Body.Data = adminRepos
 	return resp, nil
 }

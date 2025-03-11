@@ -11,7 +11,9 @@ import (
 
 // GET Github app installations
 type GithubAppInstallationListResponse struct {
-	Body []*ent.GithubInstallation
+	Body struct {
+		Data []*ent.GithubInstallation `json:"data"`
+	}
 }
 
 func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, input *server.EmptyInput) (*GithubAppInstallationListResponse, error) {
@@ -29,6 +31,6 @@ func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, 
 	}
 
 	resp := &GithubAppInstallationListResponse{}
-	resp.Body = installations
+	resp.Body.Data = installations
 	return resp, nil
 }
