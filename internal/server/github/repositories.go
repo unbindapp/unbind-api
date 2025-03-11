@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/github"
 	"github.com/unbindapp/unbind-api/internal/log"
 )
 
@@ -15,7 +15,7 @@ type GithubAdminRepositoryListInput struct {
 }
 
 type GithubAdminRepositoryListResponse struct {
-	Body []*github.Repository
+	Body []*github.GithubRepository
 }
 
 func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context, input *GithubAdminRepositoryListInput) (*GithubAdminRepositoryListResponse, error) {

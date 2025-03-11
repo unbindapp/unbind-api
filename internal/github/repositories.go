@@ -10,7 +10,7 @@ import (
 )
 
 // Read user's admin repositories (that they can configure CI/CD on)
-func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, installation *ent.GithubInstallation) ([]*github.Repository, error) {
+func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, installation *ent.GithubInstallation) ([]*GithubRepository, error) {
 	if installation == nil || installation.Edges.GithubApp == nil {
 		return nil, fmt.Errorf("Invalid installation")
 	}
@@ -36,5 +36,41 @@ func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, install
 			}
 		}
 	}
-	return adminRepos, nil
+	return formatRepositoryResponse(adminRepos), nil
+}
+
+type GithubRepositoryOwner struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Login     string `json:"login"`
+	AvatarURL string `json:"avatar_url"`
+}
+
+type GithubRepository struct {
+	ID       int64                 `json:"id"`
+	FullName string                `json:"full_name"`
+	HTMLURL  string                `json:"html_url"`
+	CloneURL string                `json:"clone_url"`
+	HomePage string                `json:"homepage"`
+	Owner    GithubRepositoryOwner `json:"owner"`
+}
+
+func formatRepositoryResponse(repositories []*github.Repository) []*GithubRepository {
+	response := make([]*GithubRepository, 0)
+	for _, repository := range repositories {
+		response = append(response, &GithubRepository{
+			ID:       repository.GetID(),
+			FullName: repository.GetFullName(),
+			HTMLURL:  repository.GetHTMLURL(),
+			CloneURL: repository.GetCloneURL(),
+			HomePage: repository.GetHomepage(),
+			Owner: GithubRepositoryOwner{
+				ID:        repository.Owner.GetID(),
+				Name:      repository.Owner.GetName(),
+				Login:     repository.Owner.GetLogin(),
+				AvatarURL: repository.Owner.GetAvatarURL(),
+			},
+		})
+	}
+	return response
 }
