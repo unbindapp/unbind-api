@@ -174,7 +174,7 @@ func startAPI(cfg *config.Config) {
 			OperationID: "list-admin-repos",
 			Summary:     "List Repositories for an Installation",
 			Description: "List all repositories the user has admin access of.",
-			Path:        "/installation/{installation_id}/repositories",
+			Path:        "/repositories",
 			Method:      http.MethodGet,
 		},
 		githubHandlers.HandleListGithubAdminRepositories,

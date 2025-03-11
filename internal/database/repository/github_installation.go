@@ -3,13 +3,23 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (r *Repository) GetGithubInstallationByID(ctx context.Context, ID int64) (*ent.GithubInstallation, error) {
 	return r.DB.GithubInstallation.Query().Where(githubinstallation.ID(ID)).WithGithubApp().Only(ctx)
+}
+
+func (r *Repository) GetGithubInstallationsByCreator(ctx context.Context, createdBy uuid.UUID) ([]*ent.GithubInstallation, error) {
+	return r.DB.GithubInstallation.Query().WithGithubApp(func(gaq *ent.GithubAppQuery) {
+		gaq.Where(
+			githubapp.CreatedByEQ(createdBy),
+		)
+	}).All(ctx)
 }
 
 func (r *Repository) GetGithubInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error) {

@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/ent"
@@ -11,41 +12,85 @@ import (
 )
 
 // Read user's admin repositories (that they can configure CI/CD on)
-func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, installation *ent.GithubInstallation) ([]*GithubRepository, error) {
-	if installation == nil || installation.Edges.GithubApp == nil {
-		return nil, fmt.Errorf("Invalid installation")
-	}
+func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, installations []*ent.GithubInstallation) ([]*GithubRepository, error) {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	allAdminRepos := make([]*GithubRepository, 0)
+	errChan := make(chan error, len(installations))
 
-	// Get authenticated client
-	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting authenticated client: %v", err)
-	}
-
-	// Get user's organizations
-	// ! TODO - handle pagination
-	ghRepositories, _, err := authenticatedClient.Repositories.ListByUser(ctx, installation.AccountLogin, nil)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting user organizations: %v", err)
-	}
-
-	adminRepos := make([]*github.Repository, 0)
-	for _, repo := range ghRepositories {
-		if installation.AccountType == githubinstallation.AccountTypeUser {
-			if repo.GetOwner().GetID() == installation.AccountID {
-				adminRepos = append(adminRepos, repo)
-				continue
-			}
+	for _, installation := range installations {
+		if installation == nil || installation.Edges.GithubApp == nil {
+			log.Warnf("Invalid installation to read repositories from, missing appedge or nil: %v", installation)
+			continue
 		}
-		// ! TODO - figure out organization owners?
-		if perms := repo.GetPermissions(); perms != nil {
-			log.Infof("Repo %s perms: %v", repo.GetFullName(), perms)
-			if isAdmin, ok := perms["admin"]; ok && isAdmin {
-				adminRepos = append(adminRepos, repo)
+		wg.Add(1)
+		go func(inst *ent.GithubInstallation) {
+			defer wg.Done()
+			// Get authenticated client
+			authenticatedClient, err := self.GetAuthenticatedClient(ctx, inst.GithubAppID, inst.ID, inst.Edges.GithubApp.PrivateKey)
+			if err != nil {
+				errChan <- fmt.Errorf("Error getting authenticated client for %s: %v", inst.AccountLogin, err)
+				return
 			}
+			// Get user's repositories
+			// ! TODO - handle pagination
+			ghRepositories, _, err := authenticatedClient.Repositories.ListByUser(ctx, inst.AccountLogin, nil)
+			if err != nil {
+				errChan <- fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
+				return
+			}
+			adminRepos := make([]*github.Repository, 0)
+			for _, repo := range ghRepositories {
+				if inst.AccountType == githubinstallation.AccountTypeUser {
+					if repo.GetOwner().GetID() == inst.AccountID {
+						adminRepos = append(adminRepos, repo)
+						continue
+					}
+				}
+				// ! TODO - figure out organization owners?
+				if perms := repo.GetPermissions(); perms != nil {
+					log.Infof("Repo %s perms: %v", repo.GetFullName(), perms)
+					if isAdmin, ok := perms["admin"]; ok && isAdmin {
+						adminRepos = append(adminRepos, repo)
+					}
+				}
+			}
+			// Format and add to the result slice in a thread-safe way
+			formattedRepos := formatRepositoryResponse(adminRepos)
+			mu.Lock()
+			allAdminRepos = append(allAdminRepos, formattedRepos...)
+			mu.Unlock()
+		}(installation)
+	}
+	// Wait for all goroutines to complete
+	wg.Wait()
+	close(errChan)
+
+	// Check if any errors occurred
+	for err := range errChan {
+		if err != nil {
+			return nil, err // Return the first error encountered
 		}
 	}
-	return formatRepositoryResponse(adminRepos), nil
+
+	// Remove any duplicates
+	return removeDuplicateRepositories(allAdminRepos), nil
+}
+
+// removeDuplicateRepositories removes duplicate repositories from the slice
+// based on the repository ID
+func removeDuplicateRepositories(repos []*GithubRepository) []*GithubRepository {
+	seen := make(map[int64]bool)
+	result := make([]*GithubRepository, 0, len(repos))
+
+	for _, repo := range repos {
+		if !seen[repo.ID] {
+			seen[repo.ID] = true
+			result = append(result, repo)
+		}
+	}
+
+	return result
 }
 
 type GithubRepositoryOwner struct {

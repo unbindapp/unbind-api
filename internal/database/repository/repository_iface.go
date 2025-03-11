@@ -23,6 +23,7 @@ type RepositoryInterface interface {
 	CreateGithubApp(ctx context.Context, app *github.AppConfig, createdBy uuid.UUID) (*ent.GithubApp, error)
 	GetGithubAppByID(ctx context.Context, ID int64) (*ent.GithubApp, error)
 	GetGithubInstallationByID(ctx context.Context, ID int64) (*ent.GithubInstallation, error)
+	GetGithubInstallationsByCreator(ctx context.Context, createdBy uuid.UUID) ([]*ent.GithubInstallation, error)
 	GetGithubInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error)
 	UpsertGithubInstallation(ctx context.Context, id int64, appID int64, accountID int64, accountLogin string, accountType githubinstallation.AccountType, accountURL string, repositorySelection githubinstallation.RepositorySelection, suspended bool, active bool, permissions models.GithubInstallationPermissions, events []string) (*ent.GithubInstallation, error)
 	SetInstallationActive(ctx context.Context, id int64, active bool) (*ent.GithubInstallation, error)
