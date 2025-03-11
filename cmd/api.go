@@ -140,7 +140,7 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "list-app-installations",
 			Summary:     "List Installations",
-			Description: "List all installations for a specific GitHub app",
+			Description: "List all github app installations.",
 			Path:        "/installations",
 			Method:      http.MethodGet,
 		},
