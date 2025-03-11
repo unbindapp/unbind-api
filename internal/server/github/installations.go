@@ -18,7 +18,14 @@ type GithubAppInstallationListResponse struct {
 }
 
 func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, input *GithubAppInstallationListInput) (*GithubAppInstallationListResponse, error) {
-	installations, err := self.srv.Repository.GetGithubInstallationsByAppID(ctx, input.AppID)
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
+	// ! TODO - RBAC
+	installations, err := self.srv.Repository.GetGithubInstallationsByCreator(ctx, user.ID)
 	if err != nil {
 		log.Error("Error getting github installations", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github installations")

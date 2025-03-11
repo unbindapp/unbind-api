@@ -127,17 +127,6 @@ func startAPI(cfg *config.Config) {
 	huma.Register(
 		ghGroup,
 		huma.Operation{
-			OperationID: "app-install",
-			Summary:     "App Install Redirect",
-			Description: "Redirects to install the GitHub app",
-			Path:        "/app/install/{app_id}",
-			Method:      http.MethodPost,
-		},
-		githubHandlers.HandleGithubAppInstall,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
 			OperationID: "list-apps",
 			Summary:     "List Github Apps",
 			Description: "List all the GitHub apps connected to our instance",
@@ -152,7 +141,7 @@ func startAPI(cfg *config.Config) {
 			OperationID: "list-app-installations",
 			Summary:     "List Installations",
 			Description: "List all installations for a specific GitHub app",
-			Path:        "/app/{app_id}/installations",
+			Path:        "/installations",
 			Method:      http.MethodGet,
 		},
 		githubHandlers.HandleListGithubAppInstallations,
