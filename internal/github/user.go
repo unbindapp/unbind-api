@@ -38,8 +38,6 @@ func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, instal
 			continue
 		}
 
-		log.Infof("User %s has role %s in org %s\n", installation.AccountLogin, membership.GetRole(), org.GetLogin())
-
 		// Check if user has admin role in this organization
 		if strings.EqualFold(membership.GetRole(), "admin") {
 			adminOrgs = append(adminOrgs, org)

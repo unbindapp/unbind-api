@@ -168,6 +168,17 @@ func startAPI(cfg *config.Config) {
 		},
 		githubHandlers.HandleListGithubAdminOrganizations,
 	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "list-admin-repos",
+			Summary:     "List Repositories for an Installation",
+			Description: "List all repositories the user has admin access of.",
+			Path:        "/installation/{installation_id}/repositories",
+			Method:      http.MethodGet,
+		},
+		githubHandlers.HandleListGithubAdminRepositories,
+	)
 
 	webhookGroup := huma.NewGroup(api, "/webhook")
 	webhookHandlers := webhook_handler.NewHandlerGroup(srvImpl)
