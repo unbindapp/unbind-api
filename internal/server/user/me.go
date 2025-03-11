@@ -1,4 +1,4 @@
-package server
+package user_handler
 
 import (
 	"context"
@@ -6,12 +6,8 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/server"
 )
-
-func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {
-	user, found = ctx.Value("user").(*ent.User)
-	return user, found
-}
 
 type MeResponse struct {
 	Body struct {
@@ -20,7 +16,7 @@ type MeResponse struct {
 }
 
 // Me handles GET /me
-func (self *Server) Me(ctx context.Context, _ *EmptyInput) (*MeResponse, error) {
+func (self *HandlerGroup) Me(ctx context.Context, _ *server.EmptyInput) (*MeResponse, error) {
 
 	user, ok := ctx.Value("user").(*ent.User)
 	if !ok {

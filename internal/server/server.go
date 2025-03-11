@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/database/repository"
 	"github.com/unbindapp/unbind-api/internal/github"
@@ -37,4 +38,9 @@ func (self *Server) HealthCheck(ctx context.Context, _ *EmptyInput) (*HealthResp
 	healthResponse := &HealthResponse{}
 	healthResponse.Body.Status = "ok"
 	return healthResponse, nil
+}
+
+func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {
+	user, found = ctx.Value("user").(*ent.User)
+	return user, found
 }

@@ -18,6 +18,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/middleware"
 	"github.com/unbindapp/unbind-api/internal/server"
 	github_handler "github.com/unbindapp/unbind-api/internal/server/github"
+	teams_handler "github.com/unbindapp/unbind-api/internal/server/teams"
+	user_handler "github.com/unbindapp/unbind-api/internal/server/user"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/server/webhook"
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/oauth2"
@@ -107,8 +109,9 @@ func startAPI(cfg *config.Config) {
 
 	// /user group
 	userGrp := huma.NewGroup(api, "/user")
+	userHandlers := user_handler.NewHandlerGroup(srvImpl)
 	userGrp.UseMiddleware(mw.Authenticate)
-	huma.Get(userGrp, "/me", srvImpl.Me)
+	huma.Get(userGrp, "/me", userHandlers.Me)
 
 	ghGroup := huma.NewGroup(api, "/github")
 	githubHandlers := github_handler.NewHandlerGroup(srvImpl)
@@ -194,8 +197,21 @@ func startAPI(cfg *config.Config) {
 		webhookHandlers.HandleGithubAppSave,
 	)
 
-	// !
-	// huma.Get(api, "/teams", srvImpl.ListTeams)
+	// /teams group
+	teamsGrp := huma.NewGroup(api, "/teams")
+	teamHandlers := teams_handler.NewHandlerGroup(srvImpl)
+	teamsGrp.UseMiddleware(mw.Authenticate)
+	huma.Register(
+		teamsGrp,
+		huma.Operation{
+			OperationID: "list-teams",
+			Summary:     "List Teams",
+			Description: "List all teams the current user is a member of",
+			Path:        "/",
+			Method:      http.MethodGet,
+		},
+		teamHandlers.ListTeams,
+	)
 
 	// Start the server
 	addr := ":8089"
