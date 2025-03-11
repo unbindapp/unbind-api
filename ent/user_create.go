@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/user"
@@ -108,6 +109,21 @@ func (uc *UserCreate) AddOauth2Codes(o ...*Oauth2Code) *UserCreate {
 		ids[i] = o[i].ID
 	}
 	return uc.AddOauth2CodeIDs(ids...)
+}
+
+// AddCreatedByIDs adds the "created_by" edge to the GithubApp entity by IDs.
+func (uc *UserCreate) AddCreatedByIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddCreatedByIDs(ids...)
+	return uc
+}
+
+// AddCreatedBy adds the "created_by" edges to the GithubApp entity.
+func (uc *UserCreate) AddCreatedBy(g ...*GithubApp) *UserCreate {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uc.AddCreatedByIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -250,6 +266,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.CreatedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedByTable,
+			Columns: []string{user.CreatedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

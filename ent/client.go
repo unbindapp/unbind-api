@@ -374,6 +374,22 @@ func (c *GithubAppClient) QueryInstallations(ga *GithubApp) *GithubInstallationQ
 	return query
 }
 
+// QueryUsers queries the users edge of a GithubApp.
+func (c *GithubAppClient) QueryUsers(ga *GithubApp) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := ga.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(githubapp.Table, githubapp.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, githubapp.UsersTable, githubapp.UsersColumn),
+		)
+		fromV = sqlgraph.Neighbors(ga.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *GithubAppClient) Hooks() []Hook {
 	return c.hooks.GithubApp
@@ -1112,6 +1128,22 @@ func (c *UserClient) QueryOauth2Codes(u *User) *Oauth2CodeQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(oauth2code.Table, oauth2code.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.Oauth2CodesTable, user.Oauth2CodesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCreatedBy queries the created_by edge of a User.
+func (c *UserClient) QueryCreatedBy(u *User) *GithubAppQuery {
+	query := (&GithubAppClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(githubapp.Table, githubapp.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.CreatedByTable, user.CreatedByColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

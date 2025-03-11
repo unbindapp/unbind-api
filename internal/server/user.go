@@ -8,6 +8,11 @@ import (
 	"github.com/unbindapp/unbind-api/internal/log"
 )
 
+func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {
+	user, found = ctx.Value("user").(*ent.User)
+	return user, found
+}
+
 type MeResponse struct {
 	Body struct {
 		User *ent.User `json:"user"`

@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/user"
 )
 
 // GithubAppCreate is the builder for creating a GithubApp entity.
@@ -48,6 +50,12 @@ func (gac *GithubAppCreate) SetNillableUpdatedAt(t *time.Time) *GithubAppCreate 
 	if t != nil {
 		gac.SetUpdatedAt(*t)
 	}
+	return gac
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (gac *GithubAppCreate) SetCreatedBy(u uuid.UUID) *GithubAppCreate {
+	gac.mutation.SetCreatedBy(u)
 	return gac
 }
 
@@ -100,6 +108,17 @@ func (gac *GithubAppCreate) AddInstallations(g ...*GithubInstallation) *GithubAp
 		ids[i] = g[i].ID
 	}
 	return gac.AddInstallationIDs(ids...)
+}
+
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (gac *GithubAppCreate) SetUsersID(id uuid.UUID) *GithubAppCreate {
+	gac.mutation.SetUsersID(id)
+	return gac
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (gac *GithubAppCreate) SetUsers(u *User) *GithubAppCreate {
+	return gac.SetUsersID(u.ID)
 }
 
 // Mutation returns the GithubAppMutation object of the builder.
@@ -155,6 +174,9 @@ func (gac *GithubAppCreate) check() error {
 	if _, ok := gac.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "GithubApp.updated_at"`)}
 	}
+	if _, ok := gac.mutation.CreatedBy(); !ok {
+		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required field "GithubApp.created_by"`)}
+	}
 	if _, ok := gac.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "GithubApp.name"`)}
 	}
@@ -179,6 +201,9 @@ func (gac *GithubAppCreate) check() error {
 		if err := githubapp.IDValidator(v); err != nil {
 			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "GithubApp.id": %w`, err)}
 		}
+	}
+	if len(gac.mutation.UsersIDs()) == 0 {
+		return &ValidationError{Name: "users", err: errors.New(`ent: missing required edge "GithubApp.users"`)}
 	}
 	return nil
 }
@@ -257,6 +282,23 @@ func (gac *GithubAppCreate) createSpec() (*GithubApp, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := gac.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   githubapp.UsersTable,
+			Columns: []string{githubapp.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.CreatedBy = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -318,6 +360,18 @@ func (u *GithubAppUpsert) SetUpdatedAt(v time.Time) *GithubAppUpsert {
 // UpdateUpdatedAt sets the "updated_at" field to the value that was provided on create.
 func (u *GithubAppUpsert) UpdateUpdatedAt() *GithubAppUpsert {
 	u.SetExcluded(githubapp.FieldUpdatedAt)
+	return u
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (u *GithubAppUpsert) SetCreatedBy(v uuid.UUID) *GithubAppUpsert {
+	u.Set(githubapp.FieldCreatedBy, v)
+	return u
+}
+
+// UpdateCreatedBy sets the "created_by" field to the value that was provided on create.
+func (u *GithubAppUpsert) UpdateCreatedBy() *GithubAppUpsert {
+	u.SetExcluded(githubapp.FieldCreatedBy)
 	return u
 }
 
@@ -443,6 +497,20 @@ func (u *GithubAppUpsertOne) SetUpdatedAt(v time.Time) *GithubAppUpsertOne {
 func (u *GithubAppUpsertOne) UpdateUpdatedAt() *GithubAppUpsertOne {
 	return u.Update(func(s *GithubAppUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (u *GithubAppUpsertOne) SetCreatedBy(v uuid.UUID) *GithubAppUpsertOne {
+	return u.Update(func(s *GithubAppUpsert) {
+		s.SetCreatedBy(v)
+	})
+}
+
+// UpdateCreatedBy sets the "created_by" field to the value that was provided on create.
+func (u *GithubAppUpsertOne) UpdateCreatedBy() *GithubAppUpsertOne {
+	return u.Update(func(s *GithubAppUpsert) {
+		s.UpdateCreatedBy()
 	})
 }
 
@@ -744,6 +812,20 @@ func (u *GithubAppUpsertBulk) SetUpdatedAt(v time.Time) *GithubAppUpsertBulk {
 func (u *GithubAppUpsertBulk) UpdateUpdatedAt() *GithubAppUpsertBulk {
 	return u.Update(func(s *GithubAppUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (u *GithubAppUpsertBulk) SetCreatedBy(v uuid.UUID) *GithubAppUpsertBulk {
+	return u.Update(func(s *GithubAppUpsert) {
+		s.SetCreatedBy(v)
+	})
+}
+
+// UpdateCreatedBy sets the "created_by" field to the value that was provided on create.
+func (u *GithubAppUpsertBulk) UpdateCreatedBy() *GithubAppUpsertBulk {
+	return u.Update(func(s *GithubAppUpsert) {
+		s.UpdateCreatedBy()
 	})
 }
 

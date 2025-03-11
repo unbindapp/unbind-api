@@ -29,6 +29,13 @@ type GithubAppCreateResponse struct {
 
 // Handler to render GitHub page with form submission
 func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppCreateInput) (*GithubAppCreateResponse, error) {
+	// Get caller
+	user, found := self.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
 	// Template for the GitHub form submission page
 	tmpl := `<!DOCTYPE html>
 <html>
@@ -79,6 +86,12 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 	if err != nil {
 		log.Error("Error setting state in cache", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to set state in cache")
+	}
+	// Set a user ID in the cache
+	err = self.StringCache.SetWithExpiration(ctx, state, user.ID.String(), 30*time.Minute)
+	if err != nil {
+		log.Error("Error setting user ID in cache", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to set user ID in cache")
 	}
 
 	q := url.Values{}
@@ -160,8 +173,23 @@ func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithub
 		return nil, huma.Error400BadRequest("Invalid state")
 	}
 
+	// Get user id from cache
+	userID, err := self.StringCache.Getdel(ctx, input.State)
+	if err != nil {
+		if err == valkey.Nil {
+			return nil, huma.Error400BadRequest("Invalid state")
+		}
+		log.Error("Error getting user ID from cache", "err", err)
+		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to get user ID: %v", err))
+	}
+	userIDParsed, err := uuid.Parse(userID)
+	if err != nil {
+		log.Error("Error parsing user ID", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to determine user ID")
+	}
+
 	// Save the app config
-	ghApp, err := self.Repository.CreateGithubApp(ctx, appConfig)
+	ghApp, err := self.Repository.CreateGithubApp(ctx, appConfig, userIDParsed)
 	if err != nil {
 		log.Error("Error saving github app", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to save github app")

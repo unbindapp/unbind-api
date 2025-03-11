@@ -7,6 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 )
 
@@ -63,6 +64,11 @@ func CreatedAt(v time.Time) predicate.GithubApp {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// CreatedBy applies equality check predicate on the "created_by" field. It's identical to CreatedByEQ.
+func CreatedBy(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldEQ(FieldCreatedBy, v))
 }
 
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
@@ -168,6 +174,26 @@ func UpdatedAtLT(v time.Time) predicate.GithubApp {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// CreatedByEQ applies the EQ predicate on the "created_by" field.
+func CreatedByEQ(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldEQ(FieldCreatedBy, v))
+}
+
+// CreatedByNEQ applies the NEQ predicate on the "created_by" field.
+func CreatedByNEQ(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldNEQ(FieldCreatedBy, v))
+}
+
+// CreatedByIn applies the In predicate on the "created_by" field.
+func CreatedByIn(vs ...uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldIn(FieldCreatedBy, vs...))
+}
+
+// CreatedByNotIn applies the NotIn predicate on the "created_by" field.
+func CreatedByNotIn(vs ...uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldNotIn(FieldCreatedBy, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -510,6 +536,29 @@ func HasInstallations() predicate.GithubApp {
 func HasInstallationsWith(preds ...predicate.GithubInstallation) predicate.GithubApp {
 	return predicate.GithubApp(func(s *sql.Selector) {
 		step := newInstallationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasUsers applies the HasEdge predicate on the "users" edge.
+func HasUsers() predicate.GithubApp {
+	return predicate.GithubApp(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, UsersTable, UsersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUsersWith applies the HasEdge predicate on the "users" edge with a given conditions (other predicates).
+func HasUsersWith(preds ...predicate.User) predicate.GithubApp {
+	return predicate.GithubApp(func(s *sql.Selector) {
+		step := newUsersStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

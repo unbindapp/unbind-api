@@ -27,6 +27,8 @@ const (
 	EdgeOauth2Tokens = "oauth2_tokens"
 	// EdgeOauth2Codes holds the string denoting the oauth2_codes edge name in mutations.
 	EdgeOauth2Codes = "oauth2_codes"
+	// EdgeCreatedBy holds the string denoting the created_by edge name in mutations.
+	EdgeCreatedBy = "created_by"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// Oauth2TokensTable is the table that holds the oauth2_tokens relation/edge.
@@ -43,6 +45,13 @@ const (
 	Oauth2CodesInverseTable = "oauth2_codes"
 	// Oauth2CodesColumn is the table column denoting the oauth2_codes relation/edge.
 	Oauth2CodesColumn = "user_oauth2_codes"
+	// CreatedByTable is the table that holds the created_by relation/edge.
+	CreatedByTable = "github_apps"
+	// CreatedByInverseTable is the table name for the GithubApp entity.
+	// It exists in this package in order to avoid circular dependency with the "githubapp" package.
+	CreatedByInverseTable = "github_apps"
+	// CreatedByColumn is the table column denoting the created_by relation/edge.
+	CreatedByColumn = "created_by"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -130,6 +139,20 @@ func ByOauth2Codes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newOauth2CodesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCreatedByCount orders the results by created_by count.
+func ByCreatedByCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCreatedByStep(), opts...)
+	}
+}
+
+// ByCreatedBy orders the results by created_by terms.
+func ByCreatedBy(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCreatedByStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOauth2TokensStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -142,5 +165,12 @@ func newOauth2CodesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(Oauth2CodesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, Oauth2CodesTable, Oauth2CodesColumn),
+	)
+}
+func newCreatedByStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CreatedByInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CreatedByTable, CreatedByColumn),
 	)
 }

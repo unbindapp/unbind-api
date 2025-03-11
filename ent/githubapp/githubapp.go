@@ -18,6 +18,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldCreatedBy holds the string denoting the created_by field in the database.
+	FieldCreatedBy = "created_by"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldClientID holds the string denoting the client_id field in the database.
@@ -30,6 +32,8 @@ const (
 	FieldPrivateKey = "private_key"
 	// EdgeInstallations holds the string denoting the installations edge name in mutations.
 	EdgeInstallations = "installations"
+	// EdgeUsers holds the string denoting the users edge name in mutations.
+	EdgeUsers = "users"
 	// Table holds the table name of the githubapp in the database.
 	Table = "github_apps"
 	// InstallationsTable is the table that holds the installations relation/edge.
@@ -39,6 +43,13 @@ const (
 	InstallationsInverseTable = "github_installations"
 	// InstallationsColumn is the table column denoting the installations relation/edge.
 	InstallationsColumn = "github_app_id"
+	// UsersTable is the table that holds the users relation/edge.
+	UsersTable = "github_apps"
+	// UsersInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	UsersInverseTable = "users"
+	// UsersColumn is the table column denoting the users relation/edge.
+	UsersColumn = "created_by"
 )
 
 // Columns holds all SQL columns for githubapp fields.
@@ -46,6 +57,7 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldCreatedBy,
 	FieldName,
 	FieldClientID,
 	FieldClientSecret,
@@ -94,6 +106,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByCreatedBy orders the results by the created_by field.
+func ByCreatedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedBy, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -132,10 +149,24 @@ func ByInstallations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newInstallationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByUsersField orders the results by users field.
+func ByUsersField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUsersStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newInstallationsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(InstallationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, InstallationsTable, InstallationsColumn),
+	)
+}
+func newUsersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UsersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, UsersTable, UsersColumn),
 	)
 }

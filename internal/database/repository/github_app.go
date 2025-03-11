@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/go-github/v69/github"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 )
@@ -22,7 +23,7 @@ func (r *Repository) GetGithubApps(ctx context.Context, withInstallations bool) 
 	return q.All(ctx)
 }
 
-func (r *Repository) CreateGithubApp(ctx context.Context, app *github.AppConfig) (*ent.GithubApp, error) {
+func (r *Repository) CreateGithubApp(ctx context.Context, app *github.AppConfig, createdBy uuid.UUID) (*ent.GithubApp, error) {
 	return r.DB.GithubApp.Create().
 		SetID(app.GetID()).
 		SetClientID(app.GetClientID()).
@@ -30,6 +31,7 @@ func (r *Repository) CreateGithubApp(ctx context.Context, app *github.AppConfig)
 		SetWebhookSecret(app.GetWebhookSecret()).
 		SetPrivateKey(app.GetPEM()).
 		SetName(app.GetName()).
+		SetCreatedBy(createdBy).
 		Save(ctx)
 }
 

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -96,6 +97,21 @@ func (uu *UserUpdate) AddOauth2Codes(o ...*Oauth2Code) *UserUpdate {
 	return uu.AddOauth2CodeIDs(ids...)
 }
 
+// AddCreatedByIDs adds the "created_by" edge to the GithubApp entity by IDs.
+func (uu *UserUpdate) AddCreatedByIDs(ids ...int64) *UserUpdate {
+	uu.mutation.AddCreatedByIDs(ids...)
+	return uu
+}
+
+// AddCreatedBy adds the "created_by" edges to the GithubApp entity.
+func (uu *UserUpdate) AddCreatedBy(g ...*GithubApp) *UserUpdate {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uu.AddCreatedByIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -141,6 +157,27 @@ func (uu *UserUpdate) RemoveOauth2Codes(o ...*Oauth2Code) *UserUpdate {
 		ids[i] = o[i].ID
 	}
 	return uu.RemoveOauth2CodeIDs(ids...)
+}
+
+// ClearCreatedBy clears all "created_by" edges to the GithubApp entity.
+func (uu *UserUpdate) ClearCreatedBy() *UserUpdate {
+	uu.mutation.ClearCreatedBy()
+	return uu
+}
+
+// RemoveCreatedByIDs removes the "created_by" edge to GithubApp entities by IDs.
+func (uu *UserUpdate) RemoveCreatedByIDs(ids ...int64) *UserUpdate {
+	uu.mutation.RemoveCreatedByIDs(ids...)
+	return uu
+}
+
+// RemoveCreatedBy removes "created_by" edges to GithubApp entities.
+func (uu *UserUpdate) RemoveCreatedBy(g ...*GithubApp) *UserUpdate {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uu.RemoveCreatedByIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -293,6 +330,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.CreatedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedByTable,
+			Columns: []string{user.CreatedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedCreatedByIDs(); len(nodes) > 0 && !uu.mutation.CreatedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedByTable,
+			Columns: []string{user.CreatedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.CreatedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedByTable,
+			Columns: []string{user.CreatedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(uu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -379,6 +461,21 @@ func (uuo *UserUpdateOne) AddOauth2Codes(o ...*Oauth2Code) *UserUpdateOne {
 	return uuo.AddOauth2CodeIDs(ids...)
 }
 
+// AddCreatedByIDs adds the "created_by" edge to the GithubApp entity by IDs.
+func (uuo *UserUpdateOne) AddCreatedByIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.AddCreatedByIDs(ids...)
+	return uuo
+}
+
+// AddCreatedBy adds the "created_by" edges to the GithubApp entity.
+func (uuo *UserUpdateOne) AddCreatedBy(g ...*GithubApp) *UserUpdateOne {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uuo.AddCreatedByIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -424,6 +521,27 @@ func (uuo *UserUpdateOne) RemoveOauth2Codes(o ...*Oauth2Code) *UserUpdateOne {
 		ids[i] = o[i].ID
 	}
 	return uuo.RemoveOauth2CodeIDs(ids...)
+}
+
+// ClearCreatedBy clears all "created_by" edges to the GithubApp entity.
+func (uuo *UserUpdateOne) ClearCreatedBy() *UserUpdateOne {
+	uuo.mutation.ClearCreatedBy()
+	return uuo
+}
+
+// RemoveCreatedByIDs removes the "created_by" edge to GithubApp entities by IDs.
+func (uuo *UserUpdateOne) RemoveCreatedByIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.RemoveCreatedByIDs(ids...)
+	return uuo
+}
+
+// RemoveCreatedBy removes "created_by" edges to GithubApp entities.
+func (uuo *UserUpdateOne) RemoveCreatedBy(g ...*GithubApp) *UserUpdateOne {
+	ids := make([]int64, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uuo.RemoveCreatedByIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -599,6 +717,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(oauth2code.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.CreatedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedByTable,
+			Columns: []string{user.CreatedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedCreatedByIDs(); len(nodes) > 0 && !uuo.mutation.CreatedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedByTable,
+			Columns: []string{user.CreatedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.CreatedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CreatedByTable,
+			Columns: []string{user.CreatedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

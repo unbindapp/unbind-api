@@ -11,9 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/user"
 )
 
 // GithubAppUpdate is the builder for updating GithubApp entities.
@@ -33,6 +35,20 @@ func (gau *GithubAppUpdate) Where(ps ...predicate.GithubApp) *GithubAppUpdate {
 // SetUpdatedAt sets the "updated_at" field.
 func (gau *GithubAppUpdate) SetUpdatedAt(t time.Time) *GithubAppUpdate {
 	gau.mutation.SetUpdatedAt(t)
+	return gau
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (gau *GithubAppUpdate) SetCreatedBy(u uuid.UUID) *GithubAppUpdate {
+	gau.mutation.SetCreatedBy(u)
+	return gau
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (gau *GithubAppUpdate) SetNillableCreatedBy(u *uuid.UUID) *GithubAppUpdate {
+	if u != nil {
+		gau.SetCreatedBy(*u)
+	}
 	return gau
 }
 
@@ -121,6 +137,17 @@ func (gau *GithubAppUpdate) AddInstallations(g ...*GithubInstallation) *GithubAp
 	return gau.AddInstallationIDs(ids...)
 }
 
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (gau *GithubAppUpdate) SetUsersID(id uuid.UUID) *GithubAppUpdate {
+	gau.mutation.SetUsersID(id)
+	return gau
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (gau *GithubAppUpdate) SetUsers(u *User) *GithubAppUpdate {
+	return gau.SetUsersID(u.ID)
+}
+
 // Mutation returns the GithubAppMutation object of the builder.
 func (gau *GithubAppUpdate) Mutation() *GithubAppMutation {
 	return gau.mutation
@@ -145,6 +172,12 @@ func (gau *GithubAppUpdate) RemoveInstallations(g ...*GithubInstallation) *Githu
 		ids[i] = g[i].ID
 	}
 	return gau.RemoveInstallationIDs(ids...)
+}
+
+// ClearUsers clears the "users" edge to the User entity.
+func (gau *GithubAppUpdate) ClearUsers() *GithubAppUpdate {
+	gau.mutation.ClearUsers()
+	return gau
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -189,6 +222,9 @@ func (gau *GithubAppUpdate) check() error {
 		if err := githubapp.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "GithubApp.name": %w`, err)}
 		}
+	}
+	if gau.mutation.UsersCleared() && len(gau.mutation.UsersIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "GithubApp.users"`)
 	}
 	return nil
 }
@@ -274,6 +310,35 @@ func (gau *GithubAppUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if gau.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   githubapp.UsersTable,
+			Columns: []string{githubapp.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gau.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   githubapp.UsersTable,
+			Columns: []string{githubapp.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(gau.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, gau.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -299,6 +364,20 @@ type GithubAppUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (gauo *GithubAppUpdateOne) SetUpdatedAt(t time.Time) *GithubAppUpdateOne {
 	gauo.mutation.SetUpdatedAt(t)
+	return gauo
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (gauo *GithubAppUpdateOne) SetCreatedBy(u uuid.UUID) *GithubAppUpdateOne {
+	gauo.mutation.SetCreatedBy(u)
+	return gauo
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (gauo *GithubAppUpdateOne) SetNillableCreatedBy(u *uuid.UUID) *GithubAppUpdateOne {
+	if u != nil {
+		gauo.SetCreatedBy(*u)
+	}
 	return gauo
 }
 
@@ -387,6 +466,17 @@ func (gauo *GithubAppUpdateOne) AddInstallations(g ...*GithubInstallation) *Gith
 	return gauo.AddInstallationIDs(ids...)
 }
 
+// SetUsersID sets the "users" edge to the User entity by ID.
+func (gauo *GithubAppUpdateOne) SetUsersID(id uuid.UUID) *GithubAppUpdateOne {
+	gauo.mutation.SetUsersID(id)
+	return gauo
+}
+
+// SetUsers sets the "users" edge to the User entity.
+func (gauo *GithubAppUpdateOne) SetUsers(u *User) *GithubAppUpdateOne {
+	return gauo.SetUsersID(u.ID)
+}
+
 // Mutation returns the GithubAppMutation object of the builder.
 func (gauo *GithubAppUpdateOne) Mutation() *GithubAppMutation {
 	return gauo.mutation
@@ -411,6 +501,12 @@ func (gauo *GithubAppUpdateOne) RemoveInstallations(g ...*GithubInstallation) *G
 		ids[i] = g[i].ID
 	}
 	return gauo.RemoveInstallationIDs(ids...)
+}
+
+// ClearUsers clears the "users" edge to the User entity.
+func (gauo *GithubAppUpdateOne) ClearUsers() *GithubAppUpdateOne {
+	gauo.mutation.ClearUsers()
+	return gauo
 }
 
 // Where appends a list predicates to the GithubAppUpdate builder.
@@ -468,6 +564,9 @@ func (gauo *GithubAppUpdateOne) check() error {
 		if err := githubapp.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "GithubApp.name": %w`, err)}
 		}
+	}
+	if gauo.mutation.UsersCleared() && len(gauo.mutation.UsersIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "GithubApp.users"`)
 	}
 	return nil
 }
@@ -563,6 +662,35 @@ func (gauo *GithubAppUpdateOne) sqlSave(ctx context.Context) (_node *GithubApp, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubinstallation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if gauo.mutation.UsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   githubapp.UsersTable,
+			Columns: []string{githubapp.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gauo.mutation.UsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   githubapp.UsersTable,
+			Columns: []string{githubapp.UsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

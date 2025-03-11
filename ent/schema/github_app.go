@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 )
 
@@ -29,6 +30,8 @@ func (GithubApp) Fields() []ent.Field {
 			Positive().
 			Unique().
 			Comment("The GitHub App ID"),
+		field.UUID("created_by", uuid.UUID{}).
+			Comment("The user that created this github app."),
 		field.String("name").
 			NotEmpty().
 			Comment("Name of the GitHub App"),
@@ -54,6 +57,12 @@ func (GithubApp) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
+		// M2O with users
+		edge.From("users", User.Type).
+			Ref("created_by").
+			Field("created_by").
+			Required().
+			Unique(),
 	}
 }
 

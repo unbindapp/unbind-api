@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v69/github"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -19,7 +20,7 @@ type RepositoryInterface interface {
 	GetGithubApp(ctx context.Context) (*ent.GithubApp, error)
 	// Get all github apps returns a slice of GithubApp entities.
 	GetGithubApps(ctx context.Context, withInstallations bool) ([]*ent.GithubApp, error)
-	CreateGithubApp(ctx context.Context, app *github.AppConfig) (*ent.GithubApp, error)
+	CreateGithubApp(ctx context.Context, app *github.AppConfig, createdBy uuid.UUID) (*ent.GithubApp, error)
 	GetGithubAppByID(ctx context.Context, ID int64) (*ent.GithubApp, error)
 	GetGithubInstallationByID(ctx context.Context, ID int64) (*ent.GithubInstallation, error)
 	GetGithubInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error)
@@ -35,6 +36,7 @@ type RepositoryInterface interface {
 	RevokeRefreshToken(ctx context.Context, refreshToken string) error
 	GetByAccessToken(ctx context.Context, accessToken string) (*ent.Oauth2Token, error)
 	GetByRefreshToken(ctx context.Context, refreshToken string) (*ent.Oauth2Token, error)
+	CleanTokenStore(ctx context.Context) (result error)
 	// WithTx runs a function in a transaction
 	// Usage example:
 	//

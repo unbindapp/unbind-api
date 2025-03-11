@@ -56,6 +56,8 @@ type GithubAppMutation struct {
 	installations        map[int64]struct{}
 	removedinstallations map[int64]struct{}
 	clearedinstallations bool
+	users                *uuid.UUID
+	clearedusers         bool
 	done                 bool
 	oldValue             func(context.Context) (*GithubApp, error)
 	predicates           []predicate.GithubApp
@@ -235,6 +237,42 @@ func (m *GithubAppMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *GithubAppMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (m *GithubAppMutation) SetCreatedBy(u uuid.UUID) {
+	m.users = &u
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *GithubAppMutation) CreatedBy() (r uuid.UUID, exists bool) {
+	v := m.users
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the GithubApp entity.
+// If the GithubApp object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GithubAppMutation) OldCreatedBy(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *GithubAppMutation) ResetCreatedBy() {
+	m.users = nil
 }
 
 // SetName sets the "name" field.
@@ -471,6 +509,46 @@ func (m *GithubAppMutation) ResetInstallations() {
 	m.removedinstallations = nil
 }
 
+// SetUsersID sets the "users" edge to the User entity by id.
+func (m *GithubAppMutation) SetUsersID(id uuid.UUID) {
+	m.users = &id
+}
+
+// ClearUsers clears the "users" edge to the User entity.
+func (m *GithubAppMutation) ClearUsers() {
+	m.clearedusers = true
+	m.clearedFields[githubapp.FieldCreatedBy] = struct{}{}
+}
+
+// UsersCleared reports if the "users" edge to the User entity was cleared.
+func (m *GithubAppMutation) UsersCleared() bool {
+	return m.clearedusers
+}
+
+// UsersID returns the "users" edge ID in the mutation.
+func (m *GithubAppMutation) UsersID() (id uuid.UUID, exists bool) {
+	if m.users != nil {
+		return *m.users, true
+	}
+	return
+}
+
+// UsersIDs returns the "users" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UsersID instead. It exists only for internal usage by the builders.
+func (m *GithubAppMutation) UsersIDs() (ids []uuid.UUID) {
+	if id := m.users; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUsers resets all changes to the "users" edge.
+func (m *GithubAppMutation) ResetUsers() {
+	m.users = nil
+	m.clearedusers = false
+}
+
 // Where appends a list predicates to the GithubAppMutation builder.
 func (m *GithubAppMutation) Where(ps ...predicate.GithubApp) {
 	m.predicates = append(m.predicates, ps...)
@@ -505,12 +583,15 @@ func (m *GithubAppMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GithubAppMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.created_at != nil {
 		fields = append(fields, githubapp.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, githubapp.FieldUpdatedAt)
+	}
+	if m.users != nil {
+		fields = append(fields, githubapp.FieldCreatedBy)
 	}
 	if m.name != nil {
 		fields = append(fields, githubapp.FieldName)
@@ -539,6 +620,8 @@ func (m *GithubAppMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case githubapp.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case githubapp.FieldCreatedBy:
+		return m.CreatedBy()
 	case githubapp.FieldName:
 		return m.Name()
 	case githubapp.FieldClientID:
@@ -562,6 +645,8 @@ func (m *GithubAppMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldCreatedAt(ctx)
 	case githubapp.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case githubapp.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
 	case githubapp.FieldName:
 		return m.OldName(ctx)
 	case githubapp.FieldClientID:
@@ -594,6 +679,13 @@ func (m *GithubAppMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case githubapp.FieldCreatedBy:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
 		return nil
 	case githubapp.FieldName:
 		v, ok := value.(string)
@@ -685,6 +777,9 @@ func (m *GithubAppMutation) ResetField(name string) error {
 	case githubapp.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
+	case githubapp.FieldCreatedBy:
+		m.ResetCreatedBy()
+		return nil
 	case githubapp.FieldName:
 		m.ResetName()
 		return nil
@@ -706,9 +801,12 @@ func (m *GithubAppMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GithubAppMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.installations != nil {
 		edges = append(edges, githubapp.EdgeInstallations)
+	}
+	if m.users != nil {
+		edges = append(edges, githubapp.EdgeUsers)
 	}
 	return edges
 }
@@ -723,13 +821,17 @@ func (m *GithubAppMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case githubapp.EdgeUsers:
+		if id := m.users; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GithubAppMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedinstallations != nil {
 		edges = append(edges, githubapp.EdgeInstallations)
 	}
@@ -752,9 +854,12 @@ func (m *GithubAppMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GithubAppMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedinstallations {
 		edges = append(edges, githubapp.EdgeInstallations)
+	}
+	if m.clearedusers {
+		edges = append(edges, githubapp.EdgeUsers)
 	}
 	return edges
 }
@@ -765,6 +870,8 @@ func (m *GithubAppMutation) EdgeCleared(name string) bool {
 	switch name {
 	case githubapp.EdgeInstallations:
 		return m.clearedinstallations
+	case githubapp.EdgeUsers:
+		return m.clearedusers
 	}
 	return false
 }
@@ -773,6 +880,9 @@ func (m *GithubAppMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *GithubAppMutation) ClearEdge(name string) error {
 	switch name {
+	case githubapp.EdgeUsers:
+		m.ClearUsers()
+		return nil
 	}
 	return fmt.Errorf("unknown GithubApp unique edge %s", name)
 }
@@ -783,6 +893,9 @@ func (m *GithubAppMutation) ResetEdge(name string) error {
 	switch name {
 	case githubapp.EdgeInstallations:
 		m.ResetInstallations()
+		return nil
+	case githubapp.EdgeUsers:
+		m.ResetUsers()
 		return nil
 	}
 	return fmt.Errorf("unknown GithubApp edge %s", name)
@@ -3848,6 +3961,9 @@ type UserMutation struct {
 	oauth2_codes         map[uuid.UUID]struct{}
 	removedoauth2_codes  map[uuid.UUID]struct{}
 	clearedoauth2_codes  bool
+	created_by           map[int64]struct{}
+	removedcreated_by    map[int64]struct{}
+	clearedcreated_by    bool
 	done                 bool
 	oldValue             func(context.Context) (*User, error)
 	predicates           []predicate.User
@@ -4209,6 +4325,60 @@ func (m *UserMutation) ResetOauth2Codes() {
 	m.removedoauth2_codes = nil
 }
 
+// AddCreatedByIDs adds the "created_by" edge to the GithubApp entity by ids.
+func (m *UserMutation) AddCreatedByIDs(ids ...int64) {
+	if m.created_by == nil {
+		m.created_by = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.created_by[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCreatedBy clears the "created_by" edge to the GithubApp entity.
+func (m *UserMutation) ClearCreatedBy() {
+	m.clearedcreated_by = true
+}
+
+// CreatedByCleared reports if the "created_by" edge to the GithubApp entity was cleared.
+func (m *UserMutation) CreatedByCleared() bool {
+	return m.clearedcreated_by
+}
+
+// RemoveCreatedByIDs removes the "created_by" edge to the GithubApp entity by IDs.
+func (m *UserMutation) RemoveCreatedByIDs(ids ...int64) {
+	if m.removedcreated_by == nil {
+		m.removedcreated_by = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.created_by, ids[i])
+		m.removedcreated_by[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCreatedBy returns the removed IDs of the "created_by" edge to the GithubApp entity.
+func (m *UserMutation) RemovedCreatedByIDs() (ids []int64) {
+	for id := range m.removedcreated_by {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CreatedByIDs returns the "created_by" edge IDs in the mutation.
+func (m *UserMutation) CreatedByIDs() (ids []int64) {
+	for id := range m.created_by {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCreatedBy resets all changes to the "created_by" edge.
+func (m *UserMutation) ResetCreatedBy() {
+	m.created_by = nil
+	m.clearedcreated_by = false
+	m.removedcreated_by = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -4393,12 +4563,15 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.oauth2_tokens != nil {
 		edges = append(edges, user.EdgeOauth2Tokens)
 	}
 	if m.oauth2_codes != nil {
 		edges = append(edges, user.EdgeOauth2Codes)
+	}
+	if m.created_by != nil {
+		edges = append(edges, user.EdgeCreatedBy)
 	}
 	return edges
 }
@@ -4419,18 +4592,27 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCreatedBy:
+		ids := make([]ent.Value, 0, len(m.created_by))
+		for id := range m.created_by {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedoauth2_tokens != nil {
 		edges = append(edges, user.EdgeOauth2Tokens)
 	}
 	if m.removedoauth2_codes != nil {
 		edges = append(edges, user.EdgeOauth2Codes)
+	}
+	if m.removedcreated_by != nil {
+		edges = append(edges, user.EdgeCreatedBy)
 	}
 	return edges
 }
@@ -4451,18 +4633,27 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCreatedBy:
+		ids := make([]ent.Value, 0, len(m.removedcreated_by))
+		for id := range m.removedcreated_by {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedoauth2_tokens {
 		edges = append(edges, user.EdgeOauth2Tokens)
 	}
 	if m.clearedoauth2_codes {
 		edges = append(edges, user.EdgeOauth2Codes)
+	}
+	if m.clearedcreated_by {
+		edges = append(edges, user.EdgeCreatedBy)
 	}
 	return edges
 }
@@ -4475,6 +4666,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedoauth2_tokens
 	case user.EdgeOauth2Codes:
 		return m.clearedoauth2_codes
+	case user.EdgeCreatedBy:
+		return m.clearedcreated_by
 	}
 	return false
 }
@@ -4496,6 +4689,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeOauth2Codes:
 		m.ResetOauth2Codes()
+		return nil
+	case user.EdgeCreatedBy:
+		m.ResetCreatedBy()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

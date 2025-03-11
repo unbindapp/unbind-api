@@ -39,9 +39,11 @@ type UserEdges struct {
 	Oauth2Tokens []*Oauth2Token `json:"oauth2_tokens,omitempty"`
 	// Oauth2Codes holds the value of the oauth2_codes edge.
 	Oauth2Codes []*Oauth2Code `json:"oauth2_codes,omitempty"`
+	// CreatedBy holds the value of the created_by edge.
+	CreatedBy []*GithubApp `json:"created_by,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // Oauth2TokensOrErr returns the Oauth2Tokens value or an error if the edge
@@ -60,6 +62,15 @@ func (e UserEdges) Oauth2CodesOrErr() ([]*Oauth2Code, error) {
 		return e.Oauth2Codes, nil
 	}
 	return nil, &NotLoadedError{edge: "oauth2_codes"}
+}
+
+// CreatedByOrErr returns the CreatedBy value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CreatedByOrErr() ([]*GithubApp, error) {
+	if e.loadedTypes[2] {
+		return e.CreatedBy, nil
+	}
+	return nil, &NotLoadedError{edge: "created_by"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -139,6 +150,11 @@ func (u *User) QueryOauth2Tokens() *Oauth2TokenQuery {
 // QueryOauth2Codes queries the "oauth2_codes" edge of the User entity.
 func (u *User) QueryOauth2Codes() *Oauth2CodeQuery {
 	return NewUserClient(u.config).QueryOauth2Codes(u)
+}
+
+// QueryCreatedBy queries the "created_by" edge of the User entity.
+func (u *User) QueryCreatedBy() *GithubAppQuery {
+	return NewUserClient(u.config).QueryCreatedBy(u)
 }
 
 // Update returns a builder for updating this User.

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -28,6 +29,7 @@ type UserQuery struct {
 	predicates       []predicate.User
 	withOauth2Tokens *Oauth2TokenQuery
 	withOauth2Codes  *Oauth2CodeQuery
+	withCreatedBy    *GithubAppQuery
 	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -102,6 +104,28 @@ func (uq *UserQuery) QueryOauth2Codes() *Oauth2CodeQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(oauth2code.Table, oauth2code.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.Oauth2CodesTable, user.Oauth2CodesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCreatedBy chains the current query on the "created_by" edge.
+func (uq *UserQuery) QueryCreatedBy() *GithubAppQuery {
+	query := (&GithubAppClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(githubapp.Table, githubapp.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.CreatedByTable, user.CreatedByColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -303,6 +327,7 @@ func (uq *UserQuery) Clone() *UserQuery {
 		predicates:       append([]predicate.User{}, uq.predicates...),
 		withOauth2Tokens: uq.withOauth2Tokens.Clone(),
 		withOauth2Codes:  uq.withOauth2Codes.Clone(),
+		withCreatedBy:    uq.withCreatedBy.Clone(),
 		// clone intermediate query.
 		sql:       uq.sql.Clone(),
 		path:      uq.path,
@@ -329,6 +354,17 @@ func (uq *UserQuery) WithOauth2Codes(opts ...func(*Oauth2CodeQuery)) *UserQuery 
 		opt(query)
 	}
 	uq.withOauth2Codes = query
+	return uq
+}
+
+// WithCreatedBy tells the query-builder to eager-load the nodes that are connected to
+// the "created_by" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithCreatedBy(opts ...func(*GithubAppQuery)) *UserQuery {
+	query := (&GithubAppClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withCreatedBy = query
 	return uq
 }
 
@@ -410,9 +446,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			uq.withOauth2Tokens != nil,
 			uq.withOauth2Codes != nil,
+			uq.withCreatedBy != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -447,6 +484,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadOauth2Codes(ctx, query, nodes,
 			func(n *User) { n.Edges.Oauth2Codes = []*Oauth2Code{} },
 			func(n *User, e *Oauth2Code) { n.Edges.Oauth2Codes = append(n.Edges.Oauth2Codes, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withCreatedBy; query != nil {
+		if err := uq.loadCreatedBy(ctx, query, nodes,
+			func(n *User) { n.Edges.CreatedBy = []*GithubApp{} },
+			func(n *User, e *GithubApp) { n.Edges.CreatedBy = append(n.Edges.CreatedBy, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -510,6 +554,36 @@ func (uq *UserQuery) loadOauth2Codes(ctx context.Context, query *Oauth2CodeQuery
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_oauth2_codes" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadCreatedBy(ctx context.Context, query *GithubAppQuery, nodes []*User, init func(*User), assign func(*User, *GithubApp)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(githubapp.FieldCreatedBy)
+	}
+	query.Where(predicate.GithubApp(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.CreatedByColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CreatedBy
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "created_by" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

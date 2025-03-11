@@ -12,9 +12,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/user"
 )
 
 // GithubAppQuery is the builder for querying GithubApp entities.
@@ -25,6 +27,7 @@ type GithubAppQuery struct {
 	inters            []Interceptor
 	predicates        []predicate.GithubApp
 	withInstallations *GithubInstallationQuery
+	withUsers         *UserQuery
 	modifiers         []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -77,6 +80,28 @@ func (gaq *GithubAppQuery) QueryInstallations() *GithubInstallationQuery {
 			sqlgraph.From(githubapp.Table, githubapp.FieldID, selector),
 			sqlgraph.To(githubinstallation.Table, githubinstallation.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, githubapp.InstallationsTable, githubapp.InstallationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUsers chains the current query on the "users" edge.
+func (gaq *GithubAppQuery) QueryUsers() *UserQuery {
+	query := (&UserClient{config: gaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(githubapp.Table, githubapp.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, githubapp.UsersTable, githubapp.UsersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gaq.driver.Dialect(), step)
 		return fromU, nil
@@ -277,6 +302,7 @@ func (gaq *GithubAppQuery) Clone() *GithubAppQuery {
 		inters:            append([]Interceptor{}, gaq.inters...),
 		predicates:        append([]predicate.GithubApp{}, gaq.predicates...),
 		withInstallations: gaq.withInstallations.Clone(),
+		withUsers:         gaq.withUsers.Clone(),
 		// clone intermediate query.
 		sql:       gaq.sql.Clone(),
 		path:      gaq.path,
@@ -292,6 +318,17 @@ func (gaq *GithubAppQuery) WithInstallations(opts ...func(*GithubInstallationQue
 		opt(query)
 	}
 	gaq.withInstallations = query
+	return gaq
+}
+
+// WithUsers tells the query-builder to eager-load the nodes that are connected to
+// the "users" edge. The optional arguments are used to configure the query builder of the edge.
+func (gaq *GithubAppQuery) WithUsers(opts ...func(*UserQuery)) *GithubAppQuery {
+	query := (&UserClient{config: gaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gaq.withUsers = query
 	return gaq
 }
 
@@ -373,8 +410,9 @@ func (gaq *GithubAppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*G
 	var (
 		nodes       = []*GithubApp{}
 		_spec       = gaq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			gaq.withInstallations != nil,
+			gaq.withUsers != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -402,6 +440,12 @@ func (gaq *GithubAppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*G
 		if err := gaq.loadInstallations(ctx, query, nodes,
 			func(n *GithubApp) { n.Edges.Installations = []*GithubInstallation{} },
 			func(n *GithubApp, e *GithubInstallation) { n.Edges.Installations = append(n.Edges.Installations, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gaq.withUsers; query != nil {
+		if err := gaq.loadUsers(ctx, query, nodes, nil,
+			func(n *GithubApp, e *User) { n.Edges.Users = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -438,6 +482,35 @@ func (gaq *GithubAppQuery) loadInstallations(ctx context.Context, query *GithubI
 	}
 	return nil
 }
+func (gaq *GithubAppQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*GithubApp, init func(*GithubApp), assign func(*GithubApp, *User)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*GithubApp)
+	for i := range nodes {
+		fk := nodes[i].CreatedBy
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "created_by" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (gaq *GithubAppQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := gaq.querySpec()
@@ -466,6 +539,9 @@ func (gaq *GithubAppQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != githubapp.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if gaq.withUsers != nil {
+			_spec.Node.AddColumnOnce(githubapp.FieldCreatedBy)
 		}
 	}
 	if ps := gaq.predicates; len(ps) > 0 {

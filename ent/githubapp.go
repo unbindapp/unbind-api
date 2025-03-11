@@ -9,7 +9,9 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/user"
 )
 
 // GithubApp is the model entity for the GithubApp schema.
@@ -22,6 +24,8 @@ type GithubApp struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// The user that created this github app.
+	CreatedBy uuid.UUID `json:"created_by,omitempty"`
 	// Name of the GitHub App
 	Name string `json:"name,omitempty"`
 	// OAuth client ID of the GitHub App
@@ -42,9 +46,11 @@ type GithubApp struct {
 type GithubAppEdges struct {
 	// Installations holds the value of the installations edge.
 	Installations []*GithubInstallation `json:"installations,omitempty"`
+	// Users holds the value of the users edge.
+	Users *User `json:"users,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // InstallationsOrErr returns the Installations value or an error if the edge
@@ -54,6 +60,17 @@ func (e GithubAppEdges) InstallationsOrErr() ([]*GithubInstallation, error) {
 		return e.Installations, nil
 	}
 	return nil, &NotLoadedError{edge: "installations"}
+}
+
+// UsersOrErr returns the Users value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e GithubAppEdges) UsersOrErr() (*User, error) {
+	if e.Users != nil {
+		return e.Users, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "users"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -67,6 +84,8 @@ func (*GithubApp) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case githubapp.FieldCreatedAt, githubapp.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
+		case githubapp.FieldCreatedBy:
+			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -99,6 +118,12 @@ func (ga *GithubApp) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				ga.UpdatedAt = value.Time
+			}
+		case githubapp.FieldCreatedBy:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field created_by", values[i])
+			} else if value != nil {
+				ga.CreatedBy = *value
 			}
 		case githubapp.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -148,6 +173,11 @@ func (ga *GithubApp) QueryInstallations() *GithubInstallationQuery {
 	return NewGithubAppClient(ga.config).QueryInstallations(ga)
 }
 
+// QueryUsers queries the "users" edge of the GithubApp entity.
+func (ga *GithubApp) QueryUsers() *UserQuery {
+	return NewGithubAppClient(ga.config).QueryUsers(ga)
+}
+
 // Update returns a builder for updating this GithubApp.
 // Note that you need to call GithubApp.Unwrap() before calling this method if this GithubApp
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -176,6 +206,9 @@ func (ga *GithubApp) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(ga.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("created_by=")
+	builder.WriteString(fmt.Sprintf("%v", ga.CreatedBy))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(ga.Name)

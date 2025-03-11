@@ -35,6 +35,11 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("oauth2_tokens", Oauth2Token.Type),
 		edge.To("oauth2_codes", Oauth2Code.Type),
+		// O2M with github_apps
+		edge.To("created_by", GithubApp.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 	}
 }
 

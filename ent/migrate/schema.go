@@ -19,12 +19,21 @@ var (
 		{Name: "client_secret", Type: field.TypeString},
 		{Name: "webhook_secret", Type: field.TypeString},
 		{Name: "private_key", Type: field.TypeString, Size: 2147483647},
+		{Name: "created_by", Type: field.TypeUUID},
 	}
 	// GithubAppsTable holds the schema information for the "github_apps" table.
 	GithubAppsTable = &schema.Table{
 		Name:       "github_apps",
 		Columns:    GithubAppsColumns,
 		PrimaryKey: []*schema.Column{GithubAppsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "github_apps_users_created_by",
+				Columns:    []*schema.Column{GithubAppsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
 	}
 	// GithubInstallationsColumns holds the columns for the "github_installations" table.
 	GithubInstallationsColumns = []*schema.Column{
@@ -155,6 +164,7 @@ var (
 )
 
 func init() {
+	GithubAppsTable.ForeignKeys[0].RefTable = UsersTable
 	GithubAppsTable.Annotation = &entsql.Annotation{
 		Table: "github_apps",
 	}
