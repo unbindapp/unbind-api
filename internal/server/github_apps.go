@@ -184,6 +184,9 @@ func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithub
 		url.QueryEscape(state),
 	)
 
+	// Delay the redirect because github will 404 otherwise
+	time.Sleep(2 * time.Second)
+
 	return &HandleGithubAppSaveResponse{
 		Status: http.StatusTemporaryRedirect,
 		Url:    installationURL,
