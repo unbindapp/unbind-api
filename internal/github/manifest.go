@@ -29,11 +29,11 @@ type HookAttributes struct {
 
 // DefaultPermissions contains permission settings
 type DefaultPermissions struct {
-	Contents      string `json:"contents"`
-	Issues        string `json:"issues"`
-	Metadata      string `json:"metadata"`
-	PullRequests  string `json:"pull_requests"`
-	Organizations string `json:"organizations,omitempty"`
+	Contents     string `json:"contents"`
+	Issues       string `json:"issues"`
+	Metadata     string `json:"metadata"`
+	PullRequests string `json:"pull_requests"`
+	Members      string `json:"members,omitempty"`
 }
 
 // CreateAppManifest generates the GitHub App manifest
@@ -66,7 +66,7 @@ func (g *GithubClient) CreateAppManifest(redirectUrl string, setupUrl string, wi
 	}
 
 	if withOrganizations {
-		manifest.DefaultPermissions.Organizations = "read"
+		manifest.DefaultPermissions.Members = "read"
 	}
 
 	return manifest, appName, nil
