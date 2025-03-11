@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/ent"
@@ -23,25 +22,29 @@ func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, instal
 	}
 
 	// Get user's organizations
-	orgs, _, err := authenticatedClient.Organizations.List(ctx, installation.AccountLogin, nil)
+	orgs, _, err := authenticatedClient.Organizations.ListOrgMemberships(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user organizations: %v", err)
 	}
 
-	adminOrgs := make([]*github.Organization, 0)
-	for _, org := range orgs {
-		// Check membership status in the organization
-		membership, _, err := authenticatedClient.Organizations.GetOrgMembership(ctx, installation.AccountLogin, org.GetLogin())
-		if err != nil {
-			// Log the error but continue processing other orgs
-			log.Errorf("Error getting membership for org %s: %v\n", org.GetLogin(), err)
-			continue
-		}
-
-		// Check if user has admin role in this organization
-		if strings.EqualFold(membership.GetRole(), "admin") {
-			adminOrgs = append(adminOrgs, org)
-		}
+	for _, o := range orgs {
+		log.Infof("Org: %v", o)
 	}
+
+	adminOrgs := make([]*github.Organization, 0)
+	// for _, org := range orgs {
+	// 	// Check membership status in the organization
+	// 	membership, _, err := authenticatedClient.Organizations.GetOrgMembership(ctx, installation.AccountLogin, org.GetLogin())
+	// 	if err != nil {
+	// 		// Log the error but continue processing other orgs
+	// 		log.Errorf("Error getting membership for org %s: %v\n", org.GetLogin(), err)
+	// 		continue
+	// 	}
+
+	// 	// Check if user has admin role in this organization
+	// 	if strings.EqualFold(membership.GetRole(), "admin") {
+	// 		adminOrgs = append(adminOrgs, org)
+	// 	}
+	// }
 	return adminOrgs, nil
 }
