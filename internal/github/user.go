@@ -9,7 +9,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/internal/log"
-	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
 func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, installation *ent.GithubInstallation) ([]*github.Organization, error) {
@@ -17,21 +16,14 @@ func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, instal
 		return nil, fmt.Errorf("Invalid installation")
 	}
 
-	privateKey, err := utils.DecodePrivateKey(installation.Edges.GithubApp.PrivateKey)
+	// Get authenticated client
+	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting authenticated client: %v", err)
 	}
-
-	bearerToken, err := utils.GenerateGithubJWT(installation.Edges.GithubApp.ID, privateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// Add token to client
-	client := self.client.WithAuthToken(bearerToken)
 
 	// Get user's organizations
-	orgs, _, err := client.Organizations.List(ctx, installation.AccountLogin, nil)
+	orgs, _, err := authenticatedClient.Organizations.List(ctx, installation.AccountLogin, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user organizations: %v", err)
 	}
@@ -39,7 +31,7 @@ func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, instal
 	var adminOrgs []*github.Organization
 	for _, org := range orgs {
 		// Check membership status in the organization
-		membership, _, err := client.Organizations.GetOrgMembership(ctx, installation.AccountLogin, org.GetLogin())
+		membership, _, err := authenticatedClient.Organizations.GetOrgMembership(ctx, installation.AccountLogin, org.GetLogin())
 		if err != nil {
 			// Log the error but continue processing other orgs
 			log.Errorf("Error getting membership for org %s: %v\n", org.GetLogin(), err)

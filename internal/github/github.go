@@ -1,12 +1,15 @@
 package github
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
 type GithubClient struct {
@@ -40,4 +43,26 @@ func NewGithubClient(cfg *config.Config) *GithubClient {
 		cfg:    cfg,
 		client: githubClient,
 	}
+}
+
+func (self *GithubClient) GetAuthenticatedClient(ctx context.Context, appID int64, installationID int64, appPrivateKey string) (*github.Client, error) {
+	privateKey, err := utils.DecodePrivateKey(appPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	bearerToken, err := utils.GenerateGithubJWT(appID, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add token to client
+	client := self.client.WithAuthToken(bearerToken)
+
+	token, _, err := client.Apps.CreateInstallationToken(ctx, installationID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create installation token: %v", err)
+	}
+
+	return self.client.WithAuthToken(token.GetToken()), nil
 }
