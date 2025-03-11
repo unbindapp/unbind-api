@@ -921,8 +921,8 @@ type GithubInstallationMutation struct {
 	events               *[]string
 	appendevents         []string
 	clearedFields        map[string]struct{}
-	github_apps          *int64
-	clearedgithub_apps   bool
+	github_app           *int64
+	clearedgithub_app    bool
 	done                 bool
 	oldValue             func(context.Context) (*GithubInstallation, error)
 	predicates           []predicate.GithubInstallation
@@ -1106,12 +1106,12 @@ func (m *GithubInstallationMutation) ResetUpdatedAt() {
 
 // SetGithubAppID sets the "github_app_id" field.
 func (m *GithubInstallationMutation) SetGithubAppID(i int64) {
-	m.github_apps = &i
+	m.github_app = &i
 }
 
 // GithubAppID returns the value of the "github_app_id" field in the mutation.
 func (m *GithubInstallationMutation) GithubAppID() (r int64, exists bool) {
-	v := m.github_apps
+	v := m.github_app
 	if v == nil {
 		return
 	}
@@ -1137,7 +1137,7 @@ func (m *GithubInstallationMutation) OldGithubAppID(ctx context.Context) (v int6
 
 // ResetGithubAppID resets all changes to the "github_app_id" field.
 func (m *GithubInstallationMutation) ResetGithubAppID() {
-	m.github_apps = nil
+	m.github_app = nil
 }
 
 // SetAccountID sets the "account_id" field.
@@ -1526,44 +1526,31 @@ func (m *GithubInstallationMutation) ResetEvents() {
 	delete(m.clearedFields, githubinstallation.FieldEvents)
 }
 
-// SetGithubAppsID sets the "github_apps" edge to the GithubApp entity by id.
-func (m *GithubInstallationMutation) SetGithubAppsID(id int64) {
-	m.github_apps = &id
-}
-
-// ClearGithubApps clears the "github_apps" edge to the GithubApp entity.
-func (m *GithubInstallationMutation) ClearGithubApps() {
-	m.clearedgithub_apps = true
+// ClearGithubApp clears the "github_app" edge to the GithubApp entity.
+func (m *GithubInstallationMutation) ClearGithubApp() {
+	m.clearedgithub_app = true
 	m.clearedFields[githubinstallation.FieldGithubAppID] = struct{}{}
 }
 
-// GithubAppsCleared reports if the "github_apps" edge to the GithubApp entity was cleared.
-func (m *GithubInstallationMutation) GithubAppsCleared() bool {
-	return m.clearedgithub_apps
+// GithubAppCleared reports if the "github_app" edge to the GithubApp entity was cleared.
+func (m *GithubInstallationMutation) GithubAppCleared() bool {
+	return m.clearedgithub_app
 }
 
-// GithubAppsID returns the "github_apps" edge ID in the mutation.
-func (m *GithubInstallationMutation) GithubAppsID() (id int64, exists bool) {
-	if m.github_apps != nil {
-		return *m.github_apps, true
-	}
-	return
-}
-
-// GithubAppsIDs returns the "github_apps" edge IDs in the mutation.
+// GithubAppIDs returns the "github_app" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// GithubAppsID instead. It exists only for internal usage by the builders.
-func (m *GithubInstallationMutation) GithubAppsIDs() (ids []int64) {
-	if id := m.github_apps; id != nil {
+// GithubAppID instead. It exists only for internal usage by the builders.
+func (m *GithubInstallationMutation) GithubAppIDs() (ids []int64) {
+	if id := m.github_app; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetGithubApps resets all changes to the "github_apps" edge.
-func (m *GithubInstallationMutation) ResetGithubApps() {
-	m.github_apps = nil
-	m.clearedgithub_apps = false
+// ResetGithubApp resets all changes to the "github_app" edge.
+func (m *GithubInstallationMutation) ResetGithubApp() {
+	m.github_app = nil
+	m.clearedgithub_app = false
 }
 
 // Where appends a list predicates to the GithubInstallationMutation builder.
@@ -1607,7 +1594,7 @@ func (m *GithubInstallationMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, githubinstallation.FieldUpdatedAt)
 	}
-	if m.github_apps != nil {
+	if m.github_app != nil {
 		fields = append(fields, githubinstallation.FieldGithubAppID)
 	}
 	if m.account_id != nil {
@@ -1917,8 +1904,8 @@ func (m *GithubInstallationMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GithubInstallationMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.github_apps != nil {
-		edges = append(edges, githubinstallation.EdgeGithubApps)
+	if m.github_app != nil {
+		edges = append(edges, githubinstallation.EdgeGithubApp)
 	}
 	return edges
 }
@@ -1927,8 +1914,8 @@ func (m *GithubInstallationMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *GithubInstallationMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case githubinstallation.EdgeGithubApps:
-		if id := m.github_apps; id != nil {
+	case githubinstallation.EdgeGithubApp:
+		if id := m.github_app; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -1950,8 +1937,8 @@ func (m *GithubInstallationMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GithubInstallationMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.clearedgithub_apps {
-		edges = append(edges, githubinstallation.EdgeGithubApps)
+	if m.clearedgithub_app {
+		edges = append(edges, githubinstallation.EdgeGithubApp)
 	}
 	return edges
 }
@@ -1960,8 +1947,8 @@ func (m *GithubInstallationMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *GithubInstallationMutation) EdgeCleared(name string) bool {
 	switch name {
-	case githubinstallation.EdgeGithubApps:
-		return m.clearedgithub_apps
+	case githubinstallation.EdgeGithubApp:
+		return m.clearedgithub_app
 	}
 	return false
 }
@@ -1970,8 +1957,8 @@ func (m *GithubInstallationMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *GithubInstallationMutation) ClearEdge(name string) error {
 	switch name {
-	case githubinstallation.EdgeGithubApps:
-		m.ClearGithubApps()
+	case githubinstallation.EdgeGithubApp:
+		m.ClearGithubApp()
 		return nil
 	}
 	return fmt.Errorf("unknown GithubInstallation unique edge %s", name)
@@ -1981,8 +1968,8 @@ func (m *GithubInstallationMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *GithubInstallationMutation) ResetEdge(name string) error {
 	switch name {
-	case githubinstallation.EdgeGithubApps:
-		m.ResetGithubApps()
+	case githubinstallation.EdgeGithubApp:
+		m.ResetGithubApp()
 		return nil
 	}
 	return fmt.Errorf("unknown GithubInstallation edge %s", name)

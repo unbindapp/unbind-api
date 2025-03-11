@@ -37,21 +37,21 @@ type DefaultPermissions struct {
 }
 
 // CreateAppManifest generates the GitHub App manifest
-func (g *GithubClient) CreateAppManifest(redirectUrl string, setupUrl string, withOrganizations bool) (manifest *GitHubAppManifest, appName string, err error) {
+func (self *GithubClient) CreateAppManifest(redirectUrl string, setupUrl string, withOrganizations bool) (manifest *GitHubAppManifest, appName string, err error) {
 	// Generate a random suffix
 	suffixRand, err := utils.GenerateRandomSimpleID(5)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to generate random suffix: %w", err)
 	}
 
-	appName = fmt.Sprintf("unbind-%s-%s", g.cfg.UnbindSuffix, suffixRand)
+	appName = fmt.Sprintf("unbind-%s-%s", self.cfg.UnbindSuffix, suffixRand)
 
 	manifest = &GitHubAppManifest{
 		Name:        appName,
 		Description: "Application to connect unbind with Github",
-		URL:         g.cfg.ExternalURL,
+		URL:         self.cfg.ExternalURL,
 		HookAttributes: HookAttributes{
-			URL: g.cfg.GithubWebhookURL,
+			URL: self.cfg.GithubWebhookURL,
 		},
 		RedirectURL: redirectUrl,
 		SetupUrl:    setupUrl,
@@ -73,8 +73,8 @@ func (g *GithubClient) CreateAppManifest(redirectUrl string, setupUrl string, wi
 }
 
 // ManifestCodeConversion gets app configruation from github using the code
-func (g *GithubClient) ManifestCodeConversion(ctx context.Context, code string) (*github.AppConfig, error) {
-	appConfig, response, err := g.client.Apps.CompleteAppManifest(ctx, code)
+func (self *GithubClient) ManifestCodeConversion(ctx context.Context, code string) (*github.AppConfig, error) {
+	appConfig, response, err := self.client.Apps.CompleteAppManifest(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange manifest code: %w", err)
 	}

@@ -195,15 +195,9 @@ func (giu *GithubInstallationUpdate) ClearEvents() *GithubInstallationUpdate {
 	return giu
 }
 
-// SetGithubAppsID sets the "github_apps" edge to the GithubApp entity by ID.
-func (giu *GithubInstallationUpdate) SetGithubAppsID(id int64) *GithubInstallationUpdate {
-	giu.mutation.SetGithubAppsID(id)
-	return giu
-}
-
-// SetGithubApps sets the "github_apps" edge to the GithubApp entity.
-func (giu *GithubInstallationUpdate) SetGithubApps(g *GithubApp) *GithubInstallationUpdate {
-	return giu.SetGithubAppsID(g.ID)
+// SetGithubApp sets the "github_app" edge to the GithubApp entity.
+func (giu *GithubInstallationUpdate) SetGithubApp(g *GithubApp) *GithubInstallationUpdate {
+	return giu.SetGithubAppID(g.ID)
 }
 
 // Mutation returns the GithubInstallationMutation object of the builder.
@@ -211,9 +205,9 @@ func (giu *GithubInstallationUpdate) Mutation() *GithubInstallationMutation {
 	return giu.mutation
 }
 
-// ClearGithubApps clears the "github_apps" edge to the GithubApp entity.
-func (giu *GithubInstallationUpdate) ClearGithubApps() *GithubInstallationUpdate {
-	giu.mutation.ClearGithubApps()
+// ClearGithubApp clears the "github_app" edge to the GithubApp entity.
+func (giu *GithubInstallationUpdate) ClearGithubApp() *GithubInstallationUpdate {
+	giu.mutation.ClearGithubApp()
 	return giu
 }
 
@@ -275,8 +269,8 @@ func (giu *GithubInstallationUpdate) check() error {
 			return &ValidationError{Name: "repository_selection", err: fmt.Errorf(`ent: validator failed for field "GithubInstallation.repository_selection": %w`, err)}
 		}
 	}
-	if giu.mutation.GithubAppsCleared() && len(giu.mutation.GithubAppsIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "GithubInstallation.github_apps"`)
+	if giu.mutation.GithubAppCleared() && len(giu.mutation.GithubAppIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "GithubInstallation.github_app"`)
 	}
 	return nil
 }
@@ -343,12 +337,12 @@ func (giu *GithubInstallationUpdate) sqlSave(ctx context.Context) (n int, err er
 	if giu.mutation.EventsCleared() {
 		_spec.ClearField(githubinstallation.FieldEvents, field.TypeJSON)
 	}
-	if giu.mutation.GithubAppsCleared() {
+	if giu.mutation.GithubAppCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   githubinstallation.GithubAppsTable,
-			Columns: []string{githubinstallation.GithubAppsColumn},
+			Table:   githubinstallation.GithubAppTable,
+			Columns: []string{githubinstallation.GithubAppColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
@@ -356,12 +350,12 @@ func (giu *GithubInstallationUpdate) sqlSave(ctx context.Context) (n int, err er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := giu.mutation.GithubAppsIDs(); len(nodes) > 0 {
+	if nodes := giu.mutation.GithubAppIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   githubinstallation.GithubAppsTable,
-			Columns: []string{githubinstallation.GithubAppsColumn},
+			Table:   githubinstallation.GithubAppTable,
+			Columns: []string{githubinstallation.GithubAppColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
@@ -557,15 +551,9 @@ func (giuo *GithubInstallationUpdateOne) ClearEvents() *GithubInstallationUpdate
 	return giuo
 }
 
-// SetGithubAppsID sets the "github_apps" edge to the GithubApp entity by ID.
-func (giuo *GithubInstallationUpdateOne) SetGithubAppsID(id int64) *GithubInstallationUpdateOne {
-	giuo.mutation.SetGithubAppsID(id)
-	return giuo
-}
-
-// SetGithubApps sets the "github_apps" edge to the GithubApp entity.
-func (giuo *GithubInstallationUpdateOne) SetGithubApps(g *GithubApp) *GithubInstallationUpdateOne {
-	return giuo.SetGithubAppsID(g.ID)
+// SetGithubApp sets the "github_app" edge to the GithubApp entity.
+func (giuo *GithubInstallationUpdateOne) SetGithubApp(g *GithubApp) *GithubInstallationUpdateOne {
+	return giuo.SetGithubAppID(g.ID)
 }
 
 // Mutation returns the GithubInstallationMutation object of the builder.
@@ -573,9 +561,9 @@ func (giuo *GithubInstallationUpdateOne) Mutation() *GithubInstallationMutation 
 	return giuo.mutation
 }
 
-// ClearGithubApps clears the "github_apps" edge to the GithubApp entity.
-func (giuo *GithubInstallationUpdateOne) ClearGithubApps() *GithubInstallationUpdateOne {
-	giuo.mutation.ClearGithubApps()
+// ClearGithubApp clears the "github_app" edge to the GithubApp entity.
+func (giuo *GithubInstallationUpdateOne) ClearGithubApp() *GithubInstallationUpdateOne {
+	giuo.mutation.ClearGithubApp()
 	return giuo
 }
 
@@ -650,8 +638,8 @@ func (giuo *GithubInstallationUpdateOne) check() error {
 			return &ValidationError{Name: "repository_selection", err: fmt.Errorf(`ent: validator failed for field "GithubInstallation.repository_selection": %w`, err)}
 		}
 	}
-	if giuo.mutation.GithubAppsCleared() && len(giuo.mutation.GithubAppsIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "GithubInstallation.github_apps"`)
+	if giuo.mutation.GithubAppCleared() && len(giuo.mutation.GithubAppIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "GithubInstallation.github_app"`)
 	}
 	return nil
 }
@@ -735,12 +723,12 @@ func (giuo *GithubInstallationUpdateOne) sqlSave(ctx context.Context) (_node *Gi
 	if giuo.mutation.EventsCleared() {
 		_spec.ClearField(githubinstallation.FieldEvents, field.TypeJSON)
 	}
-	if giuo.mutation.GithubAppsCleared() {
+	if giuo.mutation.GithubAppCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   githubinstallation.GithubAppsTable,
-			Columns: []string{githubinstallation.GithubAppsColumn},
+			Table:   githubinstallation.GithubAppTable,
+			Columns: []string{githubinstallation.GithubAppColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
@@ -748,12 +736,12 @@ func (giuo *GithubInstallationUpdateOne) sqlSave(ctx context.Context) (_node *Gi
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := giuo.mutation.GithubAppsIDs(); len(nodes) > 0 {
+	if nodes := giuo.mutation.GithubAppIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   githubinstallation.GithubAppsTable,
-			Columns: []string{githubinstallation.GithubAppsColumn},
+			Table:   githubinstallation.GithubAppTable,
+			Columns: []string{githubinstallation.GithubAppColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),

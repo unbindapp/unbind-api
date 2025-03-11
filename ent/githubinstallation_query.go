@@ -19,12 +19,12 @@ import (
 // GithubInstallationQuery is the builder for querying GithubInstallation entities.
 type GithubInstallationQuery struct {
 	config
-	ctx            *QueryContext
-	order          []githubinstallation.OrderOption
-	inters         []Interceptor
-	predicates     []predicate.GithubInstallation
-	withGithubApps *GithubAppQuery
-	modifiers      []func(*sql.Selector)
+	ctx           *QueryContext
+	order         []githubinstallation.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.GithubInstallation
+	withGithubApp *GithubAppQuery
+	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -61,8 +61,8 @@ func (giq *GithubInstallationQuery) Order(o ...githubinstallation.OrderOption) *
 	return giq
 }
 
-// QueryGithubApps chains the current query on the "github_apps" edge.
-func (giq *GithubInstallationQuery) QueryGithubApps() *GithubAppQuery {
+// QueryGithubApp chains the current query on the "github_app" edge.
+func (giq *GithubInstallationQuery) QueryGithubApp() *GithubAppQuery {
 	query := (&GithubAppClient{config: giq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := giq.prepareQuery(ctx); err != nil {
@@ -75,7 +75,7 @@ func (giq *GithubInstallationQuery) QueryGithubApps() *GithubAppQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(githubinstallation.Table, githubinstallation.FieldID, selector),
 			sqlgraph.To(githubapp.Table, githubapp.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, githubinstallation.GithubAppsTable, githubinstallation.GithubAppsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, githubinstallation.GithubAppTable, githubinstallation.GithubAppColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(giq.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +270,12 @@ func (giq *GithubInstallationQuery) Clone() *GithubInstallationQuery {
 		return nil
 	}
 	return &GithubInstallationQuery{
-		config:         giq.config,
-		ctx:            giq.ctx.Clone(),
-		order:          append([]githubinstallation.OrderOption{}, giq.order...),
-		inters:         append([]Interceptor{}, giq.inters...),
-		predicates:     append([]predicate.GithubInstallation{}, giq.predicates...),
-		withGithubApps: giq.withGithubApps.Clone(),
+		config:        giq.config,
+		ctx:           giq.ctx.Clone(),
+		order:         append([]githubinstallation.OrderOption{}, giq.order...),
+		inters:        append([]Interceptor{}, giq.inters...),
+		predicates:    append([]predicate.GithubInstallation{}, giq.predicates...),
+		withGithubApp: giq.withGithubApp.Clone(),
 		// clone intermediate query.
 		sql:       giq.sql.Clone(),
 		path:      giq.path,
@@ -283,14 +283,14 @@ func (giq *GithubInstallationQuery) Clone() *GithubInstallationQuery {
 	}
 }
 
-// WithGithubApps tells the query-builder to eager-load the nodes that are connected to
-// the "github_apps" edge. The optional arguments are used to configure the query builder of the edge.
-func (giq *GithubInstallationQuery) WithGithubApps(opts ...func(*GithubAppQuery)) *GithubInstallationQuery {
+// WithGithubApp tells the query-builder to eager-load the nodes that are connected to
+// the "github_app" edge. The optional arguments are used to configure the query builder of the edge.
+func (giq *GithubInstallationQuery) WithGithubApp(opts ...func(*GithubAppQuery)) *GithubInstallationQuery {
 	query := (&GithubAppClient{config: giq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	giq.withGithubApps = query
+	giq.withGithubApp = query
 	return giq
 }
 
@@ -373,7 +373,7 @@ func (giq *GithubInstallationQuery) sqlAll(ctx context.Context, hooks ...queryHo
 		nodes       = []*GithubInstallation{}
 		_spec       = giq.querySpec()
 		loadedTypes = [1]bool{
-			giq.withGithubApps != nil,
+			giq.withGithubApp != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -397,16 +397,16 @@ func (giq *GithubInstallationQuery) sqlAll(ctx context.Context, hooks ...queryHo
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := giq.withGithubApps; query != nil {
-		if err := giq.loadGithubApps(ctx, query, nodes, nil,
-			func(n *GithubInstallation, e *GithubApp) { n.Edges.GithubApps = e }); err != nil {
+	if query := giq.withGithubApp; query != nil {
+		if err := giq.loadGithubApp(ctx, query, nodes, nil,
+			func(n *GithubInstallation, e *GithubApp) { n.Edges.GithubApp = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (giq *GithubInstallationQuery) loadGithubApps(ctx context.Context, query *GithubAppQuery, nodes []*GithubInstallation, init func(*GithubInstallation), assign func(*GithubInstallation, *GithubApp)) error {
+func (giq *GithubInstallationQuery) loadGithubApp(ctx context.Context, query *GithubAppQuery, nodes []*GithubInstallation, init func(*GithubInstallation), assign func(*GithubInstallation, *GithubApp)) error {
 	ids := make([]int64, 0, len(nodes))
 	nodeids := make(map[int64][]*GithubInstallation)
 	for i := range nodes {
@@ -464,7 +464,7 @@ func (giq *GithubInstallationQuery) querySpec() *sqlgraph.QuerySpec {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if giq.withGithubApps != nil {
+		if giq.withGithubApp != nil {
 			_spec.Node.AddColumnOnce(githubinstallation.FieldGithubAppID)
 		}
 	}

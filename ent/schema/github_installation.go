@@ -71,7 +71,7 @@ func (GithubInstallation) Fields() []ent.Field {
 func (GithubInstallation) Edges() []ent.Edge {
 	return []ent.Edge{
 		// M2O with github_apps
-		edge.From("github_apps", GithubApp.Type).
+		edge.From("github_app", GithubApp.Type).
 			Ref("installations").
 			Field("github_app_id").
 			Required().

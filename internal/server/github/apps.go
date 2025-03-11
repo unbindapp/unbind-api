@@ -1,4 +1,4 @@
-package server
+package github_handler
 
 import (
 	"bytes"
@@ -12,9 +12,9 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/utils"
-	"github.com/valkey-io/valkey-go"
 )
 
 type GitHubAppCreateInput struct {
@@ -28,9 +28,9 @@ type GithubAppCreateResponse struct {
 }
 
 // Handler to render GitHub page with form submission
-func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppCreateInput) (*GithubAppCreateResponse, error) {
+func (self *HandlerGroup) HandleGithubAppCreate(ctx context.Context, input *GitHubAppCreateInput) (*GithubAppCreateResponse, error) {
 	// Get caller
-	user, found := self.GetUserFromContext(ctx)
+	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
@@ -66,14 +66,14 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 </html>`
 
 	// Build redirect
-	redirect, err := utils.JoinURLPaths(self.Cfg.ExternalURL, "/webhook/github/app/save")
+	redirect, err := utils.JoinURLPaths(self.srv.Cfg.ExternalURL, "/webhook/github/app/save")
 	if err != nil {
 		log.Error("Error building redirect URL", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to build redirect URL")
 	}
 
 	// Create GitHub app manifest, if not organization we also want organization read permission
-	manifest, appName, err := self.GithubClient.CreateAppManifest(redirect, input.RedirectURL, input.Organization == "")
+	manifest, appName, err := self.srv.GithubClient.CreateAppManifest(redirect, input.RedirectURL, input.Organization == "")
 
 	if err != nil {
 		log.Error("Error creating github app manifest", "err", err)
@@ -82,13 +82,13 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 
 	// Create a unique state to identify this request
 	state := uuid.New().String()
-	err = self.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
+	err = self.srv.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
 	if err != nil {
 		log.Error("Error setting state in cache", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to set state in cache")
 	}
 	// Set a user ID in the cache
-	err = self.StringCache.SetWithExpiration(ctx, state, user.ID.String(), 30*time.Minute)
+	err = self.srv.StringCache.SetWithExpiration(ctx, state, user.ID.String(), 30*time.Minute)
 	if err != nil {
 		log.Error("Error setting user ID in cache", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to set user ID in cache")
@@ -96,7 +96,7 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 
 	q := url.Values{}
 	q.Set("state", state)
-	githubUrl := fmt.Sprintf("%s/settings/apps/new?%s", self.Cfg.GithubURL, q.Encode())
+	githubUrl := fmt.Sprintf("%s/settings/apps/new?%s", self.srv.Cfg.GithubURL, q.Encode())
 
 	// Create template data struct
 	type templateData struct {
@@ -139,61 +139,30 @@ func (self *Server) HandleGithubAppCreate(ctx context.Context, input *GitHubAppC
 	return resp, nil
 }
 
-// Connect the new github app to our instance, via manifest code exchange
-type HandleGithubAppSaveInput struct {
-	Code  string `query:"code" required:"true"`
-	State string `query:"state" required:"true"`
+// Redirect user to install the app
+type HandleGithubAppInstallInput struct {
+	AppID int64 `path:"app_id" required:"true"`
 }
 
-type HandleGithubAppSaveResponse struct {
+type HandleGithubAppInstallResponse struct {
 	Status int
 	Url    string `header:"Location"`
 	Cookie string `header:"Set-Cookie"`
 }
 
-// Save github app and redirect to installation
-func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithubAppSaveInput) (*HandleGithubAppSaveResponse, error) {
-	// Exchange the code for tokens.
-	appConfig, err := self.GithubClient.ManifestCodeConversion(ctx, input.Code)
+func (self *HandlerGroup) HandleGithubAppInstall(ctx context.Context, input *HandleGithubAppInstallInput) (*HandleGithubAppInstallResponse, error) {
+	// Get the app
+	ghApp, err := self.srv.Repository.GetGithubAppByID(ctx, input.AppID)
 	if err != nil {
-		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to exchange manifest code: %v", err))
-	}
-
-	// Verify state
-	state, err := self.StringCache.Getdel(ctx, appConfig.GetName())
-	if err != nil {
-		if err == valkey.Nil {
-			return nil, huma.Error400BadRequest("Invalid state")
+		if ent.IsNotFound(err) {
+			return nil, huma.Error404NotFound("App not found")
 		}
-		log.Error("Error getting state from cache", "err", err)
-		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to get state: %v", err))
+		log.Error("Error getting github app", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to get github app")
 	}
 
-	if state != input.State {
-		return nil, huma.Error400BadRequest("Invalid state")
-	}
-
-	// Get user id from cache
-	userID, err := self.StringCache.Getdel(ctx, input.State)
-	if err != nil {
-		if err == valkey.Nil {
-			return nil, huma.Error400BadRequest("Invalid state")
-		}
-		log.Error("Error getting user ID from cache", "err", err)
-		return nil, huma.Error500InternalServerError(fmt.Sprintf("Failed to get user ID: %v", err))
-	}
-	userIDParsed, err := uuid.Parse(userID)
-	if err != nil {
-		log.Error("Error parsing user ID", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to determine user ID")
-	}
-
-	// Save the app config
-	ghApp, err := self.Repository.CreateGithubApp(ctx, appConfig, userIDParsed)
-	if err != nil {
-		log.Error("Error saving github app", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to save github app")
-	}
+	// Create a state parameter to verify the callback
+	state := uuid.New().String()
 
 	// create a cookie that stores the state value
 	cookie := &http.Cookie{
@@ -206,18 +175,36 @@ func (self *Server) HandleGithubAppSave(ctx context.Context, input *HandleGithub
 	}
 
 	// Redirect URL - this is where GitHub will send users to install your app
-	installationURL := fmt.Sprintf(
-		"https://github.com/apps/%s/installations/new?state=%s",
+	redirectURL := fmt.Sprintf(
+		"https://github.com/settings/apps/%s/installations/new?state=%s",
 		url.QueryEscape(ghApp.Name),
 		url.QueryEscape(state),
 	)
 
-	// Delay the redirect because github will 404 otherwise
-	time.Sleep(2 * time.Second)
-
-	return &HandleGithubAppSaveResponse{
+	return &HandleGithubAppInstallResponse{
 		Status: http.StatusTemporaryRedirect,
-		Url:    installationURL,
+		Url:    redirectURL,
 		Cookie: cookie.String(),
 	}, nil
+}
+
+// GET Github apps
+type GithubAppListInput struct {
+	WithInstallations bool `query:"with_installations"`
+}
+
+type GithubAppListResponse struct {
+	Body []*ent.GithubApp
+}
+
+func (self *HandlerGroup) HandleListGithubApps(ctx context.Context, input *GithubAppListInput) (*GithubAppListResponse, error) {
+	apps, err := self.srv.Repository.GetGithubApps(ctx, input.WithInstallations)
+	if err != nil {
+		log.Error("Error getting github apps", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to get github apps")
+	}
+
+	resp := &GithubAppListResponse{}
+	resp.Body = apps
+	return resp, nil
 }

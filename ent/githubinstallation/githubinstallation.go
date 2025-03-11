@@ -39,17 +39,17 @@ const (
 	FieldPermissions = "permissions"
 	// FieldEvents holds the string denoting the events field in the database.
 	FieldEvents = "events"
-	// EdgeGithubApps holds the string denoting the github_apps edge name in mutations.
-	EdgeGithubApps = "github_apps"
+	// EdgeGithubApp holds the string denoting the github_app edge name in mutations.
+	EdgeGithubApp = "github_app"
 	// Table holds the table name of the githubinstallation in the database.
 	Table = "github_installations"
-	// GithubAppsTable is the table that holds the github_apps relation/edge.
-	GithubAppsTable = "github_installations"
-	// GithubAppsInverseTable is the table name for the GithubApp entity.
+	// GithubAppTable is the table that holds the github_app relation/edge.
+	GithubAppTable = "github_installations"
+	// GithubAppInverseTable is the table name for the GithubApp entity.
 	// It exists in this package in order to avoid circular dependency with the "githubapp" package.
-	GithubAppsInverseTable = "github_apps"
-	// GithubAppsColumn is the table column denoting the github_apps relation/edge.
-	GithubAppsColumn = "github_app_id"
+	GithubAppInverseTable = "github_apps"
+	// GithubAppColumn is the table column denoting the github_app relation/edge.
+	GithubAppColumn = "github_app_id"
 )
 
 // Columns holds all SQL columns for githubinstallation fields.
@@ -205,16 +205,16 @@ func ByActive(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldActive, opts...).ToFunc()
 }
 
-// ByGithubAppsField orders the results by github_apps field.
-func ByGithubAppsField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByGithubAppField orders the results by github_app field.
+func ByGithubAppField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newGithubAppsStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newGithubAppStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newGithubAppsStep() *sqlgraph.Step {
+func newGithubAppStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(GithubAppsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, GithubAppsTable, GithubAppsColumn),
+		sqlgraph.To(GithubAppInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, GithubAppTable, GithubAppColumn),
 	)
 }

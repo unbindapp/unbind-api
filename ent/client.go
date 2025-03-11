@@ -523,15 +523,15 @@ func (c *GithubInstallationClient) GetX(ctx context.Context, id int64) *GithubIn
 	return obj
 }
 
-// QueryGithubApps queries the github_apps edge of a GithubInstallation.
-func (c *GithubInstallationClient) QueryGithubApps(gi *GithubInstallation) *GithubAppQuery {
+// QueryGithubApp queries the github_app edge of a GithubInstallation.
+func (c *GithubInstallationClient) QueryGithubApp(gi *GithubInstallation) *GithubAppQuery {
 	query := (&GithubAppClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := gi.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(githubinstallation.Table, githubinstallation.FieldID, id),
 			sqlgraph.To(githubapp.Table, githubapp.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, githubinstallation.GithubAppsTable, githubinstallation.GithubAppsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, githubinstallation.GithubAppTable, githubinstallation.GithubAppColumn),
 		)
 		fromV = sqlgraph.Neighbors(gi.driver.Dialect(), step)
 		return fromV, nil

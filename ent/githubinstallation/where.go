@@ -445,21 +445,21 @@ func EventsNotNil() predicate.GithubInstallation {
 	return predicate.GithubInstallation(sql.FieldNotNull(FieldEvents))
 }
 
-// HasGithubApps applies the HasEdge predicate on the "github_apps" edge.
-func HasGithubApps() predicate.GithubInstallation {
+// HasGithubApp applies the HasEdge predicate on the "github_app" edge.
+func HasGithubApp() predicate.GithubInstallation {
 	return predicate.GithubInstallation(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, GithubAppsTable, GithubAppsColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, GithubAppTable, GithubAppColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasGithubAppsWith applies the HasEdge predicate on the "github_apps" edge with a given conditions (other predicates).
-func HasGithubAppsWith(preds ...predicate.GithubApp) predicate.GithubInstallation {
+// HasGithubAppWith applies the HasEdge predicate on the "github_app" edge with a given conditions (other predicates).
+func HasGithubAppWith(preds ...predicate.GithubApp) predicate.GithubInstallation {
 	return predicate.GithubInstallation(func(s *sql.Selector) {
-		step := newGithubAppsStep()
+		step := newGithubAppStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -150,15 +150,9 @@ func (gic *GithubInstallationCreate) SetID(i int64) *GithubInstallationCreate {
 	return gic
 }
 
-// SetGithubAppsID sets the "github_apps" edge to the GithubApp entity by ID.
-func (gic *GithubInstallationCreate) SetGithubAppsID(id int64) *GithubInstallationCreate {
-	gic.mutation.SetGithubAppsID(id)
-	return gic
-}
-
-// SetGithubApps sets the "github_apps" edge to the GithubApp entity.
-func (gic *GithubInstallationCreate) SetGithubApps(g *GithubApp) *GithubInstallationCreate {
-	return gic.SetGithubAppsID(g.ID)
+// SetGithubApp sets the "github_app" edge to the GithubApp entity.
+func (gic *GithubInstallationCreate) SetGithubApp(g *GithubApp) *GithubInstallationCreate {
+	return gic.SetGithubAppID(g.ID)
 }
 
 // Mutation returns the GithubInstallationMutation object of the builder.
@@ -275,8 +269,8 @@ func (gic *GithubInstallationCreate) check() error {
 			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "GithubInstallation.id": %w`, err)}
 		}
 	}
-	if len(gic.mutation.GithubAppsIDs()) == 0 {
-		return &ValidationError{Name: "github_apps", err: errors.New(`ent: missing required edge "GithubInstallation.github_apps"`)}
+	if len(gic.mutation.GithubAppIDs()) == 0 {
+		return &ValidationError{Name: "github_app", err: errors.New(`ent: missing required edge "GithubInstallation.github_app"`)}
 	}
 	return nil
 }
@@ -355,12 +349,12 @@ func (gic *GithubInstallationCreate) createSpec() (*GithubInstallation, *sqlgrap
 		_spec.SetField(githubinstallation.FieldEvents, field.TypeJSON, value)
 		_node.Events = value
 	}
-	if nodes := gic.mutation.GithubAppsIDs(); len(nodes) > 0 {
+	if nodes := gic.mutation.GithubAppIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   githubinstallation.GithubAppsTable,
-			Columns: []string{githubinstallation.GithubAppsColumn},
+			Table:   githubinstallation.GithubAppTable,
+			Columns: []string{githubinstallation.GithubAppColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),

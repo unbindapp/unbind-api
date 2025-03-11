@@ -9,7 +9,7 @@ import (
 )
 
 func (r *Repository) GetGithubInstallationByID(ctx context.Context, ID int64) (*ent.GithubInstallation, error) {
-	return r.DB.GithubInstallation.Query().Where(githubinstallation.ID(ID)).Only(ctx)
+	return r.DB.GithubInstallation.Query().Where(githubinstallation.ID(ID)).WithGithubApp().Only(ctx)
 }
 
 func (r *Repository) GetGithubInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error) {

@@ -34,6 +34,8 @@ type Config struct {
 	DexClientSecret      string `env:"DEX_CLIENT_SECRET"`
 	// Kubernetes config, optional - if in cluster it will use the in-cluster config
 	KubeConfig string `env:"KUBECONFIG"`
+	// ! TODO - remove me some day, for bypassing oauth
+	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
 }
 
 // Parse environment variables into a Config struct

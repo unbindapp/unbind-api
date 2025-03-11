@@ -17,6 +17,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/middleware"
 	"github.com/unbindapp/unbind-api/internal/server"
+	github_handler "github.com/unbindapp/unbind-api/internal/server/github"
+	webhook_handler "github.com/unbindapp/unbind-api/internal/server/webhook"
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/oauth2"
 )
@@ -109,6 +111,7 @@ func startAPI(cfg *config.Config) {
 	huma.Get(userGrp, "/me", srvImpl.Me)
 
 	ghGroup := huma.NewGroup(api, "/github")
+	githubHandlers := github_handler.NewHandlerGroup(srvImpl)
 	ghGroup.UseMiddleware(mw.Authenticate)
 	huma.Register(
 		ghGroup,
@@ -119,7 +122,7 @@ func startAPI(cfg *config.Config) {
 			Path:        "/app/create",
 			Method:      http.MethodGet,
 		},
-		srvImpl.HandleGithubAppCreate,
+		githubHandlers.HandleGithubAppCreate,
 	)
 	huma.Register(
 		ghGroup,
@@ -130,7 +133,7 @@ func startAPI(cfg *config.Config) {
 			Path:        "/app/install/{app_id}",
 			Method:      http.MethodPost,
 		},
-		srvImpl.HandleGithubAppInstall,
+		githubHandlers.HandleGithubAppInstall,
 	)
 	huma.Register(
 		ghGroup,
@@ -141,7 +144,7 @@ func startAPI(cfg *config.Config) {
 			Path:        "/apps",
 			Method:      http.MethodGet,
 		},
-		srvImpl.HandleListGithubApps,
+		githubHandlers.HandleListGithubApps,
 	)
 	huma.Register(
 		ghGroup,
@@ -152,10 +155,22 @@ func startAPI(cfg *config.Config) {
 			Path:        "/app/{app_id}/installations",
 			Method:      http.MethodGet,
 		},
-		srvImpl.HandleListGithubAppInstallations,
+		githubHandlers.HandleListGithubAppInstallations,
+	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "list-admin-organizations",
+			Summary:     "List Admin Organizations for an User Installation",
+			Description: "List all admin organizations for a specific user installation, invalid for 'Organization' installations.",
+			Path:        "/installation/{installation_id}/organizations",
+			Method:      http.MethodGet,
+		},
+		githubHandlers.HandleListGithubAdminOrganizations,
 	)
 
 	webhookGroup := huma.NewGroup(api, "/webhook")
+	webhookHandlers := webhook_handler.NewHandlerGroup(srvImpl)
 	huma.Register(
 		webhookGroup,
 		huma.Operation{
@@ -165,7 +180,7 @@ func startAPI(cfg *config.Config) {
 			Path:        "/github",
 			Method:      http.MethodPost,
 		},
-		srvImpl.HandleGithubWebhook,
+		webhookHandlers.HandleGithubWebhook,
 	)
 	huma.Register(
 		webhookGroup,
@@ -176,7 +191,7 @@ func startAPI(cfg *config.Config) {
 			Path:        "/github/app/save",
 			Method:      http.MethodGet,
 		},
-		srvImpl.HandleGithubAppSave,
+		webhookHandlers.HandleGithubAppSave,
 	)
 
 	// !

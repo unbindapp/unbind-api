@@ -8,22 +8,36 @@ import (
 	"github.com/unbindapp/unbind-api/internal/log"
 )
 
-func (m *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) {
+func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) {
 	authHeader := ctx.Header("Authorization")
 	if authHeader == "" {
-		huma.WriteErr(m.api, ctx, http.StatusUnauthorized, "Authorization header required")
+		huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Authorization header required")
 		return
 	}
 
 	if !strings.HasPrefix(authHeader, "Bearer ") {
-		huma.WriteErr(m.api, ctx, http.StatusUnauthorized, "Authorization header must be a Bearer token")
+		huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Authorization header must be a Bearer token")
 		return
 	}
 
 	bearerToken := strings.TrimPrefix(authHeader, "Bearer ")
-	token, err := m.verifier.Verify(ctx.Context(), bearerToken)
+
+	// ! TODO - remove tester token check someday
+	if bearerToken == self.cfg.AdminTesterToken {
+		user, err := self.repository.GetUserByEmail(ctx.Context(), "admin@unbind.app")
+		if err != nil {
+			log.Errorf("Failed to process user: %v", err)
+			huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")
+			return
+		}
+		ctx = huma.WithValue(ctx, "user", user)
+		next(ctx)
+		return
+	}
+
+	token, err := self.verifier.Verify(ctx.Context(), bearerToken)
 	if err != nil {
-		huma.WriteErr(m.api, ctx, http.StatusUnauthorized, "Invalid token")
+		huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Invalid token")
 		return
 	}
 
@@ -34,15 +48,15 @@ func (m *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) {
 	}
 	if err := token.Claims(&claims); err != nil {
 		log.Errorf("Failed to parse claims: %v", err)
-		huma.WriteErr(m.api, ctx, http.StatusInternalServerError, "Failed to parse claims")
+		huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to parse claims")
 		return
 	}
 
 	// Get or create user using Ent
-	user, err := m.repository.GetUserByEmail(ctx.Context(), claims.Email)
+	user, err := self.repository.GetUserByEmail(ctx.Context(), claims.Email)
 	if err != nil {
 		log.Errorf("Failed to process user: %v", err)
-		huma.WriteErr(m.api, ctx, http.StatusInternalServerError, "Failed to process user")
+		huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")
 		return
 	}
 

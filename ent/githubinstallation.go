@@ -53,22 +53,22 @@ type GithubInstallation struct {
 
 // GithubInstallationEdges holds the relations/edges for other nodes in the graph.
 type GithubInstallationEdges struct {
-	// GithubApps holds the value of the github_apps edge.
-	GithubApps *GithubApp `json:"github_apps,omitempty"`
+	// GithubApp holds the value of the github_app edge.
+	GithubApp *GithubApp `json:"github_app,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// GithubAppsOrErr returns the GithubApps value or an error if the edge
+// GithubAppOrErr returns the GithubApp value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e GithubInstallationEdges) GithubAppsOrErr() (*GithubApp, error) {
-	if e.GithubApps != nil {
-		return e.GithubApps, nil
+func (e GithubInstallationEdges) GithubAppOrErr() (*GithubApp, error) {
+	if e.GithubApp != nil {
+		return e.GithubApp, nil
 	} else if e.loadedTypes[0] {
 		return nil, &NotFoundError{label: githubapp.Label}
 	}
-	return nil, &NotLoadedError{edge: "github_apps"}
+	return nil, &NotLoadedError{edge: "github_app"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -196,9 +196,9 @@ func (gi *GithubInstallation) Value(name string) (ent.Value, error) {
 	return gi.selectValues.Get(name)
 }
 
-// QueryGithubApps queries the "github_apps" edge of the GithubInstallation entity.
-func (gi *GithubInstallation) QueryGithubApps() *GithubAppQuery {
-	return NewGithubInstallationClient(gi.config).QueryGithubApps(gi)
+// QueryGithubApp queries the "github_app" edge of the GithubInstallation entity.
+func (gi *GithubInstallation) QueryGithubApp() *GithubAppQuery {
+	return NewGithubInstallationClient(gi.config).QueryGithubApp(gi)
 }
 
 // Update returns a builder for updating this GithubInstallation.

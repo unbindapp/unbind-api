@@ -14,6 +14,7 @@ type Middleware struct {
 	verifier   *oidc.IDTokenVerifier
 	repository repository.RepositoryInterface
 	api        huma.API
+	cfg        *config.Config
 }
 
 func NewMiddleware(cfg *config.Config, repository repository.RepositoryInterface, api huma.API) (*Middleware, error) {
@@ -26,5 +27,6 @@ func NewMiddleware(cfg *config.Config, repository repository.RepositoryInterface
 		verifier:   provider.Verifier(&oidc.Config{ClientID: cfg.DexClientID}),
 		repository: repository,
 		api:        api,
+		cfg:        cfg,
 	}, nil
 }
