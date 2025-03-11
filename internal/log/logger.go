@@ -2,7 +2,6 @@ package log
 
 import (
 	"os"
-	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
@@ -20,7 +19,7 @@ func getLogger() *log.Logger {
 		logger = log.New(os.Stderr)
 		logger.SetStyles(styles)
 		logger.SetReportTimestamp(true)
-		logger.SetTimeFormat(time.RFC822Z)
+		logger.SetTimeFormat("15:04:05 MST")
 	}
 	return logger
 }

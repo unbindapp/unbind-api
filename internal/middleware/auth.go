@@ -34,7 +34,6 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 		next(ctx)
 		return
 	}
-	log.Errorf("token %s", bearerToken)
 
 	token, err := self.verifier.Verify(ctx.Context(), bearerToken)
 	if err != nil {
