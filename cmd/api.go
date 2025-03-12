@@ -76,6 +76,22 @@ func startAPI(cfg *config.Config) {
 
 	// New chi router
 	r := chi.NewRouter()
+
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{
+			"http://localhost:3000",
+			"https://app.unbind.app",
+		},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
 	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(`<!doctype html>
@@ -95,21 +111,6 @@ func startAPI(cfg *config.Config) {
 				</body>
 			</html>`))
 	})
-
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:3000",
-			"https://app.unbind.app",
-		},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
 
 	config := huma.DefaultConfig("Unbind API", "1.0.0")
 	config.DocsPath = ""
