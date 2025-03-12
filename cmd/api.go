@@ -176,6 +176,8 @@ func startAPI(cfg *config.Config) {
 			OperationID: "me",
 			Summary:     "Get User (Me)",
 			Description: "Get the current user",
+			Path:        "/me",
+			Method:      http.MethodGet,
 		},
 		userHandlers.Me,
 	)
