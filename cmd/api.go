@@ -130,6 +130,7 @@ func startAPI(cfg *config.Config) {
 			Description: "Check if the API is healthy",
 			Path:        "/health",
 			Method:      http.MethodGet,
+			Tags:        []string{"Meta"},
 		},
 		srvImpl.HealthCheck,
 	)
@@ -279,7 +280,7 @@ func startAPI(cfg *config.Config) {
 
 	// /teams
 	teamsGroup := huma.NewGroup(api, "/teams")
-	ghGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+	teamsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"Teams"}
 		next(op)
 	})
