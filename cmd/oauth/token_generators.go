@@ -75,8 +75,14 @@ func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo *repository.
 		"email":          u.Email,
 		"email_verified": true,
 		"name":           "John Doe",
-		// ! TODO - dynamic groups
-		"groups": []string{"oidc:users"},
+	}
+
+	scopes := strings.Split(ti.GetScope(), " ")
+	for _, scope := range scopes {
+		if scope == "groups" {
+			// ! TODO - dynamic groups
+			claims["groups"] = []string{"oidc:users"}
+		}
 	}
 
 	// Create a token with claims
