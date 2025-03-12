@@ -11,6 +11,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/database/repository"
+	"github.com/unbindapp/unbind-api/internal/log"
 )
 
 // Access token generator
@@ -78,10 +79,13 @@ func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo *repository.
 	}
 
 	scopes := strings.Split(ti.GetScope(), " ")
+	log.Infof("SCOPES %v", scopes)
 	for _, scope := range scopes {
+		log.Infof("SCOPE %v", scope)
 		if scope == "groups" {
 			// ! TODO - dynamic groups
 			claims["groups"] = []string{"oidc:users"}
+			log.Infof("CLAIMS %v", claims)
 		}
 	}
 
