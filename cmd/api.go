@@ -290,7 +290,7 @@ func startAPI(cfg *config.Config) {
 			OperationID: "list-teams",
 			Summary:     "List Teams",
 			Description: "List all teams the current user is a member of",
-			Path:        "",
+			Path:        "/",
 			Method:      http.MethodGet,
 		},
 		teamHandlers.ListTeams,
