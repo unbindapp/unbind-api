@@ -31,8 +31,6 @@ func (a *accessTokenGenerator) Token(ctx context.Context, data *oauth2.GenerateB
 		"iat": now.Unix(),
 		"jti": uuid.New().String(),
 		"sid": uuid.New().String(),
-		// ! TODO - dynamic groups
-		"groups": []string{"oidc:users"},
 	}
 
 	// Create the token
@@ -77,6 +75,8 @@ func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo *repository.
 		"email":          u.Email,
 		"email_verified": true,
 		"name":           "John Doe",
+		// ! TODO - dynamic groups
+		"groups": []string{"oidc:users"},
 	}
 
 	// Create a token with claims
