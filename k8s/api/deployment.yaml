@@ -22,6 +22,7 @@ spec:
     spec:
       containers:
         - name: unbind-api
+          serviceAccountName: unbind-api-sa
           image: replaceme
           command: ["/app/server"]
           args: ["-start-api"]
