@@ -21,6 +21,7 @@ type CallbackResponse struct {
 		AccessToken  string    `json:"access_token"`
 		TokenType    string    `json:"token_type"`
 		RefreshToken string    `json:"refresh_token"`
+		IDToken      string    `json:"id_token"`
 		Expiry       time.Time `json:"expiry"`
 	}
 }
@@ -41,6 +42,7 @@ func (self *Server) Callback(ctx context.Context, in *CallbackInput) (*CallbackR
 	// For development, return the token details as JSON.
 	cbResponse := &CallbackResponse{}
 	cbResponse.Body.AccessToken = oauth2Token.AccessToken
+	cbResponse.Body.IDToken = oauth2Token.Extra("id_token").(string)
 	cbResponse.Body.TokenType = oauth2Token.TokenType
 	cbResponse.Body.RefreshToken = oauth2Token.RefreshToken
 	cbResponse.Body.Expiry = oauth2Token.Expiry
