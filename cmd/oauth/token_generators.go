@@ -31,6 +31,8 @@ func (a *accessTokenGenerator) Token(ctx context.Context, data *oauth2.GenerateB
 		"iat": now.Unix(),
 		"jti": uuid.New().String(),
 		"sid": uuid.New().String(),
+		// ! TODO - dynamic groups
+		"groups": []string{"oidc:users"},
 	}
 
 	// Create the token
