@@ -5,6 +5,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/config"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -41,4 +42,17 @@ func NewKubeClient(cfg *config.Config) *KubeClient {
 		config: cfg,
 		client: clientset,
 	}
+}
+
+func (k *KubeClient) createClientWithToken(token string) (*kubernetes.Clientset, error) {
+	config := &rest.Config{
+		Host:        k.config.KubeProxyURL,
+		BearerToken: token,
+		// Skip TLS verification for internal cluster communication
+		TLSClientConfig: rest.TLSClientConfig{
+			Insecure: true,
+		},
+	}
+
+	return kubernetes.NewForConfig(config)
 }

@@ -8,8 +8,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/unbindapp/unbind-api/internal/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // A team has a name and an underlying namespace
@@ -20,14 +20,15 @@ type UnbindTeam struct {
 }
 
 // GetUnbindTeams returns a slice of UnbindTeam structs
-func (k *KubeClient) GetUnbindTeams() ([]UnbindTeam, error) {
-	namespaceRes := k.client.Resource(schema.GroupVersionResource{
-		Group:    "",
-		Version:  "v1",
-		Resource: "namespaces",
-	})
+func (k *KubeClient) GetUnbindTeams(ctx context.Context, bearerToken string) ([]UnbindTeam, error) {
+	client, err := k.createClientWithToken(bearerToken)
+	if err != nil {
+		log.Errorf("Error creating client with token: %v", err)
+		return nil, fmt.Errorf("error creating client with token: %v", err)
+	}
 
-	namespaces, err := namespaceRes.List(context.Background(), metav1.ListOptions{
+	// List namespaces with the unbind-team label
+	namespaces, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{
 		LabelSelector: "unbind-team",
 	})
 	if err != nil {

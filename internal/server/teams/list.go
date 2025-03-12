@@ -2,12 +2,16 @@ package teams_handler
 
 import (
 	"context"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/kubeclient"
 	"github.com/unbindapp/unbind-api/internal/log"
-	"github.com/unbindapp/unbind-api/internal/server"
 )
+
+type TeamInput struct {
+	Authorization string `header:"Authorization"`
+}
 
 type TeamResponse struct {
 	Body struct {
@@ -16,8 +20,10 @@ type TeamResponse struct {
 }
 
 // ListTeams handles GET /teams
-func (self *HandlerGroup) ListTeams(ctx context.Context, _ *server.EmptyInput) (*TeamResponse, error) {
-	teams, err := self.srv.KubeClient.GetUnbindTeams()
+func (self *HandlerGroup) ListTeams(ctx context.Context, input *TeamInput) (*TeamResponse, error) {
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+
+	teams, err := self.srv.KubeClient.GetUnbindTeams(ctx, bearerToken)
 	if err != nil {
 		log.Error("Error getting teams", "err", err)
 		return nil, huma.Error500InternalServerError("Unable to retrieve teams")

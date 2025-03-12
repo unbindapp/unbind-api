@@ -34,6 +34,8 @@ type Config struct {
 	DexClientSecret      string `env:"DEX_CLIENT_SECRET"`
 	// Kubernetes config, optional - if in cluster it will use the in-cluster config
 	KubeConfig string `env:"KUBECONFIG"`
+	// kube-oidc-proxy
+	KubeProxyURL string `env:"KUBE_PROXY_URL" envDefault:"https://kube-oidc-proxy.unbind-system.svc.cluster.local:443"`
 	// ! TODO - remove me some day, for bypassing oauth
 	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
 }
