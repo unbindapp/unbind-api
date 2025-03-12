@@ -92,6 +92,10 @@ func startAPI(cfg *config.Config) {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
+	config := huma.DefaultConfig("Unbind API", "1.0.0")
+	config.DocsPath = ""
+	api := humachi.New(r, config)
+
 	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.Write([]byte(`<!doctype html>
@@ -111,10 +115,6 @@ func startAPI(cfg *config.Config) {
 				</body>
 			</html>`))
 	})
-
-	config := huma.DefaultConfig("Unbind API", "1.0.0")
-	config.DocsPath = ""
-	api := humachi.New(r, config)
 
 	// Create middleware
 	mw, err := middleware.NewMiddleware(cfg, repo, api)
