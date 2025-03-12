@@ -289,7 +289,7 @@ func startAPI(cfg *config.Config) {
 		teamsGroup,
 		huma.Operation{
 			OperationID: "list-teams",
-			Summary:     "List",
+			Summary:     "List Teams",
 			Description: "List all teams the current user is a member of",
 			Path:        "/list",
 			Method:      http.MethodGet,
