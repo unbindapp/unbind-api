@@ -76,6 +76,26 @@ func startAPI(cfg *config.Config) {
 
 	// New chi router
 	r := chi.NewRouter()
+	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<!doctype html>
+			<html>
+				<head>
+					<title>API Reference</title>
+					<meta charset="utf-8" />
+					<meta
+						name="viewport"
+						content="width=device-width, initial-scale=1" />
+				</head>
+				<body>
+					<script
+						id="api-reference"
+						data-url="/openapi.json"></script>
+					<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+				</body>
+			</html>`))
+	})
+
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
@@ -91,7 +111,9 @@ func startAPI(cfg *config.Config) {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	api := humachi.New(r, huma.DefaultConfig("Unbind API", "1.0.0"))
+	config := huma.DefaultConfig("Unbind API", "1.0.0")
+	config.DocsPath = ""
+	api := humachi.New(r, config)
 
 	// Create middleware
 	mw, err := middleware.NewMiddleware(cfg, repo, api)
@@ -99,7 +121,6 @@ func startAPI(cfg *config.Config) {
 		log.Warnf("Failed to create middleware: %v", err)
 	}
 
-	// Add routes
 	huma.Get(api, "/healthz", srvImpl.HealthCheck)
 
 	// /auth group
