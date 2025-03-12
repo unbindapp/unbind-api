@@ -52,6 +52,10 @@ func (k *KubeClient) createClientWithToken(token string) (*kubernetes.Clientset,
 		TLSClientConfig: rest.TLSClientConfig{
 			Insecure: true,
 		},
+		Impersonate: rest.ImpersonationConfig{
+			// ! TODO - dynamic groups
+			Groups: []string{"oidc:users"},
+		},
 	}
 
 	return kubernetes.NewForConfig(config)
