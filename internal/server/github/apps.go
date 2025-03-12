@@ -22,8 +22,9 @@ type GitHubAppCreateInput struct {
 }
 
 type GithubAppCreateResponse struct {
-	ContentType string `header:"Content-Type"`
-	Body        []byte
+	Body struct {
+		Data string `json:"data"`
+	}
 }
 
 // Handler to render GitHub page with form submission
@@ -130,12 +131,13 @@ func (self *HandlerGroup) HandleGithubAppCreate(ctx context.Context, input *GitH
 	}
 
 	// Create response
-	resp := &GithubAppCreateResponse{
-		ContentType: "text/html; charset=utf-8",
-		Body:        buf.Bytes(),
-	}
-
-	return resp, nil
+	return &GithubAppCreateResponse{
+		Body: struct {
+			Data string `json:"data"`
+		}{
+			Data: buf.String(),
+		},
+	}, nil
 }
 
 // GET Github apps
