@@ -194,7 +194,7 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "app-create",
-			Summary:     "Create GitHub App",
+			Summary:     "Create App",
 			Description: "Begin the workflow to create a GitHub application",
 			Path:        "/app/create",
 			Method:      http.MethodGet,
@@ -205,7 +205,7 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "list-apps",
-			Summary:     "List Github Apps",
+			Summary:     "List Apps",
 			Description: "List all the GitHub apps connected to our instance",
 			Path:        "/apps",
 			Method:      http.MethodGet,
@@ -227,7 +227,7 @@ func startAPI(cfg *config.Config) {
 		ghGroup,
 		huma.Operation{
 			OperationID: "list-admin-organizations",
-			Summary:     "List Admin Organizations for an User Installation",
+			Summary:     "List Admin Organizations",
 			Description: "List all admin organizations for a specific user installation, invalid for 'Organization' installations.",
 			Path:        "/installation/{installation_id}/organizations",
 			Method:      http.MethodGet,
@@ -267,7 +267,7 @@ func startAPI(cfg *config.Config) {
 		webhookGroup,
 		huma.Operation{
 			OperationID: "app-save",
-			Summary:     "Save GitHub app",
+			Summary:     "Save GitHub App",
 			Description: "Save GitHub app via code exchange and redirect to installation",
 			Path:        "/github/app/save",
 			Method:      http.MethodGet,
