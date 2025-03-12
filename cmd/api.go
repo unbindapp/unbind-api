@@ -122,20 +122,69 @@ func startAPI(cfg *config.Config) {
 		log.Warnf("Failed to create middleware: %v", err)
 	}
 
-	huma.Get(api, "/healthz", srvImpl.HealthCheck)
+	huma.Register(
+		api,
+		huma.Operation{
+			OperationID: "health",
+			Summary:     "Health Check",
+			Description: "Check if the API is healthy",
+			Path:        "/health",
+			Method:      http.MethodGet,
+		},
+		srvImpl.HealthCheck,
+	)
 
 	// /auth group
-	authGrp := huma.NewGroup(api, "/auth")
-	huma.Get(authGrp, "/login", srvImpl.Login)
-	huma.Get(authGrp, "/callback", srvImpl.Callback)
+	authGroup := huma.NewGroup(api, "/auth")
+	authGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Auth"}
+		next(op)
+	})
+	huma.Register(
+		authGroup,
+		huma.Operation{
+			OperationID: "login",
+			Summary:     "Login",
+			Description: "Login",
+			Path:        "/login",
+			Method:      http.MethodGet,
+		},
+		srvImpl.Login)
+	huma.Register(
+		authGroup,
+		huma.Operation{
+			OperationID: "callback",
+			Summary:     "Callback",
+			Description: "Callback",
+			Path:        "/callback",
+			Method:      http.MethodGet,
+		},
+		srvImpl.Callback,
+	)
 
 	// /user group
-	userGrp := huma.NewGroup(api, "/user")
+	userGroup := huma.NewGroup(api, "/user")
+	userGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"User"}
+		next(op)
+	})
 	userHandlers := user_handler.NewHandlerGroup(srvImpl)
-	userGrp.UseMiddleware(mw.Authenticate)
-	huma.Get(userGrp, "/me", userHandlers.Me)
+	userGroup.UseMiddleware(mw.Authenticate)
+	huma.Register(
+		userGroup,
+		huma.Operation{
+			OperationID: "me",
+			Summary:     "Get User (Me)",
+			Description: "Get the current user",
+		},
+		userHandlers.Me,
+	)
 
 	ghGroup := huma.NewGroup(api, "/github")
+	ghGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"GitHub"}
+		next(op)
+	})
 	githubHandlers := github_handler.NewHandlerGroup(srvImpl)
 	ghGroup.UseMiddleware(mw.Authenticate)
 	huma.Register(
@@ -195,6 +244,10 @@ func startAPI(cfg *config.Config) {
 	)
 
 	webhookGroup := huma.NewGroup(api, "/webhook")
+	webhookGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Webhook"}
+		next(op)
+	})
 	webhookHandlers := webhook_handler.NewHandlerGroup(srvImpl)
 	huma.Register(
 		webhookGroup,
@@ -221,15 +274,21 @@ func startAPI(cfg *config.Config) {
 
 	// ! All authenticated routes below here
 	api.UseMiddleware(mw.Authenticate)
+
 	// /teams
+	teamsGroup := huma.NewGroup(api, "/teams")
+	ghGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Teams"}
+		next(op)
+	})
 	teamHandlers := teams_handler.NewHandlerGroup(srvImpl)
 	huma.Register(
-		api,
+		teamsGroup,
 		huma.Operation{
 			OperationID: "list-teams",
 			Summary:     "List Teams",
 			Description: "List all teams the current user is a member of",
-			Path:        "/teams",
+			Path:        "",
 			Method:      http.MethodGet,
 		},
 		teamHandlers.ListTeams,
