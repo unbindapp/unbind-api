@@ -94,6 +94,11 @@ func startAPI(cfg *config.Config) {
 
 	config := huma.DefaultConfig("Unbind API", "1.0.0")
 	config.DocsPath = ""
+	config.OpenAPI.Servers = []*huma.Server{
+		{
+			URL: cfg.ExternalURL,
+		},
+	}
 	api := humachi.New(r, config)
 
 	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
