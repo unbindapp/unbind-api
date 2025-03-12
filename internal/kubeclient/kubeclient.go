@@ -54,7 +54,8 @@ func (k *KubeClient) createClientWithToken(token string) (*kubernetes.Clientset,
 		},
 		Impersonate: rest.ImpersonationConfig{
 			// ! TODO - dynamic groups
-			Groups: []string{"oidc:users"},
+			UserName: "admin@unbind.app",
+			Groups:   []string{"oidc:users"},
 		},
 	}
 
