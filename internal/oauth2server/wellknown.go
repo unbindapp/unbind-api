@@ -48,6 +48,7 @@ func (self *Oauth2Server) HandleOpenIDConfiguration(w http.ResponseWriter, r *ht
 			"profile",
 			"email",
 			"offline_access",
+			"groups",
 		},
 	}
 
