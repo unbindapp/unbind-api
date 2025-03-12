@@ -67,7 +67,7 @@ func startAPI(cfg *config.Config) {
 			},
 			// ! TODO - adjust redirect when necessary
 			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalURL),
-			Scopes:      []string{"openid", "profile", "email", "offline_access"},
+			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 		},
 		GithubClient: github.NewGithubClient(cfg),
 		StringCache:  database.NewStringCache(client, "unbind"),
