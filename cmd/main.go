@@ -52,6 +52,11 @@ func main() {
 	listGroupPermissionsCmd := flag.NewFlagSet("list-group-permissions", flag.ExitOnError)
 	listGroupPermissionsGroupName := listGroupPermissionsCmd.String("group-name", "", "Name of the group to list permissions for")
 
+	// Create team
+	createTeamCmd := flag.NewFlagSet("create-team", flag.ExitOnError)
+	teamName := createTeamCmd.String("name", "", "Name of the team")
+	displayname := createTeamCmd.String("displayname", "", "Display name of the team")
+
 	// Sync permissions with Kubernetes
 	syncGroupToK8sFlag := flag.Bool("sync-group-to-k8s", false, "Sync group permissions with Kubernetes")
 
@@ -108,6 +113,10 @@ func main() {
 	} else if *syncGroupToK8sFlag {
 		cli := NewCLI(cfg)
 		cli.syncPermissionsWithK8S()
+	} else if len(os.Args) > 1 && os.Args[1] == "create-team" {
+		cli := NewCLI(cfg)
+		createTeamCmd.Parse(os.Args[2:])
+		cli.createTeam(*teamName, *displayname)
 	} else {
 		fmt.Println("No command specified. Use -start-api to start the API server.")
 	}

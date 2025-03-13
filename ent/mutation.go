@@ -6459,6 +6459,8 @@ type TeamMutation struct {
 	created_at      *time.Time
 	updated_at      *time.Time
 	name            *string
+	display_name    *string
+	namespace       *string
 	description     *string
 	clearedFields   map[string]struct{}
 	projects        map[uuid.UUID]struct{}
@@ -6685,6 +6687,78 @@ func (m *TeamMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *TeamMutation) ResetName() {
 	m.name = nil
+}
+
+// SetDisplayName sets the "display_name" field.
+func (m *TeamMutation) SetDisplayName(s string) {
+	m.display_name = &s
+}
+
+// DisplayName returns the value of the "display_name" field in the mutation.
+func (m *TeamMutation) DisplayName() (r string, exists bool) {
+	v := m.display_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayName returns the old "display_name" field's value of the Team entity.
+// If the Team object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamMutation) OldDisplayName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
+	}
+	return oldValue.DisplayName, nil
+}
+
+// ResetDisplayName resets all changes to the "display_name" field.
+func (m *TeamMutation) ResetDisplayName() {
+	m.display_name = nil
+}
+
+// SetNamespace sets the "namespace" field.
+func (m *TeamMutation) SetNamespace(s string) {
+	m.namespace = &s
+}
+
+// Namespace returns the value of the "namespace" field in the mutation.
+func (m *TeamMutation) Namespace() (r string, exists bool) {
+	v := m.namespace
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNamespace returns the old "namespace" field's value of the Team entity.
+// If the Team object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamMutation) OldNamespace(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNamespace is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNamespace requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNamespace: %w", err)
+	}
+	return oldValue.Namespace, nil
+}
+
+// ResetNamespace resets all changes to the "namespace" field.
+func (m *TeamMutation) ResetNamespace() {
+	m.namespace = nil
 }
 
 // SetDescription sets the "description" field.
@@ -6932,7 +7006,7 @@ func (m *TeamMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TeamMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, team.FieldCreatedAt)
 	}
@@ -6941,6 +7015,12 @@ func (m *TeamMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, team.FieldName)
+	}
+	if m.display_name != nil {
+		fields = append(fields, team.FieldDisplayName)
+	}
+	if m.namespace != nil {
+		fields = append(fields, team.FieldNamespace)
 	}
 	if m.description != nil {
 		fields = append(fields, team.FieldDescription)
@@ -6959,6 +7039,10 @@ func (m *TeamMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case team.FieldName:
 		return m.Name()
+	case team.FieldDisplayName:
+		return m.DisplayName()
+	case team.FieldNamespace:
+		return m.Namespace()
 	case team.FieldDescription:
 		return m.Description()
 	}
@@ -6976,6 +7060,10 @@ func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldUpdatedAt(ctx)
 	case team.FieldName:
 		return m.OldName(ctx)
+	case team.FieldDisplayName:
+		return m.OldDisplayName(ctx)
+	case team.FieldNamespace:
+		return m.OldNamespace(ctx)
 	case team.FieldDescription:
 		return m.OldDescription(ctx)
 	}
@@ -7007,6 +7095,20 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case team.FieldDisplayName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayName(v)
+		return nil
+	case team.FieldNamespace:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNamespace(v)
 		return nil
 	case team.FieldDescription:
 		v, ok := value.(string)
@@ -7081,6 +7183,12 @@ func (m *TeamMutation) ResetField(name string) error {
 		return nil
 	case team.FieldName:
 		m.ResetName()
+		return nil
+	case team.FieldDisplayName:
+		m.ResetDisplayName()
+		return nil
+	case team.FieldNamespace:
+		m.ResetNamespace()
 		return nil
 	case team.FieldDescription:
 		m.ResetDescription()

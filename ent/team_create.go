@@ -61,6 +61,18 @@ func (tc *TeamCreate) SetName(s string) *TeamCreate {
 	return tc
 }
 
+// SetDisplayName sets the "display_name" field.
+func (tc *TeamCreate) SetDisplayName(s string) *TeamCreate {
+	tc.mutation.SetDisplayName(s)
+	return tc
+}
+
+// SetNamespace sets the "namespace" field.
+func (tc *TeamCreate) SetNamespace(s string) *TeamCreate {
+	tc.mutation.SetNamespace(s)
+	return tc
+}
+
 // SetDescription sets the "description" field.
 func (tc *TeamCreate) SetDescription(s string) *TeamCreate {
 	tc.mutation.SetDescription(s)
@@ -199,6 +211,12 @@ func (tc *TeamCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Team.name": %w`, err)}
 		}
 	}
+	if _, ok := tc.mutation.DisplayName(); !ok {
+		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Team.display_name"`)}
+	}
+	if _, ok := tc.mutation.Namespace(); !ok {
+		return &ValidationError{Name: "namespace", err: errors.New(`ent: missing required field "Team.namespace"`)}
+	}
 	return nil
 }
 
@@ -246,6 +264,14 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := tc.mutation.DisplayName(); ok {
+		_spec.SetField(team.FieldDisplayName, field.TypeString, value)
+		_node.DisplayName = value
+	}
+	if value, ok := tc.mutation.Namespace(); ok {
+		_spec.SetField(team.FieldNamespace, field.TypeString, value)
+		_node.Namespace = value
 	}
 	if value, ok := tc.mutation.Description(); ok {
 		_spec.SetField(team.FieldDescription, field.TypeString, value)
@@ -375,6 +401,30 @@ func (u *TeamUpsert) UpdateName() *TeamUpsert {
 	return u
 }
 
+// SetDisplayName sets the "display_name" field.
+func (u *TeamUpsert) SetDisplayName(v string) *TeamUpsert {
+	u.Set(team.FieldDisplayName, v)
+	return u
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateDisplayName() *TeamUpsert {
+	u.SetExcluded(team.FieldDisplayName)
+	return u
+}
+
+// SetNamespace sets the "namespace" field.
+func (u *TeamUpsert) SetNamespace(v string) *TeamUpsert {
+	u.Set(team.FieldNamespace, v)
+	return u
+}
+
+// UpdateNamespace sets the "namespace" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateNamespace() *TeamUpsert {
+	u.SetExcluded(team.FieldNamespace)
+	return u
+}
+
 // SetDescription sets the "description" field.
 func (u *TeamUpsert) SetDescription(v string) *TeamUpsert {
 	u.Set(team.FieldDescription, v)
@@ -469,6 +519,34 @@ func (u *TeamUpsertOne) SetName(v string) *TeamUpsertOne {
 func (u *TeamUpsertOne) UpdateName() *TeamUpsertOne {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDisplayName sets the "display_name" field.
+func (u *TeamUpsertOne) SetDisplayName(v string) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetDisplayName(v)
+	})
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateDisplayName() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateDisplayName()
+	})
+}
+
+// SetNamespace sets the "namespace" field.
+func (u *TeamUpsertOne) SetNamespace(v string) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetNamespace(v)
+	})
+}
+
+// UpdateNamespace sets the "namespace" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateNamespace() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateNamespace()
 	})
 }
 
@@ -736,6 +814,34 @@ func (u *TeamUpsertBulk) SetName(v string) *TeamUpsertBulk {
 func (u *TeamUpsertBulk) UpdateName() *TeamUpsertBulk {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDisplayName sets the "display_name" field.
+func (u *TeamUpsertBulk) SetDisplayName(v string) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetDisplayName(v)
+	})
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateDisplayName() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateDisplayName()
+	})
+}
+
+// SetNamespace sets the "namespace" field.
+func (u *TeamUpsertBulk) SetNamespace(v string) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetNamespace(v)
+	})
+}
+
+// UpdateNamespace sets the "namespace" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateNamespace() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateNamespace()
 	})
 }
 

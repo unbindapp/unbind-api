@@ -133,6 +133,51 @@ func (self *cli) listGroups() {
 	fmt.Printf("Total groups: %d\n", len(groups))
 }
 
+// Create a new team
+func (self *cli) createTeam(name, displayName string) {
+	ctx := context.Background()
+
+	// Validate inputs
+	if name == "" {
+		log.Errorf("Error: name is required")
+		return
+	}
+
+	if displayName == "" {
+		displayName = name
+	}
+
+	// Check if team
+	exists, err := self.repository.Ent().Team.Query().
+		Where(team.NameEQ(name)).
+		Exist(ctx)
+	if err != nil {
+		log.Errorf("Error checking if team exists: %v", err)
+		return
+	}
+	if exists {
+		log.Errorf("Error: Team '%s' already exists", name)
+		return
+	}
+
+	// Create the team
+	team, err := self.repository.Ent().Team.Create().
+		SetName(name).
+		SetDisplayName(displayName).
+		SetNamespace(strings.ToLower(name)).Save(ctx)
+
+	if err != nil {
+		fmt.Printf("Error creating team: %v\n", err)
+		return
+	}
+
+	fmt.Println("Team created successfully:")
+	fmt.Printf("ID: %s\n", team.ID)
+	fmt.Printf("Name: %s\n", team.Name)
+	fmt.Printf("Display Name: %s\n", team.Description)
+	fmt.Printf("Namespace: %s\n", team.Namespace)
+}
+
 // Create a new group
 func (self *cli) createGroup(name, description string, teamID *uuid.UUID) {
 	ctx := context.Background()

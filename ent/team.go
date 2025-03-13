@@ -25,6 +25,10 @@ type Team struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Human-readable name
+	DisplayName string `json:"display_name,omitempty"`
+	// Kubernetes namespace tied to this team
+	Namespace string `json:"namespace,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -78,7 +82,7 @@ func (*Team) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case team.FieldName, team.FieldDescription:
+		case team.FieldName, team.FieldDisplayName, team.FieldNamespace, team.FieldDescription:
 			values[i] = new(sql.NullString)
 		case team.FieldCreatedAt, team.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -122,6 +126,18 @@ func (t *Team) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				t.Name = value.String
+			}
+		case team.FieldDisplayName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field display_name", values[i])
+			} else if value.Valid {
+				t.DisplayName = value.String
+			}
+		case team.FieldNamespace:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field namespace", values[i])
+			} else if value.Valid {
+				t.Namespace = value.String
 			}
 		case team.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -188,6 +204,12 @@ func (t *Team) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(t.Name)
+	builder.WriteString(", ")
+	builder.WriteString("display_name=")
+	builder.WriteString(t.DisplayName)
+	builder.WriteString(", ")
+	builder.WriteString("namespace=")
+	builder.WriteString(t.Namespace)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(t.Description)

@@ -53,6 +53,34 @@ func (tu *TeamUpdate) SetNillableName(s *string) *TeamUpdate {
 	return tu
 }
 
+// SetDisplayName sets the "display_name" field.
+func (tu *TeamUpdate) SetDisplayName(s string) *TeamUpdate {
+	tu.mutation.SetDisplayName(s)
+	return tu
+}
+
+// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
+func (tu *TeamUpdate) SetNillableDisplayName(s *string) *TeamUpdate {
+	if s != nil {
+		tu.SetDisplayName(*s)
+	}
+	return tu
+}
+
+// SetNamespace sets the "namespace" field.
+func (tu *TeamUpdate) SetNamespace(s string) *TeamUpdate {
+	tu.mutation.SetNamespace(s)
+	return tu
+}
+
+// SetNillableNamespace sets the "namespace" field if the given value is not nil.
+func (tu *TeamUpdate) SetNillableNamespace(s *string) *TeamUpdate {
+	if s != nil {
+		tu.SetNamespace(*s)
+	}
+	return tu
+}
+
 // SetDescription sets the "description" field.
 func (tu *TeamUpdate) SetDescription(s string) *TeamUpdate {
 	tu.mutation.SetDescription(s)
@@ -256,6 +284,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 	}
+	if value, ok := tu.mutation.DisplayName(); ok {
+		_spec.SetField(team.FieldDisplayName, field.TypeString, value)
+	}
+	if value, ok := tu.mutation.Namespace(); ok {
+		_spec.SetField(team.FieldNamespace, field.TypeString, value)
+	}
 	if value, ok := tu.mutation.Description(); ok {
 		_spec.SetField(team.FieldDescription, field.TypeString, value)
 	}
@@ -435,6 +469,34 @@ func (tuo *TeamUpdateOne) SetName(s string) *TeamUpdateOne {
 func (tuo *TeamUpdateOne) SetNillableName(s *string) *TeamUpdateOne {
 	if s != nil {
 		tuo.SetName(*s)
+	}
+	return tuo
+}
+
+// SetDisplayName sets the "display_name" field.
+func (tuo *TeamUpdateOne) SetDisplayName(s string) *TeamUpdateOne {
+	tuo.mutation.SetDisplayName(s)
+	return tuo
+}
+
+// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
+func (tuo *TeamUpdateOne) SetNillableDisplayName(s *string) *TeamUpdateOne {
+	if s != nil {
+		tuo.SetDisplayName(*s)
+	}
+	return tuo
+}
+
+// SetNamespace sets the "namespace" field.
+func (tuo *TeamUpdateOne) SetNamespace(s string) *TeamUpdateOne {
+	tuo.mutation.SetNamespace(s)
+	return tuo
+}
+
+// SetNillableNamespace sets the "namespace" field if the given value is not nil.
+func (tuo *TeamUpdateOne) SetNillableNamespace(s *string) *TeamUpdateOne {
+	if s != nil {
+		tuo.SetNamespace(*s)
 	}
 	return tuo
 }
@@ -671,6 +733,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	}
 	if value, ok := tuo.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.DisplayName(); ok {
+		_spec.SetField(team.FieldDisplayName, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.Namespace(); ok {
+		_spec.SetField(team.FieldNamespace, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.Description(); ok {
 		_spec.SetField(team.FieldDescription, field.TypeString, value)

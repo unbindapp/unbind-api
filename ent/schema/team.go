@@ -26,6 +26,8 @@ func (Team) Mixin() []ent.Mixin {
 func (Team) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").NotEmpty().Unique(),
+		field.String("display_name").Comment("Human-readable name"),
+		field.String("namespace").Unique().Comment("Kubernetes namespace tied to this team"),
 		field.String("description").Optional(),
 	}
 }
