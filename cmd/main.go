@@ -28,11 +28,20 @@ func main() {
 	groupDescription := createGroupCmd.String("description", "", "Description of the group")
 	teamID := createGroupCmd.String("team-id", "", "ID of the team to associate the group with (Optional)")
 
+	// Add user to group
+	addUserToGroupCmd := flag.NewFlagSet("add-user-to-group", flag.ExitOnError)
+	addToGroupUserEmail := addUserToGroupCmd.String("email", "", "ID of the user to add to the group")
+	addToGroupName := addUserToGroupCmd.String("group-name", "", "ID of the group to add the user to")
+
 	// List users flag
 	listUsersFlag := flag.Bool("list-users", false, "List all users")
 
 	// List groups flag
 	listGroupsFlag := flag.Bool("list-groups", false, "List all groups")
+
+	// List group permissions
+	listGroupPermissionsCmd := flag.NewFlagSet("list-group-permissions", flag.ExitOnError)
+	listGroupPermissionsGroupName := listGroupPermissionsCmd.String("group-name", "", "Name of the group to list permissions for")
 
 	// Parse the command-line flags
 	flag.Parse()
@@ -72,6 +81,14 @@ func main() {
 			}
 			cli.createGroup(*groupName, *groupDescription, &parsedTeamID)
 		}
+	} else if len(os.Args) > 1 && os.Args[1] == "add-user-to-group" {
+		cli := NewCLI(cfg)
+		addUserToGroupCmd.Parse(os.Args[2:])
+		cli.addUserToGroup(*addToGroupUserEmail, *addToGroupName)
+	} else if len(os.Args) > 1 && os.Args[1] == "list-group-permissions" {
+		cli := NewCLI(cfg)
+		listGroupPermissionsCmd.Parse(os.Args[2:])
+		cli.listGroupPermissions(*listGroupPermissionsGroupName)
 	} else {
 		fmt.Println("No command specified. Use -start-api to start the API server.")
 	}

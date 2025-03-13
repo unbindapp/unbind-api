@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/team"
+	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/k8s"
 	"github.com/unbindapp/unbind-api/internal/log"
@@ -191,6 +192,84 @@ func (self *cli) createGroup(name, description string, teamID *uuid.UUID) {
 	} else {
 		fmt.Printf("Scope: Global\n")
 	}
+}
+
+// Add a user to a group
+func (self *cli) addUserToGroup(userEmail, groupName string) {
+	ctx := context.Background()
+
+	// Get the user
+	dbUser, err := self.repository.User().GetByEmail(ctx, userEmail)
+	if err != nil {
+		fmt.Printf("Error: User '%s' not found: %v\n", userEmail, err)
+		return
+	}
+
+	// Get the group
+	group, err := self.repository.Ent().Group.Query().
+		Where(group.NameEQ(groupName)).
+		Only(ctx)
+	if err != nil {
+		fmt.Printf("Error: Group '%s' not found: %v\n", groupName, err)
+		return
+	}
+
+	// Check if user is already in the group
+	inGroup, err := self.repository.Ent().Group.QueryUsers(group).
+		Where(user.IDEQ(dbUser.ID)).
+		Exist(ctx)
+	if err != nil {
+		fmt.Printf("Error checking if user is in group: %v\n", err)
+		return
+	}
+	if inGroup {
+		fmt.Printf("User '%s' is already in group '%s'\n", userEmail, groupName)
+		return
+	}
+
+	// Add user to group
+	err = self.repository.Ent().Group.UpdateOne(group).
+		AddUserIDs(dbUser.ID).
+		Exec(ctx)
+	if err != nil {
+		fmt.Printf("Error adding user to group: %v\n", err)
+		return
+	}
+
+	fmt.Printf("Successfully added user '%s' to group '%s'\n", userEmail, groupName)
+}
+
+// List permissions for a group
+func (self *cli) listGroupPermissions(groupName string) {
+	ctx := context.Background()
+
+	// Get the group
+	group, err := self.repository.Ent().Group.Query().
+		Where(group.NameEQ(groupName)).
+		Only(ctx)
+	if err != nil {
+		fmt.Printf("Error: Group '%s' not found: %v\n", groupName, err)
+		return
+	}
+
+	// Get permissions
+	perms, err := self.repository.Ent().Group.QueryPermissions(group).All(ctx)
+	if err != nil {
+		fmt.Printf("Error querying permissions: %v\n", err)
+		return
+	}
+
+	// Print permissions
+	fmt.Printf("Permissions for group '%s':\n", groupName)
+	fmt.Println("-------------------------------------")
+	for i, p := range perms {
+		fmt.Printf("%d. %s %s:%s\n", i+1, p.Action, p.ResourceType, p.ResourceID)
+		if p.Scope != "" {
+			fmt.Printf("   Scope: %s\n", p.Scope)
+		}
+	}
+	fmt.Println("-------------------------------------")
+	fmt.Printf("Total permissions: %d\n", len(perms))
 }
 
 // Create a new user
