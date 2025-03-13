@@ -10,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/github"
 	"github.com/unbindapp/unbind-api/internal/k8s"
 	"github.com/unbindapp/unbind-api/internal/repository/repositories"
+	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"golang.org/x/oauth2"
 )
 
@@ -25,6 +26,8 @@ type Server struct {
 	Repository   repositories.RepositoriesInterface
 	StringCache  *database.ValkeyCache[string]
 	HttpClient   *http.Client
+	// Services
+	TeamService *team_service.TeamService
 }
 
 // HealthCheck is your /health endpoint

@@ -21,6 +21,7 @@ import (
 	teams_handler "github.com/unbindapp/unbind-api/internal/server/teams"
 	user_handler "github.com/unbindapp/unbind-api/internal/server/user"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/server/webhook"
+	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/oauth2"
 )
@@ -72,6 +73,7 @@ func startAPI(cfg *config.Config) {
 		GithubClient: github.NewGithubClient(cfg),
 		StringCache:  database.NewStringCache(client, "unbind"),
 		HttpClient:   &http.Client{},
+		TeamService:  team_service.NewTeamService(repo, kubeClient),
 	}
 
 	// New chi router
