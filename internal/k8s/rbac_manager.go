@@ -244,28 +244,107 @@ func (self *RBACManager) createOrUpdateClusterRole(ctx context.Context, roleName
 	// If we have no specific selectors and no team/project permissions,
 	// create a catch-all rule (global admin)
 	if len(labelSelectors) == 0 && len(config.TeamIDs) == 0 && len(config.ProjectIDs) == 0 {
-		// Create a rule for all resources
+		// Core API group ("") resources
 		rules = append(rules, map[string]interface{}{
-			"apiGroups": []interface{}{"*"},
-			"resources": interfaceFromStrings(resources),
+			"apiGroups": []interface{}{""},
+			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "")),
+			"verbs":     interfaceFromStrings(verbs),
+		})
+
+		// Apps API group resources
+		rules = append(rules, map[string]interface{}{
+			"apiGroups": []interface{}{"apps"},
+			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "apps")),
+			"verbs":     interfaceFromStrings(verbs),
+		})
+
+		// Batch API group resources
+		rules = append(rules, map[string]interface{}{
+			"apiGroups": []interface{}{"batch"},
+			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "batch")),
+			"verbs":     interfaceFromStrings(verbs),
+		})
+
+		// Networking API group resources
+		rules = append(rules, map[string]interface{}{
+			"apiGroups": []interface{}{"networking.k8s.io"},
+			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "networking.k8s.io")),
+			"verbs":     interfaceFromStrings(verbs),
+		})
+
+		// API Extensions API group resources
+		rules = append(rules, map[string]interface{}{
+			"apiGroups": []interface{}{"apiextensions.k8s.io"},
+			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "apiextensions.k8s.io")),
 			"verbs":     interfaceFromStrings(verbs),
 		})
 	} else {
 		// Create rules for each label selector
 		for _, selector := range labelSelectors {
-			rule := map[string]interface{}{
-				"apiGroups": []interface{}{"*"},
-				"resources": interfaceFromStrings(resources),
-				"verbs":     interfaceFromStrings(verbs),
+			// Core API group ("") resources
+			if len(filterResourcesByAPIGroup(resources, "")) > 0 {
+				rule := map[string]interface{}{
+					"apiGroups": []interface{}{""},
+					"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "")),
+					"verbs":     interfaceFromStrings(verbs),
+				}
+				rule["resourceSelector"] = map[string]interface{}{
+					"matchLabels": selector,
+				}
+				rules = append(rules, rule)
 			}
 
-			// Add the resource selector - this will be processed to create
-			// the proper Kubernetes label selector syntax
-			rule["resourceSelector"] = map[string]interface{}{
-				"matchLabels": selector,
+			// Apps API group resources
+			if len(filterResourcesByAPIGroup(resources, "apps")) > 0 {
+				rule := map[string]interface{}{
+					"apiGroups": []interface{}{"apps"},
+					"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "apps")),
+					"verbs":     interfaceFromStrings(verbs),
+				}
+				rule["resourceSelector"] = map[string]interface{}{
+					"matchLabels": selector,
+				}
+				rules = append(rules, rule)
 			}
 
-			rules = append(rules, rule)
+			// Batch API group resources
+			if len(filterResourcesByAPIGroup(resources, "batch")) > 0 {
+				rule := map[string]interface{}{
+					"apiGroups": []interface{}{"batch"},
+					"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "batch")),
+					"verbs":     interfaceFromStrings(verbs),
+				}
+				rule["resourceSelector"] = map[string]interface{}{
+					"matchLabels": selector,
+				}
+				rules = append(rules, rule)
+			}
+
+			// Networking API group resources
+			if len(filterResourcesByAPIGroup(resources, "networking.k8s.io")) > 0 {
+				rule := map[string]interface{}{
+					"apiGroups": []interface{}{"networking.k8s.io"},
+					"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "networking.k8s.io")),
+					"verbs":     interfaceFromStrings(verbs),
+				}
+				rule["resourceSelector"] = map[string]interface{}{
+					"matchLabels": selector,
+				}
+				rules = append(rules, rule)
+			}
+
+			// API Extensions API group resources
+			if len(filterResourcesByAPIGroup(resources, "apiextensions.k8s.io")) > 0 {
+				rule := map[string]interface{}{
+					"apiGroups": []interface{}{"apiextensions.k8s.io"},
+					"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "apiextensions.k8s.io")),
+					"verbs":     interfaceFromStrings(verbs),
+				}
+				rule["resourceSelector"] = map[string]interface{}{
+					"matchLabels": selector,
+				}
+				rules = append(rules, rule)
+			}
 		}
 	}
 
@@ -311,6 +390,77 @@ func (self *RBACManager) createOrUpdateClusterRole(ctx context.Context, roleName
 	}
 
 	return nil
+}
+
+// Helper function to filter resources by API group
+func filterResourcesByAPIGroup(resources []string, apiGroup string) []string {
+	var filteredResources []string
+
+	switch apiGroup {
+	case "": // Core API group
+		coreResources := []string{
+			"pods", "services", "configmaps", "secrets",
+			"persistentvolumeclaims", "events", "endpoints",
+		}
+		for _, r := range resources {
+			for _, cr := range coreResources {
+				if r == cr {
+					filteredResources = append(filteredResources, r)
+					break
+				}
+			}
+		}
+	case "apps":
+		appsResources := []string{
+			"deployments", "statefulsets", "replicasets", "daemonsets",
+		}
+		for _, r := range resources {
+			for _, ar := range appsResources {
+				if r == ar {
+					filteredResources = append(filteredResources, r)
+					break
+				}
+			}
+		}
+	case "batch":
+		batchResources := []string{
+			"jobs", "cronjobs",
+		}
+		for _, r := range resources {
+			for _, br := range batchResources {
+				if r == br {
+					filteredResources = append(filteredResources, r)
+					break
+				}
+			}
+		}
+	case "networking.k8s.io":
+		networkingResources := []string{
+			"ingresses", "networkpolicies", "ingressclasses",
+		}
+		for _, r := range resources {
+			for _, nr := range networkingResources {
+				if r == nr {
+					filteredResources = append(filteredResources, r)
+					break
+				}
+			}
+		}
+	case "apiextensions.k8s.io":
+		apiExtResources := []string{
+			"customresourcedefinitions",
+		}
+		for _, r := range resources {
+			for _, ar := range apiExtResources {
+				if r == ar {
+					filteredResources = append(filteredResources, r)
+					break
+				}
+			}
+		}
+	}
+
+	return filteredResources
 }
 
 // createOrUpdateClusterRoleBinding creates or updates a ClusterRoleBinding for the given group

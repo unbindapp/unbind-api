@@ -34,6 +34,7 @@ func main() {
 	addToGroupName := addUserToGroupCmd.String("group-name", "", "ID of the group to add the user to")
 
 	// Grant permisisons to group
+	// e.g.: /app/server grant-group-permissions -group-name=admin -action=admin -resource-type=team -resource-id="*"
 	grantGroupPermissionsCmd := flag.NewFlagSet("grant-group-permissions", flag.ExitOnError)
 	grantGroupName := grantGroupPermissionsCmd.String("group-name", "", "Name of the group to grant permissions to")
 	grantAction := grantGroupPermissionsCmd.String("action", "", "Action to grant permissions for")
@@ -50,6 +51,9 @@ func main() {
 	// List group permissions
 	listGroupPermissionsCmd := flag.NewFlagSet("list-group-permissions", flag.ExitOnError)
 	listGroupPermissionsGroupName := listGroupPermissionsCmd.String("group-name", "", "Name of the group to list permissions for")
+
+	// Sync permissions with Kubernetes
+	syncGroupToK8sFlag := flag.Bool("sync-group-to-k8s", false, "Sync group permissions with Kubernetes")
 
 	// Parse the command-line flags
 	flag.Parse()
@@ -101,6 +105,9 @@ func main() {
 		cli := NewCLI(cfg)
 		grantGroupPermissionsCmd.Parse(os.Args[2:])
 		cli.grantPermission(*grantGroupName, *grantAction, *grantResourceType, *grantResourceID, *grantScope)
+	} else if *syncGroupToK8sFlag {
+		cli := NewCLI(cfg)
+		cli.syncPermissionsWithK8S()
 	} else {
 		fmt.Println("No command specified. Use -start-api to start the API server.")
 	}

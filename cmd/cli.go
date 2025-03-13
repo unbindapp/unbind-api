@@ -24,6 +24,7 @@ import (
 type cli struct {
 	repository   repositories.RepositoriesInterface
 	groupService *group_service.GroupService
+	rbacManager  *k8s.RBACManager
 }
 
 func NewCLI(cfg *config.Config) *cli {
@@ -52,6 +53,7 @@ func NewCLI(cfg *config.Config) *cli {
 			repo,
 			rbacManager,
 		),
+		rbacManager: rbacManager,
 	}
 }
 
@@ -351,6 +353,14 @@ func (self *cli) grantPermission(groupName, action, resourceType, resourceID, sc
 	fmt.Printf("Resource ID: %s\n", perm.ResourceID)
 	if perm.Scope != "" {
 		fmt.Printf("Scope: %s\n", perm.Scope)
+	}
+}
+
+// Sync permissions with K8s
+func (self *cli) syncPermissionsWithK8S() {
+	if err := self.rbacManager.SyncAllGroups(context.Background()); err != nil {
+		fmt.Printf("Error syncing permissions: %v\n", err)
+		return
 	}
 }
 

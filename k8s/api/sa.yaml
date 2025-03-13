@@ -12,6 +12,27 @@ rules:
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterroles", "clusterrolebindings"]
   verbs: ["create", "get", "list", "watch", "update", "delete"]
+- apiGroups: ["", "apps", "batch", "extensions", "networking.k8s.io", "apiextensions.k8s.io"]
+  resources: [
+    "configmaps", 
+    "secrets", 
+    "pods", 
+    "services", 
+    "deployments", 
+    "statefulsets", 
+    "replicasets", 
+    "daemonsets", 
+    "jobs", 
+    "cronjobs", 
+    "ingresses", 
+    "ingressclasses", 
+    "networkpolicies", 
+    "persistentvolumeclaims", 
+    "endpoints", 
+    "events", 
+    "customresourcedefinitions"
+  ]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
