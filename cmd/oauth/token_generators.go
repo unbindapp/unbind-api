@@ -80,8 +80,15 @@ func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo repositories
 	scopes := strings.Split(ti.GetScope(), " ")
 	for _, scope := range scopes {
 		if scope == "groups" {
-			// ! TODO - dynamic groups
-			claims["groups"] = []string{"oidc:users"}
+			groups, err := repo.User().GetGroups(ctx, u.ID)
+			if err != nil {
+				return "", fmt.Errorf("failed to get groups: %w", err)
+			}
+			groupStrings := make([]string, 0, len(groups))
+			for i, g := range groups {
+				groupStrings[i] = fmt.Sprintf("oidc:%s", g.Name)
+			}
+			claims["groups"] = groupStrings
 		}
 	}
 

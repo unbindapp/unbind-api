@@ -174,6 +174,8 @@ func (self *RBACManager) SyncGroupToK8s(ctx context.Context, groupID uuid.UUID, 
 }
 
 // createOrUpdateClusterRole creates or updates a ClusterRole for the given group
+// ! TODO - we may need to replace this with Roles and RoleBindings, so it can be tied to a specific namespace, this can grant too much power
+// ! kubernetes doesn't do label matching with these roles apparently.
 func (self *RBACManager) createOrUpdateClusterRole(ctx context.Context, roleName, displayName string, config GroupRBACConfig) error {
 	// Determine verbs based on access level
 	var verbs []string
