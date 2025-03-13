@@ -10,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/group"
+	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/internal/database"
@@ -270,6 +271,87 @@ func (self *cli) listGroupPermissions(groupName string) {
 	}
 	fmt.Println("-------------------------------------")
 	fmt.Printf("Total permissions: %d\n", len(perms))
+}
+
+// Grant permission to a group
+func (self *cli) grantPermission(groupName, action, resourceType, resourceID, scope string) {
+	ctx := context.Background()
+
+	// Get the group
+	group, err := self.repository.Ent().Group.Query().
+		Where(group.NameEQ(groupName)).
+		Only(ctx)
+	if err != nil {
+		fmt.Printf("Error: Group '%s' not found: %v\n", groupName, err)
+		return
+	}
+
+	// Parse action
+	var permAction permission.Action
+	switch strings.ToLower(action) {
+	case "read":
+		permAction = permission.ActionRead
+	case "create":
+		permAction = permission.ActionCreate
+	case "update":
+		permAction = permission.ActionUpdate
+	case "delete":
+		permAction = permission.ActionDelete
+	case "manage":
+		permAction = permission.ActionManage
+	case "admin":
+		permAction = permission.ActionAdmin
+	case "edit":
+		permAction = permission.ActionEdit
+	case "view":
+		permAction = permission.ActionView
+	default:
+		fmt.Printf("Error: Invalid action '%s'. Valid actions are: read, create, update, delete, manage, admin, edit, view\n", action)
+		return
+	}
+
+	// Parse resource type
+	var permResourceType permission.ResourceType
+	switch strings.ToLower(resourceType) {
+	case "system":
+		permResourceType = permission.ResourceTypeSystem
+	case "user":
+		permResourceType = permission.ResourceTypeUser
+	case "group":
+		permResourceType = permission.ResourceTypeGroup
+	case "team":
+		permResourceType = permission.ResourceTypeTeam
+	case "project":
+		permResourceType = permission.ResourceTypeProject
+	case "permission":
+		permResourceType = permission.ResourceTypePermission
+	default:
+		fmt.Printf("Error: Invalid resource type '%s'. Valid types are: system, user, group, team, project, permission\n", resourceType)
+		return
+	}
+
+	perm, err := self.groupService.GrantPermissionToGroup(
+		ctx,
+		group_service.SUPER_USER_ID,
+		group.ID,
+		permAction,
+		permResourceType,
+		resourceID,
+		scope,
+	)
+	if err != nil {
+		fmt.Printf("Error granting permission: %v\n", err)
+		return
+	}
+
+	fmt.Println("Permission granted successfully:")
+	fmt.Printf("ID: %s\n", perm.ID)
+	fmt.Printf("Action: %s\n", perm.Action)
+	fmt.Printf("Resource Type: %s\n", perm.ResourceType)
+	fmt.Printf("Resource ID: %s\n", perm.ResourceID)
+	if perm.Scope != "" {
+		fmt.Printf("Scope: %s\n", perm.Scope)
+	}
 }
 
 // Create a new user

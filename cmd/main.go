@@ -33,6 +33,14 @@ func main() {
 	addToGroupUserEmail := addUserToGroupCmd.String("email", "", "ID of the user to add to the group")
 	addToGroupName := addUserToGroupCmd.String("group-name", "", "ID of the group to add the user to")
 
+	// Grant permisisons to group
+	grantGroupPermissionsCmd := flag.NewFlagSet("grant-group-permissions", flag.ExitOnError)
+	grantGroupName := grantGroupPermissionsCmd.String("group-name", "", "Name of the group to grant permissions to")
+	grantAction := grantGroupPermissionsCmd.String("action", "", "Action to grant permissions for")
+	grantResourceType := grantGroupPermissionsCmd.String("resource-type", "", "Resource type to grant permissions for")
+	grantResourceID := grantGroupPermissionsCmd.String("resource-id", "", "Resource ID to grant permissions for")
+	grantScope := grantGroupPermissionsCmd.String("scope", "", "Scope to grant permissions for")
+
 	// List users flag
 	listUsersFlag := flag.Bool("list-users", false, "List all users")
 
@@ -89,6 +97,10 @@ func main() {
 		cli := NewCLI(cfg)
 		listGroupPermissionsCmd.Parse(os.Args[2:])
 		cli.listGroupPermissions(*listGroupPermissionsGroupName)
+	} else if len(os.Args) > 1 && os.Args[1] == "grant-group-permissions" {
+		cli := NewCLI(cfg)
+		grantGroupPermissionsCmd.Parse(os.Args[2:])
+		cli.grantPermission(*grantGroupName, *grantAction, *grantResourceType, *grantResourceID, *grantScope)
 	} else {
 		fmt.Println("No command specified. Use -start-api to start the API server.")
 	}
