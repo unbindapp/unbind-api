@@ -196,8 +196,6 @@ func (self *RBACManager) createOrUpdateClusterRole(ctx context.Context, roleName
 			// Core workload resources
 			"pods", "services", "deployments", "statefulsets",
 			"replicasets", "daemonsets", "jobs", "cronjobs",
-			// ! TODO - long term we'll need cluster roles for namespace GET, and RoleBindings for underlying namespace access
-			"namespaces",
 
 			// Configuration resources
 			"configmaps", "secrets",
@@ -244,6 +242,14 @@ func (self *RBACManager) createOrUpdateClusterRole(ctx context.Context, roleName
 
 	// Build rules based on selectors and permissions
 	var rules []interface{}
+
+	// Always add a GET rule for namespaces
+	// ! TODO - we always will need this for every user/group so they can load teams.
+	rules = append(rules, map[string]interface{}{
+		"apiGroups": []interface{}{""},
+		"resources": []interface{}{"namespaces"},
+		"verbs":     []interface{}{"get", "list", "watch"},
+	})
 
 	// If we have no specific selectors and no team/project permissions,
 	// create a catch-all rule (global admin)
