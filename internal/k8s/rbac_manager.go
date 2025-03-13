@@ -196,6 +196,8 @@ func (self *RBACManager) createOrUpdateClusterRole(ctx context.Context, roleName
 			// Core workload resources
 			"pods", "services", "deployments", "statefulsets",
 			"replicasets", "daemonsets", "jobs", "cronjobs",
+			// ! TODO - long term we'll need cluster roles for namespace GET, and RoleBindings for underlying namespace access
+			"namespaces",
 
 			// Configuration resources
 			"configmaps", "secrets",
@@ -403,6 +405,7 @@ func filterResourcesByAPIGroup(resources []string, apiGroup string) []string {
 		coreResources := []string{
 			"pods", "services", "configmaps", "secrets",
 			"persistentvolumeclaims", "events", "endpoints",
+			"namespaces",
 		}
 		for _, r := range resources {
 			for _, cr := range coreResources {
