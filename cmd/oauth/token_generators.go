@@ -84,7 +84,7 @@ func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo repositories
 			if err != nil {
 				return "", fmt.Errorf("failed to get groups: %w", err)
 			}
-			groupStrings := make([]string, 0, len(groups))
+			groupStrings := make([]string, len(groups))
 			for i, g := range groups {
 				groupStrings[i] = fmt.Sprintf("oidc:%s", g.Name)
 			}
