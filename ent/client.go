@@ -18,9 +18,13 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/jwtkey"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
+	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 
 	stdsql "database/sql"
@@ -35,12 +39,20 @@ type Client struct {
 	GithubApp *GithubAppClient
 	// GithubInstallation is the client for interacting with the GithubInstallation builders.
 	GithubInstallation *GithubInstallationClient
+	// Group is the client for interacting with the Group builders.
+	Group *GroupClient
 	// JWTKey is the client for interacting with the JWTKey builders.
 	JWTKey *JWTKeyClient
 	// Oauth2Code is the client for interacting with the Oauth2Code builders.
 	Oauth2Code *Oauth2CodeClient
 	// Oauth2Token is the client for interacting with the Oauth2Token builders.
 	Oauth2Token *Oauth2TokenClient
+	// Permission is the client for interacting with the Permission builders.
+	Permission *PermissionClient
+	// Project is the client for interacting with the Project builders.
+	Project *ProjectClient
+	// Team is the client for interacting with the Team builders.
+	Team *TeamClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -56,9 +68,13 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.GithubApp = NewGithubAppClient(c.config)
 	c.GithubInstallation = NewGithubInstallationClient(c.config)
+	c.Group = NewGroupClient(c.config)
 	c.JWTKey = NewJWTKeyClient(c.config)
 	c.Oauth2Code = NewOauth2CodeClient(c.config)
 	c.Oauth2Token = NewOauth2TokenClient(c.config)
+	c.Permission = NewPermissionClient(c.config)
+	c.Project = NewProjectClient(c.config)
+	c.Team = NewTeamClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -154,9 +170,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:             cfg,
 		GithubApp:          NewGithubAppClient(cfg),
 		GithubInstallation: NewGithubInstallationClient(cfg),
+		Group:              NewGroupClient(cfg),
 		JWTKey:             NewJWTKeyClient(cfg),
 		Oauth2Code:         NewOauth2CodeClient(cfg),
 		Oauth2Token:        NewOauth2TokenClient(cfg),
+		Permission:         NewPermissionClient(cfg),
+		Project:            NewProjectClient(cfg),
+		Team:               NewTeamClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -179,9 +199,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:             cfg,
 		GithubApp:          NewGithubAppClient(cfg),
 		GithubInstallation: NewGithubInstallationClient(cfg),
+		Group:              NewGroupClient(cfg),
 		JWTKey:             NewJWTKeyClient(cfg),
 		Oauth2Code:         NewOauth2CodeClient(cfg),
 		Oauth2Token:        NewOauth2TokenClient(cfg),
+		Permission:         NewPermissionClient(cfg),
+		Project:            NewProjectClient(cfg),
+		Team:               NewTeamClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -212,8 +236,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.GithubApp, c.GithubInstallation, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
-		c.User,
+		c.GithubApp, c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code,
+		c.Oauth2Token, c.Permission, c.Project, c.Team, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -223,8 +247,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.GithubApp, c.GithubInstallation, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
-		c.User,
+		c.GithubApp, c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code,
+		c.Oauth2Token, c.Permission, c.Project, c.Team, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -237,12 +261,20 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.GithubApp.mutate(ctx, m)
 	case *GithubInstallationMutation:
 		return c.GithubInstallation.mutate(ctx, m)
+	case *GroupMutation:
+		return c.Group.mutate(ctx, m)
 	case *JWTKeyMutation:
 		return c.JWTKey.mutate(ctx, m)
 	case *Oauth2CodeMutation:
 		return c.Oauth2Code.mutate(ctx, m)
 	case *Oauth2TokenMutation:
 		return c.Oauth2Token.mutate(ctx, m)
+	case *PermissionMutation:
+		return c.Permission.mutate(ctx, m)
+	case *ProjectMutation:
+		return c.Project.mutate(ctx, m)
+	case *TeamMutation:
+		return c.Team.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -561,6 +593,187 @@ func (c *GithubInstallationClient) mutate(ctx context.Context, m *GithubInstalla
 		return (&GithubInstallationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown GithubInstallation mutation op: %q", m.Op())
+	}
+}
+
+// GroupClient is a client for the Group schema.
+type GroupClient struct {
+	config
+}
+
+// NewGroupClient returns a client for the Group from the given config.
+func NewGroupClient(c config) *GroupClient {
+	return &GroupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `group.Hooks(f(g(h())))`.
+func (c *GroupClient) Use(hooks ...Hook) {
+	c.hooks.Group = append(c.hooks.Group, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `group.Intercept(f(g(h())))`.
+func (c *GroupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Group = append(c.inters.Group, interceptors...)
+}
+
+// Create returns a builder for creating a Group entity.
+func (c *GroupClient) Create() *GroupCreate {
+	mutation := newGroupMutation(c.config, OpCreate)
+	return &GroupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Group entities.
+func (c *GroupClient) CreateBulk(builders ...*GroupCreate) *GroupCreateBulk {
+	return &GroupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GroupClient) MapCreateBulk(slice any, setFunc func(*GroupCreate, int)) *GroupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GroupCreateBulk{err: fmt.Errorf("calling to GroupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GroupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GroupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Group.
+func (c *GroupClient) Update() *GroupUpdate {
+	mutation := newGroupMutation(c.config, OpUpdate)
+	return &GroupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GroupClient) UpdateOne(gr *Group) *GroupUpdateOne {
+	mutation := newGroupMutation(c.config, OpUpdateOne, withGroup(gr))
+	return &GroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GroupClient) UpdateOneID(id uuid.UUID) *GroupUpdateOne {
+	mutation := newGroupMutation(c.config, OpUpdateOne, withGroupID(id))
+	return &GroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Group.
+func (c *GroupClient) Delete() *GroupDelete {
+	mutation := newGroupMutation(c.config, OpDelete)
+	return &GroupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GroupClient) DeleteOne(gr *Group) *GroupDeleteOne {
+	return c.DeleteOneID(gr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GroupClient) DeleteOneID(id uuid.UUID) *GroupDeleteOne {
+	builder := c.Delete().Where(group.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GroupDeleteOne{builder}
+}
+
+// Query returns a query builder for Group.
+func (c *GroupClient) Query() *GroupQuery {
+	return &GroupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGroup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Group entity by its id.
+func (c *GroupClient) Get(ctx context.Context, id uuid.UUID) (*Group, error) {
+	return c.Query().Where(group.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GroupClient) GetX(ctx context.Context, id uuid.UUID) *Group {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUsers queries the users edge of a Group.
+func (c *GroupClient) QueryUsers(gr *Group) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(group.Table, group.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, group.UsersTable, group.UsersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(gr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPermissions queries the permissions edge of a Group.
+func (c *GroupClient) QueryPermissions(gr *Group) *PermissionQuery {
+	query := (&PermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(group.Table, group.FieldID, id),
+			sqlgraph.To(permission.Table, permission.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, group.PermissionsTable, group.PermissionsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(gr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTeam queries the team edge of a Group.
+func (c *GroupClient) QueryTeam(gr *Group) *TeamQuery {
+	query := (&TeamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(group.Table, group.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, group.TeamTable, group.TeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(gr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *GroupClient) Hooks() []Hook {
+	return c.hooks.Group
+}
+
+// Interceptors returns the client interceptors.
+func (c *GroupClient) Interceptors() []Interceptor {
+	return c.inters.Group
+}
+
+func (c *GroupClient) mutate(ctx context.Context, m *GroupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GroupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GroupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Group mutation op: %q", m.Op())
 	}
 }
 
@@ -995,6 +1208,485 @@ func (c *Oauth2TokenClient) mutate(ctx context.Context, m *Oauth2TokenMutation) 
 	}
 }
 
+// PermissionClient is a client for the Permission schema.
+type PermissionClient struct {
+	config
+}
+
+// NewPermissionClient returns a client for the Permission from the given config.
+func NewPermissionClient(c config) *PermissionClient {
+	return &PermissionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `permission.Hooks(f(g(h())))`.
+func (c *PermissionClient) Use(hooks ...Hook) {
+	c.hooks.Permission = append(c.hooks.Permission, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `permission.Intercept(f(g(h())))`.
+func (c *PermissionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Permission = append(c.inters.Permission, interceptors...)
+}
+
+// Create returns a builder for creating a Permission entity.
+func (c *PermissionClient) Create() *PermissionCreate {
+	mutation := newPermissionMutation(c.config, OpCreate)
+	return &PermissionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Permission entities.
+func (c *PermissionClient) CreateBulk(builders ...*PermissionCreate) *PermissionCreateBulk {
+	return &PermissionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PermissionClient) MapCreateBulk(slice any, setFunc func(*PermissionCreate, int)) *PermissionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PermissionCreateBulk{err: fmt.Errorf("calling to PermissionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PermissionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PermissionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Permission.
+func (c *PermissionClient) Update() *PermissionUpdate {
+	mutation := newPermissionMutation(c.config, OpUpdate)
+	return &PermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PermissionClient) UpdateOne(pe *Permission) *PermissionUpdateOne {
+	mutation := newPermissionMutation(c.config, OpUpdateOne, withPermission(pe))
+	return &PermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PermissionClient) UpdateOneID(id uuid.UUID) *PermissionUpdateOne {
+	mutation := newPermissionMutation(c.config, OpUpdateOne, withPermissionID(id))
+	return &PermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Permission.
+func (c *PermissionClient) Delete() *PermissionDelete {
+	mutation := newPermissionMutation(c.config, OpDelete)
+	return &PermissionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PermissionClient) DeleteOne(pe *Permission) *PermissionDeleteOne {
+	return c.DeleteOneID(pe.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PermissionClient) DeleteOneID(id uuid.UUID) *PermissionDeleteOne {
+	builder := c.Delete().Where(permission.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PermissionDeleteOne{builder}
+}
+
+// Query returns a query builder for Permission.
+func (c *PermissionClient) Query() *PermissionQuery {
+	return &PermissionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePermission},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Permission entity by its id.
+func (c *PermissionClient) Get(ctx context.Context, id uuid.UUID) (*Permission, error) {
+	return c.Query().Where(permission.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PermissionClient) GetX(ctx context.Context, id uuid.UUID) *Permission {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGroups queries the groups edge of a Permission.
+func (c *PermissionClient) QueryGroups(pe *Permission) *GroupQuery {
+	query := (&GroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pe.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(permission.Table, permission.FieldID, id),
+			sqlgraph.To(group.Table, group.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, permission.GroupsTable, permission.GroupsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(pe.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PermissionClient) Hooks() []Hook {
+	return c.hooks.Permission
+}
+
+// Interceptors returns the client interceptors.
+func (c *PermissionClient) Interceptors() []Interceptor {
+	return c.inters.Permission
+}
+
+func (c *PermissionClient) mutate(ctx context.Context, m *PermissionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PermissionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PermissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Permission mutation op: %q", m.Op())
+	}
+}
+
+// ProjectClient is a client for the Project schema.
+type ProjectClient struct {
+	config
+}
+
+// NewProjectClient returns a client for the Project from the given config.
+func NewProjectClient(c config) *ProjectClient {
+	return &ProjectClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `project.Hooks(f(g(h())))`.
+func (c *ProjectClient) Use(hooks ...Hook) {
+	c.hooks.Project = append(c.hooks.Project, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `project.Intercept(f(g(h())))`.
+func (c *ProjectClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Project = append(c.inters.Project, interceptors...)
+}
+
+// Create returns a builder for creating a Project entity.
+func (c *ProjectClient) Create() *ProjectCreate {
+	mutation := newProjectMutation(c.config, OpCreate)
+	return &ProjectCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Project entities.
+func (c *ProjectClient) CreateBulk(builders ...*ProjectCreate) *ProjectCreateBulk {
+	return &ProjectCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ProjectClient) MapCreateBulk(slice any, setFunc func(*ProjectCreate, int)) *ProjectCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ProjectCreateBulk{err: fmt.Errorf("calling to ProjectClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ProjectCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ProjectCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Project.
+func (c *ProjectClient) Update() *ProjectUpdate {
+	mutation := newProjectMutation(c.config, OpUpdate)
+	return &ProjectUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProjectClient) UpdateOne(pr *Project) *ProjectUpdateOne {
+	mutation := newProjectMutation(c.config, OpUpdateOne, withProject(pr))
+	return &ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProjectClient) UpdateOneID(id uuid.UUID) *ProjectUpdateOne {
+	mutation := newProjectMutation(c.config, OpUpdateOne, withProjectID(id))
+	return &ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Project.
+func (c *ProjectClient) Delete() *ProjectDelete {
+	mutation := newProjectMutation(c.config, OpDelete)
+	return &ProjectDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ProjectClient) DeleteOne(pr *Project) *ProjectDeleteOne {
+	return c.DeleteOneID(pr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ProjectClient) DeleteOneID(id uuid.UUID) *ProjectDeleteOne {
+	builder := c.Delete().Where(project.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProjectDeleteOne{builder}
+}
+
+// Query returns a query builder for Project.
+func (c *ProjectClient) Query() *ProjectQuery {
+	return &ProjectQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeProject},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Project entity by its id.
+func (c *ProjectClient) Get(ctx context.Context, id uuid.UUID) (*Project, error) {
+	return c.Query().Where(project.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProjectClient) GetX(ctx context.Context, id uuid.UUID) *Project {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTeam queries the team edge of a Project.
+func (c *ProjectClient) QueryTeam(pr *Project) *TeamQuery {
+	query := (&TeamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, project.TeamTable, project.TeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ProjectClient) Hooks() []Hook {
+	return c.hooks.Project
+}
+
+// Interceptors returns the client interceptors.
+func (c *ProjectClient) Interceptors() []Interceptor {
+	return c.inters.Project
+}
+
+func (c *ProjectClient) mutate(ctx context.Context, m *ProjectMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ProjectCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ProjectUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ProjectDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Project mutation op: %q", m.Op())
+	}
+}
+
+// TeamClient is a client for the Team schema.
+type TeamClient struct {
+	config
+}
+
+// NewTeamClient returns a client for the Team from the given config.
+func NewTeamClient(c config) *TeamClient {
+	return &TeamClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `team.Hooks(f(g(h())))`.
+func (c *TeamClient) Use(hooks ...Hook) {
+	c.hooks.Team = append(c.hooks.Team, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `team.Intercept(f(g(h())))`.
+func (c *TeamClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Team = append(c.inters.Team, interceptors...)
+}
+
+// Create returns a builder for creating a Team entity.
+func (c *TeamClient) Create() *TeamCreate {
+	mutation := newTeamMutation(c.config, OpCreate)
+	return &TeamCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Team entities.
+func (c *TeamClient) CreateBulk(builders ...*TeamCreate) *TeamCreateBulk {
+	return &TeamCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TeamClient) MapCreateBulk(slice any, setFunc func(*TeamCreate, int)) *TeamCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TeamCreateBulk{err: fmt.Errorf("calling to TeamClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TeamCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TeamCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Team.
+func (c *TeamClient) Update() *TeamUpdate {
+	mutation := newTeamMutation(c.config, OpUpdate)
+	return &TeamUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TeamClient) UpdateOne(t *Team) *TeamUpdateOne {
+	mutation := newTeamMutation(c.config, OpUpdateOne, withTeam(t))
+	return &TeamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TeamClient) UpdateOneID(id uuid.UUID) *TeamUpdateOne {
+	mutation := newTeamMutation(c.config, OpUpdateOne, withTeamID(id))
+	return &TeamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Team.
+func (c *TeamClient) Delete() *TeamDelete {
+	mutation := newTeamMutation(c.config, OpDelete)
+	return &TeamDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TeamClient) DeleteOne(t *Team) *TeamDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TeamClient) DeleteOneID(id uuid.UUID) *TeamDeleteOne {
+	builder := c.Delete().Where(team.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TeamDeleteOne{builder}
+}
+
+// Query returns a query builder for Team.
+func (c *TeamClient) Query() *TeamQuery {
+	return &TeamQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTeam},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Team entity by its id.
+func (c *TeamClient) Get(ctx context.Context, id uuid.UUID) (*Team, error) {
+	return c.Query().Where(team.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TeamClient) GetX(ctx context.Context, id uuid.UUID) *Team {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProjects queries the projects edge of a Team.
+func (c *TeamClient) QueryProjects(t *Team) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.ProjectsTable, team.ProjectsColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMembers queries the members edge of a Team.
+func (c *TeamClient) QueryMembers(t *Team) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, team.MembersTable, team.MembersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGroups queries the groups edge of a Team.
+func (c *TeamClient) QueryGroups(t *Team) *GroupQuery {
+	query := (&GroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(group.Table, group.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.GroupsTable, team.GroupsColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TeamClient) Hooks() []Hook {
+	return c.hooks.Team
+}
+
+// Interceptors returns the client interceptors.
+func (c *TeamClient) Interceptors() []Interceptor {
+	return c.inters.Team
+}
+
+func (c *TeamClient) mutate(ctx context.Context, m *TeamMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TeamCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TeamUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TeamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TeamDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Team mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -1151,6 +1843,38 @@ func (c *UserClient) QueryCreatedBy(u *User) *GithubAppQuery {
 	return query
 }
 
+// QueryGroups queries the groups edge of a User.
+func (c *UserClient) QueryGroups(u *User) *GroupQuery {
+	query := (&GroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(group.Table, group.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, user.GroupsTable, user.GroupsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTeams queries the teams edge of a User.
+func (c *UserClient) QueryTeams(u *User) *TeamQuery {
+	query := (&TeamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, user.TeamsTable, user.TeamsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -1179,11 +1903,12 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		GithubApp, GithubInstallation, JWTKey, Oauth2Code, Oauth2Token, User []ent.Hook
+		GithubApp, GithubInstallation, Group, JWTKey, Oauth2Code, Oauth2Token,
+		Permission, Project, Team, User []ent.Hook
 	}
 	inters struct {
-		GithubApp, GithubInstallation, JWTKey, Oauth2Code, Oauth2Token,
-		User []ent.Interceptor
+		GithubApp, GithubInstallation, Group, JWTKey, Oauth2Code, Oauth2Token,
+		Permission, Project, Team, User []ent.Interceptor
 	}
 )
 

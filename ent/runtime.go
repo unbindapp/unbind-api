@@ -8,9 +8,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
+	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -76,6 +80,35 @@ func init() {
 	githubinstallationDescID := githubinstallationFields[0].Descriptor()
 	// githubinstallation.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	githubinstallation.IDValidator = githubinstallationDescID.Validators[0].(func(int64) error)
+	groupMixin := schema.Group{}.Mixin()
+	groupMixinFields0 := groupMixin[0].Fields()
+	_ = groupMixinFields0
+	groupMixinFields1 := groupMixin[1].Fields()
+	_ = groupMixinFields1
+	groupFields := schema.Group{}.Fields()
+	_ = groupFields
+	// groupDescCreatedAt is the schema descriptor for created_at field.
+	groupDescCreatedAt := groupMixinFields1[0].Descriptor()
+	// group.DefaultCreatedAt holds the default value on creation for the created_at field.
+	group.DefaultCreatedAt = groupDescCreatedAt.Default.(func() time.Time)
+	// groupDescUpdatedAt is the schema descriptor for updated_at field.
+	groupDescUpdatedAt := groupMixinFields1[1].Descriptor()
+	// group.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	group.DefaultUpdatedAt = groupDescUpdatedAt.Default.(func() time.Time)
+	// group.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	group.UpdateDefaultUpdatedAt = groupDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// groupDescName is the schema descriptor for name field.
+	groupDescName := groupFields[0].Descriptor()
+	// group.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	group.NameValidator = groupDescName.Validators[0].(func(string) error)
+	// groupDescSuperuser is the schema descriptor for superuser field.
+	groupDescSuperuser := groupFields[2].Descriptor()
+	// group.DefaultSuperuser holds the default value on creation for the superuser field.
+	group.DefaultSuperuser = groupDescSuperuser.Default.(bool)
+	// groupDescID is the schema descriptor for id field.
+	groupDescID := groupMixinFields0[0].Descriptor()
+	// group.DefaultID holds the default value on creation for the id field.
+	group.DefaultID = groupDescID.Default.(func() uuid.UUID)
 	oauth2codeMixin := schema.Oauth2Code{}.Mixin()
 	oauth2codeMixinFields0 := oauth2codeMixin[0].Fields()
 	_ = oauth2codeMixinFields0
@@ -126,6 +159,85 @@ func init() {
 	oauth2tokenDescID := oauth2tokenMixinFields0[0].Descriptor()
 	// oauth2token.DefaultID holds the default value on creation for the id field.
 	oauth2token.DefaultID = oauth2tokenDescID.Default.(func() uuid.UUID)
+	permissionMixin := schema.Permission{}.Mixin()
+	permissionMixinFields0 := permissionMixin[0].Fields()
+	_ = permissionMixinFields0
+	permissionMixinFields1 := permissionMixin[1].Fields()
+	_ = permissionMixinFields1
+	permissionFields := schema.Permission{}.Fields()
+	_ = permissionFields
+	// permissionDescCreatedAt is the schema descriptor for created_at field.
+	permissionDescCreatedAt := permissionMixinFields1[0].Descriptor()
+	// permission.DefaultCreatedAt holds the default value on creation for the created_at field.
+	permission.DefaultCreatedAt = permissionDescCreatedAt.Default.(func() time.Time)
+	// permissionDescUpdatedAt is the schema descriptor for updated_at field.
+	permissionDescUpdatedAt := permissionMixinFields1[1].Descriptor()
+	// permission.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	permission.DefaultUpdatedAt = permissionDescUpdatedAt.Default.(func() time.Time)
+	// permission.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	permission.UpdateDefaultUpdatedAt = permissionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// permissionDescResourceID is the schema descriptor for resource_id field.
+	permissionDescResourceID := permissionFields[2].Descriptor()
+	// permission.ResourceIDValidator is a validator for the "resource_id" field. It is called by the builders before save.
+	permission.ResourceIDValidator = permissionDescResourceID.Validators[0].(func(string) error)
+	// permissionDescID is the schema descriptor for id field.
+	permissionDescID := permissionMixinFields0[0].Descriptor()
+	// permission.DefaultID holds the default value on creation for the id field.
+	permission.DefaultID = permissionDescID.Default.(func() uuid.UUID)
+	projectMixin := schema.Project{}.Mixin()
+	projectMixinFields0 := projectMixin[0].Fields()
+	_ = projectMixinFields0
+	projectMixinFields1 := projectMixin[1].Fields()
+	_ = projectMixinFields1
+	projectFields := schema.Project{}.Fields()
+	_ = projectFields
+	// projectDescCreatedAt is the schema descriptor for created_at field.
+	projectDescCreatedAt := projectMixinFields1[0].Descriptor()
+	// project.DefaultCreatedAt holds the default value on creation for the created_at field.
+	project.DefaultCreatedAt = projectDescCreatedAt.Default.(func() time.Time)
+	// projectDescUpdatedAt is the schema descriptor for updated_at field.
+	projectDescUpdatedAt := projectMixinFields1[1].Descriptor()
+	// project.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	project.DefaultUpdatedAt = projectDescUpdatedAt.Default.(func() time.Time)
+	// project.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	project.UpdateDefaultUpdatedAt = projectDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// projectDescName is the schema descriptor for name field.
+	projectDescName := projectFields[0].Descriptor()
+	// project.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	project.NameValidator = projectDescName.Validators[0].(func(string) error)
+	// projectDescStatus is the schema descriptor for status field.
+	projectDescStatus := projectFields[2].Descriptor()
+	// project.DefaultStatus holds the default value on creation for the status field.
+	project.DefaultStatus = projectDescStatus.Default.(string)
+	// projectDescID is the schema descriptor for id field.
+	projectDescID := projectMixinFields0[0].Descriptor()
+	// project.DefaultID holds the default value on creation for the id field.
+	project.DefaultID = projectDescID.Default.(func() uuid.UUID)
+	teamMixin := schema.Team{}.Mixin()
+	teamMixinFields0 := teamMixin[0].Fields()
+	_ = teamMixinFields0
+	teamMixinFields1 := teamMixin[1].Fields()
+	_ = teamMixinFields1
+	teamFields := schema.Team{}.Fields()
+	_ = teamFields
+	// teamDescCreatedAt is the schema descriptor for created_at field.
+	teamDescCreatedAt := teamMixinFields1[0].Descriptor()
+	// team.DefaultCreatedAt holds the default value on creation for the created_at field.
+	team.DefaultCreatedAt = teamDescCreatedAt.Default.(func() time.Time)
+	// teamDescUpdatedAt is the schema descriptor for updated_at field.
+	teamDescUpdatedAt := teamMixinFields1[1].Descriptor()
+	// team.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	team.DefaultUpdatedAt = teamDescUpdatedAt.Default.(func() time.Time)
+	// team.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	team.UpdateDefaultUpdatedAt = teamDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// teamDescName is the schema descriptor for name field.
+	teamDescName := teamFields[0].Descriptor()
+	// team.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	team.NameValidator = teamDescName.Validators[0].(func(string) error)
+	// teamDescID is the schema descriptor for id field.
+	teamDescID := teamMixinFields0[0].Descriptor()
+	// team.DefaultID holds the default value on creation for the id field.
+	team.DefaultID = teamDescID.Default.(func() uuid.UUID)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

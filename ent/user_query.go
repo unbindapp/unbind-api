@@ -14,9 +14,11 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -30,6 +32,8 @@ type UserQuery struct {
 	withOauth2Tokens *Oauth2TokenQuery
 	withOauth2Codes  *Oauth2CodeQuery
 	withCreatedBy    *GithubAppQuery
+	withGroups       *GroupQuery
+	withTeams        *TeamQuery
 	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -126,6 +130,50 @@ func (uq *UserQuery) QueryCreatedBy() *GithubAppQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(githubapp.Table, githubapp.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.CreatedByTable, user.CreatedByColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryGroups chains the current query on the "groups" edge.
+func (uq *UserQuery) QueryGroups() *GroupQuery {
+	query := (&GroupClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(group.Table, group.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, user.GroupsTable, user.GroupsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTeams chains the current query on the "teams" edge.
+func (uq *UserQuery) QueryTeams() *TeamQuery {
+	query := (&TeamClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, user.TeamsTable, user.TeamsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -328,6 +376,8 @@ func (uq *UserQuery) Clone() *UserQuery {
 		withOauth2Tokens: uq.withOauth2Tokens.Clone(),
 		withOauth2Codes:  uq.withOauth2Codes.Clone(),
 		withCreatedBy:    uq.withCreatedBy.Clone(),
+		withGroups:       uq.withGroups.Clone(),
+		withTeams:        uq.withTeams.Clone(),
 		// clone intermediate query.
 		sql:       uq.sql.Clone(),
 		path:      uq.path,
@@ -365,6 +415,28 @@ func (uq *UserQuery) WithCreatedBy(opts ...func(*GithubAppQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withCreatedBy = query
+	return uq
+}
+
+// WithGroups tells the query-builder to eager-load the nodes that are connected to
+// the "groups" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithGroups(opts ...func(*GroupQuery)) *UserQuery {
+	query := (&GroupClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withGroups = query
+	return uq
+}
+
+// WithTeams tells the query-builder to eager-load the nodes that are connected to
+// the "teams" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithTeams(opts ...func(*TeamQuery)) *UserQuery {
+	query := (&TeamClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withTeams = query
 	return uq
 }
 
@@ -446,10 +518,12 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [5]bool{
 			uq.withOauth2Tokens != nil,
 			uq.withOauth2Codes != nil,
 			uq.withCreatedBy != nil,
+			uq.withGroups != nil,
+			uq.withTeams != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -491,6 +565,20 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadCreatedBy(ctx, query, nodes,
 			func(n *User) { n.Edges.CreatedBy = []*GithubApp{} },
 			func(n *User, e *GithubApp) { n.Edges.CreatedBy = append(n.Edges.CreatedBy, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withGroups; query != nil {
+		if err := uq.loadGroups(ctx, query, nodes,
+			func(n *User) { n.Edges.Groups = []*Group{} },
+			func(n *User, e *Group) { n.Edges.Groups = append(n.Edges.Groups, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withTeams; query != nil {
+		if err := uq.loadTeams(ctx, query, nodes,
+			func(n *User) { n.Edges.Teams = []*Team{} },
+			func(n *User, e *Team) { n.Edges.Teams = append(n.Edges.Teams, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -586,6 +674,128 @@ func (uq *UserQuery) loadCreatedBy(ctx context.Context, query *GithubAppQuery, n
 			return fmt.Errorf(`unexpected referenced foreign-key "created_by" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes []*User, init func(*User), assign func(*User, *Group)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*User)
+	nids := make(map[uuid.UUID]map[*User]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(user.GroupsTable)
+		s.Join(joinT).On(s.C(group.FieldID), joinT.C(user.GroupsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(user.GroupsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(user.GroupsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Group](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "groups" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uq *UserQuery) loadTeams(ctx context.Context, query *TeamQuery, nodes []*User, init func(*User), assign func(*User, *Team)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[uuid.UUID]*User)
+	nids := make(map[uuid.UUID]map[*User]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(user.TeamsTable)
+		s.Join(joinT).On(s.C(team.FieldID), joinT.C(user.TeamsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(user.TeamsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(user.TeamsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(uuid.UUID)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := *values[0].(*uuid.UUID)
+				inValue := *values[1].(*uuid.UUID)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Team](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "teams" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }

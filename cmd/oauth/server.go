@@ -16,10 +16,10 @@ import (
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/database"
-	"github.com/unbindapp/unbind-api/internal/database/repository"
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/middleware"
 	"github.com/unbindapp/unbind-api/internal/oauth2server"
+	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 	"github.com/unbindapp/unbind-api/internal/utils"
 	"github.com/valkey-io/valkey-go"
 )
@@ -46,10 +46,10 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 	if err := db.Schema.Create(ctx); err != nil {
 		log.Fatal("Failed to run migrations", "err", err)
 	}
-	repo := repository.NewRepository(db)
+	repo := repositories.NewRepositories(db)
 
 	// Load private key
-	pkey, _, err := repo.GetOrGenerateJWTPrivateKey(ctx)
+	pkey, _, err := repo.Oauth().GetOrGenerateJWTPrivateKey(ctx)
 	if err != nil {
 		log.Fatalf("Failed to get private key: %v", err)
 	}
@@ -226,7 +226,7 @@ func StartOauth2Server(cfg *config.Config) {
 	// Cron job to clean up expired tokens
 	s := gocron.NewScheduler(time.UTC)
 	s.Every(1).Hour().Do(func() {
-		err := oauth2Srv.Repository.CleanTokenStore(ctx)
+		err := oauth2Srv.Repository.Oauth().CleanTokenStore(ctx)
 		if err != nil {
 			log.Error("Failed to clean token store", "err", err)
 		}

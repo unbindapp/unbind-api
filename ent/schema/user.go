@@ -40,6 +40,8 @@ func (User) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
+		edge.To("groups", Group.Type),
+		edge.To("teams", Team.Type),
 	}
 }
 

@@ -3,18 +3,25 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/group"
+	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/internal/database"
-	"github.com/unbindapp/unbind-api/internal/database/repository"
+	"github.com/unbindapp/unbind-api/internal/k8s"
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/repository/repositories"
+	group_service "github.com/unbindapp/unbind-api/internal/services/group"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type cli struct {
-	repository *repository.Repository
+	repository   repositories.RepositoriesInterface
+	groupService *group_service.GroupService
 }
 
 func NewCLI(cfg *config.Config) *cli {
@@ -32,17 +39,24 @@ func NewCLI(cfg *config.Config) *cli {
 	if err := db.Schema.Create(context.TODO()); err != nil {
 		log.Fatal("Failed to run migrations", "err", err)
 	}
-	repo := repository.NewRepository(db)
+	repo := repositories.NewRepositories(db)
+
+	kubeClient := k8s.NewKubeClient(cfg)
+	rbacManager := k8s.NewRBACManager(repo, kubeClient)
 
 	return &cli{
 		repository: repo,
+		groupService: group_service.NewGroupService(
+			repo,
+			rbacManager,
+		),
 	}
 }
 
 // List all users in the database
 func (self *cli) listUsers() {
 	// Query all users
-	users, err := self.repository.DB.User.Query().All(context.Background())
+	users, err := self.repository.Ent().User.Query().WithGroups().All(context.Background())
 	if err != nil {
 		fmt.Printf("Error querying users: %v\n", err)
 		return
@@ -52,12 +66,131 @@ func (self *cli) listUsers() {
 	fmt.Println("Users:")
 	fmt.Println("-------------------------------------")
 	for _, u := range users {
+		groupNames := make([]string, len(u.Edges.Groups))
+		for i, g := range u.Edges.Groups {
+			groupNames[i] = g.Name
+		}
 		fmt.Printf("ID: %s\n", u.ID)
 		fmt.Printf("Email: %s\n", u.Email)
 		fmt.Printf("Created: %s\n", u.CreatedAt.Format(time.RFC3339))
+		fmt.Printf("Groups: %s\n", strings.Join(groupNames, ", "))
 		fmt.Println("-------------------------------------")
 	}
 	fmt.Printf("Total users: %d\n", len(users))
+}
+
+// List all groups in the database
+func (self *cli) listGroups() {
+	ctx := context.Background()
+
+	// Query all groups
+	groups, err := self.repository.Ent().Group.Query().All(ctx)
+	if err != nil {
+		fmt.Printf("Error querying groups: %v\n", err)
+		return
+	}
+
+	// Print group information
+	fmt.Println("Groups:")
+	fmt.Println("-------------------------------------")
+	for _, g := range groups {
+		fmt.Printf("ID: %s\n", g.ID)
+		fmt.Printf("Name: %s\n", g.Name)
+		fmt.Printf("Description: %s\n", g.Description)
+
+		if g.TeamID != nil {
+			fmt.Printf("Team ID: %s\n", *g.TeamID)
+		} else {
+			fmt.Printf("Scope: Global\n")
+		}
+
+		if g.K8sRoleName != "" {
+			fmt.Printf("K8s Role: %s\n", g.K8sRoleName)
+		}
+
+		// Get members count
+		members, err := self.repository.Ent().Group.QueryUsers(g).Count(ctx)
+		if err != nil {
+			fmt.Printf("Error counting members: %v\n", err)
+		} else {
+			fmt.Printf("Members: %d\n", members)
+		}
+
+		// Get permissions count
+		perms, err := self.repository.Ent().Group.QueryPermissions(g).Count(ctx)
+		if err != nil {
+			fmt.Printf("Error counting permissions: %v\n", err)
+		} else {
+			fmt.Printf("Permissions: %d\n", perms)
+		}
+
+		fmt.Println("-------------------------------------")
+	}
+	fmt.Printf("Total groups: %d\n", len(groups))
+}
+
+// Create a new group
+func (self *cli) createGroup(name, description string, teamID *uuid.UUID) {
+	ctx := context.Background()
+
+	// Validate inputs
+	if name == "" {
+		log.Errorf("Error: group name is required")
+		return
+	}
+
+	// Check if group already exists
+	exists, err := self.repository.Ent().Group.Query().
+		Where(group.NameEQ(name)).
+		Exist(ctx)
+	if err != nil {
+		log.Errorf("Error checking if group exists: %v", err)
+		return
+	}
+	if exists {
+		log.Errorf("Error: Group '%s' already exists", name)
+		return
+	}
+
+	// Create the group
+	groupBuilder := self.repository.Ent().Group.Create().
+		SetName(name).
+		SetDescription(description)
+
+	// Set team ID if provided
+	if teamID != nil {
+		// Check if team exists
+		teamExists, err := self.repository.Ent().Team.Query().
+			Where(team.IDEQ(*teamID)).
+			Exist(ctx)
+		if err != nil {
+			log.Errorf("Error checking if team exists: %v", err)
+			return
+		}
+		if !teamExists {
+			log.Errorf("Error: Team with ID '%s' does not exist", teamID.String())
+			return
+		}
+
+		groupBuilder.SetTeamID(*teamID)
+	}
+
+	// Save the group
+	group, err := groupBuilder.Save(ctx)
+	if err != nil {
+		fmt.Printf("Error creating group: %v\n", err)
+		return
+	}
+
+	fmt.Println("Group created successfully:")
+	fmt.Printf("ID: %s\n", group.ID)
+	fmt.Printf("Name: %s\n", group.Name)
+	fmt.Printf("Description: %s\n", group.Description)
+	if group.TeamID != nil {
+		fmt.Printf("Team ID: %s\n", *group.TeamID)
+	} else {
+		fmt.Printf("Scope: Global\n")
+	}
 }
 
 // Create a new user
@@ -69,7 +202,7 @@ func (self *cli) createUser(email, password string) {
 	}
 
 	// Check if username already exists
-	u, err := self.repository.GetUserByEmail(context.Background(), email)
+	u, err := self.repository.User().GetByEmail(context.Background(), email)
 	if err != nil {
 		if !ent.IsNotFound(err) {
 			log.Errorf("Error checking if user exists: %v", err)
@@ -89,7 +222,7 @@ func (self *cli) createUser(email, password string) {
 	}
 
 	// Create the user
-	u, err = self.repository.DB.User.Create().
+	u, err = self.repository.Ent().User.Create().
 		SetEmail(email).
 		SetPasswordHash(string(hashedPassword)).
 		Save(context.Background())

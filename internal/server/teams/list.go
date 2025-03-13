@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/unbindapp/unbind-api/internal/kubeclient"
+	"github.com/unbindapp/unbind-api/internal/k8s"
 	"github.com/unbindapp/unbind-api/internal/log"
 )
 
@@ -15,7 +15,7 @@ type TeamInput struct {
 
 type TeamResponse struct {
 	Body struct {
-		Data []kubeclient.UnbindTeam `json:"data"`
+		Data []k8s.UnbindTeam `json:"data"`
 	}
 }
 

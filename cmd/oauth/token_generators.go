@@ -10,7 +10,7 @@ import (
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/internal/database/repository"
+	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 )
 
 // Access token generator
@@ -53,14 +53,14 @@ func (a *accessTokenGenerator) Token(ctx context.Context, data *oauth2.GenerateB
 }
 
 // The ID token of the oidc flow
-func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo *repository.Repository, issuer string, privateKey *rsa.PrivateKey, kid string) (string, error) {
+func generateIDToken(ctx context.Context, ti oauth2.TokenInfo, repo repositories.RepositoriesInterface, issuer string, privateKey *rsa.PrivateKey, kid string) (string, error) {
 	now := time.Now()
 
 	// Gather the data we need
 	userID := ti.GetUserID()
 	clientID := ti.GetClientID()
 
-	u, err := repo.GetUserByEmail(ctx, userID)
+	u, err := repo.User().GetByEmail(ctx, userID)
 	if err != nil {
 		return "", fmt.Errorf("failed to find user: %w", err)
 	}

@@ -29,6 +29,10 @@ const (
 	EdgeOauth2Codes = "oauth2_codes"
 	// EdgeCreatedBy holds the string denoting the created_by edge name in mutations.
 	EdgeCreatedBy = "created_by"
+	// EdgeGroups holds the string denoting the groups edge name in mutations.
+	EdgeGroups = "groups"
+	// EdgeTeams holds the string denoting the teams edge name in mutations.
+	EdgeTeams = "teams"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// Oauth2TokensTable is the table that holds the oauth2_tokens relation/edge.
@@ -52,6 +56,16 @@ const (
 	CreatedByInverseTable = "github_apps"
 	// CreatedByColumn is the table column denoting the created_by relation/edge.
 	CreatedByColumn = "created_by"
+	// GroupsTable is the table that holds the groups relation/edge. The primary key declared below.
+	GroupsTable = "user_groups"
+	// GroupsInverseTable is the table name for the Group entity.
+	// It exists in this package in order to avoid circular dependency with the "group" package.
+	GroupsInverseTable = "groups"
+	// TeamsTable is the table that holds the teams relation/edge. The primary key declared below.
+	TeamsTable = "user_teams"
+	// TeamsInverseTable is the table name for the Team entity.
+	// It exists in this package in order to avoid circular dependency with the "team" package.
+	TeamsInverseTable = "teams"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -62,6 +76,15 @@ var Columns = []string{
 	FieldEmail,
 	FieldPasswordHash,
 }
+
+var (
+	// GroupsPrimaryKey and GroupsColumn2 are the table columns denoting the
+	// primary key for the groups relation (M2M).
+	GroupsPrimaryKey = []string{"user_id", "group_id"}
+	// TeamsPrimaryKey and TeamsColumn2 are the table columns denoting the
+	// primary key for the teams relation (M2M).
+	TeamsPrimaryKey = []string{"user_id", "team_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -153,6 +176,34 @@ func ByCreatedBy(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCreatedByStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByGroupsCount orders the results by groups count.
+func ByGroupsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newGroupsStep(), opts...)
+	}
+}
+
+// ByGroups orders the results by groups terms.
+func ByGroups(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newGroupsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByTeamsCount orders the results by teams count.
+func ByTeamsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTeamsStep(), opts...)
+	}
+}
+
+// ByTeams orders the results by teams terms.
+func ByTeams(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTeamsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOauth2TokensStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -172,5 +223,19 @@ func newCreatedByStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CreatedByInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CreatedByTable, CreatedByColumn),
+	)
+}
+func newGroupsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(GroupsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, GroupsTable, GroupsPrimaryKey...),
+	)
+}
+func newTeamsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TeamsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, TeamsTable, TeamsPrimaryKey...),
 	)
 }

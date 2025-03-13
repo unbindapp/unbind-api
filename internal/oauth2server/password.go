@@ -9,7 +9,7 @@ import (
 
 func (self *Oauth2Server) PasswordAuthorizationHandler(ctx context.Context, clientID, username, password string) (userID string, err error) {
 	// Find the user
-	u, err := self.Repository.GetUserByEmail(ctx, username)
+	u, err := self.Repository.User().GetByEmail(ctx, username)
 	if err != nil {
 		return "", errors.New("invalid username or password")
 	}

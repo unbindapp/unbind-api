@@ -23,7 +23,7 @@ type GithubAdminOrganizationListResponse struct {
 
 func (self *HandlerGroup) HandleListGithubAdminOrganizations(ctx context.Context, input *GithubAdminOrganizationListInput) (*GithubAdminOrganizationListResponse, error) {
 	// Get installation
-	installation, err := self.srv.Repository.GetGithubInstallationByID(ctx, input.InstallationID)
+	installation, err := self.srv.Repository.Github().GetInstallationByID(ctx, input.InstallationID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, huma.Error404NotFound("Installation not found")

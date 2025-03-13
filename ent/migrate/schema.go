@@ -72,6 +72,40 @@ var (
 			},
 		},
 	}
+	// GroupsColumns holds the columns for the "groups" table.
+	GroupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "superuser", Type: field.TypeBool, Default: false},
+		{Name: "k8s_role_name", Type: field.TypeString, Nullable: true},
+		{Name: "identity_provider", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "team_id", Type: field.TypeUUID, Nullable: true},
+	}
+	// GroupsTable holds the schema information for the "groups" table.
+	GroupsTable = &schema.Table{
+		Name:       "groups",
+		Columns:    GroupsColumns,
+		PrimaryKey: []*schema.Column{GroupsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "groups_teams_groups",
+				Columns:    []*schema.Column{GroupsColumns[9]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "group_name_team_id",
+				Unique:  true,
+				Columns: []*schema.Column{GroupsColumns[3], GroupsColumns[9]},
+			},
+		},
+	}
 	// JwtKeysColumns holds the columns for the "jwt_keys" table.
 	JwtKeysColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -138,6 +172,61 @@ var (
 			},
 		},
 	}
+	// PermissionsColumns holds the columns for the "permissions" table.
+	PermissionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "action", Type: field.TypeEnum, Enums: []string{"read", "create", "update", "delete", "manage", "admin", "edit", "view"}},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "group", "permission", "user", "system"}},
+		{Name: "resource_id", Type: field.TypeString},
+		{Name: "scope", Type: field.TypeString, Nullable: true},
+		{Name: "labels", Type: field.TypeJSON, Nullable: true},
+	}
+	// PermissionsTable holds the schema information for the "permissions" table.
+	PermissionsTable = &schema.Table{
+		Name:       "permissions",
+		Columns:    PermissionsColumns,
+		PrimaryKey: []*schema.Column{PermissionsColumns[0]},
+	}
+	// ProjectsColumns holds the columns for the "projects" table.
+	ProjectsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeString, Default: "active"},
+		{Name: "team_projects", Type: field.TypeUUID, Nullable: true},
+	}
+	// ProjectsTable holds the schema information for the "projects" table.
+	ProjectsTable = &schema.Table{
+		Name:       "projects",
+		Columns:    ProjectsColumns,
+		PrimaryKey: []*schema.Column{ProjectsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "projects_teams_projects",
+				Columns:    []*schema.Column{ProjectsColumns[6]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// TeamsColumns holds the columns for the "teams" table.
+	TeamsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+	}
+	// TeamsTable holds the schema information for the "teams" table.
+	TeamsTable = &schema.Table{
+		Name:       "teams",
+		Columns:    TeamsColumns,
+		PrimaryKey: []*schema.Column{TeamsColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -152,14 +241,96 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// GroupPermissionsColumns holds the columns for the "group_permissions" table.
+	GroupPermissionsColumns = []*schema.Column{
+		{Name: "group_id", Type: field.TypeUUID},
+		{Name: "permission_id", Type: field.TypeUUID},
+	}
+	// GroupPermissionsTable holds the schema information for the "group_permissions" table.
+	GroupPermissionsTable = &schema.Table{
+		Name:       "group_permissions",
+		Columns:    GroupPermissionsColumns,
+		PrimaryKey: []*schema.Column{GroupPermissionsColumns[0], GroupPermissionsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "group_permissions_group_id",
+				Columns:    []*schema.Column{GroupPermissionsColumns[0]},
+				RefColumns: []*schema.Column{GroupsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "group_permissions_permission_id",
+				Columns:    []*schema.Column{GroupPermissionsColumns[1]},
+				RefColumns: []*schema.Column{PermissionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UserGroupsColumns holds the columns for the "user_groups" table.
+	UserGroupsColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "group_id", Type: field.TypeUUID},
+	}
+	// UserGroupsTable holds the schema information for the "user_groups" table.
+	UserGroupsTable = &schema.Table{
+		Name:       "user_groups",
+		Columns:    UserGroupsColumns,
+		PrimaryKey: []*schema.Column{UserGroupsColumns[0], UserGroupsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_groups_user_id",
+				Columns:    []*schema.Column{UserGroupsColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_groups_group_id",
+				Columns:    []*schema.Column{UserGroupsColumns[1]},
+				RefColumns: []*schema.Column{GroupsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UserTeamsColumns holds the columns for the "user_teams" table.
+	UserTeamsColumns = []*schema.Column{
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "team_id", Type: field.TypeUUID},
+	}
+	// UserTeamsTable holds the schema information for the "user_teams" table.
+	UserTeamsTable = &schema.Table{
+		Name:       "user_teams",
+		Columns:    UserTeamsColumns,
+		PrimaryKey: []*schema.Column{UserTeamsColumns[0], UserTeamsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_teams_user_id",
+				Columns:    []*schema.Column{UserTeamsColumns[0]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "user_teams_team_id",
+				Columns:    []*schema.Column{UserTeamsColumns[1]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		GithubAppsTable,
 		GithubInstallationsTable,
+		GroupsTable,
 		JwtKeysTable,
 		Oauth2CodesTable,
 		Oauth2TokensTable,
+		PermissionsTable,
+		ProjectsTable,
+		TeamsTable,
 		UsersTable,
+		GroupPermissionsTable,
+		UserGroupsTable,
+		UserTeamsTable,
 	}
 )
 
@@ -172,6 +343,10 @@ func init() {
 	GithubInstallationsTable.Annotation = &entsql.Annotation{
 		Table: "github_installations",
 	}
+	GroupsTable.ForeignKeys[0].RefTable = TeamsTable
+	GroupsTable.Annotation = &entsql.Annotation{
+		Table: "groups",
+	}
 	JwtKeysTable.Annotation = &entsql.Annotation{
 		Table: "jwt_keys",
 	}
@@ -183,7 +358,23 @@ func init() {
 	Oauth2TokensTable.Annotation = &entsql.Annotation{
 		Table: "oauth2_tokens",
 	}
+	PermissionsTable.Annotation = &entsql.Annotation{
+		Table: "permissions",
+	}
+	ProjectsTable.ForeignKeys[0].RefTable = TeamsTable
+	ProjectsTable.Annotation = &entsql.Annotation{
+		Table: "projects",
+	}
+	TeamsTable.Annotation = &entsql.Annotation{
+		Table: "teams",
+	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
 	}
+	GroupPermissionsTable.ForeignKeys[0].RefTable = GroupsTable
+	GroupPermissionsTable.ForeignKeys[1].RefTable = PermissionsTable
+	UserGroupsTable.ForeignKeys[0].RefTable = UsersTable
+	UserGroupsTable.ForeignKeys[1].RefTable = GroupsTable
+	UserTeamsTable.ForeignKeys[0].RefTable = UsersTable
+	UserTeamsTable.ForeignKeys[1].RefTable = TeamsTable
 }

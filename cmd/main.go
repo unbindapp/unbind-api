@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/cmd/oauth"
 	"github.com/unbindapp/unbind-api/config"
@@ -21,8 +22,17 @@ func main() {
 	email := createUserCmd.String("email", "", "Email for the new user")
 	password := createUserCmd.String("password", "", "Password for the new user")
 
+	// Group management flags
+	createGroupCmd := flag.NewFlagSet("create-group", flag.ExitOnError)
+	groupName := createGroupCmd.String("name", "", "Name of the group")
+	groupDescription := createGroupCmd.String("description", "", "Description of the group")
+	teamID := createGroupCmd.String("team-id", "", "ID of the team to associate the group with (Optional)")
+
 	// List users flag
 	listUsersFlag := flag.Bool("list-users", false, "List all users")
+
+	// List groups flag
+	listGroupsFlag := flag.Bool("list-groups", false, "List all groups")
 
 	// Parse the command-line flags
 	flag.Parse()
@@ -43,10 +53,25 @@ func main() {
 	} else if *listUsersFlag {
 		cli := NewCLI(cfg)
 		cli.listUsers()
+	} else if *listGroupsFlag {
+		cli := NewCLI(cfg)
+		cli.listGroups()
 	} else if len(os.Args) > 1 && os.Args[1] == "create-user" {
 		cli := NewCLI(cfg)
 		createUserCmd.Parse(os.Args[2:])
 		cli.createUser(*email, *password)
+	} else if len(os.Args) > 1 && os.Args[1] == "create-group" {
+		cli := NewCLI(cfg)
+		createGroupCmd.Parse(os.Args[2:])
+		if teamID != nil {
+			cli.createGroup(*groupName, *groupDescription, nil)
+		} else {
+			parsedTeamID, err := uuid.Parse(*teamID)
+			if err != nil {
+				log.Fatalf("Failed to parse team ID: %v", err)
+			}
+			cli.createGroup(*groupName, *groupDescription, &parsedTeamID)
+		}
 	} else {
 		fmt.Println("No command specified. Use -start-api to start the API server.")
 	}

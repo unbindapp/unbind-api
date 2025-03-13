@@ -8,16 +8,16 @@ import (
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
 	"github.com/go-oauth2/oauth2/v4/models"
-	"github.com/unbindapp/unbind-api/internal/database/repository"
+	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 )
 
 // Custom token store that using our database backend and handles authorization code flow
 type customTokenStore struct {
 	clientStore *dbClientStore
-	repository  *repository.Repository
+	repository  repositories.RepositoriesInterface
 }
 
-func NewCustomTokenStore(clientStore *dbClientStore, repository *repository.Repository) *customTokenStore {
+func NewCustomTokenStore(clientStore *dbClientStore, repository repositories.RepositoriesInterface) *customTokenStore {
 	return &customTokenStore{
 		clientStore: clientStore,
 		repository:  repository,
@@ -61,12 +61,12 @@ func (s *customTokenStore) createAuthorizationCode(ctx context.Context, info oau
 	}
 	expiresAt := time.Now().Add(expiresIn)
 
-	u, err := s.repository.GetUserByEmail(ctx, userID)
+	u, err := s.repository.User().GetByEmail(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to find user: %w", err)
 	}
 
-	_, err = s.repository.CreateAuthCode(ctx, code, clientID, scope, u, expiresAt)
+	_, err = s.repository.Oauth().CreateAuthCode(ctx, code, clientID, scope, u, expiresAt)
 	return err
 }
 
@@ -89,7 +89,7 @@ func (s *customTokenStore) createTokens(ctx context.Context, info oauth2.TokenIn
 	}
 
 	// Find the user by userData (often an email or ID)
-	u, err := s.repository.GetUserByEmail(ctx, userData)
+	u, err := s.repository.User().GetByEmail(ctx, userData)
 	if err != nil {
 		return fmt.Errorf("failed to find user: %w", err)
 	}
@@ -101,7 +101,7 @@ func (s *customTokenStore) createTokens(ctx context.Context, info oauth2.TokenIn
 	}
 	refreshExpiresAt := time.Now().Add(refreshExpiresIn)
 
-	_, err = s.repository.CreateToken(
+	_, err = s.repository.Oauth().CreateToken(
 		ctx,
 		accessToken,
 		refreshToken,
@@ -116,21 +116,21 @@ func (s *customTokenStore) createTokens(ctx context.Context, info oauth2.TokenIn
 // RemoveByCode is called after a successful exchange or if the code is no longer valid.
 func (s *customTokenStore) RemoveByCode(ctx context.Context, code string) error {
 	// Delete it from DB so it can’t be reused
-	return s.repository.DeleteAuthCode(ctx, code)
+	return s.repository.Oauth().DeleteAuthCode(ctx, code)
 }
 
 func (s *customTokenStore) RemoveByAccess(ctx context.Context, access string) error {
-	return s.repository.RevokeAccessToken(ctx, access)
+	return s.repository.Oauth().RevokeAccessToken(ctx, access)
 }
 
 func (s *customTokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
-	return s.repository.RevokeRefreshToken(ctx, refresh)
+	return s.repository.Oauth().RevokeRefreshToken(ctx, refresh)
 }
 
 // GetByCode is called when the library needs to exchange an authorization code for tokens.
 func (s *customTokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	// Query your DB to see if this code exists
-	authCode, err := s.repository.GetAuthCode(ctx, code)
+	authCode, err := s.repository.Oauth().GetAuthCode(ctx, code)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (s *customTokenStore) GetByCode(ctx context.Context, code string) (oauth2.T
 	return token, nil
 }
 func (s *customTokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
-	token, err := s.repository.GetByAccessToken(ctx, access)
+	token, err := s.repository.Oauth().GetByAccessToken(ctx, access)
 
 	if err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func (s *customTokenStore) GetByAccess(ctx context.Context, access string) (oaut
 }
 
 func (s *customTokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
-	token, err := s.repository.GetByRefreshToken(ctx, refresh)
+	token, err := s.repository.Oauth().GetByRefreshToken(ctx, refresh)
 
 	if err != nil {
 		return nil, err

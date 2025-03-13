@@ -24,7 +24,7 @@ func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, 
 	}
 
 	// ! TODO - RBAC
-	installations, err := self.srv.Repository.GetGithubInstallationsByCreator(ctx, user.ID)
+	installations, err := self.srv.Repository.Github().GetInstallationsByCreator(ctx, user.ID)
 	if err != nil {
 		log.Error("Error getting github installations", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github installations")

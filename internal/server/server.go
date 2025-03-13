@@ -7,9 +7,9 @@ import (
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/database"
-	"github.com/unbindapp/unbind-api/internal/database/repository"
 	"github.com/unbindapp/unbind-api/internal/github"
-	"github.com/unbindapp/unbind-api/internal/kubeclient"
+	"github.com/unbindapp/unbind-api/internal/k8s"
+	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 	"golang.org/x/oauth2"
 )
 
@@ -18,11 +18,11 @@ type EmptyInput struct{}
 
 // Server implements generated.ServerInterface
 type Server struct {
-	KubeClient   *kubeclient.KubeClient
+	KubeClient   *k8s.KubeClient
 	Cfg          *config.Config
 	OauthConfig  *oauth2.Config
 	GithubClient *github.GithubClient
-	Repository   *repository.Repository
+	Repository   repositories.RepositoriesInterface
 	StringCache  *database.ValkeyCache[string]
 	HttpClient   *http.Client
 }

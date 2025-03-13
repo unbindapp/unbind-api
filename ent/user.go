@@ -41,9 +41,13 @@ type UserEdges struct {
 	Oauth2Codes []*Oauth2Code `json:"oauth2_codes,omitempty"`
 	// CreatedBy holds the value of the created_by edge.
 	CreatedBy []*GithubApp `json:"created_by,omitempty"`
+	// Groups holds the value of the groups edge.
+	Groups []*Group `json:"groups,omitempty"`
+	// Teams holds the value of the teams edge.
+	Teams []*Team `json:"teams,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [5]bool
 }
 
 // Oauth2TokensOrErr returns the Oauth2Tokens value or an error if the edge
@@ -71,6 +75,24 @@ func (e UserEdges) CreatedByOrErr() ([]*GithubApp, error) {
 		return e.CreatedBy, nil
 	}
 	return nil, &NotLoadedError{edge: "created_by"}
+}
+
+// GroupsOrErr returns the Groups value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) GroupsOrErr() ([]*Group, error) {
+	if e.loadedTypes[3] {
+		return e.Groups, nil
+	}
+	return nil, &NotLoadedError{edge: "groups"}
+}
+
+// TeamsOrErr returns the Teams value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) TeamsOrErr() ([]*Team, error) {
+	if e.loadedTypes[4] {
+		return e.Teams, nil
+	}
+	return nil, &NotLoadedError{edge: "teams"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -155,6 +177,16 @@ func (u *User) QueryOauth2Codes() *Oauth2CodeQuery {
 // QueryCreatedBy queries the "created_by" edge of the User entity.
 func (u *User) QueryCreatedBy() *GithubAppQuery {
 	return NewUserClient(u.config).QueryCreatedBy(u)
+}
+
+// QueryGroups queries the "groups" edge of the User entity.
+func (u *User) QueryGroups() *GroupQuery {
+	return NewUserClient(u.config).QueryGroups(u)
+}
+
+// QueryTeams queries the "teams" edge of the User entity.
+func (u *User) QueryTeams() *TeamQuery {
+	return NewUserClient(u.config).QueryTeams(u)
 }
 
 // Update returns a builder for updating this User.

@@ -14,8 +14,10 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
+	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
+	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -124,6 +126,36 @@ func (uc *UserCreate) AddCreatedBy(g ...*GithubApp) *UserCreate {
 		ids[i] = g[i].ID
 	}
 	return uc.AddCreatedByIDs(ids...)
+}
+
+// AddGroupIDs adds the "groups" edge to the Group entity by IDs.
+func (uc *UserCreate) AddGroupIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddGroupIDs(ids...)
+	return uc
+}
+
+// AddGroups adds the "groups" edges to the Group entity.
+func (uc *UserCreate) AddGroups(g ...*Group) *UserCreate {
+	ids := make([]uuid.UUID, len(g))
+	for i := range g {
+		ids[i] = g[i].ID
+	}
+	return uc.AddGroupIDs(ids...)
+}
+
+// AddTeamIDs adds the "teams" edge to the Team entity by IDs.
+func (uc *UserCreate) AddTeamIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddTeamIDs(ids...)
+	return uc
+}
+
+// AddTeams adds the "teams" edges to the Team entity.
+func (uc *UserCreate) AddTeams(t ...*Team) *UserCreate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uc.AddTeamIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -282,6 +314,38 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.GroupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.GroupsTable,
+			Columns: user.GroupsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(group.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.TeamsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.TeamsTable,
+			Columns: user.TeamsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -90,7 +90,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	pageKey := r.Form.Get("page_key")
 
 	// Validate credentials against your repository
-	user, err := self.Repository.AuthenticateUser(r.Context(), username, password)
+	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 	if err != nil {
 		// Authentication failed - redirect back to login with error
 		// Preserve all original query parameters

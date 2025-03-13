@@ -68,7 +68,7 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 	}
 
 	// Save the app config
-	ghApp, err := self.srv.Repository.CreateGithubApp(ctx, appConfig, userIDParsed)
+	ghApp, err := self.srv.Repository.Github().CreateApp(ctx, appConfig, userIDParsed)
 	if err != nil {
 		log.Error("Error saving github app", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to save github app")
@@ -114,7 +114,7 @@ type GithubWebhookOutput struct {
 
 func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *GithubWebhookInput) (*GithubWebhookOutput, error) {
 	// Since we may have multiple apps, we want to validate against every webhook secret to see if it belongs to any of our apps
-	ghApps, err := self.srv.Repository.GetGithubApps(ctx, false)
+	ghApps, err := self.srv.Repository.Github().GetApps(ctx, false)
 	if err != nil {
 		log.Error("Error getting github apps", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github apps")
@@ -190,7 +190,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			}
 
 			// Create or update installation in database
-			_, err = self.srv.Repository.UpsertGithubInstallation(
+			_, err = self.srv.Repository.Github().UpsertInstallation(
 				ctx,
 				installationID,
 				installation.GetAppID(),
@@ -212,21 +212,21 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 
 		case "deleted":
 			// Mark as inactive instead of deleting
-			_, err := self.srv.Repository.SetInstallationActive(ctx, installationID, false)
+			_, err := self.srv.Repository.Github().SetInstallationActive(ctx, installationID, false)
 			if err != nil {
 				log.Error("Error setting installation as inactive", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to set installation as inactive")
 			}
 
 		case "suspended":
-			_, err := self.srv.Repository.SetInstallationSuspended(ctx, installationID, true)
+			_, err := self.srv.Repository.Github().SetInstallationSuspended(ctx, installationID, true)
 			if err != nil {
 				log.Error("Error setting installation as suspended", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to set installation as suspended")
 			}
 
 		case "unsuspended":
-			_, err := self.srv.Repository.SetInstallationSuspended(ctx, installationID, false)
+			_, err := self.srv.Repository.Github().SetInstallationSuspended(ctx, installationID, false)
 			if err != nil {
 				log.Error("Error setting installation as unsuspended", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to set installation as unsuspended")

@@ -11,11 +11,11 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/database"
-	"github.com/unbindapp/unbind-api/internal/database/repository"
 	"github.com/unbindapp/unbind-api/internal/github"
-	"github.com/unbindapp/unbind-api/internal/kubeclient"
+	"github.com/unbindapp/unbind-api/internal/k8s"
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/middleware"
+	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 	"github.com/unbindapp/unbind-api/internal/server"
 	github_handler "github.com/unbindapp/unbind-api/internal/server/github"
 	teams_handler "github.com/unbindapp/unbind-api/internal/server/teams"
@@ -47,10 +47,10 @@ func startAPI(cfg *config.Config) {
 	if err := db.Schema.Create(context.TODO()); err != nil {
 		log.Fatal("Failed to run migrations", "err", err)
 	}
-	repo := repository.NewRepository(db)
+	repo := repositories.NewRepositories(db)
 
 	// Create kubernetes client
-	kubeClient := kubeclient.NewKubeClient(cfg)
+	kubeClient := k8s.NewKubeClient(cfg)
 
 	// Implementation
 	srvImpl := &server.Server{

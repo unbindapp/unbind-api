@@ -7,17 +7,17 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/database/repository"
+	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 )
 
 type Middleware struct {
 	verifier   *oidc.IDTokenVerifier
-	repository repository.RepositoryInterface
+	repository repositories.RepositoriesInterface
 	api        huma.API
 	cfg        *config.Config
 }
 
-func NewMiddleware(cfg *config.Config, repository repository.RepositoryInterface, api huma.API) (*Middleware, error) {
+func NewMiddleware(cfg *config.Config, repository repositories.RepositoriesInterface, api huma.API) (*Middleware, error) {
 	provider, err := oidc.NewProvider(context.Background(), cfg.DexIssuerURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get provider: %v", err)

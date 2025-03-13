@@ -33,6 +33,18 @@ func (f GithubInstallationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GithubInstallationMutation", m)
 }
 
+// The GroupFunc type is an adapter to allow the use of ordinary
+// function as Group mutator.
+type GroupFunc func(context.Context, *ent.GroupMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GroupFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GroupMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GroupMutation", m)
+}
+
 // The JWTKeyFunc type is an adapter to allow the use of ordinary
 // function as JWTKey mutator.
 type JWTKeyFunc func(context.Context, *ent.JWTKeyMutation) (ent.Value, error)
@@ -67,6 +79,42 @@ func (f Oauth2TokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.Oauth2TokenMutation", m)
+}
+
+// The PermissionFunc type is an adapter to allow the use of ordinary
+// function as Permission mutator.
+type PermissionFunc func(context.Context, *ent.PermissionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PermissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PermissionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PermissionMutation", m)
+}
+
+// The ProjectFunc type is an adapter to allow the use of ordinary
+// function as Project mutator.
+type ProjectFunc func(context.Context, *ent.ProjectMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProjectMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectMutation", m)
+}
+
+// The TeamFunc type is an adapter to allow the use of ordinary
+// function as Team mutator.
+type TeamFunc func(context.Context, *ent.TeamMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TeamFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TeamMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TeamMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

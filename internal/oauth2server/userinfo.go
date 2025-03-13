@@ -29,7 +29,7 @@ func (self *Oauth2Server) HandleUserinfo(w http.ResponseWriter, r *http.Request)
 
 	// Get user info
 	username := tokenInfo.GetUserID()
-	u, err := self.Repository.GetUserByEmail(r.Context(), username)
+	u, err := self.Repository.User().GetByEmail(r.Context(), username)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)

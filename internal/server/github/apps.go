@@ -152,7 +152,7 @@ type GithubAppListResponse struct {
 }
 
 func (self *HandlerGroup) HandleListGithubApps(ctx context.Context, input *GithubAppListInput) (*GithubAppListResponse, error) {
-	apps, err := self.srv.Repository.GetGithubApps(ctx, input.WithInstallations)
+	apps, err := self.srv.Repository.Github().GetApps(ctx, input.WithInstallations)
 	if err != nil {
 		log.Error("Error getting github apps", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github apps")

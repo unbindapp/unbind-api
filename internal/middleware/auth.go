@@ -24,7 +24,7 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 
 	// ! TODO - remove tester token check someday
 	if bearerToken == self.cfg.AdminTesterToken {
-		user, err := self.repository.GetUserByEmail(ctx.Context(), "admin@unbind.app")
+		user, err := self.repository.User().GetByEmail(ctx.Context(), "admin@unbind.app")
 		if err != nil {
 			log.Errorf("Failed to process user: %v", err)
 			huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")
@@ -53,7 +53,7 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 	}
 
 	// Get or create user using Ent
-	user, err := self.repository.GetUserByEmail(ctx.Context(), claims.Email)
+	user, err := self.repository.User().GetByEmail(ctx.Context(), claims.Email)
 	if err != nil {
 		log.Errorf("Failed to process user: %v", err)
 		huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")

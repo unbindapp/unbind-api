@@ -355,6 +355,52 @@ func HasCreatedByWith(preds ...predicate.GithubApp) predicate.User {
 	})
 }
 
+// HasGroups applies the HasEdge predicate on the "groups" edge.
+func HasGroups() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, GroupsTable, GroupsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGroupsWith applies the HasEdge predicate on the "groups" edge with a given conditions (other predicates).
+func HasGroupsWith(preds ...predicate.Group) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newGroupsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTeams applies the HasEdge predicate on the "teams" edge.
+func HasTeams() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, TeamsTable, TeamsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTeamsWith applies the HasEdge predicate on the "teams" edge with a given conditions (other predicates).
+func HasTeamsWith(preds ...predicate.Team) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newTeamsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

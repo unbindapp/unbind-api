@@ -14,9 +14,13 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/jwtkey"
 	"github.com/unbindapp/unbind-api/ent/oauth2code"
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
+	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -80,9 +84,13 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			githubapp.Table:          githubapp.ValidColumn,
 			githubinstallation.Table: githubinstallation.ValidColumn,
+			group.Table:              group.ValidColumn,
 			jwtkey.Table:             jwtkey.ValidColumn,
 			oauth2code.Table:         oauth2code.ValidColumn,
 			oauth2token.Table:        oauth2token.ValidColumn,
+			permission.Table:         permission.ValidColumn,
+			project.Table:            project.ValidColumn,
+			team.Table:               team.ValidColumn,
 			user.Table:               user.ValidColumn,
 		})
 	})
