@@ -15,7 +15,7 @@ import (
 
 type ListProjectInput struct {
 	server.BaseAuthInput
-	TeamID uuid.UUID `path:"team_id"`
+	TeamID uuid.UUID `query:"team_id" required:"true"`
 }
 
 type ListProjectResponse struct {

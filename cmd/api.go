@@ -316,8 +316,8 @@ func startAPI(cfg *config.Config) {
 		teamHandlers.UpdateTeam,
 	)
 
-	// /teams/{team_id}/projects group
-	projectsGroup := huma.NewGroup(api, "/teams/{team_id}/project")
+	// /projects group
+	projectsGroup := huma.NewGroup(api, "/projects")
 	projectsGroup.UseMiddleware(mw.Authenticate)
 	projectsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"Projects"}
@@ -329,7 +329,7 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "create-project",
 			Summary:     "Create Project",
-			Description: "Create a project in this team",
+			Description: "Create a project",
 			Path:        "/create",
 			Method:      http.MethodPost,
 		},
@@ -340,7 +340,7 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "list-projects",
 			Summary:     "List Projects",
-			Description: "List all projects in a team",
+			Description: "List all projects",
 			Path:        "/list",
 			Method:      http.MethodGet,
 		},
@@ -351,8 +351,8 @@ func startAPI(cfg *config.Config) {
 		huma.Operation{
 			OperationID: "update-project",
 			Summary:     "Update Project",
-			Description: "Update a project in this team",
-			Path:        "/{project_id}/update",
+			Description: "Update a project",
+			Path:        "/update",
 			Method:      http.MethodPut,
 		},
 		projectHandlers.UpdateProject,

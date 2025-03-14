@@ -16,10 +16,10 @@ import (
 
 type CreateProjectInput struct {
 	server.BaseAuthInput
-	TeamID uuid.UUID `path:"team_id"`
-	Body   struct {
-		DisplayName string `json:"display_name" required:"true"`
-		Description string `json:"description" required:"true"`
+	Body struct {
+		TeamID      uuid.UUID `json:"team_id" required:"true"`
+		DisplayName string    `json:"display_name" required:"true"`
+		Description string    `json:"description" required:"true"`
 	}
 }
 
