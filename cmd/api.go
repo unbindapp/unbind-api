@@ -211,10 +211,10 @@ func startAPI(cfg *config.Config) {
 		srvImpl.Callback,
 	)
 
-	// /user group
-	userGroup := huma.NewGroup(api, "/user")
+	// /users group
+	userGroup := huma.NewGroup(api, "/users")
 	userGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"User"}
+		op.Tags = []string{"Users"}
 		next(op)
 	})
 	userHandlers := user_handler.NewHandlerGroup(srvImpl)
@@ -223,7 +223,7 @@ func startAPI(cfg *config.Config) {
 		userGroup,
 		huma.Operation{
 			OperationID: "me",
-			Summary:     "Get User (Me)",
+			Summary:     "Get Current User",
 			Description: "Get the current user",
 			Path:        "/me",
 			Method:      http.MethodGet,
