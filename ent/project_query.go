@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,18 +15,20 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/team"
 )
 
 // ProjectQuery is the builder for querying Project entities.
 type ProjectQuery struct {
 	config
-	ctx        *QueryContext
-	order      []project.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Project
-	withTeam   *TeamQuery
-	modifiers  []func(*sql.Selector)
+	ctx          *QueryContext
+	order        []project.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.Project
+	withTeam     *TeamQuery
+	withServices *ServiceQuery
+	modifiers    []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -77,6 +80,28 @@ func (pq *ProjectQuery) QueryTeam() *TeamQuery {
 			sqlgraph.From(project.Table, project.FieldID, selector),
 			sqlgraph.To(team.Table, team.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, project.TeamTable, project.TeamColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryServices chains the current query on the "services" edge.
+func (pq *ProjectQuery) QueryServices() *ServiceQuery {
+	query := (&ServiceClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.ServicesTable, project.ServicesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -271,12 +296,13 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		return nil
 	}
 	return &ProjectQuery{
-		config:     pq.config,
-		ctx:        pq.ctx.Clone(),
-		order:      append([]project.OrderOption{}, pq.order...),
-		inters:     append([]Interceptor{}, pq.inters...),
-		predicates: append([]predicate.Project{}, pq.predicates...),
-		withTeam:   pq.withTeam.Clone(),
+		config:       pq.config,
+		ctx:          pq.ctx.Clone(),
+		order:        append([]project.OrderOption{}, pq.order...),
+		inters:       append([]Interceptor{}, pq.inters...),
+		predicates:   append([]predicate.Project{}, pq.predicates...),
+		withTeam:     pq.withTeam.Clone(),
+		withServices: pq.withServices.Clone(),
 		// clone intermediate query.
 		sql:       pq.sql.Clone(),
 		path:      pq.path,
@@ -292,6 +318,17 @@ func (pq *ProjectQuery) WithTeam(opts ...func(*TeamQuery)) *ProjectQuery {
 		opt(query)
 	}
 	pq.withTeam = query
+	return pq
+}
+
+// WithServices tells the query-builder to eager-load the nodes that are connected to
+// the "services" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithServices(opts ...func(*ServiceQuery)) *ProjectQuery {
+	query := (&ServiceClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withServices = query
 	return pq
 }
 
@@ -373,8 +410,9 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	var (
 		nodes       = []*Project{}
 		_spec       = pq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			pq.withTeam != nil,
+			pq.withServices != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -401,6 +439,13 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	if query := pq.withTeam; query != nil {
 		if err := pq.loadTeam(ctx, query, nodes, nil,
 			func(n *Project, e *Team) { n.Edges.Team = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withServices; query != nil {
+		if err := pq.loadServices(ctx, query, nodes,
+			func(n *Project) { n.Edges.Services = []*Service{} },
+			func(n *Project, e *Service) { n.Edges.Services = append(n.Edges.Services, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -433,6 +478,36 @@ func (pq *ProjectQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (pq *ProjectQuery) loadServices(ctx context.Context, query *ServiceQuery, nodes []*Project, init func(*Project), assign func(*Project, *Service)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Project)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(service.FieldProjectID)
+	}
+	query.Where(predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(project.ServicesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ProjectID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "project_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

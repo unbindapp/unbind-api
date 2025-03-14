@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/group"
@@ -20,6 +21,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
@@ -82,6 +85,7 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			deployment.Table:         deployment.ValidColumn,
 			githubapp.Table:          githubapp.ValidColumn,
 			githubinstallation.Table: githubinstallation.ValidColumn,
 			group.Table:              group.ValidColumn,
@@ -90,6 +94,8 @@ func checkColumn(table, column string) error {
 			oauth2token.Table:        oauth2token.ValidColumn,
 			permission.Table:         permission.ValidColumn,
 			project.Table:            project.ValidColumn,
+			service.Table:            service.ValidColumn,
+			serviceconfig.Table:      serviceconfig.ValidColumn,
 			team.Table:               team.ValidColumn,
 			user.Table:               user.ValidColumn,
 		})

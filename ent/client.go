@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/group"
@@ -24,6 +25,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 
@@ -35,6 +38,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Deployment is the client for interacting with the Deployment builders.
+	Deployment *DeploymentClient
 	// GithubApp is the client for interacting with the GithubApp builders.
 	GithubApp *GithubAppClient
 	// GithubInstallation is the client for interacting with the GithubInstallation builders.
@@ -51,6 +56,10 @@ type Client struct {
 	Permission *PermissionClient
 	// Project is the client for interacting with the Project builders.
 	Project *ProjectClient
+	// Service is the client for interacting with the Service builders.
+	Service *ServiceClient
+	// ServiceConfig is the client for interacting with the ServiceConfig builders.
+	ServiceConfig *ServiceConfigClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// User is the client for interacting with the User builders.
@@ -66,6 +75,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Deployment = NewDeploymentClient(c.config)
 	c.GithubApp = NewGithubAppClient(c.config)
 	c.GithubInstallation = NewGithubInstallationClient(c.config)
 	c.Group = NewGroupClient(c.config)
@@ -74,6 +84,8 @@ func (c *Client) init() {
 	c.Oauth2Token = NewOauth2TokenClient(c.config)
 	c.Permission = NewPermissionClient(c.config)
 	c.Project = NewProjectClient(c.config)
+	c.Service = NewServiceClient(c.config)
+	c.ServiceConfig = NewServiceConfigClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -168,6 +180,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		Deployment:         NewDeploymentClient(cfg),
 		GithubApp:          NewGithubAppClient(cfg),
 		GithubInstallation: NewGithubInstallationClient(cfg),
 		Group:              NewGroupClient(cfg),
@@ -176,6 +189,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Oauth2Token:        NewOauth2TokenClient(cfg),
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
+		Service:            NewServiceClient(cfg),
+		ServiceConfig:      NewServiceConfigClient(cfg),
 		Team:               NewTeamClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
@@ -197,6 +212,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		Deployment:         NewDeploymentClient(cfg),
 		GithubApp:          NewGithubAppClient(cfg),
 		GithubInstallation: NewGithubInstallationClient(cfg),
 		Group:              NewGroupClient(cfg),
@@ -205,6 +221,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Oauth2Token:        NewOauth2TokenClient(cfg),
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
+		Service:            NewServiceClient(cfg),
+		ServiceConfig:      NewServiceConfigClient(cfg),
 		Team:               NewTeamClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
@@ -213,7 +231,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		GithubApp.
+//		Deployment.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -236,8 +254,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.GithubApp, c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code,
-		c.Oauth2Token, c.Permission, c.Project, c.Team, c.User,
+		c.Deployment, c.GithubApp, c.GithubInstallation, c.Group, c.JWTKey,
+		c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project, c.Service,
+		c.ServiceConfig, c.Team, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -247,8 +266,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.GithubApp, c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code,
-		c.Oauth2Token, c.Permission, c.Project, c.Team, c.User,
+		c.Deployment, c.GithubApp, c.GithubInstallation, c.Group, c.JWTKey,
+		c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project, c.Service,
+		c.ServiceConfig, c.Team, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -257,6 +277,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *DeploymentMutation:
+		return c.Deployment.mutate(ctx, m)
 	case *GithubAppMutation:
 		return c.GithubApp.mutate(ctx, m)
 	case *GithubInstallationMutation:
@@ -273,12 +295,149 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Permission.mutate(ctx, m)
 	case *ProjectMutation:
 		return c.Project.mutate(ctx, m)
+	case *ServiceMutation:
+		return c.Service.mutate(ctx, m)
+	case *ServiceConfigMutation:
+		return c.ServiceConfig.mutate(ctx, m)
 	case *TeamMutation:
 		return c.Team.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// DeploymentClient is a client for the Deployment schema.
+type DeploymentClient struct {
+	config
+}
+
+// NewDeploymentClient returns a client for the Deployment from the given config.
+func NewDeploymentClient(c config) *DeploymentClient {
+	return &DeploymentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `deployment.Hooks(f(g(h())))`.
+func (c *DeploymentClient) Use(hooks ...Hook) {
+	c.hooks.Deployment = append(c.hooks.Deployment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `deployment.Intercept(f(g(h())))`.
+func (c *DeploymentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Deployment = append(c.inters.Deployment, interceptors...)
+}
+
+// Create returns a builder for creating a Deployment entity.
+func (c *DeploymentClient) Create() *DeploymentCreate {
+	mutation := newDeploymentMutation(c.config, OpCreate)
+	return &DeploymentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Deployment entities.
+func (c *DeploymentClient) CreateBulk(builders ...*DeploymentCreate) *DeploymentCreateBulk {
+	return &DeploymentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DeploymentClient) MapCreateBulk(slice any, setFunc func(*DeploymentCreate, int)) *DeploymentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DeploymentCreateBulk{err: fmt.Errorf("calling to DeploymentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DeploymentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DeploymentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Deployment.
+func (c *DeploymentClient) Update() *DeploymentUpdate {
+	mutation := newDeploymentMutation(c.config, OpUpdate)
+	return &DeploymentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DeploymentClient) UpdateOne(d *Deployment) *DeploymentUpdateOne {
+	mutation := newDeploymentMutation(c.config, OpUpdateOne, withDeployment(d))
+	return &DeploymentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DeploymentClient) UpdateOneID(id uuid.UUID) *DeploymentUpdateOne {
+	mutation := newDeploymentMutation(c.config, OpUpdateOne, withDeploymentID(id))
+	return &DeploymentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Deployment.
+func (c *DeploymentClient) Delete() *DeploymentDelete {
+	mutation := newDeploymentMutation(c.config, OpDelete)
+	return &DeploymentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DeploymentClient) DeleteOne(d *Deployment) *DeploymentDeleteOne {
+	return c.DeleteOneID(d.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DeploymentClient) DeleteOneID(id uuid.UUID) *DeploymentDeleteOne {
+	builder := c.Delete().Where(deployment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DeploymentDeleteOne{builder}
+}
+
+// Query returns a query builder for Deployment.
+func (c *DeploymentClient) Query() *DeploymentQuery {
+	return &DeploymentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDeployment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Deployment entity by its id.
+func (c *DeploymentClient) Get(ctx context.Context, id uuid.UUID) (*Deployment, error) {
+	return c.Query().Where(deployment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DeploymentClient) GetX(ctx context.Context, id uuid.UUID) *Deployment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *DeploymentClient) Hooks() []Hook {
+	return c.hooks.Deployment
+}
+
+// Interceptors returns the client interceptors.
+func (c *DeploymentClient) Interceptors() []Interceptor {
+	return c.inters.Deployment
+}
+
+func (c *DeploymentClient) mutate(ctx context.Context, m *DeploymentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DeploymentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DeploymentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DeploymentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DeploymentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Deployment mutation op: %q", m.Op())
 	}
 }
 
@@ -564,6 +723,22 @@ func (c *GithubInstallationClient) QueryGithubApp(gi *GithubInstallation) *Githu
 			sqlgraph.From(githubinstallation.Table, githubinstallation.FieldID, id),
 			sqlgraph.To(githubapp.Table, githubapp.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, githubinstallation.GithubAppTable, githubinstallation.GithubAppColumn),
+		)
+		fromV = sqlgraph.Neighbors(gi.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryServices queries the services edge of a GithubInstallation.
+func (c *GithubInstallationClient) QueryServices(gi *GithubInstallation) *ServiceQuery {
+	query := (&ServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gi.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(githubinstallation.Table, githubinstallation.FieldID, id),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, githubinstallation.ServicesTable, githubinstallation.ServicesColumn),
 		)
 		fromV = sqlgraph.Neighbors(gi.driver.Dialect(), step)
 		return fromV, nil
@@ -1481,6 +1656,22 @@ func (c *ProjectClient) QueryTeam(pr *Project) *TeamQuery {
 	return query
 }
 
+// QueryServices queries the services edge of a Project.
+func (c *ProjectClient) QueryServices(pr *Project) *ServiceQuery {
+	query := (&ServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.ServicesTable, project.ServicesColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ProjectClient) Hooks() []Hook {
 	return c.hooks.Project
@@ -1503,6 +1694,336 @@ func (c *ProjectClient) mutate(ctx context.Context, m *ProjectMutation) (Value, 
 		return (&ProjectDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Project mutation op: %q", m.Op())
+	}
+}
+
+// ServiceClient is a client for the Service schema.
+type ServiceClient struct {
+	config
+}
+
+// NewServiceClient returns a client for the Service from the given config.
+func NewServiceClient(c config) *ServiceClient {
+	return &ServiceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `service.Hooks(f(g(h())))`.
+func (c *ServiceClient) Use(hooks ...Hook) {
+	c.hooks.Service = append(c.hooks.Service, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `service.Intercept(f(g(h())))`.
+func (c *ServiceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Service = append(c.inters.Service, interceptors...)
+}
+
+// Create returns a builder for creating a Service entity.
+func (c *ServiceClient) Create() *ServiceCreate {
+	mutation := newServiceMutation(c.config, OpCreate)
+	return &ServiceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Service entities.
+func (c *ServiceClient) CreateBulk(builders ...*ServiceCreate) *ServiceCreateBulk {
+	return &ServiceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ServiceClient) MapCreateBulk(slice any, setFunc func(*ServiceCreate, int)) *ServiceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ServiceCreateBulk{err: fmt.Errorf("calling to ServiceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ServiceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ServiceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Service.
+func (c *ServiceClient) Update() *ServiceUpdate {
+	mutation := newServiceMutation(c.config, OpUpdate)
+	return &ServiceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ServiceClient) UpdateOne(s *Service) *ServiceUpdateOne {
+	mutation := newServiceMutation(c.config, OpUpdateOne, withService(s))
+	return &ServiceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ServiceClient) UpdateOneID(id uuid.UUID) *ServiceUpdateOne {
+	mutation := newServiceMutation(c.config, OpUpdateOne, withServiceID(id))
+	return &ServiceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Service.
+func (c *ServiceClient) Delete() *ServiceDelete {
+	mutation := newServiceMutation(c.config, OpDelete)
+	return &ServiceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ServiceClient) DeleteOne(s *Service) *ServiceDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ServiceClient) DeleteOneID(id uuid.UUID) *ServiceDeleteOne {
+	builder := c.Delete().Where(service.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ServiceDeleteOne{builder}
+}
+
+// Query returns a query builder for Service.
+func (c *ServiceClient) Query() *ServiceQuery {
+	return &ServiceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeService},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Service entity by its id.
+func (c *ServiceClient) Get(ctx context.Context, id uuid.UUID) (*Service, error) {
+	return c.Query().Where(service.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ServiceClient) GetX(ctx context.Context, id uuid.UUID) *Service {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProject queries the project edge of a Service.
+func (c *ServiceClient) QueryProject(s *Service) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, service.ProjectTable, service.ProjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGithubInstallation queries the github_installation edge of a Service.
+func (c *ServiceClient) QueryGithubInstallation(s *Service) *GithubInstallationQuery {
+	query := (&GithubInstallationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(githubinstallation.Table, githubinstallation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, service.GithubInstallationTable, service.GithubInstallationColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryServiceConfigs queries the service_configs edge of a Service.
+func (c *ServiceClient) QueryServiceConfigs(s *Service) *ServiceConfigQuery {
+	query := (&ServiceConfigClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(serviceconfig.Table, serviceconfig.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, service.ServiceConfigsTable, service.ServiceConfigsColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ServiceClient) Hooks() []Hook {
+	return c.hooks.Service
+}
+
+// Interceptors returns the client interceptors.
+func (c *ServiceClient) Interceptors() []Interceptor {
+	return c.inters.Service
+}
+
+func (c *ServiceClient) mutate(ctx context.Context, m *ServiceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ServiceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ServiceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ServiceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ServiceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Service mutation op: %q", m.Op())
+	}
+}
+
+// ServiceConfigClient is a client for the ServiceConfig schema.
+type ServiceConfigClient struct {
+	config
+}
+
+// NewServiceConfigClient returns a client for the ServiceConfig from the given config.
+func NewServiceConfigClient(c config) *ServiceConfigClient {
+	return &ServiceConfigClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `serviceconfig.Hooks(f(g(h())))`.
+func (c *ServiceConfigClient) Use(hooks ...Hook) {
+	c.hooks.ServiceConfig = append(c.hooks.ServiceConfig, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `serviceconfig.Intercept(f(g(h())))`.
+func (c *ServiceConfigClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ServiceConfig = append(c.inters.ServiceConfig, interceptors...)
+}
+
+// Create returns a builder for creating a ServiceConfig entity.
+func (c *ServiceConfigClient) Create() *ServiceConfigCreate {
+	mutation := newServiceConfigMutation(c.config, OpCreate)
+	return &ServiceConfigCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ServiceConfig entities.
+func (c *ServiceConfigClient) CreateBulk(builders ...*ServiceConfigCreate) *ServiceConfigCreateBulk {
+	return &ServiceConfigCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ServiceConfigClient) MapCreateBulk(slice any, setFunc func(*ServiceConfigCreate, int)) *ServiceConfigCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ServiceConfigCreateBulk{err: fmt.Errorf("calling to ServiceConfigClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ServiceConfigCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ServiceConfigCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ServiceConfig.
+func (c *ServiceConfigClient) Update() *ServiceConfigUpdate {
+	mutation := newServiceConfigMutation(c.config, OpUpdate)
+	return &ServiceConfigUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ServiceConfigClient) UpdateOne(sc *ServiceConfig) *ServiceConfigUpdateOne {
+	mutation := newServiceConfigMutation(c.config, OpUpdateOne, withServiceConfig(sc))
+	return &ServiceConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ServiceConfigClient) UpdateOneID(id uuid.UUID) *ServiceConfigUpdateOne {
+	mutation := newServiceConfigMutation(c.config, OpUpdateOne, withServiceConfigID(id))
+	return &ServiceConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ServiceConfig.
+func (c *ServiceConfigClient) Delete() *ServiceConfigDelete {
+	mutation := newServiceConfigMutation(c.config, OpDelete)
+	return &ServiceConfigDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ServiceConfigClient) DeleteOne(sc *ServiceConfig) *ServiceConfigDeleteOne {
+	return c.DeleteOneID(sc.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ServiceConfigClient) DeleteOneID(id uuid.UUID) *ServiceConfigDeleteOne {
+	builder := c.Delete().Where(serviceconfig.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ServiceConfigDeleteOne{builder}
+}
+
+// Query returns a query builder for ServiceConfig.
+func (c *ServiceConfigClient) Query() *ServiceConfigQuery {
+	return &ServiceConfigQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeServiceConfig},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ServiceConfig entity by its id.
+func (c *ServiceConfigClient) Get(ctx context.Context, id uuid.UUID) (*ServiceConfig, error) {
+	return c.Query().Where(serviceconfig.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ServiceConfigClient) GetX(ctx context.Context, id uuid.UUID) *ServiceConfig {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryService queries the service edge of a ServiceConfig.
+func (c *ServiceConfigClient) QueryService(sc *ServiceConfig) *ServiceQuery {
+	query := (&ServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(serviceconfig.Table, serviceconfig.FieldID, id),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, serviceconfig.ServiceTable, serviceconfig.ServiceColumn),
+		)
+		fromV = sqlgraph.Neighbors(sc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ServiceConfigClient) Hooks() []Hook {
+	return c.hooks.ServiceConfig
+}
+
+// Interceptors returns the client interceptors.
+func (c *ServiceConfigClient) Interceptors() []Interceptor {
+	return c.inters.ServiceConfig
+}
+
+func (c *ServiceConfigClient) mutate(ctx context.Context, m *ServiceConfigMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ServiceConfigCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ServiceConfigUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ServiceConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ServiceConfigDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ServiceConfig mutation op: %q", m.Op())
 	}
 }
 
@@ -1903,12 +2424,13 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		GithubApp, GithubInstallation, Group, JWTKey, Oauth2Code, Oauth2Token,
-		Permission, Project, Team, User []ent.Hook
+		Deployment, GithubApp, GithubInstallation, Group, JWTKey, Oauth2Code,
+		Oauth2Token, Permission, Project, Service, ServiceConfig, Team, User []ent.Hook
 	}
 	inters struct {
-		GithubApp, GithubInstallation, Group, JWTKey, Oauth2Code, Oauth2Token,
-		Permission, Project, Team, User []ent.Interceptor
+		Deployment, GithubApp, GithubInstallation, Group, JWTKey, Oauth2Code,
+		Oauth2Token, Permission, Project, Service, ServiceConfig, Team,
+		User []ent.Interceptor
 	}
 )
 

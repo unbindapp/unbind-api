@@ -9,6 +9,18 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 )
 
+// The DeploymentFunc type is an adapter to allow the use of ordinary
+// function as Deployment mutator.
+type DeploymentFunc func(context.Context, *ent.DeploymentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DeploymentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DeploymentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DeploymentMutation", m)
+}
+
 // The GithubAppFunc type is an adapter to allow the use of ordinary
 // function as GithubApp mutator.
 type GithubAppFunc func(context.Context, *ent.GithubAppMutation) (ent.Value, error)
@@ -103,6 +115,30 @@ func (f ProjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectMutation", m)
+}
+
+// The ServiceFunc type is an adapter to allow the use of ordinary
+// function as Service mutator.
+type ServiceFunc func(context.Context, *ent.ServiceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ServiceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ServiceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ServiceMutation", m)
+}
+
+// The ServiceConfigFunc type is an adapter to allow the use of ordinary
+// function as ServiceConfig mutator.
+type ServiceConfigFunc func(context.Context, *ent.ServiceConfigMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ServiceConfigFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ServiceConfigMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ServiceConfigMutation", m)
 }
 
 // The TeamFunc type is an adapter to allow the use of ordinary

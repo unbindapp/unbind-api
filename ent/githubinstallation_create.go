@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
 
@@ -153,6 +155,21 @@ func (gic *GithubInstallationCreate) SetID(i int64) *GithubInstallationCreate {
 // SetGithubApp sets the "github_app" edge to the GithubApp entity.
 func (gic *GithubInstallationCreate) SetGithubApp(g *GithubApp) *GithubInstallationCreate {
 	return gic.SetGithubAppID(g.ID)
+}
+
+// AddServiceIDs adds the "services" edge to the Service entity by IDs.
+func (gic *GithubInstallationCreate) AddServiceIDs(ids ...uuid.UUID) *GithubInstallationCreate {
+	gic.mutation.AddServiceIDs(ids...)
+	return gic
+}
+
+// AddServices adds the "services" edges to the Service entity.
+func (gic *GithubInstallationCreate) AddServices(s ...*Service) *GithubInstallationCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return gic.AddServiceIDs(ids...)
 }
 
 // Mutation returns the GithubInstallationMutation object of the builder.
@@ -364,6 +381,22 @@ func (gic *GithubInstallationCreate) createSpec() (*GithubInstallation, *sqlgrap
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.GithubAppID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gic.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubinstallation.ServicesTable,
+			Columns: []string{githubinstallation.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

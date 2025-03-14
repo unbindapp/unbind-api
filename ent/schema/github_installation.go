@@ -76,6 +76,8 @@ func (GithubInstallation) Edges() []ent.Edge {
 			Field("github_app_id").
 			Required().
 			Unique(),
+		// O2M with services
+		edge.To("services", Service.Type),
 	}
 }
 

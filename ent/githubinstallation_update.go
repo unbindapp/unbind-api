@@ -12,9 +12,11 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
 
@@ -200,6 +202,21 @@ func (giu *GithubInstallationUpdate) SetGithubApp(g *GithubApp) *GithubInstallat
 	return giu.SetGithubAppID(g.ID)
 }
 
+// AddServiceIDs adds the "services" edge to the Service entity by IDs.
+func (giu *GithubInstallationUpdate) AddServiceIDs(ids ...uuid.UUID) *GithubInstallationUpdate {
+	giu.mutation.AddServiceIDs(ids...)
+	return giu
+}
+
+// AddServices adds the "services" edges to the Service entity.
+func (giu *GithubInstallationUpdate) AddServices(s ...*Service) *GithubInstallationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return giu.AddServiceIDs(ids...)
+}
+
 // Mutation returns the GithubInstallationMutation object of the builder.
 func (giu *GithubInstallationUpdate) Mutation() *GithubInstallationMutation {
 	return giu.mutation
@@ -209,6 +226,27 @@ func (giu *GithubInstallationUpdate) Mutation() *GithubInstallationMutation {
 func (giu *GithubInstallationUpdate) ClearGithubApp() *GithubInstallationUpdate {
 	giu.mutation.ClearGithubApp()
 	return giu
+}
+
+// ClearServices clears all "services" edges to the Service entity.
+func (giu *GithubInstallationUpdate) ClearServices() *GithubInstallationUpdate {
+	giu.mutation.ClearServices()
+	return giu
+}
+
+// RemoveServiceIDs removes the "services" edge to Service entities by IDs.
+func (giu *GithubInstallationUpdate) RemoveServiceIDs(ids ...uuid.UUID) *GithubInstallationUpdate {
+	giu.mutation.RemoveServiceIDs(ids...)
+	return giu
+}
+
+// RemoveServices removes "services" edges to Service entities.
+func (giu *GithubInstallationUpdate) RemoveServices(s ...*Service) *GithubInstallationUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return giu.RemoveServiceIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -359,6 +397,51 @@ func (giu *GithubInstallationUpdate) sqlSave(ctx context.Context) (n int, err er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if giu.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubinstallation.ServicesTable,
+			Columns: []string{githubinstallation.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := giu.mutation.RemovedServicesIDs(); len(nodes) > 0 && !giu.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubinstallation.ServicesTable,
+			Columns: []string{githubinstallation.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := giu.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubinstallation.ServicesTable,
+			Columns: []string{githubinstallation.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -556,6 +639,21 @@ func (giuo *GithubInstallationUpdateOne) SetGithubApp(g *GithubApp) *GithubInsta
 	return giuo.SetGithubAppID(g.ID)
 }
 
+// AddServiceIDs adds the "services" edge to the Service entity by IDs.
+func (giuo *GithubInstallationUpdateOne) AddServiceIDs(ids ...uuid.UUID) *GithubInstallationUpdateOne {
+	giuo.mutation.AddServiceIDs(ids...)
+	return giuo
+}
+
+// AddServices adds the "services" edges to the Service entity.
+func (giuo *GithubInstallationUpdateOne) AddServices(s ...*Service) *GithubInstallationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return giuo.AddServiceIDs(ids...)
+}
+
 // Mutation returns the GithubInstallationMutation object of the builder.
 func (giuo *GithubInstallationUpdateOne) Mutation() *GithubInstallationMutation {
 	return giuo.mutation
@@ -565,6 +663,27 @@ func (giuo *GithubInstallationUpdateOne) Mutation() *GithubInstallationMutation 
 func (giuo *GithubInstallationUpdateOne) ClearGithubApp() *GithubInstallationUpdateOne {
 	giuo.mutation.ClearGithubApp()
 	return giuo
+}
+
+// ClearServices clears all "services" edges to the Service entity.
+func (giuo *GithubInstallationUpdateOne) ClearServices() *GithubInstallationUpdateOne {
+	giuo.mutation.ClearServices()
+	return giuo
+}
+
+// RemoveServiceIDs removes the "services" edge to Service entities by IDs.
+func (giuo *GithubInstallationUpdateOne) RemoveServiceIDs(ids ...uuid.UUID) *GithubInstallationUpdateOne {
+	giuo.mutation.RemoveServiceIDs(ids...)
+	return giuo
+}
+
+// RemoveServices removes "services" edges to Service entities.
+func (giuo *GithubInstallationUpdateOne) RemoveServices(s ...*Service) *GithubInstallationUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return giuo.RemoveServiceIDs(ids...)
 }
 
 // Where appends a list predicates to the GithubInstallationUpdate builder.
@@ -745,6 +864,51 @@ func (giuo *GithubInstallationUpdateOne) sqlSave(ctx context.Context) (_node *Gi
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(githubapp.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if giuo.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubinstallation.ServicesTable,
+			Columns: []string{githubinstallation.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := giuo.mutation.RemovedServicesIDs(); len(nodes) > 0 && !giuo.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubinstallation.ServicesTable,
+			Columns: []string{githubinstallation.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := giuo.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   githubinstallation.ServicesTable,
+			Columns: []string{githubinstallation.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

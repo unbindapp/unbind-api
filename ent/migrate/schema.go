@@ -9,6 +9,18 @@ import (
 )
 
 var (
+	// DeploymentsColumns holds the columns for the "deployments" table.
+	DeploymentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// DeploymentsTable holds the schema information for the "deployments" table.
+	DeploymentsTable = &schema.Table{
+		Name:       "deployments",
+		Columns:    DeploymentsColumns,
+		PrimaryKey: []*schema.Column{DeploymentsColumns[0]},
+	}
 	// GithubAppsColumns holds the columns for the "github_apps" table.
 	GithubAppsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -214,6 +226,69 @@ var (
 			},
 		},
 	}
+	// ServicesColumns holds the columns for the "services" table.
+	ServicesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "display_name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"database", "api", "web", "custom"}},
+		{Name: "subtype", Type: field.TypeEnum, Enums: []string{"react", "go", "node", "next", "other"}},
+		{Name: "git_repository", Type: field.TypeString, Nullable: true},
+		{Name: "git_branch", Type: field.TypeString, Nullable: true, Default: "main"},
+		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "project_id", Type: field.TypeUUID},
+	}
+	// ServicesTable holds the schema information for the "services" table.
+	ServicesTable = &schema.Table{
+		Name:       "services",
+		Columns:    ServicesColumns,
+		PrimaryKey: []*schema.Column{ServicesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "services_github_installations_services",
+				Columns:    []*schema.Column{ServicesColumns[10]},
+				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "services_projects_services",
+				Columns:    []*schema.Column{ServicesColumns[11]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// ServiceConfigsColumns holds the columns for the "service_configs" table.
+	ServiceConfigsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "host", Type: field.TypeString, Nullable: true},
+		{Name: "port", Type: field.TypeInt, Default: 8080},
+		{Name: "replicas", Type: field.TypeInt32, Default: 2},
+		{Name: "auto_deploy", Type: field.TypeBool, Default: true},
+		{Name: "run_command", Type: field.TypeString, Nullable: true},
+		{Name: "public", Type: field.TypeBool, Default: false},
+		{Name: "image", Type: field.TypeString, Nullable: true},
+		{Name: "service_id", Type: field.TypeUUID, Unique: true},
+	}
+	// ServiceConfigsTable holds the schema information for the "service_configs" table.
+	ServiceConfigsTable = &schema.Table{
+		Name:       "service_configs",
+		Columns:    ServiceConfigsColumns,
+		PrimaryKey: []*schema.Column{ServiceConfigsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "service_configs_services_service_configs",
+				Columns:    []*schema.Column{ServiceConfigsColumns[10]},
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -321,6 +396,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		DeploymentsTable,
 		GithubAppsTable,
 		GithubInstallationsTable,
 		GroupsTable,
@@ -329,6 +405,8 @@ var (
 		Oauth2TokensTable,
 		PermissionsTable,
 		ProjectsTable,
+		ServicesTable,
+		ServiceConfigsTable,
 		TeamsTable,
 		UsersTable,
 		GroupPermissionsTable,
@@ -367,6 +445,15 @@ func init() {
 	ProjectsTable.ForeignKeys[0].RefTable = TeamsTable
 	ProjectsTable.Annotation = &entsql.Annotation{
 		Table: "projects",
+	}
+	ServicesTable.ForeignKeys[0].RefTable = GithubInstallationsTable
+	ServicesTable.ForeignKeys[1].RefTable = ProjectsTable
+	ServicesTable.Annotation = &entsql.Annotation{
+		Table: "services",
+	}
+	ServiceConfigsTable.ForeignKeys[0].RefTable = ServicesTable
+	ServiceConfigsTable.Annotation = &entsql.Annotation{
+		Table: "service_configs",
 	}
 	TeamsTable.Annotation = &entsql.Annotation{
 		Table: "teams",

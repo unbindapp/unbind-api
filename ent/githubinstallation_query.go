@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/service"
 )
 
 // GithubInstallationQuery is the builder for querying GithubInstallation entities.
@@ -24,6 +26,7 @@ type GithubInstallationQuery struct {
 	inters        []Interceptor
 	predicates    []predicate.GithubInstallation
 	withGithubApp *GithubAppQuery
+	withServices  *ServiceQuery
 	modifiers     []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -76,6 +79,28 @@ func (giq *GithubInstallationQuery) QueryGithubApp() *GithubAppQuery {
 			sqlgraph.From(githubinstallation.Table, githubinstallation.FieldID, selector),
 			sqlgraph.To(githubapp.Table, githubapp.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, githubinstallation.GithubAppTable, githubinstallation.GithubAppColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(giq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryServices chains the current query on the "services" edge.
+func (giq *GithubInstallationQuery) QueryServices() *ServiceQuery {
+	query := (&ServiceClient{config: giq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := giq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := giq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(githubinstallation.Table, githubinstallation.FieldID, selector),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, githubinstallation.ServicesTable, githubinstallation.ServicesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(giq.driver.Dialect(), step)
 		return fromU, nil
@@ -276,6 +301,7 @@ func (giq *GithubInstallationQuery) Clone() *GithubInstallationQuery {
 		inters:        append([]Interceptor{}, giq.inters...),
 		predicates:    append([]predicate.GithubInstallation{}, giq.predicates...),
 		withGithubApp: giq.withGithubApp.Clone(),
+		withServices:  giq.withServices.Clone(),
 		// clone intermediate query.
 		sql:       giq.sql.Clone(),
 		path:      giq.path,
@@ -291,6 +317,17 @@ func (giq *GithubInstallationQuery) WithGithubApp(opts ...func(*GithubAppQuery))
 		opt(query)
 	}
 	giq.withGithubApp = query
+	return giq
+}
+
+// WithServices tells the query-builder to eager-load the nodes that are connected to
+// the "services" edge. The optional arguments are used to configure the query builder of the edge.
+func (giq *GithubInstallationQuery) WithServices(opts ...func(*ServiceQuery)) *GithubInstallationQuery {
+	query := (&ServiceClient{config: giq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	giq.withServices = query
 	return giq
 }
 
@@ -372,8 +409,9 @@ func (giq *GithubInstallationQuery) sqlAll(ctx context.Context, hooks ...queryHo
 	var (
 		nodes       = []*GithubInstallation{}
 		_spec       = giq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			giq.withGithubApp != nil,
+			giq.withServices != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -400,6 +438,13 @@ func (giq *GithubInstallationQuery) sqlAll(ctx context.Context, hooks ...queryHo
 	if query := giq.withGithubApp; query != nil {
 		if err := giq.loadGithubApp(ctx, query, nodes, nil,
 			func(n *GithubInstallation, e *GithubApp) { n.Edges.GithubApp = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := giq.withServices; query != nil {
+		if err := giq.loadServices(ctx, query, nodes,
+			func(n *GithubInstallation) { n.Edges.Services = []*Service{} },
+			func(n *GithubInstallation, e *Service) { n.Edges.Services = append(n.Edges.Services, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -432,6 +477,39 @@ func (giq *GithubInstallationQuery) loadGithubApp(ctx context.Context, query *Gi
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (giq *GithubInstallationQuery) loadServices(ctx context.Context, query *ServiceQuery, nodes []*GithubInstallation, init func(*GithubInstallation), assign func(*GithubInstallation, *Service)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*GithubInstallation)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(service.FieldGithubInstallationID)
+	}
+	query.Where(predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(githubinstallation.ServicesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.GithubInstallationID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "github_installation_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "github_installation_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

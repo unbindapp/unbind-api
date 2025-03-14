@@ -468,6 +468,29 @@ func HasGithubAppWith(preds ...predicate.GithubApp) predicate.GithubInstallation
 	})
 }
 
+// HasServices applies the HasEdge predicate on the "services" edge.
+func HasServices() predicate.GithubInstallation {
+	return predicate.GithubInstallation(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ServicesTable, ServicesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasServicesWith applies the HasEdge predicate on the "services" edge with a given conditions (other predicates).
+func HasServicesWith(preds ...predicate.Service) predicate.GithubInstallation {
+	return predicate.GithubInstallation(func(s *sql.Selector) {
+		step := newServicesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.GithubInstallation) predicate.GithubInstallation {
 	return predicate.GithubInstallation(sql.AndPredicates(predicates...))

@@ -55,9 +55,11 @@ type GithubInstallation struct {
 type GithubInstallationEdges struct {
 	// GithubApp holds the value of the github_app edge.
 	GithubApp *GithubApp `json:"github_app,omitempty"`
+	// Services holds the value of the services edge.
+	Services []*Service `json:"services,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // GithubAppOrErr returns the GithubApp value or an error if the edge
@@ -69,6 +71,15 @@ func (e GithubInstallationEdges) GithubAppOrErr() (*GithubApp, error) {
 		return nil, &NotFoundError{label: githubapp.Label}
 	}
 	return nil, &NotLoadedError{edge: "github_app"}
+}
+
+// ServicesOrErr returns the Services value or an error if the edge
+// was not loaded in eager-loading.
+func (e GithubInstallationEdges) ServicesOrErr() ([]*Service, error) {
+	if e.loadedTypes[1] {
+		return e.Services, nil
+	}
+	return nil, &NotLoadedError{edge: "services"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -199,6 +210,11 @@ func (gi *GithubInstallation) Value(name string) (ent.Value, error) {
 // QueryGithubApp queries the "github_app" edge of the GithubInstallation entity.
 func (gi *GithubInstallation) QueryGithubApp() *GithubAppQuery {
 	return NewGithubInstallationClient(gi.config).QueryGithubApp(gi)
+}
+
+// QueryServices queries the "services" edge of the GithubInstallation entity.
+func (gi *GithubInstallation) QueryServices() *ServiceQuery {
+	return NewGithubInstallationClient(gi.config).QueryServices(gi)
 }
 
 // Update returns a builder for updating this GithubInstallation.

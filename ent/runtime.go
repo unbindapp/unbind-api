@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/group"
@@ -14,6 +15,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
@@ -22,6 +25,27 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	deploymentMixin := schema.Deployment{}.Mixin()
+	deploymentMixinFields0 := deploymentMixin[0].Fields()
+	_ = deploymentMixinFields0
+	deploymentMixinFields1 := deploymentMixin[1].Fields()
+	_ = deploymentMixinFields1
+	deploymentFields := schema.Deployment{}.Fields()
+	_ = deploymentFields
+	// deploymentDescCreatedAt is the schema descriptor for created_at field.
+	deploymentDescCreatedAt := deploymentMixinFields1[0].Descriptor()
+	// deployment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	deployment.DefaultCreatedAt = deploymentDescCreatedAt.Default.(func() time.Time)
+	// deploymentDescUpdatedAt is the schema descriptor for updated_at field.
+	deploymentDescUpdatedAt := deploymentMixinFields1[1].Descriptor()
+	// deployment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	deployment.DefaultUpdatedAt = deploymentDescUpdatedAt.Default.(func() time.Time)
+	// deployment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	deployment.UpdateDefaultUpdatedAt = deploymentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// deploymentDescID is the schema descriptor for id field.
+	deploymentDescID := deploymentMixinFields0[0].Descriptor()
+	// deployment.DefaultID holds the default value on creation for the id field.
+	deployment.DefaultID = deploymentDescID.Default.(func() uuid.UUID)
 	githubappMixin := schema.GithubApp{}.Mixin()
 	githubappMixinFields0 := githubappMixin[0].Fields()
 	_ = githubappMixinFields0
@@ -213,6 +237,72 @@ func init() {
 	projectDescID := projectMixinFields0[0].Descriptor()
 	// project.DefaultID holds the default value on creation for the id field.
 	project.DefaultID = projectDescID.Default.(func() uuid.UUID)
+	serviceMixin := schema.Service{}.Mixin()
+	serviceMixinFields0 := serviceMixin[0].Fields()
+	_ = serviceMixinFields0
+	serviceMixinFields1 := serviceMixin[1].Fields()
+	_ = serviceMixinFields1
+	serviceFields := schema.Service{}.Fields()
+	_ = serviceFields
+	// serviceDescCreatedAt is the schema descriptor for created_at field.
+	serviceDescCreatedAt := serviceMixinFields1[0].Descriptor()
+	// service.DefaultCreatedAt holds the default value on creation for the created_at field.
+	service.DefaultCreatedAt = serviceDescCreatedAt.Default.(func() time.Time)
+	// serviceDescUpdatedAt is the schema descriptor for updated_at field.
+	serviceDescUpdatedAt := serviceMixinFields1[1].Descriptor()
+	// service.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	service.DefaultUpdatedAt = serviceDescUpdatedAt.Default.(func() time.Time)
+	// service.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	service.UpdateDefaultUpdatedAt = serviceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// serviceDescName is the schema descriptor for name field.
+	serviceDescName := serviceFields[0].Descriptor()
+	// service.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	service.NameValidator = serviceDescName.Validators[0].(func(string) error)
+	// serviceDescGitBranch is the schema descriptor for git_branch field.
+	serviceDescGitBranch := serviceFields[8].Descriptor()
+	// service.DefaultGitBranch holds the default value on creation for the git_branch field.
+	service.DefaultGitBranch = serviceDescGitBranch.Default.(string)
+	// serviceDescID is the schema descriptor for id field.
+	serviceDescID := serviceMixinFields0[0].Descriptor()
+	// service.DefaultID holds the default value on creation for the id field.
+	service.DefaultID = serviceDescID.Default.(func() uuid.UUID)
+	serviceconfigMixin := schema.ServiceConfig{}.Mixin()
+	serviceconfigMixinFields0 := serviceconfigMixin[0].Fields()
+	_ = serviceconfigMixinFields0
+	serviceconfigMixinFields1 := serviceconfigMixin[1].Fields()
+	_ = serviceconfigMixinFields1
+	serviceconfigFields := schema.ServiceConfig{}.Fields()
+	_ = serviceconfigFields
+	// serviceconfigDescCreatedAt is the schema descriptor for created_at field.
+	serviceconfigDescCreatedAt := serviceconfigMixinFields1[0].Descriptor()
+	// serviceconfig.DefaultCreatedAt holds the default value on creation for the created_at field.
+	serviceconfig.DefaultCreatedAt = serviceconfigDescCreatedAt.Default.(func() time.Time)
+	// serviceconfigDescUpdatedAt is the schema descriptor for updated_at field.
+	serviceconfigDescUpdatedAt := serviceconfigMixinFields1[1].Descriptor()
+	// serviceconfig.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	serviceconfig.DefaultUpdatedAt = serviceconfigDescUpdatedAt.Default.(func() time.Time)
+	// serviceconfig.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	serviceconfig.UpdateDefaultUpdatedAt = serviceconfigDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// serviceconfigDescPort is the schema descriptor for port field.
+	serviceconfigDescPort := serviceconfigFields[2].Descriptor()
+	// serviceconfig.DefaultPort holds the default value on creation for the port field.
+	serviceconfig.DefaultPort = serviceconfigDescPort.Default.(int)
+	// serviceconfigDescReplicas is the schema descriptor for replicas field.
+	serviceconfigDescReplicas := serviceconfigFields[3].Descriptor()
+	// serviceconfig.DefaultReplicas holds the default value on creation for the replicas field.
+	serviceconfig.DefaultReplicas = serviceconfigDescReplicas.Default.(int32)
+	// serviceconfigDescAutoDeploy is the schema descriptor for auto_deploy field.
+	serviceconfigDescAutoDeploy := serviceconfigFields[4].Descriptor()
+	// serviceconfig.DefaultAutoDeploy holds the default value on creation for the auto_deploy field.
+	serviceconfig.DefaultAutoDeploy = serviceconfigDescAutoDeploy.Default.(bool)
+	// serviceconfigDescPublic is the schema descriptor for public field.
+	serviceconfigDescPublic := serviceconfigFields[6].Descriptor()
+	// serviceconfig.DefaultPublic holds the default value on creation for the public field.
+	serviceconfig.DefaultPublic = serviceconfigDescPublic.Default.(bool)
+	// serviceconfigDescID is the schema descriptor for id field.
+	serviceconfigDescID := serviceconfigMixinFields0[0].Descriptor()
+	// serviceconfig.DefaultID holds the default value on creation for the id field.
+	serviceconfig.DefaultID = serviceconfigDescID.Default.(func() uuid.UUID)
 	teamMixin := schema.Team{}.Mixin()
 	teamMixinFields0 := teamMixin[0].Fields()
 	_ = teamMixinFields0

@@ -41,6 +41,8 @@ const (
 	FieldEvents = "events"
 	// EdgeGithubApp holds the string denoting the github_app edge name in mutations.
 	EdgeGithubApp = "github_app"
+	// EdgeServices holds the string denoting the services edge name in mutations.
+	EdgeServices = "services"
 	// Table holds the table name of the githubinstallation in the database.
 	Table = "github_installations"
 	// GithubAppTable is the table that holds the github_app relation/edge.
@@ -50,6 +52,13 @@ const (
 	GithubAppInverseTable = "github_apps"
 	// GithubAppColumn is the table column denoting the github_app relation/edge.
 	GithubAppColumn = "github_app_id"
+	// ServicesTable is the table that holds the services relation/edge.
+	ServicesTable = "services"
+	// ServicesInverseTable is the table name for the Service entity.
+	// It exists in this package in order to avoid circular dependency with the "service" package.
+	ServicesInverseTable = "services"
+	// ServicesColumn is the table column denoting the services relation/edge.
+	ServicesColumn = "github_installation_id"
 )
 
 // Columns holds all SQL columns for githubinstallation fields.
@@ -211,10 +220,31 @@ func ByGithubAppField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newGithubAppStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByServicesCount orders the results by services count.
+func ByServicesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newServicesStep(), opts...)
+	}
+}
+
+// ByServices orders the results by services terms.
+func ByServices(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newServicesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newGithubAppStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GithubAppInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, GithubAppTable, GithubAppColumn),
+	)
+}
+func newServicesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ServicesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ServicesTable, ServicesColumn),
 	)
 }

@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/team"
 )
 
@@ -116,6 +117,21 @@ func (pc *ProjectCreate) SetNillableID(u *uuid.UUID) *ProjectCreate {
 // SetTeam sets the "team" edge to the Team entity.
 func (pc *ProjectCreate) SetTeam(t *Team) *ProjectCreate {
 	return pc.SetTeamID(t.ID)
+}
+
+// AddServiceIDs adds the "services" edge to the Service entity by IDs.
+func (pc *ProjectCreate) AddServiceIDs(ids ...uuid.UUID) *ProjectCreate {
+	pc.mutation.AddServiceIDs(ids...)
+	return pc
+}
+
+// AddServices adds the "services" edges to the Service entity.
+func (pc *ProjectCreate) AddServices(s ...*Service) *ProjectCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return pc.AddServiceIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -274,6 +290,22 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.TeamID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ServicesTable,
+			Columns: []string{project.ServicesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

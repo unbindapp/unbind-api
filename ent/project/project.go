@@ -31,6 +31,8 @@ const (
 	FieldTeamID = "team_id"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
+	// EdgeServices holds the string denoting the services edge name in mutations.
+	EdgeServices = "services"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
 	// TeamTable is the table that holds the team relation/edge.
@@ -40,6 +42,13 @@ const (
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
 	TeamColumn = "team_id"
+	// ServicesTable is the table that holds the services relation/edge.
+	ServicesTable = "services"
+	// ServicesInverseTable is the table name for the Service entity.
+	// It exists in this package in order to avoid circular dependency with the "service" package.
+	ServicesInverseTable = "services"
+	// ServicesColumn is the table column denoting the services relation/edge.
+	ServicesColumn = "project_id"
 )
 
 // Columns holds all SQL columns for project fields.
@@ -128,10 +137,31 @@ func ByTeamField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTeamStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByServicesCount orders the results by services count.
+func ByServicesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newServicesStep(), opts...)
+	}
+}
+
+// ByServices orders the results by services terms.
+func ByServices(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newServicesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTeamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TeamInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
+	)
+}
+func newServicesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ServicesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ServicesTable, ServicesColumn),
 	)
 }

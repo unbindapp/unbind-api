@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Deployment is the predicate function for deployment builders.
+type Deployment func(*sql.Selector)
+
 // GithubApp is the predicate function for githubapp builders.
 type GithubApp func(*sql.Selector)
 
@@ -29,6 +32,12 @@ type Permission func(*sql.Selector)
 
 // Project is the predicate function for project builders.
 type Project func(*sql.Selector)
+
+// Service is the predicate function for service builders.
+type Service func(*sql.Selector)
+
+// ServiceConfig is the predicate function for serviceconfig builders.
+type ServiceConfig func(*sql.Selector)
 
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)
