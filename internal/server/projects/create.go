@@ -45,7 +45,7 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 	}
 
 	createdProject, err := self.srv.ProjectService.CreateProject(ctx, user.ID, &project_service.CreateProjectInput{
-		TeamID:      input.TeamID,
+		TeamID:      input.Body.TeamID,
 		Name:        name,
 		DisplayName: input.Body.DisplayName,
 		Description: input.Body.Description,
