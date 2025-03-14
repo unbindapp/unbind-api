@@ -293,7 +293,6 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	teamHandlers := teams_handler.NewHandlerGroup(srvImpl)
-	projectHandlers := projects_handler.NewHandlerGroup(srvImpl)
 	huma.Register(
 		teamsGroup,
 		huma.Operation{
@@ -316,35 +315,44 @@ func startAPI(cfg *config.Config) {
 		},
 		teamHandlers.UpdateTeam,
 	)
+
+	// /teams/{team_id}/projects group
+	projectsGroup := huma.NewGroup(api, "/teams/{team_id}/project")
+	projectsGroup.UseMiddleware(mw.Authenticate)
+	projectsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Projects"}
+		next(op)
+	})
+	projectHandlers := projects_handler.NewHandlerGroup(srvImpl)
 	huma.Register(
-		teamsGroup,
+		projectsGroup,
 		huma.Operation{
 			OperationID: "create-project",
 			Summary:     "Create Project",
 			Description: "Create a project in this team",
-			Path:        "/{team_id}/project",
+			Path:        "/create",
 			Method:      http.MethodPost,
 		},
 		projectHandlers.CreateProject,
 	)
 	huma.Register(
-		teamsGroup,
+		projectsGroup,
 		huma.Operation{
 			OperationID: "list-projects",
 			Summary:     "List Projects",
 			Description: "List all projects in a team",
-			Path:        "/{team_id}/projects",
+			Path:        "/list",
 			Method:      http.MethodGet,
 		},
 		projectHandlers.ListProjects,
 	)
 	huma.Register(
-		teamsGroup,
+		projectsGroup,
 		huma.Operation{
 			OperationID: "update-project",
 			Summary:     "Update Project",
 			Description: "Update a project in this team",
-			Path:        "/{team_id}/project/{project_id}",
+			Path:        "/{project_id}/update",
 			Method:      http.MethodPut,
 		},
 		projectHandlers.UpdateProject,
