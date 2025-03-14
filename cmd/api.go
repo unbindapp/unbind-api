@@ -310,7 +310,7 @@ func startAPI(cfg *config.Config) {
 			OperationID: "update-team",
 			Summary:     "Update Team",
 			Description: "Update a team",
-			Path:        "/{team_id}",
+			Path:        "/update",
 			Method:      http.MethodPut,
 		},
 		teamHandlers.UpdateTeam,
