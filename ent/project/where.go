@@ -71,6 +71,11 @@ func Name(v string) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldName, v))
 }
 
+// DisplayName applies equality check predicate on the "display_name" field. It's identical to DisplayNameEQ.
+func DisplayName(v string) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldDisplayName, v))
+}
+
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldDescription, v))
@@ -79,6 +84,11 @@ func Description(v string) predicate.Project {
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
 func Status(v string) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldStatus, v))
+}
+
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldTeamID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -226,6 +236,71 @@ func NameContainsFold(v string) predicate.Project {
 	return predicate.Project(sql.FieldContainsFold(FieldName, v))
 }
 
+// DisplayNameEQ applies the EQ predicate on the "display_name" field.
+func DisplayNameEQ(v string) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldDisplayName, v))
+}
+
+// DisplayNameNEQ applies the NEQ predicate on the "display_name" field.
+func DisplayNameNEQ(v string) predicate.Project {
+	return predicate.Project(sql.FieldNEQ(FieldDisplayName, v))
+}
+
+// DisplayNameIn applies the In predicate on the "display_name" field.
+func DisplayNameIn(vs ...string) predicate.Project {
+	return predicate.Project(sql.FieldIn(FieldDisplayName, vs...))
+}
+
+// DisplayNameNotIn applies the NotIn predicate on the "display_name" field.
+func DisplayNameNotIn(vs ...string) predicate.Project {
+	return predicate.Project(sql.FieldNotIn(FieldDisplayName, vs...))
+}
+
+// DisplayNameGT applies the GT predicate on the "display_name" field.
+func DisplayNameGT(v string) predicate.Project {
+	return predicate.Project(sql.FieldGT(FieldDisplayName, v))
+}
+
+// DisplayNameGTE applies the GTE predicate on the "display_name" field.
+func DisplayNameGTE(v string) predicate.Project {
+	return predicate.Project(sql.FieldGTE(FieldDisplayName, v))
+}
+
+// DisplayNameLT applies the LT predicate on the "display_name" field.
+func DisplayNameLT(v string) predicate.Project {
+	return predicate.Project(sql.FieldLT(FieldDisplayName, v))
+}
+
+// DisplayNameLTE applies the LTE predicate on the "display_name" field.
+func DisplayNameLTE(v string) predicate.Project {
+	return predicate.Project(sql.FieldLTE(FieldDisplayName, v))
+}
+
+// DisplayNameContains applies the Contains predicate on the "display_name" field.
+func DisplayNameContains(v string) predicate.Project {
+	return predicate.Project(sql.FieldContains(FieldDisplayName, v))
+}
+
+// DisplayNameHasPrefix applies the HasPrefix predicate on the "display_name" field.
+func DisplayNameHasPrefix(v string) predicate.Project {
+	return predicate.Project(sql.FieldHasPrefix(FieldDisplayName, v))
+}
+
+// DisplayNameHasSuffix applies the HasSuffix predicate on the "display_name" field.
+func DisplayNameHasSuffix(v string) predicate.Project {
+	return predicate.Project(sql.FieldHasSuffix(FieldDisplayName, v))
+}
+
+// DisplayNameEqualFold applies the EqualFold predicate on the "display_name" field.
+func DisplayNameEqualFold(v string) predicate.Project {
+	return predicate.Project(sql.FieldEqualFold(FieldDisplayName, v))
+}
+
+// DisplayNameContainsFold applies the ContainsFold predicate on the "display_name" field.
+func DisplayNameContainsFold(v string) predicate.Project {
+	return predicate.Project(sql.FieldContainsFold(FieldDisplayName, v))
+}
+
 // DescriptionEQ applies the EQ predicate on the "description" field.
 func DescriptionEQ(v string) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldDescription, v))
@@ -364,6 +439,26 @@ func StatusEqualFold(v string) predicate.Project {
 // StatusContainsFold applies the ContainsFold predicate on the "status" field.
 func StatusContainsFold(v string) predicate.Project {
 	return predicate.Project(sql.FieldContainsFold(FieldStatus, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldNotIn(FieldTeamID, vs...))
 }
 
 // HasTeam applies the HasEdge predicate on the "team" edge.

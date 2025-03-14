@@ -11,18 +11,20 @@ type ErrorType int
 var (
 	// Permissions
 	ErrUnauthorized       = errors.New("unauthorized")
-	ErrNotFound           = errors.New("not found")
 	ErrGroupAlreadyExists = errors.New("group name already exists")
 	ErrInvalidInput       = NewCustomError(ErrTypeInvalidInput, "")
+	ErrNotFound           = NewCustomError(ErrTypeNotFound, "")
 )
 
 // More dynamic errors
 const (
 	ErrTypeInvalidInput ErrorType = iota
+	ErrTypeNotFound
 )
 
 var errorTypeStrings = map[ErrorType]string{
 	ErrTypeInvalidInput: "ErrInvalidInput",
+	ErrTypeNotFound:     "ErrNotFound",
 }
 
 func (e ErrorType) String() string {

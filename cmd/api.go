@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 	"github.com/unbindapp/unbind-api/internal/server"
 	github_handler "github.com/unbindapp/unbind-api/internal/server/github"
+	projects_handler "github.com/unbindapp/unbind-api/internal/server/projects"
 	teams_handler "github.com/unbindapp/unbind-api/internal/server/teams"
 	user_handler "github.com/unbindapp/unbind-api/internal/server/user"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/server/webhook"
@@ -290,6 +291,7 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	teamHandlers := teams_handler.NewHandlerGroup(srvImpl)
+	projectHandlers := projects_handler.NewHandlerGroup(srvImpl)
 	huma.Register(
 		teamsGroup,
 		huma.Operation{
@@ -311,6 +313,39 @@ func startAPI(cfg *config.Config) {
 			Method:      http.MethodPut,
 		},
 		teamHandlers.UpdateTeam,
+	)
+	huma.Register(
+		teamsGroup,
+		huma.Operation{
+			OperationID: "create-project",
+			Summary:     "Create Project",
+			Description: "Create a project in this team",
+			Path:        "/{team_id}/project",
+			Method:      http.MethodPost,
+		},
+		projectHandlers.CreateProject,
+	)
+	huma.Register(
+		teamsGroup,
+		huma.Operation{
+			OperationID: "list-projects",
+			Summary:     "List Projects",
+			Description: "List all projects in a team",
+			Path:        "/{team_id}/projects",
+			Method:      http.MethodGet,
+		},
+		projectHandlers.ListProjects,
+	)
+	huma.Register(
+		teamsGroup,
+		huma.Operation{
+			OperationID: "update-project",
+			Summary:     "Update Project",
+			Description: "Update a project in this team",
+			Path:        "/{team_id}/project/{project_id}",
+			Method:      http.MethodPut,
+		},
+		projectHandlers.UpdateProject,
 	)
 
 	// Start the server

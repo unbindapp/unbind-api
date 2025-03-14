@@ -25,7 +25,6 @@ type ProjectQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Project
 	withTeam   *TeamQuery
-	withFKs    bool
 	modifiers  []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -373,18 +372,11 @@ func (pq *ProjectQuery) prepareQuery(ctx context.Context) error {
 func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Project, error) {
 	var (
 		nodes       = []*Project{}
-		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
 		loadedTypes = [1]bool{
 			pq.withTeam != nil,
 		}
 	)
-	if pq.withTeam != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, project.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Project).scanValues(nil, columns)
 	}
@@ -419,10 +411,7 @@ func (pq *ProjectQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Project)
 	for i := range nodes {
-		if nodes[i].team_projects == nil {
-			continue
-		}
-		fk := *nodes[i].team_projects
+		fk := nodes[i].TeamID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -439,7 +428,7 @@ func (pq *ProjectQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_projects" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -475,6 +464,9 @@ func (pq *ProjectQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != project.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if pq.withTeam != nil {
+			_spec.Node.AddColumnOnce(project.FieldTeamID)
 		}
 	}
 	if ps := pq.predicates; len(ps) > 0 {

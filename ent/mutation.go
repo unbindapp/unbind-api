@@ -5822,6 +5822,7 @@ type ProjectMutation struct {
 	created_at    *time.Time
 	updated_at    *time.Time
 	name          *string
+	display_name  *string
 	description   *string
 	status        *string
 	clearedFields map[string]struct{}
@@ -6044,6 +6045,42 @@ func (m *ProjectMutation) ResetName() {
 	m.name = nil
 }
 
+// SetDisplayName sets the "display_name" field.
+func (m *ProjectMutation) SetDisplayName(s string) {
+	m.display_name = &s
+}
+
+// DisplayName returns the value of the "display_name" field in the mutation.
+func (m *ProjectMutation) DisplayName() (r string, exists bool) {
+	v := m.display_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayName returns the old "display_name" field's value of the Project entity.
+// If the Project object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProjectMutation) OldDisplayName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
+	}
+	return oldValue.DisplayName, nil
+}
+
+// ResetDisplayName resets all changes to the "display_name" field.
+func (m *ProjectMutation) ResetDisplayName() {
+	m.display_name = nil
+}
+
 // SetDescription sets the "description" field.
 func (m *ProjectMutation) SetDescription(s string) {
 	m.description = &s
@@ -6129,27 +6166,51 @@ func (m *ProjectMutation) ResetStatus() {
 	m.status = nil
 }
 
-// SetTeamID sets the "team" edge to the Team entity by id.
-func (m *ProjectMutation) SetTeamID(id uuid.UUID) {
-	m.team = &id
+// SetTeamID sets the "team_id" field.
+func (m *ProjectMutation) SetTeamID(u uuid.UUID) {
+	m.team = &u
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *ProjectMutation) TeamID() (r uuid.UUID, exists bool) {
+	v := m.team
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the Project entity.
+// If the Project object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProjectMutation) OldTeamID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *ProjectMutation) ResetTeamID() {
+	m.team = nil
 }
 
 // ClearTeam clears the "team" edge to the Team entity.
 func (m *ProjectMutation) ClearTeam() {
 	m.clearedteam = true
+	m.clearedFields[project.FieldTeamID] = struct{}{}
 }
 
 // TeamCleared reports if the "team" edge to the Team entity was cleared.
 func (m *ProjectMutation) TeamCleared() bool {
 	return m.clearedteam
-}
-
-// TeamID returns the "team" edge ID in the mutation.
-func (m *ProjectMutation) TeamID() (id uuid.UUID, exists bool) {
-	if m.team != nil {
-		return *m.team, true
-	}
-	return
 }
 
 // TeamIDs returns the "team" edge IDs in the mutation.
@@ -6202,7 +6263,7 @@ func (m *ProjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProjectMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, project.FieldCreatedAt)
 	}
@@ -6212,11 +6273,17 @@ func (m *ProjectMutation) Fields() []string {
 	if m.name != nil {
 		fields = append(fields, project.FieldName)
 	}
+	if m.display_name != nil {
+		fields = append(fields, project.FieldDisplayName)
+	}
 	if m.description != nil {
 		fields = append(fields, project.FieldDescription)
 	}
 	if m.status != nil {
 		fields = append(fields, project.FieldStatus)
+	}
+	if m.team != nil {
+		fields = append(fields, project.FieldTeamID)
 	}
 	return fields
 }
@@ -6232,10 +6299,14 @@ func (m *ProjectMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case project.FieldName:
 		return m.Name()
+	case project.FieldDisplayName:
+		return m.DisplayName()
 	case project.FieldDescription:
 		return m.Description()
 	case project.FieldStatus:
 		return m.Status()
+	case project.FieldTeamID:
+		return m.TeamID()
 	}
 	return nil, false
 }
@@ -6251,10 +6322,14 @@ func (m *ProjectMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldUpdatedAt(ctx)
 	case project.FieldName:
 		return m.OldName(ctx)
+	case project.FieldDisplayName:
+		return m.OldDisplayName(ctx)
 	case project.FieldDescription:
 		return m.OldDescription(ctx)
 	case project.FieldStatus:
 		return m.OldStatus(ctx)
+	case project.FieldTeamID:
+		return m.OldTeamID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Project field %s", name)
 }
@@ -6285,6 +6360,13 @@ func (m *ProjectMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetName(v)
 		return nil
+	case project.FieldDisplayName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayName(v)
+		return nil
 	case project.FieldDescription:
 		v, ok := value.(string)
 		if !ok {
@@ -6298,6 +6380,13 @@ func (m *ProjectMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case project.FieldTeamID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Project field %s", name)
@@ -6366,11 +6455,17 @@ func (m *ProjectMutation) ResetField(name string) error {
 	case project.FieldName:
 		m.ResetName()
 		return nil
+	case project.FieldDisplayName:
+		m.ResetDisplayName()
+		return nil
 	case project.FieldDescription:
 		m.ResetDescription()
 		return nil
 	case project.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case project.FieldTeamID:
+		m.ResetTeamID()
 		return nil
 	}
 	return fmt.Errorf("unknown Project field %s", name)

@@ -507,7 +507,9 @@ func (tq *TeamQuery) loadProjects(ctx context.Context, query *ProjectQuery, node
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(project.FieldTeamID)
+	}
 	query.Where(predicate.Project(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.ProjectsColumn), fks...))
 	}))
@@ -516,13 +518,10 @@ func (tq *TeamQuery) loadProjects(ctx context.Context, query *ProjectQuery, node
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.team_projects
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_projects" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TeamID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_projects" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

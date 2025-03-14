@@ -206,7 +206,7 @@ func init() {
 	// project.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	project.NameValidator = projectDescName.Validators[0].(func(string) error)
 	// projectDescStatus is the schema descriptor for status field.
-	projectDescStatus := projectFields[2].Descriptor()
+	projectDescStatus := projectFields[3].Descriptor()
 	// project.DefaultStatus holds the default value on creation for the status field.
 	project.DefaultStatus = projectDescStatus.Default.(string)
 	// projectDescID is the schema descriptor for id field.

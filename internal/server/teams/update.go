@@ -41,6 +41,9 @@ func (self *HandlerGroup) UpdateTeam(ctx context.Context, input *UpdateTeamInput
 		DisplayName: input.Body.DisplayName,
 	})
 	if err != nil {
+		if errors.Is(err, errdefs.ErrInvalidInput) {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
 		if ent.IsNotFound(err) {
 			return nil, huma.Error404NotFound("Team not found")
 		}

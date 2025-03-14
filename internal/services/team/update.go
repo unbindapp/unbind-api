@@ -11,7 +11,7 @@ import (
 )
 
 type TeamUpdateInput struct {
-	ID          uuid.UUID `json:"id" validate:"required"`
+	ID          uuid.UUID `json:"id" validate:"required,uuid4"`
 	DisplayName string    `json:"display_name" validate:"required"`
 }
 

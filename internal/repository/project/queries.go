@@ -19,3 +19,7 @@ func (self *ProjectRepository) GetTeamID(ctx context.Context, id uuid.UUID) (uui
 	}
 	return team.ID, nil
 }
+
+func (self *ProjectRepository) GetByTeam(ctx context.Context, teamID uuid.UUID) ([]*ent.Project, error) {
+	return self.base.DB.Project.Query().Where(project.TeamID(teamID)).All(ctx)
+}

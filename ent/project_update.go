@@ -51,6 +51,20 @@ func (pu *ProjectUpdate) SetNillableName(s *string) *ProjectUpdate {
 	return pu
 }
 
+// SetDisplayName sets the "display_name" field.
+func (pu *ProjectUpdate) SetDisplayName(s string) *ProjectUpdate {
+	pu.mutation.SetDisplayName(s)
+	return pu
+}
+
+// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableDisplayName(s *string) *ProjectUpdate {
+	if s != nil {
+		pu.SetDisplayName(*s)
+	}
+	return pu
+}
+
 // SetDescription sets the "description" field.
 func (pu *ProjectUpdate) SetDescription(s string) *ProjectUpdate {
 	pu.mutation.SetDescription(s)
@@ -85,16 +99,16 @@ func (pu *ProjectUpdate) SetNillableStatus(s *string) *ProjectUpdate {
 	return pu
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (pu *ProjectUpdate) SetTeamID(id uuid.UUID) *ProjectUpdate {
-	pu.mutation.SetTeamID(id)
+// SetTeamID sets the "team_id" field.
+func (pu *ProjectUpdate) SetTeamID(u uuid.UUID) *ProjectUpdate {
+	pu.mutation.SetTeamID(u)
 	return pu
 }
 
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (pu *ProjectUpdate) SetNillableTeamID(id *uuid.UUID) *ProjectUpdate {
-	if id != nil {
-		pu = pu.SetTeamID(*id)
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableTeamID(u *uuid.UUID) *ProjectUpdate {
+	if u != nil {
+		pu.SetTeamID(*u)
 	}
 	return pu
 }
@@ -158,6 +172,9 @@ func (pu *ProjectUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Project.name": %w`, err)}
 		}
 	}
+	if pu.mutation.TeamCleared() && len(pu.mutation.TeamIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Project.team"`)
+	}
 	return nil
 }
 
@@ -184,6 +201,9 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.Name(); ok {
 		_spec.SetField(project.FieldName, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.DisplayName(); ok {
+		_spec.SetField(project.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := pu.mutation.Description(); ok {
 		_spec.SetField(project.FieldDescription, field.TypeString, value)
@@ -265,6 +285,20 @@ func (puo *ProjectUpdateOne) SetNillableName(s *string) *ProjectUpdateOne {
 	return puo
 }
 
+// SetDisplayName sets the "display_name" field.
+func (puo *ProjectUpdateOne) SetDisplayName(s string) *ProjectUpdateOne {
+	puo.mutation.SetDisplayName(s)
+	return puo
+}
+
+// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableDisplayName(s *string) *ProjectUpdateOne {
+	if s != nil {
+		puo.SetDisplayName(*s)
+	}
+	return puo
+}
+
 // SetDescription sets the "description" field.
 func (puo *ProjectUpdateOne) SetDescription(s string) *ProjectUpdateOne {
 	puo.mutation.SetDescription(s)
@@ -299,16 +333,16 @@ func (puo *ProjectUpdateOne) SetNillableStatus(s *string) *ProjectUpdateOne {
 	return puo
 }
 
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (puo *ProjectUpdateOne) SetTeamID(id uuid.UUID) *ProjectUpdateOne {
-	puo.mutation.SetTeamID(id)
+// SetTeamID sets the "team_id" field.
+func (puo *ProjectUpdateOne) SetTeamID(u uuid.UUID) *ProjectUpdateOne {
+	puo.mutation.SetTeamID(u)
 	return puo
 }
 
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (puo *ProjectUpdateOne) SetNillableTeamID(id *uuid.UUID) *ProjectUpdateOne {
-	if id != nil {
-		puo = puo.SetTeamID(*id)
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableTeamID(u *uuid.UUID) *ProjectUpdateOne {
+	if u != nil {
+		puo.SetTeamID(*u)
 	}
 	return puo
 }
@@ -385,6 +419,9 @@ func (puo *ProjectUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Project.name": %w`, err)}
 		}
 	}
+	if puo.mutation.TeamCleared() && len(puo.mutation.TeamIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Project.team"`)
+	}
 	return nil
 }
 
@@ -428,6 +465,9 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	}
 	if value, ok := puo.mutation.Name(); ok {
 		_spec.SetField(project.FieldName, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.DisplayName(); ok {
+		_spec.SetField(project.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.Description(); ok {
 		_spec.SetField(project.FieldDescription, field.TypeString, value)

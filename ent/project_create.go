@@ -59,6 +59,12 @@ func (pc *ProjectCreate) SetName(s string) *ProjectCreate {
 	return pc
 }
 
+// SetDisplayName sets the "display_name" field.
+func (pc *ProjectCreate) SetDisplayName(s string) *ProjectCreate {
+	pc.mutation.SetDisplayName(s)
+	return pc
+}
+
 // SetDescription sets the "description" field.
 func (pc *ProjectCreate) SetDescription(s string) *ProjectCreate {
 	pc.mutation.SetDescription(s)
@@ -87,6 +93,12 @@ func (pc *ProjectCreate) SetNillableStatus(s *string) *ProjectCreate {
 	return pc
 }
 
+// SetTeamID sets the "team_id" field.
+func (pc *ProjectCreate) SetTeamID(u uuid.UUID) *ProjectCreate {
+	pc.mutation.SetTeamID(u)
+	return pc
+}
+
 // SetID sets the "id" field.
 func (pc *ProjectCreate) SetID(u uuid.UUID) *ProjectCreate {
 	pc.mutation.SetID(u)
@@ -97,20 +109,6 @@ func (pc *ProjectCreate) SetID(u uuid.UUID) *ProjectCreate {
 func (pc *ProjectCreate) SetNillableID(u *uuid.UUID) *ProjectCreate {
 	if u != nil {
 		pc.SetID(*u)
-	}
-	return pc
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (pc *ProjectCreate) SetTeamID(id uuid.UUID) *ProjectCreate {
-	pc.mutation.SetTeamID(id)
-	return pc
-}
-
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (pc *ProjectCreate) SetNillableTeamID(id *uuid.UUID) *ProjectCreate {
-	if id != nil {
-		pc = pc.SetTeamID(*id)
 	}
 	return pc
 }
@@ -189,8 +187,17 @@ func (pc *ProjectCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Project.name": %w`, err)}
 		}
 	}
+	if _, ok := pc.mutation.DisplayName(); !ok {
+		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Project.display_name"`)}
+	}
 	if _, ok := pc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Project.status"`)}
+	}
+	if _, ok := pc.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "Project.team_id"`)}
+	}
+	if len(pc.mutation.TeamIDs()) == 0 {
+		return &ValidationError{Name: "team", err: errors.New(`ent: missing required edge "Project.team"`)}
 	}
 	return nil
 }
@@ -240,6 +247,10 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		_spec.SetField(project.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
+	if value, ok := pc.mutation.DisplayName(); ok {
+		_spec.SetField(project.FieldDisplayName, field.TypeString, value)
+		_node.DisplayName = value
+	}
 	if value, ok := pc.mutation.Description(); ok {
 		_spec.SetField(project.FieldDescription, field.TypeString, value)
 		_node.Description = value
@@ -262,7 +273,7 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_projects = &nodes[0]
+		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -341,6 +352,18 @@ func (u *ProjectUpsert) UpdateName() *ProjectUpsert {
 	return u
 }
 
+// SetDisplayName sets the "display_name" field.
+func (u *ProjectUpsert) SetDisplayName(v string) *ProjectUpsert {
+	u.Set(project.FieldDisplayName, v)
+	return u
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *ProjectUpsert) UpdateDisplayName() *ProjectUpsert {
+	u.SetExcluded(project.FieldDisplayName)
+	return u
+}
+
 // SetDescription sets the "description" field.
 func (u *ProjectUpsert) SetDescription(v string) *ProjectUpsert {
 	u.Set(project.FieldDescription, v)
@@ -368,6 +391,18 @@ func (u *ProjectUpsert) SetStatus(v string) *ProjectUpsert {
 // UpdateStatus sets the "status" field to the value that was provided on create.
 func (u *ProjectUpsert) UpdateStatus() *ProjectUpsert {
 	u.SetExcluded(project.FieldStatus)
+	return u
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *ProjectUpsert) SetTeamID(v uuid.UUID) *ProjectUpsert {
+	u.Set(project.FieldTeamID, v)
+	return u
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *ProjectUpsert) UpdateTeamID() *ProjectUpsert {
+	u.SetExcluded(project.FieldTeamID)
 	return u
 }
 
@@ -450,6 +485,20 @@ func (u *ProjectUpsertOne) UpdateName() *ProjectUpsertOne {
 	})
 }
 
+// SetDisplayName sets the "display_name" field.
+func (u *ProjectUpsertOne) SetDisplayName(v string) *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetDisplayName(v)
+	})
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *ProjectUpsertOne) UpdateDisplayName() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateDisplayName()
+	})
+}
+
 // SetDescription sets the "description" field.
 func (u *ProjectUpsertOne) SetDescription(v string) *ProjectUpsertOne {
 	return u.Update(func(s *ProjectUpsert) {
@@ -482,6 +531,20 @@ func (u *ProjectUpsertOne) SetStatus(v string) *ProjectUpsertOne {
 func (u *ProjectUpsertOne) UpdateStatus() *ProjectUpsertOne {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *ProjectUpsertOne) SetTeamID(v uuid.UUID) *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *ProjectUpsertOne) UpdateTeamID() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateTeamID()
 	})
 }
 
@@ -731,6 +794,20 @@ func (u *ProjectUpsertBulk) UpdateName() *ProjectUpsertBulk {
 	})
 }
 
+// SetDisplayName sets the "display_name" field.
+func (u *ProjectUpsertBulk) SetDisplayName(v string) *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetDisplayName(v)
+	})
+}
+
+// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
+func (u *ProjectUpsertBulk) UpdateDisplayName() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateDisplayName()
+	})
+}
+
 // SetDescription sets the "description" field.
 func (u *ProjectUpsertBulk) SetDescription(v string) *ProjectUpsertBulk {
 	return u.Update(func(s *ProjectUpsert) {
@@ -763,6 +840,20 @@ func (u *ProjectUpsertBulk) SetStatus(v string) *ProjectUpsertBulk {
 func (u *ProjectUpsertBulk) UpdateStatus() *ProjectUpsertBulk {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *ProjectUpsertBulk) SetTeamID(v uuid.UUID) *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *ProjectUpsertBulk) UpdateTeamID() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateTeamID()
 	})
 }
 

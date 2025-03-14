@@ -21,10 +21,14 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldDisplayName holds the string denoting the display_name field in the database.
+	FieldDisplayName = "display_name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldTeamID holds the string denoting the team_id field in the database.
+	FieldTeamID = "team_id"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
 	// Table holds the table name of the project in the database.
@@ -35,7 +39,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
-	TeamColumn = "team_projects"
+	TeamColumn = "team_id"
 )
 
 // Columns holds all SQL columns for project fields.
@@ -44,25 +48,16 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldName,
+	FieldDisplayName,
 	FieldDescription,
 	FieldStatus,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "projects"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"team_projects",
+	FieldTeamID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -107,6 +102,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
+// ByDisplayName orders the results by the display_name field.
+func ByDisplayName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDisplayName, opts...).ToFunc()
+}
+
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
@@ -115,6 +115,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByTeamID orders the results by the team_id field.
+func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
 }
 
 // ByTeamField orders the results by team field.

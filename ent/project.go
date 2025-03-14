@@ -26,15 +26,18 @@ type Project struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// DisplayName holds the value of the "display_name" field.
+	DisplayName string `json:"display_name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID uuid.UUID `json:"team_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProjectQuery when eager-loading is set.
-	Edges         ProjectEdges `json:"edges"`
-	team_projects *uuid.UUID
-	selectValues  sql.SelectValues
+	Edges        ProjectEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // ProjectEdges holds the relations/edges for other nodes in the graph.
@@ -62,14 +65,12 @@ func (*Project) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case project.FieldName, project.FieldDescription, project.FieldStatus:
+		case project.FieldName, project.FieldDisplayName, project.FieldDescription, project.FieldStatus:
 			values[i] = new(sql.NullString)
 		case project.FieldCreatedAt, project.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case project.FieldID:
+		case project.FieldID, project.FieldTeamID:
 			values[i] = new(uuid.UUID)
-		case project.ForeignKeys[0]: // team_projects
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -109,6 +110,12 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				pr.Name = value.String
 			}
+		case project.FieldDisplayName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field display_name", values[i])
+			} else if value.Valid {
+				pr.DisplayName = value.String
+			}
 		case project.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
@@ -121,12 +128,11 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				pr.Status = value.String
 			}
-		case project.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field team_projects", values[i])
-			} else if value.Valid {
-				pr.team_projects = new(uuid.UUID)
-				*pr.team_projects = *value.S.(*uuid.UUID)
+		case project.FieldTeamID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value != nil {
+				pr.TeamID = *value
 			}
 		default:
 			pr.selectValues.Set(columns[i], values[i])
@@ -178,11 +184,17 @@ func (pr *Project) String() string {
 	builder.WriteString("name=")
 	builder.WriteString(pr.Name)
 	builder.WriteString(", ")
+	builder.WriteString("display_name=")
+	builder.WriteString(pr.DisplayName)
+	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(pr.Description)
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(pr.Status)
+	builder.WriteString(", ")
+	builder.WriteString("team_id=")
+	builder.WriteString(fmt.Sprintf("%v", pr.TeamID))
 	builder.WriteByte(')')
 	return builder.String()
 }

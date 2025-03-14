@@ -195,9 +195,10 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
+		{Name: "display_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "active"},
-		{Name: "team_projects", Type: field.TypeUUID, Nullable: true},
+		{Name: "team_id", Type: field.TypeUUID},
 	}
 	// ProjectsTable holds the schema information for the "projects" table.
 	ProjectsTable = &schema.Table{
@@ -207,9 +208,9 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "projects_teams_projects",
-				Columns:    []*schema.Column{ProjectsColumns[6]},
+				Columns:    []*schema.Column{ProjectsColumns[7]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}

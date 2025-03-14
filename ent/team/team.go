@@ -41,7 +41,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "project" package.
 	ProjectsInverseTable = "projects"
 	// ProjectsColumn is the table column denoting the projects relation/edge.
-	ProjectsColumn = "team_projects"
+	ProjectsColumn = "team_id"
 	// MembersTable is the table that holds the members relation/edge. The primary key declared below.
 	MembersTable = "user_teams"
 	// MembersInverseTable is the table name for the User entity.
