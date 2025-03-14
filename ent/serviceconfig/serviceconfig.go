@@ -21,6 +21,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldServiceID holds the string denoting the service_id field in the database.
 	FieldServiceID = "service_id"
+	// FieldGitBranch holds the string denoting the git_branch field in the database.
+	FieldGitBranch = "git_branch"
 	// FieldHost holds the string denoting the host field in the database.
 	FieldHost = "host"
 	// FieldPort holds the string denoting the port field in the database.
@@ -54,6 +56,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldServiceID,
+	FieldGitBranch,
 	FieldHost,
 	FieldPort,
 	FieldReplicas,
@@ -113,6 +116,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByServiceID orders the results by the service_id field.
 func ByServiceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServiceID, opts...).ToFunc()
+}
+
+// ByGitBranch orders the results by the git_branch field.
+func ByGitBranch(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGitBranch, opts...).ToFunc()
 }
 
 // ByHost orders the results by the host field.

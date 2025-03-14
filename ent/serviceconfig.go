@@ -26,6 +26,8 @@ type ServiceConfig struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// ServiceID holds the value of the "service_id" field.
 	ServiceID uuid.UUID `json:"service_id,omitempty"`
+	// Branch to build from
+	GitBranch *string `json:"git_branch,omitempty"`
 	// External domain for the service, e.g., unbind.app
 	Host string `json:"host,omitempty"`
 	// Main container port
@@ -75,7 +77,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldPort, serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldHost, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldGitBranch, serviceconfig.FieldHost, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -119,6 +121,13 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field service_id", values[i])
 			} else if value != nil {
 				sc.ServiceID = *value
+			}
+		case serviceconfig.FieldGitBranch:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field git_branch", values[i])
+			} else if value.Valid {
+				sc.GitBranch = new(string)
+				*sc.GitBranch = value.String
 			}
 		case serviceconfig.FieldHost:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -212,6 +221,11 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("service_id=")
 	builder.WriteString(fmt.Sprintf("%v", sc.ServiceID))
+	builder.WriteString(", ")
+	if v := sc.GitBranch; v != nil {
+		builder.WriteString("git_branch=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("host=")
 	builder.WriteString(sc.Host)

@@ -266,6 +266,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "git_branch", Type: field.TypeString, Nullable: true},
 		{Name: "host", Type: field.TypeString, Nullable: true},
 		{Name: "port", Type: field.TypeInt, Default: 8080},
 		{Name: "replicas", Type: field.TypeInt32, Default: 2},
@@ -283,7 +284,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_services_service_configs",
-				Columns:    []*schema.Column{ServiceConfigsColumns[10]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[11]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

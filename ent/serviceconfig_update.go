@@ -51,6 +51,26 @@ func (scu *ServiceConfigUpdate) SetNillableServiceID(u *uuid.UUID) *ServiceConfi
 	return scu
 }
 
+// SetGitBranch sets the "git_branch" field.
+func (scu *ServiceConfigUpdate) SetGitBranch(s string) *ServiceConfigUpdate {
+	scu.mutation.SetGitBranch(s)
+	return scu
+}
+
+// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableGitBranch(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetGitBranch(*s)
+	}
+	return scu
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (scu *ServiceConfigUpdate) ClearGitBranch() *ServiceConfigUpdate {
+	scu.mutation.ClearGitBranch()
+	return scu
+}
+
 // SetHost sets the "host" field.
 func (scu *ServiceConfigUpdate) SetHost(s string) *ServiceConfigUpdate {
 	scu.mutation.SetHost(s)
@@ -262,6 +282,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := scu.mutation.GitBranch(); ok {
+		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
+	}
+	if scu.mutation.GitBranchCleared() {
+		_spec.ClearField(serviceconfig.FieldGitBranch, field.TypeString)
+	}
 	if value, ok := scu.mutation.Host(); ok {
 		_spec.SetField(serviceconfig.FieldHost, field.TypeString, value)
 	}
@@ -366,6 +392,26 @@ func (scuo *ServiceConfigUpdateOne) SetNillableServiceID(u *uuid.UUID) *ServiceC
 	if u != nil {
 		scuo.SetServiceID(*u)
 	}
+	return scuo
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (scuo *ServiceConfigUpdateOne) SetGitBranch(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetGitBranch(s)
+	return scuo
+}
+
+// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableGitBranch(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetGitBranch(*s)
+	}
+	return scuo
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (scuo *ServiceConfigUpdateOne) ClearGitBranch() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearGitBranch()
 	return scuo
 }
 
@@ -609,6 +655,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if value, ok := scuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := scuo.mutation.GitBranch(); ok {
+		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
+	}
+	if scuo.mutation.GitBranchCleared() {
+		_spec.ClearField(serviceconfig.FieldGitBranch, field.TypeString)
 	}
 	if value, ok := scuo.mutation.Host(); ok {
 		_spec.SetField(serviceconfig.FieldHost, field.TypeString, value)

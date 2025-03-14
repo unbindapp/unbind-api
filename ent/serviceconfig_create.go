@@ -59,6 +59,20 @@ func (scc *ServiceConfigCreate) SetServiceID(u uuid.UUID) *ServiceConfigCreate {
 	return scc
 }
 
+// SetGitBranch sets the "git_branch" field.
+func (scc *ServiceConfigCreate) SetGitBranch(s string) *ServiceConfigCreate {
+	scc.mutation.SetGitBranch(s)
+	return scc
+}
+
+// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableGitBranch(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetGitBranch(*s)
+	}
+	return scc
+}
+
 // SetHost sets the "host" field.
 func (scc *ServiceConfigCreate) SetHost(s string) *ServiceConfigCreate {
 	scc.mutation.SetHost(s)
@@ -311,6 +325,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := scc.mutation.GitBranch(); ok {
+		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
+		_node.GitBranch = &value
+	}
 	if value, ok := scc.mutation.Host(); ok {
 		_spec.SetField(serviceconfig.FieldHost, field.TypeString, value)
 		_node.Host = value
@@ -429,6 +447,24 @@ func (u *ServiceConfigUpsert) SetServiceID(v uuid.UUID) *ServiceConfigUpsert {
 // UpdateServiceID sets the "service_id" field to the value that was provided on create.
 func (u *ServiceConfigUpsert) UpdateServiceID() *ServiceConfigUpsert {
 	u.SetExcluded(serviceconfig.FieldServiceID)
+	return u
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (u *ServiceConfigUpsert) SetGitBranch(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldGitBranch, v)
+	return u
+}
+
+// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateGitBranch() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldGitBranch)
+	return u
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (u *ServiceConfigUpsert) ClearGitBranch() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldGitBranch)
 	return u
 }
 
@@ -622,6 +658,27 @@ func (u *ServiceConfigUpsertOne) SetServiceID(v uuid.UUID) *ServiceConfigUpsertO
 func (u *ServiceConfigUpsertOne) UpdateServiceID() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateServiceID()
+	})
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (u *ServiceConfigUpsertOne) SetGitBranch(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetGitBranch(v)
+	})
+}
+
+// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateGitBranch() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateGitBranch()
+	})
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (u *ServiceConfigUpsertOne) ClearGitBranch() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearGitBranch()
 	})
 }
 
@@ -1001,6 +1058,27 @@ func (u *ServiceConfigUpsertBulk) SetServiceID(v uuid.UUID) *ServiceConfigUpsert
 func (u *ServiceConfigUpsertBulk) UpdateServiceID() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateServiceID()
+	})
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (u *ServiceConfigUpsertBulk) SetGitBranch(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetGitBranch(v)
+	})
+}
+
+// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateGitBranch() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateGitBranch()
+	})
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (u *ServiceConfigUpsertBulk) ClearGitBranch() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearGitBranch()
 	})
 }
 

@@ -71,6 +71,11 @@ func ServiceID(v uuid.UUID) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldServiceID, v))
 }
 
+// GitBranch applies equality check predicate on the "git_branch" field. It's identical to GitBranchEQ.
+func GitBranch(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldGitBranch, v))
+}
+
 // Host applies equality check predicate on the "host" field. It's identical to HostEQ.
 func Host(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldHost, v))
@@ -204,6 +209,81 @@ func ServiceIDIn(vs ...uuid.UUID) predicate.ServiceConfig {
 // ServiceIDNotIn applies the NotIn predicate on the "service_id" field.
 func ServiceIDNotIn(vs ...uuid.UUID) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotIn(FieldServiceID, vs...))
+}
+
+// GitBranchEQ applies the EQ predicate on the "git_branch" field.
+func GitBranchEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldGitBranch, v))
+}
+
+// GitBranchNEQ applies the NEQ predicate on the "git_branch" field.
+func GitBranchNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldGitBranch, v))
+}
+
+// GitBranchIn applies the In predicate on the "git_branch" field.
+func GitBranchIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldGitBranch, vs...))
+}
+
+// GitBranchNotIn applies the NotIn predicate on the "git_branch" field.
+func GitBranchNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldGitBranch, vs...))
+}
+
+// GitBranchGT applies the GT predicate on the "git_branch" field.
+func GitBranchGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldGitBranch, v))
+}
+
+// GitBranchGTE applies the GTE predicate on the "git_branch" field.
+func GitBranchGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldGitBranch, v))
+}
+
+// GitBranchLT applies the LT predicate on the "git_branch" field.
+func GitBranchLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldGitBranch, v))
+}
+
+// GitBranchLTE applies the LTE predicate on the "git_branch" field.
+func GitBranchLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldGitBranch, v))
+}
+
+// GitBranchContains applies the Contains predicate on the "git_branch" field.
+func GitBranchContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldGitBranch, v))
+}
+
+// GitBranchHasPrefix applies the HasPrefix predicate on the "git_branch" field.
+func GitBranchHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldGitBranch, v))
+}
+
+// GitBranchHasSuffix applies the HasSuffix predicate on the "git_branch" field.
+func GitBranchHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldGitBranch, v))
+}
+
+// GitBranchIsNil applies the IsNil predicate on the "git_branch" field.
+func GitBranchIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldGitBranch))
+}
+
+// GitBranchNotNil applies the NotNil predicate on the "git_branch" field.
+func GitBranchNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldGitBranch))
+}
+
+// GitBranchEqualFold applies the EqualFold predicate on the "git_branch" field.
+func GitBranchEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldGitBranch, v))
+}
+
+// GitBranchContainsFold applies the ContainsFold predicate on the "git_branch" field.
+func GitBranchContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldGitBranch, v))
 }
 
 // HostEQ applies the EQ predicate on the "host" field.

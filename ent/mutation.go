@@ -8228,6 +8228,7 @@ type ServiceConfigMutation struct {
 	id             *uuid.UUID
 	created_at     *time.Time
 	updated_at     *time.Time
+	git_branch     *string
 	host           *string
 	port           *int
 	addport        *int
@@ -8455,6 +8456,55 @@ func (m *ServiceConfigMutation) OldServiceID(ctx context.Context) (v uuid.UUID, 
 // ResetServiceID resets all changes to the "service_id" field.
 func (m *ServiceConfigMutation) ResetServiceID() {
 	m.service = nil
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (m *ServiceConfigMutation) SetGitBranch(s string) {
+	m.git_branch = &s
+}
+
+// GitBranch returns the value of the "git_branch" field in the mutation.
+func (m *ServiceConfigMutation) GitBranch() (r string, exists bool) {
+	v := m.git_branch
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitBranch returns the old "git_branch" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldGitBranch(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitBranch is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitBranch requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitBranch: %w", err)
+	}
+	return oldValue.GitBranch, nil
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (m *ServiceConfigMutation) ClearGitBranch() {
+	m.git_branch = nil
+	m.clearedFields[serviceconfig.FieldGitBranch] = struct{}{}
+}
+
+// GitBranchCleared returns if the "git_branch" field was cleared in this mutation.
+func (m *ServiceConfigMutation) GitBranchCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldGitBranch]
+	return ok
+}
+
+// ResetGitBranch resets all changes to the "git_branch" field.
+func (m *ServiceConfigMutation) ResetGitBranch() {
+	m.git_branch = nil
+	delete(m.clearedFields, serviceconfig.FieldGitBranch)
 }
 
 // SetHost sets the "host" field.
@@ -8849,7 +8899,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -8858,6 +8908,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	}
 	if m.service != nil {
 		fields = append(fields, serviceconfig.FieldServiceID)
+	}
+	if m.git_branch != nil {
+		fields = append(fields, serviceconfig.FieldGitBranch)
 	}
 	if m.host != nil {
 		fields = append(fields, serviceconfig.FieldHost)
@@ -8894,6 +8947,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case serviceconfig.FieldServiceID:
 		return m.ServiceID()
+	case serviceconfig.FieldGitBranch:
+		return m.GitBranch()
 	case serviceconfig.FieldHost:
 		return m.Host()
 	case serviceconfig.FieldPort:
@@ -8923,6 +8978,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldUpdatedAt(ctx)
 	case serviceconfig.FieldServiceID:
 		return m.OldServiceID(ctx)
+	case serviceconfig.FieldGitBranch:
+		return m.OldGitBranch(ctx)
 	case serviceconfig.FieldHost:
 		return m.OldHost(ctx)
 	case serviceconfig.FieldPort:
@@ -8966,6 +9023,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetServiceID(v)
+		return nil
+	case serviceconfig.FieldGitBranch:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitBranch(v)
 		return nil
 	case serviceconfig.FieldHost:
 		v, ok := value.(string)
@@ -9073,6 +9137,9 @@ func (m *ServiceConfigMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ServiceConfigMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(serviceconfig.FieldGitBranch) {
+		fields = append(fields, serviceconfig.FieldGitBranch)
+	}
 	if m.FieldCleared(serviceconfig.FieldHost) {
 		fields = append(fields, serviceconfig.FieldHost)
 	}
@@ -9096,6 +9163,9 @@ func (m *ServiceConfigMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ServiceConfigMutation) ClearField(name string) error {
 	switch name {
+	case serviceconfig.FieldGitBranch:
+		m.ClearGitBranch()
+		return nil
 	case serviceconfig.FieldHost:
 		m.ClearHost()
 		return nil
@@ -9121,6 +9191,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldServiceID:
 		m.ResetServiceID()
+		return nil
+	case serviceconfig.FieldGitBranch:
+		m.ResetGitBranch()
 		return nil
 	case serviceconfig.FieldHost:
 		m.ResetHost()
