@@ -11,13 +11,13 @@ import (
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/server"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
+	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
 type CreateProjectInput struct {
 	server.BaseAuthInput
 	TeamID uuid.UUID `path:"team_id"`
 	Body   struct {
-		Name        string `json:"name" required:"true"`
 		DisplayName string `json:"display_name" required:"true"`
 		Description string `json:"description" required:"true"`
 	}
@@ -37,9 +37,16 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
+	// Generate name
+	name, err := utils.GenerateSlug(input.Body.DisplayName)
+	if err != nil {
+		log.Error("Error generating project name", "err", err)
+		return nil, huma.Error500InternalServerError("Unable to generate project name")
+	}
+
 	createdProject, err := self.srv.ProjectService.CreateProject(ctx, user.ID, &project_service.CreateProjectInput{
 		TeamID:      input.TeamID,
-		Name:        input.Body.Name,
+		Name:        name,
 		DisplayName: input.Body.DisplayName,
 		Description: input.Body.Description,
 	})

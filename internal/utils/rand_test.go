@@ -57,3 +57,74 @@ func TestGenerateRandomSimpleID(t *testing.T) {
 		assert.Equal(t, length, len(result), "Should handle large requested lengths")
 	})
 }
+
+func TestGenerateSlug(t *testing.T) {
+	tests := []struct {
+		name        string
+		displayName string
+		wantPattern string
+	}{
+		{
+			name:        "Simple name",
+			displayName: "New Project",
+			wantPattern: "^new-project-[a-z0-9]{6}$",
+		},
+		{
+			name:        "Name with special characters",
+			displayName: "Hello World! @#$ 123",
+			wantPattern: "^hello-world-123-[a-z0-9]{6}$",
+		},
+		{
+			name:        "Name with multiple spaces",
+			displayName: "  Multiple   Spaces  ",
+			wantPattern: "^multiple-spaces-[a-z0-9]{6}$",
+		},
+		{
+			name:        "Empty string",
+			displayName: "",
+			wantPattern: "^untitled-[a-z0-9]{6}$",
+		},
+		{
+			name:        "Non-ASCII characters",
+			displayName: "Café Résumé",
+			wantPattern: "^caf-r-sum-[a-z0-9]{6}$",
+		},
+		{
+			name:        "Only special characters",
+			displayName: "!@#$%^&*()",
+			wantPattern: "^untitled-[a-z0-9]{6}$",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GenerateSlug(tt.displayName)
+
+			// Assert no error occurred
+			assert.NoError(t, err)
+
+			// Assert the slug matches the expected pattern
+			assert.Regexp(t, regexp.MustCompile(tt.wantPattern), got)
+		})
+	}
+}
+
+func TestGenerateSlugUniqueness(t *testing.T) {
+	// Generate multiple slugs from the same display name
+	displayName := "Test Project"
+	numSlugs := 10
+	slugs := make([]string, numSlugs)
+
+	for i := 0; i < numSlugs; i++ {
+		slug, err := GenerateSlug(displayName)
+		assert.NoError(t, err)
+		slugs[i] = slug
+	}
+
+	// Check that all generated slugs are unique
+	for i := 0; i < numSlugs; i++ {
+		for j := i + 1; j < numSlugs; j++ {
+			assert.NotEqual(t, slugs[i], slugs[j], "Generated slugs should be unique")
+		}
+	}
+}
