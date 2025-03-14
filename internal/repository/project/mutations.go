@@ -27,3 +27,7 @@ func (self *ProjectRepository) Update(ctx context.Context, projectID uuid.UUID, 
 	}
 	return m.Save(ctx)
 }
+
+func (self *ProjectRepository) Delete(ctx context.Context, projectID uuid.UUID) error {
+	return self.base.DB.Project.DeleteOneID(projectID).Exec(ctx)
+}

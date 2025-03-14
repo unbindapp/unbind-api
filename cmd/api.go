@@ -395,6 +395,17 @@ func startAPI(cfg *config.Config) {
 		},
 		projectHandlers.UpdateProject,
 	)
+	huma.Register(
+		projectsGroup,
+		huma.Operation{
+			OperationID: "delete-project",
+			Summary:     "Delete Project",
+			Description: "Delete a project",
+			Path:        "/delete",
+			Method:      http.MethodDelete,
+		},
+		projectHandlers.DeleteProject,
+	)
 
 	// Start the server
 	addr := ":8089"
