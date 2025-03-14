@@ -13,10 +13,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/server"
 	"github.com/unbindapp/unbind-api/internal/utils"
 )
 
 type GitHubAppCreateInput struct {
+	server.BaseAuthInput
 	RedirectURL  string `query:"redirect_url" required:"true" doc:"The client URL to redirect to after the installation is finished"`
 	Organization string `query:"organization" doc:"The organization to install the app for, if any"`
 }
@@ -142,6 +144,7 @@ func (self *HandlerGroup) HandleGithubAppCreate(ctx context.Context, input *GitH
 
 // GET Github apps
 type GithubAppListInput struct {
+	server.BaseAuthInput
 	WithInstallations bool `query:"with_installations"`
 }
 

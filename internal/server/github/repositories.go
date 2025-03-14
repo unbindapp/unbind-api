@@ -16,7 +16,7 @@ type GithubAdminRepositoryListResponse struct {
 	}
 }
 
-func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context, input *server.EmptyInput) (*GithubAdminRepositoryListResponse, error) {
+func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context, input *server.BaseAuthInput) (*GithubAdminRepositoryListResponse, error) {
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
 		log.Error("Error getting user from context")

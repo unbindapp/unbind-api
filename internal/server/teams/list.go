@@ -2,16 +2,15 @@ package teams_handler
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/errdefs"
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/server"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 )
-
-type TeamInput struct {
-	Authorization string `header:"Authorization"`
-}
 
 type TeamResponse struct {
 	Body struct {
@@ -20,7 +19,7 @@ type TeamResponse struct {
 }
 
 // ListTeams handles GET /teams
-func (self *HandlerGroup) ListTeams(ctx context.Context, input *TeamInput) (*TeamResponse, error) {
+func (self *HandlerGroup) ListTeams(ctx context.Context, input *server.BaseAuthInput) (*TeamResponse, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -32,6 +31,9 @@ func (self *HandlerGroup) ListTeams(ctx context.Context, input *TeamInput) (*Tea
 
 	teams, err := self.srv.TeamService.ListTeams(ctx, user.ID, bearerToken)
 	if err != nil {
+		if errors.Is(err, errdefs.ErrUnauthorized) {
+			return nil, huma.Error403Forbidden("Unauthorized")
+		}
 		log.Error("Error getting teams", "err", err)
 		return nil, huma.Error500InternalServerError("Unable to retrieve teams")
 	}

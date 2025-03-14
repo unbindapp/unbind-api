@@ -16,7 +16,7 @@ type MeResponse struct {
 }
 
 // Me handles GET /me
-func (self *HandlerGroup) Me(ctx context.Context, _ *server.EmptyInput) (*MeResponse, error) {
+func (self *HandlerGroup) Me(ctx context.Context, _ *server.BaseAuthInput) (*MeResponse, error) {
 
 	user, ok := ctx.Value("user").(*ent.User)
 	if !ok {

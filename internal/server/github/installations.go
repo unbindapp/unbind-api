@@ -16,7 +16,7 @@ type GithubAppInstallationListResponse struct {
 	}
 }
 
-func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, input *server.EmptyInput) (*GithubAppInstallationListResponse, error) {
+func (self *HandlerGroup) HandleListGithubAppInstallations(ctx context.Context, input *server.BaseAuthInput) (*GithubAppInstallationListResponse, error) {
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
 		log.Error("Error getting user from context")

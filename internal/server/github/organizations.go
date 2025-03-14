@@ -8,10 +8,12 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/server"
 )
 
 // GET Github admin organizations for installation
 type GithubAdminOrganizationListInput struct {
+	server.BaseAuthInput
 	InstallationID int64 `path:"installation_id" required:"true"`
 }
 

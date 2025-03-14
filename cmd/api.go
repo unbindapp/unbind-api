@@ -282,11 +282,9 @@ func startAPI(cfg *config.Config) {
 		webhookHandlers.HandleGithubAppSave,
 	)
 
-	// ! All authenticated routes below here
-	api.UseMiddleware(mw.Authenticate)
-
 	// /teams
 	teamsGroup := huma.NewGroup(api, "/teams")
+	teamsGroup.UseMiddleware(mw.Authenticate)
 	teamsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"Teams"}
 		next(op)
@@ -302,6 +300,17 @@ func startAPI(cfg *config.Config) {
 			Method:      http.MethodGet,
 		},
 		teamHandlers.ListTeams,
+	)
+	huma.Register(
+		teamsGroup,
+		huma.Operation{
+			OperationID: "update-team",
+			Summary:     "Update Team",
+			Description: "Update a team",
+			Path:        "/{team_id}",
+			Method:      http.MethodPut,
+		},
+		teamHandlers.UpdateTeam,
 	)
 
 	// Start the server

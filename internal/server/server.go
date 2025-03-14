@@ -17,6 +17,11 @@ import (
 // EmptyInput can be used when no input is needed.
 type EmptyInput struct{}
 
+// BaseAuthInput can be used when no input is needed and the user must be authenticated.
+type BaseAuthInput struct {
+	Authorization string `header:"Authorization" doc:"Bearer token" required:"true"`
+}
+
 // Server implements generated.ServerInterface
 type Server struct {
 	KubeClient   *k8s.KubeClient
