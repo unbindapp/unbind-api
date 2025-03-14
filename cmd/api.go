@@ -28,6 +28,44 @@ import (
 	"golang.org/x/oauth2"
 )
 
+func NewHumaConfig(title, version string) huma.Config {
+	schemaPrefix := "#/components/schemas/"
+	schemasPath := "/schemas"
+
+	registry := huma.NewMapRegistry(schemaPrefix, huma.DefaultSchemaNamer)
+
+	return huma.Config{
+		OpenAPI: &huma.OpenAPI{
+			OpenAPI: "3.1.0",
+			Info: &huma.Info{
+				Title:   title,
+				Version: version,
+			},
+			Components: &huma.Components{
+				Schemas: registry,
+			},
+		},
+		OpenAPIPath:   "/openapi",
+		DocsPath:      "/docs",
+		SchemasPath:   schemasPath,
+		Formats:       huma.DefaultFormats,
+		DefaultFormat: "application/json",
+		// * Remove the $schma field
+		// CreateHooks: []func(huma.Config) huma.Config{
+		// 	func(c huma.Config) huma.Config {
+		// 		// Add a link transformer to the API. This adds `Link` headers and
+		// 		// puts `$schema` fields in the response body which point to the JSON
+		// 		// Schema that describes the response structure.
+		// 		// This is a create hook so we get the latest schema path setting.
+		// 		linkTransformer := huma.NewSchemaLinkTransformer(schemaPrefix, c.SchemasPath)
+		// 		c.OpenAPI.OnAddOperation = append(c.OpenAPI.OnAddOperation, linkTransformer.OnAddOperation)
+		// 		c.Transformers = append(c.Transformers, linkTransformer.Transform)
+		// 		return c
+		// 	},
+		// },
+	}
+}
+
 func startAPI(cfg *config.Config) {
 	// Initialize valkey (redis)
 	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
@@ -97,7 +135,7 @@ func startAPI(cfg *config.Config) {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	config := huma.DefaultConfig("Unbind API", "1.0.0")
+	config := NewHumaConfig("Unbind API", "1.0.0")
 	config.DocsPath = ""
 	config.OpenAPI.Servers = []*huma.Server{
 		{
