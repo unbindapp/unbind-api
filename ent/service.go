@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
-	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 )
@@ -36,14 +36,12 @@ type Service struct {
 	Type service.Type `json:"type,omitempty"`
 	// Type of service
 	Subtype service.Subtype `json:"subtype,omitempty"`
-	// ProjectID holds the value of the "project_id" field.
-	ProjectID uuid.UUID `json:"project_id,omitempty"`
+	// EnvironmentID holds the value of the "environment_id" field.
+	EnvironmentID uuid.UUID `json:"environment_id,omitempty"`
 	// Optional reference to GitHub installation
 	GithubInstallationID *int64 `json:"github_installation_id,omitempty"`
 	// GitHub repository name
 	GitRepository *string `json:"git_repository,omitempty"`
-	// Branch to build from
-	GitBranch *string `json:"git_branch,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -52,8 +50,8 @@ type Service struct {
 
 // ServiceEdges holds the relations/edges for other nodes in the graph.
 type ServiceEdges struct {
-	// Project holds the value of the project edge.
-	Project *Project `json:"project,omitempty"`
+	// Environment holds the value of the environment edge.
+	Environment *Environment `json:"environment,omitempty"`
 	// GithubInstallation holds the value of the github_installation edge.
 	GithubInstallation *GithubInstallation `json:"github_installation,omitempty"`
 	// ServiceConfigs holds the value of the service_configs edge.
@@ -63,15 +61,15 @@ type ServiceEdges struct {
 	loadedTypes [3]bool
 }
 
-// ProjectOrErr returns the Project value or an error if the edge
+// EnvironmentOrErr returns the Environment value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e ServiceEdges) ProjectOrErr() (*Project, error) {
-	if e.Project != nil {
-		return e.Project, nil
+func (e ServiceEdges) EnvironmentOrErr() (*Environment, error) {
+	if e.Environment != nil {
+		return e.Environment, nil
 	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: project.Label}
+		return nil, &NotFoundError{label: environment.Label}
 	}
-	return nil, &NotLoadedError{edge: "project"}
+	return nil, &NotLoadedError{edge: "environment"}
 }
 
 // GithubInstallationOrErr returns the GithubInstallation value or an error if the edge
@@ -103,11 +101,11 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldSubtype, service.FieldGitRepository, service.FieldGitBranch:
+		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldSubtype, service.FieldGitRepository:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case service.FieldID, service.FieldProjectID:
+		case service.FieldID, service.FieldEnvironmentID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -172,11 +170,11 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.Subtype = service.Subtype(value.String)
 			}
-		case service.FieldProjectID:
+		case service.FieldEnvironmentID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field project_id", values[i])
+				return fmt.Errorf("unexpected type %T for field environment_id", values[i])
 			} else if value != nil {
-				s.ProjectID = *value
+				s.EnvironmentID = *value
 			}
 		case service.FieldGithubInstallationID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -192,13 +190,6 @@ func (s *Service) assignValues(columns []string, values []any) error {
 				s.GitRepository = new(string)
 				*s.GitRepository = value.String
 			}
-		case service.FieldGitBranch:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field git_branch", values[i])
-			} else if value.Valid {
-				s.GitBranch = new(string)
-				*s.GitBranch = value.String
-			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -212,9 +203,9 @@ func (s *Service) Value(name string) (ent.Value, error) {
 	return s.selectValues.Get(name)
 }
 
-// QueryProject queries the "project" edge of the Service entity.
-func (s *Service) QueryProject() *ProjectQuery {
-	return NewServiceClient(s.config).QueryProject(s)
+// QueryEnvironment queries the "environment" edge of the Service entity.
+func (s *Service) QueryEnvironment() *EnvironmentQuery {
+	return NewServiceClient(s.config).QueryEnvironment(s)
 }
 
 // QueryGithubInstallation queries the "github_installation" edge of the Service entity.
@@ -271,8 +262,8 @@ func (s *Service) String() string {
 	builder.WriteString("subtype=")
 	builder.WriteString(fmt.Sprintf("%v", s.Subtype))
 	builder.WriteString(", ")
-	builder.WriteString("project_id=")
-	builder.WriteString(fmt.Sprintf("%v", s.ProjectID))
+	builder.WriteString("environment_id=")
+	builder.WriteString(fmt.Sprintf("%v", s.EnvironmentID))
 	builder.WriteString(", ")
 	if v := s.GithubInstallationID; v != nil {
 		builder.WriteString("github_installation_id=")
@@ -281,11 +272,6 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	if v := s.GitRepository; v != nil {
 		builder.WriteString("git_repository=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := s.GitBranch; v != nil {
-		builder.WriteString("git_branch=")
 		builder.WriteString(*v)
 	}
 	builder.WriteByte(')')

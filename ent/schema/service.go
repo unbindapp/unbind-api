@@ -31,18 +31,17 @@ func (Service) Fields() []ent.Field {
 		field.String("description").Optional(),
 		field.Enum("type").Values("database", "api", "web", "custom").Comment("Type of service"),
 		field.Enum("subtype").Values("react", "go", "node", "next", "other").Comment("Type of service"),
-		field.UUID("project_id", uuid.UUID{}),
+		field.UUID("environment_id", uuid.UUID{}),
 		field.Int64("github_installation_id").Optional().Nillable().Comment("Optional reference to GitHub installation"),
 		field.String("git_repository").Optional().Nillable().Comment("GitHub repository name"),
-		field.String("git_branch").Optional().Nillable().Default("main").Comment("Branch to build from"),
 	}
 }
 
 // Edges of the Service.
 func (Service) Edges() []ent.Edge {
 	return []ent.Edge{
-		// M2O edge to keep track of the project
-		edge.From("project", Project.Type).Ref("services").Field("project_id").Unique().Required(),
+		// M2O edge to keep track of the environment
+		edge.From("environment", Environment.Type).Ref("services").Field("environment_id").Unique().Required(),
 		// M2O edge to keep track of the GitHub installation
 		edge.From("github_installation", GithubInstallation.Type).Ref("services").Field("github_installation_id").Unique(),
 		// O2O edge to keep track of the service configuration

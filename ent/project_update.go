@@ -12,9 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
-	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/team"
 )
 
@@ -119,19 +119,19 @@ func (pu *ProjectUpdate) SetTeam(t *Team) *ProjectUpdate {
 	return pu.SetTeamID(t.ID)
 }
 
-// AddServiceIDs adds the "services" edge to the Service entity by IDs.
-func (pu *ProjectUpdate) AddServiceIDs(ids ...uuid.UUID) *ProjectUpdate {
-	pu.mutation.AddServiceIDs(ids...)
+// AddEnvironmentIDs adds the "environments" edge to the Environment entity by IDs.
+func (pu *ProjectUpdate) AddEnvironmentIDs(ids ...uuid.UUID) *ProjectUpdate {
+	pu.mutation.AddEnvironmentIDs(ids...)
 	return pu
 }
 
-// AddServices adds the "services" edges to the Service entity.
-func (pu *ProjectUpdate) AddServices(s ...*Service) *ProjectUpdate {
-	ids := make([]uuid.UUID, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// AddEnvironments adds the "environments" edges to the Environment entity.
+func (pu *ProjectUpdate) AddEnvironments(e ...*Environment) *ProjectUpdate {
+	ids := make([]uuid.UUID, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
-	return pu.AddServiceIDs(ids...)
+	return pu.AddEnvironmentIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -145,25 +145,25 @@ func (pu *ProjectUpdate) ClearTeam() *ProjectUpdate {
 	return pu
 }
 
-// ClearServices clears all "services" edges to the Service entity.
-func (pu *ProjectUpdate) ClearServices() *ProjectUpdate {
-	pu.mutation.ClearServices()
+// ClearEnvironments clears all "environments" edges to the Environment entity.
+func (pu *ProjectUpdate) ClearEnvironments() *ProjectUpdate {
+	pu.mutation.ClearEnvironments()
 	return pu
 }
 
-// RemoveServiceIDs removes the "services" edge to Service entities by IDs.
-func (pu *ProjectUpdate) RemoveServiceIDs(ids ...uuid.UUID) *ProjectUpdate {
-	pu.mutation.RemoveServiceIDs(ids...)
+// RemoveEnvironmentIDs removes the "environments" edge to Environment entities by IDs.
+func (pu *ProjectUpdate) RemoveEnvironmentIDs(ids ...uuid.UUID) *ProjectUpdate {
+	pu.mutation.RemoveEnvironmentIDs(ids...)
 	return pu
 }
 
-// RemoveServices removes "services" edges to Service entities.
-func (pu *ProjectUpdate) RemoveServices(s ...*Service) *ProjectUpdate {
-	ids := make([]uuid.UUID, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// RemoveEnvironments removes "environments" edges to Environment entities.
+func (pu *ProjectUpdate) RemoveEnvironments(e ...*Environment) *ProjectUpdate {
+	ids := make([]uuid.UUID, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
-	return pu.RemoveServiceIDs(ids...)
+	return pu.RemoveEnvironmentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -280,28 +280,28 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if pu.mutation.ServicesCleared() {
+	if pu.mutation.EnvironmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   project.ServicesTable,
-			Columns: []string{project.ServicesColumn},
+			Table:   project.EnvironmentsTable,
+			Columns: []string{project.EnvironmentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := pu.mutation.RemovedServicesIDs(); len(nodes) > 0 && !pu.mutation.ServicesCleared() {
+	if nodes := pu.mutation.RemovedEnvironmentsIDs(); len(nodes) > 0 && !pu.mutation.EnvironmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   project.ServicesTable,
-			Columns: []string{project.ServicesColumn},
+			Table:   project.EnvironmentsTable,
+			Columns: []string{project.EnvironmentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -309,15 +309,15 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := pu.mutation.ServicesIDs(); len(nodes) > 0 {
+	if nodes := pu.mutation.EnvironmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   project.ServicesTable,
-			Columns: []string{project.ServicesColumn},
+			Table:   project.EnvironmentsTable,
+			Columns: []string{project.EnvironmentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -434,19 +434,19 @@ func (puo *ProjectUpdateOne) SetTeam(t *Team) *ProjectUpdateOne {
 	return puo.SetTeamID(t.ID)
 }
 
-// AddServiceIDs adds the "services" edge to the Service entity by IDs.
-func (puo *ProjectUpdateOne) AddServiceIDs(ids ...uuid.UUID) *ProjectUpdateOne {
-	puo.mutation.AddServiceIDs(ids...)
+// AddEnvironmentIDs adds the "environments" edge to the Environment entity by IDs.
+func (puo *ProjectUpdateOne) AddEnvironmentIDs(ids ...uuid.UUID) *ProjectUpdateOne {
+	puo.mutation.AddEnvironmentIDs(ids...)
 	return puo
 }
 
-// AddServices adds the "services" edges to the Service entity.
-func (puo *ProjectUpdateOne) AddServices(s ...*Service) *ProjectUpdateOne {
-	ids := make([]uuid.UUID, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// AddEnvironments adds the "environments" edges to the Environment entity.
+func (puo *ProjectUpdateOne) AddEnvironments(e ...*Environment) *ProjectUpdateOne {
+	ids := make([]uuid.UUID, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
-	return puo.AddServiceIDs(ids...)
+	return puo.AddEnvironmentIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -460,25 +460,25 @@ func (puo *ProjectUpdateOne) ClearTeam() *ProjectUpdateOne {
 	return puo
 }
 
-// ClearServices clears all "services" edges to the Service entity.
-func (puo *ProjectUpdateOne) ClearServices() *ProjectUpdateOne {
-	puo.mutation.ClearServices()
+// ClearEnvironments clears all "environments" edges to the Environment entity.
+func (puo *ProjectUpdateOne) ClearEnvironments() *ProjectUpdateOne {
+	puo.mutation.ClearEnvironments()
 	return puo
 }
 
-// RemoveServiceIDs removes the "services" edge to Service entities by IDs.
-func (puo *ProjectUpdateOne) RemoveServiceIDs(ids ...uuid.UUID) *ProjectUpdateOne {
-	puo.mutation.RemoveServiceIDs(ids...)
+// RemoveEnvironmentIDs removes the "environments" edge to Environment entities by IDs.
+func (puo *ProjectUpdateOne) RemoveEnvironmentIDs(ids ...uuid.UUID) *ProjectUpdateOne {
+	puo.mutation.RemoveEnvironmentIDs(ids...)
 	return puo
 }
 
-// RemoveServices removes "services" edges to Service entities.
-func (puo *ProjectUpdateOne) RemoveServices(s ...*Service) *ProjectUpdateOne {
-	ids := make([]uuid.UUID, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// RemoveEnvironments removes "environments" edges to Environment entities.
+func (puo *ProjectUpdateOne) RemoveEnvironments(e ...*Environment) *ProjectUpdateOne {
+	ids := make([]uuid.UUID, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
-	return puo.RemoveServiceIDs(ids...)
+	return puo.RemoveEnvironmentIDs(ids...)
 }
 
 // Where appends a list predicates to the ProjectUpdate builder.
@@ -625,28 +625,28 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if puo.mutation.ServicesCleared() {
+	if puo.mutation.EnvironmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   project.ServicesTable,
-			Columns: []string{project.ServicesColumn},
+			Table:   project.EnvironmentsTable,
+			Columns: []string{project.EnvironmentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := puo.mutation.RemovedServicesIDs(); len(nodes) > 0 && !puo.mutation.ServicesCleared() {
+	if nodes := puo.mutation.RemovedEnvironmentsIDs(); len(nodes) > 0 && !puo.mutation.EnvironmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   project.ServicesTable,
-			Columns: []string{project.ServicesColumn},
+			Table:   project.EnvironmentsTable,
+			Columns: []string{project.EnvironmentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -654,15 +654,15 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := puo.mutation.ServicesIDs(); len(nodes) > 0 {
+	if nodes := puo.mutation.EnvironmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   project.ServicesTable,
-			Columns: []string{project.ServicesColumn},
+			Table:   project.EnvironmentsTable,
+			Columns: []string{project.EnvironmentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

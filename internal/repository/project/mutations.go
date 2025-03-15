@@ -5,11 +5,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/repository"
 )
 
-func (self *ProjectRepository) Create(ctx context.Context, teamID uuid.UUID, name, displayName, description string) (*ent.Project, error) {
+func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, displayName, description string) (*ent.Project, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
 	// Create the project in the database
-	return self.base.DB.Project.Create().
+	return db.Project.Create().
 		SetTeamID(teamID).
 		SetName(name).
 		SetDisplayName(displayName).

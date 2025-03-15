@@ -3,7 +3,11 @@
 package repositories
 
 import (
+	"context"
+
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/repository"
+	environment_repo "github.com/unbindapp/unbind-api/internal/repository/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repository/github"
 	group_repo "github.com/unbindapp/unbind-api/internal/repository/group"
 	oauth_repo "github.com/unbindapp/unbind-api/internal/repository/oauth"
@@ -31,4 +35,7 @@ type RepositoriesInterface interface {
 	Team() team_repo.TeamRepositoryInterface
 	// Permissions returns the Permissions repository
 	Permissions() permissions_repo.PermissionsRepositoryInterface
+	// Environment returns the Environment repository
+	Environment() environment_repo.EnvironmentRepositoryInterface
+	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

@@ -12,9 +12,9 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
-	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 )
@@ -115,16 +115,16 @@ func (su *ServiceUpdate) SetNillableSubtype(s *service.Subtype) *ServiceUpdate {
 	return su
 }
 
-// SetProjectID sets the "project_id" field.
-func (su *ServiceUpdate) SetProjectID(u uuid.UUID) *ServiceUpdate {
-	su.mutation.SetProjectID(u)
+// SetEnvironmentID sets the "environment_id" field.
+func (su *ServiceUpdate) SetEnvironmentID(u uuid.UUID) *ServiceUpdate {
+	su.mutation.SetEnvironmentID(u)
 	return su
 }
 
-// SetNillableProjectID sets the "project_id" field if the given value is not nil.
-func (su *ServiceUpdate) SetNillableProjectID(u *uuid.UUID) *ServiceUpdate {
+// SetNillableEnvironmentID sets the "environment_id" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableEnvironmentID(u *uuid.UUID) *ServiceUpdate {
 	if u != nil {
-		su.SetProjectID(*u)
+		su.SetEnvironmentID(*u)
 	}
 	return su
 }
@@ -169,29 +169,9 @@ func (su *ServiceUpdate) ClearGitRepository() *ServiceUpdate {
 	return su
 }
 
-// SetGitBranch sets the "git_branch" field.
-func (su *ServiceUpdate) SetGitBranch(s string) *ServiceUpdate {
-	su.mutation.SetGitBranch(s)
-	return su
-}
-
-// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
-func (su *ServiceUpdate) SetNillableGitBranch(s *string) *ServiceUpdate {
-	if s != nil {
-		su.SetGitBranch(*s)
-	}
-	return su
-}
-
-// ClearGitBranch clears the value of the "git_branch" field.
-func (su *ServiceUpdate) ClearGitBranch() *ServiceUpdate {
-	su.mutation.ClearGitBranch()
-	return su
-}
-
-// SetProject sets the "project" edge to the Project entity.
-func (su *ServiceUpdate) SetProject(p *Project) *ServiceUpdate {
-	return su.SetProjectID(p.ID)
+// SetEnvironment sets the "environment" edge to the Environment entity.
+func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
+	return su.SetEnvironmentID(e.ID)
 }
 
 // SetGithubInstallation sets the "github_installation" edge to the GithubInstallation entity.
@@ -223,9 +203,9 @@ func (su *ServiceUpdate) Mutation() *ServiceMutation {
 	return su.mutation
 }
 
-// ClearProject clears the "project" edge to the Project entity.
-func (su *ServiceUpdate) ClearProject() *ServiceUpdate {
-	su.mutation.ClearProject()
+// ClearEnvironment clears the "environment" edge to the Environment entity.
+func (su *ServiceUpdate) ClearEnvironment() *ServiceUpdate {
+	su.mutation.ClearEnvironment()
 	return su
 }
 
@@ -294,8 +274,8 @@ func (su *ServiceUpdate) check() error {
 			return &ValidationError{Name: "subtype", err: fmt.Errorf(`ent: validator failed for field "Service.subtype": %w`, err)}
 		}
 	}
-	if su.mutation.ProjectCleared() && len(su.mutation.ProjectIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Service.project"`)
+	if su.mutation.EnvironmentCleared() && len(su.mutation.EnvironmentIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Service.environment"`)
 	}
 	return nil
 }
@@ -345,34 +325,28 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if su.mutation.GitRepositoryCleared() {
 		_spec.ClearField(service.FieldGitRepository, field.TypeString)
 	}
-	if value, ok := su.mutation.GitBranch(); ok {
-		_spec.SetField(service.FieldGitBranch, field.TypeString, value)
-	}
-	if su.mutation.GitBranchCleared() {
-		_spec.ClearField(service.FieldGitBranch, field.TypeString)
-	}
-	if su.mutation.ProjectCleared() {
+	if su.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   service.ProjectTable,
-			Columns: []string{service.ProjectColumn},
+			Table:   service.EnvironmentTable,
+			Columns: []string{service.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.ProjectIDs(); len(nodes) > 0 {
+	if nodes := su.mutation.EnvironmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   service.ProjectTable,
-			Columns: []string{service.ProjectColumn},
+			Table:   service.EnvironmentTable,
+			Columns: []string{service.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -542,16 +516,16 @@ func (suo *ServiceUpdateOne) SetNillableSubtype(s *service.Subtype) *ServiceUpda
 	return suo
 }
 
-// SetProjectID sets the "project_id" field.
-func (suo *ServiceUpdateOne) SetProjectID(u uuid.UUID) *ServiceUpdateOne {
-	suo.mutation.SetProjectID(u)
+// SetEnvironmentID sets the "environment_id" field.
+func (suo *ServiceUpdateOne) SetEnvironmentID(u uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.SetEnvironmentID(u)
 	return suo
 }
 
-// SetNillableProjectID sets the "project_id" field if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableProjectID(u *uuid.UUID) *ServiceUpdateOne {
+// SetNillableEnvironmentID sets the "environment_id" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableEnvironmentID(u *uuid.UUID) *ServiceUpdateOne {
 	if u != nil {
-		suo.SetProjectID(*u)
+		suo.SetEnvironmentID(*u)
 	}
 	return suo
 }
@@ -596,29 +570,9 @@ func (suo *ServiceUpdateOne) ClearGitRepository() *ServiceUpdateOne {
 	return suo
 }
 
-// SetGitBranch sets the "git_branch" field.
-func (suo *ServiceUpdateOne) SetGitBranch(s string) *ServiceUpdateOne {
-	suo.mutation.SetGitBranch(s)
-	return suo
-}
-
-// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableGitBranch(s *string) *ServiceUpdateOne {
-	if s != nil {
-		suo.SetGitBranch(*s)
-	}
-	return suo
-}
-
-// ClearGitBranch clears the value of the "git_branch" field.
-func (suo *ServiceUpdateOne) ClearGitBranch() *ServiceUpdateOne {
-	suo.mutation.ClearGitBranch()
-	return suo
-}
-
-// SetProject sets the "project" edge to the Project entity.
-func (suo *ServiceUpdateOne) SetProject(p *Project) *ServiceUpdateOne {
-	return suo.SetProjectID(p.ID)
+// SetEnvironment sets the "environment" edge to the Environment entity.
+func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
+	return suo.SetEnvironmentID(e.ID)
 }
 
 // SetGithubInstallation sets the "github_installation" edge to the GithubInstallation entity.
@@ -650,9 +604,9 @@ func (suo *ServiceUpdateOne) Mutation() *ServiceMutation {
 	return suo.mutation
 }
 
-// ClearProject clears the "project" edge to the Project entity.
-func (suo *ServiceUpdateOne) ClearProject() *ServiceUpdateOne {
-	suo.mutation.ClearProject()
+// ClearEnvironment clears the "environment" edge to the Environment entity.
+func (suo *ServiceUpdateOne) ClearEnvironment() *ServiceUpdateOne {
+	suo.mutation.ClearEnvironment()
 	return suo
 }
 
@@ -734,8 +688,8 @@ func (suo *ServiceUpdateOne) check() error {
 			return &ValidationError{Name: "subtype", err: fmt.Errorf(`ent: validator failed for field "Service.subtype": %w`, err)}
 		}
 	}
-	if suo.mutation.ProjectCleared() && len(suo.mutation.ProjectIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Service.project"`)
+	if suo.mutation.EnvironmentCleared() && len(suo.mutation.EnvironmentIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Service.environment"`)
 	}
 	return nil
 }
@@ -802,34 +756,28 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	if suo.mutation.GitRepositoryCleared() {
 		_spec.ClearField(service.FieldGitRepository, field.TypeString)
 	}
-	if value, ok := suo.mutation.GitBranch(); ok {
-		_spec.SetField(service.FieldGitBranch, field.TypeString, value)
-	}
-	if suo.mutation.GitBranchCleared() {
-		_spec.ClearField(service.FieldGitBranch, field.TypeString)
-	}
-	if suo.mutation.ProjectCleared() {
+	if suo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   service.ProjectTable,
-			Columns: []string{service.ProjectColumn},
+			Table:   service.EnvironmentTable,
+			Columns: []string{service.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.ProjectIDs(); len(nodes) > 0 {
+	if nodes := suo.mutation.EnvironmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   service.ProjectTable,
-			Columns: []string{service.ProjectColumn},
+			Table:   service.EnvironmentTable,
+			Columns: []string{service.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

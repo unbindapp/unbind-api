@@ -16,6 +16,8 @@ type Tx struct {
 	config
 	// Deployment is the client for interacting with the Deployment builders.
 	Deployment *DeploymentClient
+	// Environment is the client for interacting with the Environment builders.
+	Environment *EnvironmentClient
 	// GithubApp is the client for interacting with the GithubApp builders.
 	GithubApp *GithubAppClient
 	// GithubInstallation is the client for interacting with the GithubInstallation builders.
@@ -172,6 +174,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Deployment = NewDeploymentClient(tx.config)
+	tx.Environment = NewEnvironmentClient(tx.config)
 	tx.GithubApp = NewGithubAppClient(tx.config)
 	tx.GithubInstallation = NewGithubInstallationClient(tx.config)
 	tx.Group = NewGroupClient(tx.config)

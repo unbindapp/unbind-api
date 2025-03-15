@@ -21,6 +21,31 @@ var (
 		Columns:    DeploymentsColumns,
 		PrimaryKey: []*schema.Column{DeploymentsColumns[0]},
 	}
+	// EnvironmentsColumns holds the columns for the "environments" table.
+	EnvironmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "display_name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
+		{Name: "active", Type: field.TypeBool, Default: true},
+		{Name: "project_id", Type: field.TypeUUID},
+	}
+	// EnvironmentsTable holds the schema information for the "environments" table.
+	EnvironmentsTable = &schema.Table{
+		Name:       "environments",
+		Columns:    EnvironmentsColumns,
+		PrimaryKey: []*schema.Column{EnvironmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "environments_projects_environments",
+				Columns:    []*schema.Column{EnvironmentsColumns[7]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// GithubAppsColumns holds the columns for the "github_apps" table.
 	GithubAppsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -237,9 +262,8 @@ var (
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"database", "api", "web", "custom"}},
 		{Name: "subtype", Type: field.TypeEnum, Enums: []string{"react", "go", "node", "next", "other"}},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
-		{Name: "git_branch", Type: field.TypeString, Nullable: true, Default: "main"},
+		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
-		{Name: "project_id", Type: field.TypeUUID},
 	}
 	// ServicesTable holds the schema information for the "services" table.
 	ServicesTable = &schema.Table{
@@ -248,16 +272,16 @@ var (
 		PrimaryKey: []*schema.Column{ServicesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "services_environments_services",
+				Columns:    []*schema.Column{ServicesColumns[9]},
+				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
 				Symbol:     "services_github_installations_services",
 				Columns:    []*schema.Column{ServicesColumns[10]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "services_projects_services",
-				Columns:    []*schema.Column{ServicesColumns[11]},
-				RefColumns: []*schema.Column{ProjectsColumns[0]},
-				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -398,6 +422,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		DeploymentsTable,
+		EnvironmentsTable,
 		GithubAppsTable,
 		GithubInstallationsTable,
 		GroupsTable,
@@ -417,6 +442,10 @@ var (
 )
 
 func init() {
+	EnvironmentsTable.ForeignKeys[0].RefTable = ProjectsTable
+	EnvironmentsTable.Annotation = &entsql.Annotation{
+		Table: "environments",
+	}
 	GithubAppsTable.ForeignKeys[0].RefTable = UsersTable
 	GithubAppsTable.Annotation = &entsql.Annotation{
 		Table: "github_apps",
@@ -447,8 +476,8 @@ func init() {
 	ProjectsTable.Annotation = &entsql.Annotation{
 		Table: "projects",
 	}
-	ServicesTable.ForeignKeys[0].RefTable = GithubInstallationsTable
-	ServicesTable.ForeignKeys[1].RefTable = ProjectsTable
+	ServicesTable.ForeignKeys[0].RefTable = EnvironmentsTable
+	ServicesTable.ForeignKeys[1].RefTable = GithubInstallationsTable
 	ServicesTable.Annotation = &entsql.Annotation{
 		Table: "services",
 	}

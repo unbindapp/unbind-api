@@ -44,8 +44,8 @@ type Project struct {
 type ProjectEdges struct {
 	// Team holds the value of the team edge.
 	Team *Team `json:"team,omitempty"`
-	// Services holds the value of the services edge.
-	Services []*Service `json:"services,omitempty"`
+	// Environments holds the value of the environments edge.
+	Environments []*Environment `json:"environments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -62,13 +62,13 @@ func (e ProjectEdges) TeamOrErr() (*Team, error) {
 	return nil, &NotLoadedError{edge: "team"}
 }
 
-// ServicesOrErr returns the Services value or an error if the edge
+// EnvironmentsOrErr returns the Environments value or an error if the edge
 // was not loaded in eager-loading.
-func (e ProjectEdges) ServicesOrErr() ([]*Service, error) {
+func (e ProjectEdges) EnvironmentsOrErr() ([]*Environment, error) {
 	if e.loadedTypes[1] {
-		return e.Services, nil
+		return e.Environments, nil
 	}
-	return nil, &NotLoadedError{edge: "services"}
+	return nil, &NotLoadedError{edge: "environments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -163,9 +163,9 @@ func (pr *Project) QueryTeam() *TeamQuery {
 	return NewProjectClient(pr.config).QueryTeam(pr)
 }
 
-// QueryServices queries the "services" edge of the Project entity.
-func (pr *Project) QueryServices() *ServiceQuery {
-	return NewProjectClient(pr.config).QueryServices(pr)
+// QueryEnvironments queries the "environments" edge of the Project entity.
+func (pr *Project) QueryEnvironments() *EnvironmentQuery {
+	return NewProjectClient(pr.config).QueryEnvironments(pr)
 }
 
 // Update returns a builder for updating this Project.

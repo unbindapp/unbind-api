@@ -21,6 +21,18 @@ func (f DeploymentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DeploymentMutation", m)
 }
 
+// The EnvironmentFunc type is an adapter to allow the use of ordinary
+// function as Environment mutator.
+type EnvironmentFunc func(context.Context, *ent.EnvironmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EnvironmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EnvironmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EnvironmentMutation", m)
+}
+
 // The GithubAppFunc type is an adapter to allow the use of ordinary
 // function as GithubApp mutator.
 type GithubAppFunc func(context.Context, *ent.GithubAppMutation) (ent.Value, error)

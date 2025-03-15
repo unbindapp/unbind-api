@@ -13,22 +13,22 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
-	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/team"
 )
 
 // ProjectQuery is the builder for querying Project entities.
 type ProjectQuery struct {
 	config
-	ctx          *QueryContext
-	order        []project.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.Project
-	withTeam     *TeamQuery
-	withServices *ServiceQuery
-	modifiers    []func(*sql.Selector)
+	ctx              *QueryContext
+	order            []project.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Project
+	withTeam         *TeamQuery
+	withEnvironments *EnvironmentQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -87,9 +87,9 @@ func (pq *ProjectQuery) QueryTeam() *TeamQuery {
 	return query
 }
 
-// QueryServices chains the current query on the "services" edge.
-func (pq *ProjectQuery) QueryServices() *ServiceQuery {
-	query := (&ServiceClient{config: pq.config}).Query()
+// QueryEnvironments chains the current query on the "environments" edge.
+func (pq *ProjectQuery) QueryEnvironments() *EnvironmentQuery {
+	query := (&EnvironmentClient{config: pq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := pq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -100,8 +100,8 @@ func (pq *ProjectQuery) QueryServices() *ServiceQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(project.Table, project.FieldID, selector),
-			sqlgraph.To(service.Table, service.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, project.ServicesTable, project.ServicesColumn),
+			sqlgraph.To(environment.Table, environment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.EnvironmentsTable, project.EnvironmentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -296,13 +296,13 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		return nil
 	}
 	return &ProjectQuery{
-		config:       pq.config,
-		ctx:          pq.ctx.Clone(),
-		order:        append([]project.OrderOption{}, pq.order...),
-		inters:       append([]Interceptor{}, pq.inters...),
-		predicates:   append([]predicate.Project{}, pq.predicates...),
-		withTeam:     pq.withTeam.Clone(),
-		withServices: pq.withServices.Clone(),
+		config:           pq.config,
+		ctx:              pq.ctx.Clone(),
+		order:            append([]project.OrderOption{}, pq.order...),
+		inters:           append([]Interceptor{}, pq.inters...),
+		predicates:       append([]predicate.Project{}, pq.predicates...),
+		withTeam:         pq.withTeam.Clone(),
+		withEnvironments: pq.withEnvironments.Clone(),
 		// clone intermediate query.
 		sql:       pq.sql.Clone(),
 		path:      pq.path,
@@ -321,14 +321,14 @@ func (pq *ProjectQuery) WithTeam(opts ...func(*TeamQuery)) *ProjectQuery {
 	return pq
 }
 
-// WithServices tells the query-builder to eager-load the nodes that are connected to
-// the "services" edge. The optional arguments are used to configure the query builder of the edge.
-func (pq *ProjectQuery) WithServices(opts ...func(*ServiceQuery)) *ProjectQuery {
-	query := (&ServiceClient{config: pq.config}).Query()
+// WithEnvironments tells the query-builder to eager-load the nodes that are connected to
+// the "environments" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithEnvironments(opts ...func(*EnvironmentQuery)) *ProjectQuery {
+	query := (&EnvironmentClient{config: pq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	pq.withServices = query
+	pq.withEnvironments = query
 	return pq
 }
 
@@ -412,7 +412,7 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		_spec       = pq.querySpec()
 		loadedTypes = [2]bool{
 			pq.withTeam != nil,
-			pq.withServices != nil,
+			pq.withEnvironments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,10 +442,10 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 			return nil, err
 		}
 	}
-	if query := pq.withServices; query != nil {
-		if err := pq.loadServices(ctx, query, nodes,
-			func(n *Project) { n.Edges.Services = []*Service{} },
-			func(n *Project, e *Service) { n.Edges.Services = append(n.Edges.Services, e) }); err != nil {
+	if query := pq.withEnvironments; query != nil {
+		if err := pq.loadEnvironments(ctx, query, nodes,
+			func(n *Project) { n.Edges.Environments = []*Environment{} },
+			func(n *Project, e *Environment) { n.Edges.Environments = append(n.Edges.Environments, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -481,7 +481,7 @@ func (pq *ProjectQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []
 	}
 	return nil
 }
-func (pq *ProjectQuery) loadServices(ctx context.Context, query *ServiceQuery, nodes []*Project, init func(*Project), assign func(*Project, *Service)) error {
+func (pq *ProjectQuery) loadEnvironments(ctx context.Context, query *EnvironmentQuery, nodes []*Project, init func(*Project), assign func(*Project, *Environment)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Project)
 	for i := range nodes {
@@ -492,10 +492,10 @@ func (pq *ProjectQuery) loadServices(ctx context.Context, query *ServiceQuery, n
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(service.FieldProjectID)
+		query.ctx.AppendFieldOnce(environment.FieldProjectID)
 	}
-	query.Where(predicate.Service(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(project.ServicesColumn), fks...))
+	query.Where(predicate.Environment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(project.EnvironmentsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -1,7 +1,11 @@
 package repositories
 
 import (
+	"context"
+
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/repository"
+	environment_repo "github.com/unbindapp/unbind-api/internal/repository/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repository/github"
 	group_repo "github.com/unbindapp/unbind-api/internal/repository/group"
 	oauth_repo "github.com/unbindapp/unbind-api/internal/repository/oauth"
@@ -16,6 +20,7 @@ import (
 //go:generate go run -mod=mod github.com/vburenin/ifacemaker -f "*.go" -i RepositoriesInterface -p repositories -s Repositories -o repositories_iface.go
 type Repositories struct {
 	db          *ent.Client
+	base        *repository.BaseRepository
 	github      github_repo.GithubRepositoryInterface
 	user        user_repo.UserRepositoryInterface
 	oauth       oauth_repo.OauthRepositoryInterface
@@ -23,10 +28,12 @@ type Repositories struct {
 	project     project_repo.ProjectRepositoryInterface
 	team        team_repo.TeamRepositoryInterface
 	permissions permissions_repo.PermissionsRepositoryInterface
+	environment environment_repo.EnvironmentRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
 func NewRepositories(db *ent.Client) *Repositories {
+	base := repository.NewBaseRepository(db)
 	githubRepo := github_repo.NewGithubRepository(db)
 	oauthRepo := oauth_repo.NewOauthRepository(db)
 	userRepo := user_repo.NewUserRepository(db)
@@ -34,8 +41,10 @@ func NewRepositories(db *ent.Client) *Repositories {
 	teamRepo := team_repo.NewTeamRepository(db)
 	permissionsRepo := permissions_repo.NewPermissionsRepository(db, userRepo, projectRepo, teamRepo)
 	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
+	environmentRepo := environment_repo.NewEnvironmentRepository(db)
 	return &Repositories{
 		db:          db,
+		base:        base,
 		github:      githubRepo,
 		user:        userRepo,
 		oauth:       oauthRepo,
@@ -43,6 +52,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		project:     projectRepo,
 		team:        teamRepo,
 		permissions: permissionsRepo,
+		environment: environmentRepo,
 	}
 }
 
@@ -84,4 +94,13 @@ func (r *Repositories) Team() team_repo.TeamRepositoryInterface {
 // Permissions returns the Permissions repository
 func (r *Repositories) Permissions() permissions_repo.PermissionsRepositoryInterface {
 	return r.permissions
+}
+
+// Environment returns the Environment repository
+func (r *Repositories) Environment() environment_repo.EnvironmentRepositoryInterface {
+	return r.environment
+}
+
+func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {
+	return r.base.WithTx(ctx, fn)
 }

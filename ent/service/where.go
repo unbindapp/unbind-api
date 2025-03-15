@@ -81,9 +81,9 @@ func Description(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldDescription, v))
 }
 
-// ProjectID applies equality check predicate on the "project_id" field. It's identical to ProjectIDEQ.
-func ProjectID(v uuid.UUID) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldProjectID, v))
+// EnvironmentID applies equality check predicate on the "environment_id" field. It's identical to EnvironmentIDEQ.
+func EnvironmentID(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldEnvironmentID, v))
 }
 
 // GithubInstallationID applies equality check predicate on the "github_installation_id" field. It's identical to GithubInstallationIDEQ.
@@ -94,11 +94,6 @@ func GithubInstallationID(v int64) predicate.Service {
 // GitRepository applies equality check predicate on the "git_repository" field. It's identical to GitRepositoryEQ.
 func GitRepository(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldGitRepository, v))
-}
-
-// GitBranch applies equality check predicate on the "git_branch" field. It's identical to GitBranchEQ.
-func GitBranch(v string) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldGitBranch, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -426,24 +421,24 @@ func SubtypeNotIn(vs ...Subtype) predicate.Service {
 	return predicate.Service(sql.FieldNotIn(FieldSubtype, vs...))
 }
 
-// ProjectIDEQ applies the EQ predicate on the "project_id" field.
-func ProjectIDEQ(v uuid.UUID) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldProjectID, v))
+// EnvironmentIDEQ applies the EQ predicate on the "environment_id" field.
+func EnvironmentIDEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldEnvironmentID, v))
 }
 
-// ProjectIDNEQ applies the NEQ predicate on the "project_id" field.
-func ProjectIDNEQ(v uuid.UUID) predicate.Service {
-	return predicate.Service(sql.FieldNEQ(FieldProjectID, v))
+// EnvironmentIDNEQ applies the NEQ predicate on the "environment_id" field.
+func EnvironmentIDNEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldEnvironmentID, v))
 }
 
-// ProjectIDIn applies the In predicate on the "project_id" field.
-func ProjectIDIn(vs ...uuid.UUID) predicate.Service {
-	return predicate.Service(sql.FieldIn(FieldProjectID, vs...))
+// EnvironmentIDIn applies the In predicate on the "environment_id" field.
+func EnvironmentIDIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldEnvironmentID, vs...))
 }
 
-// ProjectIDNotIn applies the NotIn predicate on the "project_id" field.
-func ProjectIDNotIn(vs ...uuid.UUID) predicate.Service {
-	return predicate.Service(sql.FieldNotIn(FieldProjectID, vs...))
+// EnvironmentIDNotIn applies the NotIn predicate on the "environment_id" field.
+func EnvironmentIDNotIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldEnvironmentID, vs...))
 }
 
 // GithubInstallationIDEQ applies the EQ predicate on the "github_installation_id" field.
@@ -551,96 +546,21 @@ func GitRepositoryContainsFold(v string) predicate.Service {
 	return predicate.Service(sql.FieldContainsFold(FieldGitRepository, v))
 }
 
-// GitBranchEQ applies the EQ predicate on the "git_branch" field.
-func GitBranchEQ(v string) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldGitBranch, v))
-}
-
-// GitBranchNEQ applies the NEQ predicate on the "git_branch" field.
-func GitBranchNEQ(v string) predicate.Service {
-	return predicate.Service(sql.FieldNEQ(FieldGitBranch, v))
-}
-
-// GitBranchIn applies the In predicate on the "git_branch" field.
-func GitBranchIn(vs ...string) predicate.Service {
-	return predicate.Service(sql.FieldIn(FieldGitBranch, vs...))
-}
-
-// GitBranchNotIn applies the NotIn predicate on the "git_branch" field.
-func GitBranchNotIn(vs ...string) predicate.Service {
-	return predicate.Service(sql.FieldNotIn(FieldGitBranch, vs...))
-}
-
-// GitBranchGT applies the GT predicate on the "git_branch" field.
-func GitBranchGT(v string) predicate.Service {
-	return predicate.Service(sql.FieldGT(FieldGitBranch, v))
-}
-
-// GitBranchGTE applies the GTE predicate on the "git_branch" field.
-func GitBranchGTE(v string) predicate.Service {
-	return predicate.Service(sql.FieldGTE(FieldGitBranch, v))
-}
-
-// GitBranchLT applies the LT predicate on the "git_branch" field.
-func GitBranchLT(v string) predicate.Service {
-	return predicate.Service(sql.FieldLT(FieldGitBranch, v))
-}
-
-// GitBranchLTE applies the LTE predicate on the "git_branch" field.
-func GitBranchLTE(v string) predicate.Service {
-	return predicate.Service(sql.FieldLTE(FieldGitBranch, v))
-}
-
-// GitBranchContains applies the Contains predicate on the "git_branch" field.
-func GitBranchContains(v string) predicate.Service {
-	return predicate.Service(sql.FieldContains(FieldGitBranch, v))
-}
-
-// GitBranchHasPrefix applies the HasPrefix predicate on the "git_branch" field.
-func GitBranchHasPrefix(v string) predicate.Service {
-	return predicate.Service(sql.FieldHasPrefix(FieldGitBranch, v))
-}
-
-// GitBranchHasSuffix applies the HasSuffix predicate on the "git_branch" field.
-func GitBranchHasSuffix(v string) predicate.Service {
-	return predicate.Service(sql.FieldHasSuffix(FieldGitBranch, v))
-}
-
-// GitBranchIsNil applies the IsNil predicate on the "git_branch" field.
-func GitBranchIsNil() predicate.Service {
-	return predicate.Service(sql.FieldIsNull(FieldGitBranch))
-}
-
-// GitBranchNotNil applies the NotNil predicate on the "git_branch" field.
-func GitBranchNotNil() predicate.Service {
-	return predicate.Service(sql.FieldNotNull(FieldGitBranch))
-}
-
-// GitBranchEqualFold applies the EqualFold predicate on the "git_branch" field.
-func GitBranchEqualFold(v string) predicate.Service {
-	return predicate.Service(sql.FieldEqualFold(FieldGitBranch, v))
-}
-
-// GitBranchContainsFold applies the ContainsFold predicate on the "git_branch" field.
-func GitBranchContainsFold(v string) predicate.Service {
-	return predicate.Service(sql.FieldContainsFold(FieldGitBranch, v))
-}
-
-// HasProject applies the HasEdge predicate on the "project" edge.
-func HasProject() predicate.Service {
+// HasEnvironment applies the HasEdge predicate on the "environment" edge.
+func HasEnvironment() predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, EnvironmentTable, EnvironmentColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasProjectWith applies the HasEdge predicate on the "project" edge with a given conditions (other predicates).
-func HasProjectWith(preds ...predicate.Project) predicate.Service {
+// HasEnvironmentWith applies the HasEdge predicate on the "environment" edge with a given conditions (other predicates).
+func HasEnvironmentWith(preds ...predicate.Environment) predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
-		step := newProjectStep()
+		step := newEnvironmentStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

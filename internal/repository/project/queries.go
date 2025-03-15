@@ -9,7 +9,7 @@ import (
 )
 
 func (self *ProjectRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Project, error) {
-	return self.base.DB.Project.Query().Where(project.ID(id)).WithTeam().Only(ctx)
+	return self.base.DB.Project.Query().Where(project.ID(id)).WithTeam().WithEnvironments().Only(ctx)
 }
 
 func (self *ProjectRepository) GetTeamID(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
@@ -21,5 +21,5 @@ func (self *ProjectRepository) GetTeamID(ctx context.Context, id uuid.UUID) (uui
 }
 
 func (self *ProjectRepository) GetByTeam(ctx context.Context, teamID uuid.UUID) ([]*ent.Project, error) {
-	return self.base.DB.Project.Query().Where(project.TeamID(teamID)).All(ctx)
+	return self.base.DB.Project.Query().Where(project.TeamID(teamID)).WithEnvironments().All(ctx)
 }

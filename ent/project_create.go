@@ -13,8 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/project"
-	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/team"
 )
 
@@ -119,19 +119,19 @@ func (pc *ProjectCreate) SetTeam(t *Team) *ProjectCreate {
 	return pc.SetTeamID(t.ID)
 }
 
-// AddServiceIDs adds the "services" edge to the Service entity by IDs.
-func (pc *ProjectCreate) AddServiceIDs(ids ...uuid.UUID) *ProjectCreate {
-	pc.mutation.AddServiceIDs(ids...)
+// AddEnvironmentIDs adds the "environments" edge to the Environment entity by IDs.
+func (pc *ProjectCreate) AddEnvironmentIDs(ids ...uuid.UUID) *ProjectCreate {
+	pc.mutation.AddEnvironmentIDs(ids...)
 	return pc
 }
 
-// AddServices adds the "services" edges to the Service entity.
-func (pc *ProjectCreate) AddServices(s ...*Service) *ProjectCreate {
-	ids := make([]uuid.UUID, len(s))
-	for i := range s {
-		ids[i] = s[i].ID
+// AddEnvironments adds the "environments" edges to the Environment entity.
+func (pc *ProjectCreate) AddEnvironments(e ...*Environment) *ProjectCreate {
+	ids := make([]uuid.UUID, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
 	}
-	return pc.AddServiceIDs(ids...)
+	return pc.AddEnvironmentIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -292,15 +292,15 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := pc.mutation.ServicesIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.EnvironmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   project.ServicesTable,
-			Columns: []string{project.ServicesColumn},
+			Table:   project.EnvironmentsTable,
+			Columns: []string{project.EnvironmentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

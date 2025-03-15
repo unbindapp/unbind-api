@@ -30,29 +30,27 @@ const (
 	FieldType = "type"
 	// FieldSubtype holds the string denoting the subtype field in the database.
 	FieldSubtype = "subtype"
-	// FieldProjectID holds the string denoting the project_id field in the database.
-	FieldProjectID = "project_id"
+	// FieldEnvironmentID holds the string denoting the environment_id field in the database.
+	FieldEnvironmentID = "environment_id"
 	// FieldGithubInstallationID holds the string denoting the github_installation_id field in the database.
 	FieldGithubInstallationID = "github_installation_id"
 	// FieldGitRepository holds the string denoting the git_repository field in the database.
 	FieldGitRepository = "git_repository"
-	// FieldGitBranch holds the string denoting the git_branch field in the database.
-	FieldGitBranch = "git_branch"
-	// EdgeProject holds the string denoting the project edge name in mutations.
-	EdgeProject = "project"
+	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
+	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
 	EdgeGithubInstallation = "github_installation"
 	// EdgeServiceConfigs holds the string denoting the service_configs edge name in mutations.
 	EdgeServiceConfigs = "service_configs"
 	// Table holds the table name of the service in the database.
 	Table = "services"
-	// ProjectTable is the table that holds the project relation/edge.
-	ProjectTable = "services"
-	// ProjectInverseTable is the table name for the Project entity.
-	// It exists in this package in order to avoid circular dependency with the "project" package.
-	ProjectInverseTable = "projects"
-	// ProjectColumn is the table column denoting the project relation/edge.
-	ProjectColumn = "project_id"
+	// EnvironmentTable is the table that holds the environment relation/edge.
+	EnvironmentTable = "services"
+	// EnvironmentInverseTable is the table name for the Environment entity.
+	// It exists in this package in order to avoid circular dependency with the "environment" package.
+	EnvironmentInverseTable = "environments"
+	// EnvironmentColumn is the table column denoting the environment relation/edge.
+	EnvironmentColumn = "environment_id"
 	// GithubInstallationTable is the table that holds the github_installation relation/edge.
 	GithubInstallationTable = "services"
 	// GithubInstallationInverseTable is the table name for the GithubInstallation entity.
@@ -79,10 +77,9 @@ var Columns = []string{
 	FieldDescription,
 	FieldType,
 	FieldSubtype,
-	FieldProjectID,
+	FieldEnvironmentID,
 	FieldGithubInstallationID,
 	FieldGitRepository,
-	FieldGitBranch,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -104,8 +101,6 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// DefaultGitBranch holds the default value on creation for the "git_branch" field.
-	DefaultGitBranch string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -204,9 +199,9 @@ func BySubtype(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubtype, opts...).ToFunc()
 }
 
-// ByProjectID orders the results by the project_id field.
-func ByProjectID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldProjectID, opts...).ToFunc()
+// ByEnvironmentID orders the results by the environment_id field.
+func ByEnvironmentID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEnvironmentID, opts...).ToFunc()
 }
 
 // ByGithubInstallationID orders the results by the github_installation_id field.
@@ -219,15 +214,10 @@ func ByGitRepository(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGitRepository, opts...).ToFunc()
 }
 
-// ByGitBranch orders the results by the git_branch field.
-func ByGitBranch(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldGitBranch, opts...).ToFunc()
-}
-
-// ByProjectField orders the results by project field.
-func ByProjectField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByEnvironmentField orders the results by environment field.
+func ByEnvironmentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newProjectStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newEnvironmentStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -244,11 +234,11 @@ func ByServiceConfigsField(field string, opts ...sql.OrderTermOption) OrderOptio
 		sqlgraph.OrderByNeighborTerms(s, newServiceConfigsStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newProjectStep() *sqlgraph.Step {
+func newEnvironmentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ProjectInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+		sqlgraph.To(EnvironmentInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, EnvironmentTable, EnvironmentColumn),
 	)
 }
 func newGithubInstallationStep() *sqlgraph.Step {

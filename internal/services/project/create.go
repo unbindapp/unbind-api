@@ -8,7 +8,9 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/internal/errdefs"
+	"github.com/unbindapp/unbind-api/internal/repository"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
+	"github.com/unbindapp/unbind-api/internal/utils"
 	"github.com/unbindapp/unbind-api/internal/validate"
 )
 
@@ -20,12 +22,22 @@ type CreateProjectInput struct {
 }
 
 type ProjectResponse struct {
+	ID           uuid.UUID              `json:"id"`
+	Name         string                 `json:"name"`
+	DisplayName  string                 `json:"display_name"`
+	Description  string                 `json:"description"`
+	Status       string                 `json:"status"`
+	TeamID       uuid.UUID              `json:"team_id"`
+	CreatedAt    time.Time              `json:"created_at"`
+	Environments []*EnvironmentResponse `json:"environments"`
+}
+
+type EnvironmentResponse struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	DisplayName string    `json:"display_name"`
 	Description string    `json:"description"`
-	Status      string    `json:"status"`
-	TeamID      uuid.UUID `json:"team_id"`
+	Active      bool      `json:"active"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -71,8 +83,24 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	}
 
 	// Create the project
-	project, err := self.repo.Project().Create(ctx, input.TeamID, input.Name, input.DisplayName, input.Description)
-	if err != nil {
+	var project *ent.Project
+	var environment *ent.Environment
+	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		project, err = self.repo.Project().Create(ctx, tx, input.TeamID, input.Name, input.DisplayName, input.Description)
+		if err != nil {
+			return err
+		}
+		// Create a default environment
+		name, err := utils.GenerateSlug("production")
+		if err != nil {
+			return err
+		}
+		environment, err = self.repo.Environment().Create(ctx, tx, name, "Production", "Default production environment", project.ID)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
@@ -84,5 +112,15 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 		Status:      project.Status,
 		TeamID:      project.TeamID,
 		CreatedAt:   project.CreatedAt,
+		Environments: []*EnvironmentResponse{
+			{
+				ID:          environment.ID,
+				Name:        environment.Name,
+				DisplayName: environment.DisplayName,
+				Description: environment.Description,
+				Active:      environment.Active,
+				CreatedAt:   environment.CreatedAt,
+			},
+		},
 	}, nil
 }

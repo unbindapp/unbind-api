@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/deployment"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/group"
@@ -39,6 +40,7 @@ const (
 
 	// Node types.
 	TypeDeployment         = "Deployment"
+	TypeEnvironment        = "Environment"
 	TypeGithubApp          = "GithubApp"
 	TypeGithubInstallation = "GithubInstallation"
 	TypeGroup              = "Group"
@@ -437,6 +439,801 @@ func (m *DeploymentMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *DeploymentMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Deployment edge %s", name)
+}
+
+// EnvironmentMutation represents an operation that mutates the Environment nodes in the graph.
+type EnvironmentMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	created_at      *time.Time
+	updated_at      *time.Time
+	name            *string
+	display_name    *string
+	description     *string
+	active          *bool
+	clearedFields   map[string]struct{}
+	project         *uuid.UUID
+	clearedproject  bool
+	services        map[uuid.UUID]struct{}
+	removedservices map[uuid.UUID]struct{}
+	clearedservices bool
+	done            bool
+	oldValue        func(context.Context) (*Environment, error)
+	predicates      []predicate.Environment
+}
+
+var _ ent.Mutation = (*EnvironmentMutation)(nil)
+
+// environmentOption allows management of the mutation configuration using functional options.
+type environmentOption func(*EnvironmentMutation)
+
+// newEnvironmentMutation creates new mutation for the Environment entity.
+func newEnvironmentMutation(c config, op Op, opts ...environmentOption) *EnvironmentMutation {
+	m := &EnvironmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEnvironment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEnvironmentID sets the ID field of the mutation.
+func withEnvironmentID(id uuid.UUID) environmentOption {
+	return func(m *EnvironmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Environment
+		)
+		m.oldValue = func(ctx context.Context) (*Environment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Environment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEnvironment sets the old Environment of the mutation.
+func withEnvironment(node *Environment) environmentOption {
+	return func(m *EnvironmentMutation) {
+		m.oldValue = func(context.Context) (*Environment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EnvironmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EnvironmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Environment entities.
+func (m *EnvironmentMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EnvironmentMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EnvironmentMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Environment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EnvironmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EnvironmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EnvironmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *EnvironmentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *EnvironmentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *EnvironmentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetName sets the "name" field.
+func (m *EnvironmentMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *EnvironmentMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *EnvironmentMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDisplayName sets the "display_name" field.
+func (m *EnvironmentMutation) SetDisplayName(s string) {
+	m.display_name = &s
+}
+
+// DisplayName returns the value of the "display_name" field in the mutation.
+func (m *EnvironmentMutation) DisplayName() (r string, exists bool) {
+	v := m.display_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayName returns the old "display_name" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldDisplayName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
+	}
+	return oldValue.DisplayName, nil
+}
+
+// ResetDisplayName resets all changes to the "display_name" field.
+func (m *EnvironmentMutation) ResetDisplayName() {
+	m.display_name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *EnvironmentMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *EnvironmentMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *EnvironmentMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetActive sets the "active" field.
+func (m *EnvironmentMutation) SetActive(b bool) {
+	m.active = &b
+}
+
+// Active returns the value of the "active" field in the mutation.
+func (m *EnvironmentMutation) Active() (r bool, exists bool) {
+	v := m.active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActive returns the old "active" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActive: %w", err)
+	}
+	return oldValue.Active, nil
+}
+
+// ResetActive resets all changes to the "active" field.
+func (m *EnvironmentMutation) ResetActive() {
+	m.active = nil
+}
+
+// SetProjectID sets the "project_id" field.
+func (m *EnvironmentMutation) SetProjectID(u uuid.UUID) {
+	m.project = &u
+}
+
+// ProjectID returns the value of the "project_id" field in the mutation.
+func (m *EnvironmentMutation) ProjectID() (r uuid.UUID, exists bool) {
+	v := m.project
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProjectID returns the old "project_id" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldProjectID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProjectID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProjectID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProjectID: %w", err)
+	}
+	return oldValue.ProjectID, nil
+}
+
+// ResetProjectID resets all changes to the "project_id" field.
+func (m *EnvironmentMutation) ResetProjectID() {
+	m.project = nil
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (m *EnvironmentMutation) ClearProject() {
+	m.clearedproject = true
+	m.clearedFields[environment.FieldProjectID] = struct{}{}
+}
+
+// ProjectCleared reports if the "project" edge to the Project entity was cleared.
+func (m *EnvironmentMutation) ProjectCleared() bool {
+	return m.clearedproject
+}
+
+// ProjectIDs returns the "project" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ProjectID instead. It exists only for internal usage by the builders.
+func (m *EnvironmentMutation) ProjectIDs() (ids []uuid.UUID) {
+	if id := m.project; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetProject resets all changes to the "project" edge.
+func (m *EnvironmentMutation) ResetProject() {
+	m.project = nil
+	m.clearedproject = false
+}
+
+// AddServiceIDs adds the "services" edge to the Service entity by ids.
+func (m *EnvironmentMutation) AddServiceIDs(ids ...uuid.UUID) {
+	if m.services == nil {
+		m.services = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.services[ids[i]] = struct{}{}
+	}
+}
+
+// ClearServices clears the "services" edge to the Service entity.
+func (m *EnvironmentMutation) ClearServices() {
+	m.clearedservices = true
+}
+
+// ServicesCleared reports if the "services" edge to the Service entity was cleared.
+func (m *EnvironmentMutation) ServicesCleared() bool {
+	return m.clearedservices
+}
+
+// RemoveServiceIDs removes the "services" edge to the Service entity by IDs.
+func (m *EnvironmentMutation) RemoveServiceIDs(ids ...uuid.UUID) {
+	if m.removedservices == nil {
+		m.removedservices = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.services, ids[i])
+		m.removedservices[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedServices returns the removed IDs of the "services" edge to the Service entity.
+func (m *EnvironmentMutation) RemovedServicesIDs() (ids []uuid.UUID) {
+	for id := range m.removedservices {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ServicesIDs returns the "services" edge IDs in the mutation.
+func (m *EnvironmentMutation) ServicesIDs() (ids []uuid.UUID) {
+	for id := range m.services {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetServices resets all changes to the "services" edge.
+func (m *EnvironmentMutation) ResetServices() {
+	m.services = nil
+	m.clearedservices = false
+	m.removedservices = nil
+}
+
+// Where appends a list predicates to the EnvironmentMutation builder.
+func (m *EnvironmentMutation) Where(ps ...predicate.Environment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EnvironmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EnvironmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Environment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EnvironmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EnvironmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Environment).
+func (m *EnvironmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EnvironmentMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.created_at != nil {
+		fields = append(fields, environment.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, environment.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, environment.FieldName)
+	}
+	if m.display_name != nil {
+		fields = append(fields, environment.FieldDisplayName)
+	}
+	if m.description != nil {
+		fields = append(fields, environment.FieldDescription)
+	}
+	if m.active != nil {
+		fields = append(fields, environment.FieldActive)
+	}
+	if m.project != nil {
+		fields = append(fields, environment.FieldProjectID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EnvironmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case environment.FieldCreatedAt:
+		return m.CreatedAt()
+	case environment.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case environment.FieldName:
+		return m.Name()
+	case environment.FieldDisplayName:
+		return m.DisplayName()
+	case environment.FieldDescription:
+		return m.Description()
+	case environment.FieldActive:
+		return m.Active()
+	case environment.FieldProjectID:
+		return m.ProjectID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EnvironmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case environment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case environment.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case environment.FieldName:
+		return m.OldName(ctx)
+	case environment.FieldDisplayName:
+		return m.OldDisplayName(ctx)
+	case environment.FieldDescription:
+		return m.OldDescription(ctx)
+	case environment.FieldActive:
+		return m.OldActive(ctx)
+	case environment.FieldProjectID:
+		return m.OldProjectID(ctx)
+	}
+	return nil, fmt.Errorf("unknown Environment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EnvironmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case environment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case environment.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case environment.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case environment.FieldDisplayName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayName(v)
+		return nil
+	case environment.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case environment.FieldActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActive(v)
+		return nil
+	case environment.FieldProjectID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProjectID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Environment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EnvironmentMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EnvironmentMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EnvironmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Environment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EnvironmentMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EnvironmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EnvironmentMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Environment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EnvironmentMutation) ResetField(name string) error {
+	switch name {
+	case environment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case environment.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case environment.FieldName:
+		m.ResetName()
+		return nil
+	case environment.FieldDisplayName:
+		m.ResetDisplayName()
+		return nil
+	case environment.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case environment.FieldActive:
+		m.ResetActive()
+		return nil
+	case environment.FieldProjectID:
+		m.ResetProjectID()
+		return nil
+	}
+	return fmt.Errorf("unknown Environment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EnvironmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.project != nil {
+		edges = append(edges, environment.EdgeProject)
+	}
+	if m.services != nil {
+		edges = append(edges, environment.EdgeServices)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EnvironmentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case environment.EdgeProject:
+		if id := m.project; id != nil {
+			return []ent.Value{*id}
+		}
+	case environment.EdgeServices:
+		ids := make([]ent.Value, 0, len(m.services))
+		for id := range m.services {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EnvironmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedservices != nil {
+		edges = append(edges, environment.EdgeServices)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EnvironmentMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case environment.EdgeServices:
+		ids := make([]ent.Value, 0, len(m.removedservices))
+		for id := range m.removedservices {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EnvironmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedproject {
+		edges = append(edges, environment.EdgeProject)
+	}
+	if m.clearedservices {
+		edges = append(edges, environment.EdgeServices)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EnvironmentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case environment.EdgeProject:
+		return m.clearedproject
+	case environment.EdgeServices:
+		return m.clearedservices
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EnvironmentMutation) ClearEdge(name string) error {
+	switch name {
+	case environment.EdgeProject:
+		m.ClearProject()
+		return nil
+	}
+	return fmt.Errorf("unknown Environment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EnvironmentMutation) ResetEdge(name string) error {
+	switch name {
+	case environment.EdgeProject:
+		m.ResetProject()
+		return nil
+	case environment.EdgeServices:
+		m.ResetServices()
+		return nil
+	}
+	return fmt.Errorf("unknown Environment edge %s", name)
 }
 
 // GithubAppMutation represents an operation that mutates the GithubApp nodes in the graph.
@@ -6293,24 +7090,24 @@ func (m *PermissionMutation) ResetEdge(name string) error {
 // ProjectMutation represents an operation that mutates the Project nodes in the graph.
 type ProjectMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	created_at      *time.Time
-	updated_at      *time.Time
-	name            *string
-	display_name    *string
-	description     *string
-	status          *string
-	clearedFields   map[string]struct{}
-	team            *uuid.UUID
-	clearedteam     bool
-	services        map[uuid.UUID]struct{}
-	removedservices map[uuid.UUID]struct{}
-	clearedservices bool
-	done            bool
-	oldValue        func(context.Context) (*Project, error)
-	predicates      []predicate.Project
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	created_at          *time.Time
+	updated_at          *time.Time
+	name                *string
+	display_name        *string
+	description         *string
+	status              *string
+	clearedFields       map[string]struct{}
+	team                *uuid.UUID
+	clearedteam         bool
+	environments        map[uuid.UUID]struct{}
+	removedenvironments map[uuid.UUID]struct{}
+	clearedenvironments bool
+	done                bool
+	oldValue            func(context.Context) (*Project, error)
+	predicates          []predicate.Project
 }
 
 var _ ent.Mutation = (*ProjectMutation)(nil)
@@ -6709,58 +7506,58 @@ func (m *ProjectMutation) ResetTeam() {
 	m.clearedteam = false
 }
 
-// AddServiceIDs adds the "services" edge to the Service entity by ids.
-func (m *ProjectMutation) AddServiceIDs(ids ...uuid.UUID) {
-	if m.services == nil {
-		m.services = make(map[uuid.UUID]struct{})
+// AddEnvironmentIDs adds the "environments" edge to the Environment entity by ids.
+func (m *ProjectMutation) AddEnvironmentIDs(ids ...uuid.UUID) {
+	if m.environments == nil {
+		m.environments = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.services[ids[i]] = struct{}{}
+		m.environments[ids[i]] = struct{}{}
 	}
 }
 
-// ClearServices clears the "services" edge to the Service entity.
-func (m *ProjectMutation) ClearServices() {
-	m.clearedservices = true
+// ClearEnvironments clears the "environments" edge to the Environment entity.
+func (m *ProjectMutation) ClearEnvironments() {
+	m.clearedenvironments = true
 }
 
-// ServicesCleared reports if the "services" edge to the Service entity was cleared.
-func (m *ProjectMutation) ServicesCleared() bool {
-	return m.clearedservices
+// EnvironmentsCleared reports if the "environments" edge to the Environment entity was cleared.
+func (m *ProjectMutation) EnvironmentsCleared() bool {
+	return m.clearedenvironments
 }
 
-// RemoveServiceIDs removes the "services" edge to the Service entity by IDs.
-func (m *ProjectMutation) RemoveServiceIDs(ids ...uuid.UUID) {
-	if m.removedservices == nil {
-		m.removedservices = make(map[uuid.UUID]struct{})
+// RemoveEnvironmentIDs removes the "environments" edge to the Environment entity by IDs.
+func (m *ProjectMutation) RemoveEnvironmentIDs(ids ...uuid.UUID) {
+	if m.removedenvironments == nil {
+		m.removedenvironments = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.services, ids[i])
-		m.removedservices[ids[i]] = struct{}{}
+		delete(m.environments, ids[i])
+		m.removedenvironments[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedServices returns the removed IDs of the "services" edge to the Service entity.
-func (m *ProjectMutation) RemovedServicesIDs() (ids []uuid.UUID) {
-	for id := range m.removedservices {
+// RemovedEnvironments returns the removed IDs of the "environments" edge to the Environment entity.
+func (m *ProjectMutation) RemovedEnvironmentsIDs() (ids []uuid.UUID) {
+	for id := range m.removedenvironments {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ServicesIDs returns the "services" edge IDs in the mutation.
-func (m *ProjectMutation) ServicesIDs() (ids []uuid.UUID) {
-	for id := range m.services {
+// EnvironmentsIDs returns the "environments" edge IDs in the mutation.
+func (m *ProjectMutation) EnvironmentsIDs() (ids []uuid.UUID) {
+	for id := range m.environments {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetServices resets all changes to the "services" edge.
-func (m *ProjectMutation) ResetServices() {
-	m.services = nil
-	m.clearedservices = false
-	m.removedservices = nil
+// ResetEnvironments resets all changes to the "environments" edge.
+func (m *ProjectMutation) ResetEnvironments() {
+	m.environments = nil
+	m.clearedenvironments = false
+	m.removedenvironments = nil
 }
 
 // Where appends a list predicates to the ProjectMutation builder.
@@ -7011,8 +7808,8 @@ func (m *ProjectMutation) AddedEdges() []string {
 	if m.team != nil {
 		edges = append(edges, project.EdgeTeam)
 	}
-	if m.services != nil {
-		edges = append(edges, project.EdgeServices)
+	if m.environments != nil {
+		edges = append(edges, project.EdgeEnvironments)
 	}
 	return edges
 }
@@ -7025,9 +7822,9 @@ func (m *ProjectMutation) AddedIDs(name string) []ent.Value {
 		if id := m.team; id != nil {
 			return []ent.Value{*id}
 		}
-	case project.EdgeServices:
-		ids := make([]ent.Value, 0, len(m.services))
-		for id := range m.services {
+	case project.EdgeEnvironments:
+		ids := make([]ent.Value, 0, len(m.environments))
+		for id := range m.environments {
 			ids = append(ids, id)
 		}
 		return ids
@@ -7038,8 +7835,8 @@ func (m *ProjectMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProjectMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedservices != nil {
-		edges = append(edges, project.EdgeServices)
+	if m.removedenvironments != nil {
+		edges = append(edges, project.EdgeEnvironments)
 	}
 	return edges
 }
@@ -7048,9 +7845,9 @@ func (m *ProjectMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *ProjectMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case project.EdgeServices:
-		ids := make([]ent.Value, 0, len(m.removedservices))
-		for id := range m.removedservices {
+	case project.EdgeEnvironments:
+		ids := make([]ent.Value, 0, len(m.removedenvironments))
+		for id := range m.removedenvironments {
 			ids = append(ids, id)
 		}
 		return ids
@@ -7064,8 +7861,8 @@ func (m *ProjectMutation) ClearedEdges() []string {
 	if m.clearedteam {
 		edges = append(edges, project.EdgeTeam)
 	}
-	if m.clearedservices {
-		edges = append(edges, project.EdgeServices)
+	if m.clearedenvironments {
+		edges = append(edges, project.EdgeEnvironments)
 	}
 	return edges
 }
@@ -7076,8 +7873,8 @@ func (m *ProjectMutation) EdgeCleared(name string) bool {
 	switch name {
 	case project.EdgeTeam:
 		return m.clearedteam
-	case project.EdgeServices:
-		return m.clearedservices
+	case project.EdgeEnvironments:
+		return m.clearedenvironments
 	}
 	return false
 }
@@ -7100,8 +7897,8 @@ func (m *ProjectMutation) ResetEdge(name string) error {
 	case project.EdgeTeam:
 		m.ResetTeam()
 		return nil
-	case project.EdgeServices:
-		m.ResetServices()
+	case project.EdgeEnvironments:
+		m.ResetEnvironments()
 		return nil
 	}
 	return fmt.Errorf("unknown Project edge %s", name)
@@ -7121,10 +7918,9 @@ type ServiceMutation struct {
 	_type                      *service.Type
 	subtype                    *service.Subtype
 	git_repository             *string
-	git_branch                 *string
 	clearedFields              map[string]struct{}
-	project                    *uuid.UUID
-	clearedproject             bool
+	environment                *uuid.UUID
+	clearedenvironment         bool
 	github_installation        *int64
 	clearedgithub_installation bool
 	service_configs            *uuid.UUID
@@ -7503,40 +8299,40 @@ func (m *ServiceMutation) ResetSubtype() {
 	m.subtype = nil
 }
 
-// SetProjectID sets the "project_id" field.
-func (m *ServiceMutation) SetProjectID(u uuid.UUID) {
-	m.project = &u
+// SetEnvironmentID sets the "environment_id" field.
+func (m *ServiceMutation) SetEnvironmentID(u uuid.UUID) {
+	m.environment = &u
 }
 
-// ProjectID returns the value of the "project_id" field in the mutation.
-func (m *ServiceMutation) ProjectID() (r uuid.UUID, exists bool) {
-	v := m.project
+// EnvironmentID returns the value of the "environment_id" field in the mutation.
+func (m *ServiceMutation) EnvironmentID() (r uuid.UUID, exists bool) {
+	v := m.environment
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldProjectID returns the old "project_id" field's value of the Service entity.
+// OldEnvironmentID returns the old "environment_id" field's value of the Service entity.
 // If the Service object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldProjectID(ctx context.Context) (v uuid.UUID, err error) {
+func (m *ServiceMutation) OldEnvironmentID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProjectID is only allowed on UpdateOne operations")
+		return v, errors.New("OldEnvironmentID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProjectID requires an ID field in the mutation")
+		return v, errors.New("OldEnvironmentID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProjectID: %w", err)
+		return v, fmt.Errorf("querying old value for OldEnvironmentID: %w", err)
 	}
-	return oldValue.ProjectID, nil
+	return oldValue.EnvironmentID, nil
 }
 
-// ResetProjectID resets all changes to the "project_id" field.
-func (m *ServiceMutation) ResetProjectID() {
-	m.project = nil
+// ResetEnvironmentID resets all changes to the "environment_id" field.
+func (m *ServiceMutation) ResetEnvironmentID() {
+	m.environment = nil
 }
 
 // SetGithubInstallationID sets the "github_installation_id" field.
@@ -7637,80 +8433,31 @@ func (m *ServiceMutation) ResetGitRepository() {
 	delete(m.clearedFields, service.FieldGitRepository)
 }
 
-// SetGitBranch sets the "git_branch" field.
-func (m *ServiceMutation) SetGitBranch(s string) {
-	m.git_branch = &s
+// ClearEnvironment clears the "environment" edge to the Environment entity.
+func (m *ServiceMutation) ClearEnvironment() {
+	m.clearedenvironment = true
+	m.clearedFields[service.FieldEnvironmentID] = struct{}{}
 }
 
-// GitBranch returns the value of the "git_branch" field in the mutation.
-func (m *ServiceMutation) GitBranch() (r string, exists bool) {
-	v := m.git_branch
-	if v == nil {
-		return
-	}
-	return *v, true
+// EnvironmentCleared reports if the "environment" edge to the Environment entity was cleared.
+func (m *ServiceMutation) EnvironmentCleared() bool {
+	return m.clearedenvironment
 }
 
-// OldGitBranch returns the old "git_branch" field's value of the Service entity.
-// If the Service object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldGitBranch(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldGitBranch is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldGitBranch requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldGitBranch: %w", err)
-	}
-	return oldValue.GitBranch, nil
-}
-
-// ClearGitBranch clears the value of the "git_branch" field.
-func (m *ServiceMutation) ClearGitBranch() {
-	m.git_branch = nil
-	m.clearedFields[service.FieldGitBranch] = struct{}{}
-}
-
-// GitBranchCleared returns if the "git_branch" field was cleared in this mutation.
-func (m *ServiceMutation) GitBranchCleared() bool {
-	_, ok := m.clearedFields[service.FieldGitBranch]
-	return ok
-}
-
-// ResetGitBranch resets all changes to the "git_branch" field.
-func (m *ServiceMutation) ResetGitBranch() {
-	m.git_branch = nil
-	delete(m.clearedFields, service.FieldGitBranch)
-}
-
-// ClearProject clears the "project" edge to the Project entity.
-func (m *ServiceMutation) ClearProject() {
-	m.clearedproject = true
-	m.clearedFields[service.FieldProjectID] = struct{}{}
-}
-
-// ProjectCleared reports if the "project" edge to the Project entity was cleared.
-func (m *ServiceMutation) ProjectCleared() bool {
-	return m.clearedproject
-}
-
-// ProjectIDs returns the "project" edge IDs in the mutation.
+// EnvironmentIDs returns the "environment" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ProjectID instead. It exists only for internal usage by the builders.
-func (m *ServiceMutation) ProjectIDs() (ids []uuid.UUID) {
-	if id := m.project; id != nil {
+// EnvironmentID instead. It exists only for internal usage by the builders.
+func (m *ServiceMutation) EnvironmentIDs() (ids []uuid.UUID) {
+	if id := m.environment; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetProject resets all changes to the "project" edge.
-func (m *ServiceMutation) ResetProject() {
-	m.project = nil
-	m.clearedproject = false
+// ResetEnvironment resets all changes to the "environment" edge.
+func (m *ServiceMutation) ResetEnvironment() {
+	m.environment = nil
+	m.clearedenvironment = false
 }
 
 // ClearGithubInstallation clears the "github_installation" edge to the GithubInstallation entity.
@@ -7813,7 +8560,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -7835,17 +8582,14 @@ func (m *ServiceMutation) Fields() []string {
 	if m.subtype != nil {
 		fields = append(fields, service.FieldSubtype)
 	}
-	if m.project != nil {
-		fields = append(fields, service.FieldProjectID)
+	if m.environment != nil {
+		fields = append(fields, service.FieldEnvironmentID)
 	}
 	if m.github_installation != nil {
 		fields = append(fields, service.FieldGithubInstallationID)
 	}
 	if m.git_repository != nil {
 		fields = append(fields, service.FieldGitRepository)
-	}
-	if m.git_branch != nil {
-		fields = append(fields, service.FieldGitBranch)
 	}
 	return fields
 }
@@ -7869,14 +8613,12 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.GetType()
 	case service.FieldSubtype:
 		return m.Subtype()
-	case service.FieldProjectID:
-		return m.ProjectID()
+	case service.FieldEnvironmentID:
+		return m.EnvironmentID()
 	case service.FieldGithubInstallationID:
 		return m.GithubInstallationID()
 	case service.FieldGitRepository:
 		return m.GitRepository()
-	case service.FieldGitBranch:
-		return m.GitBranch()
 	}
 	return nil, false
 }
@@ -7900,14 +8642,12 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldType(ctx)
 	case service.FieldSubtype:
 		return m.OldSubtype(ctx)
-	case service.FieldProjectID:
-		return m.OldProjectID(ctx)
+	case service.FieldEnvironmentID:
+		return m.OldEnvironmentID(ctx)
 	case service.FieldGithubInstallationID:
 		return m.OldGithubInstallationID(ctx)
 	case service.FieldGitRepository:
 		return m.OldGitRepository(ctx)
-	case service.FieldGitBranch:
-		return m.OldGitBranch(ctx)
 	}
 	return nil, fmt.Errorf("unknown Service field %s", name)
 }
@@ -7966,12 +8706,12 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSubtype(v)
 		return nil
-	case service.FieldProjectID:
+	case service.FieldEnvironmentID:
 		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetProjectID(v)
+		m.SetEnvironmentID(v)
 		return nil
 	case service.FieldGithubInstallationID:
 		v, ok := value.(int64)
@@ -7986,13 +8726,6 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGitRepository(v)
-		return nil
-	case service.FieldGitBranch:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetGitBranch(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
@@ -8036,9 +8769,6 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldGitRepository) {
 		fields = append(fields, service.FieldGitRepository)
 	}
-	if m.FieldCleared(service.FieldGitBranch) {
-		fields = append(fields, service.FieldGitBranch)
-	}
 	return fields
 }
 
@@ -8061,9 +8791,6 @@ func (m *ServiceMutation) ClearField(name string) error {
 		return nil
 	case service.FieldGitRepository:
 		m.ClearGitRepository()
-		return nil
-	case service.FieldGitBranch:
-		m.ClearGitBranch()
 		return nil
 	}
 	return fmt.Errorf("unknown Service nullable field %s", name)
@@ -8094,17 +8821,14 @@ func (m *ServiceMutation) ResetField(name string) error {
 	case service.FieldSubtype:
 		m.ResetSubtype()
 		return nil
-	case service.FieldProjectID:
-		m.ResetProjectID()
+	case service.FieldEnvironmentID:
+		m.ResetEnvironmentID()
 		return nil
 	case service.FieldGithubInstallationID:
 		m.ResetGithubInstallationID()
 		return nil
 	case service.FieldGitRepository:
 		m.ResetGitRepository()
-		return nil
-	case service.FieldGitBranch:
-		m.ResetGitBranch()
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
@@ -8113,8 +8837,8 @@ func (m *ServiceMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ServiceMutation) AddedEdges() []string {
 	edges := make([]string, 0, 3)
-	if m.project != nil {
-		edges = append(edges, service.EdgeProject)
+	if m.environment != nil {
+		edges = append(edges, service.EdgeEnvironment)
 	}
 	if m.github_installation != nil {
 		edges = append(edges, service.EdgeGithubInstallation)
@@ -8129,8 +8853,8 @@ func (m *ServiceMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case service.EdgeProject:
-		if id := m.project; id != nil {
+	case service.EdgeEnvironment:
+		if id := m.environment; id != nil {
 			return []ent.Value{*id}
 		}
 	case service.EdgeGithubInstallation:
@@ -8160,8 +8884,8 @@ func (m *ServiceMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ServiceMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 3)
-	if m.clearedproject {
-		edges = append(edges, service.EdgeProject)
+	if m.clearedenvironment {
+		edges = append(edges, service.EdgeEnvironment)
 	}
 	if m.clearedgithub_installation {
 		edges = append(edges, service.EdgeGithubInstallation)
@@ -8176,8 +8900,8 @@ func (m *ServiceMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *ServiceMutation) EdgeCleared(name string) bool {
 	switch name {
-	case service.EdgeProject:
-		return m.clearedproject
+	case service.EdgeEnvironment:
+		return m.clearedenvironment
 	case service.EdgeGithubInstallation:
 		return m.clearedgithub_installation
 	case service.EdgeServiceConfigs:
@@ -8190,8 +8914,8 @@ func (m *ServiceMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *ServiceMutation) ClearEdge(name string) error {
 	switch name {
-	case service.EdgeProject:
-		m.ClearProject()
+	case service.EdgeEnvironment:
+		m.ClearEnvironment()
 		return nil
 	case service.EdgeGithubInstallation:
 		m.ClearGithubInstallation()
@@ -8207,8 +8931,8 @@ func (m *ServiceMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ServiceMutation) ResetEdge(name string) error {
 	switch name {
-	case service.EdgeProject:
-		m.ResetProject()
+	case service.EdgeEnvironment:
+		m.ResetEnvironment()
 		return nil
 	case service.EdgeGithubInstallation:
 		m.ResetGithubInstallation()

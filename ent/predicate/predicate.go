@@ -9,6 +9,9 @@ import (
 // Deployment is the predicate function for deployment builders.
 type Deployment func(*sql.Selector)
 
+// Environment is the predicate function for environment builders.
+type Environment func(*sql.Selector)
+
 // GithubApp is the predicate function for githubapp builders.
 type GithubApp func(*sql.Selector)
 

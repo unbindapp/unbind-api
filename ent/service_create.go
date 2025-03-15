@@ -13,8 +13,8 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
-	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 )
@@ -93,9 +93,9 @@ func (sc *ServiceCreate) SetSubtype(s service.Subtype) *ServiceCreate {
 	return sc
 }
 
-// SetProjectID sets the "project_id" field.
-func (sc *ServiceCreate) SetProjectID(u uuid.UUID) *ServiceCreate {
-	sc.mutation.SetProjectID(u)
+// SetEnvironmentID sets the "environment_id" field.
+func (sc *ServiceCreate) SetEnvironmentID(u uuid.UUID) *ServiceCreate {
+	sc.mutation.SetEnvironmentID(u)
 	return sc
 }
 
@@ -127,20 +127,6 @@ func (sc *ServiceCreate) SetNillableGitRepository(s *string) *ServiceCreate {
 	return sc
 }
 
-// SetGitBranch sets the "git_branch" field.
-func (sc *ServiceCreate) SetGitBranch(s string) *ServiceCreate {
-	sc.mutation.SetGitBranch(s)
-	return sc
-}
-
-// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
-func (sc *ServiceCreate) SetNillableGitBranch(s *string) *ServiceCreate {
-	if s != nil {
-		sc.SetGitBranch(*s)
-	}
-	return sc
-}
-
 // SetID sets the "id" field.
 func (sc *ServiceCreate) SetID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetID(u)
@@ -155,9 +141,9 @@ func (sc *ServiceCreate) SetNillableID(u *uuid.UUID) *ServiceCreate {
 	return sc
 }
 
-// SetProject sets the "project" edge to the Project entity.
-func (sc *ServiceCreate) SetProject(p *Project) *ServiceCreate {
-	return sc.SetProjectID(p.ID)
+// SetEnvironment sets the "environment" edge to the Environment entity.
+func (sc *ServiceCreate) SetEnvironment(e *Environment) *ServiceCreate {
+	return sc.SetEnvironmentID(e.ID)
 }
 
 // SetGithubInstallation sets the "github_installation" edge to the GithubInstallation entity.
@@ -227,10 +213,6 @@ func (sc *ServiceCreate) defaults() {
 		v := service.DefaultUpdatedAt()
 		sc.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := sc.mutation.GitBranch(); !ok {
-		v := service.DefaultGitBranch
-		sc.mutation.SetGitBranch(v)
-	}
 	if _, ok := sc.mutation.ID(); !ok {
 		v := service.DefaultID()
 		sc.mutation.SetID(v)
@@ -272,11 +254,11 @@ func (sc *ServiceCreate) check() error {
 			return &ValidationError{Name: "subtype", err: fmt.Errorf(`ent: validator failed for field "Service.subtype": %w`, err)}
 		}
 	}
-	if _, ok := sc.mutation.ProjectID(); !ok {
-		return &ValidationError{Name: "project_id", err: errors.New(`ent: missing required field "Service.project_id"`)}
+	if _, ok := sc.mutation.EnvironmentID(); !ok {
+		return &ValidationError{Name: "environment_id", err: errors.New(`ent: missing required field "Service.environment_id"`)}
 	}
-	if len(sc.mutation.ProjectIDs()) == 0 {
-		return &ValidationError{Name: "project", err: errors.New(`ent: missing required edge "Service.project"`)}
+	if len(sc.mutation.EnvironmentIDs()) == 0 {
+		return &ValidationError{Name: "environment", err: errors.New(`ent: missing required edge "Service.environment"`)}
 	}
 	return nil
 }
@@ -346,25 +328,21 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)
 		_node.GitRepository = &value
 	}
-	if value, ok := sc.mutation.GitBranch(); ok {
-		_spec.SetField(service.FieldGitBranch, field.TypeString, value)
-		_node.GitBranch = &value
-	}
-	if nodes := sc.mutation.ProjectIDs(); len(nodes) > 0 {
+	if nodes := sc.mutation.EnvironmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   service.ProjectTable,
-			Columns: []string{service.ProjectColumn},
+			Table:   service.EnvironmentTable,
+			Columns: []string{service.EnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.ProjectID = nodes[0]
+		_node.EnvironmentID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := sc.mutation.GithubInstallationIDs(); len(nodes) > 0 {
@@ -530,15 +508,15 @@ func (u *ServiceUpsert) UpdateSubtype() *ServiceUpsert {
 	return u
 }
 
-// SetProjectID sets the "project_id" field.
-func (u *ServiceUpsert) SetProjectID(v uuid.UUID) *ServiceUpsert {
-	u.Set(service.FieldProjectID, v)
+// SetEnvironmentID sets the "environment_id" field.
+func (u *ServiceUpsert) SetEnvironmentID(v uuid.UUID) *ServiceUpsert {
+	u.Set(service.FieldEnvironmentID, v)
 	return u
 }
 
-// UpdateProjectID sets the "project_id" field to the value that was provided on create.
-func (u *ServiceUpsert) UpdateProjectID() *ServiceUpsert {
-	u.SetExcluded(service.FieldProjectID)
+// UpdateEnvironmentID sets the "environment_id" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateEnvironmentID() *ServiceUpsert {
+	u.SetExcluded(service.FieldEnvironmentID)
 	return u
 }
 
@@ -575,24 +553,6 @@ func (u *ServiceUpsert) UpdateGitRepository() *ServiceUpsert {
 // ClearGitRepository clears the value of the "git_repository" field.
 func (u *ServiceUpsert) ClearGitRepository() *ServiceUpsert {
 	u.SetNull(service.FieldGitRepository)
-	return u
-}
-
-// SetGitBranch sets the "git_branch" field.
-func (u *ServiceUpsert) SetGitBranch(v string) *ServiceUpsert {
-	u.Set(service.FieldGitBranch, v)
-	return u
-}
-
-// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
-func (u *ServiceUpsert) UpdateGitBranch() *ServiceUpsert {
-	u.SetExcluded(service.FieldGitBranch)
-	return u
-}
-
-// ClearGitBranch clears the value of the "git_branch" field.
-func (u *ServiceUpsert) ClearGitBranch() *ServiceUpsert {
-	u.SetNull(service.FieldGitBranch)
 	return u
 }
 
@@ -738,17 +698,17 @@ func (u *ServiceUpsertOne) UpdateSubtype() *ServiceUpsertOne {
 	})
 }
 
-// SetProjectID sets the "project_id" field.
-func (u *ServiceUpsertOne) SetProjectID(v uuid.UUID) *ServiceUpsertOne {
+// SetEnvironmentID sets the "environment_id" field.
+func (u *ServiceUpsertOne) SetEnvironmentID(v uuid.UUID) *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
-		s.SetProjectID(v)
+		s.SetEnvironmentID(v)
 	})
 }
 
-// UpdateProjectID sets the "project_id" field to the value that was provided on create.
-func (u *ServiceUpsertOne) UpdateProjectID() *ServiceUpsertOne {
+// UpdateEnvironmentID sets the "environment_id" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateEnvironmentID() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateProjectID()
+		s.UpdateEnvironmentID()
 	})
 }
 
@@ -791,27 +751,6 @@ func (u *ServiceUpsertOne) UpdateGitRepository() *ServiceUpsertOne {
 func (u *ServiceUpsertOne) ClearGitRepository() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearGitRepository()
-	})
-}
-
-// SetGitBranch sets the "git_branch" field.
-func (u *ServiceUpsertOne) SetGitBranch(v string) *ServiceUpsertOne {
-	return u.Update(func(s *ServiceUpsert) {
-		s.SetGitBranch(v)
-	})
-}
-
-// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
-func (u *ServiceUpsertOne) UpdateGitBranch() *ServiceUpsertOne {
-	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateGitBranch()
-	})
-}
-
-// ClearGitBranch clears the value of the "git_branch" field.
-func (u *ServiceUpsertOne) ClearGitBranch() *ServiceUpsertOne {
-	return u.Update(func(s *ServiceUpsert) {
-		s.ClearGitBranch()
 	})
 }
 
@@ -1124,17 +1063,17 @@ func (u *ServiceUpsertBulk) UpdateSubtype() *ServiceUpsertBulk {
 	})
 }
 
-// SetProjectID sets the "project_id" field.
-func (u *ServiceUpsertBulk) SetProjectID(v uuid.UUID) *ServiceUpsertBulk {
+// SetEnvironmentID sets the "environment_id" field.
+func (u *ServiceUpsertBulk) SetEnvironmentID(v uuid.UUID) *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
-		s.SetProjectID(v)
+		s.SetEnvironmentID(v)
 	})
 }
 
-// UpdateProjectID sets the "project_id" field to the value that was provided on create.
-func (u *ServiceUpsertBulk) UpdateProjectID() *ServiceUpsertBulk {
+// UpdateEnvironmentID sets the "environment_id" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateEnvironmentID() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateProjectID()
+		s.UpdateEnvironmentID()
 	})
 }
 
@@ -1177,27 +1116,6 @@ func (u *ServiceUpsertBulk) UpdateGitRepository() *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) ClearGitRepository() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearGitRepository()
-	})
-}
-
-// SetGitBranch sets the "git_branch" field.
-func (u *ServiceUpsertBulk) SetGitBranch(v string) *ServiceUpsertBulk {
-	return u.Update(func(s *ServiceUpsert) {
-		s.SetGitBranch(v)
-	})
-}
-
-// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
-func (u *ServiceUpsertBulk) UpdateGitBranch() *ServiceUpsertBulk {
-	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateGitBranch()
-	})
-}
-
-// ClearGitBranch clears the value of the "git_branch" field.
-func (u *ServiceUpsertBulk) ClearGitBranch() *ServiceUpsertBulk {
-	return u.Update(func(s *ServiceUpsert) {
-		s.ClearGitBranch()
 	})
 }
 

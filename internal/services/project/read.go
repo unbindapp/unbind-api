@@ -54,14 +54,26 @@ func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUser
 
 	projectResponse := make([]*ProjectResponse, len(projects))
 	for i, project := range projects {
+		environmentsResponse := make([]*EnvironmentResponse, len(project.Edges.Environments))
+		for j, environment := range project.Edges.Environments {
+			environmentsResponse[j] = &EnvironmentResponse{
+				ID:          environment.ID,
+				Name:        environment.Name,
+				DisplayName: environment.DisplayName,
+				Description: environment.Description,
+				CreatedAt:   environment.CreatedAt,
+			}
+		}
+
 		projectResponse[i] = &ProjectResponse{
-			ID:          project.ID,
-			Name:        project.Name,
-			DisplayName: project.DisplayName,
-			Description: project.Description,
-			Status:      project.Status,
-			TeamID:      project.TeamID,
-			CreatedAt:   project.CreatedAt,
+			ID:           project.ID,
+			Name:         project.Name,
+			DisplayName:  project.DisplayName,
+			Description:  project.Description,
+			Status:       project.Status,
+			TeamID:       project.TeamID,
+			CreatedAt:    project.CreatedAt,
+			Environments: environmentsResponse,
 		}
 	}
 

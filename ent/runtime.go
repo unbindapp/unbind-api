@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/deployment"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/group"
@@ -46,6 +47,35 @@ func init() {
 	deploymentDescID := deploymentMixinFields0[0].Descriptor()
 	// deployment.DefaultID holds the default value on creation for the id field.
 	deployment.DefaultID = deploymentDescID.Default.(func() uuid.UUID)
+	environmentMixin := schema.Environment{}.Mixin()
+	environmentMixinFields0 := environmentMixin[0].Fields()
+	_ = environmentMixinFields0
+	environmentMixinFields1 := environmentMixin[1].Fields()
+	_ = environmentMixinFields1
+	environmentFields := schema.Environment{}.Fields()
+	_ = environmentFields
+	// environmentDescCreatedAt is the schema descriptor for created_at field.
+	environmentDescCreatedAt := environmentMixinFields1[0].Descriptor()
+	// environment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	environment.DefaultCreatedAt = environmentDescCreatedAt.Default.(func() time.Time)
+	// environmentDescUpdatedAt is the schema descriptor for updated_at field.
+	environmentDescUpdatedAt := environmentMixinFields1[1].Descriptor()
+	// environment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	environment.DefaultUpdatedAt = environmentDescUpdatedAt.Default.(func() time.Time)
+	// environment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	environment.UpdateDefaultUpdatedAt = environmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// environmentDescName is the schema descriptor for name field.
+	environmentDescName := environmentFields[0].Descriptor()
+	// environment.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	environment.NameValidator = environmentDescName.Validators[0].(func(string) error)
+	// environmentDescActive is the schema descriptor for active field.
+	environmentDescActive := environmentFields[3].Descriptor()
+	// environment.DefaultActive holds the default value on creation for the active field.
+	environment.DefaultActive = environmentDescActive.Default.(bool)
+	// environmentDescID is the schema descriptor for id field.
+	environmentDescID := environmentMixinFields0[0].Descriptor()
+	// environment.DefaultID holds the default value on creation for the id field.
+	environment.DefaultID = environmentDescID.Default.(func() uuid.UUID)
 	githubappMixin := schema.GithubApp{}.Mixin()
 	githubappMixinFields0 := githubappMixin[0].Fields()
 	_ = githubappMixinFields0
@@ -258,10 +288,6 @@ func init() {
 	serviceDescName := serviceFields[0].Descriptor()
 	// service.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	service.NameValidator = serviceDescName.Validators[0].(func(string) error)
-	// serviceDescGitBranch is the schema descriptor for git_branch field.
-	serviceDescGitBranch := serviceFields[8].Descriptor()
-	// service.DefaultGitBranch holds the default value on creation for the git_branch field.
-	service.DefaultGitBranch = serviceDescGitBranch.Default.(string)
 	// serviceDescID is the schema descriptor for id field.
 	serviceDescID := serviceMixinFields0[0].Descriptor()
 	// service.DefaultID holds the default value on creation for the id field.

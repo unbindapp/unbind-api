@@ -38,7 +38,7 @@ func (Project) Fields() []ent.Field {
 func (Project) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("team", Team.Type).Ref("projects").Field("team_id").Unique().Required(),
-		edge.To("services", Service.Type),
+		edge.To("environments", Environment.Type),
 	}
 }
 
