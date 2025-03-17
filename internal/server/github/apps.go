@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -75,7 +76,7 @@ func (self *HandlerGroup) HandleGithubAppCreate(ctx context.Context, input *GitH
 	}
 
 	// Create GitHub app manifest, if not organization we also want organization read permission
-	manifest, appName, err := self.srv.GithubClient.CreateAppManifest(redirect, input.RedirectURL, input.Organization == "")
+	manifest, appName, err := self.srv.GithubClient.CreateAppManifest(redirect, input.RedirectURL, input.Organization != "")
 
 	if err != nil {
 		log.Error("Error creating github app manifest", "err", err)
@@ -95,10 +96,23 @@ func (self *HandlerGroup) HandleGithubAppCreate(ctx context.Context, input *GitH
 		log.Error("Error setting user ID in cache", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to set user ID in cache")
 	}
+	// Set organization in the cache
+	if input.Organization != "" {
+		err = self.srv.StringCache.SetWithExpiration(ctx, state+"-org", input.Organization, 30*time.Minute)
+		if err != nil {
+			log.Error("Error setting organization in cache", "err", err)
+			return nil, huma.Error500InternalServerError("Failed to set organization in cache")
+		}
+	}
 
 	q := url.Values{}
 	q.Set("state", state)
-	githubUrl := fmt.Sprintf("%s/settings/apps/new?%s", self.srv.Cfg.GithubURL, q.Encode())
+	githubUrl := self.srv.Cfg.GithubURL
+	if input.Organization != "" {
+		githubUrl, _ = utils.JoinURLPaths(githubUrl, "organizations", strings.ToLower(input.Organization))
+	}
+	githubUrl, _ = utils.JoinURLPaths(githubUrl, "settings", "apps", "new")
+	githubUrl = fmt.Sprintf("%s?%s", githubUrl, q.Encode())
 
 	// Create template data struct
 	type templateData struct {

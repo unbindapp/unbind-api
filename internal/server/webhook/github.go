@@ -2,6 +2,7 @@ package webhook_handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -67,6 +68,14 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 		return nil, huma.Error500InternalServerError("Failed to determine user ID")
 	}
 
+	// Get organization from the cache
+	// !  TODO - do we need this? seems like installation URL is the same regardless of org
+	_, err = self.srv.StringCache.Getdel(ctx, state+"-org")
+	if err != nil && !errors.Is(err, valkey.Nil) {
+		log.Error("Error getting organization from the cache", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to get organization from cache")
+	}
+
 	// Save the app config
 	ghApp, err := self.srv.Repository.Github().CreateApp(ctx, appConfig, userIDParsed)
 	if err != nil {
@@ -85,7 +94,8 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 	}
 
 	// Redirect URL - this is where GitHub will send users to install your app
-	installationURL := fmt.Sprintf(
+	var installationURL string
+	installationURL = fmt.Sprintf(
 		"https://github.com/apps/%s/installations/new?state=%s",
 		url.QueryEscape(ghApp.Name),
 		url.QueryEscape(state),

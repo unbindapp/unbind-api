@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/ent"
@@ -102,6 +103,7 @@ type GithubRepositoryOwner struct {
 
 type GithubRepository struct {
 	ID       int64                 `json:"id"`
+	Name     string                `json:"name"`
 	FullName string                `json:"full_name"`
 	HTMLURL  string                `json:"html_url"`
 	CloneURL string                `json:"clone_url"`
@@ -114,6 +116,7 @@ func formatRepositoryResponse(repositories []*github.Repository) []*GithubReposi
 	for _, repository := range repositories {
 		response = append(response, &GithubRepository{
 			ID:       repository.GetID(),
+			Name:     repository.GetName(),
 			FullName: repository.GetFullName(),
 			HTMLURL:  repository.GetHTMLURL(),
 			CloneURL: repository.GetCloneURL(),
@@ -127,4 +130,177 @@ func formatRepositoryResponse(repositories []*github.Repository) []*GithubReposi
 		})
 	}
 	return response
+}
+
+// ! Getting repository details
+// GithubRepositoryDetail contains detailed information about a repository
+type GithubRepositoryDetail struct {
+	ID              int64                  `json:"id"`
+	Name            string                 `json:"name"`
+	FullName        string                 `json:"fullName"`
+	Description     string                 `json:"description"`
+	URL             string                 `json:"url"`
+	HTMLURL         string                 `json:"htmlUrl"`
+	DefaultBranch   string                 `json:"defaultBranch"`
+	Language        string                 `json:"language"`
+	Private         bool                   `json:"private"`
+	Fork            bool                   `json:"fork"`
+	Archived        bool                   `json:"archived"`
+	Disabled        bool                   `json:"disabled"`
+	Size            int                    `json:"size"`
+	StargazersCount int                    `json:"stargazersCount"`
+	WatchersCount   int                    `json:"watchersCount"`
+	ForksCount      int                    `json:"forksCount"`
+	OpenIssuesCount int                    `json:"openIssuesCount"`
+	CreatedAt       time.Time              `json:"createdAt"`
+	UpdatedAt       time.Time              `json:"updatedAt"`
+	PushedAt        time.Time              `json:"pushedAt"`
+	Branches        []*GithubBranch        `json:"branches"`
+	Tags            []*GithubTag           `json:"tags"`
+	Owner           *GithubRepositoryOwner `json:"owner"`
+}
+
+// GithubBranch contains information about a branch
+type GithubBranch struct {
+	Name      string `json:"name"`
+	Protected bool   `json:"protected"`
+	SHA       string `json:"sha"`
+}
+
+// GithubTag contains information about a tag
+type GithubTag struct {
+	Name string `json:"name"`
+	SHA  string `json:"sha"`
+}
+
+// GetRepositoryDetail retrieves detailed information about a GitHub repository
+func (self *GithubClient) GetRepositoryDetail(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (*GithubRepositoryDetail, error) {
+	if installation == nil || installation.Edges.GithubApp == nil {
+		return nil, fmt.Errorf("invalid installation: missing app edge or nil")
+	}
+
+	// Get authenticated client
+	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
+	}
+
+	// Get repository information
+	ghRepo, _, err := authenticatedClient.Repositories.Get(ctx, owner, repo)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repository %s/%s: %v", owner, repo, err)
+	}
+
+	// Get branches
+	branches, err := self.getRepositoryBranches(ctx, authenticatedClient, owner, repo)
+	if err != nil {
+		log.Warn("Error getting repository branches", "err", err, "owner", owner, "repo", repo)
+		// Continue execution rather than failing
+	}
+
+	// Get tags
+	tags, err := self.getRepositoryTags(ctx, authenticatedClient, owner, repo)
+	if err != nil {
+		log.Warn("Error getting repository tags", "err", err, "owner", owner, "repo", repo)
+		// Continue execution rather than failing
+	}
+
+	// Format the response
+	repoDetail := &GithubRepositoryDetail{
+		ID:              ghRepo.GetID(),
+		Name:            ghRepo.GetName(),
+		FullName:        ghRepo.GetFullName(),
+		Description:     ghRepo.GetDescription(),
+		URL:             ghRepo.GetURL(),
+		HTMLURL:         ghRepo.GetHTMLURL(),
+		DefaultBranch:   ghRepo.GetDefaultBranch(),
+		Language:        ghRepo.GetLanguage(),
+		Private:         ghRepo.GetPrivate(),
+		Fork:            ghRepo.GetFork(),
+		Archived:        ghRepo.GetArchived(),
+		Disabled:        ghRepo.GetDisabled(),
+		Size:            ghRepo.GetSize(),
+		StargazersCount: ghRepo.GetStargazersCount(),
+		WatchersCount:   ghRepo.GetWatchersCount(),
+		ForksCount:      ghRepo.GetForksCount(),
+		OpenIssuesCount: ghRepo.GetOpenIssuesCount(),
+		CreatedAt:       ghRepo.GetCreatedAt().Time,
+		UpdatedAt:       ghRepo.GetUpdatedAt().Time,
+		PushedAt:        ghRepo.GetPushedAt().Time,
+		Branches:        branches,
+		Tags:            tags,
+	}
+
+	// Add owner information if available
+	if ghRepo.Owner != nil {
+		repoDetail.Owner = &GithubRepositoryOwner{
+			ID:        ghRepo.Owner.GetID(),
+			Name:      ghRepo.Owner.GetName(),
+			Login:     ghRepo.Owner.GetLogin(),
+			AvatarURL: ghRepo.Owner.GetAvatarURL(),
+		}
+	}
+
+	return repoDetail, nil
+}
+
+// Get branches for a repository
+func (self *GithubClient) getRepositoryBranches(ctx context.Context, client *github.Client, owner, repo string) ([]*GithubBranch, error) {
+	opts := &github.BranchListOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+	}
+
+	var allBranches []*GithubBranch
+	for {
+		branches, resp, err := client.Repositories.ListBranches(ctx, owner, repo, opts)
+		if err != nil {
+			return nil, fmt.Errorf("error listing branches: %v", err)
+		}
+
+		for _, branch := range branches {
+			allBranches = append(allBranches, &GithubBranch{
+				Name:      branch.GetName(),
+				Protected: branch.GetProtected(),
+				SHA:       branch.GetCommit().GetSHA(),
+			})
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return allBranches, nil
+}
+
+// getRepositoryTags retrieves a list of tags for a repository
+func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.Client, owner, repo string) ([]*GithubTag, error) {
+	opts := &github.ListOptions{
+		PerPage: 100,
+	}
+
+	var allTags []*GithubTag
+	for {
+		tags, resp, err := client.Repositories.ListTags(ctx, owner, repo, opts)
+		if err != nil {
+			return nil, fmt.Errorf("error listing tags: %v", err)
+		}
+
+		for _, tag := range tags {
+			allTags = append(allTags, &GithubTag{
+				Name: tag.GetName(),
+				SHA:  tag.GetCommit().GetSHA(),
+			})
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return allTags, nil
 }

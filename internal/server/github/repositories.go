@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/github"
 	"github.com/unbindapp/unbind-api/internal/log"
 	"github.com/unbindapp/unbind-api/internal/server"
@@ -48,5 +49,43 @@ func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context,
 
 	resp := &GithubAdminRepositoryListResponse{}
 	resp.Body.Data = adminRepos
+	return resp, nil
+}
+
+// GET github repository details (branches, tags, etc.)
+type GithubRepositoryDetailInput struct {
+	server.BaseAuthInput
+	InstallationID int64  `query:"installation_id" required:"true"`
+	Owner          string `query:"owner" required:"true"`
+	RepoName       string `query:"repo_name" required:"true"`
+}
+
+type GithubRepositoryDetailResponse struct {
+	Body struct {
+		Data *github.GithubRepositoryDetail `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) HandleGetGithubRepositoryDetail(ctx context.Context, input *GithubRepositoryDetailInput) (*GithubRepositoryDetailResponse, error) {
+	// Get the installation by ID
+	installationID := input.InstallationID
+	installation, err := self.srv.Repository.Github().GetInstallationByID(ctx, installationID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, huma.Error404NotFound("GitHub installation not found")
+		}
+		log.Error("Error getting github installation", "err", err, "installationID", installationID)
+		return nil, huma.Error500InternalServerError("Failed to get github installation")
+	}
+
+	// Get repository details
+	repoDetail, err := self.srv.GithubClient.GetRepositoryDetail(ctx, installation, input.Owner, input.RepoName)
+	if err != nil {
+		log.Error("Error getting repository detail", "err", err, "owner", input.Owner, "repo", input.RepoName)
+		return nil, huma.Error500InternalServerError("Failed to get repository details")
+	}
+
+	resp := &GithubRepositoryDetailResponse{}
+	resp.Body.Data = repoDetail
 	return resp, nil
 }

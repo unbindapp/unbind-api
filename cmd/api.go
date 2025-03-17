@@ -293,6 +293,17 @@ func startAPI(cfg *config.Config) {
 		},
 		githubHandlers.HandleListGithubAdminRepositories,
 	)
+	huma.Register(
+		ghGroup,
+		huma.Operation{
+			OperationID: "repo-detail",
+			Summary:     "Repository Detail",
+			Description: "Get details of a repository (branch, tags, etc.)",
+			Path:        "/repositories/info",
+			Method:      http.MethodGet,
+		},
+		githubHandlers.HandleGetGithubRepositoryDetail,
+	)
 
 	webhookGroup := huma.NewGroup(api, "/webhook")
 	webhookGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
