@@ -151,23 +151,23 @@ func (sc *ServiceCreate) SetGithubInstallation(g *GithubInstallation) *ServiceCr
 	return sc.SetGithubInstallationID(g.ID)
 }
 
-// SetServiceConfigsID sets the "service_configs" edge to the ServiceConfig entity by ID.
-func (sc *ServiceCreate) SetServiceConfigsID(id uuid.UUID) *ServiceCreate {
-	sc.mutation.SetServiceConfigsID(id)
+// SetServiceConfigID sets the "service_config" edge to the ServiceConfig entity by ID.
+func (sc *ServiceCreate) SetServiceConfigID(id uuid.UUID) *ServiceCreate {
+	sc.mutation.SetServiceConfigID(id)
 	return sc
 }
 
-// SetNillableServiceConfigsID sets the "service_configs" edge to the ServiceConfig entity by ID if the given value is not nil.
-func (sc *ServiceCreate) SetNillableServiceConfigsID(id *uuid.UUID) *ServiceCreate {
+// SetNillableServiceConfigID sets the "service_config" edge to the ServiceConfig entity by ID if the given value is not nil.
+func (sc *ServiceCreate) SetNillableServiceConfigID(id *uuid.UUID) *ServiceCreate {
 	if id != nil {
-		sc = sc.SetServiceConfigsID(*id)
+		sc = sc.SetServiceConfigID(*id)
 	}
 	return sc
 }
 
-// SetServiceConfigs sets the "service_configs" edge to the ServiceConfig entity.
-func (sc *ServiceCreate) SetServiceConfigs(s *ServiceConfig) *ServiceCreate {
-	return sc.SetServiceConfigsID(s.ID)
+// SetServiceConfig sets the "service_config" edge to the ServiceConfig entity.
+func (sc *ServiceCreate) SetServiceConfig(s *ServiceConfig) *ServiceCreate {
+	return sc.SetServiceConfigID(s.ID)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -362,12 +362,12 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_node.GithubInstallationID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := sc.mutation.ServiceConfigsIDs(); len(nodes) > 0 {
+	if nodes := sc.mutation.ServiceConfigIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   service.ServiceConfigsTable,
-			Columns: []string{service.ServiceConfigsColumn},
+			Table:   service.ServiceConfigTable,
+			Columns: []string{service.ServiceConfigColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),

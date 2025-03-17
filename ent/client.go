@@ -2010,15 +2010,15 @@ func (c *ServiceClient) QueryGithubInstallation(s *Service) *GithubInstallationQ
 	return query
 }
 
-// QueryServiceConfigs queries the service_configs edge of a Service.
-func (c *ServiceClient) QueryServiceConfigs(s *Service) *ServiceConfigQuery {
+// QueryServiceConfig queries the service_config edge of a Service.
+func (c *ServiceClient) QueryServiceConfig(s *Service) *ServiceConfigQuery {
 	query := (&ServiceConfigClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := s.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(service.Table, service.FieldID, id),
 			sqlgraph.To(serviceconfig.Table, serviceconfig.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, service.ServiceConfigsTable, service.ServiceConfigsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, service.ServiceConfigTable, service.ServiceConfigColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil

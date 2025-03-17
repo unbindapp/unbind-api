@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/caarlos0/env/v11"
-	"github.com/unbindapp/unbind-api/internal/log"
-	"github.com/unbindapp/unbind-api/internal/utils"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 type Config struct {

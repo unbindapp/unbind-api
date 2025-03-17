@@ -9,10 +9,9 @@ import (
 	ent "github.com/unbindapp/unbind-api/ent"
 
 	githubinstallation "github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/schema"
 
 	mock "github.com/stretchr/testify/mock"
-
-	models "github.com/unbindapp/unbind-api/internal/models"
 
 	uuid "github.com/google/uuid"
 )
@@ -564,7 +563,7 @@ func (_c *GithubRepositoryMock_SetInstallationSuspended_Call) RunAndReturn(run f
 }
 
 // UpsertInstallation provides a mock function with given fields: ctx, id, appID, accountID, accountLogin, accountType, accountURL, repositorySelection, suspended, active, permissions, events
-func (_m *GithubRepositoryMock) UpsertInstallation(ctx context.Context, id int64, appID int64, accountID int64, accountLogin string, accountType githubinstallation.AccountType, accountURL string, repositorySelection githubinstallation.RepositorySelection, suspended bool, active bool, permissions models.GithubInstallationPermissions, events []string) (*ent.GithubInstallation, error) {
+func (_m *GithubRepositoryMock) UpsertInstallation(ctx context.Context, id int64, appID int64, accountID int64, accountLogin string, accountType githubinstallation.AccountType, accountURL string, repositorySelection githubinstallation.RepositorySelection, suspended bool, active bool, permissions schema.GithubInstallationPermissions, events []string) (*ent.GithubInstallation, error) {
 	ret := _m.Called(ctx, id, appID, accountID, accountLogin, accountType, accountURL, repositorySelection, suspended, active, permissions, events)
 
 	if len(ret) == 0 {
@@ -573,10 +572,10 @@ func (_m *GithubRepositoryMock) UpsertInstallation(ctx context.Context, id int64
 
 	var r0 *ent.GithubInstallation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, models.GithubInstallationPermissions, []string) (*ent.GithubInstallation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, schema.GithubInstallationPermissions, []string) (*ent.GithubInstallation, error)); ok {
 		return rf(ctx, id, appID, accountID, accountLogin, accountType, accountURL, repositorySelection, suspended, active, permissions, events)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, models.GithubInstallationPermissions, []string) *ent.GithubInstallation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, schema.GithubInstallationPermissions, []string) *ent.GithubInstallation); ok {
 		r0 = rf(ctx, id, appID, accountID, accountLogin, accountType, accountURL, repositorySelection, suspended, active, permissions, events)
 	} else {
 		if ret.Get(0) != nil {
@@ -584,7 +583,7 @@ func (_m *GithubRepositoryMock) UpsertInstallation(ctx context.Context, id int64
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, models.GithubInstallationPermissions, []string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, schema.GithubInstallationPermissions, []string) error); ok {
 		r1 = rf(ctx, id, appID, accountID, accountLogin, accountType, accountURL, repositorySelection, suspended, active, permissions, events)
 	} else {
 		r1 = ret.Error(1)
@@ -615,9 +614,9 @@ func (_e *GithubRepositoryMock_Expecter) UpsertInstallation(ctx interface{}, id 
 	return &GithubRepositoryMock_UpsertInstallation_Call{Call: _e.mock.On("UpsertInstallation", ctx, id, appID, accountID, accountLogin, accountType, accountURL, repositorySelection, suspended, active, permissions, events)}
 }
 
-func (_c *GithubRepositoryMock_UpsertInstallation_Call) Run(run func(ctx context.Context, id int64, appID int64, accountID int64, accountLogin string, accountType githubinstallation.AccountType, accountURL string, repositorySelection githubinstallation.RepositorySelection, suspended bool, active bool, permissions models.GithubInstallationPermissions, events []string)) *GithubRepositoryMock_UpsertInstallation_Call {
+func (_c *GithubRepositoryMock_UpsertInstallation_Call) Run(run func(ctx context.Context, id int64, appID int64, accountID int64, accountLogin string, accountType githubinstallation.AccountType, accountURL string, repositorySelection githubinstallation.RepositorySelection, suspended bool, active bool, permissions schema.GithubInstallationPermissions, events []string)) *GithubRepositoryMock_UpsertInstallation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64), args[2].(int64), args[3].(int64), args[4].(string), args[5].(githubinstallation.AccountType), args[6].(string), args[7].(githubinstallation.RepositorySelection), args[8].(bool), args[9].(bool), args[10].(models.GithubInstallationPermissions), args[11].([]string))
+		run(args[0].(context.Context), args[1].(int64), args[2].(int64), args[3].(int64), args[4].(string), args[5].(githubinstallation.AccountType), args[6].(string), args[7].(githubinstallation.RepositorySelection), args[8].(bool), args[9].(bool), args[10].(schema.GithubInstallationPermissions), args[11].([]string))
 	})
 	return _c
 }
@@ -627,7 +626,7 @@ func (_c *GithubRepositoryMock_UpsertInstallation_Call) Return(_a0 *ent.GithubIn
 	return _c
 }
 
-func (_c *GithubRepositoryMock_UpsertInstallation_Call) RunAndReturn(run func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, models.GithubInstallationPermissions, []string) (*ent.GithubInstallation, error)) *GithubRepositoryMock_UpsertInstallation_Call {
+func (_c *GithubRepositoryMock_UpsertInstallation_Call) RunAndReturn(run func(context.Context, int64, int64, int64, string, githubinstallation.AccountType, string, githubinstallation.RepositorySelection, bool, bool, schema.GithubInstallationPermissions, []string) (*ent.GithubInstallation, error)) *GithubRepositoryMock_UpsertInstallation_Call {
 	_c.Call.Return(run)
 	return _c
 }

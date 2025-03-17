@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/internal/errdefs"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 // UpdateGroup updates a group if the user has permission

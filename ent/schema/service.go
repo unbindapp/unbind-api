@@ -45,7 +45,7 @@ func (Service) Edges() []ent.Edge {
 		// M2O edge to keep track of the GitHub installation
 		edge.From("github_installation", GithubInstallation.Type).Ref("services").Field("github_installation_id").Unique(),
 		// O2O edge to keep track of the service configuration
-		edge.To("service_configs", ServiceConfig.Type).Unique(),
+		edge.To("service_config", ServiceConfig.Type).Unique(),
 		// ! TODO - Add edge to keep track of build history
 		// edge.To("deployments", Deployment.Type),
 	}

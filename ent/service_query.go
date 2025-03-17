@@ -29,7 +29,7 @@ type ServiceQuery struct {
 	predicates             []predicate.Service
 	withEnvironment        *EnvironmentQuery
 	withGithubInstallation *GithubInstallationQuery
-	withServiceConfigs     *ServiceConfigQuery
+	withServiceConfig      *ServiceConfigQuery
 	modifiers              []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -111,8 +111,8 @@ func (sq *ServiceQuery) QueryGithubInstallation() *GithubInstallationQuery {
 	return query
 }
 
-// QueryServiceConfigs chains the current query on the "service_configs" edge.
-func (sq *ServiceQuery) QueryServiceConfigs() *ServiceConfigQuery {
+// QueryServiceConfig chains the current query on the "service_config" edge.
+func (sq *ServiceQuery) QueryServiceConfig() *ServiceConfigQuery {
 	query := (&ServiceConfigClient{config: sq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := sq.prepareQuery(ctx); err != nil {
@@ -125,7 +125,7 @@ func (sq *ServiceQuery) QueryServiceConfigs() *ServiceConfigQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(service.Table, service.FieldID, selector),
 			sqlgraph.To(serviceconfig.Table, serviceconfig.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, service.ServiceConfigsTable, service.ServiceConfigsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, service.ServiceConfigTable, service.ServiceConfigColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -327,7 +327,7 @@ func (sq *ServiceQuery) Clone() *ServiceQuery {
 		predicates:             append([]predicate.Service{}, sq.predicates...),
 		withEnvironment:        sq.withEnvironment.Clone(),
 		withGithubInstallation: sq.withGithubInstallation.Clone(),
-		withServiceConfigs:     sq.withServiceConfigs.Clone(),
+		withServiceConfig:      sq.withServiceConfig.Clone(),
 		// clone intermediate query.
 		sql:       sq.sql.Clone(),
 		path:      sq.path,
@@ -357,14 +357,14 @@ func (sq *ServiceQuery) WithGithubInstallation(opts ...func(*GithubInstallationQ
 	return sq
 }
 
-// WithServiceConfigs tells the query-builder to eager-load the nodes that are connected to
-// the "service_configs" edge. The optional arguments are used to configure the query builder of the edge.
-func (sq *ServiceQuery) WithServiceConfigs(opts ...func(*ServiceConfigQuery)) *ServiceQuery {
+// WithServiceConfig tells the query-builder to eager-load the nodes that are connected to
+// the "service_config" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ServiceQuery) WithServiceConfig(opts ...func(*ServiceConfigQuery)) *ServiceQuery {
 	query := (&ServiceConfigClient{config: sq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	sq.withServiceConfigs = query
+	sq.withServiceConfig = query
 	return sq
 }
 
@@ -449,7 +449,7 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 		loadedTypes = [3]bool{
 			sq.withEnvironment != nil,
 			sq.withGithubInstallation != nil,
-			sq.withServiceConfigs != nil,
+			sq.withServiceConfig != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -485,9 +485,9 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 			return nil, err
 		}
 	}
-	if query := sq.withServiceConfigs; query != nil {
-		if err := sq.loadServiceConfigs(ctx, query, nodes, nil,
-			func(n *Service, e *ServiceConfig) { n.Edges.ServiceConfigs = e }); err != nil {
+	if query := sq.withServiceConfig; query != nil {
+		if err := sq.loadServiceConfig(ctx, query, nodes, nil,
+			func(n *Service, e *ServiceConfig) { n.Edges.ServiceConfig = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -555,7 +555,7 @@ func (sq *ServiceQuery) loadGithubInstallation(ctx context.Context, query *Githu
 	}
 	return nil
 }
-func (sq *ServiceQuery) loadServiceConfigs(ctx context.Context, query *ServiceConfigQuery, nodes []*Service, init func(*Service), assign func(*Service, *ServiceConfig)) error {
+func (sq *ServiceQuery) loadServiceConfig(ctx context.Context, query *ServiceConfigQuery, nodes []*Service, init func(*Service), assign func(*Service, *ServiceConfig)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Service)
 	for i := range nodes {
@@ -566,7 +566,7 @@ func (sq *ServiceQuery) loadServiceConfigs(ctx context.Context, query *ServiceCo
 		query.ctx.AppendFieldOnce(serviceconfig.FieldServiceID)
 	}
 	query.Where(predicate.ServiceConfig(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(service.ServiceConfigsColumn), fks...))
+		s.Where(sql.InValues(s.C(service.ServiceConfigColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

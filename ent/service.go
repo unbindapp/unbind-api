@@ -54,8 +54,8 @@ type ServiceEdges struct {
 	Environment *Environment `json:"environment,omitempty"`
 	// GithubInstallation holds the value of the github_installation edge.
 	GithubInstallation *GithubInstallation `json:"github_installation,omitempty"`
-	// ServiceConfigs holds the value of the service_configs edge.
-	ServiceConfigs *ServiceConfig `json:"service_configs,omitempty"`
+	// ServiceConfig holds the value of the service_config edge.
+	ServiceConfig *ServiceConfig `json:"service_config,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [3]bool
@@ -83,15 +83,15 @@ func (e ServiceEdges) GithubInstallationOrErr() (*GithubInstallation, error) {
 	return nil, &NotLoadedError{edge: "github_installation"}
 }
 
-// ServiceConfigsOrErr returns the ServiceConfigs value or an error if the edge
+// ServiceConfigOrErr returns the ServiceConfig value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e ServiceEdges) ServiceConfigsOrErr() (*ServiceConfig, error) {
-	if e.ServiceConfigs != nil {
-		return e.ServiceConfigs, nil
+func (e ServiceEdges) ServiceConfigOrErr() (*ServiceConfig, error) {
+	if e.ServiceConfig != nil {
+		return e.ServiceConfig, nil
 	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: serviceconfig.Label}
 	}
-	return nil, &NotLoadedError{edge: "service_configs"}
+	return nil, &NotLoadedError{edge: "service_config"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -213,9 +213,9 @@ func (s *Service) QueryGithubInstallation() *GithubInstallationQuery {
 	return NewServiceClient(s.config).QueryGithubInstallation(s)
 }
 
-// QueryServiceConfigs queries the "service_configs" edge of the Service entity.
-func (s *Service) QueryServiceConfigs() *ServiceConfigQuery {
-	return NewServiceClient(s.config).QueryServiceConfigs(s)
+// QueryServiceConfig queries the "service_config" edge of the Service entity.
+func (s *Service) QueryServiceConfig() *ServiceConfigQuery {
+	return NewServiceClient(s.config).QueryServiceConfig(s)
 }
 
 // Update returns a builder for updating this Service.

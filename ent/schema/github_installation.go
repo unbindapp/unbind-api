@@ -8,8 +8,12 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
+
+type GithubInstallationPermissions struct {
+	Contents string `json:"contents,omitempty"`
+	Metadata string `json:"metadata,omitempty"`
+}
 
 // GithubInstallation holds the schema definition for the GithubInstallation entity.
 type GithubInstallation struct {
@@ -58,7 +62,7 @@ func (GithubInstallation) Fields() []ent.Field {
 			Default(true).
 			Comment("Whether the installation is active"),
 		// Permissions and settings - optional but useful
-		field.JSON("permissions", models.GithubInstallationPermissions{}).
+		field.JSON("permissions", GithubInstallationPermissions{}).
 			Optional().
 			Comment("Permissions granted to this installation"),
 		field.JSON("events", []string{}).

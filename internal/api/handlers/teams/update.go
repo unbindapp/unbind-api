@@ -1,0 +1,60 @@
+package teams_handler
+
+import (
+	"context"
+	"errors"
+
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/api/server"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+)
+
+type UpdateTeamInput struct {
+	server.BaseAuthInput
+	Body struct {
+		TeamID      uuid.UUID `json:"team_id" required:"true"`
+		DisplayName string    `json:"display_name"`
+	}
+}
+
+type UpdateTeamResponse struct {
+	Body struct {
+		Data *team_service.GetTeamResponse `json:"data"`
+	}
+}
+
+// UpdateTeam handles PUT /team/{team_id}
+func (self *HandlerGroup) UpdateTeam(ctx context.Context, input *UpdateTeamInput) (*UpdateTeamResponse, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
+	updatedTeam, err := self.srv.TeamService.UpdateTeam(ctx, user.ID, &team_service.TeamUpdateInput{
+		ID:          input.Body.TeamID,
+		DisplayName: input.Body.DisplayName,
+	})
+	if err != nil {
+		if errors.Is(err, errdefs.ErrInvalidInput) {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+		if ent.IsNotFound(err) {
+			return nil, huma.Error404NotFound("Team not found")
+		}
+		if errors.Is(err, errdefs.ErrUnauthorized) {
+			return nil, huma.Error403Forbidden("Unauthorized")
+		}
+		log.Error("Error getting teams", "err", err)
+		return nil, huma.Error500InternalServerError("Unable to update team")
+	}
+
+	resp := &UpdateTeamResponse{}
+	resp.Body.Data = updatedTeam
+	return resp, nil
+}

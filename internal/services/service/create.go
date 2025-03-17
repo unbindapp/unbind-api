@@ -3,17 +3,17 @@ package service_service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/service"
-	"github.com/unbindapp/unbind-api/internal/errdefs"
-	"github.com/unbindapp/unbind-api/internal/log"
-	"github.com/unbindapp/unbind-api/internal/repository"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
-	"github.com/unbindapp/unbind-api/internal/validate"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/validate"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // CreateServiceInput defines the input for creating a new service
@@ -41,36 +41,8 @@ type CreateServiceInput struct {
 	Image      *string `json:"image,omitempty"`
 }
 
-// ServiceResponse defines the response structure for service operations
-type ServiceResponse struct {
-	ID                   uuid.UUID              `json:"id"`
-	Name                 string                 `json:"name"`
-	DisplayName          string                 `json:"display_name"`
-	Description          string                 `json:"description"`
-	Type                 service.Type           `json:"type"`
-	Subtype              service.Subtype        `json:"subtype"`
-	EnvironmentID        uuid.UUID              `json:"environment_id"`
-	GitHubInstallationID *int64                 `json:"github_installation_id,omitempty"`
-	GitRepository        *string                `json:"git_repository,omitempty"`
-	CreatedAt            time.Time              `json:"created_at"`
-	UpdatedAt            time.Time              `json:"updated_at"`
-	Config               *ServiceConfigResponse `json:"config"`
-}
-
-// ServiceConfigResponse defines the configuration response for a service
-type ServiceConfigResponse struct {
-	GitBranch  *string `json:"git_branch,omitempty"`
-	Host       string  `json:"host,omitempty"`
-	Port       int     `json:"port,omitempty"`
-	Replicas   int32   `json:"replicas"`
-	AutoDeploy bool    `json:"auto_deploy"`
-	RunCommand *string `json:"run_command,omitempty"`
-	Public     bool    `json:"public"`
-	Image      string  `json:"image,omitempty"`
-}
-
 // CreateService creates a new service and its configuration
-func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *CreateServiceInput) (*ServiceResponse, error) {
+func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *CreateServiceInput) (*models.ServiceResponse, error) {
 	// Validate input
 	if err := validate.Validator().Struct(input); err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
@@ -195,36 +167,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		if err != nil {
 			return fmt.Errorf("failed to create service config: %w", err)
 		}
+		service.Edges.ServiceConfig = serviceConfig
 		return nil
 
 	}); err != nil {
 		return nil, err
 	}
 
-	// Prepare response
-	response := &ServiceResponse{
-		ID:                   service.ID,
-		Name:                 service.Name,
-		DisplayName:          service.DisplayName,
-		Description:          service.Description,
-		Type:                 service.Type,
-		Subtype:              service.Subtype,
-		EnvironmentID:        service.EnvironmentID,
-		GitHubInstallationID: service.GithubInstallationID,
-		GitRepository:        service.GitRepository,
-		CreatedAt:            service.CreatedAt,
-		UpdatedAt:            service.UpdatedAt,
-		Config: &ServiceConfigResponse{
-			GitBranch:  serviceConfig.GitBranch,
-			Host:       serviceConfig.Host,
-			Port:       serviceConfig.Port,
-			Replicas:   serviceConfig.Replicas,
-			AutoDeploy: serviceConfig.AutoDeploy,
-			RunCommand: serviceConfig.RunCommand,
-			Public:     serviceConfig.Public,
-			Image:      serviceConfig.Image,
-		},
-	}
-
-	return response, nil
+	return models.TransformServiceEntity(service), nil
 }

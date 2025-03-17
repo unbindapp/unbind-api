@@ -23,11 +23,11 @@ import (
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 const (
@@ -2114,7 +2114,7 @@ type GithubInstallationMutation struct {
 	repository_selection *githubinstallation.RepositorySelection
 	suspended            *bool
 	active               *bool
-	permissions          *models.GithubInstallationPermissions
+	permissions          *schema.GithubInstallationPermissions
 	events               *[]string
 	appendevents         []string
 	clearedFields        map[string]struct{}
@@ -2613,12 +2613,12 @@ func (m *GithubInstallationMutation) ResetActive() {
 }
 
 // SetPermissions sets the "permissions" field.
-func (m *GithubInstallationMutation) SetPermissions(mip models.GithubInstallationPermissions) {
-	m.permissions = &mip
+func (m *GithubInstallationMutation) SetPermissions(sip schema.GithubInstallationPermissions) {
+	m.permissions = &sip
 }
 
 // Permissions returns the value of the "permissions" field in the mutation.
-func (m *GithubInstallationMutation) Permissions() (r models.GithubInstallationPermissions, exists bool) {
+func (m *GithubInstallationMutation) Permissions() (r schema.GithubInstallationPermissions, exists bool) {
 	v := m.permissions
 	if v == nil {
 		return
@@ -2629,7 +2629,7 @@ func (m *GithubInstallationMutation) Permissions() (r models.GithubInstallationP
 // OldPermissions returns the old "permissions" field's value of the GithubInstallation entity.
 // If the GithubInstallation object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GithubInstallationMutation) OldPermissions(ctx context.Context) (v models.GithubInstallationPermissions, err error) {
+func (m *GithubInstallationMutation) OldPermissions(ctx context.Context) (v schema.GithubInstallationPermissions, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPermissions is only allowed on UpdateOne operations")
 	}
@@ -3023,7 +3023,7 @@ func (m *GithubInstallationMutation) SetField(name string, value ent.Value) erro
 		m.SetActive(v)
 		return nil
 	case githubinstallation.FieldPermissions:
-		v, ok := value.(models.GithubInstallationPermissions)
+		v, ok := value.(schema.GithubInstallationPermissions)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -7923,8 +7923,8 @@ type ServiceMutation struct {
 	clearedenvironment         bool
 	github_installation        *int64
 	clearedgithub_installation bool
-	service_configs            *uuid.UUID
-	clearedservice_configs     bool
+	service_config             *uuid.UUID
+	clearedservice_config      bool
 	done                       bool
 	oldValue                   func(context.Context) (*Service, error)
 	predicates                 []predicate.Service
@@ -8487,43 +8487,43 @@ func (m *ServiceMutation) ResetGithubInstallation() {
 	m.clearedgithub_installation = false
 }
 
-// SetServiceConfigsID sets the "service_configs" edge to the ServiceConfig entity by id.
-func (m *ServiceMutation) SetServiceConfigsID(id uuid.UUID) {
-	m.service_configs = &id
+// SetServiceConfigID sets the "service_config" edge to the ServiceConfig entity by id.
+func (m *ServiceMutation) SetServiceConfigID(id uuid.UUID) {
+	m.service_config = &id
 }
 
-// ClearServiceConfigs clears the "service_configs" edge to the ServiceConfig entity.
-func (m *ServiceMutation) ClearServiceConfigs() {
-	m.clearedservice_configs = true
+// ClearServiceConfig clears the "service_config" edge to the ServiceConfig entity.
+func (m *ServiceMutation) ClearServiceConfig() {
+	m.clearedservice_config = true
 }
 
-// ServiceConfigsCleared reports if the "service_configs" edge to the ServiceConfig entity was cleared.
-func (m *ServiceMutation) ServiceConfigsCleared() bool {
-	return m.clearedservice_configs
+// ServiceConfigCleared reports if the "service_config" edge to the ServiceConfig entity was cleared.
+func (m *ServiceMutation) ServiceConfigCleared() bool {
+	return m.clearedservice_config
 }
 
-// ServiceConfigsID returns the "service_configs" edge ID in the mutation.
-func (m *ServiceMutation) ServiceConfigsID() (id uuid.UUID, exists bool) {
-	if m.service_configs != nil {
-		return *m.service_configs, true
+// ServiceConfigID returns the "service_config" edge ID in the mutation.
+func (m *ServiceMutation) ServiceConfigID() (id uuid.UUID, exists bool) {
+	if m.service_config != nil {
+		return *m.service_config, true
 	}
 	return
 }
 
-// ServiceConfigsIDs returns the "service_configs" edge IDs in the mutation.
+// ServiceConfigIDs returns the "service_config" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ServiceConfigsID instead. It exists only for internal usage by the builders.
-func (m *ServiceMutation) ServiceConfigsIDs() (ids []uuid.UUID) {
-	if id := m.service_configs; id != nil {
+// ServiceConfigID instead. It exists only for internal usage by the builders.
+func (m *ServiceMutation) ServiceConfigIDs() (ids []uuid.UUID) {
+	if id := m.service_config; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetServiceConfigs resets all changes to the "service_configs" edge.
-func (m *ServiceMutation) ResetServiceConfigs() {
-	m.service_configs = nil
-	m.clearedservice_configs = false
+// ResetServiceConfig resets all changes to the "service_config" edge.
+func (m *ServiceMutation) ResetServiceConfig() {
+	m.service_config = nil
+	m.clearedservice_config = false
 }
 
 // Where appends a list predicates to the ServiceMutation builder.
@@ -8843,8 +8843,8 @@ func (m *ServiceMutation) AddedEdges() []string {
 	if m.github_installation != nil {
 		edges = append(edges, service.EdgeGithubInstallation)
 	}
-	if m.service_configs != nil {
-		edges = append(edges, service.EdgeServiceConfigs)
+	if m.service_config != nil {
+		edges = append(edges, service.EdgeServiceConfig)
 	}
 	return edges
 }
@@ -8861,8 +8861,8 @@ func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 		if id := m.github_installation; id != nil {
 			return []ent.Value{*id}
 		}
-	case service.EdgeServiceConfigs:
-		if id := m.service_configs; id != nil {
+	case service.EdgeServiceConfig:
+		if id := m.service_config; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -8890,8 +8890,8 @@ func (m *ServiceMutation) ClearedEdges() []string {
 	if m.clearedgithub_installation {
 		edges = append(edges, service.EdgeGithubInstallation)
 	}
-	if m.clearedservice_configs {
-		edges = append(edges, service.EdgeServiceConfigs)
+	if m.clearedservice_config {
+		edges = append(edges, service.EdgeServiceConfig)
 	}
 	return edges
 }
@@ -8904,8 +8904,8 @@ func (m *ServiceMutation) EdgeCleared(name string) bool {
 		return m.clearedenvironment
 	case service.EdgeGithubInstallation:
 		return m.clearedgithub_installation
-	case service.EdgeServiceConfigs:
-		return m.clearedservice_configs
+	case service.EdgeServiceConfig:
+		return m.clearedservice_config
 	}
 	return false
 }
@@ -8920,8 +8920,8 @@ func (m *ServiceMutation) ClearEdge(name string) error {
 	case service.EdgeGithubInstallation:
 		m.ClearGithubInstallation()
 		return nil
-	case service.EdgeServiceConfigs:
-		m.ClearServiceConfigs()
+	case service.EdgeServiceConfig:
+		m.ClearServiceConfig()
 		return nil
 	}
 	return fmt.Errorf("unknown Service unique edge %s", name)
@@ -8937,8 +8937,8 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 	case service.EdgeGithubInstallation:
 		m.ResetGithubInstallation()
 		return nil
-	case service.EdgeServiceConfigs:
-		m.ResetServiceConfigs()
+	case service.EdgeServiceConfig:
+		m.ResetServiceConfig()
 		return nil
 	}
 	return fmt.Errorf("unknown Service edge %s", name)

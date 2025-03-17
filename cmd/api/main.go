@@ -11,19 +11,21 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/database"
-	"github.com/unbindapp/unbind-api/internal/github"
-	"github.com/unbindapp/unbind-api/internal/k8s"
-	"github.com/unbindapp/unbind-api/internal/log"
-	"github.com/unbindapp/unbind-api/internal/middleware"
-	"github.com/unbindapp/unbind-api/internal/repository/repositories"
-	"github.com/unbindapp/unbind-api/internal/server"
-	github_handler "github.com/unbindapp/unbind-api/internal/server/github"
-	projects_handler "github.com/unbindapp/unbind-api/internal/server/projects"
-	service_handler "github.com/unbindapp/unbind-api/internal/server/service"
-	teams_handler "github.com/unbindapp/unbind-api/internal/server/teams"
-	user_handler "github.com/unbindapp/unbind-api/internal/server/user"
-	webhook_handler "github.com/unbindapp/unbind-api/internal/server/webhook"
+	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
+	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
+	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
+	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
+	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
+	user_handler "github.com/unbindapp/unbind-api/internal/api/handlers/user"
+	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
+	"github.com/unbindapp/unbind-api/internal/api/middleware"
+	"github.com/unbindapp/unbind-api/internal/api/server"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/integrations/github"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
@@ -117,7 +119,7 @@ func startAPI(cfg *config.Config) {
 			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 		},
 		GithubClient:   githubClient,
-		StringCache:    database.NewStringCache(client, "unbind"),
+		StringCache:    cache.NewStringCache(client, "unbind"),
 		HttpClient:     &http.Client{},
 		TeamService:    team_service.NewTeamService(repo, kubeClient),
 		ProjectService: project_service.NewProjectService(repo, kubeClient),
@@ -177,6 +179,12 @@ func startAPI(cfg *config.Config) {
 		log.Warnf("Failed to create middleware: %v", err)
 	}
 
+	type HealthResponse struct {
+		Body struct {
+			Status string `json:"status"`
+		}
+	}
+
 	huma.Register(
 		api,
 		huma.Operation{
@@ -187,11 +195,17 @@ func startAPI(cfg *config.Config) {
 			Method:      http.MethodGet,
 			Tags:        []string{"Meta"},
 		},
-		srvImpl.HealthCheck,
+		func(ctx context.Context, i *server.EmptyInput) (*HealthResponse, error) {
+
+			healthResponse := &HealthResponse{}
+			healthResponse.Body.Status = "ok"
+			return healthResponse, nil
+		},
 	)
 
 	// /auth group
 	authGroup := huma.NewGroup(api, "/auth")
+	authHandlers := logintmp_handler.NewHandlerGroup(srvImpl)
 	authGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"Auth"}
 		next(op)
@@ -205,7 +219,7 @@ func startAPI(cfg *config.Config) {
 			Path:        "/login",
 			Method:      http.MethodGet,
 		},
-		srvImpl.Login)
+		authHandlers.Login)
 	huma.Register(
 		authGroup,
 		huma.Operation{
@@ -215,7 +229,7 @@ func startAPI(cfg *config.Config) {
 			Path:        "/callback",
 			Method:      http.MethodGet,
 		},
-		srvImpl.Callback,
+		authHandlers.Callback,
 	)
 
 	// /users group

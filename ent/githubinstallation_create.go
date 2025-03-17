@@ -14,8 +14,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // GithubInstallationCreate is the builder for creating a GithubInstallation entity.
@@ -127,15 +127,15 @@ func (gic *GithubInstallationCreate) SetNillableActive(b *bool) *GithubInstallat
 }
 
 // SetPermissions sets the "permissions" field.
-func (gic *GithubInstallationCreate) SetPermissions(mip models.GithubInstallationPermissions) *GithubInstallationCreate {
-	gic.mutation.SetPermissions(mip)
+func (gic *GithubInstallationCreate) SetPermissions(sip schema.GithubInstallationPermissions) *GithubInstallationCreate {
+	gic.mutation.SetPermissions(sip)
 	return gic
 }
 
 // SetNillablePermissions sets the "permissions" field if the given value is not nil.
-func (gic *GithubInstallationCreate) SetNillablePermissions(mip *models.GithubInstallationPermissions) *GithubInstallationCreate {
-	if mip != nil {
-		gic.SetPermissions(*mip)
+func (gic *GithubInstallationCreate) SetNillablePermissions(sip *schema.GithubInstallationPermissions) *GithubInstallationCreate {
+	if sip != nil {
+		gic.SetPermissions(*sip)
 	}
 	return gic
 }
@@ -566,7 +566,7 @@ func (u *GithubInstallationUpsert) UpdateActive() *GithubInstallationUpsert {
 }
 
 // SetPermissions sets the "permissions" field.
-func (u *GithubInstallationUpsert) SetPermissions(v models.GithubInstallationPermissions) *GithubInstallationUpsert {
+func (u *GithubInstallationUpsert) SetPermissions(v schema.GithubInstallationPermissions) *GithubInstallationUpsert {
 	u.Set(githubinstallation.FieldPermissions, v)
 	return u
 }
@@ -786,7 +786,7 @@ func (u *GithubInstallationUpsertOne) UpdateActive() *GithubInstallationUpsertOn
 }
 
 // SetPermissions sets the "permissions" field.
-func (u *GithubInstallationUpsertOne) SetPermissions(v models.GithubInstallationPermissions) *GithubInstallationUpsertOne {
+func (u *GithubInstallationUpsertOne) SetPermissions(v schema.GithubInstallationPermissions) *GithubInstallationUpsertOne {
 	return u.Update(func(s *GithubInstallationUpsert) {
 		s.SetPermissions(v)
 	})
@@ -1178,7 +1178,7 @@ func (u *GithubInstallationUpsertBulk) UpdateActive() *GithubInstallationUpsertB
 }
 
 // SetPermissions sets the "permissions" field.
-func (u *GithubInstallationUpsertBulk) SetPermissions(v models.GithubInstallationPermissions) *GithubInstallationUpsertBulk {
+func (u *GithubInstallationUpsertBulk) SetPermissions(v schema.GithubInstallationPermissions) *GithubInstallationUpsertBulk {
 	return u.Update(func(s *GithubInstallationUpsert) {
 		s.SetPermissions(v)
 	})

@@ -40,8 +40,8 @@ const (
 	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
 	EdgeGithubInstallation = "github_installation"
-	// EdgeServiceConfigs holds the string denoting the service_configs edge name in mutations.
-	EdgeServiceConfigs = "service_configs"
+	// EdgeServiceConfig holds the string denoting the service_config edge name in mutations.
+	EdgeServiceConfig = "service_config"
 	// Table holds the table name of the service in the database.
 	Table = "services"
 	// EnvironmentTable is the table that holds the environment relation/edge.
@@ -58,13 +58,13 @@ const (
 	GithubInstallationInverseTable = "github_installations"
 	// GithubInstallationColumn is the table column denoting the github_installation relation/edge.
 	GithubInstallationColumn = "github_installation_id"
-	// ServiceConfigsTable is the table that holds the service_configs relation/edge.
-	ServiceConfigsTable = "service_configs"
-	// ServiceConfigsInverseTable is the table name for the ServiceConfig entity.
+	// ServiceConfigTable is the table that holds the service_config relation/edge.
+	ServiceConfigTable = "service_configs"
+	// ServiceConfigInverseTable is the table name for the ServiceConfig entity.
 	// It exists in this package in order to avoid circular dependency with the "serviceconfig" package.
-	ServiceConfigsInverseTable = "service_configs"
-	// ServiceConfigsColumn is the table column denoting the service_configs relation/edge.
-	ServiceConfigsColumn = "service_id"
+	ServiceConfigInverseTable = "service_configs"
+	// ServiceConfigColumn is the table column denoting the service_config relation/edge.
+	ServiceConfigColumn = "service_id"
 )
 
 // Columns holds all SQL columns for service fields.
@@ -228,10 +228,10 @@ func ByGithubInstallationField(field string, opts ...sql.OrderTermOption) OrderO
 	}
 }
 
-// ByServiceConfigsField orders the results by service_configs field.
-func ByServiceConfigsField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByServiceConfigField orders the results by service_config field.
+func ByServiceConfigField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newServiceConfigsStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newServiceConfigStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newEnvironmentStep() *sqlgraph.Step {
@@ -248,10 +248,10 @@ func newGithubInstallationStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, GithubInstallationTable, GithubInstallationColumn),
 	)
 }
-func newServiceConfigsStep() *sqlgraph.Step {
+func newServiceConfigStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ServiceConfigsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, ServiceConfigsTable, ServiceConfigsColumn),
+		sqlgraph.To(ServiceConfigInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ServiceConfigTable, ServiceConfigColumn),
 	)
 }

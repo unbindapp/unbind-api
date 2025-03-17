@@ -16,8 +16,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // GithubInstallationUpdate is the builder for updating GithubInstallation entities.
@@ -160,15 +160,15 @@ func (giu *GithubInstallationUpdate) SetNillableActive(b *bool) *GithubInstallat
 }
 
 // SetPermissions sets the "permissions" field.
-func (giu *GithubInstallationUpdate) SetPermissions(mip models.GithubInstallationPermissions) *GithubInstallationUpdate {
-	giu.mutation.SetPermissions(mip)
+func (giu *GithubInstallationUpdate) SetPermissions(sip schema.GithubInstallationPermissions) *GithubInstallationUpdate {
+	giu.mutation.SetPermissions(sip)
 	return giu
 }
 
 // SetNillablePermissions sets the "permissions" field if the given value is not nil.
-func (giu *GithubInstallationUpdate) SetNillablePermissions(mip *models.GithubInstallationPermissions) *GithubInstallationUpdate {
-	if mip != nil {
-		giu.SetPermissions(*mip)
+func (giu *GithubInstallationUpdate) SetNillablePermissions(sip *schema.GithubInstallationPermissions) *GithubInstallationUpdate {
+	if sip != nil {
+		giu.SetPermissions(*sip)
 	}
 	return giu
 }
@@ -597,15 +597,15 @@ func (giuo *GithubInstallationUpdateOne) SetNillableActive(b *bool) *GithubInsta
 }
 
 // SetPermissions sets the "permissions" field.
-func (giuo *GithubInstallationUpdateOne) SetPermissions(mip models.GithubInstallationPermissions) *GithubInstallationUpdateOne {
-	giuo.mutation.SetPermissions(mip)
+func (giuo *GithubInstallationUpdateOne) SetPermissions(sip schema.GithubInstallationPermissions) *GithubInstallationUpdateOne {
+	giuo.mutation.SetPermissions(sip)
 	return giuo
 }
 
 // SetNillablePermissions sets the "permissions" field if the given value is not nil.
-func (giuo *GithubInstallationUpdateOne) SetNillablePermissions(mip *models.GithubInstallationPermissions) *GithubInstallationUpdateOne {
-	if mip != nil {
-		giuo.SetPermissions(*mip)
+func (giuo *GithubInstallationUpdateOne) SetNillablePermissions(sip *schema.GithubInstallationPermissions) *GithubInstallationUpdateOne {
+	if sip != nil {
+		giuo.SetPermissions(*sip)
 	}
 	return giuo
 }

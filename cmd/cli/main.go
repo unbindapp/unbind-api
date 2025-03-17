@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/log"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
 func main() {

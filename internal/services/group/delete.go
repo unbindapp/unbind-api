@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/internal/log"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 // DeleteGroup deletes a group if the user has permissions

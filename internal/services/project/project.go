@@ -1,8 +1,8 @@
 package project_service
 
 import (
-	"github.com/unbindapp/unbind-api/internal/k8s"
-	"github.com/unbindapp/unbind-api/internal/repository/repositories"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 
 // Integrate project management with internal permissions and kubernetes RBAC

@@ -307,7 +307,7 @@ var (
 		PrimaryKey: []*schema.Column{ServiceConfigsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "service_configs_services_service_configs",
+				Symbol:     "service_configs_services_service_config",
 				Columns:    []*schema.Column{ServiceConfigsColumns[11]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.NoAction,

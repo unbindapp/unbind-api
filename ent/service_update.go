@@ -179,23 +179,23 @@ func (su *ServiceUpdate) SetGithubInstallation(g *GithubInstallation) *ServiceUp
 	return su.SetGithubInstallationID(g.ID)
 }
 
-// SetServiceConfigsID sets the "service_configs" edge to the ServiceConfig entity by ID.
-func (su *ServiceUpdate) SetServiceConfigsID(id uuid.UUID) *ServiceUpdate {
-	su.mutation.SetServiceConfigsID(id)
+// SetServiceConfigID sets the "service_config" edge to the ServiceConfig entity by ID.
+func (su *ServiceUpdate) SetServiceConfigID(id uuid.UUID) *ServiceUpdate {
+	su.mutation.SetServiceConfigID(id)
 	return su
 }
 
-// SetNillableServiceConfigsID sets the "service_configs" edge to the ServiceConfig entity by ID if the given value is not nil.
-func (su *ServiceUpdate) SetNillableServiceConfigsID(id *uuid.UUID) *ServiceUpdate {
+// SetNillableServiceConfigID sets the "service_config" edge to the ServiceConfig entity by ID if the given value is not nil.
+func (su *ServiceUpdate) SetNillableServiceConfigID(id *uuid.UUID) *ServiceUpdate {
 	if id != nil {
-		su = su.SetServiceConfigsID(*id)
+		su = su.SetServiceConfigID(*id)
 	}
 	return su
 }
 
-// SetServiceConfigs sets the "service_configs" edge to the ServiceConfig entity.
-func (su *ServiceUpdate) SetServiceConfigs(s *ServiceConfig) *ServiceUpdate {
-	return su.SetServiceConfigsID(s.ID)
+// SetServiceConfig sets the "service_config" edge to the ServiceConfig entity.
+func (su *ServiceUpdate) SetServiceConfig(s *ServiceConfig) *ServiceUpdate {
+	return su.SetServiceConfigID(s.ID)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -215,9 +215,9 @@ func (su *ServiceUpdate) ClearGithubInstallation() *ServiceUpdate {
 	return su
 }
 
-// ClearServiceConfigs clears the "service_configs" edge to the ServiceConfig entity.
-func (su *ServiceUpdate) ClearServiceConfigs() *ServiceUpdate {
-	su.mutation.ClearServiceConfigs()
+// ClearServiceConfig clears the "service_config" edge to the ServiceConfig entity.
+func (su *ServiceUpdate) ClearServiceConfig() *ServiceUpdate {
+	su.mutation.ClearServiceConfig()
 	return su
 }
 
@@ -383,12 +383,12 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if su.mutation.ServiceConfigsCleared() {
+	if su.mutation.ServiceConfigCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   service.ServiceConfigsTable,
-			Columns: []string{service.ServiceConfigsColumn},
+			Table:   service.ServiceConfigTable,
+			Columns: []string{service.ServiceConfigColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -396,12 +396,12 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.ServiceConfigsIDs(); len(nodes) > 0 {
+	if nodes := su.mutation.ServiceConfigIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   service.ServiceConfigsTable,
-			Columns: []string{service.ServiceConfigsColumn},
+			Table:   service.ServiceConfigTable,
+			Columns: []string{service.ServiceConfigColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -580,23 +580,23 @@ func (suo *ServiceUpdateOne) SetGithubInstallation(g *GithubInstallation) *Servi
 	return suo.SetGithubInstallationID(g.ID)
 }
 
-// SetServiceConfigsID sets the "service_configs" edge to the ServiceConfig entity by ID.
-func (suo *ServiceUpdateOne) SetServiceConfigsID(id uuid.UUID) *ServiceUpdateOne {
-	suo.mutation.SetServiceConfigsID(id)
+// SetServiceConfigID sets the "service_config" edge to the ServiceConfig entity by ID.
+func (suo *ServiceUpdateOne) SetServiceConfigID(id uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.SetServiceConfigID(id)
 	return suo
 }
 
-// SetNillableServiceConfigsID sets the "service_configs" edge to the ServiceConfig entity by ID if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableServiceConfigsID(id *uuid.UUID) *ServiceUpdateOne {
+// SetNillableServiceConfigID sets the "service_config" edge to the ServiceConfig entity by ID if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableServiceConfigID(id *uuid.UUID) *ServiceUpdateOne {
 	if id != nil {
-		suo = suo.SetServiceConfigsID(*id)
+		suo = suo.SetServiceConfigID(*id)
 	}
 	return suo
 }
 
-// SetServiceConfigs sets the "service_configs" edge to the ServiceConfig entity.
-func (suo *ServiceUpdateOne) SetServiceConfigs(s *ServiceConfig) *ServiceUpdateOne {
-	return suo.SetServiceConfigsID(s.ID)
+// SetServiceConfig sets the "service_config" edge to the ServiceConfig entity.
+func (suo *ServiceUpdateOne) SetServiceConfig(s *ServiceConfig) *ServiceUpdateOne {
+	return suo.SetServiceConfigID(s.ID)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -616,9 +616,9 @@ func (suo *ServiceUpdateOne) ClearGithubInstallation() *ServiceUpdateOne {
 	return suo
 }
 
-// ClearServiceConfigs clears the "service_configs" edge to the ServiceConfig entity.
-func (suo *ServiceUpdateOne) ClearServiceConfigs() *ServiceUpdateOne {
-	suo.mutation.ClearServiceConfigs()
+// ClearServiceConfig clears the "service_config" edge to the ServiceConfig entity.
+func (suo *ServiceUpdateOne) ClearServiceConfig() *ServiceUpdateOne {
+	suo.mutation.ClearServiceConfig()
 	return suo
 }
 
@@ -814,12 +814,12 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if suo.mutation.ServiceConfigsCleared() {
+	if suo.mutation.ServiceConfigCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   service.ServiceConfigsTable,
-			Columns: []string{service.ServiceConfigsColumn},
+			Table:   service.ServiceConfigTable,
+			Columns: []string{service.ServiceConfigColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -827,12 +827,12 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.ServiceConfigsIDs(); len(nodes) > 0 {
+	if nodes := suo.mutation.ServiceConfigIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   service.ServiceConfigsTable,
-			Columns: []string{service.ServiceConfigsColumn},
+			Table:   service.ServiceConfigTable,
+			Columns: []string{service.ServiceConfigColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),

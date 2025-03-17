@@ -1,8 +1,8 @@
 package service_service
 
 import (
-	"github.com/unbindapp/unbind-api/internal/github"
-	"github.com/unbindapp/unbind-api/internal/repository/repositories"
+	"github.com/unbindapp/unbind-api/internal/integrations/github"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 
 // Integrate service management with internal permissions and kubernetes RBAC

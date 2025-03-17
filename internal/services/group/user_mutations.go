@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/internal/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 )
 
 func (self *GroupService) AddUserToGroup(ctx context.Context, requesterUserID, targetUserID, groupID uuid.UUID) error {

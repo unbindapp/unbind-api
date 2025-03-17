@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/database"
-	"github.com/unbindapp/unbind-api/internal/repository/repositories"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 
 type Oauth2Server struct {
@@ -17,5 +17,5 @@ type Oauth2Server struct {
 	Srv         *server.Server
 	PrivateKey  *rsa.PrivateKey
 	Kid         string
-	StringCache *database.ValkeyCache[string]
+	StringCache *cache.ValkeyCache[string]
 }

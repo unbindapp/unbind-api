@@ -16,12 +16,13 @@ import (
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/database"
-	"github.com/unbindapp/unbind-api/internal/log"
-	"github.com/unbindapp/unbind-api/internal/middleware"
+	"github.com/unbindapp/unbind-api/internal/api/middleware"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/oauth2server"
-	"github.com/unbindapp/unbind-api/internal/repository/repositories"
-	"github.com/unbindapp/unbind-api/internal/utils"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -56,7 +57,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 	}
 
 	// Use our custom token store
-	clientStoreCache := database.NewCache[CacheClientInto](valkey, "auth")
+	clientStoreCache := cache.NewCache[CacheClientInto](valkey, "auth")
 	clientStore := NewDBClientStore(ctx, clientStoreCache)
 	tokenStore := NewCustomTokenStore(clientStore, repo)
 	manager.MapTokenStorage(tokenStore)
@@ -99,7 +100,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 		Cfg:         cfg,
 		PrivateKey:  pkey,
 		Kid:         keyID,
-		StringCache: database.NewStringCache(valkey, "unbind-oauth-str"),
+		StringCache: cache.NewStringCache(valkey, "unbind-oauth-str"),
 	}
 
 	// Create the server

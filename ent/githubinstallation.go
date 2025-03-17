@@ -12,7 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
-	"github.com/unbindapp/unbind-api/internal/models"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // GithubInstallation is the model entity for the GithubInstallation schema.
@@ -42,7 +42,7 @@ type GithubInstallation struct {
 	// Whether the installation is active
 	Active bool `json:"active,omitempty"`
 	// Permissions granted to this installation
-	Permissions models.GithubInstallationPermissions `json:"permissions,omitempty"`
+	Permissions schema.GithubInstallationPermissions `json:"permissions,omitempty"`
 	// Events this installation subscribes to
 	Events []string `json:"events,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.

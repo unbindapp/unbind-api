@@ -8,7 +8,7 @@ import (
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
 	"github.com/go-oauth2/oauth2/v4/models"
-	"github.com/unbindapp/unbind-api/internal/repository/repositories"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 
 // Custom token store that using our database backend and handles authorization code flow

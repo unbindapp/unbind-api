@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 // GetGroupMembers lists all users who are members of a group

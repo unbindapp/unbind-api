@@ -6,11 +6,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/internal/errdefs"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID) ([]*ProjectResponse, error) {
+func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID) ([]*models.ProjectResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -52,30 +53,6 @@ func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUser
 		return nil, err
 	}
 
-	projectResponse := make([]*ProjectResponse, len(projects))
-	for i, project := range projects {
-		environmentsResponse := make([]*EnvironmentResponse, len(project.Edges.Environments))
-		for j, environment := range project.Edges.Environments {
-			environmentsResponse[j] = &EnvironmentResponse{
-				ID:          environment.ID,
-				Name:        environment.Name,
-				DisplayName: environment.DisplayName,
-				Description: environment.Description,
-				CreatedAt:   environment.CreatedAt,
-			}
-		}
-
-		projectResponse[i] = &ProjectResponse{
-			ID:           project.ID,
-			Name:         project.Name,
-			DisplayName:  project.DisplayName,
-			Description:  project.Description,
-			Status:       project.Status,
-			TeamID:       project.TeamID,
-			CreatedAt:    project.CreatedAt,
-			Environments: environmentsResponse,
-		}
-	}
-
-	return projectResponse, nil
+	// Convert to response
+	return models.TransformProjectEntitities(projects), nil
 }

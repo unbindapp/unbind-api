@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/unbindapp/unbind-api/internal/utils"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 // WellKnownConfig holds the fields you want to return in /.well-known/openid-configuration

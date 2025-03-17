@@ -5,17 +5,17 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/unbindapp/unbind-api/internal/database"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/valkey-io/valkey-go"
 )
 
 // A custom client store that persists clients in a Valkey cache.
 type dbClientStore struct {
 	ctx   context.Context
-	cache *database.ValkeyCache[CacheClientInto]
+	cache *cache.ValkeyCache[CacheClientInto]
 }
 
-func NewDBClientStore(ctx context.Context, cache *database.ValkeyCache[CacheClientInto]) *dbClientStore {
+func NewDBClientStore(ctx context.Context, cache *cache.ValkeyCache[CacheClientInto]) *dbClientStore {
 	return &dbClientStore{
 		ctx:   ctx,
 		cache: cache,

@@ -41,7 +41,7 @@ func (ServiceConfig) Fields() []ent.Field {
 // Edges of the ServiceConfig.
 func (ServiceConfig) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("service", Service.Type).Ref("service_configs").Field("service_id").Unique().Required(),
+		edge.From("service", Service.Type).Ref("service_config").Field("service_id").Unique().Required(),
 	}
 }
 

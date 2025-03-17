@@ -592,21 +592,21 @@ func HasGithubInstallationWith(preds ...predicate.GithubInstallation) predicate.
 	})
 }
 
-// HasServiceConfigs applies the HasEdge predicate on the "service_configs" edge.
-func HasServiceConfigs() predicate.Service {
+// HasServiceConfig applies the HasEdge predicate on the "service_config" edge.
+func HasServiceConfig() predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, ServiceConfigsTable, ServiceConfigsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, ServiceConfigTable, ServiceConfigColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasServiceConfigsWith applies the HasEdge predicate on the "service_configs" edge with a given conditions (other predicates).
-func HasServiceConfigsWith(preds ...predicate.ServiceConfig) predicate.Service {
+// HasServiceConfigWith applies the HasEdge predicate on the "service_config" edge with a given conditions (other predicates).
+func HasServiceConfigWith(preds ...predicate.ServiceConfig) predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
-		step := newServiceConfigsStep()
+		step := newServiceConfigStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -5,9 +5,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/internal/errdefs"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
-	"github.com/unbindapp/unbind-api/internal/validate"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/validate"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 type TeamUpdateInput struct {

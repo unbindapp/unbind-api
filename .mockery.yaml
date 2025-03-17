@@ -1,6 +1,6 @@
 with-expecter: true
 packages:
-  github.com/unbindapp/unbind-api/internal/repository:
+  github.com/unbindapp/unbind-api/internal/repositories:
     config:
       dir: ./mocks/repository
     interfaces:
@@ -15,7 +15,7 @@ packages:
           filename: tx_mock.go
           mockName: TxMock
           outpkg: mocks_repository_tx
-  github.com/unbindapp/unbind-api/internal/repository/github:
+  github.com/unbindapp/unbind-api/internal/repositories/github:
     config:
       dir: ./mocks/repository/github
     interfaces:
@@ -24,7 +24,7 @@ packages:
           filename: github_repository_mock.go
           mockName: GithubRepositoryMock
           outpkg: mocks_repository_github
-  github.com/unbindapp/unbind-api/internal/repository/user:
+  github.com/unbindapp/unbind-api/internal/repositories/user:
     config:
       dir: ./mocks/repository/user
     interfaces:
@@ -33,7 +33,7 @@ packages:
           filename: user_repository_mock.go
           mockName: UserRepositoryMock
           outpkg: mocks_repository_user
-  github.com/unbindapp/unbind-api/internal/repository/oauth:
+  github.com/unbindapp/unbind-api/internal/repositories/oauth:
     config:
       dir: ./mocks/repository/oauth
     interfaces:
@@ -42,7 +42,7 @@ packages:
           filename: oauth_repository_mock.go
           mockName: OauthRepositoryMock
           outpkg: mocks_repository_oauth
-  github.com/unbindapp/unbind-api/internal/database/repositories:
+  github.com/unbindapp/unbind-api/internal/infrastructure/database/repositories:
     config:
       dir: ./mocks/repositories
     interfaces:

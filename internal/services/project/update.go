@@ -6,9 +6,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/internal/errdefs"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
-	"github.com/unbindapp/unbind-api/internal/validate"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/validate"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 type UpdateProjectInput struct {
@@ -18,7 +19,7 @@ type UpdateProjectInput struct {
 	Description string
 }
 
-func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID uuid.UUID, input *UpdateProjectInput) (*ProjectResponse, error) {
+func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID uuid.UUID, input *UpdateProjectInput) (*models.ProjectResponse, error) {
 	// Validate input
 	if err := validate.Validator().Struct(input); err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
@@ -80,13 +81,6 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
-	return &ProjectResponse{
-		ID:          project.ID,
-		Name:        project.Name,
-		DisplayName: project.DisplayName,
-		Description: project.Description,
-		Status:      project.Status,
-		TeamID:      project.TeamID,
-		CreatedAt:   project.CreatedAt,
-	}, nil
+	// Convert to response
+	return models.TransformProjectEntity(project), nil
 }
