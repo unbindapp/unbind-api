@@ -304,3 +304,31 @@ func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.
 
 	return allTags, nil
 }
+
+// VerifyRepositoryAccess checks if a repository is accessible via a specific installation
+func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (bool, error) {
+	if installation == nil || installation.Edges.GithubApp == nil {
+		return false, fmt.Errorf("invalid installation: missing app edge or nil")
+	}
+
+	// Get authenticated client
+	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
+	if err != nil {
+		return false, fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
+	}
+
+	// See if we can access the repository
+	_, resp, err := authenticatedClient.Repositories.Get(ctx, owner, repo)
+	if err == nil {
+		// Repository found and accessible
+		return true, nil
+	}
+
+	if resp != nil && resp.StatusCode == 404 {
+		// Repository either doesn't exist or installation doesn't have access
+		return false, nil
+	}
+
+	log.Errorf("Error verifying repository access: %v", err)
+	return false, nil
+}

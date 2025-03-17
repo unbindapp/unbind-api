@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/k8s"
 	"github.com/unbindapp/unbind-api/internal/repository/repositories"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
+	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"golang.org/x/oauth2"
 )
@@ -35,6 +36,7 @@ type Server struct {
 	// Services
 	TeamService    *team_service.TeamService
 	ProjectService *project_service.ProjectService
+	ServiceService *service_service.ServiceService
 }
 
 // HealthCheck is your /health endpoint

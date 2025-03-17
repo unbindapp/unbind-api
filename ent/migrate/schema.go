@@ -215,7 +215,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "action", Type: field.TypeEnum, Enums: []string{"read", "create", "update", "delete", "manage", "admin", "edit", "view"}},
-		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "group", "permission", "user", "system"}},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "group", "environment", "permission", "user", "system"}},
 		{Name: "resource_id", Type: field.TypeString},
 		{Name: "scope", Type: field.TypeString, Nullable: true},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},

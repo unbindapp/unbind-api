@@ -116,12 +116,13 @@ type ResourceType string
 
 // ResourceType values.
 const (
-	ResourceTypeTeam       ResourceType = "team"
-	ResourceTypeProject    ResourceType = "project"
-	ResourceTypeGroup      ResourceType = "group"
-	ResourceTypePermission ResourceType = "permission"
-	ResourceTypeUser       ResourceType = "user"
-	ResourceTypeSystem     ResourceType = "system"
+	ResourceTypeTeam        ResourceType = "team"
+	ResourceTypeProject     ResourceType = "project"
+	ResourceTypeGroup       ResourceType = "group"
+	ResourceTypeEnvironment ResourceType = "environment"
+	ResourceTypePermission  ResourceType = "permission"
+	ResourceTypeUser        ResourceType = "user"
+	ResourceTypeSystem      ResourceType = "system"
 )
 
 func (rt ResourceType) String() string {
@@ -131,7 +132,7 @@ func (rt ResourceType) String() string {
 // ResourceTypeValidator is a validator for the "resource_type" field enum values. It is called by the builders before save.
 func ResourceTypeValidator(rt ResourceType) error {
 	switch rt {
-	case ResourceTypeTeam, ResourceTypeProject, ResourceTypeGroup, ResourceTypePermission, ResourceTypeUser, ResourceTypeSystem:
+	case ResourceTypeTeam, ResourceTypeProject, ResourceTypeGroup, ResourceTypeEnvironment, ResourceTypePermission, ResourceTypeUser, ResourceTypeSystem:
 		return nil
 	default:
 		return fmt.Errorf("permission: invalid enum value for resource_type field: %q", rt)

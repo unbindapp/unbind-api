@@ -13,6 +13,7 @@ import (
 	oauth_repo "github.com/unbindapp/unbind-api/internal/repository/oauth"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
 	project_repo "github.com/unbindapp/unbind-api/internal/repository/project"
+	service_repo "github.com/unbindapp/unbind-api/internal/repository/service"
 	team_repo "github.com/unbindapp/unbind-api/internal/repository/team"
 	user_repo "github.com/unbindapp/unbind-api/internal/repository/user"
 )
@@ -37,5 +38,7 @@ type RepositoriesInterface interface {
 	Permissions() permissions_repo.PermissionsRepositoryInterface
 	// Environment returns the Environment repository
 	Environment() environment_repo.EnvironmentRepositoryInterface
+	// Service returns the Service repository
+	Service() service_repo.ServiceRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

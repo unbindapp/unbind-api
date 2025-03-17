@@ -19,10 +19,12 @@ import (
 	"github.com/unbindapp/unbind-api/internal/server"
 	github_handler "github.com/unbindapp/unbind-api/internal/server/github"
 	projects_handler "github.com/unbindapp/unbind-api/internal/server/projects"
+	service_handler "github.com/unbindapp/unbind-api/internal/server/service"
 	teams_handler "github.com/unbindapp/unbind-api/internal/server/teams"
 	user_handler "github.com/unbindapp/unbind-api/internal/server/user"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/server/webhook"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
+	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/oauth2"
@@ -93,6 +95,9 @@ func startAPI(cfg *config.Config) {
 	// Create kubernetes client
 	kubeClient := k8s.NewKubeClient(cfg)
 
+	// Create github client
+	githubClient := github.NewGithubClient(cfg)
+
 	// Implementation
 	srvImpl := &server.Server{
 		KubeClient: kubeClient,
@@ -110,11 +115,12 @@ func startAPI(cfg *config.Config) {
 			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalURL),
 			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 		},
-		GithubClient:   github.NewGithubClient(cfg),
+		GithubClient:   githubClient,
 		StringCache:    database.NewStringCache(client, "unbind"),
 		HttpClient:     &http.Client{},
 		TeamService:    team_service.NewTeamService(repo, kubeClient),
 		ProjectService: project_service.NewProjectService(repo, kubeClient),
+		ServiceService: service_service.NewServiceService(repo, githubClient),
 	}
 
 	// New chi router
@@ -416,6 +422,26 @@ func startAPI(cfg *config.Config) {
 			Method:      http.MethodDelete,
 		},
 		projectHandlers.DeleteProject,
+	)
+
+	// /services group
+	servicesGroup := huma.NewGroup(api, "/services")
+	servicesGroup.UseMiddleware(mw.Authenticate)
+	servicesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Services"}
+		next(op)
+	})
+	serviceHandlers := service_handler.NewHandlerGroup(srvImpl)
+	huma.Register(
+		servicesGroup,
+		huma.Operation{
+			OperationID: "create-service",
+			Summary:     "Create Service",
+			Description: "Create a service",
+			Path:        "/create",
+			Method:      http.MethodPost,
+		},
+		serviceHandlers.CreateService,
 	)
 
 	// Start the server

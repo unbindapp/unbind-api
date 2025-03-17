@@ -11,6 +11,7 @@ import (
 	oauth_repo "github.com/unbindapp/unbind-api/internal/repository/oauth"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repository/permissions"
 	project_repo "github.com/unbindapp/unbind-api/internal/repository/project"
+	service_repo "github.com/unbindapp/unbind-api/internal/repository/service"
 	team_repo "github.com/unbindapp/unbind-api/internal/repository/team"
 	user_repo "github.com/unbindapp/unbind-api/internal/repository/user"
 )
@@ -29,6 +30,7 @@ type Repositories struct {
 	team        team_repo.TeamRepositoryInterface
 	permissions permissions_repo.PermissionsRepositoryInterface
 	environment environment_repo.EnvironmentRepositoryInterface
+	service     service_repo.ServiceRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -42,6 +44,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	permissionsRepo := permissions_repo.NewPermissionsRepository(db, userRepo, projectRepo, teamRepo)
 	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
 	environmentRepo := environment_repo.NewEnvironmentRepository(db)
+	serviceRepo := service_repo.NewServiceRepository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -53,6 +56,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		team:        teamRepo,
 		permissions: permissionsRepo,
 		environment: environmentRepo,
+		service:     serviceRepo,
 	}
 }
 
@@ -99,6 +103,11 @@ func (r *Repositories) Permissions() permissions_repo.PermissionsRepositoryInter
 // Environment returns the Environment repository
 func (r *Repositories) Environment() environment_repo.EnvironmentRepositoryInterface {
 	return r.environment
+}
+
+// Service returns the Service repository
+func (r *Repositories) Service() service_repo.ServiceRepositoryInterface {
+	return r.service
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {
