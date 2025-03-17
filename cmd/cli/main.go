@@ -7,16 +7,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
-	"github.com/unbindapp/unbind-api/cmd/oauth"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/log"
 )
 
 func main() {
-	// Define command-line flags
-	startAPIFlag := flag.Bool("start-api", false, "Start the API server")
-	startOauth2ApiFlag := flag.Bool("start-oauth2-api", false, "Start the OAuth2 API server")
-
 	// User management flags
 	createUserCmd := flag.NewFlagSet("create-user", flag.ExitOnError)
 	email := createUserCmd.String("email", "", "Email for the new user")
@@ -71,12 +66,8 @@ func main() {
 
 	cfg := config.NewConfig()
 
-	// Check if the -start-api flag was provided
-	if *startAPIFlag {
-		startAPI(cfg)
-	} else if *startOauth2ApiFlag {
-		oauth.StartOauth2Server(cfg)
-	} else if *listUsersFlag {
+	// Processs flags
+	if *listUsersFlag {
 		cli := NewCLI(cfg)
 		cli.listUsers()
 	} else if *listGroupsFlag {

@@ -2,8 +2,9 @@
 FROM stablecog/ubuntu:22.04
 
 COPY ./internal/oauth2server/template/* /app/template/
-COPY ./cmd/server /app/server
+COPY ./cmd/api /app/api
+COPY ./cmd/oauth2server /app/oauth2server
 
 EXPOSE 8080
 
-CMD ["/app/server", "-start-api"]
+CMD ["/app/server"]

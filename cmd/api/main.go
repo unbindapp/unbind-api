@@ -9,6 +9,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/github"
@@ -448,4 +449,15 @@ func startAPI(cfg *config.Config) {
 	addr := ":8089"
 	log.Infof("Starting server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, r))
+}
+
+func main() {
+	// Load environment variables from .env file
+	err := godotenv.Overload()
+	if err != nil {
+		log.Warn("Error loading .env file:", err)
+	}
+
+	cfg := config.NewConfig()
+	startAPI(cfg)
 }

@@ -24,8 +24,7 @@ spec:
       containers:
         - name: unbind-api
           image: replaceme
-          command: ["/app/server"]
-          args: ["-start-api"]
+          command: ["/app/api"]
           resources:
             requests:
               cpu: 100m

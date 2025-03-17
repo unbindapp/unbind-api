@@ -23,8 +23,7 @@ spec:
       containers:
         - name: unbind-auth
           image: replaceme
-          command: ["/app/server"]
-          args: ["-start-oauth2-api"]
+          command: ["/app/oauth2server"]
           resources:
             requests:
               cpu: 100m

@@ -1,4 +1,4 @@
-package oauth
+package main
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/go-oauth2/oauth2/v4/manage"
 	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
+	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/database"
 	"github.com/unbindapp/unbind-api/internal/log"
@@ -237,4 +238,15 @@ func StartOauth2Server(cfg *config.Config) {
 	addr := ":8090"
 	log.Infof("Starting server on %s\n", addr)
 	log.Fatal(http.ListenAndServe(addr, r))
+}
+
+func main() {
+	// Load environment variables from .env file
+	err := godotenv.Overload()
+	if err != nil {
+		log.Warn("Error loading .env file:", err)
+	}
+
+	cfg := config.NewConfig()
+	StartOauth2Server(cfg)
 }
