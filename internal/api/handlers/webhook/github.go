@@ -242,6 +242,55 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				return nil, huma.Error500InternalServerError("Failed to set installation as unsuspended")
 			}
 		}
+	case *github.PushEvent:
+		// Trigger a build if the push event is for a branch we care about
+		if e.Repo == nil || e.Installation == nil {
+			log.Errorf("Received push event with missing repo or installation %v", e)
+			return &GithubWebhookOutput{}, nil
+		}
+		repoName := e.Repo.GetName()
+		//repoUrl := e.Repo.GetCloneURL()
+		installationID := e.Installation.GetID()
+		AppID := e.Installation.GetAppID()
+		ref := e.GetRef()
+
+		// Get the installation
+		installation, err := self.srv.Repository.Github().GetInstallationByID(ctx, installationID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				log.Info("Received event for installation not found in DB", "id", installationID)
+				return &GithubWebhookOutput{}, nil
+			}
+			log.Error("Error getting installation", "err", err)
+			return nil, huma.Error500InternalServerError("Failed to get installation")
+		}
+
+		if installation.GithubAppID != AppID {
+			log.Info("Received push event for different app", "app", AppID, "expected", installation.GithubAppID)
+			return &GithubWebhookOutput{}, nil
+		}
+
+		// Get the services associated with this installation and repo
+		services, err := self.srv.Repository.Service().GetByInstallationIDAndRepoName(ctx, installationID, repoName)
+		if err != nil {
+			log.Error("Error getting services", "err", err)
+			return nil, huma.Error500InternalServerError("Failed to get services")
+		}
+
+		servicesToBuild := make([]*ent.Service, 0)
+		for _, service := range services {
+			config := service.Edges.ServiceConfig
+			if config.GitBranch != nil && *config.GitBranch == ref {
+				servicesToBuild = append(servicesToBuild, service)
+			}
+		}
+
+		if len(servicesToBuild) == 0 {
+			// Nothing to do
+			return &GithubWebhookOutput{}, nil
+		}
+
+		// Trigger builds for each service
 	}
 
 	return &GithubWebhookOutput{}, nil

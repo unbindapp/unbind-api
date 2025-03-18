@@ -6,7 +6,7 @@ import (
 	"context"
 
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/internal/repositories"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	environment_repo "github.com/unbindapp/unbind-api/internal/repositories/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repositories/github"
 	group_repo "github.com/unbindapp/unbind-api/internal/repositories/group"

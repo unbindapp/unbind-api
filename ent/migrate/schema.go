@@ -42,7 +42,7 @@ var (
 				Symbol:     "environments_projects_environments",
 				Columns:    []*schema.Column{EnvironmentsColumns[7]},
 				RefColumns: []*schema.Column{ProjectsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}

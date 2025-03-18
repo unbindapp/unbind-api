@@ -9,9 +9,10 @@ import (
 	ent "github.com/unbindapp/unbind-api/ent"
 
 	githubinstallation "github.com/unbindapp/unbind-api/ent/githubinstallation"
-	"github.com/unbindapp/unbind-api/ent/schema"
 
 	mock "github.com/stretchr/testify/mock"
+
+	schema "github.com/unbindapp/unbind-api/ent/schema"
 
 	uuid "github.com/google/uuid"
 )
@@ -608,7 +609,7 @@ type GithubRepositoryMock_UpsertInstallation_Call struct {
 //   - repositorySelection githubinstallation.RepositorySelection
 //   - suspended bool
 //   - active bool
-//   - permissions models.GithubInstallationPermissions
+//   - permissions schema.GithubInstallationPermissions
 //   - events []string
 func (_e *GithubRepositoryMock_Expecter) UpsertInstallation(ctx interface{}, id interface{}, appID interface{}, accountID interface{}, accountLogin interface{}, accountType interface{}, accountURL interface{}, repositorySelection interface{}, suspended interface{}, active interface{}, permissions interface{}, events interface{}) *GithubRepositoryMock_UpsertInstallation_Call {
 	return &GithubRepositoryMock_UpsertInstallation_Call{Call: _e.mock.On("UpsertInstallation", ctx, id, appID, accountID, accountLogin, accountType, accountURL, repositorySelection, suspended, active, permissions, events)}

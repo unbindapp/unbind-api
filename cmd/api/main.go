@@ -419,6 +419,17 @@ func startAPI(cfg *config.Config) {
 	huma.Register(
 		projectsGroup,
 		huma.Operation{
+			OperationID: "get-project",
+			Summary:     "Get Project",
+			Description: "Get a project by ID",
+			Path:        "/get",
+			Method:      http.MethodGet,
+		},
+		projectHandlers.GetProject,
+	)
+	huma.Register(
+		projectsGroup,
+		huma.Operation{
 			OperationID: "update-project",
 			Summary:     "Update Project",
 			Description: "Update a project",

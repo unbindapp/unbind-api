@@ -56,3 +56,50 @@ func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUser
 	// Convert to response
 	return models.TransformProjectEntitities(projects), nil
 }
+
+// Get a single project by ID
+func (self *ProjectService) GetProjectByID(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID, projectID uuid.UUID) (*models.ProjectResponse, error) {
+	permissionChecks := []permissions_repo.PermissionCheck{
+		// Has permission to read system resources
+		{
+			Action:       permission.ActionRead,
+			ResourceType: permission.ResourceTypeSystem,
+			ResourceID:   "*",
+		},
+		// Has permission to read teams
+		{
+			Action:       permission.ActionRead,
+			ResourceType: permission.ResourceTypeTeam,
+			ResourceID:   "*",
+		},
+		// Has permission to read the specific team
+		{
+			Action:       permission.ActionRead,
+			ResourceType: permission.ResourceTypeTeam,
+			ResourceID:   teamID.String(),
+		},
+	}
+
+	// Check permissions
+	if err := self.repo.Permissions().Check(ctx, requesterUserID, permissionChecks); err != nil {
+		return nil, err
+	}
+
+	// Check if the team exists
+	_, err := self.repo.Team().GetByID(ctx, teamID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
+		}
+		return nil, err
+	}
+
+	// Get projects
+	project, err := self.repo.Project().GetByID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to response
+	return models.TransformProjectEntity(project), nil
+}

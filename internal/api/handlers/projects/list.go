@@ -48,3 +48,41 @@ func (self *HandlerGroup) ListProjects(ctx context.Context, input *ListProjectIn
 	resp.Body.Data = projects
 	return resp, nil
 }
+
+// Get a single project by ID
+type GetProjectInput struct {
+	server.BaseAuthInput
+	ID     uuid.UUID `query:"id" required:"true"`
+	TeamID uuid.UUID `query:"team_id" required:"true"`
+}
+
+type GetProjectResponse struct {
+	Body struct {
+		Data *models.ProjectResponse `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) GetProject(ctx context.Context, input *GetProjectInput) (*GetProjectResponse, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
+	project, err := self.srv.ProjectService.GetProjectByID(ctx, user.ID, input.TeamID, input.ID)
+	if err != nil {
+		if errors.Is(err, errdefs.ErrUnauthorized) {
+			return nil, huma.Error403Forbidden("Unauthorized")
+		}
+		if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
+			return nil, huma.Error404NotFound(err.Error())
+		}
+		log.Error("Error getting projects", "err", err)
+		return nil, huma.Error500InternalServerError("Unable to fetch projects")
+	}
+
+	resp := &GetProjectResponse{}
+	resp.Body.Data = project
+	return resp, nil
+}
