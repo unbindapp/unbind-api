@@ -15,7 +15,7 @@ type ProjectResponse struct {
 	Status       string                 `json:"status"`
 	TeamID       uuid.UUID              `json:"team_id"`
 	CreatedAt    time.Time              `json:"created_at"`
-	Environments []*EnvironmentResponse `json:"environments"`
+	Environments []*EnvironmentResponse `json:"environments" nullable:"false"`
 }
 
 // TransformProjectEntity transforms an ent.Project entity into a ProjectResponse
