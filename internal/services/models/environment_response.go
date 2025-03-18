@@ -33,10 +33,11 @@ func TransformEnvironmentEntity(entity *ent.Environment) *EnvironmentResponse {
 }
 
 // TransformEnvironmentEntitities transforms a slice of ent.Environment entities into a slice of EnvironmentResponse
-func TransformEnvironmentEntitities(entities []*ent.Environment) []*EnvironmentResponse {
-	responses := make([]*EnvironmentResponse, len(entities))
+func TransformEnvironmentEntitities(entities []*ent.Environment) []EnvironmentResponse {
+	responses := make([]EnvironmentResponse, len(entities))
 	for i, entity := range entities {
-		responses[i] = TransformEnvironmentEntity(entity)
+		res := TransformEnvironmentEntity(entity)
+		responses[i] = *res
 	}
 	return responses
 }
