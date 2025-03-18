@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/buildjob"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
@@ -26,6 +27,31 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	buildjobMixin := schema.BuildJob{}.Mixin()
+	buildjobMixinFields0 := buildjobMixin[0].Fields()
+	_ = buildjobMixinFields0
+	buildjobMixinFields1 := buildjobMixin[1].Fields()
+	_ = buildjobMixinFields1
+	buildjobFields := schema.BuildJob{}.Fields()
+	_ = buildjobFields
+	// buildjobDescCreatedAt is the schema descriptor for created_at field.
+	buildjobDescCreatedAt := buildjobMixinFields1[0].Descriptor()
+	// buildjob.DefaultCreatedAt holds the default value on creation for the created_at field.
+	buildjob.DefaultCreatedAt = buildjobDescCreatedAt.Default.(func() time.Time)
+	// buildjobDescUpdatedAt is the schema descriptor for updated_at field.
+	buildjobDescUpdatedAt := buildjobMixinFields1[1].Descriptor()
+	// buildjob.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	buildjob.DefaultUpdatedAt = buildjobDescUpdatedAt.Default.(func() time.Time)
+	// buildjob.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	buildjob.UpdateDefaultUpdatedAt = buildjobDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// buildjobDescAttempts is the schema descriptor for attempts field.
+	buildjobDescAttempts := buildjobFields[7].Descriptor()
+	// buildjob.DefaultAttempts holds the default value on creation for the attempts field.
+	buildjob.DefaultAttempts = buildjobDescAttempts.Default.(int)
+	// buildjobDescID is the schema descriptor for id field.
+	buildjobDescID := buildjobMixinFields0[0].Descriptor()
+	// buildjob.DefaultID holds the default value on creation for the id field.
+	buildjob.DefaultID = buildjobDescID.Default.(func() uuid.UUID)
 	deploymentMixin := schema.Deployment{}.Mixin()
 	deploymentMixinFields0 := deploymentMixin[0].Fields()
 	_ = deploymentMixinFields0

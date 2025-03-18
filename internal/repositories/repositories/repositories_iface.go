@@ -7,6 +7,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	buildjob_repo "github.com/unbindapp/unbind-api/internal/repositories/buildjob"
 	environment_repo "github.com/unbindapp/unbind-api/internal/repositories/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repositories/github"
 	group_repo "github.com/unbindapp/unbind-api/internal/repositories/group"
@@ -40,5 +41,7 @@ type RepositoriesInterface interface {
 	Environment() environment_repo.EnvironmentRepositoryInterface
 	// Service returns the Service repository
 	Service() service_repo.ServiceRepositoryInterface
+	// BuildJob returns the BuildJob repository
+	BuildJob() buildjob_repo.BuildJobRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

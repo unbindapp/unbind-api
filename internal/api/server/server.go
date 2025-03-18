@@ -6,6 +6,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
@@ -26,13 +27,14 @@ type BaseAuthInput struct {
 
 // Server implements generated.ServerInterface
 type Server struct {
-	KubeClient   *k8s.KubeClient
-	Cfg          *config.Config
-	OauthConfig  *oauth2.Config
-	GithubClient *github.GithubClient
-	Repository   repositories.RepositoriesInterface
-	StringCache  *cache.ValkeyCache[string]
-	HttpClient   *http.Client
+	KubeClient      *k8s.KubeClient
+	Cfg             *config.Config
+	OauthConfig     *oauth2.Config
+	GithubClient    *github.GithubClient
+	Repository      repositories.RepositoriesInterface
+	StringCache     *cache.ValkeyCache[string]
+	HttpClient      *http.Client
+	BuildController *buildctl.BuildController
 	// Services
 	TeamService    *team_service.TeamService
 	ProjectService *project_service.ProjectService

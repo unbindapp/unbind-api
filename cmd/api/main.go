@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
@@ -20,6 +21,7 @@ import (
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/api/server"
+	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
@@ -72,12 +74,16 @@ func NewHumaConfig(title, version string) huma.Config {
 }
 
 func startAPI(cfg *config.Config) {
+	// Create a context with cancellation
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Initialize valkey (redis)
-	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
+	valkeyClient, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
 	if err != nil {
 		log.Fatal("Failed to create valkey client", "err", err)
 	}
-	defer client.Close()
+	defer valkeyClient.Close()
 
 	// Load database
 	dbConnInfo, err := database.GetSqlDbConn(cfg, false)
@@ -90,7 +96,7 @@ func startAPI(cfg *config.Config) {
 		log.Fatalf("Failed to create ent client: %v", err)
 	}
 	log.Info("🦋 Running migrations...")
-	if err := db.Schema.Create(context.TODO()); err != nil {
+	if err := db.Schema.Create(ctx); err != nil {
 		log.Fatal("Failed to run migrations", "err", err)
 	}
 	repo := repositories.NewRepositories(db)
@@ -118,12 +124,13 @@ func startAPI(cfg *config.Config) {
 			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalURL),
 			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 		},
-		GithubClient:   githubClient,
-		StringCache:    cache.NewStringCache(client, "unbind"),
-		HttpClient:     &http.Client{},
-		TeamService:    team_service.NewTeamService(repo, kubeClient),
-		ProjectService: project_service.NewProjectService(repo, kubeClient),
-		ServiceService: service_service.NewServiceService(repo, githubClient),
+		GithubClient:    githubClient,
+		StringCache:     cache.NewStringCache(valkeyClient, "unbind"),
+		HttpClient:      &http.Client{},
+		BuildController: buildctl.NewBuildController(ctx, kubeClient, valkeyClient, repo),
+		TeamService:     team_service.NewTeamService(repo, kubeClient),
+		ProjectService:  project_service.NewProjectService(repo, kubeClient),
+		ServiceService:  service_service.NewServiceService(repo, githubClient),
 	}
 
 	// New chi router
@@ -473,7 +480,33 @@ func startAPI(cfg *config.Config) {
 	// Start the server
 	addr := ":8089"
 	log.Infof("Starting server on %s\n", addr)
-	log.Fatal(http.ListenAndServe(addr, r))
+
+	server := &http.Server{
+		Addr:    addr,
+		Handler: r,
+	}
+
+	// Start the server in a goroutine
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	// Wait for context cancellation (from signal handler)
+	<-ctx.Done()
+	log.Info("Shutting down server...")
+
+	// Create a shutdown context with timeout
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	// Shutdown the HTTP server
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("Server shutdown error: %v", err)
+	}
+
+	log.Info("Server gracefully stopped")
 }
 
 func main() {

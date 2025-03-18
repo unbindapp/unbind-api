@@ -11,8 +11,9 @@ import (
 )
 
 type KubeClient struct {
-	config *config.Config
-	client *dynamic.DynamicClient
+	config    *config.Config
+	client    *dynamic.DynamicClient
+	clientset *kubernetes.Clientset
 }
 
 func NewKubeClient(cfg *config.Config) *KubeClient {
@@ -33,14 +34,20 @@ func NewKubeClient(cfg *config.Config) *KubeClient {
 		}
 	}
 
-	clientset, err := dynamic.NewForConfig(kubeConfig)
+	dynamicClient, err := dynamic.NewForConfig(kubeConfig)
+	if err != nil {
+		log.Fatalf("Error creating clientset: %v", err)
+	}
+
+	clientSet, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		log.Fatalf("Error creating clientset: %v", err)
 	}
 
 	return &KubeClient{
-		config: cfg,
-		client: clientset,
+		config:    cfg,
+		client:    dynamicClient,
+		clientset: clientSet,
 	}
 }
 

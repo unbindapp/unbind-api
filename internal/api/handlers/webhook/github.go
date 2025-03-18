@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/valkey-io/valkey-go"
 )
@@ -249,9 +251,9 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			return &GithubWebhookOutput{}, nil
 		}
 		repoName := e.Repo.GetName()
-		//repoUrl := e.Repo.GetCloneURL()
+		repoUrl := e.Repo.GetCloneURL()
 		installationID := e.Installation.GetID()
-		AppID := e.Installation.GetAppID()
+		appID := e.Installation.GetAppID()
 		ref := e.GetRef()
 
 		// Get the installation
@@ -265,8 +267,8 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			return nil, huma.Error500InternalServerError("Failed to get installation")
 		}
 
-		if installation.GithubAppID != AppID {
-			log.Info("Received push event for different app", "app", AppID, "expected", installation.GithubAppID)
+		if installation.GithubAppID != appID {
+			log.Info("Received push event for different app", "app", appID, "expected", installation.GithubAppID)
 			return &GithubWebhookOutput{}, nil
 		}
 
@@ -291,6 +293,42 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 		}
 
 		// Trigger builds for each service
+		for _, service := range servicesToBuild {
+			// Get private key for the service's github app.
+			privKey, err := self.srv.Repository.Service().GetGithubPrivateKey(ctx, service.ID)
+			if err != nil {
+				log.Error("Error getting github private key", "err", err)
+				return nil, huma.Error500InternalServerError("Failed to get github private key")
+			}
+
+			// Create environment for build image
+			env := map[string]string{
+				"GITHUB_INSTALLATION_ID":      strconv.Itoa(int(installationID)),
+				"GITHUB_APP_ID":               strconv.Itoa(int(appID)),
+				"GITHUB_PRIVATE_KEY":          privKey,
+				"GITHUB_REPO_URL":             repoUrl,
+				"GIT_REF":                     ref,
+				"CONTAINER_REGISTRY_HOST":     self.srv.Cfg.ContainerRegistryHost,
+				"CONTAINER_REGISTRY_USER":     self.srv.Cfg.ContainerRegistryUser,
+				"CONTAINER_REGISTRY_PASSWORD": self.srv.Cfg.ContainerRegistryPassword,
+			}
+
+			log.Info("Enqueuing build", "repo", repoName, "branch", ref, "serviceID", service.ID, "installationID", installationID, "appID", appID, "repoUrl", repoUrl)
+			jobID, err := self.srv.BuildController.EnqueueBuildJob(
+				ctx,
+				buildctl.BuildJobRequest{
+					ServiceID:   service.ID,
+					Environment: env,
+				},
+			)
+
+			if err != nil {
+				log.Error("Error enqueuing build job", "err", err)
+				return nil, huma.Error500InternalServerError("Failed to enqueue build job")
+			}
+
+			log.Info("Enqueued build job", "jobID", jobID)
+		}
 	}
 
 	return &GithubWebhookOutput{}, nil

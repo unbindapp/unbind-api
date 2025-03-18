@@ -5,6 +5,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	buildjob_repo "github.com/unbindapp/unbind-api/internal/repositories/buildjob"
 	environment_repo "github.com/unbindapp/unbind-api/internal/repositories/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repositories/github"
 	group_repo "github.com/unbindapp/unbind-api/internal/repositories/group"
@@ -31,6 +32,7 @@ type Repositories struct {
 	permissions permissions_repo.PermissionsRepositoryInterface
 	environment environment_repo.EnvironmentRepositoryInterface
 	service     service_repo.ServiceRepositoryInterface
+	buildJob    buildjob_repo.BuildJobRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -45,6 +47,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
 	environmentRepo := environment_repo.NewEnvironmentRepository(db)
 	serviceRepo := service_repo.NewServiceRepository(db)
+	buildJobRepo := buildjob_repo.NewBuildJobRepository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -57,6 +60,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		permissions: permissionsRepo,
 		environment: environmentRepo,
 		service:     serviceRepo,
+		buildJob:    buildJobRepo,
 	}
 }
 
@@ -108,6 +112,11 @@ func (r *Repositories) Environment() environment_repo.EnvironmentRepositoryInter
 // Service returns the Service repository
 func (r *Repositories) Service() service_repo.ServiceRepositoryInterface {
 	return r.service
+}
+
+// BuildJob returns the BuildJob repository
+func (r *Repositories) BuildJob() buildjob_repo.BuildJobRepositoryInterface {
+	return r.buildJob
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {

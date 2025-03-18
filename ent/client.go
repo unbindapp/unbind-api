@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/unbindapp/unbind-api/ent/buildjob"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
@@ -39,6 +40,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// BuildJob is the client for interacting with the BuildJob builders.
+	BuildJob *BuildJobClient
 	// Deployment is the client for interacting with the Deployment builders.
 	Deployment *DeploymentClient
 	// Environment is the client for interacting with the Environment builders.
@@ -78,6 +81,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.BuildJob = NewBuildJobClient(c.config)
 	c.Deployment = NewDeploymentClient(c.config)
 	c.Environment = NewEnvironmentClient(c.config)
 	c.GithubApp = NewGithubAppClient(c.config)
@@ -184,6 +188,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		BuildJob:           NewBuildJobClient(cfg),
 		Deployment:         NewDeploymentClient(cfg),
 		Environment:        NewEnvironmentClient(cfg),
 		GithubApp:          NewGithubAppClient(cfg),
@@ -217,6 +222,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		BuildJob:           NewBuildJobClient(cfg),
 		Deployment:         NewDeploymentClient(cfg),
 		Environment:        NewEnvironmentClient(cfg),
 		GithubApp:          NewGithubAppClient(cfg),
@@ -237,7 +243,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Deployment.
+//		BuildJob.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -260,9 +266,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation, c.Group,
-		c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project, c.Service,
-		c.ServiceConfig, c.Team, c.User,
+		c.BuildJob, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
+		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
+		c.Service, c.ServiceConfig, c.Team, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -272,9 +278,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation, c.Group,
-		c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project, c.Service,
-		c.ServiceConfig, c.Team, c.User,
+		c.BuildJob, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
+		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
+		c.Service, c.ServiceConfig, c.Team, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -283,6 +289,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *BuildJobMutation:
+		return c.BuildJob.mutate(ctx, m)
 	case *DeploymentMutation:
 		return c.Deployment.mutate(ctx, m)
 	case *EnvironmentMutation:
@@ -313,6 +321,155 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// BuildJobClient is a client for the BuildJob schema.
+type BuildJobClient struct {
+	config
+}
+
+// NewBuildJobClient returns a client for the BuildJob from the given config.
+func NewBuildJobClient(c config) *BuildJobClient {
+	return &BuildJobClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `buildjob.Hooks(f(g(h())))`.
+func (c *BuildJobClient) Use(hooks ...Hook) {
+	c.hooks.BuildJob = append(c.hooks.BuildJob, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `buildjob.Intercept(f(g(h())))`.
+func (c *BuildJobClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BuildJob = append(c.inters.BuildJob, interceptors...)
+}
+
+// Create returns a builder for creating a BuildJob entity.
+func (c *BuildJobClient) Create() *BuildJobCreate {
+	mutation := newBuildJobMutation(c.config, OpCreate)
+	return &BuildJobCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BuildJob entities.
+func (c *BuildJobClient) CreateBulk(builders ...*BuildJobCreate) *BuildJobCreateBulk {
+	return &BuildJobCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BuildJobClient) MapCreateBulk(slice any, setFunc func(*BuildJobCreate, int)) *BuildJobCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BuildJobCreateBulk{err: fmt.Errorf("calling to BuildJobClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BuildJobCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BuildJobCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BuildJob.
+func (c *BuildJobClient) Update() *BuildJobUpdate {
+	mutation := newBuildJobMutation(c.config, OpUpdate)
+	return &BuildJobUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BuildJobClient) UpdateOne(bj *BuildJob) *BuildJobUpdateOne {
+	mutation := newBuildJobMutation(c.config, OpUpdateOne, withBuildJob(bj))
+	return &BuildJobUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BuildJobClient) UpdateOneID(id uuid.UUID) *BuildJobUpdateOne {
+	mutation := newBuildJobMutation(c.config, OpUpdateOne, withBuildJobID(id))
+	return &BuildJobUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BuildJob.
+func (c *BuildJobClient) Delete() *BuildJobDelete {
+	mutation := newBuildJobMutation(c.config, OpDelete)
+	return &BuildJobDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BuildJobClient) DeleteOne(bj *BuildJob) *BuildJobDeleteOne {
+	return c.DeleteOneID(bj.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BuildJobClient) DeleteOneID(id uuid.UUID) *BuildJobDeleteOne {
+	builder := c.Delete().Where(buildjob.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BuildJobDeleteOne{builder}
+}
+
+// Query returns a query builder for BuildJob.
+func (c *BuildJobClient) Query() *BuildJobQuery {
+	return &BuildJobQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBuildJob},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BuildJob entity by its id.
+func (c *BuildJobClient) Get(ctx context.Context, id uuid.UUID) (*BuildJob, error) {
+	return c.Query().Where(buildjob.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BuildJobClient) GetX(ctx context.Context, id uuid.UUID) *BuildJob {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryService queries the service edge of a BuildJob.
+func (c *BuildJobClient) QueryService(bj *BuildJob) *ServiceQuery {
+	query := (&ServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := bj.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(buildjob.Table, buildjob.FieldID, id),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, buildjob.ServiceTable, buildjob.ServiceColumn),
+		)
+		fromV = sqlgraph.Neighbors(bj.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BuildJobClient) Hooks() []Hook {
+	return c.hooks.BuildJob
+}
+
+// Interceptors returns the client interceptors.
+func (c *BuildJobClient) Interceptors() []Interceptor {
+	return c.inters.BuildJob
+}
+
+func (c *BuildJobClient) mutate(ctx context.Context, m *BuildJobMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BuildJobCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BuildJobUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BuildJobUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BuildJobDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BuildJob mutation op: %q", m.Op())
 	}
 }
 
@@ -2026,6 +2183,22 @@ func (c *ServiceClient) QueryServiceConfig(s *Service) *ServiceConfigQuery {
 	return query
 }
 
+// QueryBuildJobs queries the build_jobs edge of a Service.
+func (c *ServiceClient) QueryBuildJobs(s *Service) *BuildJobQuery {
+	query := (&BuildJobClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(buildjob.Table, buildjob.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, service.BuildJobsTable, service.BuildJobsColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ServiceClient) Hooks() []Hook {
 	return c.hooks.Service
@@ -2597,12 +2770,12 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Deployment, Environment, GithubApp, GithubInstallation, Group, JWTKey,
+		BuildJob, Deployment, Environment, GithubApp, GithubInstallation, Group, JWTKey,
 		Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig, Team,
 		User []ent.Hook
 	}
 	inters struct {
-		Deployment, Environment, GithubApp, GithubInstallation, Group, JWTKey,
+		BuildJob, Deployment, Environment, GithubApp, GithubInstallation, Group, JWTKey,
 		Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig, Team,
 		User []ent.Interceptor
 	}

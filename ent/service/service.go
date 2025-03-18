@@ -42,6 +42,8 @@ const (
 	EdgeGithubInstallation = "github_installation"
 	// EdgeServiceConfig holds the string denoting the service_config edge name in mutations.
 	EdgeServiceConfig = "service_config"
+	// EdgeBuildJobs holds the string denoting the build_jobs edge name in mutations.
+	EdgeBuildJobs = "build_jobs"
 	// Table holds the table name of the service in the database.
 	Table = "services"
 	// EnvironmentTable is the table that holds the environment relation/edge.
@@ -65,6 +67,13 @@ const (
 	ServiceConfigInverseTable = "service_configs"
 	// ServiceConfigColumn is the table column denoting the service_config relation/edge.
 	ServiceConfigColumn = "service_id"
+	// BuildJobsTable is the table that holds the build_jobs relation/edge.
+	BuildJobsTable = "build_jobs"
+	// BuildJobsInverseTable is the table name for the BuildJob entity.
+	// It exists in this package in order to avoid circular dependency with the "buildjob" package.
+	BuildJobsInverseTable = "build_jobs"
+	// BuildJobsColumn is the table column denoting the build_jobs relation/edge.
+	BuildJobsColumn = "service_id"
 )
 
 // Columns holds all SQL columns for service fields.
@@ -234,6 +243,20 @@ func ByServiceConfigField(field string, opts ...sql.OrderTermOption) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newServiceConfigStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByBuildJobsCount orders the results by build_jobs count.
+func ByBuildJobsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBuildJobsStep(), opts...)
+	}
+}
+
+// ByBuildJobs orders the results by build_jobs terms.
+func ByBuildJobs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBuildJobsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newEnvironmentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -253,5 +276,12 @@ func newServiceConfigStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ServiceConfigInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, ServiceConfigTable, ServiceConfigColumn),
+	)
+}
+func newBuildJobsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BuildJobsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BuildJobsTable, BuildJobsColumn),
 	)
 }

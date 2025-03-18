@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/buildjob"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -168,6 +169,21 @@ func (sc *ServiceCreate) SetNillableServiceConfigID(id *uuid.UUID) *ServiceCreat
 // SetServiceConfig sets the "service_config" edge to the ServiceConfig entity.
 func (sc *ServiceCreate) SetServiceConfig(s *ServiceConfig) *ServiceCreate {
 	return sc.SetServiceConfigID(s.ID)
+}
+
+// AddBuildJobIDs adds the "build_jobs" edge to the BuildJob entity by IDs.
+func (sc *ServiceCreate) AddBuildJobIDs(ids ...uuid.UUID) *ServiceCreate {
+	sc.mutation.AddBuildJobIDs(ids...)
+	return sc
+}
+
+// AddBuildJobs adds the "build_jobs" edges to the BuildJob entity.
+func (sc *ServiceCreate) AddBuildJobs(b ...*BuildJob) *ServiceCreate {
+	ids := make([]uuid.UUID, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return sc.AddBuildJobIDs(ids...)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -371,6 +387,22 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.BuildJobsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.BuildJobsTable,
+			Columns: []string{service.BuildJobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

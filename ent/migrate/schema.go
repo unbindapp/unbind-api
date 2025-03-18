@@ -9,6 +9,34 @@ import (
 )
 
 var (
+	// BuildJobsColumns holds the columns for the "build_jobs" table.
+	BuildJobsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "running", "completed", "cancelled", "failed"}},
+		{Name: "error", Type: field.TypeString, Nullable: true},
+		{Name: "started_at", Type: field.TypeTime, Nullable: true},
+		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "kubernetes_job_name", Type: field.TypeString, Nullable: true},
+		{Name: "kubernetes_job_status", Type: field.TypeString, Nullable: true},
+		{Name: "attempts", Type: field.TypeInt, Default: 0},
+		{Name: "service_id", Type: field.TypeUUID},
+	}
+	// BuildJobsTable holds the schema information for the "build_jobs" table.
+	BuildJobsTable = &schema.Table{
+		Name:       "build_jobs",
+		Columns:    BuildJobsColumns,
+		PrimaryKey: []*schema.Column{BuildJobsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "build_jobs_services_build_jobs",
+				Columns:    []*schema.Column{BuildJobsColumns[10]},
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// DeploymentsColumns holds the columns for the "deployments" table.
 	DeploymentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -421,6 +449,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		BuildJobsTable,
 		DeploymentsTable,
 		EnvironmentsTable,
 		GithubAppsTable,
@@ -442,6 +471,10 @@ var (
 )
 
 func init() {
+	BuildJobsTable.ForeignKeys[0].RefTable = ServicesTable
+	BuildJobsTable.Annotation = &entsql.Annotation{
+		Table: "build_jobs",
+	}
 	EnvironmentsTable.ForeignKeys[0].RefTable = ProjectsTable
 	EnvironmentsTable.Annotation = &entsql.Annotation{
 		Table: "environments",

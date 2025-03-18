@@ -615,6 +615,29 @@ func HasServiceConfigWith(preds ...predicate.ServiceConfig) predicate.Service {
 	})
 }
 
+// HasBuildJobs applies the HasEdge predicate on the "build_jobs" edge.
+func HasBuildJobs() predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BuildJobsTable, BuildJobsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBuildJobsWith applies the HasEdge predicate on the "build_jobs" edge with a given conditions (other predicates).
+func HasBuildJobsWith(preds ...predicate.BuildJob) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := newBuildJobsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Service) predicate.Service {
 	return predicate.Service(sql.AndPredicates(predicates...))

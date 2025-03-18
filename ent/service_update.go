@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/buildjob"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -198,6 +199,21 @@ func (su *ServiceUpdate) SetServiceConfig(s *ServiceConfig) *ServiceUpdate {
 	return su.SetServiceConfigID(s.ID)
 }
 
+// AddBuildJobIDs adds the "build_jobs" edge to the BuildJob entity by IDs.
+func (su *ServiceUpdate) AddBuildJobIDs(ids ...uuid.UUID) *ServiceUpdate {
+	su.mutation.AddBuildJobIDs(ids...)
+	return su
+}
+
+// AddBuildJobs adds the "build_jobs" edges to the BuildJob entity.
+func (su *ServiceUpdate) AddBuildJobs(b ...*BuildJob) *ServiceUpdate {
+	ids := make([]uuid.UUID, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return su.AddBuildJobIDs(ids...)
+}
+
 // Mutation returns the ServiceMutation object of the builder.
 func (su *ServiceUpdate) Mutation() *ServiceMutation {
 	return su.mutation
@@ -219,6 +235,27 @@ func (su *ServiceUpdate) ClearGithubInstallation() *ServiceUpdate {
 func (su *ServiceUpdate) ClearServiceConfig() *ServiceUpdate {
 	su.mutation.ClearServiceConfig()
 	return su
+}
+
+// ClearBuildJobs clears all "build_jobs" edges to the BuildJob entity.
+func (su *ServiceUpdate) ClearBuildJobs() *ServiceUpdate {
+	su.mutation.ClearBuildJobs()
+	return su
+}
+
+// RemoveBuildJobIDs removes the "build_jobs" edge to BuildJob entities by IDs.
+func (su *ServiceUpdate) RemoveBuildJobIDs(ids ...uuid.UUID) *ServiceUpdate {
+	su.mutation.RemoveBuildJobIDs(ids...)
+	return su
+}
+
+// RemoveBuildJobs removes "build_jobs" edges to BuildJob entities.
+func (su *ServiceUpdate) RemoveBuildJobs(b ...*BuildJob) *ServiceUpdate {
+	ids := make([]uuid.UUID, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return su.RemoveBuildJobIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -405,6 +442,51 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.BuildJobsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.BuildJobsTable,
+			Columns: []string{service.BuildJobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedBuildJobsIDs(); len(nodes) > 0 && !su.mutation.BuildJobsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.BuildJobsTable,
+			Columns: []string{service.BuildJobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.BuildJobsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.BuildJobsTable,
+			Columns: []string{service.BuildJobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -599,6 +681,21 @@ func (suo *ServiceUpdateOne) SetServiceConfig(s *ServiceConfig) *ServiceUpdateOn
 	return suo.SetServiceConfigID(s.ID)
 }
 
+// AddBuildJobIDs adds the "build_jobs" edge to the BuildJob entity by IDs.
+func (suo *ServiceUpdateOne) AddBuildJobIDs(ids ...uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.AddBuildJobIDs(ids...)
+	return suo
+}
+
+// AddBuildJobs adds the "build_jobs" edges to the BuildJob entity.
+func (suo *ServiceUpdateOne) AddBuildJobs(b ...*BuildJob) *ServiceUpdateOne {
+	ids := make([]uuid.UUID, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return suo.AddBuildJobIDs(ids...)
+}
+
 // Mutation returns the ServiceMutation object of the builder.
 func (suo *ServiceUpdateOne) Mutation() *ServiceMutation {
 	return suo.mutation
@@ -620,6 +717,27 @@ func (suo *ServiceUpdateOne) ClearGithubInstallation() *ServiceUpdateOne {
 func (suo *ServiceUpdateOne) ClearServiceConfig() *ServiceUpdateOne {
 	suo.mutation.ClearServiceConfig()
 	return suo
+}
+
+// ClearBuildJobs clears all "build_jobs" edges to the BuildJob entity.
+func (suo *ServiceUpdateOne) ClearBuildJobs() *ServiceUpdateOne {
+	suo.mutation.ClearBuildJobs()
+	return suo
+}
+
+// RemoveBuildJobIDs removes the "build_jobs" edge to BuildJob entities by IDs.
+func (suo *ServiceUpdateOne) RemoveBuildJobIDs(ids ...uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.RemoveBuildJobIDs(ids...)
+	return suo
+}
+
+// RemoveBuildJobs removes "build_jobs" edges to BuildJob entities.
+func (suo *ServiceUpdateOne) RemoveBuildJobs(b ...*BuildJob) *ServiceUpdateOne {
+	ids := make([]uuid.UUID, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return suo.RemoveBuildJobIDs(ids...)
 }
 
 // Where appends a list predicates to the ServiceUpdate builder.
@@ -836,6 +954,51 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.BuildJobsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.BuildJobsTable,
+			Columns: []string{service.BuildJobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedBuildJobsIDs(); len(nodes) > 0 && !suo.mutation.BuildJobsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.BuildJobsTable,
+			Columns: []string{service.BuildJobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.BuildJobsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.BuildJobsTable,
+			Columns: []string{service.BuildJobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

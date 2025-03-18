@@ -18,4 +18,5 @@ type ServiceRepositoryInterface interface {
 	// Create the service
 	Create(ctx context.Context, tx repository.TxInterface, displayName string, description string, serviceType service.Type, subtype service.Subtype, environmentID uuid.UUID, gitHubInstallationID *int64, gitRepository *string) (*ent.Service, error)
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
+	GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error)
 }

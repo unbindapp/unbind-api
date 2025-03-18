@@ -56,9 +56,11 @@ type ServiceEdges struct {
 	GithubInstallation *GithubInstallation `json:"github_installation,omitempty"`
 	// ServiceConfig holds the value of the service_config edge.
 	ServiceConfig *ServiceConfig `json:"service_config,omitempty"`
+	// BuildJobs holds the value of the build_jobs edge.
+	BuildJobs []*BuildJob `json:"build_jobs,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // EnvironmentOrErr returns the Environment value or an error if the edge
@@ -92,6 +94,15 @@ func (e ServiceEdges) ServiceConfigOrErr() (*ServiceConfig, error) {
 		return nil, &NotFoundError{label: serviceconfig.Label}
 	}
 	return nil, &NotLoadedError{edge: "service_config"}
+}
+
+// BuildJobsOrErr returns the BuildJobs value or an error if the edge
+// was not loaded in eager-loading.
+func (e ServiceEdges) BuildJobsOrErr() ([]*BuildJob, error) {
+	if e.loadedTypes[3] {
+		return e.BuildJobs, nil
+	}
+	return nil, &NotLoadedError{edge: "build_jobs"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -216,6 +227,11 @@ func (s *Service) QueryGithubInstallation() *GithubInstallationQuery {
 // QueryServiceConfig queries the "service_config" edge of the Service entity.
 func (s *Service) QueryServiceConfig() *ServiceConfigQuery {
 	return NewServiceClient(s.config).QueryServiceConfig(s)
+}
+
+// QueryBuildJobs queries the "build_jobs" edge of the Service entity.
+func (s *Service) QueryBuildJobs() *BuildJobQuery {
+	return NewServiceClient(s.config).QueryBuildJobs(s)
 }
 
 // Update returns a builder for updating this Service.

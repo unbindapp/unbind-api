@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/buildjob"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -30,6 +31,7 @@ type ServiceQuery struct {
 	withEnvironment        *EnvironmentQuery
 	withGithubInstallation *GithubInstallationQuery
 	withServiceConfig      *ServiceConfigQuery
+	withBuildJobs          *BuildJobQuery
 	modifiers              []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -126,6 +128,28 @@ func (sq *ServiceQuery) QueryServiceConfig() *ServiceConfigQuery {
 			sqlgraph.From(service.Table, service.FieldID, selector),
 			sqlgraph.To(serviceconfig.Table, serviceconfig.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, service.ServiceConfigTable, service.ServiceConfigColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBuildJobs chains the current query on the "build_jobs" edge.
+func (sq *ServiceQuery) QueryBuildJobs() *BuildJobQuery {
+	query := (&BuildJobClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, selector),
+			sqlgraph.To(buildjob.Table, buildjob.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, service.BuildJobsTable, service.BuildJobsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -328,6 +352,7 @@ func (sq *ServiceQuery) Clone() *ServiceQuery {
 		withEnvironment:        sq.withEnvironment.Clone(),
 		withGithubInstallation: sq.withGithubInstallation.Clone(),
 		withServiceConfig:      sq.withServiceConfig.Clone(),
+		withBuildJobs:          sq.withBuildJobs.Clone(),
 		// clone intermediate query.
 		sql:       sq.sql.Clone(),
 		path:      sq.path,
@@ -365,6 +390,17 @@ func (sq *ServiceQuery) WithServiceConfig(opts ...func(*ServiceConfigQuery)) *Se
 		opt(query)
 	}
 	sq.withServiceConfig = query
+	return sq
+}
+
+// WithBuildJobs tells the query-builder to eager-load the nodes that are connected to
+// the "build_jobs" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ServiceQuery) WithBuildJobs(opts ...func(*BuildJobQuery)) *ServiceQuery {
+	query := (&BuildJobClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withBuildJobs = query
 	return sq
 }
 
@@ -446,10 +482,11 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 	var (
 		nodes       = []*Service{}
 		_spec       = sq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			sq.withEnvironment != nil,
 			sq.withGithubInstallation != nil,
 			sq.withServiceConfig != nil,
+			sq.withBuildJobs != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -488,6 +525,13 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 	if query := sq.withServiceConfig; query != nil {
 		if err := sq.loadServiceConfig(ctx, query, nodes, nil,
 			func(n *Service, e *ServiceConfig) { n.Edges.ServiceConfig = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withBuildJobs; query != nil {
+		if err := sq.loadBuildJobs(ctx, query, nodes,
+			func(n *Service) { n.Edges.BuildJobs = []*BuildJob{} },
+			func(n *Service, e *BuildJob) { n.Edges.BuildJobs = append(n.Edges.BuildJobs, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -567,6 +611,36 @@ func (sq *ServiceQuery) loadServiceConfig(ctx context.Context, query *ServiceCon
 	}
 	query.Where(predicate.ServiceConfig(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(service.ServiceConfigColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ServiceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "service_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (sq *ServiceQuery) loadBuildJobs(ctx context.Context, query *BuildJobQuery, nodes []*Service, init func(*Service), assign func(*Service, *BuildJob)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Service)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(buildjob.FieldServiceID)
+	}
+	query.Where(predicate.BuildJob(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(service.BuildJobsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
