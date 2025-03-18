@@ -70,12 +70,15 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 		if err != nil {
 			return err
 		}
+
+		defaultEnvName := "production"
+		defaultEnvDescription := "Default production environment"
 		// Create a default environment
-		name, err := utils.GenerateSlug("production")
+		name, err := utils.GenerateSlug(defaultEnvName)
 		if err != nil {
 			return err
 		}
-		environment, err = self.repo.Environment().Create(ctx, tx, name, "Production", "Default production environment", project.ID)
+		environment, err = self.repo.Environment().Create(ctx, tx, name, defaultEnvName, defaultEnvDescription, project.ID)
 		if err != nil {
 			return err
 		}
