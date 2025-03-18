@@ -8,14 +8,14 @@ import (
 )
 
 type ProjectResponse struct {
-	ID           uuid.UUID             `json:"id"`
-	Name         string                `json:"name"`
-	DisplayName  string                `json:"display_name"`
-	Description  string                `json:"description"`
-	Status       string                `json:"status"`
-	TeamID       uuid.UUID             `json:"team_id"`
-	CreatedAt    time.Time             `json:"created_at"`
-	Environments []EnvironmentResponse `json:"environments"`
+	ID           uuid.UUID              `json:"id"`
+	Name         string                 `json:"name"`
+	DisplayName  string                 `json:"display_name"`
+	Description  string                 `json:"description"`
+	Status       string                 `json:"status"`
+	TeamID       uuid.UUID              `json:"team_id"`
+	CreatedAt    time.Time              `json:"created_at"`
+	Environments []*EnvironmentResponse `json:"environments"`
 }
 
 // TransformProjectEntity transforms an ent.Project entity into a ProjectResponse
