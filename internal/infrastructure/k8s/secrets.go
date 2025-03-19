@@ -7,13 +7,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 // GetOrCreateSecret retrieves an existing secret or creates a new one if it doesn't exist
 // Returns the secret and a boolean indicating if it was created (true) or retrieved (false)
-func (self *KubeClient) GetOrCreateSecret(ctx context.Context, name, namespace string) (*corev1.Secret, bool, error) {
+func (self *KubeClient) GetOrCreateSecret(ctx context.Context, name, namespace string, client *kubernetes.Clientset) (*corev1.Secret, bool, error) {
 	// Try to get the secret
-	secret, err := self.clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	secret, err := client.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err == nil {
 		// Secret exists, return it
 		return secret, false, nil
@@ -28,7 +29,7 @@ func (self *KubeClient) GetOrCreateSecret(ctx context.Context, name, namespace s
 		Type: corev1.SecretTypeOpaque,
 	}
 
-	createdSecret, err := self.clientset.CoreV1().Secrets(namespace).Create(ctx, newSecret, metav1.CreateOptions{})
+	createdSecret, err := client.CoreV1().Secrets(namespace).Create(ctx, newSecret, metav1.CreateOptions{})
 	if err != nil {
 		return nil, false, err
 	}
@@ -37,14 +38,14 @@ func (self *KubeClient) GetOrCreateSecret(ctx context.Context, name, namespace s
 }
 
 // GetSecret retrieves a secret by name in the given namespace
-func (self *KubeClient) GetSecret(ctx context.Context, name, namespace string) (*corev1.Secret, error) {
-	return self.clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+func (self *KubeClient) GetSecret(ctx context.Context, name, namespace string, client *kubernetes.Clientset) (*corev1.Secret, error) {
+	return client.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
 // UpdateSecret updates an existing secret with new data
-func (self *KubeClient) UpdateSecret(ctx context.Context, name, namespace string, data map[string][]byte) (*corev1.Secret, error) {
+func (self *KubeClient) UpdateSecret(ctx context.Context, name, namespace string, data map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error) {
 	// Get the current secret
-	secret, err := self.GetSecret(ctx, name, namespace)
+	secret, err := self.GetSecret(ctx, name, namespace, client)
 	if err != nil {
 		return nil, err
 	}
@@ -52,12 +53,12 @@ func (self *KubeClient) UpdateSecret(ctx context.Context, name, namespace string
 	// Update the data
 	secret.Data = data
 
-	return self.clientset.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+	return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
 }
 
 // GetSecretValue retrieves a specific key from a secret
-func (self *KubeClient) GetSecretValue(ctx context.Context, name, namespace, key string) ([]byte, error) {
-	secret, err := self.GetSecret(ctx, name, namespace)
+func (self *KubeClient) GetSecretValue(ctx context.Context, name, namespace, key string, client *kubernetes.Clientset) ([]byte, error) {
+	secret, err := self.GetSecret(ctx, name, namespace, client)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +72,8 @@ func (self *KubeClient) GetSecretValue(ctx context.Context, name, namespace, key
 }
 
 // GetSecretMap retrieves all key-value pairs from a secret as a map
-func (self *KubeClient) GetSecretMap(ctx context.Context, name, namespace string) (map[string][]byte, error) {
-	secret, err := self.GetSecret(ctx, name, namespace)
+func (self *KubeClient) GetSecretMap(ctx context.Context, name, namespace string, client *kubernetes.Clientset) (map[string][]byte, error) {
+	secret, err := self.GetSecret(ctx, name, namespace, client)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +82,8 @@ func (self *KubeClient) GetSecretMap(ctx context.Context, name, namespace string
 }
 
 // DeleteSecret deletes a secret by name in the given namespace
-func (self *KubeClient) DeleteSecret(ctx context.Context, name, namespace string) error {
-	err := self.clientset.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+func (self *KubeClient) DeleteSecret(ctx context.Context, name, namespace string, client *kubernetes.Clientset) error {
+	err := client.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
@@ -90,9 +91,9 @@ func (self *KubeClient) DeleteSecret(ctx context.Context, name, namespace string
 }
 
 // AddSecretValues adds or updates specific keys in a secret without affecting other keys
-func (self *KubeClient) AddSecretValues(ctx context.Context, name, namespace string, values map[string][]byte) (*corev1.Secret, error) {
+func (self *KubeClient) AddSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error) {
 	// Get the current secret
-	secret, err := self.GetSecret(ctx, name, namespace)
+	secret, err := self.GetSecret(ctx, name, namespace, client)
 	if err != nil {
 		return nil, err
 	}
@@ -107,5 +108,5 @@ func (self *KubeClient) AddSecretValues(ctx context.Context, name, namespace str
 		secret.Data[k] = v
 	}
 
-	return self.clientset.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+	return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
 }

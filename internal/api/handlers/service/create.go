@@ -3,6 +3,7 @@ package service_handler
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/ent"
@@ -31,8 +32,9 @@ func (self *HandlerGroup) CreateService(ctx context.Context, input *CreateServic
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	createdService, err := self.srv.ServiceService.CreateService(ctx, user.ID, input.Body)
+	createdService, err := self.srv.ServiceService.CreateService(ctx, user.ID, input.Body, bearerToken)
 	if err != nil {
 		if errors.Is(err, errdefs.ErrInvalidInput) {
 			return nil, huma.Error400BadRequest(err.Error())

@@ -18,7 +18,7 @@ type DeleteProjectInput struct {
 	ProjectID uuid.UUID `validate:"required,uuid4"`
 }
 
-func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID uuid.UUID, input *DeleteProjectInput) error {
+func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID uuid.UUID, input *DeleteProjectInput, bearerToken string) error {
 	// Validate input
 	if err := validate.Validator().Struct(input); err != nil {
 		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
@@ -71,6 +71,12 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project not in team")
 	}
 
+	// Create kubernetes client
+	k8sClient, err := self.k8sClient.CreateClientWithToken(bearerToken)
+	if err != nil {
+		return err
+	}
+
 	// Delete the project
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		client := tx.Client()
@@ -79,12 +85,12 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		}
 
 		// Delete kubernetes secrets
-		if err := self.k8sClient.DeleteSecret(ctx, project.Edges.Environments[0].KubernetesSecret, project.Edges.Team.Namespace); err != nil {
+		if err := self.k8sClient.DeleteSecret(ctx, project.Edges.Environments[0].KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
 			return err
 		}
 
 		// Delete project secret
-		if err := self.k8sClient.DeleteSecret(ctx, project.KubernetesSecret, project.Edges.Team.Namespace); err != nil {
+		if err := self.k8sClient.DeleteSecret(ctx, project.KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
 			return err
 		}
 

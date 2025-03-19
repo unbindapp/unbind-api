@@ -21,7 +21,7 @@ type CreateProjectInput struct {
 	Description string    `validate:"required"`
 }
 
-func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID uuid.UUID, input *CreateProjectInput) (*models.ProjectResponse, error) {
+func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID uuid.UUID, input *CreateProjectInput, bearerToken string) (*models.ProjectResponse, error) {
 	// Validate input
 	if err := validate.Validator().Struct(input); err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
@@ -62,12 +62,18 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
+	// Create kubernetes client
+	client, err := self.k8sClient.CreateClientWithToken(bearerToken)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create the project
 	var project *ent.Project
 	var environment *ent.Environment
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Create secret for this project
-		secret, _, err := self.k8sClient.GetOrCreateSecret(ctx, input.Name, team.Namespace)
+		secret, _, err := self.k8sClient.GetOrCreateSecret(ctx, input.Name, team.Namespace, client)
 		if err != nil {
 			return err
 		}
@@ -85,7 +91,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 			return err
 		}
 		// Create secret for this environment
-		secret, _, err = self.k8sClient.GetOrCreateSecret(ctx, name, team.Namespace)
+		secret, _, err = self.k8sClient.GetOrCreateSecret(ctx, name, team.Namespace, client)
 		if err != nil {
 			return err
 		}

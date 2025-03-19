@@ -21,7 +21,7 @@ type UnbindTeam struct {
 
 // GetUnbindTeams returns a slice of UnbindTeam structs
 func (k *KubeClient) GetUnbindTeams(ctx context.Context, bearerToken string) ([]UnbindTeam, error) {
-	client, err := k.createClientWithToken(bearerToken)
+	client, err := k.CreateClientWithToken(bearerToken)
 	if err != nil {
 		log.Errorf("Error creating client with token: %v", err)
 		return nil, fmt.Errorf("error creating client with token: %v", err)

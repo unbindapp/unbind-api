@@ -3,6 +3,7 @@ package projects_handler
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -37,6 +38,7 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
 	// Generate name
 	name, err := utils.GenerateSlug(input.Body.DisplayName)
@@ -50,7 +52,7 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 		Name:        name,
 		DisplayName: input.Body.DisplayName,
 		Description: input.Body.Description,
-	})
+	}, bearerToken)
 	if err != nil {
 		if errors.Is(err, errdefs.ErrInvalidInput) {
 			return nil, huma.Error400BadRequest(err.Error())

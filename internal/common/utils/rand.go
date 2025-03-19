@@ -42,8 +42,8 @@ func GenerateSlug(displayName string) (string, error) {
 		slug = "untitled"
 	}
 
-	// Generate a random short ID (6 characters)
-	shortID, err := GenerateRandomSimpleID(6)
+	// Generate a random short ID
+	shortID, err := GenerateRandomSimpleID(12)
 	if err != nil {
 		return "", err
 	}

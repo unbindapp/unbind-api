@@ -51,7 +51,7 @@ func NewKubeClient(cfg *config.Config) *KubeClient {
 	}
 }
 
-func (k *KubeClient) createClientWithToken(token string) (*kubernetes.Clientset, error) {
+func (k *KubeClient) CreateClientWithToken(token string) (*kubernetes.Clientset, error) {
 	config := &rest.Config{
 		Host:        k.config.KubeProxyURL,
 		BearerToken: token,

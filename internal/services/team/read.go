@@ -50,7 +50,7 @@ func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearer
 	}
 
 	// Get teams from kubernetes
-	k8sTeams, err := self.k8sClient.GetUnbindTeams(ctx, bearerToken)
+	k8sTeams, err := self.k8s.GetUnbindTeams(ctx, bearerToken)
 	if err != nil {
 		return nil, err
 	}

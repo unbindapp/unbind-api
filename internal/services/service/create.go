@@ -46,7 +46,7 @@ type CreateServiceInput struct {
 }
 
 // CreateService creates a new service and its configuration
-func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *CreateServiceInput) (*models.ServiceResponse, error) {
+func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *CreateServiceInput, bearerToken string) (*models.ServiceResponse, error) {
 	// Validate input
 	if err := validate.Validator().Struct(input); err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
@@ -174,6 +174,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 	}
 
+	// Create kubernetes client
+	client, err := self.k8s.CreateClientWithToken(bearerToken)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create service and config in a transaction
 	var service *ent.Service
 	var serviceConfig *ent.ServiceConfig
@@ -236,7 +242,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Create kubernetes secret
-		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace)
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace, client)
 		if err != nil {
 			return fmt.Errorf("failed to create secret: %v", err)
 		}
