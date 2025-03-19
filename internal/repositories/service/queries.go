@@ -2,12 +2,15 @@ package service_repo
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
 func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error) {
@@ -40,4 +43,15 @@ func (self *ServiceRepository) GetGithubPrivateKey(ctx context.Context, serviceI
 	}
 
 	return app.PrivateKey, nil
+}
+
+func (self *ServiceRepository) CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	return db.ServiceConfig.Query().
+		Where(
+			serviceconfig.HostEqualFold(strings.ToLower(domain)),
+		).Count(ctx)
 }

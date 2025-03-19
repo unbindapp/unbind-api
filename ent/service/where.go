@@ -81,6 +81,16 @@ func Description(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldDescription, v))
 }
 
+// Runtime applies equality check predicate on the "runtime" field. It's identical to RuntimeEQ.
+func Runtime(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldRuntime, v))
+}
+
+// Framework applies equality check predicate on the "framework" field. It's identical to FrameworkEQ.
+func Framework(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldFramework, v))
+}
+
 // EnvironmentID applies equality check predicate on the "environment_id" field. It's identical to EnvironmentIDEQ.
 func EnvironmentID(v uuid.UUID) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldEnvironmentID, v))
@@ -401,24 +411,174 @@ func TypeNotIn(vs ...Type) predicate.Service {
 	return predicate.Service(sql.FieldNotIn(FieldType, vs...))
 }
 
-// SubtypeEQ applies the EQ predicate on the "subtype" field.
-func SubtypeEQ(v Subtype) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldSubtype, v))
+// BuilderEQ applies the EQ predicate on the "builder" field.
+func BuilderEQ(v Builder) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldBuilder, v))
 }
 
-// SubtypeNEQ applies the NEQ predicate on the "subtype" field.
-func SubtypeNEQ(v Subtype) predicate.Service {
-	return predicate.Service(sql.FieldNEQ(FieldSubtype, v))
+// BuilderNEQ applies the NEQ predicate on the "builder" field.
+func BuilderNEQ(v Builder) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldBuilder, v))
 }
 
-// SubtypeIn applies the In predicate on the "subtype" field.
-func SubtypeIn(vs ...Subtype) predicate.Service {
-	return predicate.Service(sql.FieldIn(FieldSubtype, vs...))
+// BuilderIn applies the In predicate on the "builder" field.
+func BuilderIn(vs ...Builder) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldBuilder, vs...))
 }
 
-// SubtypeNotIn applies the NotIn predicate on the "subtype" field.
-func SubtypeNotIn(vs ...Subtype) predicate.Service {
-	return predicate.Service(sql.FieldNotIn(FieldSubtype, vs...))
+// BuilderNotIn applies the NotIn predicate on the "builder" field.
+func BuilderNotIn(vs ...Builder) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldBuilder, vs...))
+}
+
+// RuntimeEQ applies the EQ predicate on the "runtime" field.
+func RuntimeEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldRuntime, v))
+}
+
+// RuntimeNEQ applies the NEQ predicate on the "runtime" field.
+func RuntimeNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldRuntime, v))
+}
+
+// RuntimeIn applies the In predicate on the "runtime" field.
+func RuntimeIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldRuntime, vs...))
+}
+
+// RuntimeNotIn applies the NotIn predicate on the "runtime" field.
+func RuntimeNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldRuntime, vs...))
+}
+
+// RuntimeGT applies the GT predicate on the "runtime" field.
+func RuntimeGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldRuntime, v))
+}
+
+// RuntimeGTE applies the GTE predicate on the "runtime" field.
+func RuntimeGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldRuntime, v))
+}
+
+// RuntimeLT applies the LT predicate on the "runtime" field.
+func RuntimeLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldRuntime, v))
+}
+
+// RuntimeLTE applies the LTE predicate on the "runtime" field.
+func RuntimeLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldRuntime, v))
+}
+
+// RuntimeContains applies the Contains predicate on the "runtime" field.
+func RuntimeContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldRuntime, v))
+}
+
+// RuntimeHasPrefix applies the HasPrefix predicate on the "runtime" field.
+func RuntimeHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldRuntime, v))
+}
+
+// RuntimeHasSuffix applies the HasSuffix predicate on the "runtime" field.
+func RuntimeHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldRuntime, v))
+}
+
+// RuntimeIsNil applies the IsNil predicate on the "runtime" field.
+func RuntimeIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldRuntime))
+}
+
+// RuntimeNotNil applies the NotNil predicate on the "runtime" field.
+func RuntimeNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldRuntime))
+}
+
+// RuntimeEqualFold applies the EqualFold predicate on the "runtime" field.
+func RuntimeEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldRuntime, v))
+}
+
+// RuntimeContainsFold applies the ContainsFold predicate on the "runtime" field.
+func RuntimeContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldRuntime, v))
+}
+
+// FrameworkEQ applies the EQ predicate on the "framework" field.
+func FrameworkEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldFramework, v))
+}
+
+// FrameworkNEQ applies the NEQ predicate on the "framework" field.
+func FrameworkNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldFramework, v))
+}
+
+// FrameworkIn applies the In predicate on the "framework" field.
+func FrameworkIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldFramework, vs...))
+}
+
+// FrameworkNotIn applies the NotIn predicate on the "framework" field.
+func FrameworkNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldFramework, vs...))
+}
+
+// FrameworkGT applies the GT predicate on the "framework" field.
+func FrameworkGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldFramework, v))
+}
+
+// FrameworkGTE applies the GTE predicate on the "framework" field.
+func FrameworkGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldFramework, v))
+}
+
+// FrameworkLT applies the LT predicate on the "framework" field.
+func FrameworkLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldFramework, v))
+}
+
+// FrameworkLTE applies the LTE predicate on the "framework" field.
+func FrameworkLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldFramework, v))
+}
+
+// FrameworkContains applies the Contains predicate on the "framework" field.
+func FrameworkContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldFramework, v))
+}
+
+// FrameworkHasPrefix applies the HasPrefix predicate on the "framework" field.
+func FrameworkHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldFramework, v))
+}
+
+// FrameworkHasSuffix applies the HasSuffix predicate on the "framework" field.
+func FrameworkHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldFramework, v))
+}
+
+// FrameworkIsNil applies the IsNil predicate on the "framework" field.
+func FrameworkIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldFramework))
+}
+
+// FrameworkNotNil applies the NotNil predicate on the "framework" field.
+func FrameworkNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldFramework))
+}
+
+// FrameworkEqualFold applies the EqualFold predicate on the "framework" field.
+func FrameworkEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldFramework, v))
+}
+
+// FrameworkContainsFold applies the ContainsFold predicate on the "framework" field.
+func FrameworkContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldFramework, v))
 }
 
 // EnvironmentIDEQ applies the EQ predicate on the "environment_id" field.

@@ -34,8 +34,12 @@ type Service struct {
 	Description string `json:"description,omitempty"`
 	// Type of service
 	Type service.Type `json:"type,omitempty"`
-	// Type of service
-	Subtype service.Subtype `json:"subtype,omitempty"`
+	// Builder holds the value of the "builder" field.
+	Builder service.Builder `json:"builder,omitempty"`
+	// Runtime (e.g. Go, Python, Node, Deno)
+	Runtime *string `json:"runtime,omitempty"`
+	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
+	Framework *string `json:"framework,omitempty"`
 	// EnvironmentID holds the value of the "environment_id" field.
 	EnvironmentID uuid.UUID `json:"environment_id,omitempty"`
 	// Optional reference to GitHub installation
@@ -112,7 +116,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldSubtype, service.FieldGitRepository:
+		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldRuntime, service.FieldFramework, service.FieldGitRepository:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -175,11 +179,25 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.Type = service.Type(value.String)
 			}
-		case service.FieldSubtype:
+		case service.FieldBuilder:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field subtype", values[i])
+				return fmt.Errorf("unexpected type %T for field builder", values[i])
 			} else if value.Valid {
-				s.Subtype = service.Subtype(value.String)
+				s.Builder = service.Builder(value.String)
+			}
+		case service.FieldRuntime:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field runtime", values[i])
+			} else if value.Valid {
+				s.Runtime = new(string)
+				*s.Runtime = value.String
+			}
+		case service.FieldFramework:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field framework", values[i])
+			} else if value.Valid {
+				s.Framework = new(string)
+				*s.Framework = value.String
 			}
 		case service.FieldEnvironmentID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -275,8 +293,18 @@ func (s *Service) String() string {
 	builder.WriteString("type=")
 	builder.WriteString(fmt.Sprintf("%v", s.Type))
 	builder.WriteString(", ")
-	builder.WriteString("subtype=")
-	builder.WriteString(fmt.Sprintf("%v", s.Subtype))
+	builder.WriteString("builder=")
+	builder.WriteString(fmt.Sprintf("%v", s.Builder))
+	builder.WriteString(", ")
+	if v := s.Runtime; v != nil {
+		builder.WriteString("runtime=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := s.Framework; v != nil {
+		builder.WriteString("framework=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("environment_id=")
 	builder.WriteString(fmt.Sprintf("%v", s.EnvironmentID))

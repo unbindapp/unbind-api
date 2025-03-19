@@ -17,7 +17,9 @@ func (self *ServiceRepository) Create(
 	displayName string,
 	description string,
 	serviceType service.Type,
-	subtype service.Subtype,
+	builder service.Builder,
+	runtime *string,
+	framework *string,
 	environmentID uuid.UUID,
 	gitHubInstallationID *int64,
 	gitRepository *string,
@@ -38,7 +40,9 @@ func (self *ServiceRepository) Create(
 		SetDisplayName(displayName).
 		SetDescription(description).
 		SetType(serviceType).
-		SetSubtype(subtype).
+		SetBuilder(builder).
+		SetNillableRuntime(runtime).
+		SetNillableFramework(framework).
 		SetEnvironmentID(environmentID).
 		SetNillableGithubInstallationID(gitHubInstallationID).
 		SetNillableGitRepository(gitRepository).

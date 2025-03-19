@@ -16,7 +16,8 @@ type ServiceRepositoryInterface interface {
 	// Create the service config
 	CreateConfig(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, gitBranch *string, port *int, host *string, replicas *int32, autoDeploy *bool, runCommand *string, public *bool, image *string) (*ent.ServiceConfig, error)
 	// Create the service
-	Create(ctx context.Context, tx repository.TxInterface, displayName string, description string, serviceType service.Type, subtype service.Subtype, environmentID uuid.UUID, gitHubInstallationID *int64, gitRepository *string) (*ent.Service, error)
+	Create(ctx context.Context, tx repository.TxInterface, displayName string, description string, serviceType service.Type, builder service.Builder, runtime *string, framework *string, environmentID uuid.UUID, gitHubInstallationID *int64, gitRepository *string) (*ent.Service, error)
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
 	GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error)
+	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error)
 }

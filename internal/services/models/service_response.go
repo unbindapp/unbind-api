@@ -15,7 +15,9 @@ type ServiceResponse struct {
 	DisplayName          string                 `json:"display_name"`
 	Description          string                 `json:"description"`
 	Type                 service.Type           `json:"type"`
-	Subtype              service.Subtype        `json:"subtype"`
+	Builder              service.Builder        `json:"builder"`
+	Runtime              *string                `json:"runtime,omitempty"`
+	Framework            *string                `json:"framework,omitempty"`
 	EnvironmentID        uuid.UUID              `json:"environment_id"`
 	GitHubInstallationID *int64                 `json:"github_installation_id,omitempty"`
 	GitRepository        *string                `json:"git_repository,omitempty"`
@@ -34,7 +36,9 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 			DisplayName:          entity.DisplayName,
 			Description:          entity.Description,
 			Type:                 entity.Type,
-			Subtype:              entity.Subtype,
+			Builder:              entity.Builder,
+			Runtime:              entity.Runtime,
+			Framework:            entity.Framework,
 			EnvironmentID:        entity.EnvironmentID,
 			GitHubInstallationID: entity.GithubInstallationID,
 			GitRepository:        entity.GitRepository,

@@ -61,3 +61,67 @@ func transformDomain(domain string) string {
 
 	return transformed
 }
+
+// Generate a default subdomain
+func GenerateSubdomain(displayName, environmentName, externalURL string) (string, error) {
+	// Extract the domain from externalURL (without protocol)
+	u, err := url.Parse(externalURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid external URL: %w", err)
+	}
+
+	domain := u.Hostname()
+
+	// Sanitize displayName and environmentName
+	sanitizedDisplay := sanitizeForSubdomain(displayName)
+	sanitizedEnv := sanitizeForSubdomain(environmentName)
+
+	// Check if we have valid components
+	if sanitizedEnv == "" && sanitizedDisplay == "" {
+		return "", fmt.Errorf("could not generate subdomain: both environment name and display name sanitized to empty strings")
+	}
+
+	// Create the subdomain pattern
+	var subdomain string
+	if sanitizedEnv != "" && sanitizedDisplay != "" {
+		subdomain = fmt.Sprintf("%s-%s", sanitizedEnv, sanitizedDisplay)
+	} else if sanitizedEnv != "" {
+		subdomain = sanitizedEnv
+	} else {
+		subdomain = sanitizedDisplay
+	}
+
+	// Ensure the subdomain is valid
+	if subdomain == "" {
+		return "", fmt.Errorf("could not generate a valid subdomain")
+	}
+
+	// Form the complete domain
+	fullDomain := fmt.Sprintf("%s.%s", subdomain, domain)
+
+	return fullDomain, nil
+}
+
+// sanitizeForSubdomain converts a string to a valid subdomain part
+// by replacing spaces with hyphens, converting to lowercase and removing invalid characters
+func sanitizeForSubdomain(s string) string {
+	// Replace spaces and underscores with hyphens
+	s = strings.ReplaceAll(s, " ", "-")
+	s = strings.ReplaceAll(s, "_", "-")
+
+	// Convert to lowercase
+	s = strings.ToLower(s)
+
+	// Keep only alphanumeric characters and hyphens
+	reg := regexp.MustCompile("[^a-z0-9-]")
+	s = reg.ReplaceAllString(s, "")
+
+	// Replace multiple consecutive hyphens with a single one
+	reg = regexp.MustCompile("-+")
+	s = reg.ReplaceAllString(s, "-")
+
+	// Remove leading and trailing hyphens
+	s = strings.Trim(s, "-")
+
+	return s
+}

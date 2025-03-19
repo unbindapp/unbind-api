@@ -163,6 +163,7 @@ type GithubRepositoryDetail struct {
 // GithubBranch contains information about a branch
 type GithubBranch struct {
 	Name      string `json:"name"`
+	Ref       string `json:"ref"`
 	Protected bool   `json:"protected"`
 	SHA       string `json:"sha"`
 }
@@ -170,6 +171,7 @@ type GithubBranch struct {
 // GithubTag contains information about a tag
 type GithubTag struct {
 	Name string `json:"name"`
+	Ref  string `json:"ref"`
 	SHA  string `json:"sha"`
 }
 
@@ -264,6 +266,7 @@ func (self *GithubClient) getRepositoryBranches(ctx context.Context, client *git
 				Name:      branch.GetName(),
 				Protected: branch.GetProtected(),
 				SHA:       branch.GetCommit().GetSHA(),
+				Ref:       fmt.Sprintf("refs/heads/%s", branch.GetName()),
 			})
 		}
 
@@ -292,6 +295,7 @@ func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.
 		for _, tag := range tags {
 			allTags = append(allTags, &GithubTag{
 				Name: tag.GetName(),
+				Ref:  fmt.Sprintf("refs/tags/%s", tag.GetName()), // Add the full Git ref
 				SHA:  tag.GetCommit().GetSHA(),
 			})
 		}
@@ -306,29 +310,29 @@ func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.
 }
 
 // VerifyRepositoryAccess checks if a repository is accessible via a specific installation
-func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (bool, error) {
+func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (canAccess bool, repoUrl string, err error) {
 	if installation == nil || installation.Edges.GithubApp == nil {
-		return false, fmt.Errorf("invalid installation: missing app edge or nil")
+		return false, "", fmt.Errorf("invalid installation: missing app edge or nil")
 	}
 
 	// Get authenticated client
 	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
 	if err != nil {
-		return false, fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
+		return false, "", fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
 	}
 
 	// See if we can access the repository
-	_, resp, err := authenticatedClient.Repositories.Get(ctx, owner, repo)
+	repoResult, resp, err := authenticatedClient.Repositories.Get(ctx, owner, repo)
 	if err == nil {
 		// Repository found and accessible
-		return true, nil
+		return true, repoResult.GetCloneURL(), nil
 	}
 
 	if resp != nil && resp.StatusCode == 404 {
 		// Repository either doesn't exist or installation doesn't have access
-		return false, nil
+		return false, "", nil
 	}
 
 	log.Errorf("Error verifying repository access: %v", err)
-	return false, nil
+	return false, "", nil
 }

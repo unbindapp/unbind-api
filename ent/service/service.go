@@ -28,8 +28,12 @@ const (
 	FieldDescription = "description"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
-	// FieldSubtype holds the string denoting the subtype field in the database.
-	FieldSubtype = "subtype"
+	// FieldBuilder holds the string denoting the builder field in the database.
+	FieldBuilder = "builder"
+	// FieldRuntime holds the string denoting the runtime field in the database.
+	FieldRuntime = "runtime"
+	// FieldFramework holds the string denoting the framework field in the database.
+	FieldFramework = "framework"
 	// FieldEnvironmentID holds the string denoting the environment_id field in the database.
 	FieldEnvironmentID = "environment_id"
 	// FieldGithubInstallationID holds the string denoting the github_installation_id field in the database.
@@ -85,7 +89,9 @@ var Columns = []string{
 	FieldDisplayName,
 	FieldDescription,
 	FieldType,
-	FieldSubtype,
+	FieldBuilder,
+	FieldRuntime,
+	FieldFramework,
 	FieldEnvironmentID,
 	FieldGithubInstallationID,
 	FieldGitRepository,
@@ -119,10 +125,8 @@ type Type string
 
 // Type values.
 const (
-	TypeDatabase Type = "database"
-	TypeAPI      Type = "api"
-	TypeWeb      Type = "web"
-	TypeCustom   Type = "custom"
+	TypeGit        Type = "git"
+	TypeDockerfile Type = "dockerfile"
 )
 
 func (_type Type) String() string {
@@ -132,36 +136,33 @@ func (_type Type) String() string {
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type Type) error {
 	switch _type {
-	case TypeDatabase, TypeAPI, TypeWeb, TypeCustom:
+	case TypeGit, TypeDockerfile:
 		return nil
 	default:
 		return fmt.Errorf("service: invalid enum value for type field: %q", _type)
 	}
 }
 
-// Subtype defines the type for the "subtype" enum field.
-type Subtype string
+// Builder defines the type for the "builder" enum field.
+type Builder string
 
-// Subtype values.
+// Builder values.
 const (
-	SubtypeReact Subtype = "react"
-	SubtypeGo    Subtype = "go"
-	SubtypeNode  Subtype = "node"
-	SubtypeNext  Subtype = "next"
-	SubtypeOther Subtype = "other"
+	BuilderRailpack Builder = "railpack"
+	BuilderDocker   Builder = "docker"
 )
 
-func (s Subtype) String() string {
-	return string(s)
+func (b Builder) String() string {
+	return string(b)
 }
 
-// SubtypeValidator is a validator for the "subtype" field enum values. It is called by the builders before save.
-func SubtypeValidator(s Subtype) error {
-	switch s {
-	case SubtypeReact, SubtypeGo, SubtypeNode, SubtypeNext, SubtypeOther:
+// BuilderValidator is a validator for the "builder" field enum values. It is called by the builders before save.
+func BuilderValidator(b Builder) error {
+	switch b {
+	case BuilderRailpack, BuilderDocker:
 		return nil
 	default:
-		return fmt.Errorf("service: invalid enum value for subtype field: %q", s)
+		return fmt.Errorf("service: invalid enum value for builder field: %q", b)
 	}
 }
 
@@ -203,9 +204,19 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
-// BySubtype orders the results by the subtype field.
-func BySubtype(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSubtype, opts...).ToFunc()
+// ByBuilder orders the results by the builder field.
+func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
+}
+
+// ByRuntime orders the results by the runtime field.
+func ByRuntime(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRuntime, opts...).ToFunc()
+}
+
+// ByFramework orders the results by the framework field.
+func ByFramework(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFramework, opts...).ToFunc()
 }
 
 // ByEnvironmentID orders the results by the environment_id field.

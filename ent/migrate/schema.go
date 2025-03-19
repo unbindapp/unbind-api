@@ -287,8 +287,10 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"database", "api", "web", "custom"}},
-		{Name: "subtype", Type: field.TypeEnum, Enums: []string{"react", "go", "node", "next", "other"}},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"git", "dockerfile"}},
+		{Name: "builder", Type: field.TypeEnum, Enums: []string{"railpack", "docker"}},
+		{Name: "runtime", Type: field.TypeString, Nullable: true},
+		{Name: "framework", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
@@ -301,13 +303,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[9]},
+				Columns:    []*schema.Column{ServicesColumns[11]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[10]},
+				Columns:    []*schema.Column{ServicesColumns[12]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

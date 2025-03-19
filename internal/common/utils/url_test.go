@@ -288,3 +288,143 @@ func TestJoinURLPaths(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateSubdomain(t *testing.T) {
+	tests := []struct {
+		name            string
+		displayName     string
+		environmentName string
+		externalURL     string
+		expected        string
+		expectError     bool
+	}{
+		{
+			name:            "Basic case",
+			displayName:     "React App",
+			environmentName: "Production",
+			externalURL:     "https://unbind.app",
+			expected:        "production-react-app.unbind.app",
+			expectError:     false,
+		},
+		{
+			name:            "With special characters",
+			displayName:     "React_App!@#",
+			environmentName: "Prod-Stage",
+			externalURL:     "https://unbind.app",
+			expected:        "prod-stage-react-app.unbind.app",
+			expectError:     false,
+		},
+		{
+			name:            "Lowercase conversion",
+			displayName:     "UPPERCASE APP",
+			environmentName: "DEV",
+			externalURL:     "https://unbind.app",
+			expected:        "dev-uppercase-app.unbind.app",
+			expectError:     false,
+		},
+		{
+			name:            "Multiple spaces and hyphens",
+			displayName:     "My  Cool   App",
+			environmentName: "Staging--Test",
+			externalURL:     "https://unbind.app",
+			expected:        "staging-test-my-cool-app.unbind.app",
+			expectError:     false,
+		},
+		{
+			name:            "With subdomain in external URL",
+			displayName:     "Auth Service",
+			environmentName: "Test",
+			externalURL:     "https://api.unbind.app",
+			expected:        "test-auth-service.api.unbind.app",
+			expectError:     false,
+		},
+		{
+			name:            "With port in external URL",
+			displayName:     "API",
+			environmentName: "Local",
+			externalURL:     "http://localhost:8089",
+			expected:        "local-api.localhost",
+			expectError:     false,
+		},
+		{
+			name:            "Invalid external URL",
+			displayName:     "App",
+			environmentName: "Dev",
+			externalURL:     "://invalid",
+			expected:        "",
+			expectError:     true,
+		},
+		{
+			name:            "Leading and trailing hyphens",
+			displayName:     "-Frontend-",
+			environmentName: "-Staging-",
+			externalURL:     "https://unbind.app",
+			expected:        "staging-frontend.unbind.app",
+			expectError:     false,
+		},
+		{
+			name:            "Non-alphanumeric characters only",
+			displayName:     "!@#$%^",
+			environmentName: "&*()_+",
+			externalURL:     "https://unbind.app",
+			expected:        "",
+			expectError:     true, // Now returns an error
+		},
+		{
+			name:            "Only environment name provided",
+			displayName:     "!@#$%^", // Will sanitize to empty
+			environmentName: "Staging",
+			externalURL:     "https://unbind.app",
+			expected:        "staging.unbind.app",
+			expectError:     false,
+		},
+		{
+			name:            "Only display name provided",
+			displayName:     "Frontend",
+			environmentName: "!@#$%^", // Will sanitize to empty
+			externalURL:     "https://unbind.app",
+			expected:        "frontend.unbind.app",
+			expectError:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := GenerateSubdomain(tt.displayName, tt.environmentName, tt.externalURL)
+
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestSanitizeForSubdomain(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"Simple Test", "simple-test"},
+		{"UPPERCASE", "uppercase"},
+		{"with_underscore", "with-underscore"},
+		{"   spaces   ", "spaces"},
+		{"special!@#$chars", "specialchars"},
+		{"multiple--hyphens", "multiple-hyphens"},
+		{"-leading-trailing-", "leading-trailing"},
+		{"a", "a"},
+		{"", ""},
+		{"123", "123"},
+		{"a-1-b-2", "a-1-b-2"},
+		{"a---b", "a-b"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := sanitizeForSubdomain(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

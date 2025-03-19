@@ -102,17 +102,57 @@ func (su *ServiceUpdate) SetNillableType(s *service.Type) *ServiceUpdate {
 	return su
 }
 
-// SetSubtype sets the "subtype" field.
-func (su *ServiceUpdate) SetSubtype(s service.Subtype) *ServiceUpdate {
-	su.mutation.SetSubtype(s)
+// SetBuilder sets the "builder" field.
+func (su *ServiceUpdate) SetBuilder(s service.Builder) *ServiceUpdate {
+	su.mutation.SetBuilder(s)
 	return su
 }
 
-// SetNillableSubtype sets the "subtype" field if the given value is not nil.
-func (su *ServiceUpdate) SetNillableSubtype(s *service.Subtype) *ServiceUpdate {
+// SetNillableBuilder sets the "builder" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableBuilder(s *service.Builder) *ServiceUpdate {
 	if s != nil {
-		su.SetSubtype(*s)
+		su.SetBuilder(*s)
 	}
+	return su
+}
+
+// SetRuntime sets the "runtime" field.
+func (su *ServiceUpdate) SetRuntime(s string) *ServiceUpdate {
+	su.mutation.SetRuntime(s)
+	return su
+}
+
+// SetNillableRuntime sets the "runtime" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableRuntime(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetRuntime(*s)
+	}
+	return su
+}
+
+// ClearRuntime clears the value of the "runtime" field.
+func (su *ServiceUpdate) ClearRuntime() *ServiceUpdate {
+	su.mutation.ClearRuntime()
+	return su
+}
+
+// SetFramework sets the "framework" field.
+func (su *ServiceUpdate) SetFramework(s string) *ServiceUpdate {
+	su.mutation.SetFramework(s)
+	return su
+}
+
+// SetNillableFramework sets the "framework" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableFramework(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetFramework(*s)
+	}
+	return su
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (su *ServiceUpdate) ClearFramework() *ServiceUpdate {
+	su.mutation.ClearFramework()
 	return su
 }
 
@@ -306,9 +346,9 @@ func (su *ServiceUpdate) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Service.type": %w`, err)}
 		}
 	}
-	if v, ok := su.mutation.Subtype(); ok {
-		if err := service.SubtypeValidator(v); err != nil {
-			return &ValidationError{Name: "subtype", err: fmt.Errorf(`ent: validator failed for field "Service.subtype": %w`, err)}
+	if v, ok := su.mutation.Builder(); ok {
+		if err := service.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Service.builder": %w`, err)}
 		}
 	}
 	if su.mutation.EnvironmentCleared() && len(su.mutation.EnvironmentIDs()) > 0 {
@@ -353,8 +393,20 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.GetType(); ok {
 		_spec.SetField(service.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := su.mutation.Subtype(); ok {
-		_spec.SetField(service.FieldSubtype, field.TypeEnum, value)
+	if value, ok := su.mutation.Builder(); ok {
+		_spec.SetField(service.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := su.mutation.Runtime(); ok {
+		_spec.SetField(service.FieldRuntime, field.TypeString, value)
+	}
+	if su.mutation.RuntimeCleared() {
+		_spec.ClearField(service.FieldRuntime, field.TypeString)
+	}
+	if value, ok := su.mutation.Framework(); ok {
+		_spec.SetField(service.FieldFramework, field.TypeString, value)
+	}
+	if su.mutation.FrameworkCleared() {
+		_spec.ClearField(service.FieldFramework, field.TypeString)
 	}
 	if value, ok := su.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)
@@ -584,17 +636,57 @@ func (suo *ServiceUpdateOne) SetNillableType(s *service.Type) *ServiceUpdateOne 
 	return suo
 }
 
-// SetSubtype sets the "subtype" field.
-func (suo *ServiceUpdateOne) SetSubtype(s service.Subtype) *ServiceUpdateOne {
-	suo.mutation.SetSubtype(s)
+// SetBuilder sets the "builder" field.
+func (suo *ServiceUpdateOne) SetBuilder(s service.Builder) *ServiceUpdateOne {
+	suo.mutation.SetBuilder(s)
 	return suo
 }
 
-// SetNillableSubtype sets the "subtype" field if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableSubtype(s *service.Subtype) *ServiceUpdateOne {
+// SetNillableBuilder sets the "builder" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableBuilder(s *service.Builder) *ServiceUpdateOne {
 	if s != nil {
-		suo.SetSubtype(*s)
+		suo.SetBuilder(*s)
 	}
+	return suo
+}
+
+// SetRuntime sets the "runtime" field.
+func (suo *ServiceUpdateOne) SetRuntime(s string) *ServiceUpdateOne {
+	suo.mutation.SetRuntime(s)
+	return suo
+}
+
+// SetNillableRuntime sets the "runtime" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableRuntime(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetRuntime(*s)
+	}
+	return suo
+}
+
+// ClearRuntime clears the value of the "runtime" field.
+func (suo *ServiceUpdateOne) ClearRuntime() *ServiceUpdateOne {
+	suo.mutation.ClearRuntime()
+	return suo
+}
+
+// SetFramework sets the "framework" field.
+func (suo *ServiceUpdateOne) SetFramework(s string) *ServiceUpdateOne {
+	suo.mutation.SetFramework(s)
+	return suo
+}
+
+// SetNillableFramework sets the "framework" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableFramework(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetFramework(*s)
+	}
+	return suo
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (suo *ServiceUpdateOne) ClearFramework() *ServiceUpdateOne {
+	suo.mutation.ClearFramework()
 	return suo
 }
 
@@ -801,9 +893,9 @@ func (suo *ServiceUpdateOne) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Service.type": %w`, err)}
 		}
 	}
-	if v, ok := suo.mutation.Subtype(); ok {
-		if err := service.SubtypeValidator(v); err != nil {
-			return &ValidationError{Name: "subtype", err: fmt.Errorf(`ent: validator failed for field "Service.subtype": %w`, err)}
+	if v, ok := suo.mutation.Builder(); ok {
+		if err := service.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Service.builder": %w`, err)}
 		}
 	}
 	if suo.mutation.EnvironmentCleared() && len(suo.mutation.EnvironmentIDs()) > 0 {
@@ -865,8 +957,20 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	if value, ok := suo.mutation.GetType(); ok {
 		_spec.SetField(service.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := suo.mutation.Subtype(); ok {
-		_spec.SetField(service.FieldSubtype, field.TypeEnum, value)
+	if value, ok := suo.mutation.Builder(); ok {
+		_spec.SetField(service.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := suo.mutation.Runtime(); ok {
+		_spec.SetField(service.FieldRuntime, field.TypeString, value)
+	}
+	if suo.mutation.RuntimeCleared() {
+		_spec.ClearField(service.FieldRuntime, field.TypeString)
+	}
+	if value, ok := suo.mutation.Framework(); ok {
+		_spec.SetField(service.FieldFramework, field.TypeString, value)
+	}
+	if suo.mutation.FrameworkCleared() {
+		_spec.ClearField(service.FieldFramework, field.TypeString)
 	}
 	if value, ok := suo.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)

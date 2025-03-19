@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 type GithubClient struct {
@@ -45,25 +44,27 @@ func NewGithubClient(cfg *config.Config) *GithubClient {
 	}
 }
 
-// Get an authenticated client for a GitHub App installation
-func (self *GithubClient) GetAuthenticatedClient(ctx context.Context, appID int64, installationID int64, appPrivateKey string) (*github.Client, error) {
-	privateKey, err := utils.DecodePrivateKey(appPrivateKey)
+// Get the token we can use to authenticate with GitHub
+func (self *GithubClient) GetInstallationToken(ctx context.Context, appID int64, installationID int64, appPrivateKey string) (string, error) {
+	client, err := self.GetAuthenticatedClient(ctx, appID, installationID, appPrivateKey)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	bearerToken, err := utils.GenerateGithubJWT(appID, privateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// Add token to client
-	client := self.client.WithAuthToken(bearerToken)
 
 	token, _, err := client.Apps.CreateInstallationToken(ctx, installationID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create installation token: %v", err)
+		return "", fmt.Errorf("failed to create installation token: %v", err)
 	}
 
-	return self.client.WithAuthToken(token.GetToken()), nil
+	return token.GetToken(), nil
+}
+
+func (self *GithubClient) GetAuthenticatedClient(ctx context.Context, appID int64, installationID int64, appPrivateKey string) (*github.Client, error) {
+	// Get the app's installation token
+	token, err := self.GetInstallationToken(ctx, appID, installationID, appPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return self.client.WithAuthToken(token), nil
 }

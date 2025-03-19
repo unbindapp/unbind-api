@@ -88,9 +88,37 @@ func (sc *ServiceCreate) SetType(s service.Type) *ServiceCreate {
 	return sc
 }
 
-// SetSubtype sets the "subtype" field.
-func (sc *ServiceCreate) SetSubtype(s service.Subtype) *ServiceCreate {
-	sc.mutation.SetSubtype(s)
+// SetBuilder sets the "builder" field.
+func (sc *ServiceCreate) SetBuilder(s service.Builder) *ServiceCreate {
+	sc.mutation.SetBuilder(s)
+	return sc
+}
+
+// SetRuntime sets the "runtime" field.
+func (sc *ServiceCreate) SetRuntime(s string) *ServiceCreate {
+	sc.mutation.SetRuntime(s)
+	return sc
+}
+
+// SetNillableRuntime sets the "runtime" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableRuntime(s *string) *ServiceCreate {
+	if s != nil {
+		sc.SetRuntime(*s)
+	}
+	return sc
+}
+
+// SetFramework sets the "framework" field.
+func (sc *ServiceCreate) SetFramework(s string) *ServiceCreate {
+	sc.mutation.SetFramework(s)
+	return sc
+}
+
+// SetNillableFramework sets the "framework" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableFramework(s *string) *ServiceCreate {
+	if s != nil {
+		sc.SetFramework(*s)
+	}
 	return sc
 }
 
@@ -262,12 +290,12 @@ func (sc *ServiceCreate) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Service.type": %w`, err)}
 		}
 	}
-	if _, ok := sc.mutation.Subtype(); !ok {
-		return &ValidationError{Name: "subtype", err: errors.New(`ent: missing required field "Service.subtype"`)}
+	if _, ok := sc.mutation.Builder(); !ok {
+		return &ValidationError{Name: "builder", err: errors.New(`ent: missing required field "Service.builder"`)}
 	}
-	if v, ok := sc.mutation.Subtype(); ok {
-		if err := service.SubtypeValidator(v); err != nil {
-			return &ValidationError{Name: "subtype", err: fmt.Errorf(`ent: validator failed for field "Service.subtype": %w`, err)}
+	if v, ok := sc.mutation.Builder(); ok {
+		if err := service.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Service.builder": %w`, err)}
 		}
 	}
 	if _, ok := sc.mutation.EnvironmentID(); !ok {
@@ -336,9 +364,17 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldType, field.TypeEnum, value)
 		_node.Type = value
 	}
-	if value, ok := sc.mutation.Subtype(); ok {
-		_spec.SetField(service.FieldSubtype, field.TypeEnum, value)
-		_node.Subtype = value
+	if value, ok := sc.mutation.Builder(); ok {
+		_spec.SetField(service.FieldBuilder, field.TypeEnum, value)
+		_node.Builder = value
+	}
+	if value, ok := sc.mutation.Runtime(); ok {
+		_spec.SetField(service.FieldRuntime, field.TypeString, value)
+		_node.Runtime = &value
+	}
+	if value, ok := sc.mutation.Framework(); ok {
+		_spec.SetField(service.FieldFramework, field.TypeString, value)
+		_node.Framework = &value
 	}
 	if value, ok := sc.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)
@@ -528,15 +564,51 @@ func (u *ServiceUpsert) UpdateType() *ServiceUpsert {
 	return u
 }
 
-// SetSubtype sets the "subtype" field.
-func (u *ServiceUpsert) SetSubtype(v service.Subtype) *ServiceUpsert {
-	u.Set(service.FieldSubtype, v)
+// SetBuilder sets the "builder" field.
+func (u *ServiceUpsert) SetBuilder(v service.Builder) *ServiceUpsert {
+	u.Set(service.FieldBuilder, v)
 	return u
 }
 
-// UpdateSubtype sets the "subtype" field to the value that was provided on create.
-func (u *ServiceUpsert) UpdateSubtype() *ServiceUpsert {
-	u.SetExcluded(service.FieldSubtype)
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateBuilder() *ServiceUpsert {
+	u.SetExcluded(service.FieldBuilder)
+	return u
+}
+
+// SetRuntime sets the "runtime" field.
+func (u *ServiceUpsert) SetRuntime(v string) *ServiceUpsert {
+	u.Set(service.FieldRuntime, v)
+	return u
+}
+
+// UpdateRuntime sets the "runtime" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateRuntime() *ServiceUpsert {
+	u.SetExcluded(service.FieldRuntime)
+	return u
+}
+
+// ClearRuntime clears the value of the "runtime" field.
+func (u *ServiceUpsert) ClearRuntime() *ServiceUpsert {
+	u.SetNull(service.FieldRuntime)
+	return u
+}
+
+// SetFramework sets the "framework" field.
+func (u *ServiceUpsert) SetFramework(v string) *ServiceUpsert {
+	u.Set(service.FieldFramework, v)
+	return u
+}
+
+// UpdateFramework sets the "framework" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateFramework() *ServiceUpsert {
+	u.SetExcluded(service.FieldFramework)
+	return u
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (u *ServiceUpsert) ClearFramework() *ServiceUpsert {
+	u.SetNull(service.FieldFramework)
 	return u
 }
 
@@ -716,17 +788,59 @@ func (u *ServiceUpsertOne) UpdateType() *ServiceUpsertOne {
 	})
 }
 
-// SetSubtype sets the "subtype" field.
-func (u *ServiceUpsertOne) SetSubtype(v service.Subtype) *ServiceUpsertOne {
+// SetBuilder sets the "builder" field.
+func (u *ServiceUpsertOne) SetBuilder(v service.Builder) *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
-		s.SetSubtype(v)
+		s.SetBuilder(v)
 	})
 }
 
-// UpdateSubtype sets the "subtype" field to the value that was provided on create.
-func (u *ServiceUpsertOne) UpdateSubtype() *ServiceUpsertOne {
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateBuilder() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateSubtype()
+		s.UpdateBuilder()
+	})
+}
+
+// SetRuntime sets the "runtime" field.
+func (u *ServiceUpsertOne) SetRuntime(v string) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetRuntime(v)
+	})
+}
+
+// UpdateRuntime sets the "runtime" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateRuntime() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateRuntime()
+	})
+}
+
+// ClearRuntime clears the value of the "runtime" field.
+func (u *ServiceUpsertOne) ClearRuntime() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearRuntime()
+	})
+}
+
+// SetFramework sets the "framework" field.
+func (u *ServiceUpsertOne) SetFramework(v string) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetFramework(v)
+	})
+}
+
+// UpdateFramework sets the "framework" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateFramework() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateFramework()
+	})
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (u *ServiceUpsertOne) ClearFramework() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearFramework()
 	})
 }
 
@@ -1081,17 +1195,59 @@ func (u *ServiceUpsertBulk) UpdateType() *ServiceUpsertBulk {
 	})
 }
 
-// SetSubtype sets the "subtype" field.
-func (u *ServiceUpsertBulk) SetSubtype(v service.Subtype) *ServiceUpsertBulk {
+// SetBuilder sets the "builder" field.
+func (u *ServiceUpsertBulk) SetBuilder(v service.Builder) *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
-		s.SetSubtype(v)
+		s.SetBuilder(v)
 	})
 }
 
-// UpdateSubtype sets the "subtype" field to the value that was provided on create.
-func (u *ServiceUpsertBulk) UpdateSubtype() *ServiceUpsertBulk {
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateBuilder() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateSubtype()
+		s.UpdateBuilder()
+	})
+}
+
+// SetRuntime sets the "runtime" field.
+func (u *ServiceUpsertBulk) SetRuntime(v string) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetRuntime(v)
+	})
+}
+
+// UpdateRuntime sets the "runtime" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateRuntime() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateRuntime()
+	})
+}
+
+// ClearRuntime clears the value of the "runtime" field.
+func (u *ServiceUpsertBulk) ClearRuntime() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearRuntime()
+	})
+}
+
+// SetFramework sets the "framework" field.
+func (u *ServiceUpsertBulk) SetFramework(v string) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetFramework(v)
+	})
+}
+
+// UpdateFramework sets the "framework" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateFramework() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateFramework()
+	})
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (u *ServiceUpsertBulk) ClearFramework() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearFramework()
 	})
 }
 

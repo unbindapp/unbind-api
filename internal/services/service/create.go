@@ -3,6 +3,7 @@ package service_service
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -10,20 +11,23 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
 )
 
 // CreateServiceInput defines the input for creating a new service
 type CreateServiceInput struct {
-	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
-	DisplayName   string    `validate:"required" required:"true" json:"display_name"`
-	Description   string    `validate:"optional" json:"description"`
-	// ! TODO - infer this? make it optional? Make validation dynamic somehow?
-	Type    service.Type    `validate:"required,oneof=database api web custom" required:"true" json:"type" doc:"One of database, api, web, or custom"`
-	Subtype service.Subtype `validate:"required,oneof=react go node next other" required:"true" json:"subtype" doc:"One of react, go, node, next, other"`
+	TeamID        uuid.UUID       `validate:"required,uuid4" required:"true" json:"team_id"`
+	ProjectID     uuid.UUID       `validate:"required,uuid4" required:"true" json:"project_id"`
+	EnvironmentID uuid.UUID       `validate:"required,uuid4" required:"true" json:"environment_id"`
+	DisplayName   string          `validate:"required" required:"true" json:"display_name"`
+	Description   string          `validate:"optional" json:"description"`
+	Type          service.Type    `validate:"required,oneof=docker git" required:"true" doc:"Type of service, e.g. 'git', 'docker'"`
+	Builder       service.Builder `validate:"required,oneof=railpack docker" required:"true" doc:"Builder of the service - docker, railpack"`
 
 	// GitHub integration
 	GitHubInstallationID *int64  `json:"github_installation_id,omitempty"`
@@ -48,26 +52,22 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
-	// Validate that if GitHub info is provided, all fields are set
-	if input.GitHubInstallationID != nil {
-		if input.RepositoryOwner == nil || input.RepositoryName == nil {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
-				"Both GitHub repository owner and name must be provided together")
-		}
-	}
-	// Verify that the environment exists
-	environment, err := self.repo.Environment().GetByID(ctx, input.EnvironmentID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
-		}
-		return nil, err
+	// ! TODO - support docka
+	if input.Type != service.TypeGit {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only git services supported")
 	}
 
-	// Get project ID from environment for permission checking
-	project, err := self.repo.Project().GetByID(ctx, environment.ProjectID)
-	if err != nil {
-		return nil, err
+	// ! TODO - support docka
+	if input.Builder != service.BuilderRailpack {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack builder supported")
+	}
+
+	// Validate that if GitHub info is provided, all fields are set
+	if input.GitHubInstallationID != nil {
+		if input.RepositoryOwner == nil || input.RepositoryName == nil || input.GitBranch == nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
+				"GitHub repository owner, name, and branch must be provided together")
+		}
 	}
 
 	// Check permissions
@@ -82,7 +82,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		{
 			Action:       permission.ActionManage,
 			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   project.TeamID.String(),
+			ResourceID:   input.TeamID.String(),
 		},
 		// Has permission to manage projects
 		{
@@ -94,11 +94,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		{
 			Action:       permission.ActionManage,
 			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   project.ID.String(),
+			ResourceID:   input.ProjectID.String(),
 		},
 		// Has permission to manage this specific environment
 		{
-			Action:       permission.ActionManage,
+			Action:       permission.ActionCreate,
 			ResourceType: permission.ResourceTypeEnvironment,
 			ResourceID:   input.EnvironmentID.String(),
 		},
@@ -108,7 +108,17 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
+	// Verify that the environment exists
+	environment, err := self.repo.Environment().GetByID(ctx, input.EnvironmentID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
+		}
+		return nil, err
+	}
+
 	// If GitHub integration is provided, verify repository access
+	var analysisResult *sourceanalyzer.AnalysisResult
 	if input.GitHubInstallationID != nil {
 		// Get GitHub installation
 		installation, err := self.repo.Github().GetInstallationByID(ctx, *input.GitHubInstallationID)
@@ -120,7 +130,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Verify repository access
-		canAccess, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, *input.RepositoryOwner, *input.RepositoryName)
+		canAccess, cloneUrl, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, *input.RepositoryOwner, *input.RepositoryName)
 		if err != nil {
 			log.Error("Error verifying repository access", "err", err)
 			return nil, err
@@ -130,6 +140,22 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
 				"Repository not accessible with the specified GitHub installation")
 		}
+
+		// Clone repository to infer information
+		tmpDir, err := self.githubClient.CloneRepository(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey, cloneUrl, fmt.Sprintf("refs/heads/%s", *input.GitBranch))
+		if err != nil {
+			log.Error("Error cloning repository", "err", err)
+			return nil, err
+		}
+		defer os.RemoveAll(tmpDir)
+
+		// Perform analysis
+		analysisResult, err = sourceanalyzer.AnalyzeSourceCode(tmpDir)
+		if err != nil {
+			log.Error("Error analyzing source code", "err", err)
+			return nil, err
+		}
+
 	}
 
 	// Create service and config in a transaction
@@ -137,12 +163,64 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	var serviceConfig *ent.ServiceConfig
 
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		var runtime *string
+		var framework *string
+		host := input.Host
+		port := input.Port
+		public := false
+		if analysisResult != nil {
+			// Service core information
+			if analysisResult.Provider != sourceanalyzer.UnknownProvider {
+				runtime = utils.ToPtr(analysisResult.Provider.String())
+			}
+			if analysisResult.Framework != sourceanalyzer.UnknownFramework {
+				framework = utils.ToPtr(analysisResult.Framework.String())
+			}
+
+			// Default configuration information
+			if port == nil && analysisResult.Port != nil {
+				port = analysisResult.Port
+				public = true
+			}
+		}
+
+		if host == nil && public {
+			// Generate a subdomain
+			domain, err := utils.GenerateSubdomain(input.DisplayName, environment.Name, self.cfg.ExternalURL)
+			if err != nil {
+				log.Warnf("Failed to generate subdomain: %v", err)
+				public = false
+			} else {
+				// Check for collisons of the domain
+				domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, domain)
+				if err != nil {
+					log.Errorf("Failed to count domain collisions: %v", err)
+					return err
+				}
+				if domainCount > 0 {
+					// Re-generate with numerical suffix
+					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s%d", input.DisplayName, domainCount), environment.Name, self.cfg.ExternalURL)
+					if err != nil {
+						log.Warnf("Failed to generate subdomain: %v", err)
+						public = false
+						domain = ""
+					}
+				}
+
+				if domain != "" {
+					host = utils.ToPtr(domain)
+				}
+			}
+		}
+
 		// Create the service
 		createService, err := self.repo.Service().Create(ctx, tx,
 			input.DisplayName,
 			input.Description,
 			input.Type,
-			input.Subtype,
+			input.Builder,
+			runtime,
+			framework,
 			input.EnvironmentID,
 			input.GitHubInstallationID,
 			input.RepositoryName)
@@ -151,14 +229,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 		service = createService
 
-		// ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, gitBranch *string, port int, host *string, replicas *int32, autoDeploy *bool, runCommand *string, public *bool, image *string) (*ent.ServiceConfig, error)
-
 		// Create the service config
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx,
 			service.ID,
 			input.GitBranch,
-			input.Port,
-			input.Host,
+			port,
+			host,
 			input.Replicas,
 			input.AutoDeploy,
 			input.RunCommand,
