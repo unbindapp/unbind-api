@@ -111,11 +111,7 @@ func (self *HandlerGroup) DeleteSecrets(ctx context.Context, input *DeleteTeamSe
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	keysToDelete := make([]string, len(input.Body.Secrets))
-	for i, secret := range input.Body.Secrets {
-		keysToDelete[i] = secret.Name
-	}
-	secret, err := self.srv.TeamService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, keysToDelete)
+	secret, err := self.srv.TeamService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.Secrets)
 	if err != nil {
 		if errors.Is(err, errdefs.ErrUnauthorized) {
 			return nil, huma.Error403Forbidden("Unauthorized")

@@ -122,11 +122,7 @@ func (self *HandlerGroup) DeleteSecrets(ctx context.Context, input *DeleteProjec
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	keysToDelete := make([]string, len(input.Body.Secrets))
-	for i, secret := range input.Body.Secrets {
-		keysToDelete[i] = secret.Name
-	}
-	secret, err := self.srv.ProjectService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, keysToDelete)
+	secret, err := self.srv.ProjectService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.Secrets)
 	if err != nil {
 		return nil, handleSecretErr(err)
 	}
