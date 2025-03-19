@@ -489,6 +489,39 @@ func startAPI(cfg *config.Config) {
 		},
 		projectHandlers.DeleteProject,
 	)
+	huma.Register(
+		projectsGroup,
+		huma.Operation{
+			OperationID: "list-project-secrets",
+			Summary:     "List Secrets",
+			Description: "List all secrets for a project",
+			Path:        "/secrets/list",
+			Method:      http.MethodGet,
+		},
+		projectHandlers.ListSecrets,
+	)
+	huma.Register(
+		projectsGroup,
+		huma.Operation{
+			OperationID: "add-project-secret",
+			Summary:     "Add Secrets",
+			Description: "Add new secrets for a project",
+			Path:        "/secrets/create",
+			Method:      http.MethodPost,
+		},
+		projectHandlers.AddSecret,
+	)
+	huma.Register(
+		projectsGroup,
+		huma.Operation{
+			OperationID: "rm-project-secret",
+			Summary:     "Remove Secret",
+			Description: "Remove a project secret by key",
+			Path:        "/secrets/delete",
+			Method:      http.MethodDelete,
+		},
+		projectHandlers.DeleteSecret,
+	)
 
 	// /services group
 	servicesGroup := huma.NewGroup(api, "/services")

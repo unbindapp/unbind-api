@@ -63,7 +63,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	}
 
 	// Create kubernetes client
-	client, err := self.k8sClient.CreateClientWithToken(bearerToken)
+	client, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	var environment *ent.Environment
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Create secret for this project
-		secret, _, err := self.k8sClient.GetOrCreateSecret(ctx, input.Name, team.Namespace, client)
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, input.Name, team.Namespace, client)
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 			return err
 		}
 		// Create secret for this environment
-		secret, _, err = self.k8sClient.GetOrCreateSecret(ctx, name, team.Namespace, client)
+		secret, _, err = self.k8s.GetOrCreateSecret(ctx, name, team.Namespace, client)
 		if err != nil {
 			return err
 		}

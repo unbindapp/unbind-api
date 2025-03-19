@@ -72,7 +72,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 	}
 
 	// Create kubernetes client
-	k8sClient, err := self.k8sClient.CreateClientWithToken(bearerToken)
+	k8sClient, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
 		return err
 	}
@@ -85,12 +85,12 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		}
 
 		// Delete kubernetes secrets
-		if err := self.k8sClient.DeleteSecret(ctx, project.Edges.Environments[0].KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
+		if err := self.k8s.DeleteSecret(ctx, project.Edges.Environments[0].KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
 			return err
 		}
 
 		// Delete project secret
-		if err := self.k8sClient.DeleteSecret(ctx, project.KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
+		if err := self.k8s.DeleteSecret(ctx, project.KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
 			return err
 		}
 
