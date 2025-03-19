@@ -73,6 +73,20 @@ func (tc *TeamCreate) SetNamespace(s string) *TeamCreate {
 	return tc
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (tc *TeamCreate) SetKubernetesSecret(s string) *TeamCreate {
+	tc.mutation.SetKubernetesSecret(s)
+	return tc
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (tc *TeamCreate) SetNillableKubernetesSecret(s *string) *TeamCreate {
+	if s != nil {
+		tc.SetKubernetesSecret(*s)
+	}
+	return tc
+}
+
 // SetDescription sets the "description" field.
 func (tc *TeamCreate) SetDescription(s string) *TeamCreate {
 	tc.mutation.SetDescription(s)
@@ -189,6 +203,10 @@ func (tc *TeamCreate) defaults() {
 		v := team.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := tc.mutation.KubernetesSecret(); !ok {
+		v := team.DefaultKubernetesSecret
+		tc.mutation.SetKubernetesSecret(v)
+	}
 	if _, ok := tc.mutation.ID(); !ok {
 		v := team.DefaultID()
 		tc.mutation.SetID(v)
@@ -216,6 +234,9 @@ func (tc *TeamCreate) check() error {
 	}
 	if _, ok := tc.mutation.Namespace(); !ok {
 		return &ValidationError{Name: "namespace", err: errors.New(`ent: missing required field "Team.namespace"`)}
+	}
+	if _, ok := tc.mutation.KubernetesSecret(); !ok {
+		return &ValidationError{Name: "kubernetes_secret", err: errors.New(`ent: missing required field "Team.kubernetes_secret"`)}
 	}
 	return nil
 }
@@ -272,6 +293,10 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Namespace(); ok {
 		_spec.SetField(team.FieldNamespace, field.TypeString, value)
 		_node.Namespace = value
+	}
+	if value, ok := tc.mutation.KubernetesSecret(); ok {
+		_spec.SetField(team.FieldKubernetesSecret, field.TypeString, value)
+		_node.KubernetesSecret = value
 	}
 	if value, ok := tc.mutation.Description(); ok {
 		_spec.SetField(team.FieldDescription, field.TypeString, value)
@@ -425,6 +450,18 @@ func (u *TeamUpsert) UpdateNamespace() *TeamUpsert {
 	return u
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *TeamUpsert) SetKubernetesSecret(v string) *TeamUpsert {
+	u.Set(team.FieldKubernetesSecret, v)
+	return u
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateKubernetesSecret() *TeamUpsert {
+	u.SetExcluded(team.FieldKubernetesSecret)
+	return u
+}
+
 // SetDescription sets the "description" field.
 func (u *TeamUpsert) SetDescription(v string) *TeamUpsert {
 	u.Set(team.FieldDescription, v)
@@ -547,6 +584,20 @@ func (u *TeamUpsertOne) SetNamespace(v string) *TeamUpsertOne {
 func (u *TeamUpsertOne) UpdateNamespace() *TeamUpsertOne {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateNamespace()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *TeamUpsertOne) SetKubernetesSecret(v string) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateKubernetesSecret() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 
@@ -842,6 +893,20 @@ func (u *TeamUpsertBulk) SetNamespace(v string) *TeamUpsertBulk {
 func (u *TeamUpsertBulk) UpdateNamespace() *TeamUpsertBulk {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateNamespace()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *TeamUpsertBulk) SetKubernetesSecret(v string) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateKubernetesSecret() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 

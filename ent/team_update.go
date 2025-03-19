@@ -81,6 +81,20 @@ func (tu *TeamUpdate) SetNillableNamespace(s *string) *TeamUpdate {
 	return tu
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (tu *TeamUpdate) SetKubernetesSecret(s string) *TeamUpdate {
+	tu.mutation.SetKubernetesSecret(s)
+	return tu
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (tu *TeamUpdate) SetNillableKubernetesSecret(s *string) *TeamUpdate {
+	if s != nil {
+		tu.SetKubernetesSecret(*s)
+	}
+	return tu
+}
+
 // SetDescription sets the "description" field.
 func (tu *TeamUpdate) SetDescription(s string) *TeamUpdate {
 	tu.mutation.SetDescription(s)
@@ -290,6 +304,9 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.Namespace(); ok {
 		_spec.SetField(team.FieldNamespace, field.TypeString, value)
 	}
+	if value, ok := tu.mutation.KubernetesSecret(); ok {
+		_spec.SetField(team.FieldKubernetesSecret, field.TypeString, value)
+	}
 	if value, ok := tu.mutation.Description(); ok {
 		_spec.SetField(team.FieldDescription, field.TypeString, value)
 	}
@@ -497,6 +514,20 @@ func (tuo *TeamUpdateOne) SetNamespace(s string) *TeamUpdateOne {
 func (tuo *TeamUpdateOne) SetNillableNamespace(s *string) *TeamUpdateOne {
 	if s != nil {
 		tuo.SetNamespace(*s)
+	}
+	return tuo
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (tuo *TeamUpdateOne) SetKubernetesSecret(s string) *TeamUpdateOne {
+	tuo.mutation.SetKubernetesSecret(s)
+	return tuo
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (tuo *TeamUpdateOne) SetNillableKubernetesSecret(s *string) *TeamUpdateOne {
+	if s != nil {
+		tuo.SetKubernetesSecret(*s)
 	}
 	return tuo
 }
@@ -739,6 +770,9 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	}
 	if value, ok := tuo.mutation.Namespace(); ok {
 		_spec.SetField(team.FieldNamespace, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.KubernetesSecret(); ok {
+		_spec.SetField(team.FieldKubernetesSecret, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.Description(); ok {
 		_spec.SetField(team.FieldDescription, field.TypeString, value)

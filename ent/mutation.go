@@ -1452,24 +1452,25 @@ func (m *DeploymentMutation) ResetEdge(name string) error {
 // EnvironmentMutation represents an operation that mutates the Environment nodes in the graph.
 type EnvironmentMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	created_at      *time.Time
-	updated_at      *time.Time
-	name            *string
-	display_name    *string
-	description     *string
-	active          *bool
-	clearedFields   map[string]struct{}
-	project         *uuid.UUID
-	clearedproject  bool
-	services        map[uuid.UUID]struct{}
-	removedservices map[uuid.UUID]struct{}
-	clearedservices bool
-	done            bool
-	oldValue        func(context.Context) (*Environment, error)
-	predicates      []predicate.Environment
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	created_at        *time.Time
+	updated_at        *time.Time
+	name              *string
+	display_name      *string
+	description       *string
+	active            *bool
+	kubernetes_secret *string
+	clearedFields     map[string]struct{}
+	project           *uuid.UUID
+	clearedproject    bool
+	services          map[uuid.UUID]struct{}
+	removedservices   map[uuid.UUID]struct{}
+	clearedservices   bool
+	done              bool
+	oldValue          func(context.Context) (*Environment, error)
+	predicates        []predicate.Environment
 }
 
 var _ ent.Mutation = (*EnvironmentMutation)(nil)
@@ -1828,6 +1829,42 @@ func (m *EnvironmentMutation) ResetProjectID() {
 	m.project = nil
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (m *EnvironmentMutation) SetKubernetesSecret(s string) {
+	m.kubernetes_secret = &s
+}
+
+// KubernetesSecret returns the value of the "kubernetes_secret" field in the mutation.
+func (m *EnvironmentMutation) KubernetesSecret() (r string, exists bool) {
+	v := m.kubernetes_secret
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesSecret returns the old "kubernetes_secret" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldKubernetesSecret(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesSecret is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesSecret requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesSecret: %w", err)
+	}
+	return oldValue.KubernetesSecret, nil
+}
+
+// ResetKubernetesSecret resets all changes to the "kubernetes_secret" field.
+func (m *EnvironmentMutation) ResetKubernetesSecret() {
+	m.kubernetes_secret = nil
+}
+
 // ClearProject clears the "project" edge to the Project entity.
 func (m *EnvironmentMutation) ClearProject() {
 	m.clearedproject = true
@@ -1943,7 +1980,7 @@ func (m *EnvironmentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *EnvironmentMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.created_at != nil {
 		fields = append(fields, environment.FieldCreatedAt)
 	}
@@ -1964,6 +2001,9 @@ func (m *EnvironmentMutation) Fields() []string {
 	}
 	if m.project != nil {
 		fields = append(fields, environment.FieldProjectID)
+	}
+	if m.kubernetes_secret != nil {
+		fields = append(fields, environment.FieldKubernetesSecret)
 	}
 	return fields
 }
@@ -1987,6 +2027,8 @@ func (m *EnvironmentMutation) Field(name string) (ent.Value, bool) {
 		return m.Active()
 	case environment.FieldProjectID:
 		return m.ProjectID()
+	case environment.FieldKubernetesSecret:
+		return m.KubernetesSecret()
 	}
 	return nil, false
 }
@@ -2010,6 +2052,8 @@ func (m *EnvironmentMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldActive(ctx)
 	case environment.FieldProjectID:
 		return m.OldProjectID(ctx)
+	case environment.FieldKubernetesSecret:
+		return m.OldKubernetesSecret(ctx)
 	}
 	return nil, fmt.Errorf("unknown Environment field %s", name)
 }
@@ -2067,6 +2111,13 @@ func (m *EnvironmentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetProjectID(v)
+		return nil
+	case environment.FieldKubernetesSecret:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesSecret(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Environment field %s", name)
@@ -2137,6 +2188,9 @@ func (m *EnvironmentMutation) ResetField(name string) error {
 		return nil
 	case environment.FieldProjectID:
 		m.ResetProjectID()
+		return nil
+	case environment.FieldKubernetesSecret:
+		m.ResetKubernetesSecret()
 		return nil
 	}
 	return fmt.Errorf("unknown Environment field %s", name)
@@ -8107,6 +8161,7 @@ type ProjectMutation struct {
 	display_name        *string
 	description         *string
 	status              *string
+	kubernetes_secret   *string
 	clearedFields       map[string]struct{}
 	team                *uuid.UUID
 	clearedteam         bool
@@ -8487,6 +8542,42 @@ func (m *ProjectMutation) ResetTeamID() {
 	m.team = nil
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (m *ProjectMutation) SetKubernetesSecret(s string) {
+	m.kubernetes_secret = &s
+}
+
+// KubernetesSecret returns the value of the "kubernetes_secret" field in the mutation.
+func (m *ProjectMutation) KubernetesSecret() (r string, exists bool) {
+	v := m.kubernetes_secret
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesSecret returns the old "kubernetes_secret" field's value of the Project entity.
+// If the Project object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProjectMutation) OldKubernetesSecret(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesSecret is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesSecret requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesSecret: %w", err)
+	}
+	return oldValue.KubernetesSecret, nil
+}
+
+// ResetKubernetesSecret resets all changes to the "kubernetes_secret" field.
+func (m *ProjectMutation) ResetKubernetesSecret() {
+	m.kubernetes_secret = nil
+}
+
 // ClearTeam clears the "team" edge to the Team entity.
 func (m *ProjectMutation) ClearTeam() {
 	m.clearedteam = true
@@ -8602,7 +8693,7 @@ func (m *ProjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProjectMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.created_at != nil {
 		fields = append(fields, project.FieldCreatedAt)
 	}
@@ -8623,6 +8714,9 @@ func (m *ProjectMutation) Fields() []string {
 	}
 	if m.team != nil {
 		fields = append(fields, project.FieldTeamID)
+	}
+	if m.kubernetes_secret != nil {
+		fields = append(fields, project.FieldKubernetesSecret)
 	}
 	return fields
 }
@@ -8646,6 +8740,8 @@ func (m *ProjectMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case project.FieldTeamID:
 		return m.TeamID()
+	case project.FieldKubernetesSecret:
+		return m.KubernetesSecret()
 	}
 	return nil, false
 }
@@ -8669,6 +8765,8 @@ func (m *ProjectMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldStatus(ctx)
 	case project.FieldTeamID:
 		return m.OldTeamID(ctx)
+	case project.FieldKubernetesSecret:
+		return m.OldKubernetesSecret(ctx)
 	}
 	return nil, fmt.Errorf("unknown Project field %s", name)
 }
@@ -8726,6 +8824,13 @@ func (m *ProjectMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTeamID(v)
+		return nil
+	case project.FieldKubernetesSecret:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesSecret(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Project field %s", name)
@@ -8805,6 +8910,9 @@ func (m *ProjectMutation) ResetField(name string) error {
 		return nil
 	case project.FieldTeamID:
 		m.ResetTeamID()
+		return nil
+	case project.FieldKubernetesSecret:
+		m.ResetKubernetesSecret()
 		return nil
 	}
 	return fmt.Errorf("unknown Project field %s", name)
@@ -8928,6 +9036,7 @@ type ServiceMutation struct {
 	runtime                    *string
 	framework                  *string
 	git_repository             *string
+	kubernetes_secret          *string
 	clearedFields              map[string]struct{}
 	environment                *uuid.UUID
 	clearedenvironment         bool
@@ -9544,6 +9653,42 @@ func (m *ServiceMutation) ResetGitRepository() {
 	delete(m.clearedFields, service.FieldGitRepository)
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (m *ServiceMutation) SetKubernetesSecret(s string) {
+	m.kubernetes_secret = &s
+}
+
+// KubernetesSecret returns the value of the "kubernetes_secret" field in the mutation.
+func (m *ServiceMutation) KubernetesSecret() (r string, exists bool) {
+	v := m.kubernetes_secret
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesSecret returns the old "kubernetes_secret" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldKubernetesSecret(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesSecret is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesSecret requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesSecret: %w", err)
+	}
+	return oldValue.KubernetesSecret, nil
+}
+
+// ResetKubernetesSecret resets all changes to the "kubernetes_secret" field.
+func (m *ServiceMutation) ResetKubernetesSecret() {
+	m.kubernetes_secret = nil
+}
+
 // ClearEnvironment clears the "environment" edge to the Environment entity.
 func (m *ServiceMutation) ClearEnvironment() {
 	m.clearedenvironment = true
@@ -9725,7 +9870,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -9762,6 +9907,9 @@ func (m *ServiceMutation) Fields() []string {
 	if m.git_repository != nil {
 		fields = append(fields, service.FieldGitRepository)
 	}
+	if m.kubernetes_secret != nil {
+		fields = append(fields, service.FieldKubernetesSecret)
+	}
 	return fields
 }
 
@@ -9794,6 +9942,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.GithubInstallationID()
 	case service.FieldGitRepository:
 		return m.GitRepository()
+	case service.FieldKubernetesSecret:
+		return m.KubernetesSecret()
 	}
 	return nil, false
 }
@@ -9827,6 +9977,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldGithubInstallationID(ctx)
 	case service.FieldGitRepository:
 		return m.OldGitRepository(ctx)
+	case service.FieldKubernetesSecret:
+		return m.OldKubernetesSecret(ctx)
 	}
 	return nil, fmt.Errorf("unknown Service field %s", name)
 }
@@ -9919,6 +10071,13 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGitRepository(v)
+		return nil
+	case service.FieldKubernetesSecret:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesSecret(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
@@ -10040,6 +10199,9 @@ func (m *ServiceMutation) ResetField(name string) error {
 		return nil
 	case service.FieldGitRepository:
 		m.ResetGitRepository()
+		return nil
+	case service.FieldKubernetesSecret:
+		m.ResetKubernetesSecret()
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
@@ -11260,28 +11422,29 @@ func (m *ServiceConfigMutation) ResetEdge(name string) error {
 // TeamMutation represents an operation that mutates the Team nodes in the graph.
 type TeamMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	created_at      *time.Time
-	updated_at      *time.Time
-	name            *string
-	display_name    *string
-	namespace       *string
-	description     *string
-	clearedFields   map[string]struct{}
-	projects        map[uuid.UUID]struct{}
-	removedprojects map[uuid.UUID]struct{}
-	clearedprojects bool
-	members         map[uuid.UUID]struct{}
-	removedmembers  map[uuid.UUID]struct{}
-	clearedmembers  bool
-	groups          map[uuid.UUID]struct{}
-	removedgroups   map[uuid.UUID]struct{}
-	clearedgroups   bool
-	done            bool
-	oldValue        func(context.Context) (*Team, error)
-	predicates      []predicate.Team
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	created_at        *time.Time
+	updated_at        *time.Time
+	name              *string
+	display_name      *string
+	namespace         *string
+	kubernetes_secret *string
+	description       *string
+	clearedFields     map[string]struct{}
+	projects          map[uuid.UUID]struct{}
+	removedprojects   map[uuid.UUID]struct{}
+	clearedprojects   bool
+	members           map[uuid.UUID]struct{}
+	removedmembers    map[uuid.UUID]struct{}
+	clearedmembers    bool
+	groups            map[uuid.UUID]struct{}
+	removedgroups     map[uuid.UUID]struct{}
+	clearedgroups     bool
+	done              bool
+	oldValue          func(context.Context) (*Team, error)
+	predicates        []predicate.Team
 }
 
 var _ ent.Mutation = (*TeamMutation)(nil)
@@ -11568,6 +11731,42 @@ func (m *TeamMutation) ResetNamespace() {
 	m.namespace = nil
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (m *TeamMutation) SetKubernetesSecret(s string) {
+	m.kubernetes_secret = &s
+}
+
+// KubernetesSecret returns the value of the "kubernetes_secret" field in the mutation.
+func (m *TeamMutation) KubernetesSecret() (r string, exists bool) {
+	v := m.kubernetes_secret
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesSecret returns the old "kubernetes_secret" field's value of the Team entity.
+// If the Team object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamMutation) OldKubernetesSecret(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesSecret is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesSecret requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesSecret: %w", err)
+	}
+	return oldValue.KubernetesSecret, nil
+}
+
+// ResetKubernetesSecret resets all changes to the "kubernetes_secret" field.
+func (m *TeamMutation) ResetKubernetesSecret() {
+	m.kubernetes_secret = nil
+}
+
 // SetDescription sets the "description" field.
 func (m *TeamMutation) SetDescription(s string) {
 	m.description = &s
@@ -11813,7 +12012,7 @@ func (m *TeamMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TeamMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, team.FieldCreatedAt)
 	}
@@ -11828,6 +12027,9 @@ func (m *TeamMutation) Fields() []string {
 	}
 	if m.namespace != nil {
 		fields = append(fields, team.FieldNamespace)
+	}
+	if m.kubernetes_secret != nil {
+		fields = append(fields, team.FieldKubernetesSecret)
 	}
 	if m.description != nil {
 		fields = append(fields, team.FieldDescription)
@@ -11850,6 +12052,8 @@ func (m *TeamMutation) Field(name string) (ent.Value, bool) {
 		return m.DisplayName()
 	case team.FieldNamespace:
 		return m.Namespace()
+	case team.FieldKubernetesSecret:
+		return m.KubernetesSecret()
 	case team.FieldDescription:
 		return m.Description()
 	}
@@ -11871,6 +12075,8 @@ func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldDisplayName(ctx)
 	case team.FieldNamespace:
 		return m.OldNamespace(ctx)
+	case team.FieldKubernetesSecret:
+		return m.OldKubernetesSecret(ctx)
 	case team.FieldDescription:
 		return m.OldDescription(ctx)
 	}
@@ -11916,6 +12122,13 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetNamespace(v)
+		return nil
+	case team.FieldKubernetesSecret:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesSecret(v)
 		return nil
 	case team.FieldDescription:
 		v, ok := value.(string)
@@ -11996,6 +12209,9 @@ func (m *TeamMutation) ResetField(name string) error {
 		return nil
 	case team.FieldNamespace:
 		m.ResetNamespace()
+		return nil
+	case team.FieldKubernetesSecret:
+		m.ResetKubernetesSecret()
 		return nil
 	case team.FieldDescription:
 		m.ResetDescription()

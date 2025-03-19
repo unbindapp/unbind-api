@@ -1,3 +1,6 @@
+# ! TODO - We need to fix this so that unbind-api doesn't have a superuser clusterrole
+# ! We will need to be able to manage secrets in team namespaces
+# ! We will need to be able to create Role and Rolebindings in general in team namespaces.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

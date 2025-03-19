@@ -91,6 +91,11 @@ func ProjectID(v uuid.UUID) predicate.Environment {
 	return predicate.Environment(sql.FieldEQ(FieldProjectID, v))
 }
 
+// KubernetesSecret applies equality check predicate on the "kubernetes_secret" field. It's identical to KubernetesSecretEQ.
+func KubernetesSecret(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Environment {
 	return predicate.Environment(sql.FieldEQ(FieldCreatedAt, v))
@@ -394,6 +399,71 @@ func ProjectIDIn(vs ...uuid.UUID) predicate.Environment {
 // ProjectIDNotIn applies the NotIn predicate on the "project_id" field.
 func ProjectIDNotIn(vs ...uuid.UUID) predicate.Environment {
 	return predicate.Environment(sql.FieldNotIn(FieldProjectID, vs...))
+}
+
+// KubernetesSecretEQ applies the EQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretEQ(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretNEQ applies the NEQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretNEQ(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldNEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretIn applies the In predicate on the "kubernetes_secret" field.
+func KubernetesSecretIn(vs ...string) predicate.Environment {
+	return predicate.Environment(sql.FieldIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretNotIn applies the NotIn predicate on the "kubernetes_secret" field.
+func KubernetesSecretNotIn(vs ...string) predicate.Environment {
+	return predicate.Environment(sql.FieldNotIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretGT applies the GT predicate on the "kubernetes_secret" field.
+func KubernetesSecretGT(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldGT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretGTE applies the GTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretGTE(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldGTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLT applies the LT predicate on the "kubernetes_secret" field.
+func KubernetesSecretLT(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldLT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLTE applies the LTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretLTE(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldLTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContains applies the Contains predicate on the "kubernetes_secret" field.
+func KubernetesSecretContains(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldContains(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasPrefix applies the HasPrefix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasPrefix(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldHasPrefix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasSuffix applies the HasSuffix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasSuffix(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldHasSuffix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretEqualFold applies the EqualFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretEqualFold(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldEqualFold(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContainsFold applies the ContainsFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretContainsFold(v string) predicate.Environment {
+	return predicate.Environment(sql.FieldContainsFold(FieldKubernetesSecret, v))
 }
 
 // HasProject applies the HasEdge predicate on the "project" edge.

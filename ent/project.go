@@ -34,6 +34,8 @@ type Project struct {
 	Status string `json:"status,omitempty"`
 	// TeamID holds the value of the "team_id" field.
 	TeamID uuid.UUID `json:"team_id,omitempty"`
+	// Kubernetes secret for this project
+	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProjectQuery when eager-loading is set.
 	Edges        ProjectEdges `json:"edges"`
@@ -76,7 +78,7 @@ func (*Project) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case project.FieldName, project.FieldDisplayName, project.FieldDescription, project.FieldStatus:
+		case project.FieldName, project.FieldDisplayName, project.FieldDescription, project.FieldStatus, project.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case project.FieldCreatedAt, project.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -145,6 +147,12 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				pr.TeamID = *value
 			}
+		case project.FieldKubernetesSecret:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_secret", values[i])
+			} else if value.Valid {
+				pr.KubernetesSecret = value.String
+			}
 		default:
 			pr.selectValues.Set(columns[i], values[i])
 		}
@@ -211,6 +219,9 @@ func (pr *Project) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("team_id=")
 	builder.WriteString(fmt.Sprintf("%v", pr.TeamID))
+	builder.WriteString(", ")
+	builder.WriteString("kubernetes_secret=")
+	builder.WriteString(pr.KubernetesSecret)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -25,6 +25,8 @@ const (
 	FieldDisplayName = "display_name"
 	// FieldNamespace holds the string denoting the namespace field in the database.
 	FieldNamespace = "namespace"
+	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
+	FieldKubernetesSecret = "kubernetes_secret"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// EdgeProjects holds the string denoting the projects edge name in mutations.
@@ -64,6 +66,7 @@ var Columns = []string{
 	FieldName,
 	FieldDisplayName,
 	FieldNamespace,
+	FieldKubernetesSecret,
 	FieldDescription,
 }
 
@@ -92,6 +95,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultKubernetesSecret holds the default value on creation for the "kubernetes_secret" field.
+	DefaultKubernetesSecret string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -127,6 +132,11 @@ func ByDisplayName(opts ...sql.OrderTermOption) OrderOption {
 // ByNamespace orders the results by the namespace field.
 func ByNamespace(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNamespace, opts...).ToFunc()
+}
+
+// ByKubernetesSecret orders the results by the kubernetes_secret field.
+func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.

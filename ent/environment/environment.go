@@ -29,6 +29,8 @@ const (
 	FieldActive = "active"
 	// FieldProjectID holds the string denoting the project_id field in the database.
 	FieldProjectID = "project_id"
+	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
+	FieldKubernetesSecret = "kubernetes_secret"
 	// EdgeProject holds the string denoting the project edge name in mutations.
 	EdgeProject = "project"
 	// EdgeServices holds the string denoting the services edge name in mutations.
@@ -61,6 +63,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldActive,
 	FieldProjectID,
+	FieldKubernetesSecret,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -84,6 +87,8 @@ var (
 	NameValidator func(string) error
 	// DefaultActive holds the default value on creation for the "active" field.
 	DefaultActive bool
+	// DefaultKubernetesSecret holds the default value on creation for the "kubernetes_secret" field.
+	DefaultKubernetesSecret string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -129,6 +134,11 @@ func ByActive(opts ...sql.OrderTermOption) OrderOption {
 // ByProjectID orders the results by the project_id field.
 func ByProjectID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldProjectID, opts...).ToFunc()
+}
+
+// ByKubernetesSecret orders the results by the kubernetes_secret field.
+func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
 }
 
 // ByProjectField orders the results by project field.

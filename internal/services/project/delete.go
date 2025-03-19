@@ -6,8 +6,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
+	entProject "github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
@@ -70,5 +72,25 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 	}
 
 	// Delete the project
-	return self.repo.Project().Delete(ctx, input.ProjectID)
+	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		client := tx.Client()
+		if _, err := client.Project.Delete().Where(entProject.ID(input.ProjectID)).Exec(ctx); err != nil {
+			return err
+		}
+
+		// Delete kubernetes secrets
+		if err := self.k8sClient.DeleteSecret(ctx, project.Edges.Environments[0].KubernetesSecret, project.Edges.Team.Namespace); err != nil {
+			return err
+		}
+
+		// Delete project secret
+		if err := self.k8sClient.DeleteSecret(ctx, project.KubernetesSecret, project.Edges.Team.Namespace); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
 }

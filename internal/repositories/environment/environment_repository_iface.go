@@ -12,6 +12,6 @@ import (
 
 // EnvironmentRepositoryInterface ...
 type EnvironmentRepositoryInterface interface {
-	Create(ctx context.Context, tx repository.TxInterface, name, displayName, description string, projectID uuid.UUID) (*ent.Environment, error)
+	Create(ctx context.Context, tx repository.TxInterface, name, displayName, description, kuberneteSecret string, projectID uuid.UUID) (*ent.Environment, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.Environment, error)
 }

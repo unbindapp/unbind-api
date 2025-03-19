@@ -11,11 +11,13 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	group_service "github.com/unbindapp/unbind-api/internal/services/group"
 	"golang.org/x/crypto/bcrypt"
@@ -25,6 +27,7 @@ type cli struct {
 	repository   repositories.RepositoriesInterface
 	groupService *group_service.GroupService
 	rbacManager  *k8s.RBACManager
+	k8s          *k8s.KubeClient
 }
 
 func NewCLI(cfg *config.Config) *cli {
@@ -54,6 +57,7 @@ func NewCLI(cfg *config.Config) *cli {
 			rbacManager,
 		),
 		rbacManager: rbacManager,
+		k8s:         kubeClient,
 	}
 }
 
@@ -161,12 +165,22 @@ func (self *cli) createTeam(name, displayName string) {
 	}
 
 	// Create the team
-	team, err := self.repository.Ent().Team.Create().
-		SetName(name).
-		SetDisplayName(displayName).
-		SetNamespace(strings.ToLower(name)).Save(ctx)
+	var team *ent.Team
+	if err := self.repository.WithTx(ctx, func(tx repository.TxInterface) error {
+		db := tx.Client()
+		// Create secret to associate with the name
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, strings.ToLower(name))
+		if err != nil {
+			return fmt.Errorf("error creating secret: %v", err)
+		}
+		team, err = db.Team.Create().
+			SetName(name).
+			SetDisplayName(displayName).
+			SetNamespace(strings.ToLower(name)).
+			SetKubernetesSecret(secret.Name).Save(ctx)
 
-	if err != nil {
+		return nil
+	}); err != nil {
 		fmt.Printf("Error creating team: %v\n", err)
 		return
 	}
@@ -406,6 +420,43 @@ func (self *cli) syncPermissionsWithK8S() {
 	if err := self.rbacManager.SyncAllGroups(context.Background()); err != nil {
 		fmt.Printf("Error syncing permissions: %v\n", err)
 		return
+	}
+}
+
+// Sync secrets with K8s
+func (self *cli) syncSecrets() {
+	teams, err := self.repository.Ent().Team.Query().All(context.Background())
+	if err != nil {
+		fmt.Printf("Error querying teams: %v\n", err)
+		return
+	}
+
+	for _, t := range teams {
+		// Get projects, environments, services
+		projects, err := self.repository.Ent().Project.Query().
+			Where(project.TeamIDEQ(t.ID)).
+			WithEnvironments(func(eq *ent.EnvironmentQuery) {
+				eq.WithServices()
+			}).
+			All(context.Background())
+		if err != nil {
+			fmt.Printf("Error querying projects: %v\n", err)
+			return
+		}
+
+		// Create team secret
+		secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), t.Name, t.Namespace)
+		if err != nil {
+			fmt.Printf("Error creating secret: %v\n", err)
+			return
+		}
+		// Update team
+		if _, err := self.repository.Ent().Team.UpdateOne(t).
+			SetKubernetesSecret(secret.Name).
+			Save(context.Background()); err != nil {
+			fmt.Printf("Error updating team: %v\n", err)
+			return
+		}
 	}
 }
 

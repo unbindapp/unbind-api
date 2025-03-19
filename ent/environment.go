@@ -34,6 +34,8 @@ type Environment struct {
 	Active bool `json:"active,omitempty"`
 	// ProjectID holds the value of the "project_id" field.
 	ProjectID uuid.UUID `json:"project_id,omitempty"`
+	// Kubernetes secret for this environment
+	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EnvironmentQuery when eager-loading is set.
 	Edges        EnvironmentEdges `json:"edges"`
@@ -78,7 +80,7 @@ func (*Environment) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case environment.FieldActive:
 			values[i] = new(sql.NullBool)
-		case environment.FieldName, environment.FieldDisplayName, environment.FieldDescription:
+		case environment.FieldName, environment.FieldDisplayName, environment.FieldDescription, environment.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case environment.FieldCreatedAt, environment.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -147,6 +149,12 @@ func (e *Environment) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				e.ProjectID = *value
 			}
+		case environment.FieldKubernetesSecret:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_secret", values[i])
+			} else if value.Valid {
+				e.KubernetesSecret = value.String
+			}
 		default:
 			e.selectValues.Set(columns[i], values[i])
 		}
@@ -213,6 +221,9 @@ func (e *Environment) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("project_id=")
 	builder.WriteString(fmt.Sprintf("%v", e.ProjectID))
+	builder.WriteString(", ")
+	builder.WriteString("kubernetes_secret=")
+	builder.WriteString(e.KubernetesSecret)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -156,6 +156,20 @@ func (sc *ServiceCreate) SetNillableGitRepository(s *string) *ServiceCreate {
 	return sc
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (sc *ServiceCreate) SetKubernetesSecret(s string) *ServiceCreate {
+	sc.mutation.SetKubernetesSecret(s)
+	return sc
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableKubernetesSecret(s *string) *ServiceCreate {
+	if s != nil {
+		sc.SetKubernetesSecret(*s)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *ServiceCreate) SetID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetID(u)
@@ -257,6 +271,10 @@ func (sc *ServiceCreate) defaults() {
 		v := service.DefaultUpdatedAt()
 		sc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := sc.mutation.KubernetesSecret(); !ok {
+		v := service.DefaultKubernetesSecret
+		sc.mutation.SetKubernetesSecret(v)
+	}
 	if _, ok := sc.mutation.ID(); !ok {
 		v := service.DefaultID()
 		sc.mutation.SetID(v)
@@ -300,6 +318,9 @@ func (sc *ServiceCreate) check() error {
 	}
 	if _, ok := sc.mutation.EnvironmentID(); !ok {
 		return &ValidationError{Name: "environment_id", err: errors.New(`ent: missing required field "Service.environment_id"`)}
+	}
+	if _, ok := sc.mutation.KubernetesSecret(); !ok {
+		return &ValidationError{Name: "kubernetes_secret", err: errors.New(`ent: missing required field "Service.kubernetes_secret"`)}
 	}
 	if len(sc.mutation.EnvironmentIDs()) == 0 {
 		return &ValidationError{Name: "environment", err: errors.New(`ent: missing required edge "Service.environment"`)}
@@ -379,6 +400,10 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)
 		_node.GitRepository = &value
+	}
+	if value, ok := sc.mutation.KubernetesSecret(); ok {
+		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
+		_node.KubernetesSecret = value
 	}
 	if nodes := sc.mutation.EnvironmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -660,6 +685,18 @@ func (u *ServiceUpsert) ClearGitRepository() *ServiceUpsert {
 	return u
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *ServiceUpsert) SetKubernetesSecret(v string) *ServiceUpsert {
+	u.Set(service.FieldKubernetesSecret, v)
+	return u
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateKubernetesSecret() *ServiceUpsert {
+	u.SetExcluded(service.FieldKubernetesSecret)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -897,6 +934,20 @@ func (u *ServiceUpsertOne) UpdateGitRepository() *ServiceUpsertOne {
 func (u *ServiceUpsertOne) ClearGitRepository() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearGitRepository()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *ServiceUpsertOne) SetKubernetesSecret(v string) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateKubernetesSecret() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 
@@ -1304,6 +1355,20 @@ func (u *ServiceUpsertBulk) UpdateGitRepository() *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) ClearGitRepository() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearGitRepository()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *ServiceUpsertBulk) SetKubernetesSecret(v string) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateKubernetesSecret() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 

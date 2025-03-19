@@ -31,6 +31,8 @@ func (Project) Fields() []ent.Field {
 		field.String("description").Optional(),
 		field.String("status").Default("active"),
 		field.UUID("team_id", uuid.UUID{}),
+		// ! TODO - remove default after migration
+		field.String("kubernetes_secret").Default("").Comment("Kubernetes secret for this project"),
 	}
 }
 

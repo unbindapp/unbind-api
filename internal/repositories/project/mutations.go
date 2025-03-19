@@ -8,7 +8,7 @@ import (
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
-func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, displayName, description string) (*ent.Project, error) {
+func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, displayName, description, kubernetesSecret string) (*ent.Project, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
@@ -19,6 +19,7 @@ func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInter
 		SetName(name).
 		SetDisplayName(displayName).
 		SetDescription(description).
+		SetKubernetesSecret(kubernetesSecret).
 		Save(ctx)
 }
 

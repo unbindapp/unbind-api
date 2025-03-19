@@ -117,6 +117,22 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
+	if input.ProjectID != environment.Edges.Project.ID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment does not belong to the specified project")
+	}
+
+	// Verify that the team exists
+	project, err := self.repo.Project().GetByID(ctx, input.ProjectID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
+		}
+	}
+
+	if project.Edges.Team.ID != input.TeamID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to the specified team")
+	}
+
 	// If GitHub integration is provided, verify repository access
 	var analysisResult *sourceanalyzer.AnalysisResult
 	if input.GitHubInstallationID != nil {
@@ -213,8 +229,21 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 		}
 
+		// Generate unique name
+		name, err := utils.GenerateSlug(input.DisplayName)
+		if err != nil {
+			return err
+		}
+
+		// Create kubernetes secret
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace)
+		if err != nil {
+			return fmt.Errorf("failed to create secret: %v", err)
+		}
+
 		// Create the service
 		createService, err := self.repo.Service().Create(ctx, tx,
+			name,
 			input.DisplayName,
 			input.Description,
 			input.Type,
@@ -223,7 +252,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			framework,
 			input.EnvironmentID,
 			input.GitHubInstallationID,
-			input.RepositoryName)
+			input.RepositoryName,
+			secret.Name)
 		if err != nil {
 			return fmt.Errorf("failed to create service: %w", err)
 		}

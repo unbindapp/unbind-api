@@ -210,6 +210,20 @@ func (su *ServiceUpdate) ClearGitRepository() *ServiceUpdate {
 	return su
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (su *ServiceUpdate) SetKubernetesSecret(s string) *ServiceUpdate {
+	su.mutation.SetKubernetesSecret(s)
+	return su
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableKubernetesSecret(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetKubernetesSecret(*s)
+	}
+	return su
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
 	return su.SetEnvironmentID(e.ID)
@@ -413,6 +427,9 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if su.mutation.GitRepositoryCleared() {
 		_spec.ClearField(service.FieldGitRepository, field.TypeString)
+	}
+	if value, ok := su.mutation.KubernetesSecret(); ok {
+		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
 	}
 	if su.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -744,6 +761,20 @@ func (suo *ServiceUpdateOne) ClearGitRepository() *ServiceUpdateOne {
 	return suo
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (suo *ServiceUpdateOne) SetKubernetesSecret(s string) *ServiceUpdateOne {
+	suo.mutation.SetKubernetesSecret(s)
+	return suo
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableKubernetesSecret(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetKubernetesSecret(*s)
+	}
+	return suo
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
 	return suo.SetEnvironmentID(e.ID)
@@ -977,6 +1008,9 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	}
 	if suo.mutation.GitRepositoryCleared() {
 		_spec.ClearField(service.FieldGitRepository, field.TypeString)
+	}
+	if value, ok := suo.mutation.KubernetesSecret(); ok {
+		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
 	}
 	if suo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{

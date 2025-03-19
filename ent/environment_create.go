@@ -92,6 +92,20 @@ func (ec *EnvironmentCreate) SetProjectID(u uuid.UUID) *EnvironmentCreate {
 	return ec
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (ec *EnvironmentCreate) SetKubernetesSecret(s string) *EnvironmentCreate {
+	ec.mutation.SetKubernetesSecret(s)
+	return ec
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (ec *EnvironmentCreate) SetNillableKubernetesSecret(s *string) *EnvironmentCreate {
+	if s != nil {
+		ec.SetKubernetesSecret(*s)
+	}
+	return ec
+}
+
 // SetID sets the "id" field.
 func (ec *EnvironmentCreate) SetID(u uuid.UUID) *EnvironmentCreate {
 	ec.mutation.SetID(u)
@@ -173,6 +187,10 @@ func (ec *EnvironmentCreate) defaults() {
 		v := environment.DefaultActive
 		ec.mutation.SetActive(v)
 	}
+	if _, ok := ec.mutation.KubernetesSecret(); !ok {
+		v := environment.DefaultKubernetesSecret
+		ec.mutation.SetKubernetesSecret(v)
+	}
 	if _, ok := ec.mutation.ID(); !ok {
 		v := environment.DefaultID()
 		ec.mutation.SetID(v)
@@ -206,6 +224,9 @@ func (ec *EnvironmentCreate) check() error {
 	}
 	if _, ok := ec.mutation.ProjectID(); !ok {
 		return &ValidationError{Name: "project_id", err: errors.New(`ent: missing required field "Environment.project_id"`)}
+	}
+	if _, ok := ec.mutation.KubernetesSecret(); !ok {
+		return &ValidationError{Name: "kubernetes_secret", err: errors.New(`ent: missing required field "Environment.kubernetes_secret"`)}
 	}
 	if len(ec.mutation.ProjectIDs()) == 0 {
 		return &ValidationError{Name: "project", err: errors.New(`ent: missing required edge "Environment.project"`)}
@@ -269,6 +290,10 @@ func (ec *EnvironmentCreate) createSpec() (*Environment, *sqlgraph.CreateSpec) {
 	if value, ok := ec.mutation.Active(); ok {
 		_spec.SetField(environment.FieldActive, field.TypeBool, value)
 		_node.Active = value
+	}
+	if value, ok := ec.mutation.KubernetesSecret(); ok {
+		_spec.SetField(environment.FieldKubernetesSecret, field.TypeString, value)
+		_node.KubernetesSecret = value
 	}
 	if nodes := ec.mutation.ProjectIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -427,6 +452,18 @@ func (u *EnvironmentUpsert) UpdateProjectID() *EnvironmentUpsert {
 	return u
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *EnvironmentUpsert) SetKubernetesSecret(v string) *EnvironmentUpsert {
+	u.Set(environment.FieldKubernetesSecret, v)
+	return u
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *EnvironmentUpsert) UpdateKubernetesSecret() *EnvironmentUpsert {
+	u.SetExcluded(environment.FieldKubernetesSecret)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -559,6 +596,20 @@ func (u *EnvironmentUpsertOne) SetProjectID(v uuid.UUID) *EnvironmentUpsertOne {
 func (u *EnvironmentUpsertOne) UpdateProjectID() *EnvironmentUpsertOne {
 	return u.Update(func(s *EnvironmentUpsert) {
 		s.UpdateProjectID()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *EnvironmentUpsertOne) SetKubernetesSecret(v string) *EnvironmentUpsertOne {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *EnvironmentUpsertOne) UpdateKubernetesSecret() *EnvironmentUpsertOne {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 
@@ -861,6 +912,20 @@ func (u *EnvironmentUpsertBulk) SetProjectID(v uuid.UUID) *EnvironmentUpsertBulk
 func (u *EnvironmentUpsertBulk) UpdateProjectID() *EnvironmentUpsertBulk {
 	return u.Update(func(s *EnvironmentUpsert) {
 		s.UpdateProjectID()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *EnvironmentUpsertBulk) SetKubernetesSecret(v string) *EnvironmentUpsertBulk {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *EnvironmentUpsertBulk) UpdateKubernetesSecret() *EnvironmentUpsertBulk {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 

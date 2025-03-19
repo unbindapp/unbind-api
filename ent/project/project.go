@@ -29,6 +29,8 @@ const (
 	FieldStatus = "status"
 	// FieldTeamID holds the string denoting the team_id field in the database.
 	FieldTeamID = "team_id"
+	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
+	FieldKubernetesSecret = "kubernetes_secret"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
 	// EdgeEnvironments holds the string denoting the environments edge name in mutations.
@@ -61,6 +63,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldStatus,
 	FieldTeamID,
+	FieldKubernetesSecret,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -84,6 +87,8 @@ var (
 	NameValidator func(string) error
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus string
+	// DefaultKubernetesSecret holds the default value on creation for the "kubernetes_secret" field.
+	DefaultKubernetesSecret string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -129,6 +134,11 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 // ByTeamID orders the results by the team_id field.
 func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
+}
+
+// ByKubernetesSecret orders the results by the kubernetes_secret field.
+func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
 }
 
 // ByTeamField orders the results by team field.

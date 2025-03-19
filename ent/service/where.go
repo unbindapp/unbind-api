@@ -106,6 +106,11 @@ func GitRepository(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldGitRepository, v))
 }
 
+// KubernetesSecret applies equality check predicate on the "kubernetes_secret" field. It's identical to KubernetesSecretEQ.
+func KubernetesSecret(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldCreatedAt, v))
@@ -704,6 +709,71 @@ func GitRepositoryEqualFold(v string) predicate.Service {
 // GitRepositoryContainsFold applies the ContainsFold predicate on the "git_repository" field.
 func GitRepositoryContainsFold(v string) predicate.Service {
 	return predicate.Service(sql.FieldContainsFold(FieldGitRepository, v))
+}
+
+// KubernetesSecretEQ applies the EQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretNEQ applies the NEQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretIn applies the In predicate on the "kubernetes_secret" field.
+func KubernetesSecretIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretNotIn applies the NotIn predicate on the "kubernetes_secret" field.
+func KubernetesSecretNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretGT applies the GT predicate on the "kubernetes_secret" field.
+func KubernetesSecretGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretGTE applies the GTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLT applies the LT predicate on the "kubernetes_secret" field.
+func KubernetesSecretLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLTE applies the LTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContains applies the Contains predicate on the "kubernetes_secret" field.
+func KubernetesSecretContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasPrefix applies the HasPrefix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasSuffix applies the HasSuffix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretEqualFold applies the EqualFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContainsFold applies the ContainsFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldKubernetesSecret, v))
 }
 
 // HasEnvironment applies the HasEdge predicate on the "environment" edge.

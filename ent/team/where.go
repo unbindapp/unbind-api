@@ -81,6 +81,11 @@ func Namespace(v string) predicate.Team {
 	return predicate.Team(sql.FieldEQ(FieldNamespace, v))
 }
 
+// KubernetesSecret applies equality check predicate on the "kubernetes_secret" field. It's identical to KubernetesSecretEQ.
+func KubernetesSecret(v string) predicate.Team {
+	return predicate.Team(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.Team {
 	return predicate.Team(sql.FieldEQ(FieldDescription, v))
@@ -359,6 +364,71 @@ func NamespaceEqualFold(v string) predicate.Team {
 // NamespaceContainsFold applies the ContainsFold predicate on the "namespace" field.
 func NamespaceContainsFold(v string) predicate.Team {
 	return predicate.Team(sql.FieldContainsFold(FieldNamespace, v))
+}
+
+// KubernetesSecretEQ applies the EQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretEQ(v string) predicate.Team {
+	return predicate.Team(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretNEQ applies the NEQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretNEQ(v string) predicate.Team {
+	return predicate.Team(sql.FieldNEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretIn applies the In predicate on the "kubernetes_secret" field.
+func KubernetesSecretIn(vs ...string) predicate.Team {
+	return predicate.Team(sql.FieldIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretNotIn applies the NotIn predicate on the "kubernetes_secret" field.
+func KubernetesSecretNotIn(vs ...string) predicate.Team {
+	return predicate.Team(sql.FieldNotIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretGT applies the GT predicate on the "kubernetes_secret" field.
+func KubernetesSecretGT(v string) predicate.Team {
+	return predicate.Team(sql.FieldGT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretGTE applies the GTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretGTE(v string) predicate.Team {
+	return predicate.Team(sql.FieldGTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLT applies the LT predicate on the "kubernetes_secret" field.
+func KubernetesSecretLT(v string) predicate.Team {
+	return predicate.Team(sql.FieldLT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLTE applies the LTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretLTE(v string) predicate.Team {
+	return predicate.Team(sql.FieldLTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContains applies the Contains predicate on the "kubernetes_secret" field.
+func KubernetesSecretContains(v string) predicate.Team {
+	return predicate.Team(sql.FieldContains(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasPrefix applies the HasPrefix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasPrefix(v string) predicate.Team {
+	return predicate.Team(sql.FieldHasPrefix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasSuffix applies the HasSuffix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasSuffix(v string) predicate.Team {
+	return predicate.Team(sql.FieldHasSuffix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretEqualFold applies the EqualFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretEqualFold(v string) predicate.Team {
+	return predicate.Team(sql.FieldEqualFold(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContainsFold applies the ContainsFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretContainsFold(v string) predicate.Team {
+	return predicate.Team(sql.FieldContainsFold(FieldKubernetesSecret, v))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.

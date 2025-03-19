@@ -130,7 +130,7 @@ func startAPI(cfg *config.Config) {
 		BuildController: buildctl.NewBuildController(ctx, kubeClient, valkeyClient, repo),
 		TeamService:     team_service.NewTeamService(repo, kubeClient),
 		ProjectService:  project_service.NewProjectService(repo, kubeClient),
-		ServiceService:  service_service.NewServiceService(cfg, repo, githubClient),
+		ServiceService:  service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
 	}
 
 	// New chi router

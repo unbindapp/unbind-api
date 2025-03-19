@@ -55,6 +55,9 @@ func main() {
 	// Sync permissions with Kubernetes
 	syncGroupToK8sFlag := flag.Bool("sync-group-to-k8s", false, "Sync group permissions with Kubernetes")
 
+	// Sync secrets with database
+	syncK8sSecretsFlag := flag.Bool("sync-k8s-secrets", false, "Sync Kubernetes secrets with database")
+
 	// Parse the command-line flags
 	flag.Parse()
 
@@ -108,6 +111,9 @@ func main() {
 		cli := NewCLI(cfg)
 		createTeamCmd.Parse(os.Args[2:])
 		cli.createTeam(*teamName, *displayname)
+	} else if *syncK8sSecretsFlag {
+		cli := NewCLI(cfg)
+		cli.syncSecrets()
 	} else {
 		fmt.Println("No command specified. Use -start-api to start the API server.")
 	}

@@ -58,6 +58,7 @@ var (
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString},
 		{Name: "active", Type: field.TypeBool, Default: true},
+		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
 		{Name: "project_id", Type: field.TypeUUID},
 	}
 	// EnvironmentsTable holds the schema information for the "environments" table.
@@ -68,7 +69,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "environments_projects_environments",
-				Columns:    []*schema.Column{EnvironmentsColumns[7]},
+				Columns:    []*schema.Column{EnvironmentsColumns[8]},
 				RefColumns: []*schema.Column{ProjectsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -263,6 +264,7 @@ var (
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "active"},
+		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
 		{Name: "team_id", Type: field.TypeUUID},
 	}
 	// ProjectsTable holds the schema information for the "projects" table.
@@ -273,7 +275,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "projects_teams_projects",
-				Columns:    []*schema.Column{ProjectsColumns[7]},
+				Columns:    []*schema.Column{ProjectsColumns[8]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -292,6 +294,7 @@ var (
 		{Name: "runtime", Type: field.TypeString, Nullable: true},
 		{Name: "framework", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
+		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
 	}
@@ -303,13 +306,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[11]},
+				Columns:    []*schema.Column{ServicesColumns[12]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[12]},
+				Columns:    []*schema.Column{ServicesColumns[13]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -352,6 +355,7 @@ var (
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "namespace", Type: field.TypeString, Unique: true},
+		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 	}
 	// TeamsTable holds the schema information for the "teams" table.

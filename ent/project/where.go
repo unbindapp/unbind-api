@@ -91,6 +91,11 @@ func TeamID(v uuid.UUID) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldTeamID, v))
 }
 
+// KubernetesSecret applies equality check predicate on the "kubernetes_secret" field. It's identical to KubernetesSecretEQ.
+func KubernetesSecret(v string) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldCreatedAt, v))
@@ -459,6 +464,71 @@ func TeamIDIn(vs ...uuid.UUID) predicate.Project {
 // TeamIDNotIn applies the NotIn predicate on the "team_id" field.
 func TeamIDNotIn(vs ...uuid.UUID) predicate.Project {
 	return predicate.Project(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// KubernetesSecretEQ applies the EQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretEQ(v string) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretNEQ applies the NEQ predicate on the "kubernetes_secret" field.
+func KubernetesSecretNEQ(v string) predicate.Project {
+	return predicate.Project(sql.FieldNEQ(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretIn applies the In predicate on the "kubernetes_secret" field.
+func KubernetesSecretIn(vs ...string) predicate.Project {
+	return predicate.Project(sql.FieldIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretNotIn applies the NotIn predicate on the "kubernetes_secret" field.
+func KubernetesSecretNotIn(vs ...string) predicate.Project {
+	return predicate.Project(sql.FieldNotIn(FieldKubernetesSecret, vs...))
+}
+
+// KubernetesSecretGT applies the GT predicate on the "kubernetes_secret" field.
+func KubernetesSecretGT(v string) predicate.Project {
+	return predicate.Project(sql.FieldGT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretGTE applies the GTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretGTE(v string) predicate.Project {
+	return predicate.Project(sql.FieldGTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLT applies the LT predicate on the "kubernetes_secret" field.
+func KubernetesSecretLT(v string) predicate.Project {
+	return predicate.Project(sql.FieldLT(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretLTE applies the LTE predicate on the "kubernetes_secret" field.
+func KubernetesSecretLTE(v string) predicate.Project {
+	return predicate.Project(sql.FieldLTE(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContains applies the Contains predicate on the "kubernetes_secret" field.
+func KubernetesSecretContains(v string) predicate.Project {
+	return predicate.Project(sql.FieldContains(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasPrefix applies the HasPrefix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasPrefix(v string) predicate.Project {
+	return predicate.Project(sql.FieldHasPrefix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretHasSuffix applies the HasSuffix predicate on the "kubernetes_secret" field.
+func KubernetesSecretHasSuffix(v string) predicate.Project {
+	return predicate.Project(sql.FieldHasSuffix(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretEqualFold applies the EqualFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretEqualFold(v string) predicate.Project {
+	return predicate.Project(sql.FieldEqualFold(FieldKubernetesSecret, v))
+}
+
+// KubernetesSecretContainsFold applies the ContainsFold predicate on the "kubernetes_secret" field.
+func KubernetesSecretContainsFold(v string) predicate.Project {
+	return predicate.Project(sql.FieldContainsFold(FieldKubernetesSecret, v))
 }
 
 // HasTeam applies the HasEdge predicate on the "team" edge.

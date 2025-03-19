@@ -46,6 +46,8 @@ type Service struct {
 	GithubInstallationID *int64 `json:"github_installation_id,omitempty"`
 	// GitHub repository name
 	GitRepository *string `json:"git_repository,omitempty"`
+	// Kubernetes secret for this service
+	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -116,7 +118,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldRuntime, service.FieldFramework, service.FieldGitRepository:
+		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldRuntime, service.FieldFramework, service.FieldGitRepository, service.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -219,6 +221,12 @@ func (s *Service) assignValues(columns []string, values []any) error {
 				s.GitRepository = new(string)
 				*s.GitRepository = value.String
 			}
+		case service.FieldKubernetesSecret:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_secret", values[i])
+			} else if value.Valid {
+				s.KubernetesSecret = value.String
+			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -318,6 +326,9 @@ func (s *Service) String() string {
 		builder.WriteString("git_repository=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("kubernetes_secret=")
+	builder.WriteString(s.KubernetesSecret)
 	builder.WriteByte(')')
 	return builder.String()
 }

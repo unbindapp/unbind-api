@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/service"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
@@ -14,6 +13,7 @@ import (
 func (self *ServiceRepository) Create(
 	ctx context.Context,
 	tx repository.TxInterface,
+	name string,
 	displayName string,
 	description string,
 	serviceType service.Type,
@@ -23,16 +23,11 @@ func (self *ServiceRepository) Create(
 	environmentID uuid.UUID,
 	gitHubInstallationID *int64,
 	gitRepository *string,
+	kubernetesSecret string,
 ) (*ent.Service, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
-	}
-
-	// Generate unique name
-	name, err := utils.GenerateSlug(displayName)
-	if err != nil {
-		return nil, err
 	}
 
 	return db.Service.Create().
@@ -46,5 +41,6 @@ func (self *ServiceRepository) Create(
 		SetEnvironmentID(environmentID).
 		SetNillableGithubInstallationID(gitHubInstallationID).
 		SetNillableGitRepository(gitRepository).
+		SetKubernetesSecret(kubernetesSecret).
 		Save(ctx)
 }

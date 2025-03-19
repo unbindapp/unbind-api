@@ -12,7 +12,7 @@ import (
 
 // ProjectRepositoryInterface ...
 type ProjectRepositoryInterface interface {
-	Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, displayName, description string) (*ent.Project, error)
+	Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, displayName, description, kubernetesSecret string) (*ent.Project, error)
 	Update(ctx context.Context, projectID uuid.UUID, displayName, description string) (*ent.Project, error)
 	Delete(ctx context.Context, projectID uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.Project, error)

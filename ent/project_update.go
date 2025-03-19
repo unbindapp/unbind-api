@@ -114,6 +114,20 @@ func (pu *ProjectUpdate) SetNillableTeamID(u *uuid.UUID) *ProjectUpdate {
 	return pu
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (pu *ProjectUpdate) SetKubernetesSecret(s string) *ProjectUpdate {
+	pu.mutation.SetKubernetesSecret(s)
+	return pu
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableKubernetesSecret(s *string) *ProjectUpdate {
+	if s != nil {
+		pu.SetKubernetesSecret(*s)
+	}
+	return pu
+}
+
 // SetTeam sets the "team" edge to the Team entity.
 func (pu *ProjectUpdate) SetTeam(t *Team) *ProjectUpdate {
 	return pu.SetTeamID(t.ID)
@@ -250,6 +264,9 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.Status(); ok {
 		_spec.SetField(project.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.KubernetesSecret(); ok {
+		_spec.SetField(project.FieldKubernetesSecret, field.TypeString, value)
 	}
 	if pu.mutation.TeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -429,6 +446,20 @@ func (puo *ProjectUpdateOne) SetNillableTeamID(u *uuid.UUID) *ProjectUpdateOne {
 	return puo
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (puo *ProjectUpdateOne) SetKubernetesSecret(s string) *ProjectUpdateOne {
+	puo.mutation.SetKubernetesSecret(s)
+	return puo
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableKubernetesSecret(s *string) *ProjectUpdateOne {
+	if s != nil {
+		puo.SetKubernetesSecret(*s)
+	}
+	return puo
+}
+
 // SetTeam sets the "team" edge to the Team entity.
 func (puo *ProjectUpdateOne) SetTeam(t *Team) *ProjectUpdateOne {
 	return puo.SetTeamID(t.ID)
@@ -595,6 +626,9 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	}
 	if value, ok := puo.mutation.Status(); ok {
 		_spec.SetField(project.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.KubernetesSecret(); ok {
+		_spec.SetField(project.FieldKubernetesSecret, field.TypeString, value)
 	}
 	if puo.mutation.TeamCleared() {
 		edge := &sqlgraph.EdgeSpec{

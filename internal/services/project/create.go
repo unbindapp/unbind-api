@@ -54,7 +54,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	}
 
 	// Check if the team exists
-	_, err := self.repo.Team().GetByID(ctx, input.TeamID)
+	team, err := self.repo.Team().GetByID(ctx, input.TeamID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
@@ -66,7 +66,13 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	var project *ent.Project
 	var environment *ent.Environment
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
-		project, err = self.repo.Project().Create(ctx, tx, input.TeamID, input.Name, input.DisplayName, input.Description)
+		// Create secret for this project
+		secret, _, err := self.k8sClient.GetOrCreateSecret(ctx, input.Name, team.Namespace)
+		if err != nil {
+			return err
+		}
+
+		project, err = self.repo.Project().Create(ctx, tx, input.TeamID, input.Name, input.DisplayName, input.Description, secret.Name)
 		if err != nil {
 			return err
 		}
@@ -78,7 +84,13 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 		if err != nil {
 			return err
 		}
-		environment, err = self.repo.Environment().Create(ctx, tx, name, defaultEnvName, defaultEnvDescription, project.ID)
+		// Create secret for this environment
+		secret, _, err = self.k8sClient.GetOrCreateSecret(ctx, name, team.Namespace)
+		if err != nil {
+			return err
+		}
+
+		environment, err = self.repo.Environment().Create(ctx, tx, name, defaultEnvName, defaultEnvDescription, secret.Name, project.ID)
 		if err != nil {
 			return err
 		}

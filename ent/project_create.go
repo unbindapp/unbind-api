@@ -100,6 +100,20 @@ func (pc *ProjectCreate) SetTeamID(u uuid.UUID) *ProjectCreate {
 	return pc
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (pc *ProjectCreate) SetKubernetesSecret(s string) *ProjectCreate {
+	pc.mutation.SetKubernetesSecret(s)
+	return pc
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (pc *ProjectCreate) SetNillableKubernetesSecret(s *string) *ProjectCreate {
+	if s != nil {
+		pc.SetKubernetesSecret(*s)
+	}
+	return pc
+}
+
 // SetID sets the "id" field.
 func (pc *ProjectCreate) SetID(u uuid.UUID) *ProjectCreate {
 	pc.mutation.SetID(u)
@@ -181,6 +195,10 @@ func (pc *ProjectCreate) defaults() {
 		v := project.DefaultStatus
 		pc.mutation.SetStatus(v)
 	}
+	if _, ok := pc.mutation.KubernetesSecret(); !ok {
+		v := project.DefaultKubernetesSecret
+		pc.mutation.SetKubernetesSecret(v)
+	}
 	if _, ok := pc.mutation.ID(); !ok {
 		v := project.DefaultID()
 		pc.mutation.SetID(v)
@@ -211,6 +229,9 @@ func (pc *ProjectCreate) check() error {
 	}
 	if _, ok := pc.mutation.TeamID(); !ok {
 		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "Project.team_id"`)}
+	}
+	if _, ok := pc.mutation.KubernetesSecret(); !ok {
+		return &ValidationError{Name: "kubernetes_secret", err: errors.New(`ent: missing required field "Project.kubernetes_secret"`)}
 	}
 	if len(pc.mutation.TeamIDs()) == 0 {
 		return &ValidationError{Name: "team", err: errors.New(`ent: missing required edge "Project.team"`)}
@@ -274,6 +295,10 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Status(); ok {
 		_spec.SetField(project.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := pc.mutation.KubernetesSecret(); ok {
+		_spec.SetField(project.FieldKubernetesSecret, field.TypeString, value)
+		_node.KubernetesSecret = value
 	}
 	if nodes := pc.mutation.TeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -438,6 +463,18 @@ func (u *ProjectUpsert) UpdateTeamID() *ProjectUpsert {
 	return u
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *ProjectUpsert) SetKubernetesSecret(v string) *ProjectUpsert {
+	u.Set(project.FieldKubernetesSecret, v)
+	return u
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *ProjectUpsert) UpdateKubernetesSecret() *ProjectUpsert {
+	u.SetExcluded(project.FieldKubernetesSecret)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -577,6 +614,20 @@ func (u *ProjectUpsertOne) SetTeamID(v uuid.UUID) *ProjectUpsertOne {
 func (u *ProjectUpsertOne) UpdateTeamID() *ProjectUpsertOne {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateTeamID()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *ProjectUpsertOne) SetKubernetesSecret(v string) *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *ProjectUpsertOne) UpdateKubernetesSecret() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 
@@ -886,6 +937,20 @@ func (u *ProjectUpsertBulk) SetTeamID(v uuid.UUID) *ProjectUpsertBulk {
 func (u *ProjectUpsertBulk) UpdateTeamID() *ProjectUpsertBulk {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateTeamID()
+	})
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (u *ProjectUpsertBulk) SetKubernetesSecret(v string) *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetKubernetesSecret(v)
+	})
+}
+
+// UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
+func (u *ProjectUpsertBulk) UpdateKubernetesSecret() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateKubernetesSecret()
 	})
 }
 

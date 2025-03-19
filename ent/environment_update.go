@@ -108,6 +108,20 @@ func (eu *EnvironmentUpdate) SetNillableProjectID(u *uuid.UUID) *EnvironmentUpda
 	return eu
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (eu *EnvironmentUpdate) SetKubernetesSecret(s string) *EnvironmentUpdate {
+	eu.mutation.SetKubernetesSecret(s)
+	return eu
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (eu *EnvironmentUpdate) SetNillableKubernetesSecret(s *string) *EnvironmentUpdate {
+	if s != nil {
+		eu.SetKubernetesSecret(*s)
+	}
+	return eu
+}
+
 // SetProject sets the "project" edge to the Project entity.
 func (eu *EnvironmentUpdate) SetProject(p *Project) *EnvironmentUpdate {
 	return eu.SetProjectID(p.ID)
@@ -241,6 +255,9 @@ func (eu *EnvironmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := eu.mutation.Active(); ok {
 		_spec.SetField(environment.FieldActive, field.TypeBool, value)
+	}
+	if value, ok := eu.mutation.KubernetesSecret(); ok {
+		_spec.SetField(environment.FieldKubernetesSecret, field.TypeString, value)
 	}
 	if eu.mutation.ProjectCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -414,6 +431,20 @@ func (euo *EnvironmentUpdateOne) SetNillableProjectID(u *uuid.UUID) *Environment
 	return euo
 }
 
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (euo *EnvironmentUpdateOne) SetKubernetesSecret(s string) *EnvironmentUpdateOne {
+	euo.mutation.SetKubernetesSecret(s)
+	return euo
+}
+
+// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
+func (euo *EnvironmentUpdateOne) SetNillableKubernetesSecret(s *string) *EnvironmentUpdateOne {
+	if s != nil {
+		euo.SetKubernetesSecret(*s)
+	}
+	return euo
+}
+
 // SetProject sets the "project" edge to the Project entity.
 func (euo *EnvironmentUpdateOne) SetProject(p *Project) *EnvironmentUpdateOne {
 	return euo.SetProjectID(p.ID)
@@ -577,6 +608,9 @@ func (euo *EnvironmentUpdateOne) sqlSave(ctx context.Context) (_node *Environmen
 	}
 	if value, ok := euo.mutation.Active(); ok {
 		_spec.SetField(environment.FieldActive, field.TypeBool, value)
+	}
+	if value, ok := euo.mutation.KubernetesSecret(); ok {
+		_spec.SetField(environment.FieldKubernetesSecret, field.TypeString, value)
 	}
 	if euo.mutation.ProjectCleared() {
 		edge := &sqlgraph.EdgeSpec{
