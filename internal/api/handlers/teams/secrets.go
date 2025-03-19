@@ -97,8 +97,10 @@ func (self *HandlerGroup) AddSecret(ctx context.Context, input *AddTeamSecretInp
 type DeleteTeamSecretInput struct {
 	server.BaseAuthInput
 	Body struct {
-		TeamID uuid.UUID `json:"team_id" validate:"required"`
-		Key    string    `json:"key" validate:"required"`
+		TeamID  uuid.UUID `json:"team_id" validate:"required"`
+		Secrets []*struct {
+			Name string `json:"name" validate:"required"`
+		} `json:"secrets" validate:"required"`
 	}
 }
 
@@ -111,7 +113,11 @@ func (self *HandlerGroup) DeleteSecret(ctx context.Context, input *DeleteTeamSec
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	secret, err := self.srv.TeamService.DeleteSecretByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.Key)
+	keysToDelete := make([]string, len(input.Body.Secrets))
+	for i, secret := range input.Body.Secrets {
+		keysToDelete[i] = secret.Name
+	}
+	secret, err := self.srv.TeamService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, keysToDelete)
 	if err != nil {
 		if errors.Is(err, errdefs.ErrUnauthorized) {
 			return nil, huma.Error403Forbidden("Unauthorized")

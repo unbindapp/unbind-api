@@ -149,7 +149,7 @@ func (self *TeamService) CreateSecrets(ctx context.Context, userID uuid.UUID, be
 }
 
 // Delete a secret by key
-func (self *TeamService) DeleteSecretByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, secretKey string) ([]*models.SecretResponse, error) {
+func (self *TeamService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, keys []string) ([]*models.SecretResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -201,7 +201,9 @@ func (self *TeamService) DeleteSecretByKey(ctx context.Context, userID uuid.UUID
 	}
 
 	// Remove from map
-	delete(secrets, secretKey)
+	for _, secretKey := range keys {
+		delete(secrets, secretKey)
+	}
 
 	// Update secrets
 	_, err = self.k8s.UpdateSecret(ctx, team.KubernetesSecret, team.Namespace, secrets, client)

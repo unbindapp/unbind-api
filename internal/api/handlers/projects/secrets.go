@@ -109,7 +109,9 @@ type DeleteProjectSecretInput struct {
 	Body struct {
 		TeamID    uuid.UUID `json:"team_id" validate:"required"`
 		ProjectID uuid.UUID `json:"project_id" validate:"required"`
-		Key       string    `json:"key" validate:"required"`
+		Secrets   []*struct {
+			Name string `json:"name" validate:"required"`
+		} `json:"secrets" validate:"required"`
 	}
 }
 
@@ -122,7 +124,11 @@ func (self *HandlerGroup) DeleteSecret(ctx context.Context, input *DeleteProject
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	secret, err := self.srv.ProjectService.DeleteSecretByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.Key)
+	keysToDelete := make([]string, len(input.Body.Secrets))
+	for i, secret := range input.Body.Secrets {
+		keysToDelete[i] = secret.Name
+	}
+	secret, err := self.srv.ProjectService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, keysToDelete)
 	if err != nil {
 		return nil, handleSecretErr(err)
 	}
