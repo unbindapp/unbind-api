@@ -51,8 +51,8 @@ func (self *HandlerGroup) ListSecrets(ctx context.Context, input *ListTeamSecret
 	return resp, nil
 }
 
-// Add new
-type AddTeamSecretInput struct {
+// Create new
+type CreateTeamSecretsInput struct {
 	server.BaseAuthInput
 	Body struct {
 		TeamID  uuid.UUID `json:"team_id" validate:"required"`
@@ -63,7 +63,7 @@ type AddTeamSecretInput struct {
 	}
 }
 
-func (self *HandlerGroup) AddSecret(ctx context.Context, input *AddTeamSecretInput) (*SecretsResponse, error) {
+func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateTeamSecretsInput) (*SecretsResponse, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -94,7 +94,7 @@ func (self *HandlerGroup) AddSecret(ctx context.Context, input *AddTeamSecretInp
 }
 
 // Delete one
-type DeleteTeamSecretInput struct {
+type DeleteTeamSecretsInput struct {
 	server.BaseAuthInput
 	Body struct {
 		TeamID  uuid.UUID                  `json:"team_id" validate:"required"`
@@ -102,7 +102,7 @@ type DeleteTeamSecretInput struct {
 	}
 }
 
-func (self *HandlerGroup) DeleteSecret(ctx context.Context, input *DeleteTeamSecretInput) (*SecretsResponse, error) {
+func (self *HandlerGroup) DeleteSecrets(ctx context.Context, input *DeleteTeamSecretsInput) (*SecretsResponse, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {

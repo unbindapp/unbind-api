@@ -406,24 +406,24 @@ func startAPI(cfg *config.Config) {
 	huma.Register(
 		teamsGroup,
 		huma.Operation{
-			OperationID: "add-team-secret",
-			Summary:     "Add Secrets",
-			Description: "Add new secrets for a team",
+			OperationID: "create-team-secrets",
+			Summary:     "Create Secrets",
+			Description: "Create new secrets for a team",
 			Path:        "/secrets/create",
 			Method:      http.MethodPost,
 		},
-		teamHandlers.AddSecret,
+		teamHandlers.CreateSecrets,
 	)
 	huma.Register(
 		teamsGroup,
 		huma.Operation{
-			OperationID: "rm-team-secret",
-			Summary:     "Remove Secret",
-			Description: "Remove a team secret by key",
+			OperationID: "delete-team-secrets",
+			Summary:     "Delete Secrets",
+			Description: "Delete team secret by key",
 			Path:        "/secrets/delete",
 			Method:      http.MethodDelete,
 		},
-		teamHandlers.DeleteSecret,
+		teamHandlers.DeleteSecrets,
 	)
 
 	// /projects group
@@ -503,24 +503,24 @@ func startAPI(cfg *config.Config) {
 	huma.Register(
 		projectsGroup,
 		huma.Operation{
-			OperationID: "add-project-secret",
-			Summary:     "Add Secrets",
-			Description: "Add new secrets for a project",
+			OperationID: "create-project-secrets",
+			Summary:     "Create Secrets",
+			Description: "Create new secrets for a project",
 			Path:        "/secrets/create",
 			Method:      http.MethodPost,
 		},
-		projectHandlers.AddSecret,
+		projectHandlers.CreateSecrets,
 	)
 	huma.Register(
 		projectsGroup,
 		huma.Operation{
-			OperationID: "rm-project-secret",
-			Summary:     "Remove Secret",
-			Description: "Remove a project secret by key",
+			OperationID: "delete-project-secrets",
+			Summary:     "Delete Secrets",
+			Description: "Delete project secrets by key",
 			Path:        "/secrets/delete",
 			Method:      http.MethodDelete,
 		},
-		projectHandlers.DeleteSecret,
+		projectHandlers.DeleteSecrets,
 	)
 
 	// /services group
