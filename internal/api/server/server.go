@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
@@ -36,9 +37,10 @@ type Server struct {
 	HttpClient      *http.Client
 	BuildController *buildctl.BuildController
 	// Services
-	TeamService    *team_service.TeamService
-	ProjectService *project_service.ProjectService
-	ServiceService *service_service.ServiceService
+	TeamService        *team_service.TeamService
+	ProjectService     *project_service.ProjectService
+	ServiceService     *service_service.ServiceService
+	EnvironmentService *environment_service.EnvironmentService
 }
 
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {

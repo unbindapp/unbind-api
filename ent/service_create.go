@@ -162,14 +162,6 @@ func (sc *ServiceCreate) SetKubernetesSecret(s string) *ServiceCreate {
 	return sc
 }
 
-// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
-func (sc *ServiceCreate) SetNillableKubernetesSecret(s *string) *ServiceCreate {
-	if s != nil {
-		sc.SetKubernetesSecret(*s)
-	}
-	return sc
-}
-
 // SetID sets the "id" field.
 func (sc *ServiceCreate) SetID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetID(u)
@@ -270,10 +262,6 @@ func (sc *ServiceCreate) defaults() {
 	if _, ok := sc.mutation.UpdatedAt(); !ok {
 		v := service.DefaultUpdatedAt()
 		sc.mutation.SetUpdatedAt(v)
-	}
-	if _, ok := sc.mutation.KubernetesSecret(); !ok {
-		v := service.DefaultKubernetesSecret
-		sc.mutation.SetKubernetesSecret(v)
 	}
 	if _, ok := sc.mutation.ID(); !ok {
 		v := service.DefaultID()

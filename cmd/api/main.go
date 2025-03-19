@@ -15,6 +15,7 @@ import (
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
+	secrets_handler "github.com/unbindapp/unbind-api/internal/api/handlers/secrets"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
 	user_handler "github.com/unbindapp/unbind-api/internal/api/handlers/user"
@@ -28,6 +29,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
@@ -124,13 +126,14 @@ func startAPI(cfg *config.Config) {
 			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalURL),
 			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 		},
-		GithubClient:    githubClient,
-		StringCache:     cache.NewStringCache(valkeyClient, "unbind"),
-		HttpClient:      &http.Client{},
-		BuildController: buildctl.NewBuildController(ctx, kubeClient, valkeyClient, repo),
-		TeamService:     team_service.NewTeamService(repo, kubeClient),
-		ProjectService:  project_service.NewProjectService(repo, kubeClient),
-		ServiceService:  service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
+		GithubClient:       githubClient,
+		StringCache:        cache.NewStringCache(valkeyClient, "unbind"),
+		HttpClient:         &http.Client{},
+		BuildController:    buildctl.NewBuildController(ctx, kubeClient, valkeyClient, repo),
+		TeamService:        team_service.NewTeamService(repo, kubeClient),
+		ProjectService:     project_service.NewProjectService(repo, kubeClient),
+		ServiceService:     service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
+		EnvironmentService: environment_service.NewEnvironmentService(repo, kubeClient),
 	}
 
 	// New chi router
@@ -392,39 +395,6 @@ func startAPI(cfg *config.Config) {
 		},
 		teamHandlers.UpdateTeam,
 	)
-	huma.Register(
-		teamsGroup,
-		huma.Operation{
-			OperationID: "list-team-secrets",
-			Summary:     "List Secrets",
-			Description: "List all secrets for a team",
-			Path:        "/secrets/list",
-			Method:      http.MethodGet,
-		},
-		teamHandlers.ListSecrets,
-	)
-	huma.Register(
-		teamsGroup,
-		huma.Operation{
-			OperationID: "create-team-secrets",
-			Summary:     "Create Secrets",
-			Description: "Create new secrets for a team",
-			Path:        "/secrets/create",
-			Method:      http.MethodPost,
-		},
-		teamHandlers.CreateSecrets,
-	)
-	huma.Register(
-		teamsGroup,
-		huma.Operation{
-			OperationID: "delete-team-secrets",
-			Summary:     "Delete Secrets",
-			Description: "Delete team secret by key",
-			Path:        "/secrets/delete",
-			Method:      http.MethodDelete,
-		},
-		teamHandlers.DeleteSecrets,
-	)
 
 	// /projects group
 	projectsGroup := huma.NewGroup(api, "/projects")
@@ -489,39 +459,6 @@ func startAPI(cfg *config.Config) {
 		},
 		projectHandlers.DeleteProject,
 	)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "list-project-secrets",
-			Summary:     "List Secrets",
-			Description: "List all secrets for a project",
-			Path:        "/secrets/list",
-			Method:      http.MethodGet,
-		},
-		projectHandlers.ListSecrets,
-	)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "create-project-secrets",
-			Summary:     "Create Secrets",
-			Description: "Create new secrets for a project",
-			Path:        "/secrets/create",
-			Method:      http.MethodPost,
-		},
-		projectHandlers.CreateSecrets,
-	)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "delete-project-secrets",
-			Summary:     "Delete Secrets",
-			Description: "Delete project secrets by key",
-			Path:        "/secrets/delete",
-			Method:      http.MethodDelete,
-		},
-		projectHandlers.DeleteSecrets,
-	)
 
 	// /services group
 	servicesGroup := huma.NewGroup(api, "/services")
@@ -541,6 +478,48 @@ func startAPI(cfg *config.Config) {
 			Method:      http.MethodPost,
 		},
 		serviceHandlers.CreateService,
+	)
+
+	// /secrets group
+	secretsGroup := huma.NewGroup(api, "/secrets")
+	secretsGroup.UseMiddleware(mw.Authenticate)
+	secretsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Secrets"}
+		next(op)
+	})
+	secretHandlers := secrets_handler.NewHandlerGroup(srvImpl)
+	huma.Register(
+		secretsGroup,
+		huma.Operation{
+			OperationID: "list-secrets",
+			Summary:     "List Secrets",
+			Description: "List secrets for a service, environment, project, or team",
+			Path:        "/list",
+			Method:      http.MethodGet,
+		},
+		secretHandlers.ListSecrets,
+	)
+	huma.Register(
+		secretsGroup,
+		huma.Operation{
+			OperationID: "create-secret",
+			Summary:     "Create Secrets",
+			Description: "Create secrets for a service, environment, project, or team",
+			Path:        "/create",
+			Method:      http.MethodPost,
+		},
+		secretHandlers.CreateSecrets,
+	)
+	huma.Register(
+		secretsGroup,
+		huma.Operation{
+			OperationID: "delete-secret",
+			Summary:     "Delete Secrets",
+			Description: "Delete secrets for a service, environment, project, or team",
+			Path:        "/delete",
+			Method:      http.MethodDelete,
+		},
+		secretHandlers.DeleteSecrets,
 	)
 
 	// Start the server

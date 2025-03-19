@@ -87,8 +87,6 @@ var (
 	NameValidator func(string) error
 	// DefaultActive holds the default value on creation for the "active" field.
 	DefaultActive bool
-	// DefaultKubernetesSecret holds the default value on creation for the "kubernetes_secret" field.
-	DefaultKubernetesSecret string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )

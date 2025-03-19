@@ -31,8 +31,7 @@ func (Environment) Fields() []ent.Field {
 		field.String("description"),
 		field.Bool("active").Default(true),
 		field.UUID("project_id", uuid.UUID{}),
-		// ! TODO - remove default after migration
-		field.String("kubernetes_secret").Default("").Comment("Kubernetes secret for this environment"),
+		field.String("kubernetes_secret").Comment("Kubernetes secret for this environment"),
 	}
 }
 

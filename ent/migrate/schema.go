@@ -58,7 +58,7 @@ var (
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString},
 		{Name: "active", Type: field.TypeBool, Default: true},
-		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
+		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "project_id", Type: field.TypeUUID},
 	}
 	// EnvironmentsTable holds the schema information for the "environments" table.
@@ -244,7 +244,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "action", Type: field.TypeEnum, Enums: []string{"read", "create", "update", "delete", "manage", "admin", "edit", "view"}},
-		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "group", "environment", "permission", "user", "system"}},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "group", "environment", "permission", "user", "system", "service"}},
 		{Name: "resource_id", Type: field.TypeString},
 		{Name: "scope", Type: field.TypeString, Nullable: true},
 		{Name: "labels", Type: field.TypeJSON, Nullable: true},
@@ -264,7 +264,7 @@ var (
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "active"},
-		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
+		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "team_id", Type: field.TypeUUID},
 	}
 	// ProjectsTable holds the schema information for the "projects" table.
@@ -294,7 +294,7 @@ var (
 		{Name: "runtime", Type: field.TypeString, Nullable: true},
 		{Name: "framework", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
-		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
+		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
 	}
@@ -355,7 +355,7 @@ var (
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "namespace", Type: field.TypeString, Unique: true},
-		{Name: "kubernetes_secret", Type: field.TypeString, Default: ""},
+		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 	}
 	// TeamsTable holds the schema information for the "teams" table.

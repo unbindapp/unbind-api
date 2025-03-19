@@ -106,14 +106,6 @@ func (pc *ProjectCreate) SetKubernetesSecret(s string) *ProjectCreate {
 	return pc
 }
 
-// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
-func (pc *ProjectCreate) SetNillableKubernetesSecret(s *string) *ProjectCreate {
-	if s != nil {
-		pc.SetKubernetesSecret(*s)
-	}
-	return pc
-}
-
 // SetID sets the "id" field.
 func (pc *ProjectCreate) SetID(u uuid.UUID) *ProjectCreate {
 	pc.mutation.SetID(u)
@@ -194,10 +186,6 @@ func (pc *ProjectCreate) defaults() {
 	if _, ok := pc.mutation.Status(); !ok {
 		v := project.DefaultStatus
 		pc.mutation.SetStatus(v)
-	}
-	if _, ok := pc.mutation.KubernetesSecret(); !ok {
-		v := project.DefaultKubernetesSecret
-		pc.mutation.SetKubernetesSecret(v)
 	}
 	if _, ok := pc.mutation.ID(); !ok {
 		v := project.DefaultID()

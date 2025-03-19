@@ -87,8 +87,6 @@ var (
 	NameValidator func(string) error
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus string
-	// DefaultKubernetesSecret holds the default value on creation for the "kubernetes_secret" field.
-	DefaultKubernetesSecret string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )

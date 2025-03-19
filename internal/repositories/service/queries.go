@@ -13,6 +13,14 @@ import (
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
+func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error) {
+	return self.base.DB.Service.Query().
+		Where(service.IDEQ(serviceID)).
+		WithEnvironment().
+		WithServiceConfig().
+		Only(ctx)
+}
+
 func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error) {
 	return self.base.DB.Service.Query().
 		Where(service.GithubInstallationIDEQ(installationID)).

@@ -26,7 +26,7 @@ func (Permission) Mixin() []ent.Mixin {
 func (Permission) Fields() []ent.Field {
 	return []ent.Field{
 		field.Enum("action").Values("read", "create", "update", "delete", "manage", "admin", "edit", "view"),
-		field.Enum("resource_type").Values("team", "project", "group", "environment", "permission", "user", "system").Comment("Type of resource: 'teams', 'projects', 'k8s', etc."),
+		field.Enum("resource_type").Values("team", "project", "group", "environment", "permission", "user", "system", "service").Comment("Type of resource: 'teams', 'projects', 'k8s', etc."),
 		field.String("resource_id").NotEmpty().Comment("Specific resource ID or '*' for all resources of this type"),
 		field.String("scope").Optional().Comment("For additional filtering (e.g., k8s namespaces, specific fields)"),
 		field.JSON("labels", map[string]string{}).Optional().Comment("Resource labels for K8s label selectors"),

@@ -98,10 +98,6 @@ func init() {
 	environmentDescActive := environmentFields[3].Descriptor()
 	// environment.DefaultActive holds the default value on creation for the active field.
 	environment.DefaultActive = environmentDescActive.Default.(bool)
-	// environmentDescKubernetesSecret is the schema descriptor for kubernetes_secret field.
-	environmentDescKubernetesSecret := environmentFields[5].Descriptor()
-	// environment.DefaultKubernetesSecret holds the default value on creation for the kubernetes_secret field.
-	environment.DefaultKubernetesSecret = environmentDescKubernetesSecret.Default.(string)
 	// environmentDescID is the schema descriptor for id field.
 	environmentDescID := environmentMixinFields0[0].Descriptor()
 	// environment.DefaultID holds the default value on creation for the id field.
@@ -293,10 +289,6 @@ func init() {
 	projectDescStatus := projectFields[3].Descriptor()
 	// project.DefaultStatus holds the default value on creation for the status field.
 	project.DefaultStatus = projectDescStatus.Default.(string)
-	// projectDescKubernetesSecret is the schema descriptor for kubernetes_secret field.
-	projectDescKubernetesSecret := projectFields[5].Descriptor()
-	// project.DefaultKubernetesSecret holds the default value on creation for the kubernetes_secret field.
-	project.DefaultKubernetesSecret = projectDescKubernetesSecret.Default.(string)
 	// projectDescID is the schema descriptor for id field.
 	projectDescID := projectMixinFields0[0].Descriptor()
 	// project.DefaultID holds the default value on creation for the id field.
@@ -322,10 +314,6 @@ func init() {
 	serviceDescName := serviceFields[0].Descriptor()
 	// service.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	service.NameValidator = serviceDescName.Validators[0].(func(string) error)
-	// serviceDescKubernetesSecret is the schema descriptor for kubernetes_secret field.
-	serviceDescKubernetesSecret := serviceFields[10].Descriptor()
-	// service.DefaultKubernetesSecret holds the default value on creation for the kubernetes_secret field.
-	service.DefaultKubernetesSecret = serviceDescKubernetesSecret.Default.(string)
 	// serviceDescID is the schema descriptor for id field.
 	serviceDescID := serviceMixinFields0[0].Descriptor()
 	// service.DefaultID holds the default value on creation for the id field.
@@ -388,10 +376,6 @@ func init() {
 	teamDescName := teamFields[0].Descriptor()
 	// team.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	team.NameValidator = teamDescName.Validators[0].(func(string) error)
-	// teamDescKubernetesSecret is the schema descriptor for kubernetes_secret field.
-	teamDescKubernetesSecret := teamFields[3].Descriptor()
-	// team.DefaultKubernetesSecret holds the default value on creation for the kubernetes_secret field.
-	team.DefaultKubernetesSecret = teamDescKubernetesSecret.Default.(string)
 	// teamDescID is the schema descriptor for id field.
 	teamDescID := teamMixinFields0[0].Descriptor()
 	// team.DefaultID holds the default value on creation for the id field.

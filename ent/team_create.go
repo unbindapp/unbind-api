@@ -79,14 +79,6 @@ func (tc *TeamCreate) SetKubernetesSecret(s string) *TeamCreate {
 	return tc
 }
 
-// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
-func (tc *TeamCreate) SetNillableKubernetesSecret(s *string) *TeamCreate {
-	if s != nil {
-		tc.SetKubernetesSecret(*s)
-	}
-	return tc
-}
-
 // SetDescription sets the "description" field.
 func (tc *TeamCreate) SetDescription(s string) *TeamCreate {
 	tc.mutation.SetDescription(s)
@@ -202,10 +194,6 @@ func (tc *TeamCreate) defaults() {
 	if _, ok := tc.mutation.UpdatedAt(); !ok {
 		v := team.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
-	}
-	if _, ok := tc.mutation.KubernetesSecret(); !ok {
-		v := team.DefaultKubernetesSecret
-		tc.mutation.SetKubernetesSecret(v)
 	}
 	if _, ok := tc.mutation.ID(); !ok {
 		v := team.DefaultID()

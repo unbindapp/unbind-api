@@ -98,14 +98,6 @@ func (ec *EnvironmentCreate) SetKubernetesSecret(s string) *EnvironmentCreate {
 	return ec
 }
 
-// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
-func (ec *EnvironmentCreate) SetNillableKubernetesSecret(s *string) *EnvironmentCreate {
-	if s != nil {
-		ec.SetKubernetesSecret(*s)
-	}
-	return ec
-}
-
 // SetID sets the "id" field.
 func (ec *EnvironmentCreate) SetID(u uuid.UUID) *EnvironmentCreate {
 	ec.mutation.SetID(u)
@@ -186,10 +178,6 @@ func (ec *EnvironmentCreate) defaults() {
 	if _, ok := ec.mutation.Active(); !ok {
 		v := environment.DefaultActive
 		ec.mutation.SetActive(v)
-	}
-	if _, ok := ec.mutation.KubernetesSecret(); !ok {
-		v := environment.DefaultKubernetesSecret
-		ec.mutation.SetKubernetesSecret(v)
 	}
 	if _, ok := ec.mutation.ID(); !ok {
 		v := environment.DefaultID()

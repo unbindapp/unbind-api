@@ -36,8 +36,7 @@ func (Service) Fields() []ent.Field {
 		field.UUID("environment_id", uuid.UUID{}),
 		field.Int64("github_installation_id").Optional().Nillable().Comment("Optional reference to GitHub installation"),
 		field.String("git_repository").Optional().Nillable().Comment("GitHub repository name"),
-		// ! TODO - remove default after migration
-		field.String("kubernetes_secret").Default("").Comment("Kubernetes secret for this service"),
+		field.String("kubernetes_secret").Comment("Kubernetes secret for this service"),
 	}
 }
 
