@@ -457,6 +457,57 @@ func (self *cli) syncSecrets() {
 			fmt.Printf("Error updating team: %v\n", err)
 			return
 		}
+
+		// Create project secrets
+		for _, p := range projects {
+			// Create secret
+			secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), p.Name, t.Namespace)
+			if err != nil {
+				fmt.Printf("Error creating secret: %v\n", err)
+				return
+			}
+			// Update project
+			if _, err := self.repository.Ent().Project.UpdateOne(p).
+				SetKubernetesSecret(secret.Name).
+				Save(context.Background()); err != nil {
+				fmt.Printf("Error updating project: %v\n", err)
+				return
+			}
+
+			// Create environment secrets
+			for _, e := range p.Edges.Environments {
+				// Create secret
+				secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), e.Name, t.Namespace)
+				if err != nil {
+					fmt.Printf("Error creating secret: %v\n", err)
+					return
+				}
+				// Update environment
+				if _, err := self.repository.Ent().Environment.UpdateOne(e).
+					SetKubernetesSecret(secret.Name).
+					Save(context.Background()); err != nil {
+					fmt.Printf("Error updating environment: %v\n", err)
+					return
+				}
+
+				// Create service secrets
+				for _, s := range e.Edges.Services {
+					// Create secret
+					secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), s.Name, t.Namespace)
+					if err != nil {
+						fmt.Printf("Error creating secret: %v\n", err)
+						return
+					}
+					// Update service
+					if _, err := self.repository.Ent().Service.UpdateOne(s).
+						SetKubernetesSecret(secret.Name).
+						Save(context.Background()); err != nil {
+						fmt.Printf("Error updating service: %v\n", err)
+						return
+					}
+				}
+			}
+		}
 	}
 }
 
