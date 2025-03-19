@@ -97,10 +97,8 @@ func (self *HandlerGroup) AddSecret(ctx context.Context, input *AddTeamSecretInp
 type DeleteTeamSecretInput struct {
 	server.BaseAuthInput
 	Body struct {
-		TeamID  uuid.UUID `json:"team_id" validate:"required"`
-		Secrets []*struct {
-			Name string `json:"name" validate:"required"`
-		} `json:"secrets" validate:"required"`
+		TeamID  uuid.UUID                  `json:"team_id" validate:"required"`
+		Secrets []models.SecretDeleteInput `json:"secrets" validate:"required"`
 	}
 }
 

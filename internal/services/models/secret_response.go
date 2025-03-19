@@ -41,3 +41,7 @@ type SecretResponse struct {
 	Key   string     `json:"key"`
 	Value string     `json:"value"`
 }
+
+type SecretDeleteInput struct {
+	Name string `json:"name" required:"true"`
+}

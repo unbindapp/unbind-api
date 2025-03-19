@@ -181,7 +181,7 @@ func (self *ProjectService) CreateSecrets(ctx context.Context, userID uuid.UUID,
 }
 
 // Delete a secret by key
-func (self *ProjectService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, projectID uuid.UUID, keys []string) ([]*models.SecretResponse, error) {
+func (self *ProjectService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, projectID uuid.UUID, keys []models.SecretDeleteInput) ([]*models.SecretResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -250,7 +250,7 @@ func (self *ProjectService) DeleteSecretsByKey(ctx context.Context, userID uuid.
 
 	// Remove from map
 	for _, secretKey := range keys {
-		delete(secrets, secretKey)
+		delete(secrets, secretKey.Name)
 	}
 
 	// Update secrets
