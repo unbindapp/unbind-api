@@ -12,6 +12,7 @@ import (
 
 type ListProjectInput struct {
 	server.BaseAuthInput
+	models.SortInput
 	TeamID uuid.UUID `query:"team_id" required:"true"`
 }
 
@@ -29,7 +30,7 @@ func (self *HandlerGroup) ListProjects(ctx context.Context, input *ListProjectIn
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
-	projects, err := self.srv.ProjectService.GetProjectsInTeam(ctx, user.ID, input.TeamID)
+	projects, err := self.srv.ProjectService.GetProjectsInTeam(ctx, user.ID, input.TeamID, input.SortByField, input.SortOrder)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}

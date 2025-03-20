@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID) ([]*models.ProjectResponse, error) {
+func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID, sortBy models.SortByField, sortOrder models.SortOrder) ([]*models.ProjectResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -48,7 +48,7 @@ func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUser
 	}
 
 	// Get projects
-	projects, err := self.repo.Project().GetByTeam(ctx, teamID)
+	projects, err := self.repo.Project().GetByTeam(ctx, teamID, sortBy, sortOrder)
 	if err != nil {
 		return nil, err
 	}
