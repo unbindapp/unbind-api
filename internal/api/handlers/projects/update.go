@@ -40,6 +40,7 @@ func (self *HandlerGroup) UpdateProject(ctx context.Context, input *UpdateProjec
 
 	updatedProject, err := self.srv.ProjectService.UpdateProject(ctx, user.ID, &project_service.UpdateProjectInput{
 		TeamID:      input.Body.TeamID,
+		ProjectID:   input.Body.ProjectID,
 		DisplayName: input.Body.DisplayName,
 		Description: input.Body.Description,
 	})
