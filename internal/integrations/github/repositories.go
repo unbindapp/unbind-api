@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"sync"
 	"time"
 
@@ -132,7 +131,6 @@ func (self *GithubClient) ReadUserAdminRepositoriesCursor(
 	}
 
 	uniqueRepos := removeDuplicateRepositories(allAdminRepos)
-	sortRepositories(uniqueRepos)
 
 	if len(uniqueRepos) > params.Limit {
 		uniqueRepos = uniqueRepos[:params.Limit]
@@ -168,6 +166,7 @@ func (self *GithubClient) fetchUserAdminRepos(ctx context.Context,
 ) ([]*GithubRepository, int, error) {
 	adminRepos := make([]*github.Repository, 0)
 	opts := &github.RepositoryListByUserOptions{
+		Sort: "updated",
 		ListOptions: github.ListOptions{
 			PerPage: perPage,
 			Page:    page,
@@ -234,13 +233,6 @@ func decodeCursor(cursor string) (cursorData, error) {
 	}
 
 	return data, nil
-}
-
-// Sort repositories sorts by updated field
-func sortRepositories(repos []*GithubRepository) {
-	sort.Slice(repos, func(i, j int) bool {
-		return repos[i].UpdatedAt.After(repos[j].UpdatedAt)
-	})
 }
 
 // removeDuplicateRepositories removes duplicate repositories from the slice
