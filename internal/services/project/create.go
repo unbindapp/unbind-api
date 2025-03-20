@@ -18,7 +18,7 @@ type CreateProjectInput struct {
 	TeamID      uuid.UUID `validate:"required,uuid4"`
 	Name        string    `validate:"required"`
 	DisplayName string    `validate:"required"`
-	Description string    `validate:"required"`
+	Description *string
 }
 
 func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID uuid.UUID, input *CreateProjectInput, bearerToken string) (*models.ProjectResponse, error) {

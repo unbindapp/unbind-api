@@ -18,7 +18,7 @@ type CreateProjectInput struct {
 	Body struct {
 		TeamID      uuid.UUID `json:"team_id" required:"true"`
 		DisplayName string    `json:"display_name" required:"true"`
-		Description string    `json:"description" required:"true"`
+		Description *string   `json:"description" required:"false"`
 	}
 }
 
