@@ -83,8 +83,6 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// DefaultPort holds the default value on creation for the "port" field.
-	DefaultPort int
 	// DefaultReplicas holds the default value on creation for the "replicas" field.
 	DefaultReplicas int32
 	// DefaultAutoDeploy holds the default value on creation for the "auto_deploy" field.

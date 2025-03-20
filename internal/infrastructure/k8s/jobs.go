@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -13,27 +14,27 @@ import (
 )
 
 func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jobID string, env map[string]string) (jobName string, err error) {
-	// Cancel any active job for this service.
+	// Cancel any active job for this service
 	if err = self.CancelJobsByServiceID(ctx, serviceID); err != nil {
 		return "", err
 	}
 
-	// Build a unique job name.
+	// Build a unique job name
 	jobName = fmt.Sprintf("%s-build-%d", jobID, time.Now().Unix())
 
-	// Convert environment variables from map to slice.
+	// Convert environment variables from map to slice
 	var envVars []corev1.EnvVar
 	for k, v := range env {
 		envVars = append(envVars, corev1.EnvVar{Name: k, Value: v})
 	}
 
-	// Create a default set of annotations (you can extend these as needed).
+	// Create a default set of annotations
 	annotations := map[string]string{
 		"build-triggered-by": "github-webhook",
 		"trigger-timestamp":  time.Now().Format(time.RFC3339),
 	}
 
-	// Define the Job object.
+	// Define the Job object
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jobName,
@@ -61,8 +62,6 @@ func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jo
 				Spec: corev1.PodSpec{
 					ServiceAccountName: "builder-serviceaccount",
 					RestartPolicy:      corev1.RestartPolicyNever,
-					// Share process namespace between containers to allow the monitor to see other containers' processes
-					ShareProcessNamespace: utils.ToPtr(true),
 					Containers: []corev1.Container{
 						{
 							Name:  "build-container",
@@ -70,73 +69,121 @@ func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jo
 							Command: []string{
 								"sh",
 								"-c",
-								`until docker info > /dev/null 2>&1; do 
-    echo "Waiting for Docker daemon to be ready..."; 
-    sleep 1; 
-done; 
+								`# Wait for buildkitd to be ready
+until buildctl --addr tcp://localhost:1234 debug workers >/dev/null 2>&1; do
+  echo "Waiting for BuildKit daemon to be ready...";
+  sleep 1;
+done;
+# Run the builder with BuildKit
 exec /app/builder`,
 							},
 							Env: append(envVars, corev1.EnvVar{
-								Name:  "DOCKER_HOST",
-								Value: "tcp://localhost:2375",
+								Name:  "BUILDKIT_HOST",
+								Value: "tcp://localhost:1234",
 							}),
-						},
-						{
-							Name:  "docker-daemon",
-							Image: "docker:27.5-dind",
-							Env: []corev1.EnvVar{
+							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:  "DOCKER_TLS_CERTDIR",
-									Value: "",
+									Name:      "buildkit-socket",
+									MountPath: "/run/buildkit",
 								},
 							},
-							// Args: []string{
-							// 	fmt.Sprintf("--insecure-registry=%s", k.config.ContainerRegistryHost),
-							// },
+						},
+						{
+							Name:  "buildkit-daemon",
+							Image: "moby/buildkit:v0.21.0",
+							Args: []string{
+								"--addr", "tcp://0.0.0.0:1234",
+								"--oci-worker-no-process-sandbox",
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "BUILDKIT_STEP_LOG_MAX_SIZE",
+									Value: "-1", // Disable truncating of logs
+								},
+							},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true),
+								Privileged: utils.ToPtr(true), // Can be avoided with proper setup
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
-									Name:      "docker-graph-storage",
-									MountPath: "/var/lib/docker",
+									Name:      "buildkit-socket",
+									MountPath: "/run/buildkit",
 								},
+								{
+									Name:      "buildkit-storage",
+									MountPath: "/var/lib/buildkit",
+								},
+								{
+									Name:      "cache-dir",
+									MountPath: "/cache",
+								},
+							},
+							ReadinessProbe: &corev1.Probe{
+								ProbeHandler: corev1.ProbeHandler{
+									Exec: &corev1.ExecAction{
+										Command: []string{
+											"buildctl",
+											"--addr", "tcp://localhost:1234",
+											"debug", "workers",
+										},
+									},
+								},
+								InitialDelaySeconds: 5,
+								PeriodSeconds:       3,
 							},
 						},
 						{
-							Name:  "cleanup-monitor",
+							Name:  "registry-auth",
 							Image: "alpine",
 							Command: []string{
 								"sh",
 								"-c",
-								`# Wait for the /app/builder process to start
-while ! pgrep -f "/app/builder" > /dev/null; do
-    sleep 1
-done
-
-# Get the PID of the actual builder process
-builder_pid=$(pgrep -f "/app/builder")
-
-# Monitor the builder process
-while kill -0 $builder_pid 2>/dev/null; do
-    sleep 1
-done
-
-# Give a small grace period for any cleanup
-sleep 5
-
-# Once build is complete, gracefully stop the Docker daemon
-pkill dockerd
-echo "Build complete, Docker daemon stopped"`,
+								fmt.Sprintf(`mkdir -p /home/buildkit/.docker
+cat > /home/buildkit/.docker/config.json << EOF
+{
+  "auths": {
+    "%s": {
+      "auth": "%s"
+    }
+  }
+}
+EOF
+chmod 600 /home/buildkit/.docker/config.json
+echo "Registry credentials configured"
+sleep infinity`, self.config.ContainerRegistryHost,
+									base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
+										self.config.ContainerRegistryUser,
+										self.config.ContainerRegistryPassword)))),
 							},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true),
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "docker-config",
+									MountPath: "/home/buildkit/.docker",
+								},
 							},
 						},
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "docker-graph-storage",
+							Name: "buildkit-socket",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "buildkit-storage",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "docker-config",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "cache-dir",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},
@@ -147,7 +194,7 @@ echo "Build complete, Docker daemon stopped"`,
 		},
 	}
 
-	// Create the Job in Kubernetes.
+	// Create the Job in Kubernetes
 	_, err = self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).Create(ctx, job, metav1.CreateOptions{})
 	return jobName, err
 }

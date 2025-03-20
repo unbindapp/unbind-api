@@ -233,10 +233,6 @@ func (scc *ServiceConfigCreate) defaults() {
 		v := serviceconfig.DefaultUpdatedAt()
 		scc.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := scc.mutation.Port(); !ok {
-		v := serviceconfig.DefaultPort
-		scc.mutation.SetPort(v)
-	}
 	if _, ok := scc.mutation.Replicas(); !ok {
 		v := serviceconfig.DefaultReplicas
 		scc.mutation.SetReplicas(v)
@@ -265,9 +261,6 @@ func (scc *ServiceConfigCreate) check() error {
 	}
 	if _, ok := scc.mutation.ServiceID(); !ok {
 		return &ValidationError{Name: "service_id", err: errors.New(`ent: missing required field "ServiceConfig.service_id"`)}
-	}
-	if _, ok := scc.mutation.Port(); !ok {
-		return &ValidationError{Name: "port", err: errors.New(`ent: missing required field "ServiceConfig.port"`)}
 	}
 	if _, ok := scc.mutation.Replicas(); !ok {
 		return &ValidationError{Name: "replicas", err: errors.New(`ent: missing required field "ServiceConfig.replicas"`)}
@@ -331,11 +324,11 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	}
 	if value, ok := scc.mutation.Host(); ok {
 		_spec.SetField(serviceconfig.FieldHost, field.TypeString, value)
-		_node.Host = value
+		_node.Host = &value
 	}
 	if value, ok := scc.mutation.Port(); ok {
 		_spec.SetField(serviceconfig.FieldPort, field.TypeInt, value)
-		_node.Port = value
+		_node.Port = &value
 	}
 	if value, ok := scc.mutation.Replicas(); ok {
 		_spec.SetField(serviceconfig.FieldReplicas, field.TypeInt32, value)
@@ -501,6 +494,12 @@ func (u *ServiceConfigUpsert) UpdatePort() *ServiceConfigUpsert {
 // AddPort adds v to the "port" field.
 func (u *ServiceConfigUpsert) AddPort(v int) *ServiceConfigUpsert {
 	u.Add(serviceconfig.FieldPort, v)
+	return u
+}
+
+// ClearPort clears the value of the "port" field.
+func (u *ServiceConfigUpsert) ClearPort() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldPort)
 	return u
 }
 
@@ -721,6 +720,13 @@ func (u *ServiceConfigUpsertOne) AddPort(v int) *ServiceConfigUpsertOne {
 func (u *ServiceConfigUpsertOne) UpdatePort() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdatePort()
+	})
+}
+
+// ClearPort clears the value of the "port" field.
+func (u *ServiceConfigUpsertOne) ClearPort() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearPort()
 	})
 }
 
@@ -1121,6 +1127,13 @@ func (u *ServiceConfigUpsertBulk) AddPort(v int) *ServiceConfigUpsertBulk {
 func (u *ServiceConfigUpsertBulk) UpdatePort() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdatePort()
+	})
+}
+
+// ClearPort clears the value of the "port" field.
+func (u *ServiceConfigUpsertBulk) ClearPort() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearPort()
 	})
 }
 

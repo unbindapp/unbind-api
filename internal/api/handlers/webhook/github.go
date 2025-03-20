@@ -301,16 +301,39 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				return nil, huma.Error500InternalServerError("Failed to get github private key")
 			}
 
+			// Get deployment namespace
+			namespace, err := self.srv.Repository.Service().GetDeploymentNamespace(ctx, service.ID)
+
 			// Create environment for build image
 			env := map[string]string{
 				"GITHUB_INSTALLATION_ID":      strconv.Itoa(int(installationID)),
 				"GITHUB_APP_ID":               strconv.Itoa(int(appID)),
-				"GITHUB_PRIVATE_KEY":          privKey,
+				"GITHUB_APP_PRIVATE_KEY":      privKey,
 				"GITHUB_REPO_URL":             repoUrl,
 				"GIT_REF":                     ref,
 				"CONTAINER_REGISTRY_HOST":     self.srv.Cfg.ContainerRegistryHost,
 				"CONTAINER_REGISTRY_USER":     self.srv.Cfg.ContainerRegistryUser,
 				"CONTAINER_REGISTRY_PASSWORD": self.srv.Cfg.ContainerRegistryPassword,
+				"DEPLOYMENT_NAMESPACE":        namespace,
+				"SERVICE_PUBLIC":              strconv.FormatBool(service.Edges.ServiceConfig.Public),
+				"SERVICE_REPLICAS":            strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
+				"SERVICE_SECRET_NAME":         service.KubernetesSecret,
+			}
+
+			if service.Runtime != nil {
+				env["SERVICE_RUNTIME"] = *service.Runtime
+			}
+
+			if service.Framework != nil {
+				env["SERVICE_FRAMEWORK"] = *service.Framework
+			}
+
+			if service.Edges.ServiceConfig.Port != nil {
+				env["SERVICE_PORT"] = strconv.Itoa(*service.Edges.ServiceConfig.Port)
+			}
+
+			if service.Edges.ServiceConfig.Host != nil {
+				env["SERVICE_HOST"] = *service.Edges.ServiceConfig.Host
 			}
 
 			log.Info("Enqueuing build", "repo", repoName, "branch", ref, "serviceID", service.ID, "installationID", installationID, "appID", appID, "repoUrl", repoUrl)

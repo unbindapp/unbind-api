@@ -335,10 +335,6 @@ func init() {
 	serviceconfig.DefaultUpdatedAt = serviceconfigDescUpdatedAt.Default.(func() time.Time)
 	// serviceconfig.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	serviceconfig.UpdateDefaultUpdatedAt = serviceconfigDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// serviceconfigDescPort is the schema descriptor for port field.
-	serviceconfigDescPort := serviceconfigFields[3].Descriptor()
-	// serviceconfig.DefaultPort holds the default value on creation for the port field.
-	serviceconfig.DefaultPort = serviceconfigDescPort.Default.(int)
 	// serviceconfigDescReplicas is the schema descriptor for replicas field.
 	serviceconfigDescReplicas := serviceconfigFields[4].Descriptor()
 	// serviceconfig.DefaultReplicas holds the default value on creation for the replicas field.

@@ -29,9 +29,9 @@ type ServiceConfig struct {
 	// Branch to build from
 	GitBranch *string `json:"git_branch,omitempty"`
 	// External domain for the service, e.g., unbind.app
-	Host string `json:"host,omitempty"`
+	Host *string `json:"host,omitempty"`
 	// Main container port
-	Port int `json:"port,omitempty"`
+	Port *int `json:"port,omitempty"`
 	// Number of replicas for the service
 	Replicas int32 `json:"replicas,omitempty"`
 	// Whether to automatically deploy on git push
@@ -133,13 +133,15 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field host", values[i])
 			} else if value.Valid {
-				sc.Host = value.String
+				sc.Host = new(string)
+				*sc.Host = value.String
 			}
 		case serviceconfig.FieldPort:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field port", values[i])
 			} else if value.Valid {
-				sc.Port = int(value.Int64)
+				sc.Port = new(int)
+				*sc.Port = int(value.Int64)
 			}
 		case serviceconfig.FieldReplicas:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -227,11 +229,15 @@ func (sc *ServiceConfig) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	builder.WriteString("host=")
-	builder.WriteString(sc.Host)
+	if v := sc.Host; v != nil {
+		builder.WriteString("host=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("port=")
-	builder.WriteString(fmt.Sprintf("%v", sc.Port))
+	if v := sc.Port; v != nil {
+		builder.WriteString("port=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("replicas=")
 	builder.WriteString(fmt.Sprintf("%v", sc.Replicas))

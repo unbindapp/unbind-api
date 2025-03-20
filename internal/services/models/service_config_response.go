@@ -5,8 +5,8 @@ import "github.com/unbindapp/unbind-api/ent"
 // ServiceConfigResponse defines the configuration response for a service
 type ServiceConfigResponse struct {
 	GitBranch  *string `json:"git_branch,omitempty"`
-	Host       string  `json:"host,omitempty"`
-	Port       int     `json:"port,omitempty"`
+	Host       *string `json:"host,omitempty"`
+	Port       *int    `json:"port,omitempty"`
 	Replicas   int32   `json:"replicas"`
 	AutoDeploy bool    `json:"auto_deploy"`
 	RunCommand *string `json:"run_command,omitempty"`

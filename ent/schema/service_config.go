@@ -28,8 +28,8 @@ func (ServiceConfig) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("service_id", uuid.UUID{}),
 		field.String("git_branch").Optional().Nillable().Comment("Branch to build from"),
-		field.String("host").Optional().Comment("External domain for the service, e.g., unbind.app"),
-		field.Int("port").Default(8080).Comment("Main container port"),
+		field.String("host").Optional().Nillable().Comment("External domain for the service, e.g., unbind.app"),
+		field.Int("port").Optional().Nillable().Comment("Main container port"),
 		field.Int32("replicas").Default(2).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(true).Comment("Whether to automatically deploy on git push"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),

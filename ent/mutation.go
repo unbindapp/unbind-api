@@ -10649,7 +10649,7 @@ func (m *ServiceConfigMutation) Host() (r string, exists bool) {
 // OldHost returns the old "host" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldHost(ctx context.Context) (v string, err error) {
+func (m *ServiceConfigMutation) OldHost(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHost is only allowed on UpdateOne operations")
 	}
@@ -10699,7 +10699,7 @@ func (m *ServiceConfigMutation) Port() (r int, exists bool) {
 // OldPort returns the old "port" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldPort(ctx context.Context) (v int, err error) {
+func (m *ServiceConfigMutation) OldPort(ctx context.Context) (v *int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPort is only allowed on UpdateOne operations")
 	}
@@ -10731,10 +10731,24 @@ func (m *ServiceConfigMutation) AddedPort() (r int, exists bool) {
 	return *v, true
 }
 
+// ClearPort clears the value of the "port" field.
+func (m *ServiceConfigMutation) ClearPort() {
+	m.port = nil
+	m.addport = nil
+	m.clearedFields[serviceconfig.FieldPort] = struct{}{}
+}
+
+// PortCleared returns if the "port" field was cleared in this mutation.
+func (m *ServiceConfigMutation) PortCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldPort]
+	return ok
+}
+
 // ResetPort resets all changes to the "port" field.
 func (m *ServiceConfigMutation) ResetPort() {
 	m.port = nil
 	m.addport = nil
+	delete(m.clearedFields, serviceconfig.FieldPort)
 }
 
 // SetReplicas sets the "replicas" field.
@@ -11268,6 +11282,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldHost) {
 		fields = append(fields, serviceconfig.FieldHost)
 	}
+	if m.FieldCleared(serviceconfig.FieldPort) {
+		fields = append(fields, serviceconfig.FieldPort)
+	}
 	if m.FieldCleared(serviceconfig.FieldRunCommand) {
 		fields = append(fields, serviceconfig.FieldRunCommand)
 	}
@@ -11293,6 +11310,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldHost:
 		m.ClearHost()
+		return nil
+	case serviceconfig.FieldPort:
+		m.ClearPort()
 		return nil
 	case serviceconfig.FieldRunCommand:
 		m.ClearRunCommand()

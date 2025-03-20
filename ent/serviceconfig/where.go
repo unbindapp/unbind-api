@@ -401,6 +401,16 @@ func PortLTE(v int) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldLTE(FieldPort, v))
 }
 
+// PortIsNil applies the IsNil predicate on the "port" field.
+func PortIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldPort))
+}
+
+// PortNotNil applies the NotNil predicate on the "port" field.
+func PortNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldPort))
+}
+
 // ReplicasEQ applies the EQ predicate on the "replicas" field.
 func ReplicasEQ(v int32) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldReplicas, v))

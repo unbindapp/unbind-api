@@ -112,6 +112,12 @@ func (scu *ServiceConfigUpdate) AddPort(i int) *ServiceConfigUpdate {
 	return scu
 }
 
+// ClearPort clears the value of the "port" field.
+func (scu *ServiceConfigUpdate) ClearPort() *ServiceConfigUpdate {
+	scu.mutation.ClearPort()
+	return scu
+}
+
 // SetReplicas sets the "replicas" field.
 func (scu *ServiceConfigUpdate) SetReplicas(i int32) *ServiceConfigUpdate {
 	scu.mutation.ResetReplicas()
@@ -300,6 +306,9 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.AddedPort(); ok {
 		_spec.AddField(serviceconfig.FieldPort, field.TypeInt, value)
 	}
+	if scu.mutation.PortCleared() {
+		_spec.ClearField(serviceconfig.FieldPort, field.TypeInt)
+	}
 	if value, ok := scu.mutation.Replicas(); ok {
 		_spec.SetField(serviceconfig.FieldReplicas, field.TypeInt32, value)
 	}
@@ -453,6 +462,12 @@ func (scuo *ServiceConfigUpdateOne) SetNillablePort(i *int) *ServiceConfigUpdate
 // AddPort adds i to the "port" field.
 func (scuo *ServiceConfigUpdateOne) AddPort(i int) *ServiceConfigUpdateOne {
 	scuo.mutation.AddPort(i)
+	return scuo
+}
+
+// ClearPort clears the value of the "port" field.
+func (scuo *ServiceConfigUpdateOne) ClearPort() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearPort()
 	return scuo
 }
 
@@ -673,6 +688,9 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if value, ok := scuo.mutation.AddedPort(); ok {
 		_spec.AddField(serviceconfig.FieldPort, field.TypeInt, value)
+	}
+	if scuo.mutation.PortCleared() {
+		_spec.ClearField(serviceconfig.FieldPort, field.TypeInt)
 	}
 	if value, ok := scuo.mutation.Replicas(); ok {
 		_spec.SetField(serviceconfig.FieldReplicas, field.TypeInt32, value)

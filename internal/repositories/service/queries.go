@@ -10,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/team"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
@@ -62,4 +63,17 @@ func (self *ServiceRepository) CountDomainCollisons(ctx context.Context, tx repo
 		Where(
 			serviceconfig.HostEqualFold(strings.ToLower(domain)),
 		).Count(ctx)
+}
+
+func (self *ServiceRepository) GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error) {
+	svc, err := self.base.DB.Service.Query().
+		Where(service.IDEQ(serviceID)).
+		QueryEnvironment().
+		QueryProject().
+		QueryTeam().Select(team.FieldNamespace).
+		Only(ctx)
+	if err != nil {
+		return "", err
+	}
+	return svc.Namespace, nil
 }

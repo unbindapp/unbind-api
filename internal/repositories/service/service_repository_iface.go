@@ -21,4 +21,5 @@ type ServiceRepositoryInterface interface {
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
 	GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error)
 	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error)
+	GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error)
 }

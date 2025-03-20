@@ -325,7 +325,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "git_branch", Type: field.TypeString, Nullable: true},
 		{Name: "host", Type: field.TypeString, Nullable: true},
-		{Name: "port", Type: field.TypeInt, Default: 8080},
+		{Name: "port", Type: field.TypeInt, Nullable: true},
 		{Name: "replicas", Type: field.TypeInt32, Default: 2},
 		{Name: "auto_deploy", Type: field.TypeBool, Default: true},
 		{Name: "run_command", Type: field.TypeString, Nullable: true},
