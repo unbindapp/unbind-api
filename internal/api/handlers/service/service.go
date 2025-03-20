@@ -68,13 +68,13 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 
 func (self *HandlerGroup) handleErr(err error) error {
 	if errors.Is(err, errdefs.ErrInvalidInput) {
-		return huma.Error400BadRequest(err.Error())
+		return huma.Error400BadRequest("invalid input", err)
 	}
 	if errors.Is(err, errdefs.ErrUnauthorized) {
 		return huma.Error403Forbidden("Unauthorized")
 	}
 	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
-		return huma.Error404NotFound(err.Error())
+		return huma.Error404NotFound("entity not found", err)
 	}
 	log.Error("Unexpected service error", "err", err)
 	return huma.Error500InternalServerError("Unexpected error occured")

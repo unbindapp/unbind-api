@@ -42,10 +42,10 @@ func (self *HandlerGroup) UpdateTeam(ctx context.Context, input *UpdateTeamInput
 	})
 	if err != nil {
 		if errors.Is(err, errdefs.ErrInvalidInput) {
-			return nil, huma.Error400BadRequest(err.Error())
+			return nil, huma.Error400BadRequest("invalid input", err)
 		}
-		if ent.IsNotFound(err) {
-			return nil, huma.Error404NotFound("Team not found")
+		if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
+			return nil, huma.Error404NotFound("Team not found", err)
 		}
 		if errors.Is(err, errdefs.ErrUnauthorized) {
 			return nil, huma.Error403Forbidden("Unauthorized")

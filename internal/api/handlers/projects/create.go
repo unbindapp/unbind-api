@@ -2,14 +2,11 @@ package projects_handler
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/api/server"
-	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -54,17 +51,7 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 		Description: input.Body.Description,
 	}, bearerToken)
 	if err != nil {
-		if errors.Is(err, errdefs.ErrInvalidInput) {
-			return nil, huma.Error400BadRequest(err.Error())
-		}
-		if errors.Is(err, errdefs.ErrUnauthorized) {
-			return nil, huma.Error403Forbidden("Unauthorized")
-		}
-		if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
-			return nil, huma.Error404NotFound(err.Error())
-		}
-		log.Error("Error creating project", "err", err)
-		return nil, huma.Error500InternalServerError("Unable to create project")
+		return nil, self.handleErr(err)
 	}
 
 	resp := &CreateProjectResponse{}

@@ -25,7 +25,7 @@ type SecretsResponse struct {
 func (self *HandlerGroup) ListSecrets(ctx context.Context, input *ListSecretsInput) (*SecretsResponse, error) {
 	// Validate input
 	if err := ValidateSecretsDependencies(input.Type, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID); err != nil {
-		return nil, huma.Error400BadRequest(err.Error())
+		return nil, huma.Error400BadRequest("invalid input", err)
 	}
 
 	// Get caller
