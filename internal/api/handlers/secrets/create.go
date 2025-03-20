@@ -16,7 +16,7 @@ type CreateSecretsInput struct {
 	Body struct {
 		BaseSecretsJSONInput
 		Secrets []*struct {
-			Key   string `json:"key" validate:"required"`
+			Name  string `json:"name" validate:"required"`
 			Value string `json:"value" validate:"required"`
 		} `json:"secrets" validate:"required"`
 	}
@@ -38,7 +38,7 @@ func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateSecret
 
 	newSecretMap := make(map[string][]byte)
 	for _, secret := range input.Body.Secrets {
-		newSecretMap[secret.Key] = []byte(secret.Value)
+		newSecretMap[secret.Name] = []byte(secret.Value)
 	}
 
 	// Determine which service to use
