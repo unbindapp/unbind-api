@@ -2,8 +2,6 @@ package github
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -15,65 +13,13 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// CursorPaginationParams contains parameters for cursor-based pagination
-type CursorPaginationParams struct {
-	Cursor string `json:"cursor"`
-	Limit  int    `json:"limit"`
-}
-
-// CursorPaginationResponse contains pagination metadata with cursor
-type CursorPaginationResponse struct {
-	NextCursor     string `json:"next_cursor"`
-	PreviousCursor string `json:"previous_cursor,omitempty"`
-	Limit          int    `json:"limit"`
-	HasMore        bool   `json:"has_more"`
-}
-
-// RepositoriesCursorResponse contains paginated repositories with cursor info
-type RepositoriesCursorResponse struct {
-	Repositories []*GithubRepository      `json:"repositories"`
-	Pagination   CursorPaginationResponse `json:"pagination"`
-}
-
-type cursorData struct {
-	InstallationPages map[int64]int `json:"i_p"`
-	PrevCursor        string        `json:"prev"`
-}
+// ! If needed a paginated approach is in commit ef4adf6ed6a0411897006586454de97c1d6e8a7f
+// For now we roll without it
 
 // Read user's admin repositories (that they can configure CI/CD on)
-func (self *GithubClient) ReadUserAdminRepositoriesCursor(
-	ctx context.Context,
-	installations []*ent.GithubInstallation,
-	params CursorPaginationParams,
-) (*RepositoriesCursorResponse, error) {
-	// Validate and set defaults
-	if params.Limit < 1 || params.Limit > 30 {
-		params.Limit = 30 // Default
-	}
-
-	// Process cursor
-	installationPages := make(map[int64]int)
-	var prevCursor string
-
-	if params.Cursor != "" {
-		cursor, err := decodeCursor(params.Cursor)
-		if err != nil {
-			return nil, fmt.Errorf("invalid cursor: %v", err)
-		}
-		installationPages = cursor.InstallationPages
-		prevCursor = params.Cursor
-	} else {
-		for _, inst := range installations {
-			if inst != nil {
-				installationPages[inst.ID] = 1
-			}
-		}
-	}
-
+func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, installations []*ent.GithubInstallation) ([]*GithubRepository, error) {
 	var mu sync.Mutex
 	allAdminRepos := make([]*GithubRepository, 0)
-	nextInstallationPages := make(map[int64]int)
-	var hasMore bool
 
 	// limit concurrency
 	const maxConcurrency = 3
@@ -90,12 +36,6 @@ func (self *GithubClient) ReadUserAdminRepositoriesCursor(
 		// Copy the installation variable to avoid closure issues
 		inst := installation
 
-		// Check if we need to process this installation
-		page, exists := installationPages[inst.ID]
-		if !exists {
-			continue
-		}
-
 		g.Go(func() error {
 			authenticatedClient, err := self.GetAuthenticatedClient(gctx, inst.GithubAppID, inst.ID, inst.Edges.GithubApp.PrivateKey)
 			if err != nil {
@@ -104,21 +44,15 @@ func (self *GithubClient) ReadUserAdminRepositoriesCursor(
 			defer authenticatedClient.Client().CloseIdleConnections()
 
 			// Process repositories with proper pagination
-			adminRepos, nextPage, err := self.fetchUserAdminRepos(gctx, authenticatedClient, inst, page, params.Limit)
+			adminRepos, err := self.fetchUserAdminRepos(gctx, authenticatedClient, inst)
 			if err != nil {
 				return err
 			}
 
-			if nextPage > 0 {
-				mu.Lock()
-				nextInstallationPages[inst.ID] = nextPage
-				hasMore = true
-				mu.Unlock()
-			}
-
 			// Format and add to the result slice in a thread-safe way
+			formattedRepos := formatRepositoryResponse(adminRepos)
 			mu.Lock()
-			allAdminRepos = append(allAdminRepos, adminRepos...)
+			allAdminRepos = append(allAdminRepos, formattedRepos...)
 			mu.Unlock()
 
 			return nil
@@ -130,109 +64,68 @@ func (self *GithubClient) ReadUserAdminRepositoriesCursor(
 		return nil, err
 	}
 
-	uniqueRepos := removeDuplicateRepositories(allAdminRepos)
-
-	if len(uniqueRepos) > params.Limit {
-		uniqueRepos = uniqueRepos[:params.Limit]
-		hasMore = true
-	}
-
-	var nextCursor string
-	if hasMore {
-		cursorData := cursorData{
-			InstallationPages: nextInstallationPages,
-			PrevCursor:        prevCursor,
-		}
-		nextCursor, _ = encodeCursor(cursorData)
-	}
-
-	return &RepositoriesCursorResponse{
-		Repositories: uniqueRepos,
-		Pagination: CursorPaginationResponse{
-			NextCursor:     nextCursor,
-			PreviousCursor: prevCursor,
-			Limit:          params.Limit,
-			HasMore:        hasMore,
-		},
-	}, nil
+	// Remove any duplicates
+	return removeDuplicateRepositories(allAdminRepos), nil
 }
 
 // fetchUserAdminRepos fetches all admin repositories for a user with proper pagination and memory limits
-func (self *GithubClient) fetchUserAdminRepos(ctx context.Context,
-	client *github.Client,
-	inst *ent.GithubInstallation,
-	page int,
-	perPage int,
-) ([]*GithubRepository, int, error) {
+func (self *GithubClient) fetchUserAdminRepos(ctx context.Context, client *github.Client, inst *ent.GithubInstallation) ([]*github.Repository, error) {
 	adminRepos := make([]*github.Repository, 0)
 	opts := &github.RepositoryListByUserOptions{
-		Sort: "updated",
 		ListOptions: github.ListOptions{
-			PerPage: perPage,
-			Page:    page,
+			PerPage: 100,
 		},
+		Sort: "updated",
 	}
 
-	// Get user's repositories with pagination
-	ghRepositories, resp, err := client.Repositories.ListByUser(ctx, inst.AccountLogin, opts)
-	if err != nil {
-		return nil, 0, fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
-	}
-
-	// Filter admin repositories
-	for _, repo := range ghRepositories {
-		isAdmin := false
-
-		if inst.AccountType == githubinstallation.AccountTypeUser {
-			if repo.GetOwner().GetID() == inst.AccountID {
-				isAdmin = true
-			}
+	for {
+		// Check if context is canceled
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
 		}
 
-		// Check permissions
-		if !isAdmin {
-			if perms := repo.GetPermissions(); perms != nil {
-				if admin, ok := perms["admin"]; ok && admin {
+		// Get user's repositories with pagination
+		ghRepositories, resp, err := client.Repositories.ListByUser(ctx, inst.AccountLogin, opts)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
+		}
+
+		// Filter admin repositories
+		for _, repo := range ghRepositories {
+			isAdmin := false
+
+			if inst.AccountType == githubinstallation.AccountTypeUser {
+				if repo.GetOwner().GetID() == inst.AccountID {
 					isAdmin = true
 				}
 			}
+
+			// Check permissions
+			if !isAdmin {
+				if perms := repo.GetPermissions(); perms != nil {
+					if admin, ok := perms["admin"]; ok && admin {
+						isAdmin = true
+					}
+				}
+			}
+
+			if isAdmin {
+				adminRepos = append(adminRepos, repo)
+			}
 		}
 
-		if isAdmin {
-			adminRepos = append(adminRepos, repo)
+		// Check if there are more pages
+		if resp.NextPage == 0 {
+			break
 		}
+
+		// Set up for next page
+		opts.Page = resp.NextPage
 	}
 
-	// Check if there are more pages
-	nextPage := 0
-	if resp.NextPage != 0 {
-		nextPage = resp.NextPage
-	}
-
-	return formatRepositoryResponse(adminRepos), nextPage, nil
-}
-
-func encodeCursor(data cursorData) (string, error) {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(jsonData), nil
-}
-
-func decodeCursor(cursor string) (cursorData, error) {
-	var data cursorData
-	jsonData, err := base64.URLEncoding.DecodeString(cursor)
-	if err != nil {
-		return data, err
-	}
-
-	err = json.Unmarshal(jsonData, &data)
-	if err != nil {
-		return data, err
-	}
-
-	return data, nil
+	return adminRepos, nil
 }
 
 // removeDuplicateRepositories removes duplicate repositories from the slice
@@ -259,14 +152,13 @@ type GithubRepositoryOwner struct {
 }
 
 type GithubRepository struct {
-	ID        int64                 `json:"id"`
-	Name      string                `json:"name"`
-	FullName  string                `json:"full_name"`
-	HTMLURL   string                `json:"html_url"`
-	CloneURL  string                `json:"clone_url"`
-	HomePage  string                `json:"homepage"`
-	Owner     GithubRepositoryOwner `json:"owner"`
-	UpdatedAt time.Time             `json:"updated_at"`
+	ID       int64                 `json:"id"`
+	Name     string                `json:"name"`
+	FullName string                `json:"full_name"`
+	HTMLURL  string                `json:"html_url"`
+	CloneURL string                `json:"clone_url"`
+	HomePage string                `json:"homepage"`
+	Owner    GithubRepositoryOwner `json:"owner"`
 }
 
 func formatRepositoryResponse(repositories []*github.Repository) []*GithubRepository {
@@ -293,7 +185,6 @@ func formatRepositoryResponse(repositories []*github.Repository) []*GithubReposi
 				Login:     repository.Owner.GetLogin(),
 				AvatarURL: repository.Owner.GetAvatarURL(),
 			},
-			UpdatedAt: repository.GetUpdatedAt().Time,
 		})
 	}
 	return response

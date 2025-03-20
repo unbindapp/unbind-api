@@ -2,7 +2,6 @@ package github_repo
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -16,42 +15,11 @@ func (self *GithubRepository) GetInstallationByID(ctx context.Context, ID int64)
 }
 
 func (self *GithubRepository) GetInstallationsByCreator(ctx context.Context, createdBy uuid.UUID) ([]*ent.GithubInstallation, error) {
-	installations, err := self.base.DB.GithubInstallation.Query().
-		Where(
-			githubinstallation.Active(true),
-			githubinstallation.Suspended(false),
-		).WithGithubApp(func(gaq *ent.GithubAppQuery) {
+	return self.base.DB.GithubInstallation.Query().WithGithubApp(func(gaq *ent.GithubAppQuery) {
 		gaq.Where(
 			githubapp.CreatedByEQ(createdBy),
 		)
 	}).All(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// ! TODO - we should probably make sure that AccountType and AccountLogin can't be duplicated
-	// Use a map to find duplicates based on AccountType and AccountLogin
-	seen := make(map[string]int) // map key -> index in result slice
-	result := make([]*ent.GithubInstallation, 0, len(installations))
-
-	for _, installation := range installations {
-		// Create a unique key based on AccountType and AccountLogin
-		key := fmt.Sprintf("%s:%s", installation.AccountType.String(), installation.AccountLogin)
-
-		if existingIdx, exists := seen[key]; exists {
-			// Keep newer one
-			if installation.CreatedAt.After(result[existingIdx].CreatedAt) {
-				result[existingIdx] = installation
-			}
-			continue
-		}
-
-		seen[key] = len(result)
-		result = append(result, installation)
-	}
-
-	return result, nil
 }
 
 func (self *GithubRepository) GetInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error) {
