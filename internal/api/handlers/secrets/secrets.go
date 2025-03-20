@@ -2,6 +2,7 @@ package secrets_handler
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -15,10 +16,44 @@ type HandlerGroup struct {
 	srv *server.Server
 }
 
-func NewHandlerGroup(server *server.Server) *HandlerGroup {
-	return &HandlerGroup{
+func RegisterHandlers(server *server.Server, grp *huma.Group) {
+	handlers := &HandlerGroup{
 		srv: server,
 	}
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "list-secrets",
+			Summary:     "List Secrets",
+			Description: "List secrets for a service, environment, project, or team",
+			Path:        "/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListSecrets,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "create-secret",
+			Summary:     "Create Secrets",
+			Description: "Create secrets for a service, environment, project, or team",
+			Path:        "/create",
+			Method:      http.MethodPost,
+		},
+		handlers.CreateSecrets,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "delete-secret",
+			Summary:     "Delete Secrets",
+			Description: "Delete secrets for a service, environment, project, or team",
+			Path:        "/delete",
+			Method:      http.MethodDelete,
+		},
+		handlers.DeleteSecrets,
+	)
 }
 
 func handleSecretErr(err error) error {

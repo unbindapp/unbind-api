@@ -215,155 +215,35 @@ func startAPI(cfg *config.Config) {
 
 	// /auth group
 	authGroup := huma.NewGroup(api, "/auth")
-	authHandlers := logintmp_handler.NewHandlerGroup(srvImpl)
 	authGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"Auth"}
 		next(op)
 	})
-	huma.Register(
-		authGroup,
-		huma.Operation{
-			OperationID: "login",
-			Summary:     "Login",
-			Description: "Login",
-			Path:        "/login",
-			Method:      http.MethodGet,
-		},
-		authHandlers.Login)
-	huma.Register(
-		authGroup,
-		huma.Operation{
-			OperationID: "callback",
-			Summary:     "Callback",
-			Description: "Callback",
-			Path:        "/callback",
-			Method:      http.MethodGet,
-		},
-		authHandlers.Callback,
-	)
+	logintmp_handler.RegisterHandlers(srvImpl, authGroup)
 
 	// /users group
 	userGroup := huma.NewGroup(api, "/users")
+	userGroup.UseMiddleware(mw.Authenticate)
 	userGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"Users"}
 		next(op)
 	})
-	userHandlers := user_handler.NewHandlerGroup(srvImpl)
-	userGroup.UseMiddleware(mw.Authenticate)
-	huma.Register(
-		userGroup,
-		huma.Operation{
-			OperationID: "me",
-			Summary:     "Get Current User",
-			Description: "Get the current user",
-			Path:        "/me",
-			Method:      http.MethodGet,
-		},
-		userHandlers.Me,
-	)
+	user_handler.RegisterHandlers(srvImpl, userGroup)
 
 	ghGroup := huma.NewGroup(api, "/github")
+	ghGroup.UseMiddleware(mw.Authenticate)
 	ghGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"GitHub"}
 		next(op)
 	})
-	githubHandlers := github_handler.NewHandlerGroup(srvImpl)
-	ghGroup.UseMiddleware(mw.Authenticate)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "app-create",
-			Summary:     "Create App",
-			Description: "Begin the workflow to create a GitHub application",
-			Path:        "/app/create",
-			Method:      http.MethodGet,
-		},
-		githubHandlers.HandleGithubAppCreate,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "list-apps",
-			Summary:     "List Apps",
-			Description: "List all the GitHub apps connected to our instance",
-			Path:        "/apps",
-			Method:      http.MethodGet,
-		},
-		githubHandlers.HandleListGithubApps,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "list-app-installations",
-			Summary:     "List Installations",
-			Description: "List all github app installations.",
-			Path:        "/installations",
-			Method:      http.MethodGet,
-		},
-		githubHandlers.HandleListGithubAppInstallations,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "list-admin-organizations",
-			Summary:     "List Admin Organizations",
-			Description: "List all admin organizations for a specific user installation, invalid for 'Organization' installations.",
-			Path:        "/installation/{installation_id}/organizations",
-			Method:      http.MethodGet,
-		},
-		githubHandlers.HandleListGithubAdminOrganizations,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "list-admin-repos",
-			Summary:     "List Repositories",
-			Description: "List all repositories the user has admin access of.",
-			Path:        "/repositories",
-			Method:      http.MethodGet,
-		},
-		githubHandlers.HandleListGithubAdminRepositories,
-	)
-	huma.Register(
-		ghGroup,
-		huma.Operation{
-			OperationID: "repo-detail",
-			Summary:     "Repository Detail",
-			Description: "Get details of a repository (branch, tags, etc.)",
-			Path:        "/repositories/info",
-			Method:      http.MethodGet,
-		},
-		githubHandlers.HandleGetGithubRepositoryDetail,
-	)
+	github_handler.RegisterHandlers(srvImpl, ghGroup)
 
 	webhookGroup := huma.NewGroup(api, "/webhook")
 	webhookGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
 		op.Tags = []string{"Webhook"}
 		next(op)
 	})
-	webhookHandlers := webhook_handler.NewHandlerGroup(srvImpl)
-	huma.Register(
-		webhookGroup,
-		huma.Operation{
-			OperationID: "github-webhook",
-			Summary:     "Github Webhook",
-			Description: "Handle incoming GitHub webhooks",
-			Path:        "/github",
-			Method:      http.MethodPost,
-		},
-		webhookHandlers.HandleGithubWebhook,
-	)
-	huma.Register(
-		webhookGroup,
-		huma.Operation{
-			OperationID: "app-save",
-			Summary:     "Save GitHub App",
-			Description: "Save GitHub app via code exchange and redirect to installation",
-			Path:        "/github/app/save",
-			Method:      http.MethodGet,
-		},
-		webhookHandlers.HandleGithubAppSave,
-	)
+	webhook_handler.RegisterHandlers(srvImpl, webhookGroup)
 
 	// /teams
 	teamsGroup := huma.NewGroup(api, "/teams")
@@ -372,29 +252,7 @@ func startAPI(cfg *config.Config) {
 		op.Tags = []string{"Teams"}
 		next(op)
 	})
-	teamHandlers := teams_handler.NewHandlerGroup(srvImpl)
-	huma.Register(
-		teamsGroup,
-		huma.Operation{
-			OperationID: "list-teams",
-			Summary:     "List Teams",
-			Description: "List all teams the current user is a member of",
-			Path:        "/list",
-			Method:      http.MethodGet,
-		},
-		teamHandlers.ListTeams,
-	)
-	huma.Register(
-		teamsGroup,
-		huma.Operation{
-			OperationID: "update-team",
-			Summary:     "Update Team",
-			Description: "Update a team",
-			Path:        "/update",
-			Method:      http.MethodPut,
-		},
-		teamHandlers.UpdateTeam,
-	)
+	teams_handler.RegisterHandlers(srvImpl, teamsGroup)
 
 	// /projects group
 	projectsGroup := huma.NewGroup(api, "/projects")
@@ -403,62 +261,7 @@ func startAPI(cfg *config.Config) {
 		op.Tags = []string{"Projects"}
 		next(op)
 	})
-	projectHandlers := projects_handler.NewHandlerGroup(srvImpl)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "create-project",
-			Summary:     "Create Project",
-			Description: "Create a project",
-			Path:        "/create",
-			Method:      http.MethodPost,
-		},
-		projectHandlers.CreateProject,
-	)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "list-projects",
-			Summary:     "List Projects",
-			Description: "List all projects",
-			Path:        "/list",
-			Method:      http.MethodGet,
-		},
-		projectHandlers.ListProjects,
-	)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "get-project",
-			Summary:     "Get Project",
-			Description: "Get a project by ID",
-			Path:        "/get",
-			Method:      http.MethodGet,
-		},
-		projectHandlers.GetProject,
-	)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "update-project",
-			Summary:     "Update Project",
-			Description: "Update a project",
-			Path:        "/update",
-			Method:      http.MethodPut,
-		},
-		projectHandlers.UpdateProject,
-	)
-	huma.Register(
-		projectsGroup,
-		huma.Operation{
-			OperationID: "delete-project",
-			Summary:     "Delete Project",
-			Description: "Delete a project",
-			Path:        "/delete",
-			Method:      http.MethodDelete,
-		},
-		projectHandlers.DeleteProject,
-	)
+	projects_handler.RegisterHandlers(srvImpl, projectsGroup)
 
 	// /services group
 	servicesGroup := huma.NewGroup(api, "/services")
@@ -467,29 +270,7 @@ func startAPI(cfg *config.Config) {
 		op.Tags = []string{"Services"}
 		next(op)
 	})
-	serviceHandlers := service_handler.NewHandlerGroup(srvImpl)
-	huma.Register(
-		servicesGroup,
-		huma.Operation{
-			OperationID: "create-service",
-			Summary:     "Create Service",
-			Description: "Create a service",
-			Path:        "/create",
-			Method:      http.MethodPost,
-		},
-		serviceHandlers.CreateService,
-	)
-	huma.Register(
-		servicesGroup,
-		huma.Operation{
-			OperationID: "update-service",
-			Summary:     "Update Service",
-			Description: "Update a service",
-			Path:        "/update",
-			Method:      http.MethodPut,
-		},
-		serviceHandlers.UpdateService,
-	)
+	service_handler.RegisterHandlers(srvImpl, servicesGroup)
 
 	// /secrets group
 	secretsGroup := huma.NewGroup(api, "/secrets")
@@ -498,40 +279,7 @@ func startAPI(cfg *config.Config) {
 		op.Tags = []string{"Secrets"}
 		next(op)
 	})
-	secretHandlers := secrets_handler.NewHandlerGroup(srvImpl)
-	huma.Register(
-		secretsGroup,
-		huma.Operation{
-			OperationID: "list-secrets",
-			Summary:     "List Secrets",
-			Description: "List secrets for a service, environment, project, or team",
-			Path:        "/list",
-			Method:      http.MethodGet,
-		},
-		secretHandlers.ListSecrets,
-	)
-	huma.Register(
-		secretsGroup,
-		huma.Operation{
-			OperationID: "create-secret",
-			Summary:     "Create Secrets",
-			Description: "Create secrets for a service, environment, project, or team",
-			Path:        "/create",
-			Method:      http.MethodPost,
-		},
-		secretHandlers.CreateSecrets,
-	)
-	huma.Register(
-		secretsGroup,
-		huma.Operation{
-			OperationID: "delete-secret",
-			Summary:     "Delete Secrets",
-			Description: "Delete secrets for a service, environment, project, or team",
-			Path:        "/delete",
-			Method:      http.MethodDelete,
-		},
-		secretHandlers.DeleteSecrets,
-	)
+	secrets_handler.RegisterHandlers(srvImpl, secretsGroup)
 
 	// Start the server
 	addr := ":8089"
