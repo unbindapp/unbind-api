@@ -47,12 +47,10 @@ func (self *KubeClient) CreateMultiRegistryCredentials(ctx context.Context, name
 		dockerConfig.Auths[cred.RegistryURL] = DockerConfigEntry{
 			Username: cred.Username,
 			Password: cred.Password,
-			Email:    cred.Email,
 			Auth:     auth,
 		}
 	}
 
-	// Marshal the config to JSON
 	dockerConfigJSON, err := json.Marshal(dockerConfig)
 	if err != nil {
 		return nil, err
