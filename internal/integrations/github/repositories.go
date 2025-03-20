@@ -10,76 +10,121 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"golang.org/x/sync/errgroup"
 )
 
 // Read user's admin repositories (that they can configure CI/CD on)
 func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, installations []*ent.GithubInstallation) ([]*GithubRepository, error) {
-	var wg sync.WaitGroup
 	var mu sync.Mutex
 	allAdminRepos := make([]*GithubRepository, 0)
-	errChan := make(chan error, len(installations))
 
+	// limit concurrency
+	const maxConcurrency = 3
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxConcurrency)
+
+	// Process installations concurrently with a limit
 	for _, installation := range installations {
 		if installation == nil || installation.Edges.GithubApp == nil {
 			log.Warnf("Invalid installation to read repositories from, missing appedge or nil: %v", installation)
 			continue
 		}
-		wg.Add(1)
-		go func(inst *ent.GithubInstallation) {
-			defer wg.Done()
-			// Get authenticated client
-			authenticatedClient, err := self.GetAuthenticatedClient(ctx, inst.GithubAppID, inst.ID, inst.Edges.GithubApp.PrivateKey)
+
+		// Copy the installation variable to avoid closure issues
+		inst := installation
+
+		g.Go(func() error {
+			authenticatedClient, err := self.GetAuthenticatedClient(gctx, inst.GithubAppID, inst.ID, inst.Edges.GithubApp.PrivateKey)
 			if err != nil {
-				errChan <- fmt.Errorf("Error getting authenticated client for %s: %v", inst.AccountLogin, err)
-				return
+				return fmt.Errorf("Error getting authenticated client for %s: %v", inst.AccountLogin, err)
 			}
-			// Get user's repositories
-			// ! TODO - handle pagination
-			ghRepositories, _, err := authenticatedClient.Repositories.ListByUser(ctx, inst.AccountLogin, nil)
+			defer authenticatedClient.Client().CloseIdleConnections()
+
+			// Process repositories with proper pagination
+			adminRepos, err := self.fetchUserAdminRepos(gctx, authenticatedClient, inst)
 			if err != nil {
-				errChan <- fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
-				return
+				return err
 			}
-			adminRepos := make([]*github.Repository, 0)
-			for _, repo := range ghRepositories {
-				if inst.AccountType == githubinstallation.AccountTypeUser {
-					if repo.GetOwner().GetID() == inst.AccountID {
-						adminRepos = append(adminRepos, repo)
-						continue
-					}
-				}
-				// ! TODO - figure out organization owners?
-				if perms := repo.GetPermissions(); perms != nil {
-					log.Infof("Repo %s perms: %v", repo.GetFullName(), perms)
-					if isAdmin, ok := perms["admin"]; ok && isAdmin {
-						adminRepos = append(adminRepos, repo)
-					}
-				}
-			}
+
 			// Format and add to the result slice in a thread-safe way
 			formattedRepos := formatRepositoryResponse(adminRepos)
 			mu.Lock()
 			allAdminRepos = append(allAdminRepos, formattedRepos...)
 			mu.Unlock()
-		}(installation)
-	}
-	// Wait for all goroutines to complete
-	wg.Wait()
-	close(errChan)
 
-	// Check if any errors occurred
-	for err := range errChan {
-		if err != nil {
-			return nil, err // Return the first error encountered
-		}
+			return nil
+		})
+	}
+
+	// Wait for all goroutines to complete
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	// Remove any duplicates
 	return removeDuplicateRepositories(allAdminRepos), nil
 }
 
+// fetchUserAdminRepos fetches all admin repositories for a user with proper pagination and memory limits
+func (self *GithubClient) fetchUserAdminRepos(ctx context.Context, client *github.Client, inst *ent.GithubInstallation) ([]*github.Repository, error) {
+	adminRepos := make([]*github.Repository, 0)
+	opts := &github.RepositoryListByUserOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 50,
+		},
+	}
+
+	for {
+		// Check if context is canceled
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
+		// Get user's repositories with pagination
+		ghRepositories, resp, err := client.Repositories.ListByUser(ctx, inst.AccountLogin, opts)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
+		}
+
+		// Filter admin repositories
+		for _, repo := range ghRepositories {
+			isAdmin := false
+
+			if inst.AccountType == githubinstallation.AccountTypeUser {
+				if repo.GetOwner().GetID() == inst.AccountID {
+					isAdmin = true
+				}
+			}
+
+			// Check permissions
+			if !isAdmin {
+				if perms := repo.GetPermissions(); perms != nil {
+					if admin, ok := perms["admin"]; ok && admin {
+						isAdmin = true
+					}
+				}
+			}
+
+			if isAdmin {
+				adminRepos = append(adminRepos, repo)
+			}
+		}
+
+		// Check if there are more pages
+		if resp.NextPage == 0 {
+			break
+		}
+
+		// Set up for next page
+		opts.Page = resp.NextPage
+	}
+
+	return adminRepos, nil
+}
+
 // removeDuplicateRepositories removes duplicate repositories from the slice
-// based on the repository ID
 func removeDuplicateRepositories(repos []*GithubRepository) []*GithubRepository {
 	seen := make(map[int64]bool)
 	result := make([]*GithubRepository, 0, len(repos))
@@ -94,6 +139,7 @@ func removeDuplicateRepositories(repos []*GithubRepository) []*GithubRepository 
 	return result
 }
 
+// * Formatting
 type GithubRepositoryOwner struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
@@ -112,8 +158,16 @@ type GithubRepository struct {
 }
 
 func formatRepositoryResponse(repositories []*github.Repository) []*GithubRepository {
-	response := make([]*GithubRepository, 0)
+	// Pre-allocate the slice to the exact size needed to avoid reallocations
+	response := make([]*GithubRepository, 0, len(repositories))
+
 	for _, repository := range repositories {
+		// Skip repositories with nil owners to prevent panic
+		if repository.Owner == nil {
+			log.Warnf("Skipping repository with nil owner: %s", repository.GetName())
+			continue
+		}
+
 		response = append(response, &GithubRepository{
 			ID:       repository.GetID(),
 			Name:     repository.GetName(),
@@ -175,17 +229,22 @@ type GithubTag struct {
 	SHA  string `json:"sha"`
 }
 
-// GetRepositoryDetail retrieves detailed information about a GitHub repository
+// Get details for a repository
 func (self *GithubClient) GetRepositoryDetail(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (*GithubRepositoryDetail, error) {
 	if installation == nil || installation.Edges.GithubApp == nil {
 		return nil, fmt.Errorf("invalid installation: missing app edge or nil")
 	}
 
+	// We'll use a client with a timeout context to ensure we don't hang indefinitely
+	timeoutCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+
 	// Get authenticated client
-	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
+	authenticatedClient, err := self.GetAuthenticatedClient(timeoutCtx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
 	}
+	defer authenticatedClient.Client().CloseIdleConnections()
 
 	// Get repository information
 	ghRepo, _, err := authenticatedClient.Repositories.Get(ctx, owner, repo)
@@ -193,19 +252,31 @@ func (self *GithubClient) GetRepositoryDetail(ctx context.Context, installation 
 		return nil, fmt.Errorf("error getting repository %s/%s: %v", owner, repo, err)
 	}
 
-	// Get branches
-	branches, err := self.getRepositoryBranches(ctx, authenticatedClient, owner, repo)
-	if err != nil {
-		log.Warn("Error getting repository branches", "err", err, "owner", owner, "repo", repo)
-		// Continue execution rather than failing
-	}
+	var branches []*GithubBranch
+	var tags []*GithubTag
+	var wg sync.WaitGroup
+	var branchErr, tagErr error
 
-	// Get tags
-	tags, err := self.getRepositoryTags(ctx, authenticatedClient, owner, repo)
-	if err != nil {
-		log.Warn("Error getting repository tags", "err", err, "owner", owner, "repo", repo)
-		// Continue execution rather than failing
-	}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		branches, branchErr = self.getRepositoryBranches(timeoutCtx, authenticatedClient, owner, repo)
+		if branchErr != nil {
+			log.Warn("Error getting repository branches", "err", branchErr, "owner", owner, "repo", repo)
+			branchErr = nil // Don't fail the entire request for this
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		tags, tagErr = self.getRepositoryTags(timeoutCtx, authenticatedClient, owner, repo)
+		if tagErr != nil {
+			log.Warn("Error getting repository tags", "err", tagErr, "owner", owner, "repo", repo)
+			tagErr = nil // Don't fail the entire request for this
+		}
+	}()
+
+	wg.Wait()
 
 	// Format the response
 	repoDetail := &GithubRepositoryDetail{
@@ -246,28 +317,36 @@ func (self *GithubClient) GetRepositoryDetail(ctx context.Context, installation 
 	return repoDetail, nil
 }
 
-// Get branches for a repository
+// Get branches for a repository - improved with context handling
 func (self *GithubClient) getRepositoryBranches(ctx context.Context, client *github.Client, owner, repo string) ([]*GithubBranch, error) {
 	opts := &github.BranchListOptions{
 		ListOptions: github.ListOptions{
-			PerPage: 100,
+			PerPage: 50,
 		},
 	}
 
 	var allBranches []*GithubBranch
 	for {
-		branches, resp, err := client.Repositories.ListBranches(ctx, owner, repo, opts)
-		if err != nil {
-			return nil, fmt.Errorf("error listing branches: %v", err)
+		// Check if context is canceled
+		select {
+		case <-ctx.Done():
+			return allBranches, ctx.Err()
+		default:
 		}
 
-		for _, branch := range branches {
-			allBranches = append(allBranches, &GithubBranch{
+		branches, resp, err := client.Repositories.ListBranches(ctx, owner, repo, opts)
+		if err != nil {
+			return allBranches, fmt.Errorf("error listing branches: %v", err)
+		}
+		allBranches = make([]*GithubBranch, len(branches))
+
+		for i, branch := range branches {
+			allBranches[i] = &GithubBranch{
 				Name:      branch.GetName(),
 				Protected: branch.GetProtected(),
 				SHA:       branch.GetCommit().GetSHA(),
 				Ref:       fmt.Sprintf("refs/heads/%s", branch.GetName()),
-			})
+			}
 		}
 
 		if resp.NextPage == 0 {
@@ -279,7 +358,7 @@ func (self *GithubClient) getRepositoryBranches(ctx context.Context, client *git
 	return allBranches, nil
 }
 
-// getRepositoryTags retrieves a list of tags for a repository
+// getRepositoryTags retrieves a list of tags for a repository - improved with context handling
 func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.Client, owner, repo string) ([]*GithubTag, error) {
 	opts := &github.ListOptions{
 		PerPage: 100,
@@ -287,17 +366,25 @@ func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.
 
 	var allTags []*GithubTag
 	for {
-		tags, resp, err := client.Repositories.ListTags(ctx, owner, repo, opts)
-		if err != nil {
-			return nil, fmt.Errorf("error listing tags: %v", err)
+		// Check if context is canceled
+		select {
+		case <-ctx.Done():
+			return allTags, ctx.Err()
+		default:
 		}
 
-		for _, tag := range tags {
-			allTags = append(allTags, &GithubTag{
+		tags, resp, err := client.Repositories.ListTags(ctx, owner, repo, opts)
+		if err != nil {
+			return allTags, fmt.Errorf("error listing tags: %v", err)
+		}
+		allTags = make([]*GithubTag, len(tags))
+
+		for i, tag := range tags {
+			allTags[i] = &GithubTag{
 				Name: tag.GetName(),
-				Ref:  fmt.Sprintf("refs/tags/%s", tag.GetName()), // Add the full Git ref
+				Ref:  fmt.Sprintf("refs/tags/%s", tag.GetName()),
 				SHA:  tag.GetCommit().GetSHA(),
-			})
+			}
 		}
 
 		if resp.NextPage == 0 {
@@ -309,17 +396,22 @@ func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.
 	return allTags, nil
 }
 
-// VerifyRepositoryAccess checks if a repository is accessible via a specific installation
+// VerifyRepositoryAccess with resource cleanup
 func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (canAccess bool, repoUrl string, err error) {
 	if installation == nil || installation.Edges.GithubApp == nil {
 		return false, "", fmt.Errorf("invalid installation: missing app edge or nil")
 	}
 
+	// Use a short timeout for this simple verification
+	timeoutCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
 	// Get authenticated client
-	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
+	authenticatedClient, err := self.GetAuthenticatedClient(timeoutCtx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
 	if err != nil {
 		return false, "", fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
 	}
+	defer authenticatedClient.Client().CloseIdleConnections()
 
 	// See if we can access the repository
 	repoResult, resp, err := authenticatedClient.Repositories.Get(ctx, owner, repo)
