@@ -11,13 +11,19 @@ import (
 )
 
 // GET Github admin organizations for installation
+type GithubAdminRepositoryListInput struct {
+	server.BaseAuthInput
+	Cursor string `query:"cursor"`
+	Limit  int    `query:"limit"`
+}
+
 type GithubAdminRepositoryListResponse struct {
 	Body struct {
-		Data []*github.GithubRepository `json:"data"`
+		Data *github.RepositoriesCursorResponse `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context, input *server.BaseAuthInput) (*GithubAdminRepositoryListResponse, error) {
+func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context, input *GithubAdminRepositoryListInput) (*GithubAdminRepositoryListResponse, error) {
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
 		log.Error("Error getting user from context")
@@ -31,17 +37,26 @@ func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context,
 		log.Error("Error getting github installation", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get github installation")
 	}
+
 	if len(installations) == 0 {
 		return &GithubAdminRepositoryListResponse{
 			Body: struct {
-				Data []*github.GithubRepository `json:"data"`
+				Data *github.RepositoriesCursorResponse `json:"data"`
 			}{
-				Data: []*github.GithubRepository{},
+				Data: &github.RepositoriesCursorResponse{
+					Repositories: []*github.GithubRepository{},
+				},
 			},
 		}, nil
 	}
 
-	adminRepos, err := self.srv.GithubClient.ReadUserAdminRepositories(ctx, installations)
+	// Create page params
+	paginationParams := github.CursorPaginationParams{
+		Cursor: input.Cursor,
+		Limit:  input.Limit,
+	}
+
+	adminRepos, err := self.srv.GithubClient.ReadUserAdminRepositoriesCursor(ctx, installations, paginationParams)
 	if err != nil {
 		log.Error("Error getting user admin organizations", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get user admin organizations")
