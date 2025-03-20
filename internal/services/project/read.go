@@ -53,8 +53,23 @@ func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUser
 		return nil, err
 	}
 
-	// Convert to response
-	return models.TransformProjectEntitities(projects), nil
+	// Transform response
+	resp := models.TransformProjectEntitities(projects)
+
+	// Summarizes services
+	for _, project := range resp {
+		environmentIDs := make([]uuid.UUID, len(project.Environments))
+		for i, environment := range project.Environments {
+			environmentIDs[i] = environment.ID
+		}
+		counts, runtimeSummaries, err := self.repo.Service().SummarizeServices(ctx, environmentIDs)
+		if err != nil {
+			return nil, err
+		}
+		project.AttachServiceSummary(counts, runtimeSummaries)
+	}
+
+	return resp, nil
 }
 
 // Get a single project by ID
@@ -101,5 +116,18 @@ func (self *ProjectService) GetProjectByID(ctx context.Context, requesterUserID 
 	}
 
 	// Convert to response
-	return models.TransformProjectEntity(project), nil
+	resp := models.TransformProjectEntity(project)
+
+	// Summarizes services
+	environmentIDs := make([]uuid.UUID, len(resp.Environments))
+	for i, environment := range resp.Environments {
+		environmentIDs[i] = environment.ID
+	}
+	counts, runtimeSummaries, err := self.repo.Service().SummarizeServices(ctx, environmentIDs)
+	if err != nil {
+		return nil, err
+	}
+	resp.AttachServiceSummary(counts, runtimeSummaries)
+
+	return resp, nil
 }

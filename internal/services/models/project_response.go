@@ -18,6 +18,17 @@ type ProjectResponse struct {
 	Environments []*EnvironmentResponse `json:"environments" nullable:"false"`
 }
 
+func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, runtimeSummaries map[uuid.UUID][]string) {
+	for _, environment := range self.Environments {
+		if count, ok := counts[environment.ID]; ok {
+			environment.ServiceCount = count
+		}
+		if runtimeSummary, ok := runtimeSummaries[environment.ID]; ok {
+			environment.RuntimeSummary = runtimeSummary
+		}
+	}
+}
+
 // TransformProjectEntity transforms an ent.Project entity into a ProjectResponse
 func TransformProjectEntity(entity *ent.Project) *ProjectResponse {
 	response := &ProjectResponse{}

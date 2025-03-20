@@ -84,3 +84,23 @@ func (self *ServiceRepository) GetDeploymentNamespace(ctx context.Context, servi
 	}
 	return svc.Namespace, nil
 }
+
+// Summarize services in environment
+func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, runtimes map[uuid.UUID][]string, err error) {
+	counts = make(map[uuid.UUID]int)
+	runtimes = make(map[uuid.UUID][]string)
+	services, err := self.base.DB.Service.Query().
+		Select(service.FieldEnvironmentID, service.FieldRuntime).
+		Where(service.EnvironmentIDIn(environmentIDs...)).
+		All(ctx)
+	if err != nil {
+		return
+	}
+	for _, svc := range services {
+		counts[svc.EnvironmentID]++
+		if svc.Runtime != nil {
+			runtimes[svc.EnvironmentID] = append(runtimes[svc.EnvironmentID], *svc.Runtime)
+		}
+	}
+	return
+}
