@@ -67,7 +67,7 @@ func (self *TeamService) GetSecrets(ctx context.Context, userID uuid.UUID, beare
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.TeamSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++
@@ -139,7 +139,7 @@ func (self *TeamService) CreateSecrets(ctx context.Context, userID uuid.UUID, be
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.TeamSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++
@@ -216,7 +216,7 @@ func (self *TeamService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUI
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.TeamSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++

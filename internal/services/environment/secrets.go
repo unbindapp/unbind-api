@@ -96,7 +96,7 @@ func (self *EnvironmentService) GetSecrets(ctx context.Context, userID uuid.UUID
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.EnvironmentSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++
@@ -197,7 +197,7 @@ func (self *EnvironmentService) CreateSecrets(ctx context.Context, userID uuid.U
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.EnvironmentSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++
@@ -303,7 +303,7 @@ func (self *EnvironmentService) DeleteSecretsByKey(ctx context.Context, userID u
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.EnvironmentSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++

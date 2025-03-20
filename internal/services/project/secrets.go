@@ -83,7 +83,7 @@ func (self *ProjectService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.ProjectSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++
@@ -171,7 +171,7 @@ func (self *ProjectService) CreateSecrets(ctx context.Context, userID uuid.UUID,
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.ProjectSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++
@@ -264,7 +264,7 @@ func (self *ProjectService) DeleteSecretsByKey(ctx context.Context, userID uuid.
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
 			Type:  models.ProjectSecret,
-			Key:   k,
+			Name:  k,
 			Value: string(v),
 		}
 		i++
