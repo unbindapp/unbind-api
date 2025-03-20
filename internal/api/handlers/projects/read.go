@@ -52,8 +52,8 @@ func (self *HandlerGroup) ListProjects(ctx context.Context, input *ListProjectIn
 // Get a single project by ID
 type GetProjectInput struct {
 	server.BaseAuthInput
-	ID     uuid.UUID `query:"id" required:"true"`
-	TeamID uuid.UUID `query:"team_id" required:"true"`
+	ProjectID uuid.UUID `query:"project_id" required:"true"`
+	TeamID    uuid.UUID `query:"team_id" required:"true"`
 }
 
 type GetProjectResponse struct {
@@ -70,7 +70,7 @@ func (self *HandlerGroup) GetProject(ctx context.Context, input *GetProjectInput
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
-	project, err := self.srv.ProjectService.GetProjectByID(ctx, user.ID, input.TeamID, input.ID)
+	project, err := self.srv.ProjectService.GetProjectByID(ctx, user.ID, input.TeamID, input.ProjectID)
 	if err != nil {
 		if errors.Is(err, errdefs.ErrUnauthorized) {
 			return nil, huma.Error403Forbidden("Unauthorized")
