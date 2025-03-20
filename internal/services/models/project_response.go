@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 type ProjectResponse struct {
@@ -18,13 +19,16 @@ type ProjectResponse struct {
 	Environments []*EnvironmentResponse `json:"environments" nullable:"false"`
 }
 
-func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, runtimeSummaries map[uuid.UUID][]string) {
+func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, providerSummaries map[uuid.UUID][]enum.Provider, frameworkSummaries map[uuid.UUID][]enum.Framework) {
 	for _, environment := range self.Environments {
 		if count, ok := counts[environment.ID]; ok {
 			environment.ServiceCount = count
 		}
-		if runtimeSummary, ok := runtimeSummaries[environment.ID]; ok {
-			environment.RuntimeSummary = runtimeSummary
+		if providerSummary, ok := providerSummaries[environment.ID]; ok {
+			environment.ProviderSummary = providerSummary
+		}
+		if frameworkSummary, ok := frameworkSummaries[environment.ID]; ok {
+			environment.FrameworkSummary = frameworkSummary
 		}
 	}
 }

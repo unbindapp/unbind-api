@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 const (
@@ -30,8 +31,8 @@ const (
 	FieldType = "type"
 	// FieldBuilder holds the string denoting the builder field in the database.
 	FieldBuilder = "builder"
-	// FieldRuntime holds the string denoting the runtime field in the database.
-	FieldRuntime = "runtime"
+	// FieldProvider holds the string denoting the provider field in the database.
+	FieldProvider = "provider"
 	// FieldFramework holds the string denoting the framework field in the database.
 	FieldFramework = "framework"
 	// FieldEnvironmentID holds the string denoting the environment_id field in the database.
@@ -92,7 +93,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldType,
 	FieldBuilder,
-	FieldRuntime,
+	FieldProvider,
 	FieldFramework,
 	FieldEnvironmentID,
 	FieldGithubInstallationID,
@@ -169,6 +170,26 @@ func BuilderValidator(b Builder) error {
 	}
 }
 
+// ProviderValidator is a validator for the "provider" field enum values. It is called by the builders before save.
+func ProviderValidator(pr enum.Provider) error {
+	switch pr {
+	case "node", "deno", "go", "java", "php", "python", "staticfile", "unknown":
+		return nil
+	default:
+		return fmt.Errorf("service: invalid enum value for provider field: %q", pr)
+	}
+}
+
+// FrameworkValidator is a validator for the "framework" field enum values. It is called by the builders before save.
+func FrameworkValidator(f enum.Framework) error {
+	switch f {
+	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown":
+		return nil
+	default:
+		return fmt.Errorf("service: invalid enum value for framework field: %q", f)
+	}
+}
+
 // OrderOption defines the ordering options for the Service queries.
 type OrderOption func(*sql.Selector)
 
@@ -212,9 +233,9 @@ func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
 }
 
-// ByRuntime orders the results by the runtime field.
-func ByRuntime(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRuntime, opts...).ToFunc()
+// ByProvider orders the results by the provider field.
+func ByProvider(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProvider, opts...).ToFunc()
 }
 
 // ByFramework orders the results by the framework field.

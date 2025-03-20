@@ -12,6 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error) {
@@ -86,11 +87,12 @@ func (self *ServiceRepository) GetDeploymentNamespace(ctx context.Context, servi
 }
 
 // Summarize services in environment
-func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, runtimes map[uuid.UUID][]string, err error) {
+func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]enum.Provider, frameworks map[uuid.UUID][]enum.Framework, err error) {
 	counts = make(map[uuid.UUID]int)
-	runtimes = make(map[uuid.UUID][]string)
+	providers = make(map[uuid.UUID][]enum.Provider)
+	frameworks = make(map[uuid.UUID][]enum.Framework)
 	services, err := self.base.DB.Service.Query().
-		Select(service.FieldEnvironmentID, service.FieldRuntime).
+		Select(service.FieldEnvironmentID, service.FieldProvider, service.FieldFramework).
 		Where(service.EnvironmentIDIn(environmentIDs...)).
 		All(ctx)
 	if err != nil {
@@ -98,8 +100,11 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 	}
 	for _, svc := range services {
 		counts[svc.EnvironmentID]++
-		if svc.Runtime != nil {
-			runtimes[svc.EnvironmentID] = append(runtimes[svc.EnvironmentID], *svc.Runtime)
+		if svc.Provider != nil {
+			providers[svc.EnvironmentID] = append(providers[svc.EnvironmentID], *svc.Provider)
+		}
+		if svc.Framework != nil {
+			frameworks[svc.EnvironmentID] = append(frameworks[svc.EnvironmentID], *svc.Framework)
 		}
 	}
 	return

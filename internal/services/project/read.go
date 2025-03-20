@@ -62,11 +62,11 @@ func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUser
 		for i, environment := range project.Environments {
 			environmentIDs[i] = environment.ID
 		}
-		counts, runtimeSummaries, err := self.repo.Service().SummarizeServices(ctx, environmentIDs)
+		counts, runtimeSummaries, frameworkSummeries, err := self.repo.Service().SummarizeServices(ctx, environmentIDs)
 		if err != nil {
 			return nil, err
 		}
-		project.AttachServiceSummary(counts, runtimeSummaries)
+		project.AttachServiceSummary(counts, runtimeSummaries, frameworkSummeries)
 	}
 
 	return resp, nil
@@ -123,11 +123,11 @@ func (self *ProjectService) GetProjectByID(ctx context.Context, requesterUserID 
 	for i, environment := range resp.Environments {
 		environmentIDs[i] = environment.ID
 	}
-	counts, runtimeSummaries, err := self.repo.Service().SummarizeServices(ctx, environmentIDs)
+	counts, runtimeSummaries, frameworkSummaries, err := self.repo.Service().SummarizeServices(ctx, environmentIDs)
 	if err != nil {
 		return nil, err
 	}
-	resp.AttachServiceSummary(counts, runtimeSummaries)
+	resp.AttachServiceSummary(counts, runtimeSummaries, frameworkSummaries)
 
 	return resp, nil
 }

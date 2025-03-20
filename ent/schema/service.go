@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // Service holds the schema definition for the Service entity.
@@ -31,8 +32,8 @@ func (Service) Fields() []ent.Field {
 		field.String("description").Optional(),
 		field.Enum("type").Values("git", "dockerfile").Comment("Type of service"),
 		field.Enum("builder").Values("railpack", "docker"),
-		field.String("runtime").Optional().Nillable().Comment("Runtime (e.g. Go, Python, Node, Deno)"),
-		field.String("framework").Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
+		field.Enum("provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
+		field.Enum("framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
 		field.UUID("environment_id", uuid.UUID{}),
 		field.Int64("github_installation_id").Optional().Nillable().Comment("Optional reference to GitHub installation"),
 		field.String("git_repository").Optional().Nillable().Comment("GitHub repository name"),

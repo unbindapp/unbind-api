@@ -5,17 +5,19 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 type EnvironmentResponse struct {
-	ID             uuid.UUID `json:"id"`
-	Name           string    `json:"name"`
-	DisplayName    string    `json:"display_name"`
-	Description    string    `json:"description"`
-	Active         bool      `json:"active"`
-	ServiceCount   int       `json:"service_count,omitempty"`
-	RuntimeSummary []string  `json:"runtime_summary,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID               uuid.UUID        `json:"id"`
+	Name             string           `json:"name"`
+	DisplayName      string           `json:"display_name"`
+	Description      string           `json:"description"`
+	Active           bool             `json:"active"`
+	ServiceCount     int              `json:"service_count,omitempty"`
+	ProviderSummary  []enum.Provider  `json:"provider_summary,omitempty"`
+	FrameworkSummary []enum.Framework `json:"framework_summary,omitempty"`
+	CreatedAt        time.Time        `json:"created_at"`
 }
 
 // TransformEnvironmentEntity transforms an ent.Environment entity into an EnvironmentResponse

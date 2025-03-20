@@ -333,12 +333,12 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				"SERVICE_SECRET_NAME":         service.KubernetesSecret,
 			}
 
-			if service.Runtime != nil {
-				env["SERVICE_RUNTIME"] = *service.Runtime
+			if service.Provider != nil {
+				env["SERVICE_PROVIDER"] = string(*service.Provider)
 			}
 
 			if service.Framework != nil {
-				env["SERVICE_FRAMEWORK"] = *service.Framework
+				env["SERVICE_FRAMEWORK"] = string(*service.Framework)
 			}
 
 			if service.Edges.ServiceConfig.Port != nil {

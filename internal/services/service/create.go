@@ -17,6 +17,7 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // CreateServiceInput defines the input for creating a new service
@@ -166,18 +167,18 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	var serviceConfig *ent.ServiceConfig
 
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
-		var runtime *string
-		var framework *string
+		var runtime *enum.Provider
+		var framework *enum.Framework
 		host := input.Host
 		port := input.Port
 		public := false
 		if analysisResult != nil {
 			// Service core information
-			if analysisResult.Provider != sourceanalyzer.UnknownProvider {
-				runtime = utils.ToPtr(analysisResult.Provider.String())
+			if analysisResult.Provider != enum.UnknownProvider {
+				runtime = utils.ToPtr(analysisResult.Provider)
 			}
-			if analysisResult.Framework != sourceanalyzer.UnknownFramework {
-				framework = utils.ToPtr(analysisResult.Framework.String())
+			if analysisResult.Framework != enum.UnknownFramework {
+				framework = utils.ToPtr(analysisResult.Framework)
 			}
 
 			// Default configuration information

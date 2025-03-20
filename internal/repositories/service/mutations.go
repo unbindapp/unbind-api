@@ -8,6 +8,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // Create the service
@@ -19,8 +20,8 @@ func (self *ServiceRepository) Create(
 	description string,
 	serviceType service.Type,
 	builder service.Builder,
-	runtime *string,
-	framework *string,
+	provider *enum.Provider,
+	framework *enum.Framework,
 	environmentID uuid.UUID,
 	gitHubInstallationID *int64,
 	gitRepository *string,
@@ -37,7 +38,7 @@ func (self *ServiceRepository) Create(
 		SetDescription(description).
 		SetType(serviceType).
 		SetBuilder(builder).
-		SetNillableRuntime(runtime).
+		SetNillableProvider(provider).
 		SetNillableFramework(framework).
 		SetEnvironmentID(environmentID).
 		SetNillableGithubInstallationID(gitHubInstallationID).

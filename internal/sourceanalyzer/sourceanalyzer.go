@@ -6,13 +6,14 @@ import (
 	core "github.com/railwayapp/railpack/core"
 	a "github.com/railwayapp/railpack/core/app"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // The root result
 type AnalysisResult struct {
-	Provider  Provider  `json:"provider"` // Railpack provider (node, go, deno, python, java, etc.)
-	Framework Framework `json:"framework"`
-	Port      *int      `json:"port,omitempty"`
+	Provider  enum.Provider  `json:"provider"` // Railpack provider (node, go, deno, python, java, etc.)
+	Framework enum.Framework `json:"framework"`
+	Port      *int           `json:"port,omitempty"`
 }
 
 func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
@@ -31,12 +32,12 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 
 	log.Infof("Plan data: %v", string(marshalled))
 
-	detectedProvider := parseProvider(plan.DetectedProviders)
-	detectedFramework := detectFramework(detectedProvider, plan)
+	detectedProvider := enum.ParseProvider(plan.DetectedProviders)
+	detectedFramework := enum.DetectFramework(detectedProvider, plan)
 	detectedPort := inferPortFromFramework(detectedFramework)
 
 	// Railpack only returns gin, so see if this is a web API or not
-	if detectedProvider == Go && detectedFramework == UnknownFramework {
+	if detectedProvider == enum.Go && detectedFramework == enum.UnknownFramework {
 		if hasListenAndServe(sourceDir) {
 			port := 8080
 			detectedPort = &port
@@ -44,11 +45,11 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 	}
 
 	// Check for express as railpack doesn't return it
-	if detectedProvider == Node && detectedFramework == UnknownFramework {
+	if detectedProvider == enum.Node && detectedFramework == enum.UnknownFramework {
 		if isExpressApp(sourceDir) {
 			port := 3000
 			detectedPort = &port
-			detectedFramework = Express
+			detectedFramework = enum.Express
 		}
 	}
 

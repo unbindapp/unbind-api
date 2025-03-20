@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ServiceCreate is the builder for creating a Service entity.
@@ -94,30 +95,30 @@ func (sc *ServiceCreate) SetBuilder(s service.Builder) *ServiceCreate {
 	return sc
 }
 
-// SetRuntime sets the "runtime" field.
-func (sc *ServiceCreate) SetRuntime(s string) *ServiceCreate {
-	sc.mutation.SetRuntime(s)
+// SetProvider sets the "provider" field.
+func (sc *ServiceCreate) SetProvider(e enum.Provider) *ServiceCreate {
+	sc.mutation.SetProvider(e)
 	return sc
 }
 
-// SetNillableRuntime sets the "runtime" field if the given value is not nil.
-func (sc *ServiceCreate) SetNillableRuntime(s *string) *ServiceCreate {
-	if s != nil {
-		sc.SetRuntime(*s)
+// SetNillableProvider sets the "provider" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableProvider(e *enum.Provider) *ServiceCreate {
+	if e != nil {
+		sc.SetProvider(*e)
 	}
 	return sc
 }
 
 // SetFramework sets the "framework" field.
-func (sc *ServiceCreate) SetFramework(s string) *ServiceCreate {
-	sc.mutation.SetFramework(s)
+func (sc *ServiceCreate) SetFramework(e enum.Framework) *ServiceCreate {
+	sc.mutation.SetFramework(e)
 	return sc
 }
 
 // SetNillableFramework sets the "framework" field if the given value is not nil.
-func (sc *ServiceCreate) SetNillableFramework(s *string) *ServiceCreate {
-	if s != nil {
-		sc.SetFramework(*s)
+func (sc *ServiceCreate) SetNillableFramework(e *enum.Framework) *ServiceCreate {
+	if e != nil {
+		sc.SetFramework(*e)
 	}
 	return sc
 }
@@ -304,6 +305,16 @@ func (sc *ServiceCreate) check() error {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Service.builder": %w`, err)}
 		}
 	}
+	if v, ok := sc.mutation.Provider(); ok {
+		if err := service.ProviderValidator(v); err != nil {
+			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "Service.provider": %w`, err)}
+		}
+	}
+	if v, ok := sc.mutation.Framework(); ok {
+		if err := service.FrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "Service.framework": %w`, err)}
+		}
+	}
 	if _, ok := sc.mutation.EnvironmentID(); !ok {
 		return &ValidationError{Name: "environment_id", err: errors.New(`ent: missing required field "Service.environment_id"`)}
 	}
@@ -377,12 +388,12 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldBuilder, field.TypeEnum, value)
 		_node.Builder = value
 	}
-	if value, ok := sc.mutation.Runtime(); ok {
-		_spec.SetField(service.FieldRuntime, field.TypeString, value)
-		_node.Runtime = &value
+	if value, ok := sc.mutation.Provider(); ok {
+		_spec.SetField(service.FieldProvider, field.TypeEnum, value)
+		_node.Provider = &value
 	}
 	if value, ok := sc.mutation.Framework(); ok {
-		_spec.SetField(service.FieldFramework, field.TypeString, value)
+		_spec.SetField(service.FieldFramework, field.TypeEnum, value)
 		_node.Framework = &value
 	}
 	if value, ok := sc.mutation.GitRepository(); ok {
@@ -589,26 +600,26 @@ func (u *ServiceUpsert) UpdateBuilder() *ServiceUpsert {
 	return u
 }
 
-// SetRuntime sets the "runtime" field.
-func (u *ServiceUpsert) SetRuntime(v string) *ServiceUpsert {
-	u.Set(service.FieldRuntime, v)
+// SetProvider sets the "provider" field.
+func (u *ServiceUpsert) SetProvider(v enum.Provider) *ServiceUpsert {
+	u.Set(service.FieldProvider, v)
 	return u
 }
 
-// UpdateRuntime sets the "runtime" field to the value that was provided on create.
-func (u *ServiceUpsert) UpdateRuntime() *ServiceUpsert {
-	u.SetExcluded(service.FieldRuntime)
+// UpdateProvider sets the "provider" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateProvider() *ServiceUpsert {
+	u.SetExcluded(service.FieldProvider)
 	return u
 }
 
-// ClearRuntime clears the value of the "runtime" field.
-func (u *ServiceUpsert) ClearRuntime() *ServiceUpsert {
-	u.SetNull(service.FieldRuntime)
+// ClearProvider clears the value of the "provider" field.
+func (u *ServiceUpsert) ClearProvider() *ServiceUpsert {
+	u.SetNull(service.FieldProvider)
 	return u
 }
 
 // SetFramework sets the "framework" field.
-func (u *ServiceUpsert) SetFramework(v string) *ServiceUpsert {
+func (u *ServiceUpsert) SetFramework(v enum.Framework) *ServiceUpsert {
 	u.Set(service.FieldFramework, v)
 	return u
 }
@@ -827,29 +838,29 @@ func (u *ServiceUpsertOne) UpdateBuilder() *ServiceUpsertOne {
 	})
 }
 
-// SetRuntime sets the "runtime" field.
-func (u *ServiceUpsertOne) SetRuntime(v string) *ServiceUpsertOne {
+// SetProvider sets the "provider" field.
+func (u *ServiceUpsertOne) SetProvider(v enum.Provider) *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
-		s.SetRuntime(v)
+		s.SetProvider(v)
 	})
 }
 
-// UpdateRuntime sets the "runtime" field to the value that was provided on create.
-func (u *ServiceUpsertOne) UpdateRuntime() *ServiceUpsertOne {
+// UpdateProvider sets the "provider" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateProvider() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateRuntime()
+		s.UpdateProvider()
 	})
 }
 
-// ClearRuntime clears the value of the "runtime" field.
-func (u *ServiceUpsertOne) ClearRuntime() *ServiceUpsertOne {
+// ClearProvider clears the value of the "provider" field.
+func (u *ServiceUpsertOne) ClearProvider() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
-		s.ClearRuntime()
+		s.ClearProvider()
 	})
 }
 
 // SetFramework sets the "framework" field.
-func (u *ServiceUpsertOne) SetFramework(v string) *ServiceUpsertOne {
+func (u *ServiceUpsertOne) SetFramework(v enum.Framework) *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.SetFramework(v)
 	})
@@ -1248,29 +1259,29 @@ func (u *ServiceUpsertBulk) UpdateBuilder() *ServiceUpsertBulk {
 	})
 }
 
-// SetRuntime sets the "runtime" field.
-func (u *ServiceUpsertBulk) SetRuntime(v string) *ServiceUpsertBulk {
+// SetProvider sets the "provider" field.
+func (u *ServiceUpsertBulk) SetProvider(v enum.Provider) *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
-		s.SetRuntime(v)
+		s.SetProvider(v)
 	})
 }
 
-// UpdateRuntime sets the "runtime" field to the value that was provided on create.
-func (u *ServiceUpsertBulk) UpdateRuntime() *ServiceUpsertBulk {
+// UpdateProvider sets the "provider" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateProvider() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateRuntime()
+		s.UpdateProvider()
 	})
 }
 
-// ClearRuntime clears the value of the "runtime" field.
-func (u *ServiceUpsertBulk) ClearRuntime() *ServiceUpsertBulk {
+// ClearProvider clears the value of the "provider" field.
+func (u *ServiceUpsertBulk) ClearProvider() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
-		s.ClearRuntime()
+		s.ClearProvider()
 	})
 }
 
 // SetFramework sets the "framework" field.
-func (u *ServiceUpsertBulk) SetFramework(v string) *ServiceUpsertBulk {
+func (u *ServiceUpsertBulk) SetFramework(v enum.Framework) *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.SetFramework(v)
 	})

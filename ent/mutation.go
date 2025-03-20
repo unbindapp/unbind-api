@@ -29,6 +29,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 const (
@@ -9033,8 +9034,8 @@ type ServiceMutation struct {
 	description                *string
 	_type                      *service.Type
 	builder                    *service.Builder
-	runtime                    *string
-	framework                  *string
+	provider                   *enum.Provider
+	framework                  *enum.Framework
 	git_repository             *string
 	kubernetes_secret          *string
 	clearedFields              map[string]struct{}
@@ -9421,62 +9422,62 @@ func (m *ServiceMutation) ResetBuilder() {
 	m.builder = nil
 }
 
-// SetRuntime sets the "runtime" field.
-func (m *ServiceMutation) SetRuntime(s string) {
-	m.runtime = &s
+// SetProvider sets the "provider" field.
+func (m *ServiceMutation) SetProvider(e enum.Provider) {
+	m.provider = &e
 }
 
-// Runtime returns the value of the "runtime" field in the mutation.
-func (m *ServiceMutation) Runtime() (r string, exists bool) {
-	v := m.runtime
+// Provider returns the value of the "provider" field in the mutation.
+func (m *ServiceMutation) Provider() (r enum.Provider, exists bool) {
+	v := m.provider
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldRuntime returns the old "runtime" field's value of the Service entity.
+// OldProvider returns the old "provider" field's value of the Service entity.
 // If the Service object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldRuntime(ctx context.Context) (v *string, err error) {
+func (m *ServiceMutation) OldProvider(ctx context.Context) (v *enum.Provider, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRuntime is only allowed on UpdateOne operations")
+		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRuntime requires an ID field in the mutation")
+		return v, errors.New("OldProvider requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRuntime: %w", err)
+		return v, fmt.Errorf("querying old value for OldProvider: %w", err)
 	}
-	return oldValue.Runtime, nil
+	return oldValue.Provider, nil
 }
 
-// ClearRuntime clears the value of the "runtime" field.
-func (m *ServiceMutation) ClearRuntime() {
-	m.runtime = nil
-	m.clearedFields[service.FieldRuntime] = struct{}{}
+// ClearProvider clears the value of the "provider" field.
+func (m *ServiceMutation) ClearProvider() {
+	m.provider = nil
+	m.clearedFields[service.FieldProvider] = struct{}{}
 }
 
-// RuntimeCleared returns if the "runtime" field was cleared in this mutation.
-func (m *ServiceMutation) RuntimeCleared() bool {
-	_, ok := m.clearedFields[service.FieldRuntime]
+// ProviderCleared returns if the "provider" field was cleared in this mutation.
+func (m *ServiceMutation) ProviderCleared() bool {
+	_, ok := m.clearedFields[service.FieldProvider]
 	return ok
 }
 
-// ResetRuntime resets all changes to the "runtime" field.
-func (m *ServiceMutation) ResetRuntime() {
-	m.runtime = nil
-	delete(m.clearedFields, service.FieldRuntime)
+// ResetProvider resets all changes to the "provider" field.
+func (m *ServiceMutation) ResetProvider() {
+	m.provider = nil
+	delete(m.clearedFields, service.FieldProvider)
 }
 
 // SetFramework sets the "framework" field.
-func (m *ServiceMutation) SetFramework(s string) {
-	m.framework = &s
+func (m *ServiceMutation) SetFramework(e enum.Framework) {
+	m.framework = &e
 }
 
 // Framework returns the value of the "framework" field in the mutation.
-func (m *ServiceMutation) Framework() (r string, exists bool) {
+func (m *ServiceMutation) Framework() (r enum.Framework, exists bool) {
 	v := m.framework
 	if v == nil {
 		return
@@ -9487,7 +9488,7 @@ func (m *ServiceMutation) Framework() (r string, exists bool) {
 // OldFramework returns the old "framework" field's value of the Service entity.
 // If the Service object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldFramework(ctx context.Context) (v *string, err error) {
+func (m *ServiceMutation) OldFramework(ctx context.Context) (v *enum.Framework, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFramework is only allowed on UpdateOne operations")
 	}
@@ -9892,8 +9893,8 @@ func (m *ServiceMutation) Fields() []string {
 	if m.builder != nil {
 		fields = append(fields, service.FieldBuilder)
 	}
-	if m.runtime != nil {
-		fields = append(fields, service.FieldRuntime)
+	if m.provider != nil {
+		fields = append(fields, service.FieldProvider)
 	}
 	if m.framework != nil {
 		fields = append(fields, service.FieldFramework)
@@ -9932,8 +9933,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.GetType()
 	case service.FieldBuilder:
 		return m.Builder()
-	case service.FieldRuntime:
-		return m.Runtime()
+	case service.FieldProvider:
+		return m.Provider()
 	case service.FieldFramework:
 		return m.Framework()
 	case service.FieldEnvironmentID:
@@ -9967,8 +9968,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldType(ctx)
 	case service.FieldBuilder:
 		return m.OldBuilder(ctx)
-	case service.FieldRuntime:
-		return m.OldRuntime(ctx)
+	case service.FieldProvider:
+		return m.OldProvider(ctx)
 	case service.FieldFramework:
 		return m.OldFramework(ctx)
 	case service.FieldEnvironmentID:
@@ -10037,15 +10038,15 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetBuilder(v)
 		return nil
-	case service.FieldRuntime:
-		v, ok := value.(string)
+	case service.FieldProvider:
+		v, ok := value.(enum.Provider)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetRuntime(v)
+		m.SetProvider(v)
 		return nil
 	case service.FieldFramework:
-		v, ok := value.(string)
+		v, ok := value.(enum.Framework)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -10115,8 +10116,8 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldDescription) {
 		fields = append(fields, service.FieldDescription)
 	}
-	if m.FieldCleared(service.FieldRuntime) {
-		fields = append(fields, service.FieldRuntime)
+	if m.FieldCleared(service.FieldProvider) {
+		fields = append(fields, service.FieldProvider)
 	}
 	if m.FieldCleared(service.FieldFramework) {
 		fields = append(fields, service.FieldFramework)
@@ -10144,8 +10145,8 @@ func (m *ServiceMutation) ClearField(name string) error {
 	case service.FieldDescription:
 		m.ClearDescription()
 		return nil
-	case service.FieldRuntime:
-		m.ClearRuntime()
+	case service.FieldProvider:
+		m.ClearProvider()
 		return nil
 	case service.FieldFramework:
 		m.ClearFramework()
@@ -10185,8 +10186,8 @@ func (m *ServiceMutation) ResetField(name string) error {
 	case service.FieldBuilder:
 		m.ResetBuilder()
 		return nil
-	case service.FieldRuntime:
-		m.ResetRuntime()
+	case service.FieldProvider:
+		m.ResetProvider()
 		return nil
 	case service.FieldFramework:
 		m.ResetFramework()

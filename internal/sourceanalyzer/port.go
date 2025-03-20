@@ -1,35 +1,37 @@
 package sourceanalyzer
 
+import "github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+
 // Assume default port based on framework defaults
-func inferPortFromFramework(framework Framework) *int {
+func inferPortFromFramework(framework enum.Framework) *int {
 	var port int
 	switch framework {
 	// Node frameworks
-	case Next, CRA, Remix, Bun:
+	case enum.Next, enum.CRA, enum.Remix, enum.Bun:
 		port = 3000
-	case Astro:
+	case enum.Astro:
 		port = 4321
-	case Vite:
+	case enum.Vite:
 		port = 5173
-	case Angular:
+	case enum.Angular:
 		port = 4200
 
 	// Python frameworks
-	case Django, FastAPI, FastHTML:
+	case enum.Django, enum.FastAPI, enum.FastHTML:
 		port = 8000
-	case Flask:
+	case enum.Flask:
 		port = 5000
 
 	// Go frameworks
-	case Gin:
+	case enum.Gin:
 		port = 8080
 
 	// Java frameworks
-	case SpringBoot:
+	case enum.SpringBoot:
 		port = 8080
 
 	// PHP frameworks
-	case Laravel:
+	case enum.Laravel:
 		port = 8000
 	}
 

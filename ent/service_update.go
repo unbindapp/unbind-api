@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ServiceUpdate is the builder for updating Service entities.
@@ -116,36 +117,36 @@ func (su *ServiceUpdate) SetNillableBuilder(s *service.Builder) *ServiceUpdate {
 	return su
 }
 
-// SetRuntime sets the "runtime" field.
-func (su *ServiceUpdate) SetRuntime(s string) *ServiceUpdate {
-	su.mutation.SetRuntime(s)
+// SetProvider sets the "provider" field.
+func (su *ServiceUpdate) SetProvider(e enum.Provider) *ServiceUpdate {
+	su.mutation.SetProvider(e)
 	return su
 }
 
-// SetNillableRuntime sets the "runtime" field if the given value is not nil.
-func (su *ServiceUpdate) SetNillableRuntime(s *string) *ServiceUpdate {
-	if s != nil {
-		su.SetRuntime(*s)
+// SetNillableProvider sets the "provider" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableProvider(e *enum.Provider) *ServiceUpdate {
+	if e != nil {
+		su.SetProvider(*e)
 	}
 	return su
 }
 
-// ClearRuntime clears the value of the "runtime" field.
-func (su *ServiceUpdate) ClearRuntime() *ServiceUpdate {
-	su.mutation.ClearRuntime()
+// ClearProvider clears the value of the "provider" field.
+func (su *ServiceUpdate) ClearProvider() *ServiceUpdate {
+	su.mutation.ClearProvider()
 	return su
 }
 
 // SetFramework sets the "framework" field.
-func (su *ServiceUpdate) SetFramework(s string) *ServiceUpdate {
-	su.mutation.SetFramework(s)
+func (su *ServiceUpdate) SetFramework(e enum.Framework) *ServiceUpdate {
+	su.mutation.SetFramework(e)
 	return su
 }
 
 // SetNillableFramework sets the "framework" field if the given value is not nil.
-func (su *ServiceUpdate) SetNillableFramework(s *string) *ServiceUpdate {
-	if s != nil {
-		su.SetFramework(*s)
+func (su *ServiceUpdate) SetNillableFramework(e *enum.Framework) *ServiceUpdate {
+	if e != nil {
+		su.SetFramework(*e)
 	}
 	return su
 }
@@ -365,6 +366,16 @@ func (su *ServiceUpdate) check() error {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Service.builder": %w`, err)}
 		}
 	}
+	if v, ok := su.mutation.Provider(); ok {
+		if err := service.ProviderValidator(v); err != nil {
+			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "Service.provider": %w`, err)}
+		}
+	}
+	if v, ok := su.mutation.Framework(); ok {
+		if err := service.FrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "Service.framework": %w`, err)}
+		}
+	}
 	if su.mutation.EnvironmentCleared() && len(su.mutation.EnvironmentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Service.environment"`)
 	}
@@ -410,17 +421,17 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.Builder(); ok {
 		_spec.SetField(service.FieldBuilder, field.TypeEnum, value)
 	}
-	if value, ok := su.mutation.Runtime(); ok {
-		_spec.SetField(service.FieldRuntime, field.TypeString, value)
+	if value, ok := su.mutation.Provider(); ok {
+		_spec.SetField(service.FieldProvider, field.TypeEnum, value)
 	}
-	if su.mutation.RuntimeCleared() {
-		_spec.ClearField(service.FieldRuntime, field.TypeString)
+	if su.mutation.ProviderCleared() {
+		_spec.ClearField(service.FieldProvider, field.TypeEnum)
 	}
 	if value, ok := su.mutation.Framework(); ok {
-		_spec.SetField(service.FieldFramework, field.TypeString, value)
+		_spec.SetField(service.FieldFramework, field.TypeEnum, value)
 	}
 	if su.mutation.FrameworkCleared() {
-		_spec.ClearField(service.FieldFramework, field.TypeString)
+		_spec.ClearField(service.FieldFramework, field.TypeEnum)
 	}
 	if value, ok := su.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)
@@ -667,36 +678,36 @@ func (suo *ServiceUpdateOne) SetNillableBuilder(s *service.Builder) *ServiceUpda
 	return suo
 }
 
-// SetRuntime sets the "runtime" field.
-func (suo *ServiceUpdateOne) SetRuntime(s string) *ServiceUpdateOne {
-	suo.mutation.SetRuntime(s)
+// SetProvider sets the "provider" field.
+func (suo *ServiceUpdateOne) SetProvider(e enum.Provider) *ServiceUpdateOne {
+	suo.mutation.SetProvider(e)
 	return suo
 }
 
-// SetNillableRuntime sets the "runtime" field if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableRuntime(s *string) *ServiceUpdateOne {
-	if s != nil {
-		suo.SetRuntime(*s)
+// SetNillableProvider sets the "provider" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableProvider(e *enum.Provider) *ServiceUpdateOne {
+	if e != nil {
+		suo.SetProvider(*e)
 	}
 	return suo
 }
 
-// ClearRuntime clears the value of the "runtime" field.
-func (suo *ServiceUpdateOne) ClearRuntime() *ServiceUpdateOne {
-	suo.mutation.ClearRuntime()
+// ClearProvider clears the value of the "provider" field.
+func (suo *ServiceUpdateOne) ClearProvider() *ServiceUpdateOne {
+	suo.mutation.ClearProvider()
 	return suo
 }
 
 // SetFramework sets the "framework" field.
-func (suo *ServiceUpdateOne) SetFramework(s string) *ServiceUpdateOne {
-	suo.mutation.SetFramework(s)
+func (suo *ServiceUpdateOne) SetFramework(e enum.Framework) *ServiceUpdateOne {
+	suo.mutation.SetFramework(e)
 	return suo
 }
 
 // SetNillableFramework sets the "framework" field if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableFramework(s *string) *ServiceUpdateOne {
-	if s != nil {
-		suo.SetFramework(*s)
+func (suo *ServiceUpdateOne) SetNillableFramework(e *enum.Framework) *ServiceUpdateOne {
+	if e != nil {
+		suo.SetFramework(*e)
 	}
 	return suo
 }
@@ -929,6 +940,16 @@ func (suo *ServiceUpdateOne) check() error {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Service.builder": %w`, err)}
 		}
 	}
+	if v, ok := suo.mutation.Provider(); ok {
+		if err := service.ProviderValidator(v); err != nil {
+			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "Service.provider": %w`, err)}
+		}
+	}
+	if v, ok := suo.mutation.Framework(); ok {
+		if err := service.FrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "Service.framework": %w`, err)}
+		}
+	}
 	if suo.mutation.EnvironmentCleared() && len(suo.mutation.EnvironmentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Service.environment"`)
 	}
@@ -991,17 +1012,17 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	if value, ok := suo.mutation.Builder(); ok {
 		_spec.SetField(service.FieldBuilder, field.TypeEnum, value)
 	}
-	if value, ok := suo.mutation.Runtime(); ok {
-		_spec.SetField(service.FieldRuntime, field.TypeString, value)
+	if value, ok := suo.mutation.Provider(); ok {
+		_spec.SetField(service.FieldProvider, field.TypeEnum, value)
 	}
-	if suo.mutation.RuntimeCleared() {
-		_spec.ClearField(service.FieldRuntime, field.TypeString)
+	if suo.mutation.ProviderCleared() {
+		_spec.ClearField(service.FieldProvider, field.TypeEnum)
 	}
 	if value, ok := suo.mutation.Framework(); ok {
-		_spec.SetField(service.FieldFramework, field.TypeString, value)
+		_spec.SetField(service.FieldFramework, field.TypeEnum, value)
 	}
 	if suo.mutation.FrameworkCleared() {
-		_spec.ClearField(service.FieldFramework, field.TypeString)
+		_spec.ClearField(service.FieldFramework, field.TypeEnum)
 	}
 	if value, ok := suo.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)

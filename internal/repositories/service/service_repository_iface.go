@@ -9,12 +9,13 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/service"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ServiceRepositoryInterface ...
 type ServiceRepositoryInterface interface {
 	// Create the service
-	Create(ctx context.Context, tx repository.TxInterface, name string, displayName string, description string, serviceType service.Type, builder service.Builder, runtime *string, framework *string, environmentID uuid.UUID, gitHubInstallationID *int64, gitRepository *string, kubernetesSecret string) (*ent.Service, error)
+	Create(ctx context.Context, tx repository.TxInterface, name string, displayName string, description string, serviceType service.Type, builder service.Builder, provider *enum.Provider, framework *enum.Framework, environmentID uuid.UUID, gitHubInstallationID *int64, gitRepository *string, kubernetesSecret string) (*ent.Service, error)
 	// Create the service config
 	CreateConfig(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, gitBranch *string, port *int, host *string, replicas *int32, autoDeploy *bool, runCommand *string, public *bool, image *string) (*ent.ServiceConfig, error)
 	// Update the service
@@ -28,5 +29,5 @@ type ServiceRepositoryInterface interface {
 	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error)
 	GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error)
 	// Summarize services in environment
-	SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, runtimes map[uuid.UUID][]string, err error)
+	SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]enum.Provider, frameworks map[uuid.UUID][]enum.Framework, err error)
 }

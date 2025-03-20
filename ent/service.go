@@ -14,6 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // Service is the model entity for the Service schema.
@@ -36,10 +37,10 @@ type Service struct {
 	Type service.Type `json:"type,omitempty"`
 	// Builder holds the value of the "builder" field.
 	Builder service.Builder `json:"builder,omitempty"`
-	// Runtime (e.g. Go, Python, Node, Deno)
-	Runtime *string `json:"runtime,omitempty"`
+	// Provider (e.g. Go, Python, Node, Deno)
+	Provider *enum.Provider `json:"provider,omitempty"`
 	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
-	Framework *string `json:"framework,omitempty"`
+	Framework *enum.Framework `json:"framework,omitempty"`
 	// EnvironmentID holds the value of the "environment_id" field.
 	EnvironmentID uuid.UUID `json:"environment_id,omitempty"`
 	// Optional reference to GitHub installation
@@ -118,7 +119,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldRuntime, service.FieldFramework, service.FieldGitRepository, service.FieldKubernetesSecret:
+		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldProvider, service.FieldFramework, service.FieldGitRepository, service.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -187,19 +188,19 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.Builder = service.Builder(value.String)
 			}
-		case service.FieldRuntime:
+		case service.FieldProvider:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field runtime", values[i])
+				return fmt.Errorf("unexpected type %T for field provider", values[i])
 			} else if value.Valid {
-				s.Runtime = new(string)
-				*s.Runtime = value.String
+				s.Provider = new(enum.Provider)
+				*s.Provider = enum.Provider(value.String)
 			}
 		case service.FieldFramework:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field framework", values[i])
 			} else if value.Valid {
-				s.Framework = new(string)
-				*s.Framework = value.String
+				s.Framework = new(enum.Framework)
+				*s.Framework = enum.Framework(value.String)
 			}
 		case service.FieldEnvironmentID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -304,14 +305,14 @@ func (s *Service) String() string {
 	builder.WriteString("builder=")
 	builder.WriteString(fmt.Sprintf("%v", s.Builder))
 	builder.WriteString(", ")
-	if v := s.Runtime; v != nil {
-		builder.WriteString("runtime=")
-		builder.WriteString(*v)
+	if v := s.Provider; v != nil {
+		builder.WriteString("provider=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	if v := s.Framework; v != nil {
 		builder.WriteString("framework=")
-		builder.WriteString(*v)
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("environment_id=")
