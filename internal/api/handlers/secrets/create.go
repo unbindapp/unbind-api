@@ -24,7 +24,7 @@ type CreateSecretsInput struct {
 
 func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateSecretsInput) (*SecretsResponse, error) {
 	// Validate input
-	if err := ValidateSecretsDependencies(input.Body); err != nil {
+	if err := ValidateSecretsDependencies(input.Body.Type, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID); err != nil {
 		return nil, huma.Error400BadRequest(err.Error())
 	}
 
@@ -44,14 +44,15 @@ func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateSecret
 	// Determine which service to use
 	var secret []*models.SecretResponse
 	var err error
-	if input.Body.ServiceID != nil {
-		secret, err = self.srv.ServiceService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, *input.Body.ProjectID, *input.Body.EnvironmentID, *input.Body.ServiceID, newSecretMap)
-	} else if input.Body.EnvironmentID != nil {
-		secret, err = self.srv.EnvironmentService.GetSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, *input.Body.ProjectID, *input.Body.EnvironmentID)
-	} else if input.Body.ProjectID != nil {
-		secret, err = self.srv.ProjectService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, *input.Body.ProjectID, newSecretMap)
-	} else {
+	switch input.Body.Type {
+	case models.TeamSecret:
 		secret, err = self.srv.TeamService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, newSecretMap)
+	case models.ProjectSecret:
+		secret, err = self.srv.ProjectService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, newSecretMap)
+	case models.EnvironmentSecret:
+		secret, err = self.srv.EnvironmentService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, newSecretMap)
+	case models.ServiceSecret:
+		secret, err = self.srv.ServiceService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, newSecretMap)
 	}
 
 	if err != nil {

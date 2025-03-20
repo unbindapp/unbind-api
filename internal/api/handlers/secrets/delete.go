@@ -21,7 +21,7 @@ type DeleteSecretSecretsInput struct {
 
 func (self *HandlerGroup) DeleteSecrets(ctx context.Context, input *DeleteSecretSecretsInput) (*SecretsResponse, error) {
 	// Validate input
-	if err := ValidateSecretsDependencies(input.Body); err != nil {
+	if err := ValidateSecretsDependencies(input.Body.Type, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID); err != nil {
 		return nil, huma.Error400BadRequest(err.Error())
 	}
 
@@ -36,14 +36,15 @@ func (self *HandlerGroup) DeleteSecrets(ctx context.Context, input *DeleteSecret
 	var secret []*models.SecretResponse
 	var err error
 	// Determine which service to use
-	if input.Body.ServiceID != nil {
-		secret, err = self.srv.ServiceService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, *input.Body.ProjectID, *input.Body.EnvironmentID, *input.Body.ServiceID, input.Body.Secrets)
-	} else if input.Body.EnvironmentID != nil {
-		secret, err = self.srv.EnvironmentService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, *input.Body.ProjectID, *input.Body.EnvironmentID, input.Body.Secrets)
-	} else if input.Body.ProjectID != nil {
-		secret, err = self.srv.ProjectService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, *input.Body.ProjectID, input.Body.Secrets)
-	} else {
+	switch input.Body.Type {
+	case models.TeamSecret:
 		secret, err = self.srv.TeamService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.Secrets)
+	case models.ProjectSecret:
+		secret, err = self.srv.ProjectService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.Secrets)
+	case models.EnvironmentSecret:
+		secret, err = self.srv.EnvironmentService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.Secrets)
+	case models.ServiceSecret:
+		secret, err = self.srv.ServiceService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, input.Body.Secrets)
 	}
 
 	if err != nil {
