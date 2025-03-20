@@ -15,8 +15,8 @@ type EnvironmentResponse struct {
 	Description      string           `json:"description"`
 	Active           bool             `json:"active"`
 	ServiceCount     int              `json:"service_count,omitempty"`
-	ProviderSummary  []enum.Provider  `json:"provider_summary,omitempty"`
-	FrameworkSummary []enum.Framework `json:"framework_summary,omitempty"`
+	ProviderSummary  []enum.Provider  `json:"provider_summary,omitempty" nullable:"false"`
+	FrameworkSummary []enum.Framework `json:"framework_summary,omitempty" nullable:"false"`
 	CreatedAt        time.Time        `json:"created_at"`
 }
 
@@ -25,12 +25,14 @@ func TransformEnvironmentEntity(entity *ent.Environment) *EnvironmentResponse {
 	response := &EnvironmentResponse{}
 	if entity != nil {
 		response = &EnvironmentResponse{
-			ID:          entity.ID,
-			Name:        entity.Name,
-			DisplayName: entity.DisplayName,
-			Description: entity.Description,
-			Active:      entity.Active,
-			CreatedAt:   entity.CreatedAt,
+			ID:               entity.ID,
+			Name:             entity.Name,
+			DisplayName:      entity.DisplayName,
+			Description:      entity.Description,
+			Active:           entity.Active,
+			CreatedAt:        entity.CreatedAt,
+			ProviderSummary:  []enum.Provider{},
+			FrameworkSummary: []enum.Framework{},
 		}
 	}
 	return response
