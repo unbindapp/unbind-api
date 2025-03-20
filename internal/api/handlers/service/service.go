@@ -23,6 +23,28 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "list-service",
+			Summary:     "List Services",
+			Description: "List all services in an environment",
+			Path:        "/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListServices,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-service",
+			Summary:     "Get Service",
+			Description: "Get a single service by ID",
+			Path:        "/get",
+			Method:      http.MethodGet,
+		},
+		handlers.GetService,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "create-service",
 			Summary:     "Create Service",
 			Description: "Create a service",

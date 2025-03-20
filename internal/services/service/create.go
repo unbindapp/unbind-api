@@ -108,29 +108,10 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
-	// Verify that the environment exists
-	environment, err := self.repo.Environment().GetByID(ctx, input.EnvironmentID)
+	// Verify inputs
+	environment, project, err := self.VerifyInputs(ctx, input.TeamID, input.ProjectID, input.EnvironmentID)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
-		}
 		return nil, err
-	}
-
-	if input.ProjectID != environment.Edges.Project.ID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment does not belong to the specified project")
-	}
-
-	// Verify that the team exists
-	project, err := self.repo.Project().GetByID(ctx, input.ProjectID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
-		}
-	}
-
-	if project.Edges.Team.ID != input.TeamID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to the specified team")
 	}
 
 	// If GitHub integration is provided, verify repository access

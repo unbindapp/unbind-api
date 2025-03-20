@@ -30,6 +30,13 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 		All(ctx)
 }
 
+func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error) {
+	return self.base.DB.Service.Query().
+		Where(service.EnvironmentIDEQ(environmentID)).
+		WithServiceConfig().
+		All(ctx)
+}
+
 func (self *ServiceRepository) GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error) {
 	svc, err := self.base.DB.Service.Query().
 		Where(service.IDEQ(serviceID)).

@@ -23,6 +23,7 @@ type ServiceRepositoryInterface interface {
 	UpdateConfig(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, gitBranch *string, port *int, host *string, replicas *int32, autoDeploy *bool, runCommand *string, public *bool, image *string) error
 	GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error)
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
+	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error)
 	GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error)
 	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error)
 	GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error)
