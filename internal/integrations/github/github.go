@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 type GithubClient struct {
@@ -46,10 +47,18 @@ func NewGithubClient(cfg *config.Config) *GithubClient {
 
 // Get the token we can use to authenticate with GitHub
 func (self *GithubClient) GetInstallationToken(ctx context.Context, appID int64, installationID int64, appPrivateKey string) (string, error) {
-	client, err := self.GetAuthenticatedClient(ctx, appID, installationID, appPrivateKey)
+	privateKey, err := utils.DecodePrivateKey(appPrivateKey)
 	if err != nil {
 		return "", err
 	}
+
+	bearerToken, err := utils.GenerateGithubJWT(appID, privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	// Add token to client
+	client := self.client.WithAuthToken(bearerToken)
 
 	token, _, err := client.Apps.CreateInstallationToken(ctx, installationID, nil)
 	if err != nil {
@@ -60,7 +69,6 @@ func (self *GithubClient) GetInstallationToken(ctx context.Context, appID int64,
 }
 
 func (self *GithubClient) GetAuthenticatedClient(ctx context.Context, appID int64, installationID int64, appPrivateKey string) (*github.Client, error) {
-	// Get the app's installation token
 	token, err := self.GetInstallationToken(ctx, appID, installationID, appPrivateKey)
 	if err != nil {
 		return nil, err
