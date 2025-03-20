@@ -26,6 +26,7 @@ import (
 )
 
 type cli struct {
+	cfg          *config.Config
 	repository   repositories.RepositoriesInterface
 	groupService *group_service.GroupService
 	rbacManager  *k8s.RBACManager
@@ -53,6 +54,7 @@ func NewCLI(cfg *config.Config) *cli {
 	rbacManager := k8s.NewRBACManager(repo, kubeClient)
 
 	return &cli{
+		cfg:        cfg,
 		repository: repo,
 		groupService: group_service.NewGroupService(
 			repo,
@@ -452,6 +454,19 @@ func (self *cli) syncSecrets() {
 	}
 
 	for _, t := range teams {
+		// First make sure registry credentials  exist
+		_, err := self.k8s.CreateMultiRegistryCredentials(context.Background(), "unbind-registry-credentials", t.Namespace, []k8s.RegistryCredential{
+			{
+				RegistryURL: self.cfg.ContainerRegistryHost,
+				Username:    self.cfg.ContainerRegistryUser,
+				Password:    self.cfg.ContainerRegistryPassword,
+			},
+		}, client)
+		if err != nil {
+			fmt.Printf("Error creating registry credentials: %v\n", err)
+			return
+		}
+
 		// Get projects, environments, services
 		projects, err := self.repository.Ent().Project.Query().
 			Where(project.TeamIDEQ(t.ID)).
