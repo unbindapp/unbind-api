@@ -38,10 +38,10 @@ func (u SecretType) Schema(r huma.Registry) *huma.Schema {
 
 type SecretResponse struct {
 	Type  SecretType `json:"type"`
-	Name  string     `json:"key"`
+	Name  string     `json:"name"`
 	Value string     `json:"value"`
 }
 
 type SecretDeleteInput struct {
-	Name string `json:"key" required:"true"`
+	Name string `json:"name" required:"true"`
 }
