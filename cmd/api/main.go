@@ -479,6 +479,17 @@ func startAPI(cfg *config.Config) {
 		},
 		serviceHandlers.CreateService,
 	)
+	huma.Register(
+		servicesGroup,
+		huma.Operation{
+			OperationID: "update-service",
+			Summary:     "Update Service",
+			Description: "Update a service",
+			Path:        "/update",
+			Method:      http.MethodPut,
+		},
+		serviceHandlers.UpdateService,
+	)
 
 	// /secrets group
 	secretsGroup := huma.NewGroup(api, "/secrets")

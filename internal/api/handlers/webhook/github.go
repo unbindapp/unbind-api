@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -282,7 +283,14 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 		servicesToBuild := make([]*ent.Service, 0)
 		for _, service := range services {
 			config := service.Edges.ServiceConfig
-			if config.GitBranch != nil && *config.GitBranch == ref {
+			var refToBuild *string
+			if config.GitBranch != nil {
+				if !strings.Contains(*config.GitBranch, "refs/heads/") {
+					refToBuild = utils.ToPtr("refs/heads/" + *config.GitBranch)
+				}
+			}
+
+			if refToBuild != nil && *refToBuild == ref {
 				servicesToBuild = append(servicesToBuild, service)
 			}
 		}
@@ -294,6 +302,11 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 
 		// Trigger builds for each service
 		for _, service := range servicesToBuild {
+			if !service.Edges.ServiceConfig.AutoDeploy {
+				// Skip services that don't have auto-deploy enabled
+				continue
+			}
+
 			// Get private key for the service's github app.
 			privKey, err := self.srv.Repository.Service().GetGithubPrivateKey(ctx, service.ID)
 			if err != nil {
