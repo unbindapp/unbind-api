@@ -9038,6 +9038,7 @@ type ServiceMutation struct {
 	framework                  *enum.Framework
 	git_repository             *string
 	kubernetes_secret          *string
+	kubernetes_build_secret    *string
 	clearedFields              map[string]struct{}
 	environment                *uuid.UUID
 	clearedenvironment         bool
@@ -9690,6 +9691,42 @@ func (m *ServiceMutation) ResetKubernetesSecret() {
 	m.kubernetes_secret = nil
 }
 
+// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
+func (m *ServiceMutation) SetKubernetesBuildSecret(s string) {
+	m.kubernetes_build_secret = &s
+}
+
+// KubernetesBuildSecret returns the value of the "kubernetes_build_secret" field in the mutation.
+func (m *ServiceMutation) KubernetesBuildSecret() (r string, exists bool) {
+	v := m.kubernetes_build_secret
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesBuildSecret returns the old "kubernetes_build_secret" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldKubernetesBuildSecret(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesBuildSecret is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesBuildSecret requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesBuildSecret: %w", err)
+	}
+	return oldValue.KubernetesBuildSecret, nil
+}
+
+// ResetKubernetesBuildSecret resets all changes to the "kubernetes_build_secret" field.
+func (m *ServiceMutation) ResetKubernetesBuildSecret() {
+	m.kubernetes_build_secret = nil
+}
+
 // ClearEnvironment clears the "environment" edge to the Environment entity.
 func (m *ServiceMutation) ClearEnvironment() {
 	m.clearedenvironment = true
@@ -9871,7 +9908,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -9911,6 +9948,9 @@ func (m *ServiceMutation) Fields() []string {
 	if m.kubernetes_secret != nil {
 		fields = append(fields, service.FieldKubernetesSecret)
 	}
+	if m.kubernetes_build_secret != nil {
+		fields = append(fields, service.FieldKubernetesBuildSecret)
+	}
 	return fields
 }
 
@@ -9945,6 +9985,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.GitRepository()
 	case service.FieldKubernetesSecret:
 		return m.KubernetesSecret()
+	case service.FieldKubernetesBuildSecret:
+		return m.KubernetesBuildSecret()
 	}
 	return nil, false
 }
@@ -9980,6 +10022,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldGitRepository(ctx)
 	case service.FieldKubernetesSecret:
 		return m.OldKubernetesSecret(ctx)
+	case service.FieldKubernetesBuildSecret:
+		return m.OldKubernetesBuildSecret(ctx)
 	}
 	return nil, fmt.Errorf("unknown Service field %s", name)
 }
@@ -10079,6 +10123,13 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetKubernetesSecret(v)
+		return nil
+	case service.FieldKubernetesBuildSecret:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesBuildSecret(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
@@ -10203,6 +10254,9 @@ func (m *ServiceMutation) ResetField(name string) error {
 		return nil
 	case service.FieldKubernetesSecret:
 		m.ResetKubernetesSecret()
+		return nil
+	case service.FieldKubernetesBuildSecret:
+		m.ResetKubernetesBuildSecret()
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)

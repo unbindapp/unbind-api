@@ -225,6 +225,20 @@ func (su *ServiceUpdate) SetNillableKubernetesSecret(s *string) *ServiceUpdate {
 	return su
 }
 
+// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
+func (su *ServiceUpdate) SetKubernetesBuildSecret(s string) *ServiceUpdate {
+	su.mutation.SetKubernetesBuildSecret(s)
+	return su
+}
+
+// SetNillableKubernetesBuildSecret sets the "kubernetes_build_secret" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableKubernetesBuildSecret(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetKubernetesBuildSecret(*s)
+	}
+	return su
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
 	return su.SetEnvironmentID(e.ID)
@@ -441,6 +455,9 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
+	}
+	if value, ok := su.mutation.KubernetesBuildSecret(); ok {
+		_spec.SetField(service.FieldKubernetesBuildSecret, field.TypeString, value)
 	}
 	if su.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -786,6 +803,20 @@ func (suo *ServiceUpdateOne) SetNillableKubernetesSecret(s *string) *ServiceUpda
 	return suo
 }
 
+// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
+func (suo *ServiceUpdateOne) SetKubernetesBuildSecret(s string) *ServiceUpdateOne {
+	suo.mutation.SetKubernetesBuildSecret(s)
+	return suo
+}
+
+// SetNillableKubernetesBuildSecret sets the "kubernetes_build_secret" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableKubernetesBuildSecret(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetKubernetesBuildSecret(*s)
+	}
+	return suo
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
 	return suo.SetEnvironmentID(e.ID)
@@ -1032,6 +1063,9 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	}
 	if value, ok := suo.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
+	}
+	if value, ok := suo.mutation.KubernetesBuildSecret(); ok {
+		_spec.SetField(service.FieldKubernetesBuildSecret, field.TypeString, value)
 	}
 	if suo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -26,6 +26,7 @@ func (self *ServiceRepository) Create(
 	gitHubInstallationID *int64,
 	gitRepository *string,
 	kubernetesSecret string,
+	kubernetesBuildSecret string,
 ) (*ent.Service, error) {
 	db := self.base.DB
 	if tx != nil {
@@ -44,6 +45,7 @@ func (self *ServiceRepository) Create(
 		SetNillableGithubInstallationID(gitHubInstallationID).
 		SetNillableGitRepository(gitRepository).
 		SetKubernetesSecret(kubernetesSecret).
+		SetKubernetesBuildSecret(kubernetesBuildSecret).
 		Save(ctx)
 }
 

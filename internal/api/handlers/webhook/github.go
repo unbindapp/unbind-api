@@ -2,6 +2,8 @@ package webhook_handler
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,6 +22,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/valkey-io/valkey-go"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // Connect the new github app to our instance, via manifest code exchange
@@ -317,6 +321,36 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			// Get deployment namespace
 			namespace, err := self.srv.Repository.Service().GetDeploymentNamespace(ctx, service.ID)
 
+			// Get build secrets
+			// ! Use our cluster config for this
+			kubeConfig, err := rest.InClusterConfig()
+			if err != nil {
+				log.Fatalf("Error getting in-cluster config: %v", err)
+			}
+			client, err := kubernetes.NewForConfig(kubeConfig)
+			if err != nil {
+				log.Fatalf("Error creating clientset: %v", err)
+			}
+
+			buildSecrets, err := self.srv.KubeClient.GetSecretMap(ctx, service.KubernetesBuildSecret, namespace, client)
+			if err != nil {
+				log.Error("Error getting build secrets", "err", err)
+				return nil, huma.Error500InternalServerError("Failed to get build secrets")
+			}
+
+			// Convert the byte arrays to base64 strings first
+			serializableSecrets := make(map[string]string)
+			for k, v := range buildSecrets {
+				serializableSecrets[k] = base64.StdEncoding.EncodeToString(v)
+			}
+
+			// Serialize the map to JSON
+			secretsJSON, err := json.Marshal(serializableSecrets)
+			if err != nil {
+				log.Error("Error marshalling secrets", "err", err)
+				return nil, huma.Error500InternalServerError("Failed to marshal secrets")
+			}
+
 			// Create environment for build image
 			env := map[string]string{
 				"GITHUB_INSTALLATION_ID":      strconv.Itoa(int(installationID)),
@@ -331,6 +365,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				"SERVICE_PUBLIC":              strconv.FormatBool(service.Edges.ServiceConfig.Public),
 				"SERVICE_REPLICAS":            strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
 				"SERVICE_SECRET_NAME":         service.KubernetesSecret,
+				"SERVICE_BUILD_SECRETS":       string(secretsJSON),
 			}
 
 			if service.Provider != nil {

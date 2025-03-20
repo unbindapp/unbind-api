@@ -43,6 +43,8 @@ const (
 	FieldGitRepository = "git_repository"
 	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
 	FieldKubernetesSecret = "kubernetes_secret"
+	// FieldKubernetesBuildSecret holds the string denoting the kubernetes_build_secret field in the database.
+	FieldKubernetesBuildSecret = "kubernetes_build_secret"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
 	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
@@ -99,6 +101,7 @@ var Columns = []string{
 	FieldGithubInstallationID,
 	FieldGitRepository,
 	FieldKubernetesSecret,
+	FieldKubernetesBuildSecret,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -120,6 +123,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultKubernetesBuildSecret holds the default value on creation for the "kubernetes_build_secret" field.
+	DefaultKubernetesBuildSecret string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -261,6 +266,11 @@ func ByGitRepository(opts ...sql.OrderTermOption) OrderOption {
 // ByKubernetesSecret orders the results by the kubernetes_secret field.
 func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
+}
+
+// ByKubernetesBuildSecret orders the results by the kubernetes_build_secret field.
+func ByKubernetesBuildSecret(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldKubernetesBuildSecret, opts...).ToFunc()
 }
 
 // ByEnvironmentField orders the results by environment field.

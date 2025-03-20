@@ -15,10 +15,11 @@ type CreateSecretsInput struct {
 	server.BaseAuthInput
 	Body struct {
 		BaseSecretsJSONInput
-		Secrets []*struct {
-			Name  string `json:"name" validate:"required"`
-			Value string `json:"value" validate:"required"`
-		} `json:"secrets" validate:"required"`
+		BuildSecret bool `json:"build_secret" required:"false"`
+		Secrets     []*struct {
+			Name  string `json:"name" required:"true"`
+			Value string `json:"value" required:"true"`
+		} `json:"secrets" required:"true"`
 	}
 }
 
@@ -52,7 +53,7 @@ func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateSecret
 	case models.EnvironmentSecret:
 		secret, err = self.srv.EnvironmentService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, newSecretMap)
 	case models.ServiceSecret:
-		secret, err = self.srv.ServiceService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, newSecretMap)
+		secret, err = self.srv.ServiceService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, newSecretMap, input.Body.BuildSecret)
 	}
 
 	if err != nil {

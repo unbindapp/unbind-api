@@ -295,6 +295,7 @@ var (
 		{Name: "framework", Type: field.TypeEnum, Nullable: true, Enums: []string{"next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown"}},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
 		{Name: "kubernetes_secret", Type: field.TypeString},
+		{Name: "kubernetes_build_secret", Type: field.TypeString, Default: ""},
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
 	}
@@ -306,13 +307,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[12]},
+				Columns:    []*schema.Column{ServicesColumns[13]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[13]},
+				Columns:    []*schema.Column{ServicesColumns[14]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

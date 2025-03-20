@@ -314,6 +314,10 @@ func init() {
 	serviceDescName := serviceFields[0].Descriptor()
 	// service.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	service.NameValidator = serviceDescName.Validators[0].(func(string) error)
+	// serviceDescKubernetesBuildSecret is the schema descriptor for kubernetes_build_secret field.
+	serviceDescKubernetesBuildSecret := serviceFields[11].Descriptor()
+	// service.DefaultKubernetesBuildSecret holds the default value on creation for the kubernetes_build_secret field.
+	service.DefaultKubernetesBuildSecret = serviceDescKubernetesBuildSecret.Default.(string)
 	// serviceDescID is the schema descriptor for id field.
 	serviceDescID := serviceMixinFields0[0].Descriptor()
 	// service.DefaultID holds the default value on creation for the id field.

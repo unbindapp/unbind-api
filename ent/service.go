@@ -49,6 +49,8 @@ type Service struct {
 	GitRepository *string `json:"git_repository,omitempty"`
 	// Kubernetes secret for this service
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
+	// Kubernetes secret reference, used for builds.
+	KubernetesBuildSecret string `json:"kubernetes_build_secret,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -119,7 +121,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldProvider, service.FieldFramework, service.FieldGitRepository, service.FieldKubernetesSecret:
+		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldProvider, service.FieldFramework, service.FieldGitRepository, service.FieldKubernetesSecret, service.FieldKubernetesBuildSecret:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -228,6 +230,12 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.KubernetesSecret = value.String
 			}
+		case service.FieldKubernetesBuildSecret:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_build_secret", values[i])
+			} else if value.Valid {
+				s.KubernetesBuildSecret = value.String
+			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -330,6 +338,9 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("kubernetes_secret=")
 	builder.WriteString(s.KubernetesSecret)
+	builder.WriteString(", ")
+	builder.WriteString("kubernetes_build_secret=")
+	builder.WriteString(s.KubernetesBuildSecret)
 	builder.WriteByte(')')
 	return builder.String()
 }

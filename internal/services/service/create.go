@@ -223,10 +223,16 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return err
 		}
 
-		// Create kubernetes secret
+		// Create kubernetes secrets
 		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace, client)
 		if err != nil {
 			return fmt.Errorf("failed to create secret: %v", err)
+		}
+
+		// For builder
+		buildSecret, _, err := self.k8s.GetOrCreateSecret(ctx, fmt.Sprintf("%s-build", name), project.Edges.Team.Namespace, client)
+		if err != nil {
+			return fmt.Errorf("failed to create build secret: %v", err)
 		}
 
 		// Create the service
@@ -241,7 +247,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			input.EnvironmentID,
 			input.GitHubInstallationID,
 			input.RepositoryName,
-			secret.Name)
+			secret.Name,
+			buildSecret.Name)
 		if err != nil {
 			return fmt.Errorf("failed to create service: %w", err)
 		}

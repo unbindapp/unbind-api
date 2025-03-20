@@ -102,6 +102,11 @@ func KubernetesSecret(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldKubernetesSecret, v))
 }
 
+// KubernetesBuildSecret applies equality check predicate on the "kubernetes_build_secret" field. It's identical to KubernetesBuildSecretEQ.
+func KubernetesBuildSecret(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldKubernetesBuildSecret, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldCreatedAt, v))
@@ -695,6 +700,71 @@ func KubernetesSecretEqualFold(v string) predicate.Service {
 // KubernetesSecretContainsFold applies the ContainsFold predicate on the "kubernetes_secret" field.
 func KubernetesSecretContainsFold(v string) predicate.Service {
 	return predicate.Service(sql.FieldContainsFold(FieldKubernetesSecret, v))
+}
+
+// KubernetesBuildSecretEQ applies the EQ predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretNEQ applies the NEQ predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretIn applies the In predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldKubernetesBuildSecret, vs...))
+}
+
+// KubernetesBuildSecretNotIn applies the NotIn predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldKubernetesBuildSecret, vs...))
+}
+
+// KubernetesBuildSecretGT applies the GT predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretGTE applies the GTE predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretLT applies the LT predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretLTE applies the LTE predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretContains applies the Contains predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretHasPrefix applies the HasPrefix predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretHasSuffix applies the HasSuffix predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretEqualFold applies the EqualFold predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldKubernetesBuildSecret, v))
+}
+
+// KubernetesBuildSecretContainsFold applies the ContainsFold predicate on the "kubernetes_build_secret" field.
+func KubernetesBuildSecretContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldKubernetesBuildSecret, v))
 }
 
 // HasEnvironment applies the HasEdge predicate on the "environment" edge.
