@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -128,6 +129,13 @@ func (self *GithubClient) fetchUserAdminRepos(ctx context.Context, client *githu
 	return adminRepos, nil
 }
 
+// Sort repositories sorts by updated field
+func sortRepositories(repos []*GithubRepository) {
+	sort.Slice(repos, func(i, j int) bool {
+		return repos[i].UpdatedAt.After(repos[j].UpdatedAt)
+	})
+}
+
 // removeDuplicateRepositories removes duplicate repositories from the slice
 func removeDuplicateRepositories(repos []*GithubRepository) []*GithubRepository {
 	seen := make(map[int64]bool)
@@ -152,13 +160,14 @@ type GithubRepositoryOwner struct {
 }
 
 type GithubRepository struct {
-	ID       int64                 `json:"id"`
-	Name     string                `json:"name"`
-	FullName string                `json:"full_name"`
-	HTMLURL  string                `json:"html_url"`
-	CloneURL string                `json:"clone_url"`
-	HomePage string                `json:"homepage"`
-	Owner    GithubRepositoryOwner `json:"owner"`
+	ID        int64                 `json:"id"`
+	Name      string                `json:"name"`
+	FullName  string                `json:"full_name"`
+	HTMLURL   string                `json:"html_url"`
+	CloneURL  string                `json:"clone_url"`
+	HomePage  string                `json:"homepage"`
+	Owner     GithubRepositoryOwner `json:"owner"`
+	UpdatedAt time.Time             `json:"updated_at"`
 }
 
 func formatRepositoryResponse(repositories []*github.Repository) []*GithubRepository {
@@ -185,6 +194,7 @@ func formatRepositoryResponse(repositories []*github.Repository) []*GithubReposi
 				Login:     repository.Owner.GetLogin(),
 				AvatarURL: repository.Owner.GetAvatarURL(),
 			},
+			UpdatedAt: repository.GetUpdatedAt().Time,
 		})
 	}
 	return response
