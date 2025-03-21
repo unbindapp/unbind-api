@@ -51,7 +51,7 @@ func (self *HandlerGroup) ListServices(ctx context.Context, input *ListServiceIn
 // Get a single service by ID
 type GetServiceInput struct {
 	server.BaseAuthInput
-	ID            uuid.UUID `query:"id" required:"true"`
+	ServiceID     uuid.UUID `query:"service_id" required:"true"`
 	TeamID        uuid.UUID `query:"team_id" required:"true"`
 	ProjectID     uuid.UUID `query:"project_id" required:"true"`
 	EnvironmentID uuid.UUID `query:"environment_id" required:"true"`
@@ -78,7 +78,7 @@ func (self *HandlerGroup) GetService(ctx context.Context, input *GetServiceInput
 		input.TeamID,
 		input.ProjectID,
 		input.EnvironmentID,
-		input.ID,
+		input.ServiceID,
 	)
 	if err != nil {
 		return nil, self.handleErr(err)
