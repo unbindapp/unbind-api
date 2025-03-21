@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/buildjob"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 )
 
@@ -52,15 +53,15 @@ func (bju *BuildJobUpdate) SetNillableServiceID(u *uuid.UUID) *BuildJobUpdate {
 }
 
 // SetStatus sets the "status" field.
-func (bju *BuildJobUpdate) SetStatus(b buildjob.Status) *BuildJobUpdate {
-	bju.mutation.SetStatus(b)
+func (bju *BuildJobUpdate) SetStatus(sjs schema.BuildJobStatus) *BuildJobUpdate {
+	bju.mutation.SetStatus(sjs)
 	return bju
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (bju *BuildJobUpdate) SetNillableStatus(b *buildjob.Status) *BuildJobUpdate {
-	if b != nil {
-		bju.SetStatus(*b)
+func (bju *BuildJobUpdate) SetNillableStatus(sjs *schema.BuildJobStatus) *BuildJobUpdate {
+	if sjs != nil {
+		bju.SetStatus(*sjs)
 	}
 	return bju
 }
@@ -383,15 +384,15 @@ func (bjuo *BuildJobUpdateOne) SetNillableServiceID(u *uuid.UUID) *BuildJobUpdat
 }
 
 // SetStatus sets the "status" field.
-func (bjuo *BuildJobUpdateOne) SetStatus(b buildjob.Status) *BuildJobUpdateOne {
-	bjuo.mutation.SetStatus(b)
+func (bjuo *BuildJobUpdateOne) SetStatus(sjs schema.BuildJobStatus) *BuildJobUpdateOne {
+	bjuo.mutation.SetStatus(sjs)
 	return bjuo
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (bjuo *BuildJobUpdateOne) SetNillableStatus(b *buildjob.Status) *BuildJobUpdateOne {
-	if b != nil {
-		bjuo.SetStatus(*b)
+func (bjuo *BuildJobUpdateOne) SetNillableStatus(sjs *schema.BuildJobStatus) *BuildJobUpdateOne {
+	if sjs != nil {
+		bjuo.SetStatus(*sjs)
 	}
 	return bjuo
 }

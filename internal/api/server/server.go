@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	builds_service "github.com/unbindapp/unbind-api/internal/services/builds"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
 	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
@@ -43,6 +44,7 @@ type Server struct {
 	ServiceService     *service_service.ServiceService
 	EnvironmentService *environment_service.EnvironmentService
 	LogService         *logs_service.LogsService
+	BuildJobService    *builds_service.BuildsService
 }
 
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {

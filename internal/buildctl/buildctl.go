@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/buildjob"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/queue"
@@ -143,7 +143,7 @@ func (self *BuildController) processJob(ctx context.Context, item *queue.QueueIt
 // SyncJobStatuses synchronizes the status of all processing jobs with Kubernetes
 func (self *BuildController) SyncJobStatuses(ctx context.Context) error {
 	// Get all job marked running status
-	jobs, err := self.repo.BuildJob().GetJobsByStatus(ctx, buildjob.StatusRunning)
+	jobs, err := self.repo.BuildJob().GetJobsByStatus(ctx, schema.BuildJobStatusRunning)
 	if err != nil {
 		return fmt.Errorf("failed to query processing jobs: %w", err)
 	}

@@ -4,10 +4,11 @@ package buildjob_repo
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/buildjob"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // BuildJobRepositoryInterface ...
@@ -21,5 +22,6 @@ type BuildJobRepositoryInterface interface {
 	// Assigns the kubernetes "Job" name to the build job
 	AssignKubernetesJobName(ctx context.Context, buildJobID uuid.UUID, jobName string) (*ent.BuildJob, error)
 	SetKubernetesJobStatus(ctx context.Context, buildJobID uuid.UUID, status string) (*ent.BuildJob, error)
-	GetJobsByStatus(ctx context.Context, status buildjob.Status) ([]*ent.BuildJob, error)
+	GetJobsByStatus(ctx context.Context, status schema.BuildJobStatus) ([]*ent.BuildJob, error)
+	GetByServiceIDPaginated(ctx context.Context, serviceID uuid.UUID, cursor *time.Time, statusFilter *schema.BuildJobStatus) (jobs []*ent.BuildJob, nextCursor *time.Time, err error)
 }

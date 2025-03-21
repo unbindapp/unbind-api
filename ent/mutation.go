@@ -66,7 +66,7 @@ type BuildJobMutation struct {
 	id                    *uuid.UUID
 	created_at            *time.Time
 	updated_at            *time.Time
-	status                *buildjob.Status
+	status                *schema.BuildJobStatus
 	error                 *string
 	started_at            *time.Time
 	completed_at          *time.Time
@@ -295,12 +295,12 @@ func (m *BuildJobMutation) ResetServiceID() {
 }
 
 // SetStatus sets the "status" field.
-func (m *BuildJobMutation) SetStatus(b buildjob.Status) {
-	m.status = &b
+func (m *BuildJobMutation) SetStatus(sjs schema.BuildJobStatus) {
+	m.status = &sjs
 }
 
 // Status returns the value of the "status" field in the mutation.
-func (m *BuildJobMutation) Status() (r buildjob.Status, exists bool) {
+func (m *BuildJobMutation) Status() (r schema.BuildJobStatus, exists bool) {
 	v := m.status
 	if v == nil {
 		return
@@ -311,7 +311,7 @@ func (m *BuildJobMutation) Status() (r buildjob.Status, exists bool) {
 // OldStatus returns the old "status" field's value of the BuildJob entity.
 // If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldStatus(ctx context.Context) (v buildjob.Status, err error) {
+func (m *BuildJobMutation) OldStatus(ctx context.Context) (v schema.BuildJobStatus, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
 	}
@@ -811,7 +811,7 @@ func (m *BuildJobMutation) SetField(name string, value ent.Value) error {
 		m.SetServiceID(v)
 		return nil
 	case buildjob.FieldStatus:
-		v, ok := value.(buildjob.Status)
+		v, ok := value.(schema.BuildJobStatus)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

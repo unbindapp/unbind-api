@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/buildjob"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 )
 
@@ -27,7 +28,7 @@ type BuildJob struct {
 	// ServiceID holds the value of the "service_id" field.
 	ServiceID uuid.UUID `json:"service_id,omitempty"`
 	// Status holds the value of the "status" field.
-	Status buildjob.Status `json:"status,omitempty"`
+	Status schema.BuildJobStatus `json:"status,omitempty"`
 	// Error holds the value of the "error" field.
 	Error string `json:"error,omitempty"`
 	// StartedAt holds the value of the "started_at" field.
@@ -122,7 +123,7 @@ func (bj *BuildJob) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				bj.Status = buildjob.Status(value.String)
+				bj.Status = schema.BuildJobStatus(value.String)
 			}
 		case buildjob.FieldError:
 			if value, ok := values[i].(*sql.NullString); !ok {

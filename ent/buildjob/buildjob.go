@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 const (
@@ -87,26 +88,10 @@ var (
 	DefaultID func() uuid.UUID
 )
 
-// Status defines the type for the "status" enum field.
-type Status string
-
-// Status values.
-const (
-	StatusQueued    Status = "queued"
-	StatusRunning   Status = "running"
-	StatusCompleted Status = "completed"
-	StatusCancelled Status = "cancelled"
-	StatusFailed    Status = "failed"
-)
-
-func (s Status) String() string {
-	return string(s)
-}
-
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
-func StatusValidator(s Status) error {
+func StatusValidator(s schema.BuildJobStatus) error {
 	switch s {
-	case StatusQueued, StatusRunning, StatusCompleted, StatusCancelled, StatusFailed:
+	case "queued", "running", "completed", "cancelled", "failed":
 		return nil
 	default:
 		return fmt.Errorf("buildjob: invalid enum value for status field: %q", s)

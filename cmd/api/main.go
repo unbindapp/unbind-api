@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
+	builds_handler "github.com/unbindapp/unbind-api/internal/api/handlers/builds"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
@@ -30,6 +31,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	builds_service "github.com/unbindapp/unbind-api/internal/services/builds"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
 	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
@@ -137,6 +139,7 @@ func startAPI(cfg *config.Config) {
 		ServiceService:     service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
 		EnvironmentService: environment_service.NewEnvironmentService(repo, kubeClient),
 		LogService:         logs_service.NewLogsService(repo, kubeClient),
+		BuildJobService:    builds_service.NewBuildsService(repo),
 	}
 
 	// New chi router
@@ -292,6 +295,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	logs_handler.RegisterHandlers(srvImpl, logsGroup)
+
+	// /builds group
+	buildsGroup := huma.NewGroup(api, "/builds")
+	buildsGroup.UseMiddleware(mw.Authenticate)
+	buildsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Builds"}
+		next(op)
+	})
+	builds_handler.RegisterHandlers(srvImpl, buildsGroup)
 
 	// Start the server
 	addr := ":8089"

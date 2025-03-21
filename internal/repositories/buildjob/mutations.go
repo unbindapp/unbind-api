@@ -7,25 +7,26 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/buildjob"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 func (self *BuildJobRepository) Create(ctx context.Context, serviceID uuid.UUID) (*ent.BuildJob, error) {
 	return self.base.DB.BuildJob.Create().
 		SetServiceID(serviceID).
-		SetStatus(buildjob.StatusQueued).
+		SetStatus(schema.BuildJobStatusQueued).
 		Save(ctx)
 }
 
 func (self *BuildJobRepository) MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.BuildJob, error) {
 	return self.base.DB.BuildJob.UpdateOneID(buildJobID).
-		SetStatus(buildjob.StatusRunning).
+		SetStatus(schema.BuildJobStatusRunning).
 		SetStartedAt(time.Now()).
 		Save(ctx)
 }
 
 func (self *BuildJobRepository) MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string) (*ent.BuildJob, error) {
 	return self.base.DB.BuildJob.UpdateOneID(buildJobID).
-		SetStatus(buildjob.StatusFailed).
+		SetStatus(schema.BuildJobStatusFailed).
 		SetCompletedAt(time.Now()).
 		SetError(message).
 		Save(ctx)
@@ -33,7 +34,7 @@ func (self *BuildJobRepository) MarkFailed(ctx context.Context, buildJobID uuid.
 
 func (self *BuildJobRepository) MarkCompleted(ctx context.Context, buildJobID uuid.UUID) (*ent.BuildJob, error) {
 	return self.base.DB.BuildJob.UpdateOneID(buildJobID).
-		SetStatus(buildjob.StatusCompleted).
+		SetStatus(schema.BuildJobStatusCompleted).
 		SetCompletedAt(time.Now()).
 		Save(ctx)
 }
@@ -41,11 +42,11 @@ func (self *BuildJobRepository) MarkCompleted(ctx context.Context, buildJobID uu
 // Cancels all jobs that are not in a finished state
 func (self *BuildJobRepository) MarkCancelled(ctx context.Context, serviceID uuid.UUID) error {
 	return self.base.DB.BuildJob.Update().
-		SetStatus(buildjob.StatusCancelled).
+		SetStatus(schema.BuildJobStatusCancelled).
 		SetCompletedAt(time.Now()).
 		Where(
 			buildjob.ServiceIDEQ(serviceID),
-			buildjob.StatusNotIn(buildjob.StatusFailed, buildjob.StatusCancelled, buildjob.StatusCompleted),
+			buildjob.StatusNotIn(schema.BuildJobStatusFailed, schema.BuildJobStatusCancelled, schema.BuildJobStatusCompleted),
 		).
 		Exec(ctx)
 }

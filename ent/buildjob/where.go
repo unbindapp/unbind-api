@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // ID filters vertices based on their ID field.
@@ -202,23 +203,33 @@ func ServiceIDNotIn(vs ...uuid.UUID) predicate.BuildJob {
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v Status) predicate.BuildJob {
-	return predicate.BuildJob(sql.FieldEQ(FieldStatus, v))
+func StatusEQ(v schema.BuildJobStatus) predicate.BuildJob {
+	vc := v
+	return predicate.BuildJob(sql.FieldEQ(FieldStatus, vc))
 }
 
 // StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v Status) predicate.BuildJob {
-	return predicate.BuildJob(sql.FieldNEQ(FieldStatus, v))
+func StatusNEQ(v schema.BuildJobStatus) predicate.BuildJob {
+	vc := v
+	return predicate.BuildJob(sql.FieldNEQ(FieldStatus, vc))
 }
 
 // StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...Status) predicate.BuildJob {
-	return predicate.BuildJob(sql.FieldIn(FieldStatus, vs...))
+func StatusIn(vs ...schema.BuildJobStatus) predicate.BuildJob {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.BuildJob(sql.FieldIn(FieldStatus, v...))
 }
 
 // StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...Status) predicate.BuildJob {
-	return predicate.BuildJob(sql.FieldNotIn(FieldStatus, vs...))
+func StatusNotIn(vs ...schema.BuildJobStatus) predicate.BuildJob {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.BuildJob(sql.FieldNotIn(FieldStatus, v...))
 }
 
 // ErrorEQ applies the EQ predicate on the "error" field.

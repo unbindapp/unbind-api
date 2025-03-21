@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/buildjob"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 )
 
@@ -60,8 +61,8 @@ func (bjc *BuildJobCreate) SetServiceID(u uuid.UUID) *BuildJobCreate {
 }
 
 // SetStatus sets the "status" field.
-func (bjc *BuildJobCreate) SetStatus(b buildjob.Status) *BuildJobCreate {
-	bjc.mutation.SetStatus(b)
+func (bjc *BuildJobCreate) SetStatus(sjs schema.BuildJobStatus) *BuildJobCreate {
+	bjc.mutation.SetStatus(sjs)
 	return bjc
 }
 
@@ -412,7 +413,7 @@ func (u *BuildJobUpsert) UpdateServiceID() *BuildJobUpsert {
 }
 
 // SetStatus sets the "status" field.
-func (u *BuildJobUpsert) SetStatus(v buildjob.Status) *BuildJobUpsert {
+func (u *BuildJobUpsert) SetStatus(v schema.BuildJobStatus) *BuildJobUpsert {
 	u.Set(buildjob.FieldStatus, v)
 	return u
 }
@@ -611,7 +612,7 @@ func (u *BuildJobUpsertOne) UpdateServiceID() *BuildJobUpsertOne {
 }
 
 // SetStatus sets the "status" field.
-func (u *BuildJobUpsertOne) SetStatus(v buildjob.Status) *BuildJobUpsertOne {
+func (u *BuildJobUpsertOne) SetStatus(v schema.BuildJobStatus) *BuildJobUpsertOne {
 	return u.Update(func(s *BuildJobUpsert) {
 		s.SetStatus(v)
 	})
@@ -997,7 +998,7 @@ func (u *BuildJobUpsertBulk) UpdateServiceID() *BuildJobUpsertBulk {
 }
 
 // SetStatus sets the "status" field.
-func (u *BuildJobUpsertBulk) SetStatus(v buildjob.Status) *BuildJobUpsertBulk {
+func (u *BuildJobUpsertBulk) SetStatus(v schema.BuildJobStatus) *BuildJobUpsertBulk {
 	return u.Update(func(s *BuildJobUpsert) {
 		s.SetStatus(v)
 	})
