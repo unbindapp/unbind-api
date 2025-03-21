@@ -18,7 +18,7 @@ type CreateProjectInput struct {
 	TeamID      uuid.UUID `validate:"required,uuid4"`
 	Name        string    `validate:"required"`
 	DisplayName string    `validate:"required"`
-	Description *string
+	Description string
 }
 
 func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID uuid.UUID, input *CreateProjectInput, bearerToken string) (*models.ProjectResponse, error) {
@@ -78,7 +78,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 			return err
 		}
 
-		project, err = self.repo.Project().Create(ctx, tx, input.TeamID, input.Name, input.DisplayName, input.Description, secret.Name)
+		project, err = self.repo.Project().Create(ctx, tx, input.TeamID, input.Name, input.DisplayName, &input.Description, secret.Name)
 		if err != nil {
 			return err
 		}
