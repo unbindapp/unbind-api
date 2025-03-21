@@ -18,7 +18,7 @@ type ListSecretsInput struct {
 
 type SecretsResponse struct {
 	Body struct {
-		Data []*models.SecretResponse `json:"data"`
+		Data []*models.SecretResponse `json:"data" nullable:"false"`
 	}
 }
 
