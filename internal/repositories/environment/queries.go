@@ -9,5 +9,7 @@ import (
 )
 
 func (self *EnvironmentRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Environment, error) {
-	return self.base.DB.Environment.Query().Where(environment.ID(id)).WithProject().Only(ctx)
+	return self.base.DB.Environment.Query().Where(environment.ID(id)).WithProject(func(q *ent.ProjectQuery) {
+		q.WithTeam()
+	}).Only(ctx)
 }
