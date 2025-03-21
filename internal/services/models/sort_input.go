@@ -71,6 +71,6 @@ func (u SortByField) Schema(r huma.Registry) *huma.Schema {
 }
 
 type SortInput struct {
-	SortByField SortByField `query:"sory_by" default:"created_at" required:"false"`
+	SortByField SortByField `query:"sort_by" default:"created_at" required:"false"`
 	SortOrder   SortOrder   `query:"sort_order" default:"desc" required:"false"`
 }
