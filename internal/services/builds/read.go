@@ -5,11 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -82,54 +79,4 @@ func (self *BuildsService) GetBuildJobsForService(ctx context.Context, requester
 
 	return resp, metadata, nil
 
-}
-
-func (self *BuildsService) validateInputs(ctx context.Context, input *models.GetBuildJobsInput) error {
-	// Get team
-	team, err := self.repo.Team().GetByID(ctx, input.TeamID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, input.TeamID.String())
-		}
-		return err
-	}
-
-	// Get project
-	project, err := self.repo.Project().GetByID(ctx, input.ProjectID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, input.ProjectID.String())
-		}
-		return err
-	}
-
-	if project.TeamID != team.ID {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "project does not belong to team")
-	}
-
-	var environmentID *uuid.UUID
-	for _, env := range project.Edges.Environments {
-		if env.ID == input.EnvironmentID {
-			environmentID = utils.ToPtr(env.ID)
-			break
-		}
-	}
-
-	if environmentID == nil {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "environment does not belong to project")
-	}
-
-	// Get service
-	service, err := self.repo.Service().GetByID(ctx, input.ServiceID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "service not found")
-		}
-		return err
-	}
-
-	if service.EnvironmentID != *environmentID {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "service does not belong to environment")
-	}
-	return nil
 }
