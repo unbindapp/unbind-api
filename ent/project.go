@@ -29,7 +29,7 @@ type Project struct {
 	// DisplayName holds the value of the "display_name" field.
 	DisplayName string `json:"display_name,omitempty"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
 	// TeamID holds the value of the "team_id" field.
@@ -133,7 +133,8 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				pr.Description = value.String
+				pr.Description = new(string)
+				*pr.Description = value.String
 			}
 		case project.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -211,8 +212,10 @@ func (pr *Project) String() string {
 	builder.WriteString("display_name=")
 	builder.WriteString(pr.DisplayName)
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(pr.Description)
+	if v := pr.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(pr.Status)

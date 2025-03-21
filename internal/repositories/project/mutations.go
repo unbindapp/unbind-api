@@ -23,13 +23,18 @@ func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInter
 		Save(ctx)
 }
 
-func (self *ProjectRepository) Update(ctx context.Context, projectID uuid.UUID, displayName, description string) (*ent.Project, error) {
+func (self *ProjectRepository) Update(ctx context.Context, projectID uuid.UUID, displayName string, description *string) (*ent.Project, error) {
 	m := self.base.DB.Project.UpdateOneID(projectID)
 	if displayName != "" {
 		m.SetDisplayName(displayName)
 	}
-	if description != "" {
-		m.SetDescription(description)
+	if description != nil {
+		// Reset on empty string
+		if *description == "" {
+			m.ClearDescription()
+		} else {
+			m.SetDescription(*description)
+		}
 	}
 	return m.Save(ctx)
 }

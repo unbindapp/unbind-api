@@ -16,7 +16,7 @@ type UpdateProjectInput struct {
 	TeamID      uuid.UUID `validate:"required,uuid4"`
 	ProjectID   uuid.UUID `validate:"required,uuid4"`
 	DisplayName string
-	Description string
+	Description *string
 }
 
 func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID uuid.UUID, input *UpdateProjectInput) (*models.ProjectResponse, error) {
@@ -24,7 +24,7 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 	if err := validate.Validator().Struct(input); err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
-	if input.DisplayName == "" && input.Description == "" {
+	if input.DisplayName == "" && input.Description == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "No fields to update")
 	}
 

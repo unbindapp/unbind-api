@@ -28,7 +28,7 @@ func (Project) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").NotEmpty(),
 		field.String("display_name"),
-		field.String("description").Optional(),
+		field.String("description").Optional().Nillable(),
 		field.String("status").Default("active"),
 		field.UUID("team_id", uuid.UUID{}),
 		field.String("kubernetes_secret").Comment("Kubernetes secret for this project"),
