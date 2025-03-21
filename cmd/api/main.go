@@ -14,6 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/config"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
+	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
 	secrets_handler "github.com/unbindapp/unbind-api/internal/api/handlers/secrets"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
@@ -30,6 +31,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
+	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
@@ -134,6 +136,7 @@ func startAPI(cfg *config.Config) {
 		ProjectService:     project_service.NewProjectService(repo, kubeClient),
 		ServiceService:     service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
 		EnvironmentService: environment_service.NewEnvironmentService(repo, kubeClient),
+		LogService:         logs_service.NewLogsService(repo, kubeClient),
 	}
 
 	// New chi router
@@ -280,6 +283,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	secrets_handler.RegisterHandlers(srvImpl, secretsGroup)
+
+	// /logs group
+	logsGroup := huma.NewGroup(api, "/logs")
+	logsGroup.UseMiddleware(mw.Authenticate)
+	logsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Logs"}
+		next(op)
+	})
+	logs_handler.RegisterHandlers(srvImpl, logsGroup)
 
 	// Start the server
 	addr := ":8089"

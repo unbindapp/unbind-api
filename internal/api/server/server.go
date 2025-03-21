@@ -12,6 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
+	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
@@ -41,6 +42,7 @@ type Server struct {
 	ProjectService     *project_service.ProjectService
 	ServiceService     *service_service.ServiceService
 	EnvironmentService *environment_service.EnvironmentService
+	LogService         *logs_service.LogsService
 }
 
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {
