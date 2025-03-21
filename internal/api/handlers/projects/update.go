@@ -19,8 +19,8 @@ type UpdateProjectInput struct {
 	Body struct {
 		TeamID      uuid.UUID `json:"team_id" required:"true"`
 		ProjectID   uuid.UUID `json:"project_id" required:"true"`
-		DisplayName string    `json:"display_name"`
-		Description string    `json:"description"`
+		DisplayName string    `json:"display_name" required:"false"`
+		Description string    `json:"description" required:"false"`
 	}
 }
 
@@ -36,6 +36,10 @@ func (self *HandlerGroup) UpdateProject(ctx context.Context, input *UpdateProjec
 	if !found {
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
+	if input.Body.DisplayName == "" && input.Body.Description == "" {
+		return nil, huma.Error400BadRequest("Either display_name or description must be provided")
 	}
 
 	updatedProject, err := self.srv.ProjectService.UpdateProject(ctx, user.ID, &project_service.UpdateProjectInput{
