@@ -18,6 +18,7 @@ type UpdateTeamInput struct {
 	Body struct {
 		TeamID      uuid.UUID `json:"team_id" required:"true"`
 		DisplayName string    `json:"display_name"`
+		Description *string   `json:"description"`
 	}
 }
 
@@ -39,6 +40,7 @@ func (self *HandlerGroup) UpdateTeam(ctx context.Context, input *UpdateTeamInput
 	updatedTeam, err := self.srv.TeamService.UpdateTeam(ctx, user.ID, &team_service.TeamUpdateInput{
 		ID:          input.Body.TeamID,
 		DisplayName: input.Body.DisplayName,
+		Description: input.Body.Description,
 	})
 	if err != nil {
 		if errors.Is(err, errdefs.ErrInvalidInput) {

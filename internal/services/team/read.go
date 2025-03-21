@@ -13,6 +13,7 @@ type GetTeamResponse struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	DisplayName string    `json:"display_name"`
+	Description *string   `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -70,6 +71,7 @@ func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearer
 				ID:          team.ID,
 				Name:        team.Name,
 				DisplayName: team.DisplayName,
+				Description: team.Description,
 				CreatedAt:   team.CreatedAt,
 			})
 		}

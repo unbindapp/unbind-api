@@ -29,7 +29,7 @@ func (Team) Fields() []ent.Field {
 		field.String("display_name").Comment("Human-readable name"),
 		field.String("namespace").Unique().Comment("Kubernetes namespace tied to this team"),
 		field.String("kubernetes_secret").Comment("Kubernetes secret for this team"),
-		field.String("description").Optional(),
+		field.String("description").Optional().Nillable(),
 	}
 }
 

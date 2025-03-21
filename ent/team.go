@@ -32,7 +32,7 @@ type Team struct {
 	// Kubernetes secret for this team
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamQuery when eager-loading is set.
 	Edges        TeamEdges `json:"edges"`
@@ -151,7 +151,8 @@ func (t *Team) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				t.Description = value.String
+				t.Description = new(string)
+				*t.Description = value.String
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -222,8 +223,10 @@ func (t *Team) String() string {
 	builder.WriteString("kubernetes_secret=")
 	builder.WriteString(t.KubernetesSecret)
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(t.Description)
+	if v := t.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }
