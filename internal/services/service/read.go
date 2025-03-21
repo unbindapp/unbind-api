@@ -120,7 +120,7 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 	}
 
 	// Get services in environment
-	service, err := self.repo.Service().GetByID(ctx, environmentID)
+	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
