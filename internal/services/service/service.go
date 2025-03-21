@@ -39,6 +39,14 @@ func (self *ServiceService) VerifyInputs(ctx context.Context, teamID, projectID,
 		return nil, nil, err
 	}
 
+	if environment == nil {
+		return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
+	}
+
+	if environment.Edges.Project == nil {
+		return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment does not belong to a project")
+	}
+
 	if projectID != environment.Edges.Project.ID {
 		return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment does not belong to the specified project")
 	}
@@ -49,6 +57,14 @@ func (self *ServiceService) VerifyInputs(ctx context.Context, teamID, projectID,
 		if ent.IsNotFound(err) {
 			return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
 		}
+	}
+
+	if project == nil {
+		return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
+	}
+
+	if project.Edges.Team == nil {
+		return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to a team")
 	}
 
 	if project.Edges.Team.ID != teamID {
