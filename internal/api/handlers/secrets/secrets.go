@@ -69,7 +69,7 @@ func handleSecretErr(err error) error {
 
 // Base inputs
 type BaseSecretsInput struct {
-	Type          models.SecretType `json:"type" required:"true" doc:"The type of secret to fetch"`
+	Type          models.SecretType `json:"type" required:"true" doc:"The type of secret"`
 	TeamID        uuid.UUID         `query:"team_id" required:"true"`
 	ProjectID     uuid.UUID         `query:"project_id" doc:"If present, fetch project secrets"`
 	EnvironmentID uuid.UUID         `query:"environment_id" doc:"If present, fetch environment secrets - requires project_id"`
@@ -77,7 +77,7 @@ type BaseSecretsInput struct {
 }
 
 type BaseSecretsJSONInput struct {
-	Type          models.SecretType `json:"type" required:"true" doc:"The type of secret to fetch"`
+	Type          models.SecretType `json:"type" required:"true" doc:"The type of secret"`
 	TeamID        uuid.UUID         `json:"team_id" required:"true"`
 	ProjectID     uuid.UUID         `json:"project_id" required:"false" doc:"If present without environment_id, mutate team secrets"`
 	EnvironmentID uuid.UUID         `json:"environment_id" required:"false" doc:"If present without service_id, mutate environment secrets - requires project_id"`
