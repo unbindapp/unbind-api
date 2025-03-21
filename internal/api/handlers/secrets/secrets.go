@@ -35,13 +35,13 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "create-secret",
-			Summary:     "Create Secrets",
-			Description: "Create secrets for a service, environment, project, or team",
-			Path:        "/create",
+			OperationID: "upsert-secret",
+			Summary:     "Upsert Secrets",
+			Description: "Create or update secrets for a service, environment, project, or team by key",
+			Path:        "/upsert",
 			Method:      http.MethodPost,
 		},
-		handlers.CreateSecrets,
+		handlers.UpsertSecrets,
 	)
 	huma.Register(
 		grp,

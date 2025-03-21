@@ -127,10 +127,10 @@ func (self *ServiceService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 	}
 	for k, v := range buildSecrets {
 		secretResponse = append(secretResponse, &models.SecretResponse{
-			Type:        models.ServiceSecret,
-			Name:        k,
-			Value:       string(v),
-			BuildSecret: true,
+			Type:          models.ServiceSecret,
+			Name:          k,
+			Value:         string(v),
+			IsBuildSecret: true,
 		})
 	}
 
@@ -138,7 +138,7 @@ func (self *ServiceService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 }
 
 // Create secrets in bulk
-func (self *ServiceService) CreateSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, newSecrets map[string][]byte, buildSecret bool) ([]*models.SecretResponse, error) {
+func (self *ServiceService) UpsertSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, newSecrets map[string][]byte, isBuildSecret bool) ([]*models.SecretResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -233,10 +233,10 @@ func (self *ServiceService) CreateSecrets(ctx context.Context, userID uuid.UUID,
 
 	// make secrets
 	secretName := service.KubernetesSecret
-	if buildSecret {
+	if isBuildSecret {
 		secretName = service.KubernetesBuildSecret
 	}
-	_, err = self.k8s.AddSecretValues(ctx, secretName, project.Edges.Team.Namespace, newSecrets, client)
+	_, err = self.k8s.UpsertSecretValues(ctx, secretName, project.Edges.Team.Namespace, newSecrets, client)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +262,7 @@ func (self *ServiceService) CreateSecrets(ctx context.Context, userID uuid.UUID,
 }
 
 // Delete a secret by key
-func (self *ServiceService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, keys []models.SecretDeleteInput, buildSecret bool) ([]*models.SecretResponse, error) {
+func (self *ServiceService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, keys []models.SecretDeleteInput, isBuildSecret bool) ([]*models.SecretResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -357,7 +357,7 @@ func (self *ServiceService) DeleteSecretsByKey(ctx context.Context, userID uuid.
 
 	// Get secrets
 	secretName := service.KubernetesSecret
-	if buildSecret {
+	if isBuildSecret {
 		secretName = service.KubernetesBuildSecret
 	}
 	secrets, err := self.k8s.GetSecretMap(ctx, secretName, project.Edges.Team.Namespace, client)
@@ -380,10 +380,10 @@ func (self *ServiceService) DeleteSecretsByKey(ctx context.Context, userID uuid.
 	i := 0
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
-			Type:        models.ServiceSecret,
-			Name:        k,
-			Value:       string(v),
-			BuildSecret: buildSecret,
+			Type:          models.ServiceSecret,
+			Name:          k,
+			Value:         string(v),
+			IsBuildSecret: isBuildSecret,
 		}
 		i++
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
 	builds_handler "github.com/unbindapp/unbind-api/internal/api/handlers/builds"
+	environments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/environments"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
@@ -271,6 +272,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	projects_handler.RegisterHandlers(srvImpl, projectsGroup)
+
+	// /environments group
+	environmentsGroup := huma.NewGroup(api, "/environments")
+	environmentsGroup.UseMiddleware(mw.Authenticate)
+	environmentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Environments"}
+		next(op)
+	})
+	environments_handler.RegisterHandlers(srvImpl, environmentsGroup)
 
 	// /services group
 	servicesGroup := huma.NewGroup(api, "/services")

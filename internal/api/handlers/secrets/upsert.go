@@ -11,19 +11,19 @@ import (
 )
 
 // Create new
-type CreateSecretsInput struct {
+type UpsertSecretsInput struct {
 	server.BaseAuthInput
 	Body struct {
 		BaseSecretsJSONInput
-		BuildSecret bool `json:"build_secret" required:"false"`
-		Secrets     []*struct {
+		IsBuildSecret bool `json:"is_build_secret" required:"false"`
+		Secrets       []*struct {
 			Name  string `json:"name" required:"true"`
 			Value string `json:"value" required:"true"`
 		} `json:"secrets" required:"true"`
 	}
 }
 
-func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateSecretsInput) (*SecretsResponse, error) {
+func (self *HandlerGroup) UpsertSecrets(ctx context.Context, input *UpsertSecretsInput) (*SecretsResponse, error) {
 	// Validate input
 	if err := ValidateSecretsDependencies(input.Body.Type, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID); err != nil {
 		return nil, huma.Error400BadRequest("invalid input", err)
@@ -37,9 +37,9 @@ func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateSecret
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	newSecretMap := make(map[string][]byte)
+	secretUpdateMap := make(map[string][]byte)
 	for _, secret := range input.Body.Secrets {
-		newSecretMap[secret.Name] = []byte(secret.Value)
+		secretUpdateMap[secret.Name] = []byte(secret.Value)
 	}
 
 	// Determine which service to use
@@ -47,13 +47,13 @@ func (self *HandlerGroup) CreateSecrets(ctx context.Context, input *CreateSecret
 	var err error
 	switch input.Body.Type {
 	case models.TeamSecret:
-		secret, err = self.srv.TeamService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, newSecretMap)
+		secret, err = self.srv.TeamService.UpsertSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, secretUpdateMap)
 	case models.ProjectSecret:
-		secret, err = self.srv.ProjectService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, newSecretMap)
+		secret, err = self.srv.ProjectService.UpsertSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, secretUpdateMap)
 	case models.EnvironmentSecret:
-		secret, err = self.srv.EnvironmentService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, newSecretMap)
+		secret, err = self.srv.EnvironmentService.UpsertSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, secretUpdateMap)
 	case models.ServiceSecret:
-		secret, err = self.srv.ServiceService.CreateSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, newSecretMap, input.Body.BuildSecret)
+		secret, err = self.srv.ServiceService.UpsertSecrets(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, secretUpdateMap, input.Body.IsBuildSecret)
 	}
 
 	if err != nil {

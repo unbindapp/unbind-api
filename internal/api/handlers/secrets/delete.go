@@ -15,8 +15,8 @@ type DeleteSecretSecretsInput struct {
 	server.BaseAuthInput
 	Body struct {
 		BaseSecretsJSONInput
-		Secrets     []models.SecretDeleteInput `json:"secrets" validate:"required"`
-		BuildSecret bool                       `json:"build_secret" required:"false"`
+		Secrets       []models.SecretDeleteInput `json:"secrets" validate:"required"`
+		IsBuildSecret bool                       `json:"is_build_secret" required:"false"`
 	}
 }
 
@@ -45,7 +45,7 @@ func (self *HandlerGroup) DeleteSecrets(ctx context.Context, input *DeleteSecret
 	case models.EnvironmentSecret:
 		secret, err = self.srv.EnvironmentService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.Secrets)
 	case models.ServiceSecret:
-		secret, err = self.srv.ServiceService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, input.Body.Secrets, input.Body.BuildSecret)
+		secret, err = self.srv.ServiceService.DeleteSecretsByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, input.Body.Secrets, input.Body.IsBuildSecret)
 	}
 
 	if err != nil {
