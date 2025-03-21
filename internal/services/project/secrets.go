@@ -93,7 +93,7 @@ func (self *ProjectService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 }
 
 // Create secrets in bulk
-func (self *ProjectService) CreateSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID uuid.UUID, newSecrets map[string][]byte) ([]*models.SecretResponse, error) {
+func (self *ProjectService) UpsertSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID uuid.UUID, newSecrets map[string][]byte) ([]*models.SecretResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -155,7 +155,7 @@ func (self *ProjectService) CreateSecrets(ctx context.Context, userID uuid.UUID,
 	}
 
 	// make secrets
-	_, err = self.k8s.AddSecretValues(ctx, project.KubernetesSecret, project.Edges.Team.Namespace, newSecrets, client)
+	_, err = self.k8s.UpsertSecretValues(ctx, project.KubernetesSecret, project.Edges.Team.Namespace, newSecrets, client)
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
 	builds_handler "github.com/unbindapp/unbind-api/internal/api/handlers/builds"
+	environments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/environments"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
@@ -113,6 +114,9 @@ func startAPI(cfg *config.Config) {
 	// Create github client
 	githubClient := github.NewGithubClient(cfg)
 
+	// Create build controller
+	buildController := buildctl.NewBuildController(ctx, cfg, kubeClient, valkeyClient, repo, githubClient)
+
 	// Implementation
 	srvImpl := &server.Server{
 		KubeClient: kubeClient,
@@ -133,13 +137,13 @@ func startAPI(cfg *config.Config) {
 		GithubClient:       githubClient,
 		StringCache:        cache.NewStringCache(valkeyClient, "unbind"),
 		HttpClient:         &http.Client{},
-		BuildController:    buildctl.NewBuildController(ctx, kubeClient, valkeyClient, repo),
+		BuildController:    buildController,
 		TeamService:        team_service.NewTeamService(repo, kubeClient),
 		ProjectService:     project_service.NewProjectService(repo, kubeClient),
 		ServiceService:     service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
 		EnvironmentService: environment_service.NewEnvironmentService(repo, kubeClient),
 		LogService:         logs_service.NewLogsService(repo, kubeClient),
-		BuildJobService:    builds_service.NewBuildsService(repo),
+		BuildJobService:    builds_service.NewBuildsService(repo, buildController),
 	}
 
 	// New chi router
@@ -268,6 +272,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	projects_handler.RegisterHandlers(srvImpl, projectsGroup)
+
+	// /environments group
+	environmentsGroup := huma.NewGroup(api, "/environments")
+	environmentsGroup.UseMiddleware(mw.Authenticate)
+	environmentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Environments"}
+		next(op)
+	})
+	environments_handler.RegisterHandlers(srvImpl, environmentsGroup)
 
 	// /services group
 	servicesGroup := huma.NewGroup(api, "/services")

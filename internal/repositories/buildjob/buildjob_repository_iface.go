@@ -19,6 +19,8 @@ type BuildJobRepositoryInterface interface {
 	MarkCompleted(ctx context.Context, buildJobID uuid.UUID) (*ent.BuildJob, error)
 	// Cancels all jobs that are not in a finished state
 	MarkCancelled(ctx context.Context, serviceID uuid.UUID) error
+	// Mark cancelled by IDs
+	MarkAsCancelled(ctx context.Context, jobIDs []uuid.UUID) error
 	// Assigns the kubernetes "Job" name to the build job
 	AssignKubernetesJobName(ctx context.Context, buildJobID uuid.UUID, jobName string) (*ent.BuildJob, error)
 	SetKubernetesJobStatus(ctx context.Context, buildJobID uuid.UUID, status string) (*ent.BuildJob, error)

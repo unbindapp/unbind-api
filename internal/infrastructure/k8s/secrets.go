@@ -167,8 +167,8 @@ func (self *KubeClient) DeleteSecret(ctx context.Context, name, namespace string
 	return nil
 }
 
-// AddSecretValues adds or updates specific keys in a secret without affecting other keys
-func (self *KubeClient) AddSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error) {
+// UpsertSecretValues adds or updates specific keys in a secret without affecting other keys
+func (self *KubeClient) UpsertSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error) {
 	// Get the current secret
 	secret, err := self.GetSecret(ctx, name, namespace, client)
 	if err != nil {

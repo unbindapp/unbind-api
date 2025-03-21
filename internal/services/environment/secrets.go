@@ -106,7 +106,7 @@ func (self *EnvironmentService) GetSecrets(ctx context.Context, userID uuid.UUID
 }
 
 // Create secrets in bulk
-func (self *EnvironmentService) CreateSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, newSecrets map[string][]byte) ([]*models.SecretResponse, error) {
+func (self *EnvironmentService) UpsertSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, newSecrets map[string][]byte) ([]*models.SecretResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -181,7 +181,7 @@ func (self *EnvironmentService) CreateSecrets(ctx context.Context, userID uuid.U
 	}
 
 	// make secrets
-	_, err = self.k8s.AddSecretValues(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, newSecrets, client)
+	_, err = self.k8s.UpsertSecretValues(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, newSecrets, client)
 	if err != nil {
 		return nil, err
 	}

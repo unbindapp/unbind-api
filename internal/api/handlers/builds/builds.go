@@ -31,6 +31,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.ListBuildJobs,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "trigger-build",
+			Summary:     "Trigger Build",
+			Description: "Trigger a new build for a service manually",
+			Path:        "/create",
+			Method:      http.MethodPost,
+		},
+		handlers.CreateBuild,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

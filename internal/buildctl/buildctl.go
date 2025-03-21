@@ -2,16 +2,27 @@ package buildctl
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/queue"
+	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/valkey-io/valkey-go"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // Valkey key for the queue
@@ -25,25 +36,29 @@ type BuildJobRequest struct {
 
 // Handles triggering builds for services
 type BuildController struct {
-	k8s        *k8s.KubeClient
-	jobQueue   *queue.Queue[BuildJobRequest]
-	ctx        context.Context
-	cancelFunc context.CancelFunc
-	repo       *repositories.Repositories
+	cfg          *config.Config
+	k8s          *k8s.KubeClient
+	jobQueue     *queue.Queue[BuildJobRequest]
+	ctx          context.Context
+	cancelFunc   context.CancelFunc
+	repo         *repositories.Repositories
+	githubClient *github.GithubClient
 }
 
-func NewBuildController(ctx context.Context, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories) *BuildController {
+func NewBuildController(ctx context.Context, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient) *BuildController {
 	jobQueue := queue.NewQueue[BuildJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
 
 	// Create a cancellable context
 	ctx, cancelFunc := context.WithCancel(ctx)
 
 	return &BuildController{
-		k8s:        k8s,
-		jobQueue:   jobQueue,
-		ctx:        ctx,
-		cancelFunc: cancelFunc,
-		repo:       repositories,
+		cfg:          cfg,
+		k8s:          k8s,
+		jobQueue:     jobQueue,
+		ctx:          ctx,
+		cancelFunc:   cancelFunc,
+		repo:         repositories,
+		githubClient: githubClient,
 	}
 }
 
@@ -78,25 +93,183 @@ func (self *BuildController) startStatusSynchronizer() {
 	}
 }
 
+// Populate build environment
+func (self *BuildController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID) (map[string]string, error) {
+	// Get the service
+	service, err := self.repo.Service().GetByID(ctx, serviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get deployment namespace
+	namespace, err := self.repo.Service().GetDeploymentNamespace(ctx, service.ID)
+
+	// Get build secrets
+	// ! Use our cluster config for this
+	kubeConfig, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf("Error getting in-cluster config: %v", err)
+	}
+	client, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		log.Fatalf("Error creating clientset: %v", err)
+	}
+
+	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesBuildSecret, namespace, client)
+	if err != nil {
+		log.Error("Error getting build secrets", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to get build secrets")
+	}
+
+	// Convert the byte arrays to base64 strings first
+	serializableSecrets := make(map[string]string)
+	for k, v := range buildSecrets {
+		serializableSecrets[k] = base64.StdEncoding.EncodeToString(v)
+	}
+
+	// Serialize the map to JSON
+	secretsJSON, err := json.Marshal(serializableSecrets)
+	if err != nil {
+		log.Error("Error marshalling secrets", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to marshal secrets")
+	}
+
+	// Populate environment
+	env := map[string]string{
+		"CONTAINER_REGISTRY_HOST":     self.cfg.ContainerRegistryHost,
+		"CONTAINER_REGISTRY_USER":     self.cfg.ContainerRegistryUser,
+		"CONTAINER_REGISTRY_PASSWORD": self.cfg.ContainerRegistryPassword,
+		"DEPLOYMENT_NAMESPACE":        namespace,
+		"SERVICE_PUBLIC":              strconv.FormatBool(service.Edges.ServiceConfig.Public),
+		"SERVICE_REPLICAS":            strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
+		"SERVICE_SECRET_NAME":         service.KubernetesSecret,
+		"SERVICE_BUILD_SECRETS":       string(secretsJSON),
+	}
+
+	// Add Github fields
+	if service.GithubInstallationID != nil {
+		if service.GitRepository == nil || service.Edges.ServiceConfig.GitBranch == nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Missing required fields for Github service - doesn't have repository or git branch")
+		}
+		// Get private key for the service's github app.
+		// ! TODO - we can probably reduce these queries
+		privKey, err := self.repo.Service().GetGithubPrivateKey(ctx, service.ID)
+		if err != nil {
+			log.Error("Error getting github private key", "err", err)
+			return nil, err
+		}
+
+		env["GITHUB_APP_PRIVATE_KEY"] = privKey
+		env["GITHUB_INSTALLATION_ID"] = strconv.Itoa(int(*service.GithubInstallationID))
+		// Get GitHub installation
+		installation, err := self.repo.Github().GetInstallationByID(ctx, *service.GithubInstallationID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "GitHub installation not found")
+			}
+			return nil, err
+		}
+		env["GITHUB_APP_ID"] = strconv.Itoa(int(installation.GithubAppID))
+
+		// Verify repository access
+		canAccess, cloneUrl, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, installation.AccountLogin, *service.GitRepository)
+		if err != nil {
+			log.Error("Error verifying repository access", "err", err)
+			return nil, err
+		}
+
+		if !canAccess || err != nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Repository not accessible with the specified GitHub installation")
+		}
+
+		env["GITHUB_REPO_URL"] = cloneUrl
+
+		ref := *service.Edges.ServiceConfig.GitBranch
+		if !strings.HasPrefix(ref, "refs/head") {
+			ref = "refs/heads/" + ref
+		}
+		env["GIT_REF"] = ref
+	}
+
+	if service.Provider != nil {
+		env["SERVICE_PROVIDER"] = string(*service.Provider)
+	}
+
+	if service.Framework != nil {
+		env["SERVICE_FRAMEWORK"] = string(*service.Framework)
+	}
+
+	if service.Edges.ServiceConfig.Port != nil {
+		env["SERVICE_PORT"] = strconv.Itoa(*service.Edges.ServiceConfig.Port)
+	}
+
+	if service.Edges.ServiceConfig.Host != nil {
+		env["SERVICE_HOST"] = *service.Edges.ServiceConfig.Host
+	}
+
+	// ! TODO - we need to support the custom run commands, the operator supports it
+
+	return env, nil
+}
+
 // EnqueueBuildJob adds a build job to the queue
-func (self *BuildController) EnqueueBuildJob(ctx context.Context, req BuildJobRequest) (jobID string, err error) {
+func (self *BuildController) EnqueueBuildJob(ctx context.Context, req BuildJobRequest) (job *ent.BuildJob, err error) {
+	// Cancel any existing queued jobs
+	if err := self.cancelExistingJobs(ctx, req.ServiceID); err != nil {
+		return nil, fmt.Errorf("failed to cancel existing jobs: %w", err)
+	}
+
 	// Create a record in the database
-	job, err := self.repo.BuildJob().Create(
+	job, err = self.repo.BuildJob().Create(
 		ctx,
 		req.ServiceID,
 	)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to create build job record: %w", err)
+		return nil, fmt.Errorf("failed to create build job record: %w", err)
 	}
 
 	// Add to the queue
 	err = self.jobQueue.Enqueue(ctx, job.ID.String(), req)
 	if err != nil {
-		return "", fmt.Errorf("failed to enqueue job: %w", err)
+		return nil, fmt.Errorf("failed to enqueue job: %w", err)
 	}
 
-	return job.ID.String(), nil
+	return job, nil
+}
+
+// cancelExistingJobs marks all pending jobs for a service as cancelled in the DB
+// and removes them from the queue
+func (self *BuildController) cancelExistingJobs(ctx context.Context, serviceID uuid.UUID) error {
+	// 1. Get all queued jobs for this service from the queue
+	queuedJobs, err := self.jobQueue.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get jobs from queue: %w", err)
+	}
+
+	// Keep track of job IDs to mark as cancelled
+	var jobIDsToCancel []uuid.UUID
+
+	// 2. Remove matching jobs from the queue
+	for _, item := range queuedJobs {
+		if item.Data.ServiceID == serviceID {
+			// Remove from queue
+			if err := self.jobQueue.Remove(ctx, item.ID); err != nil {
+				log.Errorf("Failed to remove job %s from queue: %v", item.ID, err)
+			}
+			idParsed, _ := uuid.Parse(item.ID)
+			jobIDsToCancel = append(jobIDsToCancel, idParsed)
+		}
+	}
+
+	// 3. Mark the jobs as cancelled in the database
+	if len(jobIDsToCancel) > 0 {
+		if err := self.repo.BuildJob().MarkAsCancelled(ctx, jobIDsToCancel); err != nil {
+			return fmt.Errorf("failed to mark jobs as cancelled: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // processJob processes a job from the queue

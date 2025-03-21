@@ -75,7 +75,6 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.DeleteProject,
 	)
-
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

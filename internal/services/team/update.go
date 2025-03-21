@@ -12,7 +12,8 @@ import (
 
 type TeamUpdateInput struct {
 	ID          uuid.UUID `json:"id" validate:"required,uuid4"`
-	DisplayName string    `json:"display_name" validate:"required"`
+	DisplayName string    `json:"display_name"`
+	Description *string   `json:"description"`
 }
 
 // UpdateTeam updates a specific team
@@ -21,6 +22,10 @@ func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input
 	err := validate.Validator().Struct(input)
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
+	}
+
+	if input.DisplayName == "" && input.Description == nil {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "No fields to update")
 	}
 
 	permissionChecks := []permissions_repo.PermissionCheck{
@@ -53,7 +58,7 @@ func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input
 	}
 
 	// Update the team in the database
-	updatedTeam, err := self.repo.Team().Update(ctx, input.ID, input.DisplayName)
+	updatedTeam, err := self.repo.Team().Update(ctx, input.ID, input.DisplayName, input.Description)
 	if err != nil {
 		// May be ent.NotFound
 		return nil, err

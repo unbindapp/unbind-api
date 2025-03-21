@@ -51,6 +51,18 @@ func (self *BuildJobRepository) MarkCancelled(ctx context.Context, serviceID uui
 		Exec(ctx)
 }
 
+// Mark cancelled by IDs
+func (self *BuildJobRepository) MarkAsCancelled(ctx context.Context, jobIDs []uuid.UUID) error {
+	return self.base.DB.BuildJob.Update().
+		SetStatus(schema.BuildJobStatusCancelled).
+		SetCompletedAt(time.Now()).
+		Where(
+			buildjob.IDIn(jobIDs...),
+			buildjob.StatusNotIn(schema.BuildJobStatusRunning, schema.BuildJobStatusFailed, schema.BuildJobStatusCancelled, schema.BuildJobStatusCompleted),
+		).
+		Exec(ctx)
+}
+
 // Assigns the kubernetes "Job" name to the build job
 func (self *BuildJobRepository) AssignKubernetesJobName(ctx context.Context, buildJobID uuid.UUID, jobName string) (*ent.BuildJob, error) {
 	return self.base.DB.BuildJob.UpdateOneID(buildJobID).
