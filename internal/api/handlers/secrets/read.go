@@ -48,7 +48,6 @@ func (self *HandlerGroup) ListSecrets(ctx context.Context, input *ListSecretsInp
 	if err != nil {
 		return nil, handleSecretErr(err)
 	}
-	log.Infof("Received %d team secrets", len(teamSecrets))
 
 	if input.Type == models.ProjectSecret ||
 		input.Type == models.EnvironmentSecret ||
@@ -58,7 +57,6 @@ func (self *HandlerGroup) ListSecrets(ctx context.Context, input *ListSecretsInp
 			return nil, handleSecretErr(err)
 		}
 	}
-	log.Infof("Received %d project secrets", len(projectSecrets))
 
 	if input.Type == models.EnvironmentSecret ||
 		input.Type == models.ServiceSecret {
@@ -67,7 +65,6 @@ func (self *HandlerGroup) ListSecrets(ctx context.Context, input *ListSecretsInp
 			return nil, handleSecretErr(err)
 		}
 	}
-	log.Infof("Received %d environment secrets", len(environmentSecrets))
 
 	if input.Type == models.ServiceSecret {
 		serviceSecrets, err = self.srv.ServiceService.GetSecrets(ctx, user.ID, bearerToken, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
@@ -75,7 +72,6 @@ func (self *HandlerGroup) ListSecrets(ctx context.Context, input *ListSecretsInp
 			return nil, handleSecretErr(err)
 		}
 	}
-	log.Infof("Received %d service secrets", len(serviceSecrets))
 
 	// Combine
 	secrets := append(teamSecrets, projectSecrets...)

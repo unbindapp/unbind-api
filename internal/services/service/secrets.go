@@ -7,6 +7,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -110,10 +111,12 @@ func (self *ServiceService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("%s secrets %d", service.KubernetesSecret, len(secrets))
 	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesBuildSecret, project.Edges.Team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("%s build secrets %d", service.KubernetesBuildSecret, len(buildSecrets))
 
 	secretResponse := make([]*models.SecretResponse, len(secrets))
 	i := 0
