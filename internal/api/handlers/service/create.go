@@ -31,6 +31,10 @@ func (self *HandlerGroup) CreateService(ctx context.Context, input *CreateServic
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
+	if input.Body == nil {
+		return nil, huma.Error400BadRequest("Missing body")
+	}
+
 	createdService, err := self.srv.ServiceService.CreateService(ctx, user.ID, input.Body, bearerToken)
 	if err != nil {
 		return nil, self.handleErr(err)
