@@ -115,7 +115,7 @@ func startAPI(cfg *config.Config) {
 	githubClient := github.NewGithubClient(cfg)
 
 	// Create build controller
-	buildController := buildctl.NewBuildController(ctx, cfg, kubeClient, valkeyClient, repo, githubClient)
+	buildController := buildctl.NewBuildController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient)
 
 	// Implementation
 	srvImpl := &server.Server{
@@ -326,6 +326,9 @@ func startAPI(cfg *config.Config) {
 		Addr:    addr,
 		Handler: r,
 	}
+
+	// Start build queue processeor
+	buildController.StartAsync()
 
 	// Start the server in a goroutine
 	go func() {

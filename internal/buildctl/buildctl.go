@@ -45,25 +45,22 @@ type BuildController struct {
 	githubClient *github.GithubClient
 }
 
-func NewBuildController(ctx context.Context, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient) *BuildController {
+func NewBuildController(ctx context.Context, cancel context.CancelFunc, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient) *BuildController {
 	jobQueue := queue.NewQueue[BuildJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
-
-	// Create a cancellable context
-	ctx, cancelFunc := context.WithCancel(ctx)
 
 	return &BuildController{
 		cfg:          cfg,
 		k8s:          k8s,
 		jobQueue:     jobQueue,
 		ctx:          ctx,
-		cancelFunc:   cancelFunc,
+		cancelFunc:   cancel,
 		repo:         repositories,
 		githubClient: githubClient,
 	}
 }
 
 // Start queue processor
-func (self *BuildController) Start() {
+func (self *BuildController) StartAsync() {
 	// Start the job processor
 	self.jobQueue.StartProcessor(self.ctx, self.processJob)
 
