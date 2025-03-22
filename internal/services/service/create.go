@@ -166,7 +166,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	var service *ent.Service
 	var serviceConfig *ent.ServiceConfig
 
-	println("🟠 START OF TX")
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		var runtime *enum.Provider
 		var framework *enum.Framework
@@ -189,7 +188,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 		}
 
-		println("🟠 BEFORE HOST")
 		if host == nil && public {
 			// Generate a subdomain
 			domain, err := utils.GenerateSubdomain(input.DisplayName, environment.Name, self.cfg.ExternalURL)
@@ -219,14 +217,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 		}
 
-		println("🟠 Before Namee")
 		// Generate unique name
 		name, err := utils.GenerateSlug(input.DisplayName)
 		if err != nil {
 			return err
 		}
 
-		println("🟠 Before Secret")
 		if project == nil {
 			log.Errorf("Project not found")
 			return fmt.Errorf("Project not found")
@@ -235,22 +231,18 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			log.Errorf("Team not found")
 			return fmt.Errorf("Team not found")
 		}
-		println("🟠 Team is", project.Edges.Team)
-		println("🟠 Team Namespace is", project.Edges.Team.Namespace)
 		// Create kubernetes secrets
 		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace, client)
 		if err != nil {
 			return fmt.Errorf("failed to create secret: %v", err)
 		}
 
-		println("🟠 Before Build Secret")
 		// For builder
 		buildSecret, _, err := self.k8s.GetOrCreateSecret(ctx, fmt.Sprintf("%s-build", name), project.Edges.Team.Namespace, client)
 		if err != nil {
 			return fmt.Errorf("failed to create build secret: %v", err)
 		}
 
-		println("🟠 Before Create Service")
 		// Create the service
 		createService, err := self.repo.Service().Create(ctx, tx,
 			name,

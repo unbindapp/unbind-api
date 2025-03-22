@@ -29,9 +29,9 @@ func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterfa
 	}
 }
 
-func (self *ServiceService) VerifyInputs(ctx context.Context, teamID, projectID, environmentID uuid.UUID) (environment *ent.Environment, project *ent.Project, err error) {
+func (self *ServiceService) VerifyInputs(ctx context.Context, teamID, projectID, environmentID uuid.UUID) (*ent.Environment, *ent.Project, error) {
 	// Verify that the environment exists
-	environment, err = self.repo.Environment().GetByID(ctx, environmentID)
+	environment, err := self.repo.Environment().GetByID(ctx, environmentID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
@@ -59,5 +59,5 @@ func (self *ServiceService) VerifyInputs(ctx context.Context, teamID, projectID,
 		return nil, nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to the specified team")
 	}
 
-	return environment, project, nil
+	return environment, environment.Edges.Project, nil
 }
