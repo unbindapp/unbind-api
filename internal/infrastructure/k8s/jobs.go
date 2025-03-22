@@ -90,7 +90,7 @@ exec /app/builder`,
 						},
 						{
 							Name:  "buildkit-daemon",
-							Image: "moby/buildkit:v0.20.1",
+							Image: "moby/buildkit:v0.20.1-rootless",
 							Args: []string{
 								"--addr", "tcp://0.0.0.0:1234",
 								"--oci-worker-no-process-sandbox",
