@@ -227,13 +227,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		println("🟠 Before Secret")
-		// Create kubernetes secrets
-		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace, client)
-		if err != nil {
-			return fmt.Errorf("failed to create secret: %v", err)
-		}
-
-		println("🟠 Before Build Secret")
 		if project == nil {
 			log.Errorf("Project not found")
 			return fmt.Errorf("Project not found")
@@ -244,6 +237,13 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 		println("🟠 Team is", project.Edges.Team)
 		println("🟠 Team Namespace is", project.Edges.Team.Namespace)
+		// Create kubernetes secrets
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace, client)
+		if err != nil {
+			return fmt.Errorf("failed to create secret: %v", err)
+		}
+
+		println("🟠 Before Build Secret")
 		// For builder
 		buildSecret, _, err := self.k8s.GetOrCreateSecret(ctx, fmt.Sprintf("%s-build", name), project.Edges.Team.Namespace, client)
 		if err != nil {
