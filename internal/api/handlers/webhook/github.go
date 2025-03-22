@@ -253,7 +253,6 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 		repoName := e.Repo.GetName()
 		repoUrl := e.Repo.GetCloneURL()
 		installationID := e.Installation.GetID()
-		appID := e.Installation.GetAppID()
 		ref := e.GetRef()
 
 		// Get the installation
@@ -267,13 +266,8 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			return nil, huma.Error500InternalServerError("Failed to get installation")
 		}
 
-		if installation.GithubAppID != appID {
-			log.Info("Received push event for different app", "app", appID, "expected", installation.GithubAppID)
-			return &GithubWebhookOutput{}, nil
-		}
-
 		// Get the services associated with this installation and repo
-		services, err := self.srv.Repository.Service().GetByInstallationIDAndRepoName(ctx, installationID, repoName)
+		services, err := self.srv.Repository.Service().GetByInstallationIDAndRepoName(ctx, installation.ID, repoName)
 		if err != nil {
 			log.Error("Error getting services", "err", err)
 			return nil, huma.Error500InternalServerError("Failed to get services")
@@ -312,7 +306,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				return nil, huma.Error500InternalServerError("Failed to populate build environment")
 			}
 
-			log.Info("Enqueuing build", "repo", repoName, "branch", ref, "serviceID", service.ID, "installationID", installationID, "appID", appID, "repoUrl", repoUrl)
+			log.Info("Enqueuing build", "repo", repoName, "branch", ref, "serviceID", service.ID, "installationID", installationID, "appID", installation.GithubAppID, "repoUrl", repoUrl)
 			jobID, err := self.srv.BuildController.EnqueueBuildJob(
 				ctx,
 				buildctl.BuildJobRequest{
