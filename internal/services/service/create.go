@@ -234,6 +234,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		println("🟠 Before Build Secret")
+		println("🟠 Team is", project.Edges.Team)
+		println("🟠 Team Namespace is", project.Edges.Team.Namespace)
 		// For builder
 		buildSecret, _, err := self.k8s.GetOrCreateSecret(ctx, fmt.Sprintf("%s-build", name), project.Edges.Team.Namespace, client)
 		if err != nil {
