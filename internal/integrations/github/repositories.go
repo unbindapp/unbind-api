@@ -45,7 +45,18 @@ func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, install
 			defer authenticatedClient.Client().CloseIdleConnections()
 
 			// Process repositories with proper pagination
-			adminRepos, err := self.fetchUserAdminRepos(gctx, authenticatedClient, inst)
+			var adminRepos []*github.Repository
+
+			if inst.AccountType == githubinstallation.AccountTypeOrganization {
+				repos, e := self.fetchOrganizationAdminRepos(gctx, authenticatedClient, inst)
+				adminRepos = repos
+				err = e
+			} else {
+				repos, e := self.fetchUserAdminRepos(gctx, authenticatedClient, inst)
+				adminRepos = repos
+				err = e
+			}
+
 			if err != nil {
 				return err
 			}
@@ -89,6 +100,65 @@ func (self *GithubClient) fetchUserAdminRepos(ctx context.Context, client *githu
 
 		// Get user's repositories with pagination
 		ghRepositories, resp, err := client.Repositories.ListByUser(ctx, inst.AccountLogin, opts)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
+		}
+
+		// Filter admin repositories
+		for _, repo := range ghRepositories {
+			isAdmin := false
+
+			if inst.AccountType == githubinstallation.AccountTypeUser {
+				if repo.GetOwner().GetID() == inst.AccountID {
+					isAdmin = true
+				}
+			}
+
+			// Check permissions
+			if !isAdmin {
+				if perms := repo.GetPermissions(); perms != nil {
+					if admin, ok := perms["admin"]; ok && admin {
+						isAdmin = true
+					}
+				}
+			}
+
+			if isAdmin {
+				adminRepos = append(adminRepos, repo)
+			}
+		}
+
+		// Check if there are more pages
+		if resp.NextPage == 0 {
+			break
+		}
+
+		// Set up for next page
+		opts.Page = resp.NextPage
+	}
+
+	return adminRepos, nil
+}
+
+func (self *GithubClient) fetchOrganizationAdminRepos(ctx context.Context, client *github.Client, inst *ent.GithubInstallation) ([]*github.Repository, error) {
+	adminRepos := make([]*github.Repository, 0)
+	opts := &github.RepositoryListByOrgOptions{
+		ListOptions: github.ListOptions{
+			PerPage: 100,
+		},
+		Sort: "updated",
+	}
+
+	for {
+		// Check if context is canceled
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
+		// Get user's repositories with pagination
+		ghRepositories, resp, err := client.Repositories.ListByOrg(ctx, inst.AccountLogin, opts)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
 		}
