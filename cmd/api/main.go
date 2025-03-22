@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -84,6 +88,15 @@ func startAPI(cfg *config.Config) {
 	// Create a context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// Set up signal handling
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-signalCh
+		slog.Info("Received shutdown signal", "signal", sig)
+		cancel() // This will propagate cancellation to all derived contexts
+	}()
 
 	// Initialize valkey (redis)
 	valkeyClient, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
