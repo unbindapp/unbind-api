@@ -35,6 +35,10 @@ func (self *HandlerGroup) CreateService(ctx context.Context, input *CreateServic
 		return nil, huma.Error400BadRequest("Missing body")
 	}
 
+	println(input.Body.DisplayName)
+	println(input.Body.RepositoryName)
+	println(input.Body.RepositoryOwner)
+
 	createdService, err := self.srv.ServiceService.CreateService(ctx, user.ID, input.Body, bearerToken)
 	if err != nil {
 		return nil, self.handleErr(err)
