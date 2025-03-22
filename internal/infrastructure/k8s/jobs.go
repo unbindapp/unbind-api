@@ -50,6 +50,7 @@ func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jo
 			TTLSecondsAfterFinished: utils.ToPtr[int32](300),
 			BackoffLimit:            utils.ToPtr[int32](0),
 			Parallelism:             utils.ToPtr[int32](1),
+			ActiveDeadlineSeconds:   utils.ToPtr[int64](600),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
