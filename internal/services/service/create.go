@@ -234,6 +234,9 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		println("🟠 Before Build Secret")
+		if project.Edges.Team == nil {
+			return fmt.Errorf("Team not found")
+		}
 		println("🟠 Team is", project.Edges.Team)
 		println("🟠 Team Namespace is", project.Edges.Team.Namespace)
 		// For builder
