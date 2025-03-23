@@ -26,8 +26,8 @@ type CreateServiceInput struct {
 	ProjectID     uuid.UUID       `validate:"required,uuid4" required:"true" json:"project_id"`
 	EnvironmentID uuid.UUID       `validate:"required,uuid4" required:"true" json:"environment_id"`
 	DisplayName   string          `validate:"required" required:"true" json:"display_name"`
-	Type          service.Type    `validate:"required,oneof=docker git" required:"true" doc:"Type of service, e.g. 'git', 'docker'"`
-	Builder       service.Builder `validate:"required,oneof=railpack docker" required:"true" doc:"Builder of the service - docker, railpack"`
+	Type          service.Type    `validate:"required,oneof=docker git" required:"true" doc:"Type of service, e.g. 'git', 'docker'" json:"type"`
+	Builder       service.Builder `validate:"required,oneof=railpack docker" required:"true" doc:"Builder of the service - docker, railpack" json:"builder"`
 	Description   string          `json:"description,omitempty"`
 
 	// GitHub integration
