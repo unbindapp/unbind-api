@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // ID filters vertices based on their ID field.
@@ -63,6 +65,41 @@ func CreatedAt(v time.Time) predicate.Deployment {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// ServiceID applies equality check predicate on the "service_id" field. It's identical to ServiceIDEQ.
+func ServiceID(v uuid.UUID) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldServiceID, v))
+}
+
+// Error applies equality check predicate on the "error" field. It's identical to ErrorEQ.
+func Error(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldError, v))
+}
+
+// StartedAt applies equality check predicate on the "started_at" field. It's identical to StartedAtEQ.
+func StartedAt(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldStartedAt, v))
+}
+
+// CompletedAt applies equality check predicate on the "completed_at" field. It's identical to CompletedAtEQ.
+func CompletedAt(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldCompletedAt, v))
+}
+
+// KubernetesJobName applies equality check predicate on the "kubernetes_job_name" field. It's identical to KubernetesJobNameEQ.
+func KubernetesJobName(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobStatus applies equality check predicate on the "kubernetes_job_status" field. It's identical to KubernetesJobStatusEQ.
+func KubernetesJobStatus(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldKubernetesJobStatus, v))
+}
+
+// Attempts applies equality check predicate on the "attempts" field. It's identical to AttemptsEQ.
+func Attempts(v int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldAttempts, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -143,6 +180,444 @@ func UpdatedAtLT(v time.Time) predicate.Deployment {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Deployment {
 	return predicate.Deployment(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// ServiceIDEQ applies the EQ predicate on the "service_id" field.
+func ServiceIDEQ(v uuid.UUID) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldServiceID, v))
+}
+
+// ServiceIDNEQ applies the NEQ predicate on the "service_id" field.
+func ServiceIDNEQ(v uuid.UUID) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldServiceID, v))
+}
+
+// ServiceIDIn applies the In predicate on the "service_id" field.
+func ServiceIDIn(vs ...uuid.UUID) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldServiceID, vs...))
+}
+
+// ServiceIDNotIn applies the NotIn predicate on the "service_id" field.
+func ServiceIDNotIn(vs ...uuid.UUID) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldServiceID, vs...))
+}
+
+// StatusEQ applies the EQ predicate on the "status" field.
+func StatusEQ(v schema.DeploymentStatus) predicate.Deployment {
+	vc := v
+	return predicate.Deployment(sql.FieldEQ(FieldStatus, vc))
+}
+
+// StatusNEQ applies the NEQ predicate on the "status" field.
+func StatusNEQ(v schema.DeploymentStatus) predicate.Deployment {
+	vc := v
+	return predicate.Deployment(sql.FieldNEQ(FieldStatus, vc))
+}
+
+// StatusIn applies the In predicate on the "status" field.
+func StatusIn(vs ...schema.DeploymentStatus) predicate.Deployment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Deployment(sql.FieldIn(FieldStatus, v...))
+}
+
+// StatusNotIn applies the NotIn predicate on the "status" field.
+func StatusNotIn(vs ...schema.DeploymentStatus) predicate.Deployment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Deployment(sql.FieldNotIn(FieldStatus, v...))
+}
+
+// ErrorEQ applies the EQ predicate on the "error" field.
+func ErrorEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldError, v))
+}
+
+// ErrorNEQ applies the NEQ predicate on the "error" field.
+func ErrorNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldError, v))
+}
+
+// ErrorIn applies the In predicate on the "error" field.
+func ErrorIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldError, vs...))
+}
+
+// ErrorNotIn applies the NotIn predicate on the "error" field.
+func ErrorNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldError, vs...))
+}
+
+// ErrorGT applies the GT predicate on the "error" field.
+func ErrorGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldError, v))
+}
+
+// ErrorGTE applies the GTE predicate on the "error" field.
+func ErrorGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldError, v))
+}
+
+// ErrorLT applies the LT predicate on the "error" field.
+func ErrorLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldError, v))
+}
+
+// ErrorLTE applies the LTE predicate on the "error" field.
+func ErrorLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldError, v))
+}
+
+// ErrorContains applies the Contains predicate on the "error" field.
+func ErrorContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldError, v))
+}
+
+// ErrorHasPrefix applies the HasPrefix predicate on the "error" field.
+func ErrorHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldError, v))
+}
+
+// ErrorHasSuffix applies the HasSuffix predicate on the "error" field.
+func ErrorHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldError, v))
+}
+
+// ErrorIsNil applies the IsNil predicate on the "error" field.
+func ErrorIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldError))
+}
+
+// ErrorNotNil applies the NotNil predicate on the "error" field.
+func ErrorNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldError))
+}
+
+// ErrorEqualFold applies the EqualFold predicate on the "error" field.
+func ErrorEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldError, v))
+}
+
+// ErrorContainsFold applies the ContainsFold predicate on the "error" field.
+func ErrorContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldError, v))
+}
+
+// StartedAtEQ applies the EQ predicate on the "started_at" field.
+func StartedAtEQ(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldStartedAt, v))
+}
+
+// StartedAtNEQ applies the NEQ predicate on the "started_at" field.
+func StartedAtNEQ(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldStartedAt, v))
+}
+
+// StartedAtIn applies the In predicate on the "started_at" field.
+func StartedAtIn(vs ...time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldStartedAt, vs...))
+}
+
+// StartedAtNotIn applies the NotIn predicate on the "started_at" field.
+func StartedAtNotIn(vs ...time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldStartedAt, vs...))
+}
+
+// StartedAtGT applies the GT predicate on the "started_at" field.
+func StartedAtGT(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldStartedAt, v))
+}
+
+// StartedAtGTE applies the GTE predicate on the "started_at" field.
+func StartedAtGTE(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldStartedAt, v))
+}
+
+// StartedAtLT applies the LT predicate on the "started_at" field.
+func StartedAtLT(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldStartedAt, v))
+}
+
+// StartedAtLTE applies the LTE predicate on the "started_at" field.
+func StartedAtLTE(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldStartedAt, v))
+}
+
+// StartedAtIsNil applies the IsNil predicate on the "started_at" field.
+func StartedAtIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldStartedAt))
+}
+
+// StartedAtNotNil applies the NotNil predicate on the "started_at" field.
+func StartedAtNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldStartedAt))
+}
+
+// CompletedAtEQ applies the EQ predicate on the "completed_at" field.
+func CompletedAtEQ(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldCompletedAt, v))
+}
+
+// CompletedAtNEQ applies the NEQ predicate on the "completed_at" field.
+func CompletedAtNEQ(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldCompletedAt, v))
+}
+
+// CompletedAtIn applies the In predicate on the "completed_at" field.
+func CompletedAtIn(vs ...time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldCompletedAt, vs...))
+}
+
+// CompletedAtNotIn applies the NotIn predicate on the "completed_at" field.
+func CompletedAtNotIn(vs ...time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldCompletedAt, vs...))
+}
+
+// CompletedAtGT applies the GT predicate on the "completed_at" field.
+func CompletedAtGT(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldCompletedAt, v))
+}
+
+// CompletedAtGTE applies the GTE predicate on the "completed_at" field.
+func CompletedAtGTE(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldCompletedAt, v))
+}
+
+// CompletedAtLT applies the LT predicate on the "completed_at" field.
+func CompletedAtLT(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldCompletedAt, v))
+}
+
+// CompletedAtLTE applies the LTE predicate on the "completed_at" field.
+func CompletedAtLTE(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldCompletedAt, v))
+}
+
+// CompletedAtIsNil applies the IsNil predicate on the "completed_at" field.
+func CompletedAtIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldCompletedAt))
+}
+
+// CompletedAtNotNil applies the NotNil predicate on the "completed_at" field.
+func CompletedAtNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldCompletedAt))
+}
+
+// KubernetesJobNameEQ applies the EQ predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameNEQ applies the NEQ predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameIn applies the In predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldKubernetesJobName, vs...))
+}
+
+// KubernetesJobNameNotIn applies the NotIn predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldKubernetesJobName, vs...))
+}
+
+// KubernetesJobNameGT applies the GT predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameGTE applies the GTE predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameLT applies the LT predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameLTE applies the LTE predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameContains applies the Contains predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameHasPrefix applies the HasPrefix predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameHasSuffix applies the HasSuffix predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameIsNil applies the IsNil predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldKubernetesJobName))
+}
+
+// KubernetesJobNameNotNil applies the NotNil predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldKubernetesJobName))
+}
+
+// KubernetesJobNameEqualFold applies the EqualFold predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobNameContainsFold applies the ContainsFold predicate on the "kubernetes_job_name" field.
+func KubernetesJobNameContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldKubernetesJobName, v))
+}
+
+// KubernetesJobStatusEQ applies the EQ predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusNEQ applies the NEQ predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusIn applies the In predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldKubernetesJobStatus, vs...))
+}
+
+// KubernetesJobStatusNotIn applies the NotIn predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldKubernetesJobStatus, vs...))
+}
+
+// KubernetesJobStatusGT applies the GT predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusGTE applies the GTE predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusLT applies the LT predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusLTE applies the LTE predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusContains applies the Contains predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusHasPrefix applies the HasPrefix predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusHasSuffix applies the HasSuffix predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusIsNil applies the IsNil predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldKubernetesJobStatus))
+}
+
+// KubernetesJobStatusNotNil applies the NotNil predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldKubernetesJobStatus))
+}
+
+// KubernetesJobStatusEqualFold applies the EqualFold predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldKubernetesJobStatus, v))
+}
+
+// KubernetesJobStatusContainsFold applies the ContainsFold predicate on the "kubernetes_job_status" field.
+func KubernetesJobStatusContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldKubernetesJobStatus, v))
+}
+
+// AttemptsEQ applies the EQ predicate on the "attempts" field.
+func AttemptsEQ(v int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldAttempts, v))
+}
+
+// AttemptsNEQ applies the NEQ predicate on the "attempts" field.
+func AttemptsNEQ(v int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldAttempts, v))
+}
+
+// AttemptsIn applies the In predicate on the "attempts" field.
+func AttemptsIn(vs ...int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldAttempts, vs...))
+}
+
+// AttemptsNotIn applies the NotIn predicate on the "attempts" field.
+func AttemptsNotIn(vs ...int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldAttempts, vs...))
+}
+
+// AttemptsGT applies the GT predicate on the "attempts" field.
+func AttemptsGT(v int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldAttempts, v))
+}
+
+// AttemptsGTE applies the GTE predicate on the "attempts" field.
+func AttemptsGTE(v int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldAttempts, v))
+}
+
+// AttemptsLT applies the LT predicate on the "attempts" field.
+func AttemptsLT(v int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldAttempts, v))
+}
+
+// AttemptsLTE applies the LTE predicate on the "attempts" field.
+func AttemptsLTE(v int) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldAttempts, v))
+}
+
+// HasService applies the HasEdge predicate on the "service" edge.
+func HasService() predicate.Deployment {
+	return predicate.Deployment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ServiceTable, ServiceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasServiceWith applies the HasEdge predicate on the "service" edge with a given conditions (other predicates).
+func HasServiceWith(preds ...predicate.Service) predicate.Deployment {
+	return predicate.Deployment(func(s *sql.Selector) {
+		step := newServiceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

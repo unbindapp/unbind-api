@@ -110,12 +110,8 @@ func (self *ServiceService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 	if err != nil {
 		return nil, err
 	}
-	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesBuildSecret, project.Edges.Team.Namespace, client)
-	if err != nil {
-		return nil, err
-	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets)+len(buildSecrets))
+	secretResponse := make([]*models.SecretResponse, len(secrets))
 	i := 0
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
@@ -125,16 +121,6 @@ func (self *ServiceService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 		}
 		i++
 	}
-	for k, v := range buildSecrets {
-		secretResponse[i] = &models.SecretResponse{
-			Type:          models.ServiceSecret,
-			Name:          k,
-			Value:         string(v),
-			IsBuildSecret: true,
-		}
-		i++
-	}
-
 	return secretResponse, nil
 }
 
@@ -233,17 +219,13 @@ func (self *ServiceService) UpsertSecrets(ctx context.Context, userID uuid.UUID,
 	}
 
 	// make secrets
-	secretName := service.KubernetesSecret
-	if isBuildSecret {
-		secretName = service.KubernetesBuildSecret
-	}
-	_, err = self.k8s.UpsertSecretValues(ctx, secretName, project.Edges.Team.Namespace, newSecrets, client)
+	_, err = self.k8s.UpsertSecretValues(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, newSecrets, client)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, secretName, project.Edges.Team.Namespace, client)
+	secrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
@@ -357,11 +339,7 @@ func (self *ServiceService) DeleteSecretsByKey(ctx context.Context, userID uuid.
 	}
 
 	// Get secrets
-	secretName := service.KubernetesSecret
-	if isBuildSecret {
-		secretName = service.KubernetesBuildSecret
-	}
-	secrets, err := self.k8s.GetSecretMap(ctx, secretName, project.Edges.Team.Namespace, client)
+	secrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +350,7 @@ func (self *ServiceService) DeleteSecretsByKey(ctx context.Context, userID uuid.
 	}
 
 	// Update secrets
-	_, err = self.k8s.UpdateSecret(ctx, secretName, project.Edges.Team.Namespace, secrets, client)
+	_, err = self.k8s.UpdateSecret(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, secrets, client)
 	if err != nil {
 		return nil, err
 	}
@@ -381,10 +359,9 @@ func (self *ServiceService) DeleteSecretsByKey(ctx context.Context, userID uuid.
 	i := 0
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
-			Type:          models.ServiceSecret,
-			Name:          k,
-			Value:         string(v),
-			IsBuildSecret: isBuildSecret,
+			Type:  models.ServiceSecret,
+			Name:  k,
+			Value: string(v),
 		}
 		i++
 	}

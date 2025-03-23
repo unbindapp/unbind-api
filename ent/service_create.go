@@ -13,7 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/buildjob"
+	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -163,20 +163,6 @@ func (sc *ServiceCreate) SetKubernetesSecret(s string) *ServiceCreate {
 	return sc
 }
 
-// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
-func (sc *ServiceCreate) SetKubernetesBuildSecret(s string) *ServiceCreate {
-	sc.mutation.SetKubernetesBuildSecret(s)
-	return sc
-}
-
-// SetNillableKubernetesBuildSecret sets the "kubernetes_build_secret" field if the given value is not nil.
-func (sc *ServiceCreate) SetNillableKubernetesBuildSecret(s *string) *ServiceCreate {
-	if s != nil {
-		sc.SetKubernetesBuildSecret(*s)
-	}
-	return sc
-}
-
 // SetID sets the "id" field.
 func (sc *ServiceCreate) SetID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetID(u)
@@ -220,19 +206,19 @@ func (sc *ServiceCreate) SetServiceConfig(s *ServiceConfig) *ServiceCreate {
 	return sc.SetServiceConfigID(s.ID)
 }
 
-// AddBuildJobIDs adds the "build_jobs" edge to the BuildJob entity by IDs.
-func (sc *ServiceCreate) AddBuildJobIDs(ids ...uuid.UUID) *ServiceCreate {
-	sc.mutation.AddBuildJobIDs(ids...)
+// AddDeploymentIDs adds the "deployments" edge to the Deployment entity by IDs.
+func (sc *ServiceCreate) AddDeploymentIDs(ids ...uuid.UUID) *ServiceCreate {
+	sc.mutation.AddDeploymentIDs(ids...)
 	return sc
 }
 
-// AddBuildJobs adds the "build_jobs" edges to the BuildJob entity.
-func (sc *ServiceCreate) AddBuildJobs(b ...*BuildJob) *ServiceCreate {
-	ids := make([]uuid.UUID, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// AddDeployments adds the "deployments" edges to the Deployment entity.
+func (sc *ServiceCreate) AddDeployments(d ...*Deployment) *ServiceCreate {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
 	}
-	return sc.AddBuildJobIDs(ids...)
+	return sc.AddDeploymentIDs(ids...)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -277,10 +263,6 @@ func (sc *ServiceCreate) defaults() {
 	if _, ok := sc.mutation.UpdatedAt(); !ok {
 		v := service.DefaultUpdatedAt()
 		sc.mutation.SetUpdatedAt(v)
-	}
-	if _, ok := sc.mutation.KubernetesBuildSecret(); !ok {
-		v := service.DefaultKubernetesBuildSecret
-		sc.mutation.SetKubernetesBuildSecret(v)
 	}
 	if _, ok := sc.mutation.ID(); !ok {
 		v := service.DefaultID()
@@ -338,9 +320,6 @@ func (sc *ServiceCreate) check() error {
 	}
 	if _, ok := sc.mutation.KubernetesSecret(); !ok {
 		return &ValidationError{Name: "kubernetes_secret", err: errors.New(`ent: missing required field "Service.kubernetes_secret"`)}
-	}
-	if _, ok := sc.mutation.KubernetesBuildSecret(); !ok {
-		return &ValidationError{Name: "kubernetes_build_secret", err: errors.New(`ent: missing required field "Service.kubernetes_build_secret"`)}
 	}
 	if len(sc.mutation.EnvironmentIDs()) == 0 {
 		return &ValidationError{Name: "environment", err: errors.New(`ent: missing required edge "Service.environment"`)}
@@ -425,10 +404,6 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
 		_node.KubernetesSecret = value
 	}
-	if value, ok := sc.mutation.KubernetesBuildSecret(); ok {
-		_spec.SetField(service.FieldKubernetesBuildSecret, field.TypeString, value)
-		_node.KubernetesBuildSecret = value
-	}
 	if nodes := sc.mutation.EnvironmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -479,15 +454,15 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := sc.mutation.BuildJobsIDs(); len(nodes) > 0 {
+	if nodes := sc.mutation.DeploymentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   service.BuildJobsTable,
-			Columns: []string{service.BuildJobsColumn},
+			Table:   service.DeploymentsTable,
+			Columns: []string{service.DeploymentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -718,18 +693,6 @@ func (u *ServiceUpsert) SetKubernetesSecret(v string) *ServiceUpsert {
 // UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
 func (u *ServiceUpsert) UpdateKubernetesSecret() *ServiceUpsert {
 	u.SetExcluded(service.FieldKubernetesSecret)
-	return u
-}
-
-// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
-func (u *ServiceUpsert) SetKubernetesBuildSecret(v string) *ServiceUpsert {
-	u.Set(service.FieldKubernetesBuildSecret, v)
-	return u
-}
-
-// UpdateKubernetesBuildSecret sets the "kubernetes_build_secret" field to the value that was provided on create.
-func (u *ServiceUpsert) UpdateKubernetesBuildSecret() *ServiceUpsert {
-	u.SetExcluded(service.FieldKubernetesBuildSecret)
 	return u
 }
 
@@ -984,20 +947,6 @@ func (u *ServiceUpsertOne) SetKubernetesSecret(v string) *ServiceUpsertOne {
 func (u *ServiceUpsertOne) UpdateKubernetesSecret() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateKubernetesSecret()
-	})
-}
-
-// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
-func (u *ServiceUpsertOne) SetKubernetesBuildSecret(v string) *ServiceUpsertOne {
-	return u.Update(func(s *ServiceUpsert) {
-		s.SetKubernetesBuildSecret(v)
-	})
-}
-
-// UpdateKubernetesBuildSecret sets the "kubernetes_build_secret" field to the value that was provided on create.
-func (u *ServiceUpsertOne) UpdateKubernetesBuildSecret() *ServiceUpsertOne {
-	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateKubernetesBuildSecret()
 	})
 }
 
@@ -1419,20 +1368,6 @@ func (u *ServiceUpsertBulk) SetKubernetesSecret(v string) *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) UpdateKubernetesSecret() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateKubernetesSecret()
-	})
-}
-
-// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
-func (u *ServiceUpsertBulk) SetKubernetesBuildSecret(v string) *ServiceUpsertBulk {
-	return u.Update(func(s *ServiceUpsert) {
-		s.SetKubernetesBuildSecret(v)
-	})
-}
-
-// UpdateKubernetesBuildSecret sets the "kubernetes_build_secret" field to the value that was provided on create.
-func (u *ServiceUpsertBulk) UpdateKubernetesBuildSecret() *ServiceUpsertBulk {
-	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateKubernetesBuildSecret()
 	})
 }
 

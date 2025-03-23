@@ -13,14 +13,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jobID string, env map[string]string) (jobName string, err error) {
+func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, jobID string, env map[string]string) (jobName string, err error) {
 	// Cancel any active job for this service
 	if err = self.CancelJobsByServiceID(ctx, serviceID); err != nil {
 		return "", err
 	}
 
 	// Build a unique job name
-	jobName = fmt.Sprintf("%s-build-%d", jobID, time.Now().Unix())
+	jobName = fmt.Sprintf("%s-deployment-%d", jobID, time.Now().Unix())
 
 	// Convert environment variables from map to slice
 	var envVars []corev1.EnvVar
@@ -30,8 +30,8 @@ func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jo
 
 	// Create a default set of annotations
 	annotations := map[string]string{
-		"build-triggered-by": "github-webhook",
-		"trigger-timestamp":  time.Now().Format(time.RFC3339),
+		"deployment-triggered-by": "github-webhook",
+		"trigger-timestamp":       time.Now().Format(time.RFC3339),
 	}
 
 	// Define the Job object
@@ -39,10 +39,10 @@ func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jo
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jobName,
 			Labels: map[string]string{
-				"build":     "true",
-				"jobID":     jobID,
-				"serviceID": serviceID,
-				"job-name":  jobName,
+				"deployment": "true",
+				"jobID":      jobID,
+				"serviceID":  serviceID,
+				"job-name":   jobName,
 			},
 			Annotations: annotations,
 		},
@@ -55,10 +55,10 @@ func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jo
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"build":     "true",
-						"jobID":     jobID,
-						"serviceID": serviceID,
-						"job-name":  jobName,
+						"deployment": "true",
+						"jobID":      jobID,
+						"serviceID":  serviceID,
+						"job-name":   jobName,
 					},
 				},
 				Spec: corev1.PodSpec{

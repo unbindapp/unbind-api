@@ -1,18 +1,18 @@
-package builds_service
+package deployments_service
 
 import (
 	"context"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
+	"github.com/unbindapp/unbind-api/internal/deployctl"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *BuildsService) CreateManualBuildJob(ctx context.Context, requesterUserId uuid.UUID, input *models.CreateBuildJobInput) (*models.BuildJobResponse, error) {
+func (self *DeploymentService) CreateManualDeployment(ctx context.Context, requesterUserId uuid.UUID, input *models.CreateDeploymentInput) (*models.DeploymentResponse, error) {
 	if err := validate.Validator().Struct(input); err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
@@ -58,12 +58,12 @@ func (self *BuildsService) CreateManualBuildJob(ctx context.Context, requesterUs
 	}
 
 	// Enqueue build job
-	env, err := self.buildController.PopulateBuildEnvironment(ctx, input.ServiceID)
+	env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID)
 	if err != nil {
 		return nil, err
 	}
 
-	job, err := self.buildController.EnqueueBuildJob(ctx, buildctl.BuildJobRequest{
+	job, err := self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
 		ServiceID:   input.ServiceID,
 		Environment: env,
 	})
@@ -71,6 +71,6 @@ func (self *BuildsService) CreateManualBuildJob(ctx context.Context, requesterUs
 		return nil, err
 	}
 
-	return models.TransformBuildJobEntity(job), nil
+	return models.TransformDeploymentEntity(job), nil
 
 }

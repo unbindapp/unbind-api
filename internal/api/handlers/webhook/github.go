@@ -15,9 +15,9 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -300,16 +300,16 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				continue
 			}
 
-			env, err := self.srv.BuildController.PopulateBuildEnvironment(ctx, service.ID)
+			env, err := self.srv.DeploymentController.PopulateBuildEnvironment(ctx, service.ID)
 			if err != nil {
 				log.Error("Error populating build environment", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to populate build environment")
 			}
 
 			log.Info("Enqueuing build", "repo", repoName, "branch", ref, "serviceID", service.ID, "installationID", installationID, "appID", installation.GithubAppID, "repoUrl", repoUrl)
-			jobID, err := self.srv.BuildController.EnqueueBuildJob(
+			jobID, err := self.srv.DeploymentController.EnqueueDeploymentJob(
 				ctx,
-				buildctl.BuildJobRequest{
+				deployctl.DeploymentJobRequest{
 					ServiceID:   service.ID,
 					Environment: env,
 				},

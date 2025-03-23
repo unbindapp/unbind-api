@@ -37,10 +37,9 @@ func (u SecretType) Schema(r huma.Registry) *huma.Schema {
 }
 
 type SecretResponse struct {
-	Type          SecretType `json:"type"`
-	Name          string     `json:"name"`
-	Value         string     `json:"value"`
-	IsBuildSecret bool       `json:"is_build_secret" doc:"Whether or not this secret is for build process, not deployement"`
+	Type  SecretType `json:"type"`
+	Name  string     `json:"name"`
+	Value string     `json:"value"`
 }
 
 type SecretDeleteInput struct {

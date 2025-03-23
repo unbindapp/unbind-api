@@ -1,4 +1,4 @@
-package builds_service
+package deployments_service
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *BuildsService) GetBuildJobsForService(ctx context.Context, requesterUserId uuid.UUID, input *models.GetBuildJobsInput) ([]*models.BuildJobResponse, *models.PaginationResponseMetadata, error) {
+func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, requesterUserId uuid.UUID, input *models.GetDeploymentsInput) ([]*models.DeploymentResponse, *models.PaginationResponseMetadata, error) {
 	// Check permissions
 	if err := self.repo.Permissions().Check(ctx, requesterUserId, []permissions_repo.PermissionCheck{
 		{
@@ -57,18 +57,18 @@ func (self *BuildsService) GetBuildJobsForService(ctx context.Context, requester
 	if !input.Cursor.IsZero() {
 		cursor = &input.Cursor
 	}
-	var status *schema.BuildJobStatus
+	var status *schema.DeploymentStatus
 	if input.Status != "" {
 		status = &input.Status
 	}
 	// Get build jobs
-	buildJobs, nextCursor, err := self.repo.BuildJob().GetByServiceIDPaginated(ctx, input.ServiceID, cursor, status)
+	deployments, nextCursor, err := self.repo.Deployment().GetByServiceIDPaginated(ctx, input.ServiceID, cursor, status)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Transform response
-	resp := models.TransformBuildJobEntities(buildJobs)
+	resp := models.TransformDeploymentEntities(deployments)
 
 	// Get pagination metadata
 	metadata := &models.PaginationResponseMetadata{

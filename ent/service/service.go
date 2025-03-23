@@ -43,16 +43,14 @@ const (
 	FieldGitRepository = "git_repository"
 	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
 	FieldKubernetesSecret = "kubernetes_secret"
-	// FieldKubernetesBuildSecret holds the string denoting the kubernetes_build_secret field in the database.
-	FieldKubernetesBuildSecret = "kubernetes_build_secret"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
 	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
 	EdgeGithubInstallation = "github_installation"
 	// EdgeServiceConfig holds the string denoting the service_config edge name in mutations.
 	EdgeServiceConfig = "service_config"
-	// EdgeBuildJobs holds the string denoting the build_jobs edge name in mutations.
-	EdgeBuildJobs = "build_jobs"
+	// EdgeDeployments holds the string denoting the deployments edge name in mutations.
+	EdgeDeployments = "deployments"
 	// Table holds the table name of the service in the database.
 	Table = "services"
 	// EnvironmentTable is the table that holds the environment relation/edge.
@@ -76,13 +74,13 @@ const (
 	ServiceConfigInverseTable = "service_configs"
 	// ServiceConfigColumn is the table column denoting the service_config relation/edge.
 	ServiceConfigColumn = "service_id"
-	// BuildJobsTable is the table that holds the build_jobs relation/edge.
-	BuildJobsTable = "build_jobs"
-	// BuildJobsInverseTable is the table name for the BuildJob entity.
-	// It exists in this package in order to avoid circular dependency with the "buildjob" package.
-	BuildJobsInverseTable = "build_jobs"
-	// BuildJobsColumn is the table column denoting the build_jobs relation/edge.
-	BuildJobsColumn = "service_id"
+	// DeploymentsTable is the table that holds the deployments relation/edge.
+	DeploymentsTable = "deployments"
+	// DeploymentsInverseTable is the table name for the Deployment entity.
+	// It exists in this package in order to avoid circular dependency with the "deployment" package.
+	DeploymentsInverseTable = "deployments"
+	// DeploymentsColumn is the table column denoting the deployments relation/edge.
+	DeploymentsColumn = "service_id"
 )
 
 // Columns holds all SQL columns for service fields.
@@ -101,7 +99,6 @@ var Columns = []string{
 	FieldGithubInstallationID,
 	FieldGitRepository,
 	FieldKubernetesSecret,
-	FieldKubernetesBuildSecret,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -123,8 +120,6 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// DefaultKubernetesBuildSecret holds the default value on creation for the "kubernetes_build_secret" field.
-	DefaultKubernetesBuildSecret string
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -268,11 +263,6 @@ func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
 }
 
-// ByKubernetesBuildSecret orders the results by the kubernetes_build_secret field.
-func ByKubernetesBuildSecret(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldKubernetesBuildSecret, opts...).ToFunc()
-}
-
 // ByEnvironmentField orders the results by environment field.
 func ByEnvironmentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -294,17 +284,17 @@ func ByServiceConfigField(field string, opts ...sql.OrderTermOption) OrderOption
 	}
 }
 
-// ByBuildJobsCount orders the results by build_jobs count.
-func ByBuildJobsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByDeploymentsCount orders the results by deployments count.
+func ByDeploymentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newBuildJobsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newDeploymentsStep(), opts...)
 	}
 }
 
-// ByBuildJobs orders the results by build_jobs terms.
-func ByBuildJobs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByDeployments orders the results by deployments terms.
+func ByDeployments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newBuildJobsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newDeploymentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newEnvironmentStep() *sqlgraph.Step {
@@ -328,10 +318,10 @@ func newServiceConfigStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2O, false, ServiceConfigTable, ServiceConfigColumn),
 	)
 }
-func newBuildJobsStep() *sqlgraph.Step {
+func newDeploymentsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(BuildJobsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, BuildJobsTable, BuildJobsColumn),
+		sqlgraph.To(DeploymentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, DeploymentsTable, DeploymentsColumn),
 	)
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
-	builds_handler "github.com/unbindapp/unbind-api/internal/api/handlers/builds"
+	deployments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/deployments"
 	environments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/environments"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
@@ -29,14 +29,14 @@ import (
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/api/server"
-	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	builds_service "github.com/unbindapp/unbind-api/internal/services/builds"
+	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
 	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
@@ -127,8 +127,8 @@ func startAPI(cfg *config.Config) {
 	// Create github client
 	githubClient := github.NewGithubClient(cfg)
 
-	// Create build controller
-	buildController := buildctl.NewBuildController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient)
+	// Create deployment controller
+	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient)
 
 	// Implementation
 	srvImpl := &server.Server{
@@ -147,16 +147,16 @@ func startAPI(cfg *config.Config) {
 			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalURL),
 			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 		},
-		GithubClient:       githubClient,
-		StringCache:        cache.NewStringCache(valkeyClient, "unbind"),
-		HttpClient:         &http.Client{},
-		BuildController:    buildController,
-		TeamService:        team_service.NewTeamService(repo, kubeClient),
-		ProjectService:     project_service.NewProjectService(repo, kubeClient),
-		ServiceService:     service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
-		EnvironmentService: environment_service.NewEnvironmentService(repo, kubeClient),
-		LogService:         logs_service.NewLogsService(repo, kubeClient),
-		BuildJobService:    builds_service.NewBuildsService(repo, buildController),
+		GithubClient:         githubClient,
+		StringCache:          cache.NewStringCache(valkeyClient, "unbind"),
+		HttpClient:           &http.Client{},
+		DeploymentController: deploymentController,
+		TeamService:          team_service.NewTeamService(repo, kubeClient),
+		ProjectService:       project_service.NewProjectService(repo, kubeClient),
+		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
+		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
+		LogService:           logs_service.NewLogsService(repo, kubeClient),
+		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController),
 	}
 
 	// New chi router
@@ -322,14 +322,14 @@ func startAPI(cfg *config.Config) {
 	})
 	logs_handler.RegisterHandlers(srvImpl, logsGroup)
 
-	// /builds group
-	buildsGroup := huma.NewGroup(api, "/builds")
-	buildsGroup.UseMiddleware(mw.Authenticate)
-	buildsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Builds"}
+	// /deployments group
+	deploymentsGroup := huma.NewGroup(api, "/deployments")
+	deploymentsGroup.UseMiddleware(mw.Authenticate)
+	deploymentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Deployments"}
 		next(op)
 	})
-	builds_handler.RegisterHandlers(srvImpl, buildsGroup)
+	deployments_handler.RegisterHandlers(srvImpl, deploymentsGroup)
 
 	// Start the server
 	addr := ":8089"
@@ -340,8 +340,8 @@ func startAPI(cfg *config.Config) {
 		Handler: r,
 	}
 
-	// Start build queue processeor
-	buildController.StartAsync()
+	// Start deployment queue processeor
+	deploymentController.StartAsync()
 
 	// Start the server in a goroutine
 	go func() {

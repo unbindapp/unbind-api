@@ -1,30 +1,31 @@
-package builds_service
+package deployments_service
 
 import (
 	"context"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/internal/buildctl"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // Integrate builds management with internal permissions and kubernetes RBAC
-type BuildsService struct {
-	repo            repositories.RepositoriesInterface
-	buildController *buildctl.BuildController
+type DeploymentService struct {
+	repo                 repositories.RepositoriesInterface
+	deploymentController *deployctl.DeploymentController
 }
 
-func NewBuildsService(repo repositories.RepositoriesInterface, buildController *buildctl.BuildController) *BuildsService {
-	return &BuildsService{
-		repo: repo,
+func NewDeploymentService(repo repositories.RepositoriesInterface, deploymentController *deployctl.DeploymentController) *DeploymentService {
+	return &DeploymentService{
+		repo:                 repo,
+		deploymentController: deploymentController,
 	}
 }
 
-func (self *BuildsService) validateInputs(ctx context.Context, input models.BuildJobInputRequirements) error {
+func (self *DeploymentService) validateInputs(ctx context.Context, input models.DeploymentInputRequirements) error {
 	// Get team
 	team, err := self.repo.Team().GetByID(ctx, input.GetTeamID())
 	if err != nil {

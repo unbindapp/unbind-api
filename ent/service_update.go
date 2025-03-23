@@ -12,7 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/buildjob"
+	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -225,20 +225,6 @@ func (su *ServiceUpdate) SetNillableKubernetesSecret(s *string) *ServiceUpdate {
 	return su
 }
 
-// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
-func (su *ServiceUpdate) SetKubernetesBuildSecret(s string) *ServiceUpdate {
-	su.mutation.SetKubernetesBuildSecret(s)
-	return su
-}
-
-// SetNillableKubernetesBuildSecret sets the "kubernetes_build_secret" field if the given value is not nil.
-func (su *ServiceUpdate) SetNillableKubernetesBuildSecret(s *string) *ServiceUpdate {
-	if s != nil {
-		su.SetKubernetesBuildSecret(*s)
-	}
-	return su
-}
-
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
 	return su.SetEnvironmentID(e.ID)
@@ -268,19 +254,19 @@ func (su *ServiceUpdate) SetServiceConfig(s *ServiceConfig) *ServiceUpdate {
 	return su.SetServiceConfigID(s.ID)
 }
 
-// AddBuildJobIDs adds the "build_jobs" edge to the BuildJob entity by IDs.
-func (su *ServiceUpdate) AddBuildJobIDs(ids ...uuid.UUID) *ServiceUpdate {
-	su.mutation.AddBuildJobIDs(ids...)
+// AddDeploymentIDs adds the "deployments" edge to the Deployment entity by IDs.
+func (su *ServiceUpdate) AddDeploymentIDs(ids ...uuid.UUID) *ServiceUpdate {
+	su.mutation.AddDeploymentIDs(ids...)
 	return su
 }
 
-// AddBuildJobs adds the "build_jobs" edges to the BuildJob entity.
-func (su *ServiceUpdate) AddBuildJobs(b ...*BuildJob) *ServiceUpdate {
-	ids := make([]uuid.UUID, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// AddDeployments adds the "deployments" edges to the Deployment entity.
+func (su *ServiceUpdate) AddDeployments(d ...*Deployment) *ServiceUpdate {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
 	}
-	return su.AddBuildJobIDs(ids...)
+	return su.AddDeploymentIDs(ids...)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -306,25 +292,25 @@ func (su *ServiceUpdate) ClearServiceConfig() *ServiceUpdate {
 	return su
 }
 
-// ClearBuildJobs clears all "build_jobs" edges to the BuildJob entity.
-func (su *ServiceUpdate) ClearBuildJobs() *ServiceUpdate {
-	su.mutation.ClearBuildJobs()
+// ClearDeployments clears all "deployments" edges to the Deployment entity.
+func (su *ServiceUpdate) ClearDeployments() *ServiceUpdate {
+	su.mutation.ClearDeployments()
 	return su
 }
 
-// RemoveBuildJobIDs removes the "build_jobs" edge to BuildJob entities by IDs.
-func (su *ServiceUpdate) RemoveBuildJobIDs(ids ...uuid.UUID) *ServiceUpdate {
-	su.mutation.RemoveBuildJobIDs(ids...)
+// RemoveDeploymentIDs removes the "deployments" edge to Deployment entities by IDs.
+func (su *ServiceUpdate) RemoveDeploymentIDs(ids ...uuid.UUID) *ServiceUpdate {
+	su.mutation.RemoveDeploymentIDs(ids...)
 	return su
 }
 
-// RemoveBuildJobs removes "build_jobs" edges to BuildJob entities.
-func (su *ServiceUpdate) RemoveBuildJobs(b ...*BuildJob) *ServiceUpdate {
-	ids := make([]uuid.UUID, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// RemoveDeployments removes "deployments" edges to Deployment entities.
+func (su *ServiceUpdate) RemoveDeployments(d ...*Deployment) *ServiceUpdate {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
 	}
-	return su.RemoveBuildJobIDs(ids...)
+	return su.RemoveDeploymentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -456,9 +442,6 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
 	}
-	if value, ok := su.mutation.KubernetesBuildSecret(); ok {
-		_spec.SetField(service.FieldKubernetesBuildSecret, field.TypeString, value)
-	}
 	if su.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -546,28 +529,28 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if su.mutation.BuildJobsCleared() {
+	if su.mutation.DeploymentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   service.BuildJobsTable,
-			Columns: []string{service.BuildJobsColumn},
+			Table:   service.DeploymentsTable,
+			Columns: []string{service.DeploymentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.RemovedBuildJobsIDs(); len(nodes) > 0 && !su.mutation.BuildJobsCleared() {
+	if nodes := su.mutation.RemovedDeploymentsIDs(); len(nodes) > 0 && !su.mutation.DeploymentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   service.BuildJobsTable,
-			Columns: []string{service.BuildJobsColumn},
+			Table:   service.DeploymentsTable,
+			Columns: []string{service.DeploymentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -575,15 +558,15 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.mutation.BuildJobsIDs(); len(nodes) > 0 {
+	if nodes := su.mutation.DeploymentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   service.BuildJobsTable,
-			Columns: []string{service.BuildJobsColumn},
+			Table:   service.DeploymentsTable,
+			Columns: []string{service.DeploymentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -803,20 +786,6 @@ func (suo *ServiceUpdateOne) SetNillableKubernetesSecret(s *string) *ServiceUpda
 	return suo
 }
 
-// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
-func (suo *ServiceUpdateOne) SetKubernetesBuildSecret(s string) *ServiceUpdateOne {
-	suo.mutation.SetKubernetesBuildSecret(s)
-	return suo
-}
-
-// SetNillableKubernetesBuildSecret sets the "kubernetes_build_secret" field if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableKubernetesBuildSecret(s *string) *ServiceUpdateOne {
-	if s != nil {
-		suo.SetKubernetesBuildSecret(*s)
-	}
-	return suo
-}
-
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
 	return suo.SetEnvironmentID(e.ID)
@@ -846,19 +815,19 @@ func (suo *ServiceUpdateOne) SetServiceConfig(s *ServiceConfig) *ServiceUpdateOn
 	return suo.SetServiceConfigID(s.ID)
 }
 
-// AddBuildJobIDs adds the "build_jobs" edge to the BuildJob entity by IDs.
-func (suo *ServiceUpdateOne) AddBuildJobIDs(ids ...uuid.UUID) *ServiceUpdateOne {
-	suo.mutation.AddBuildJobIDs(ids...)
+// AddDeploymentIDs adds the "deployments" edge to the Deployment entity by IDs.
+func (suo *ServiceUpdateOne) AddDeploymentIDs(ids ...uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.AddDeploymentIDs(ids...)
 	return suo
 }
 
-// AddBuildJobs adds the "build_jobs" edges to the BuildJob entity.
-func (suo *ServiceUpdateOne) AddBuildJobs(b ...*BuildJob) *ServiceUpdateOne {
-	ids := make([]uuid.UUID, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// AddDeployments adds the "deployments" edges to the Deployment entity.
+func (suo *ServiceUpdateOne) AddDeployments(d ...*Deployment) *ServiceUpdateOne {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
 	}
-	return suo.AddBuildJobIDs(ids...)
+	return suo.AddDeploymentIDs(ids...)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -884,25 +853,25 @@ func (suo *ServiceUpdateOne) ClearServiceConfig() *ServiceUpdateOne {
 	return suo
 }
 
-// ClearBuildJobs clears all "build_jobs" edges to the BuildJob entity.
-func (suo *ServiceUpdateOne) ClearBuildJobs() *ServiceUpdateOne {
-	suo.mutation.ClearBuildJobs()
+// ClearDeployments clears all "deployments" edges to the Deployment entity.
+func (suo *ServiceUpdateOne) ClearDeployments() *ServiceUpdateOne {
+	suo.mutation.ClearDeployments()
 	return suo
 }
 
-// RemoveBuildJobIDs removes the "build_jobs" edge to BuildJob entities by IDs.
-func (suo *ServiceUpdateOne) RemoveBuildJobIDs(ids ...uuid.UUID) *ServiceUpdateOne {
-	suo.mutation.RemoveBuildJobIDs(ids...)
+// RemoveDeploymentIDs removes the "deployments" edge to Deployment entities by IDs.
+func (suo *ServiceUpdateOne) RemoveDeploymentIDs(ids ...uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.RemoveDeploymentIDs(ids...)
 	return suo
 }
 
-// RemoveBuildJobs removes "build_jobs" edges to BuildJob entities.
-func (suo *ServiceUpdateOne) RemoveBuildJobs(b ...*BuildJob) *ServiceUpdateOne {
-	ids := make([]uuid.UUID, len(b))
-	for i := range b {
-		ids[i] = b[i].ID
+// RemoveDeployments removes "deployments" edges to Deployment entities.
+func (suo *ServiceUpdateOne) RemoveDeployments(d ...*Deployment) *ServiceUpdateOne {
+	ids := make([]uuid.UUID, len(d))
+	for i := range d {
+		ids[i] = d[i].ID
 	}
-	return suo.RemoveBuildJobIDs(ids...)
+	return suo.RemoveDeploymentIDs(ids...)
 }
 
 // Where appends a list predicates to the ServiceUpdate builder.
@@ -1064,9 +1033,6 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	if value, ok := suo.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
 	}
-	if value, ok := suo.mutation.KubernetesBuildSecret(); ok {
-		_spec.SetField(service.FieldKubernetesBuildSecret, field.TypeString, value)
-	}
 	if suo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1154,28 +1120,28 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if suo.mutation.BuildJobsCleared() {
+	if suo.mutation.DeploymentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   service.BuildJobsTable,
-			Columns: []string{service.BuildJobsColumn},
+			Table:   service.DeploymentsTable,
+			Columns: []string{service.DeploymentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.RemovedBuildJobsIDs(); len(nodes) > 0 && !suo.mutation.BuildJobsCleared() {
+	if nodes := suo.mutation.RemovedDeploymentsIDs(); len(nodes) > 0 && !suo.mutation.DeploymentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   service.BuildJobsTable,
-			Columns: []string{service.BuildJobsColumn},
+			Table:   service.DeploymentsTable,
+			Columns: []string{service.DeploymentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1183,15 +1149,15 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.mutation.BuildJobsIDs(); len(nodes) > 0 {
+	if nodes := suo.mutation.DeploymentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   service.BuildJobsTable,
-			Columns: []string{service.BuildJobsColumn},
+			Table:   service.DeploymentsTable,
+			Columns: []string{service.DeploymentsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(buildjob.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

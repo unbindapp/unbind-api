@@ -7,7 +7,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
-	buildjob_repo "github.com/unbindapp/unbind-api/internal/repositories/buildjob"
+	deployment_repo "github.com/unbindapp/unbind-api/internal/repositories/deployment"
 	environment_repo "github.com/unbindapp/unbind-api/internal/repositories/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repositories/github"
 	group_repo "github.com/unbindapp/unbind-api/internal/repositories/group"
@@ -41,7 +41,7 @@ type RepositoriesInterface interface {
 	Environment() environment_repo.EnvironmentRepositoryInterface
 	// Service returns the Service repository
 	Service() service_repo.ServiceRepositoryInterface
-	// BuildJob returns the BuildJob repository
-	BuildJob() buildjob_repo.BuildJobRepositoryInterface
+	// Deployment returns the Deployment repository
+	Deployment() deployment_repo.DeploymentRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	// BuildJobsColumns holds the columns for the "build_jobs" table.
-	BuildJobsColumns = []*schema.Column{
+	// DeploymentsColumns holds the columns for the "deployments" table.
+	DeploymentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -23,31 +23,19 @@ var (
 		{Name: "attempts", Type: field.TypeInt, Default: 0},
 		{Name: "service_id", Type: field.TypeUUID},
 	}
-	// BuildJobsTable holds the schema information for the "build_jobs" table.
-	BuildJobsTable = &schema.Table{
-		Name:       "build_jobs",
-		Columns:    BuildJobsColumns,
-		PrimaryKey: []*schema.Column{BuildJobsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "build_jobs_services_build_jobs",
-				Columns:    []*schema.Column{BuildJobsColumns[10]},
-				RefColumns: []*schema.Column{ServicesColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-	}
-	// DeploymentsColumns holds the columns for the "deployments" table.
-	DeploymentsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-	}
 	// DeploymentsTable holds the schema information for the "deployments" table.
 	DeploymentsTable = &schema.Table{
 		Name:       "deployments",
 		Columns:    DeploymentsColumns,
 		PrimaryKey: []*schema.Column{DeploymentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "deployments_services_deployments",
+				Columns:    []*schema.Column{DeploymentsColumns[10]},
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// EnvironmentsColumns holds the columns for the "environments" table.
 	EnvironmentsColumns = []*schema.Column{
@@ -295,7 +283,6 @@ var (
 		{Name: "framework", Type: field.TypeEnum, Nullable: true, Enums: []string{"next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown"}},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
 		{Name: "kubernetes_secret", Type: field.TypeString},
-		{Name: "kubernetes_build_secret", Type: field.TypeString, Default: ""},
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
 	}
@@ -307,13 +294,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[13]},
+				Columns:    []*schema.Column{ServicesColumns[12]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[14]},
+				Columns:    []*schema.Column{ServicesColumns[13]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -456,7 +443,6 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		BuildJobsTable,
 		DeploymentsTable,
 		EnvironmentsTable,
 		GithubAppsTable,
@@ -478,9 +464,9 @@ var (
 )
 
 func init() {
-	BuildJobsTable.ForeignKeys[0].RefTable = ServicesTable
-	BuildJobsTable.Annotation = &entsql.Annotation{
-		Table: "build_jobs",
+	DeploymentsTable.ForeignKeys[0].RefTable = ServicesTable
+	DeploymentsTable.Annotation = &entsql.Annotation{
+		Table: "deployments",
 	}
 	EnvironmentsTable.ForeignKeys[0].RefTable = ProjectsTable
 	EnvironmentsTable.Annotation = &entsql.Annotation{

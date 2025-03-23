@@ -6,9 +6,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// BuildJob is the predicate function for buildjob builders.
-type BuildJob func(*sql.Selector)
-
 // Deployment is the predicate function for deployment builders.
 type Deployment func(*sql.Selector)
 

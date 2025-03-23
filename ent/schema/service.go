@@ -38,8 +38,6 @@ func (Service) Fields() []ent.Field {
 		field.Int64("github_installation_id").Optional().Nillable().Comment("Optional reference to GitHub installation"),
 		field.String("git_repository").Optional().Nillable().Comment("GitHub repository name"),
 		field.String("kubernetes_secret").Comment("Kubernetes secret for this service"),
-		// ! TODO - remove default after migration
-		field.String("kubernetes_build_secret").Default("").Comment("Kubernetes secret reference, used for builds."),
 	}
 }
 
@@ -52,8 +50,8 @@ func (Service) Edges() []ent.Edge {
 		edge.From("github_installation", GithubInstallation.Type).Ref("services").Field("github_installation_id").Unique(),
 		// O2O edge to keep track of the service configuration
 		edge.To("service_config", ServiceConfig.Type).Unique(),
-		// O2M edge to keep track of the build jobs
-		edge.To("build_jobs", BuildJob.Type),
+		// O2M edge to keep track of deployments
+		edge.To("deployments", Deployment.Type),
 	}
 }
 

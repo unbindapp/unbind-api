@@ -1,4 +1,4 @@
-package builds_handler
+package deployments_handler
 
 import (
 	"context"
@@ -12,17 +12,17 @@ import (
 type CreateBuildInput struct {
 	server.BaseAuthInput
 	Body struct {
-		models.CreateBuildJobInput
+		models.CreateDeploymentInput
 	}
 }
 
 type CreateBuildOutput struct {
 	Body struct {
-		Data *models.BuildJobResponse `json:"data"`
+		Data *models.DeploymentResponse `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) CreateBuild(ctx context.Context, input *CreateBuildInput) (*CreateBuildOutput, error) {
+func (self *HandlerGroup) CreateDeployment(ctx context.Context, input *CreateBuildInput) (*CreateBuildOutput, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -31,7 +31,7 @@ func (self *HandlerGroup) CreateBuild(ctx context.Context, input *CreateBuildInp
 	}
 
 	// Create build job
-	buildJob, err := self.srv.BuildJobService.CreateManualBuildJob(ctx, user.ID, &input.Body.CreateBuildJobInput)
+	buildJob, err := self.srv.DeploymentService.CreateManualDeployment(ctx, user.ID, &input.Body.CreateDeploymentInput)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}

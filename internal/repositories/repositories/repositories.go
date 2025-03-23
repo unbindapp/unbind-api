@@ -5,7 +5,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
-	buildjob_repo "github.com/unbindapp/unbind-api/internal/repositories/buildjob"
+	deployment_repo "github.com/unbindapp/unbind-api/internal/repositories/deployment"
 	environment_repo "github.com/unbindapp/unbind-api/internal/repositories/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repositories/github"
 	group_repo "github.com/unbindapp/unbind-api/internal/repositories/group"
@@ -32,7 +32,7 @@ type Repositories struct {
 	permissions permissions_repo.PermissionsRepositoryInterface
 	environment environment_repo.EnvironmentRepositoryInterface
 	service     service_repo.ServiceRepositoryInterface
-	buildJob    buildjob_repo.BuildJobRepositoryInterface
+	deployment  deployment_repo.DeploymentRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -47,7 +47,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
 	environmentRepo := environment_repo.NewEnvironmentRepository(db)
 	serviceRepo := service_repo.NewServiceRepository(db)
-	buildJobRepo := buildjob_repo.NewBuildJobRepository(db)
+	deploymentRepo := deployment_repo.NewDeploymentRepository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -60,7 +60,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		permissions: permissionsRepo,
 		environment: environmentRepo,
 		service:     serviceRepo,
-		buildJob:    buildJobRepo,
+		deployment:  deploymentRepo,
 	}
 }
 
@@ -114,9 +114,9 @@ func (r *Repositories) Service() service_repo.ServiceRepositoryInterface {
 	return r.service
 }
 
-// BuildJob returns the BuildJob repository
-func (r *Repositories) BuildJob() buildjob_repo.BuildJobRepositoryInterface {
-	return r.buildJob
+// Deployment returns the Deployment repository
+func (r *Repositories) Deployment() deployment_repo.DeploymentRepositoryInterface {
+	return r.deployment
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {

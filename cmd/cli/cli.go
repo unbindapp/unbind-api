@@ -533,16 +533,9 @@ func (self *cli) syncSecrets() {
 						fmt.Printf("Error creating secret: %v\n", err)
 						return
 					}
-					// Create build secret
-					buildSecrets, _, err := self.k8s.GetOrCreateSecret(context.Background(), s.Name+"-build", t.Namespace, client)
-					if err != nil {
-						fmt.Printf("Error creating secret: %v\n", err)
-						return
-					}
 					// Update service
 					if _, err := self.repository.Ent().Service.UpdateOne(s).
 						SetKubernetesSecret(secret.Name).
-						SetKubernetesBuildSecret(buildSecrets.Name).
 						Save(context.Background()); err != nil {
 						fmt.Printf("Error updating service: %v\n", err)
 						return

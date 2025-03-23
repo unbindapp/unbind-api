@@ -9,18 +9,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 )
 
-// The BuildJobFunc type is an adapter to allow the use of ordinary
-// function as BuildJob mutator.
-type BuildJobFunc func(context.Context, *ent.BuildJobMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f BuildJobFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.BuildJobMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BuildJobMutation", m)
-}
-
 // The DeploymentFunc type is an adapter to allow the use of ordinary
 // function as Deployment mutator.
 type DeploymentFunc func(context.Context, *ent.DeploymentMutation) (ent.Value, error)

@@ -1,4 +1,4 @@
-package buildctl
+package deployctl
 
 import (
 	"context"
@@ -28,27 +28,27 @@ import (
 // Valkey key for the queue
 const BUILDER_QUEUE_KEY = "unbind:build:queue"
 
-// The request to build a service, includes environment for builder image
-type BuildJobRequest struct {
+// The request to deploy a service, includes environment for builder image
+type DeploymentJobRequest struct {
 	ServiceID   uuid.UUID         `json:"service_id"`
 	Environment map[string]string `json:"environment"`
 }
 
 // Handles triggering builds for services
-type BuildController struct {
+type DeploymentController struct {
 	cfg          *config.Config
 	k8s          *k8s.KubeClient
-	jobQueue     *queue.Queue[BuildJobRequest]
+	jobQueue     *queue.Queue[DeploymentJobRequest]
 	ctx          context.Context
 	cancelFunc   context.CancelFunc
 	repo         *repositories.Repositories
 	githubClient *github.GithubClient
 }
 
-func NewBuildController(ctx context.Context, cancel context.CancelFunc, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient) *BuildController {
-	jobQueue := queue.NewQueue[BuildJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
+func NewDeploymentController(ctx context.Context, cancel context.CancelFunc, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient) *DeploymentController {
+	jobQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
 
-	return &BuildController{
+	return &DeploymentController{
 		cfg:          cfg,
 		k8s:          k8s,
 		jobQueue:     jobQueue,
@@ -60,7 +60,7 @@ func NewBuildController(ctx context.Context, cancel context.CancelFunc, cfg *con
 }
 
 // Start queue processor
-func (self *BuildController) StartAsync() {
+func (self *DeploymentController) StartAsync() {
 	// Start the job processor
 	self.jobQueue.StartProcessor(self.ctx, self.processJob)
 
@@ -68,13 +68,13 @@ func (self *BuildController) StartAsync() {
 	go self.startStatusSynchronizer()
 }
 
-// Stop stops the build job manager
-func (self *BuildController) Stop() {
+// Stop stops the deployment manager
+func (self *DeploymentController) Stop() {
 	self.cancelFunc()
 }
 
 // startStatusSynchronizer periodically synchronizes job statuses with Kubernetes
-func (self *BuildController) startStatusSynchronizer() {
+func (self *DeploymentController) startStatusSynchronizer() {
 	ticker := time.NewTicker(30 * time.Second) // Sync every 30 seconds
 	defer ticker.Stop()
 
@@ -91,7 +91,7 @@ func (self *BuildController) startStatusSynchronizer() {
 }
 
 // Populate build environment
-func (self *BuildController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID) (map[string]string, error) {
+func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID) (map[string]string, error) {
 	// Get the service
 	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
@@ -112,9 +112,9 @@ func (self *BuildController) PopulateBuildEnvironment(ctx context.Context, servi
 		log.Fatalf("Error creating clientset: %v", err)
 	}
 
-	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesBuildSecret, namespace, client)
+	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, namespace, client)
 	if err != nil {
-		log.Error("Error getting build secrets", "err", err)
+		log.Error("Error getting secrets", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get build secrets")
 	}
 
@@ -209,21 +209,21 @@ func (self *BuildController) PopulateBuildEnvironment(ctx context.Context, servi
 	return env, nil
 }
 
-// EnqueueBuildJob adds a build job to the queue
-func (self *BuildController) EnqueueBuildJob(ctx context.Context, req BuildJobRequest) (job *ent.BuildJob, err error) {
+// EnqueueDeploymentJob adds a deployment to the queue
+func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req DeploymentJobRequest) (job *ent.Deployment, err error) {
 	// Cancel any existing queued jobs
 	if err := self.cancelExistingJobs(ctx, req.ServiceID); err != nil {
 		return nil, fmt.Errorf("failed to cancel existing jobs: %w", err)
 	}
 
 	// Create a record in the database
-	job, err = self.repo.BuildJob().Create(
+	job, err = self.repo.Deployment().Create(
 		ctx,
 		req.ServiceID,
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create build job record: %w", err)
+		return nil, fmt.Errorf("failed to create deployment record: %w", err)
 	}
 
 	// Add to the queue
@@ -237,7 +237,7 @@ func (self *BuildController) EnqueueBuildJob(ctx context.Context, req BuildJobRe
 
 // cancelExistingJobs marks all pending jobs for a service as cancelled in the DB
 // and removes them from the queue
-func (self *BuildController) cancelExistingJobs(ctx context.Context, serviceID uuid.UUID) error {
+func (self *DeploymentController) cancelExistingJobs(ctx context.Context, serviceID uuid.UUID) error {
 	// 1. Get all queued jobs for this service from the queue
 	queuedJobs, err := self.jobQueue.GetAll(ctx)
 	if err != nil {
@@ -261,7 +261,7 @@ func (self *BuildController) cancelExistingJobs(ctx context.Context, serviceID u
 
 	// 3. Mark the jobs as cancelled in the database
 	if len(jobIDsToCancel) > 0 {
-		if err := self.repo.BuildJob().MarkAsCancelled(ctx, jobIDsToCancel); err != nil {
+		if err := self.repo.Deployment().MarkAsCancelled(ctx, jobIDsToCancel); err != nil {
 			return fmt.Errorf("failed to mark jobs as cancelled: %w", err)
 		}
 	}
@@ -270,28 +270,28 @@ func (self *BuildController) cancelExistingJobs(ctx context.Context, serviceID u
 }
 
 // processJob processes a job from the queue
-func (self *BuildController) processJob(ctx context.Context, item *queue.QueueItem[BuildJobRequest]) error {
+func (self *DeploymentController) processJob(ctx context.Context, item *queue.QueueItem[DeploymentJobRequest]) error {
 	jobID, _ := uuid.Parse(item.ID)
 	req := item.Data
 
 	// Update the job status in the database
-	err := self.repo.BuildJob().MarkCancelled(ctx, req.ServiceID)
+	err := self.repo.Deployment().MarkCancelled(ctx, req.ServiceID)
 	if err != nil {
 		log.Warnf("Failed to mark job as cancelled: %v service: %s", err, req.ServiceID)
 	}
-	_, err = self.repo.BuildJob().MarkStarted(ctx, jobID)
+	_, err = self.repo.Deployment().MarkStarted(ctx, jobID)
 
 	if err != nil {
 		return fmt.Errorf("failed to mark job started: %w", err)
 	}
 
 	// Start the actual Kubernetes job
-	k8sJobName, err := self.k8s.CreateBuildJob(ctx, req.ServiceID.String(), jobID.String(), req.Environment)
+	k8sJobName, err := self.k8s.CreateDeployment(ctx, req.ServiceID.String(), jobID.String(), req.Environment)
 	if err != nil {
 		log.Error("Failed to create Kubernetes job", "err", err)
 
 		// Update status to failed
-		_, dbErr := self.repo.BuildJob().MarkFailed(ctx, jobID, err.Error())
+		_, dbErr := self.repo.Deployment().MarkFailed(ctx, jobID, err.Error())
 
 		if dbErr != nil {
 			log.Error("Failed to update job failure status", "err", dbErr)
@@ -301,7 +301,7 @@ func (self *BuildController) processJob(ctx context.Context, item *queue.QueueIt
 	}
 
 	// Update the Kubernetes job name in the database
-	_, err = self.repo.BuildJob().AssignKubernetesJobName(ctx, jobID, k8sJobName)
+	_, err = self.repo.Deployment().AssignKubernetesJobName(ctx, jobID, k8sJobName)
 
 	if err != nil {
 		log.Error("Failed to update Kubernetes job name in database", "err", err, "jobID", jobID, "k8sJobName", k8sJobName)
@@ -311,9 +311,9 @@ func (self *BuildController) processJob(ctx context.Context, item *queue.QueueIt
 }
 
 // SyncJobStatuses synchronizes the status of all processing jobs with Kubernetes
-func (self *BuildController) SyncJobStatuses(ctx context.Context) error {
+func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 	// Get all job marked running status
-	jobs, err := self.repo.BuildJob().GetJobsByStatus(ctx, schema.BuildJobStatusRunning)
+	jobs, err := self.repo.Deployment().GetJobsByStatus(ctx, schema.DeploymentStatusRunning)
 	if err != nil {
 		return fmt.Errorf("failed to query processing jobs: %w", err)
 	}
@@ -332,11 +332,11 @@ func (self *BuildController) SyncJobStatuses(ctx context.Context) error {
 		// Update based on Kubernetes status
 		switch k8sStatus.ConditionType {
 		case k8s.JobComplete:
-			_, err = self.repo.BuildJob().MarkCompleted(ctx, job.ID)
+			_, err = self.repo.Deployment().MarkCompleted(ctx, job.ID)
 		case k8s.JobFailed:
-			_, err = self.repo.BuildJob().MarkFailed(ctx, job.ID, k8sStatus.FailureReason)
+			_, err = self.repo.Deployment().MarkFailed(ctx, job.ID, k8sStatus.FailureReason)
 		default:
-			_, err = self.repo.BuildJob().SetKubernetesJobStatus(ctx, job.ID, k8sStatus.ConditionType.String())
+			_, err = self.repo.Deployment().SetKubernetesJobStatus(ctx, job.ID, k8sStatus.ConditionType.String())
 		}
 
 		if err != nil {

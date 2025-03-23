@@ -12,7 +12,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/buildjob"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
@@ -41,7 +40,6 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeBuildJob           = "BuildJob"
 	TypeDeployment         = "Deployment"
 	TypeEnvironment        = "Environment"
 	TypeGithubApp          = "GithubApp"
@@ -58,15 +56,15 @@ const (
 	TypeUser               = "User"
 )
 
-// BuildJobMutation represents an operation that mutates the BuildJob nodes in the graph.
-type BuildJobMutation struct {
+// DeploymentMutation represents an operation that mutates the Deployment nodes in the graph.
+type DeploymentMutation struct {
 	config
 	op                    Op
 	typ                   string
 	id                    *uuid.UUID
 	created_at            *time.Time
 	updated_at            *time.Time
-	status                *schema.BuildJobStatus
+	status                *schema.DeploymentStatus
 	error                 *string
 	started_at            *time.Time
 	completed_at          *time.Time
@@ -78,1004 +76,8 @@ type BuildJobMutation struct {
 	service               *uuid.UUID
 	clearedservice        bool
 	done                  bool
-	oldValue              func(context.Context) (*BuildJob, error)
-	predicates            []predicate.BuildJob
-}
-
-var _ ent.Mutation = (*BuildJobMutation)(nil)
-
-// buildjobOption allows management of the mutation configuration using functional options.
-type buildjobOption func(*BuildJobMutation)
-
-// newBuildJobMutation creates new mutation for the BuildJob entity.
-func newBuildJobMutation(c config, op Op, opts ...buildjobOption) *BuildJobMutation {
-	m := &BuildJobMutation{
-		config:        c,
-		op:            op,
-		typ:           TypeBuildJob,
-		clearedFields: make(map[string]struct{}),
-	}
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
-// withBuildJobID sets the ID field of the mutation.
-func withBuildJobID(id uuid.UUID) buildjobOption {
-	return func(m *BuildJobMutation) {
-		var (
-			err   error
-			once  sync.Once
-			value *BuildJob
-		)
-		m.oldValue = func(ctx context.Context) (*BuildJob, error) {
-			once.Do(func() {
-				if m.done {
-					err = errors.New("querying old values post mutation is not allowed")
-				} else {
-					value, err = m.Client().BuildJob.Get(ctx, id)
-				}
-			})
-			return value, err
-		}
-		m.id = &id
-	}
-}
-
-// withBuildJob sets the old BuildJob of the mutation.
-func withBuildJob(node *BuildJob) buildjobOption {
-	return func(m *BuildJobMutation) {
-		m.oldValue = func(context.Context) (*BuildJob, error) {
-			return node, nil
-		}
-		m.id = &node.ID
-	}
-}
-
-// Client returns a new `ent.Client` from the mutation. If the mutation was
-// executed in a transaction (ent.Tx), a transactional client is returned.
-func (m BuildJobMutation) Client() *Client {
-	client := &Client{config: m.config}
-	client.init()
-	return client
-}
-
-// Tx returns an `ent.Tx` for mutations that were executed in transactions;
-// it returns an error otherwise.
-func (m BuildJobMutation) Tx() (*Tx, error) {
-	if _, ok := m.driver.(*txDriver); !ok {
-		return nil, errors.New("ent: mutation is not running in a transaction")
-	}
-	tx := &Tx{config: m.config}
-	tx.init()
-	return tx, nil
-}
-
-// SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of BuildJob entities.
-func (m *BuildJobMutation) SetID(id uuid.UUID) {
-	m.id = &id
-}
-
-// ID returns the ID value in the mutation. Note that the ID is only available
-// if it was provided to the builder or after it was returned from the database.
-func (m *BuildJobMutation) ID() (id uuid.UUID, exists bool) {
-	if m.id == nil {
-		return
-	}
-	return *m.id, true
-}
-
-// IDs queries the database and returns the entity ids that match the mutation's predicate.
-// That means, if the mutation is applied within a transaction with an isolation level such
-// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
-// or updated by the mutation.
-func (m *BuildJobMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
-	switch {
-	case m.op.Is(OpUpdateOne | OpDeleteOne):
-		id, exists := m.ID()
-		if exists {
-			return []uuid.UUID{id}, nil
-		}
-		fallthrough
-	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().BuildJob.Query().Where(m.predicates...).IDs(ctx)
-	default:
-		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
-	}
-}
-
-// SetCreatedAt sets the "created_at" field.
-func (m *BuildJobMutation) SetCreatedAt(t time.Time) {
-	m.created_at = &t
-}
-
-// CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *BuildJobMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.created_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCreatedAt returns the old "created_at" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
-	}
-	return oldValue.CreatedAt, nil
-}
-
-// ResetCreatedAt resets all changes to the "created_at" field.
-func (m *BuildJobMutation) ResetCreatedAt() {
-	m.created_at = nil
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (m *BuildJobMutation) SetUpdatedAt(t time.Time) {
-	m.updated_at = &t
-}
-
-// UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *BuildJobMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updated_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUpdatedAt returns the old "updated_at" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
-	}
-	return oldValue.UpdatedAt, nil
-}
-
-// ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *BuildJobMutation) ResetUpdatedAt() {
-	m.updated_at = nil
-}
-
-// SetServiceID sets the "service_id" field.
-func (m *BuildJobMutation) SetServiceID(u uuid.UUID) {
-	m.service = &u
-}
-
-// ServiceID returns the value of the "service_id" field in the mutation.
-func (m *BuildJobMutation) ServiceID() (r uuid.UUID, exists bool) {
-	v := m.service
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldServiceID returns the old "service_id" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldServiceID(ctx context.Context) (v uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldServiceID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldServiceID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldServiceID: %w", err)
-	}
-	return oldValue.ServiceID, nil
-}
-
-// ResetServiceID resets all changes to the "service_id" field.
-func (m *BuildJobMutation) ResetServiceID() {
-	m.service = nil
-}
-
-// SetStatus sets the "status" field.
-func (m *BuildJobMutation) SetStatus(sjs schema.BuildJobStatus) {
-	m.status = &sjs
-}
-
-// Status returns the value of the "status" field in the mutation.
-func (m *BuildJobMutation) Status() (r schema.BuildJobStatus, exists bool) {
-	v := m.status
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStatus returns the old "status" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldStatus(ctx context.Context) (v schema.BuildJobStatus, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStatus requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
-	}
-	return oldValue.Status, nil
-}
-
-// ResetStatus resets all changes to the "status" field.
-func (m *BuildJobMutation) ResetStatus() {
-	m.status = nil
-}
-
-// SetError sets the "error" field.
-func (m *BuildJobMutation) SetError(s string) {
-	m.error = &s
-}
-
-// Error returns the value of the "error" field in the mutation.
-func (m *BuildJobMutation) Error() (r string, exists bool) {
-	v := m.error
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldError returns the old "error" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldError(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldError is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldError requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldError: %w", err)
-	}
-	return oldValue.Error, nil
-}
-
-// ClearError clears the value of the "error" field.
-func (m *BuildJobMutation) ClearError() {
-	m.error = nil
-	m.clearedFields[buildjob.FieldError] = struct{}{}
-}
-
-// ErrorCleared returns if the "error" field was cleared in this mutation.
-func (m *BuildJobMutation) ErrorCleared() bool {
-	_, ok := m.clearedFields[buildjob.FieldError]
-	return ok
-}
-
-// ResetError resets all changes to the "error" field.
-func (m *BuildJobMutation) ResetError() {
-	m.error = nil
-	delete(m.clearedFields, buildjob.FieldError)
-}
-
-// SetStartedAt sets the "started_at" field.
-func (m *BuildJobMutation) SetStartedAt(t time.Time) {
-	m.started_at = &t
-}
-
-// StartedAt returns the value of the "started_at" field in the mutation.
-func (m *BuildJobMutation) StartedAt() (r time.Time, exists bool) {
-	v := m.started_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStartedAt returns the old "started_at" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldStartedAt(ctx context.Context) (v *time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStartedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStartedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStartedAt: %w", err)
-	}
-	return oldValue.StartedAt, nil
-}
-
-// ClearStartedAt clears the value of the "started_at" field.
-func (m *BuildJobMutation) ClearStartedAt() {
-	m.started_at = nil
-	m.clearedFields[buildjob.FieldStartedAt] = struct{}{}
-}
-
-// StartedAtCleared returns if the "started_at" field was cleared in this mutation.
-func (m *BuildJobMutation) StartedAtCleared() bool {
-	_, ok := m.clearedFields[buildjob.FieldStartedAt]
-	return ok
-}
-
-// ResetStartedAt resets all changes to the "started_at" field.
-func (m *BuildJobMutation) ResetStartedAt() {
-	m.started_at = nil
-	delete(m.clearedFields, buildjob.FieldStartedAt)
-}
-
-// SetCompletedAt sets the "completed_at" field.
-func (m *BuildJobMutation) SetCompletedAt(t time.Time) {
-	m.completed_at = &t
-}
-
-// CompletedAt returns the value of the "completed_at" field in the mutation.
-func (m *BuildJobMutation) CompletedAt() (r time.Time, exists bool) {
-	v := m.completed_at
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCompletedAt returns the old "completed_at" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldCompletedAt(ctx context.Context) (v *time.Time, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCompletedAt is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCompletedAt requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCompletedAt: %w", err)
-	}
-	return oldValue.CompletedAt, nil
-}
-
-// ClearCompletedAt clears the value of the "completed_at" field.
-func (m *BuildJobMutation) ClearCompletedAt() {
-	m.completed_at = nil
-	m.clearedFields[buildjob.FieldCompletedAt] = struct{}{}
-}
-
-// CompletedAtCleared returns if the "completed_at" field was cleared in this mutation.
-func (m *BuildJobMutation) CompletedAtCleared() bool {
-	_, ok := m.clearedFields[buildjob.FieldCompletedAt]
-	return ok
-}
-
-// ResetCompletedAt resets all changes to the "completed_at" field.
-func (m *BuildJobMutation) ResetCompletedAt() {
-	m.completed_at = nil
-	delete(m.clearedFields, buildjob.FieldCompletedAt)
-}
-
-// SetKubernetesJobName sets the "kubernetes_job_name" field.
-func (m *BuildJobMutation) SetKubernetesJobName(s string) {
-	m.kubernetes_job_name = &s
-}
-
-// KubernetesJobName returns the value of the "kubernetes_job_name" field in the mutation.
-func (m *BuildJobMutation) KubernetesJobName() (r string, exists bool) {
-	v := m.kubernetes_job_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldKubernetesJobName returns the old "kubernetes_job_name" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldKubernetesJobName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldKubernetesJobName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldKubernetesJobName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldKubernetesJobName: %w", err)
-	}
-	return oldValue.KubernetesJobName, nil
-}
-
-// ClearKubernetesJobName clears the value of the "kubernetes_job_name" field.
-func (m *BuildJobMutation) ClearKubernetesJobName() {
-	m.kubernetes_job_name = nil
-	m.clearedFields[buildjob.FieldKubernetesJobName] = struct{}{}
-}
-
-// KubernetesJobNameCleared returns if the "kubernetes_job_name" field was cleared in this mutation.
-func (m *BuildJobMutation) KubernetesJobNameCleared() bool {
-	_, ok := m.clearedFields[buildjob.FieldKubernetesJobName]
-	return ok
-}
-
-// ResetKubernetesJobName resets all changes to the "kubernetes_job_name" field.
-func (m *BuildJobMutation) ResetKubernetesJobName() {
-	m.kubernetes_job_name = nil
-	delete(m.clearedFields, buildjob.FieldKubernetesJobName)
-}
-
-// SetKubernetesJobStatus sets the "kubernetes_job_status" field.
-func (m *BuildJobMutation) SetKubernetesJobStatus(s string) {
-	m.kubernetes_job_status = &s
-}
-
-// KubernetesJobStatus returns the value of the "kubernetes_job_status" field in the mutation.
-func (m *BuildJobMutation) KubernetesJobStatus() (r string, exists bool) {
-	v := m.kubernetes_job_status
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldKubernetesJobStatus returns the old "kubernetes_job_status" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldKubernetesJobStatus(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldKubernetesJobStatus is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldKubernetesJobStatus requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldKubernetesJobStatus: %w", err)
-	}
-	return oldValue.KubernetesJobStatus, nil
-}
-
-// ClearKubernetesJobStatus clears the value of the "kubernetes_job_status" field.
-func (m *BuildJobMutation) ClearKubernetesJobStatus() {
-	m.kubernetes_job_status = nil
-	m.clearedFields[buildjob.FieldKubernetesJobStatus] = struct{}{}
-}
-
-// KubernetesJobStatusCleared returns if the "kubernetes_job_status" field was cleared in this mutation.
-func (m *BuildJobMutation) KubernetesJobStatusCleared() bool {
-	_, ok := m.clearedFields[buildjob.FieldKubernetesJobStatus]
-	return ok
-}
-
-// ResetKubernetesJobStatus resets all changes to the "kubernetes_job_status" field.
-func (m *BuildJobMutation) ResetKubernetesJobStatus() {
-	m.kubernetes_job_status = nil
-	delete(m.clearedFields, buildjob.FieldKubernetesJobStatus)
-}
-
-// SetAttempts sets the "attempts" field.
-func (m *BuildJobMutation) SetAttempts(i int) {
-	m.attempts = &i
-	m.addattempts = nil
-}
-
-// Attempts returns the value of the "attempts" field in the mutation.
-func (m *BuildJobMutation) Attempts() (r int, exists bool) {
-	v := m.attempts
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldAttempts returns the old "attempts" field's value of the BuildJob entity.
-// If the BuildJob object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *BuildJobMutation) OldAttempts(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldAttempts is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldAttempts requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldAttempts: %w", err)
-	}
-	return oldValue.Attempts, nil
-}
-
-// AddAttempts adds i to the "attempts" field.
-func (m *BuildJobMutation) AddAttempts(i int) {
-	if m.addattempts != nil {
-		*m.addattempts += i
-	} else {
-		m.addattempts = &i
-	}
-}
-
-// AddedAttempts returns the value that was added to the "attempts" field in this mutation.
-func (m *BuildJobMutation) AddedAttempts() (r int, exists bool) {
-	v := m.addattempts
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetAttempts resets all changes to the "attempts" field.
-func (m *BuildJobMutation) ResetAttempts() {
-	m.attempts = nil
-	m.addattempts = nil
-}
-
-// ClearService clears the "service" edge to the Service entity.
-func (m *BuildJobMutation) ClearService() {
-	m.clearedservice = true
-	m.clearedFields[buildjob.FieldServiceID] = struct{}{}
-}
-
-// ServiceCleared reports if the "service" edge to the Service entity was cleared.
-func (m *BuildJobMutation) ServiceCleared() bool {
-	return m.clearedservice
-}
-
-// ServiceIDs returns the "service" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ServiceID instead. It exists only for internal usage by the builders.
-func (m *BuildJobMutation) ServiceIDs() (ids []uuid.UUID) {
-	if id := m.service; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetService resets all changes to the "service" edge.
-func (m *BuildJobMutation) ResetService() {
-	m.service = nil
-	m.clearedservice = false
-}
-
-// Where appends a list predicates to the BuildJobMutation builder.
-func (m *BuildJobMutation) Where(ps ...predicate.BuildJob) {
-	m.predicates = append(m.predicates, ps...)
-}
-
-// WhereP appends storage-level predicates to the BuildJobMutation builder. Using this method,
-// users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *BuildJobMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.BuildJob, len(ps))
-	for i := range ps {
-		p[i] = ps[i]
-	}
-	m.Where(p...)
-}
-
-// Op returns the operation name.
-func (m *BuildJobMutation) Op() Op {
-	return m.op
-}
-
-// SetOp allows setting the mutation operation.
-func (m *BuildJobMutation) SetOp(op Op) {
-	m.op = op
-}
-
-// Type returns the node type of this mutation (BuildJob).
-func (m *BuildJobMutation) Type() string {
-	return m.typ
-}
-
-// Fields returns all fields that were changed during this mutation. Note that in
-// order to get all numeric fields that were incremented/decremented, call
-// AddedFields().
-func (m *BuildJobMutation) Fields() []string {
-	fields := make([]string, 0, 10)
-	if m.created_at != nil {
-		fields = append(fields, buildjob.FieldCreatedAt)
-	}
-	if m.updated_at != nil {
-		fields = append(fields, buildjob.FieldUpdatedAt)
-	}
-	if m.service != nil {
-		fields = append(fields, buildjob.FieldServiceID)
-	}
-	if m.status != nil {
-		fields = append(fields, buildjob.FieldStatus)
-	}
-	if m.error != nil {
-		fields = append(fields, buildjob.FieldError)
-	}
-	if m.started_at != nil {
-		fields = append(fields, buildjob.FieldStartedAt)
-	}
-	if m.completed_at != nil {
-		fields = append(fields, buildjob.FieldCompletedAt)
-	}
-	if m.kubernetes_job_name != nil {
-		fields = append(fields, buildjob.FieldKubernetesJobName)
-	}
-	if m.kubernetes_job_status != nil {
-		fields = append(fields, buildjob.FieldKubernetesJobStatus)
-	}
-	if m.attempts != nil {
-		fields = append(fields, buildjob.FieldAttempts)
-	}
-	return fields
-}
-
-// Field returns the value of a field with the given name. The second boolean
-// return value indicates that this field was not set, or was not defined in the
-// schema.
-func (m *BuildJobMutation) Field(name string) (ent.Value, bool) {
-	switch name {
-	case buildjob.FieldCreatedAt:
-		return m.CreatedAt()
-	case buildjob.FieldUpdatedAt:
-		return m.UpdatedAt()
-	case buildjob.FieldServiceID:
-		return m.ServiceID()
-	case buildjob.FieldStatus:
-		return m.Status()
-	case buildjob.FieldError:
-		return m.Error()
-	case buildjob.FieldStartedAt:
-		return m.StartedAt()
-	case buildjob.FieldCompletedAt:
-		return m.CompletedAt()
-	case buildjob.FieldKubernetesJobName:
-		return m.KubernetesJobName()
-	case buildjob.FieldKubernetesJobStatus:
-		return m.KubernetesJobStatus()
-	case buildjob.FieldAttempts:
-		return m.Attempts()
-	}
-	return nil, false
-}
-
-// OldField returns the old value of the field from the database. An error is
-// returned if the mutation operation is not UpdateOne, or the query to the
-// database failed.
-func (m *BuildJobMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
-	switch name {
-	case buildjob.FieldCreatedAt:
-		return m.OldCreatedAt(ctx)
-	case buildjob.FieldUpdatedAt:
-		return m.OldUpdatedAt(ctx)
-	case buildjob.FieldServiceID:
-		return m.OldServiceID(ctx)
-	case buildjob.FieldStatus:
-		return m.OldStatus(ctx)
-	case buildjob.FieldError:
-		return m.OldError(ctx)
-	case buildjob.FieldStartedAt:
-		return m.OldStartedAt(ctx)
-	case buildjob.FieldCompletedAt:
-		return m.OldCompletedAt(ctx)
-	case buildjob.FieldKubernetesJobName:
-		return m.OldKubernetesJobName(ctx)
-	case buildjob.FieldKubernetesJobStatus:
-		return m.OldKubernetesJobStatus(ctx)
-	case buildjob.FieldAttempts:
-		return m.OldAttempts(ctx)
-	}
-	return nil, fmt.Errorf("unknown BuildJob field %s", name)
-}
-
-// SetField sets the value of a field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *BuildJobMutation) SetField(name string, value ent.Value) error {
-	switch name {
-	case buildjob.FieldCreatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCreatedAt(v)
-		return nil
-	case buildjob.FieldUpdatedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUpdatedAt(v)
-		return nil
-	case buildjob.FieldServiceID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetServiceID(v)
-		return nil
-	case buildjob.FieldStatus:
-		v, ok := value.(schema.BuildJobStatus)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStatus(v)
-		return nil
-	case buildjob.FieldError:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetError(v)
-		return nil
-	case buildjob.FieldStartedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStartedAt(v)
-		return nil
-	case buildjob.FieldCompletedAt:
-		v, ok := value.(time.Time)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCompletedAt(v)
-		return nil
-	case buildjob.FieldKubernetesJobName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetKubernetesJobName(v)
-		return nil
-	case buildjob.FieldKubernetesJobStatus:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetKubernetesJobStatus(v)
-		return nil
-	case buildjob.FieldAttempts:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetAttempts(v)
-		return nil
-	}
-	return fmt.Errorf("unknown BuildJob field %s", name)
-}
-
-// AddedFields returns all numeric fields that were incremented/decremented during
-// this mutation.
-func (m *BuildJobMutation) AddedFields() []string {
-	var fields []string
-	if m.addattempts != nil {
-		fields = append(fields, buildjob.FieldAttempts)
-	}
-	return fields
-}
-
-// AddedField returns the numeric value that was incremented/decremented on a field
-// with the given name. The second boolean return value indicates that this field
-// was not set, or was not defined in the schema.
-func (m *BuildJobMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case buildjob.FieldAttempts:
-		return m.AddedAttempts()
-	}
-	return nil, false
-}
-
-// AddField adds the value to the field with the given name. It returns an error if
-// the field is not defined in the schema, or if the type mismatched the field
-// type.
-func (m *BuildJobMutation) AddField(name string, value ent.Value) error {
-	switch name {
-	case buildjob.FieldAttempts:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddAttempts(v)
-		return nil
-	}
-	return fmt.Errorf("unknown BuildJob numeric field %s", name)
-}
-
-// ClearedFields returns all nullable fields that were cleared during this
-// mutation.
-func (m *BuildJobMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(buildjob.FieldError) {
-		fields = append(fields, buildjob.FieldError)
-	}
-	if m.FieldCleared(buildjob.FieldStartedAt) {
-		fields = append(fields, buildjob.FieldStartedAt)
-	}
-	if m.FieldCleared(buildjob.FieldCompletedAt) {
-		fields = append(fields, buildjob.FieldCompletedAt)
-	}
-	if m.FieldCleared(buildjob.FieldKubernetesJobName) {
-		fields = append(fields, buildjob.FieldKubernetesJobName)
-	}
-	if m.FieldCleared(buildjob.FieldKubernetesJobStatus) {
-		fields = append(fields, buildjob.FieldKubernetesJobStatus)
-	}
-	return fields
-}
-
-// FieldCleared returns a boolean indicating if a field with the given name was
-// cleared in this mutation.
-func (m *BuildJobMutation) FieldCleared(name string) bool {
-	_, ok := m.clearedFields[name]
-	return ok
-}
-
-// ClearField clears the value of the field with the given name. It returns an
-// error if the field is not defined in the schema.
-func (m *BuildJobMutation) ClearField(name string) error {
-	switch name {
-	case buildjob.FieldError:
-		m.ClearError()
-		return nil
-	case buildjob.FieldStartedAt:
-		m.ClearStartedAt()
-		return nil
-	case buildjob.FieldCompletedAt:
-		m.ClearCompletedAt()
-		return nil
-	case buildjob.FieldKubernetesJobName:
-		m.ClearKubernetesJobName()
-		return nil
-	case buildjob.FieldKubernetesJobStatus:
-		m.ClearKubernetesJobStatus()
-		return nil
-	}
-	return fmt.Errorf("unknown BuildJob nullable field %s", name)
-}
-
-// ResetField resets all changes in the mutation for the field with the given name.
-// It returns an error if the field is not defined in the schema.
-func (m *BuildJobMutation) ResetField(name string) error {
-	switch name {
-	case buildjob.FieldCreatedAt:
-		m.ResetCreatedAt()
-		return nil
-	case buildjob.FieldUpdatedAt:
-		m.ResetUpdatedAt()
-		return nil
-	case buildjob.FieldServiceID:
-		m.ResetServiceID()
-		return nil
-	case buildjob.FieldStatus:
-		m.ResetStatus()
-		return nil
-	case buildjob.FieldError:
-		m.ResetError()
-		return nil
-	case buildjob.FieldStartedAt:
-		m.ResetStartedAt()
-		return nil
-	case buildjob.FieldCompletedAt:
-		m.ResetCompletedAt()
-		return nil
-	case buildjob.FieldKubernetesJobName:
-		m.ResetKubernetesJobName()
-		return nil
-	case buildjob.FieldKubernetesJobStatus:
-		m.ResetKubernetesJobStatus()
-		return nil
-	case buildjob.FieldAttempts:
-		m.ResetAttempts()
-		return nil
-	}
-	return fmt.Errorf("unknown BuildJob field %s", name)
-}
-
-// AddedEdges returns all edge names that were set/added in this mutation.
-func (m *BuildJobMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.service != nil {
-		edges = append(edges, buildjob.EdgeService)
-	}
-	return edges
-}
-
-// AddedIDs returns all IDs (to other nodes) that were added for the given edge
-// name in this mutation.
-func (m *BuildJobMutation) AddedIDs(name string) []ent.Value {
-	switch name {
-	case buildjob.EdgeService:
-		if id := m.service; id != nil {
-			return []ent.Value{*id}
-		}
-	}
-	return nil
-}
-
-// RemovedEdges returns all edge names that were removed in this mutation.
-func (m *BuildJobMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
-	return edges
-}
-
-// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
-// the given name in this mutation.
-func (m *BuildJobMutation) RemovedIDs(name string) []ent.Value {
-	return nil
-}
-
-// ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *BuildJobMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.clearedservice {
-		edges = append(edges, buildjob.EdgeService)
-	}
-	return edges
-}
-
-// EdgeCleared returns a boolean which indicates if the edge with the given name
-// was cleared in this mutation.
-func (m *BuildJobMutation) EdgeCleared(name string) bool {
-	switch name {
-	case buildjob.EdgeService:
-		return m.clearedservice
-	}
-	return false
-}
-
-// ClearEdge clears the value of the edge with the given name. It returns an error
-// if that edge is not defined in the schema.
-func (m *BuildJobMutation) ClearEdge(name string) error {
-	switch name {
-	case buildjob.EdgeService:
-		m.ClearService()
-		return nil
-	}
-	return fmt.Errorf("unknown BuildJob unique edge %s", name)
-}
-
-// ResetEdge resets all changes to the edge with the given name in this mutation.
-// It returns an error if the edge is not defined in the schema.
-func (m *BuildJobMutation) ResetEdge(name string) error {
-	switch name {
-	case buildjob.EdgeService:
-		m.ResetService()
-		return nil
-	}
-	return fmt.Errorf("unknown BuildJob edge %s", name)
-}
-
-// DeploymentMutation represents an operation that mutates the Deployment nodes in the graph.
-type DeploymentMutation struct {
-	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	created_at    *time.Time
-	updated_at    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Deployment, error)
-	predicates    []predicate.Deployment
+	oldValue              func(context.Context) (*Deployment, error)
+	predicates            []predicate.Deployment
 }
 
 var _ ent.Mutation = (*DeploymentMutation)(nil)
@@ -1254,6 +256,406 @@ func (m *DeploymentMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetServiceID sets the "service_id" field.
+func (m *DeploymentMutation) SetServiceID(u uuid.UUID) {
+	m.service = &u
+}
+
+// ServiceID returns the value of the "service_id" field in the mutation.
+func (m *DeploymentMutation) ServiceID() (r uuid.UUID, exists bool) {
+	v := m.service
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServiceID returns the old "service_id" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldServiceID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServiceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServiceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServiceID: %w", err)
+	}
+	return oldValue.ServiceID, nil
+}
+
+// ResetServiceID resets all changes to the "service_id" field.
+func (m *DeploymentMutation) ResetServiceID() {
+	m.service = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *DeploymentMutation) SetStatus(ss schema.DeploymentStatus) {
+	m.status = &ss
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *DeploymentMutation) Status() (r schema.DeploymentStatus, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldStatus(ctx context.Context) (v schema.DeploymentStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *DeploymentMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetError sets the "error" field.
+func (m *DeploymentMutation) SetError(s string) {
+	m.error = &s
+}
+
+// Error returns the value of the "error" field in the mutation.
+func (m *DeploymentMutation) Error() (r string, exists bool) {
+	v := m.error
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldError returns the old "error" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldError(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldError is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldError requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldError: %w", err)
+	}
+	return oldValue.Error, nil
+}
+
+// ClearError clears the value of the "error" field.
+func (m *DeploymentMutation) ClearError() {
+	m.error = nil
+	m.clearedFields[deployment.FieldError] = struct{}{}
+}
+
+// ErrorCleared returns if the "error" field was cleared in this mutation.
+func (m *DeploymentMutation) ErrorCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldError]
+	return ok
+}
+
+// ResetError resets all changes to the "error" field.
+func (m *DeploymentMutation) ResetError() {
+	m.error = nil
+	delete(m.clearedFields, deployment.FieldError)
+}
+
+// SetStartedAt sets the "started_at" field.
+func (m *DeploymentMutation) SetStartedAt(t time.Time) {
+	m.started_at = &t
+}
+
+// StartedAt returns the value of the "started_at" field in the mutation.
+func (m *DeploymentMutation) StartedAt() (r time.Time, exists bool) {
+	v := m.started_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartedAt returns the old "started_at" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldStartedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartedAt: %w", err)
+	}
+	return oldValue.StartedAt, nil
+}
+
+// ClearStartedAt clears the value of the "started_at" field.
+func (m *DeploymentMutation) ClearStartedAt() {
+	m.started_at = nil
+	m.clearedFields[deployment.FieldStartedAt] = struct{}{}
+}
+
+// StartedAtCleared returns if the "started_at" field was cleared in this mutation.
+func (m *DeploymentMutation) StartedAtCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldStartedAt]
+	return ok
+}
+
+// ResetStartedAt resets all changes to the "started_at" field.
+func (m *DeploymentMutation) ResetStartedAt() {
+	m.started_at = nil
+	delete(m.clearedFields, deployment.FieldStartedAt)
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (m *DeploymentMutation) SetCompletedAt(t time.Time) {
+	m.completed_at = &t
+}
+
+// CompletedAt returns the value of the "completed_at" field in the mutation.
+func (m *DeploymentMutation) CompletedAt() (r time.Time, exists bool) {
+	v := m.completed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCompletedAt returns the old "completed_at" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldCompletedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCompletedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCompletedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCompletedAt: %w", err)
+	}
+	return oldValue.CompletedAt, nil
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (m *DeploymentMutation) ClearCompletedAt() {
+	m.completed_at = nil
+	m.clearedFields[deployment.FieldCompletedAt] = struct{}{}
+}
+
+// CompletedAtCleared returns if the "completed_at" field was cleared in this mutation.
+func (m *DeploymentMutation) CompletedAtCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldCompletedAt]
+	return ok
+}
+
+// ResetCompletedAt resets all changes to the "completed_at" field.
+func (m *DeploymentMutation) ResetCompletedAt() {
+	m.completed_at = nil
+	delete(m.clearedFields, deployment.FieldCompletedAt)
+}
+
+// SetKubernetesJobName sets the "kubernetes_job_name" field.
+func (m *DeploymentMutation) SetKubernetesJobName(s string) {
+	m.kubernetes_job_name = &s
+}
+
+// KubernetesJobName returns the value of the "kubernetes_job_name" field in the mutation.
+func (m *DeploymentMutation) KubernetesJobName() (r string, exists bool) {
+	v := m.kubernetes_job_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesJobName returns the old "kubernetes_job_name" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldKubernetesJobName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesJobName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesJobName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesJobName: %w", err)
+	}
+	return oldValue.KubernetesJobName, nil
+}
+
+// ClearKubernetesJobName clears the value of the "kubernetes_job_name" field.
+func (m *DeploymentMutation) ClearKubernetesJobName() {
+	m.kubernetes_job_name = nil
+	m.clearedFields[deployment.FieldKubernetesJobName] = struct{}{}
+}
+
+// KubernetesJobNameCleared returns if the "kubernetes_job_name" field was cleared in this mutation.
+func (m *DeploymentMutation) KubernetesJobNameCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldKubernetesJobName]
+	return ok
+}
+
+// ResetKubernetesJobName resets all changes to the "kubernetes_job_name" field.
+func (m *DeploymentMutation) ResetKubernetesJobName() {
+	m.kubernetes_job_name = nil
+	delete(m.clearedFields, deployment.FieldKubernetesJobName)
+}
+
+// SetKubernetesJobStatus sets the "kubernetes_job_status" field.
+func (m *DeploymentMutation) SetKubernetesJobStatus(s string) {
+	m.kubernetes_job_status = &s
+}
+
+// KubernetesJobStatus returns the value of the "kubernetes_job_status" field in the mutation.
+func (m *DeploymentMutation) KubernetesJobStatus() (r string, exists bool) {
+	v := m.kubernetes_job_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesJobStatus returns the old "kubernetes_job_status" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldKubernetesJobStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesJobStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesJobStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesJobStatus: %w", err)
+	}
+	return oldValue.KubernetesJobStatus, nil
+}
+
+// ClearKubernetesJobStatus clears the value of the "kubernetes_job_status" field.
+func (m *DeploymentMutation) ClearKubernetesJobStatus() {
+	m.kubernetes_job_status = nil
+	m.clearedFields[deployment.FieldKubernetesJobStatus] = struct{}{}
+}
+
+// KubernetesJobStatusCleared returns if the "kubernetes_job_status" field was cleared in this mutation.
+func (m *DeploymentMutation) KubernetesJobStatusCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldKubernetesJobStatus]
+	return ok
+}
+
+// ResetKubernetesJobStatus resets all changes to the "kubernetes_job_status" field.
+func (m *DeploymentMutation) ResetKubernetesJobStatus() {
+	m.kubernetes_job_status = nil
+	delete(m.clearedFields, deployment.FieldKubernetesJobStatus)
+}
+
+// SetAttempts sets the "attempts" field.
+func (m *DeploymentMutation) SetAttempts(i int) {
+	m.attempts = &i
+	m.addattempts = nil
+}
+
+// Attempts returns the value of the "attempts" field in the mutation.
+func (m *DeploymentMutation) Attempts() (r int, exists bool) {
+	v := m.attempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAttempts returns the old "attempts" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldAttempts(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAttempts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAttempts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAttempts: %w", err)
+	}
+	return oldValue.Attempts, nil
+}
+
+// AddAttempts adds i to the "attempts" field.
+func (m *DeploymentMutation) AddAttempts(i int) {
+	if m.addattempts != nil {
+		*m.addattempts += i
+	} else {
+		m.addattempts = &i
+	}
+}
+
+// AddedAttempts returns the value that was added to the "attempts" field in this mutation.
+func (m *DeploymentMutation) AddedAttempts() (r int, exists bool) {
+	v := m.addattempts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAttempts resets all changes to the "attempts" field.
+func (m *DeploymentMutation) ResetAttempts() {
+	m.attempts = nil
+	m.addattempts = nil
+}
+
+// ClearService clears the "service" edge to the Service entity.
+func (m *DeploymentMutation) ClearService() {
+	m.clearedservice = true
+	m.clearedFields[deployment.FieldServiceID] = struct{}{}
+}
+
+// ServiceCleared reports if the "service" edge to the Service entity was cleared.
+func (m *DeploymentMutation) ServiceCleared() bool {
+	return m.clearedservice
+}
+
+// ServiceIDs returns the "service" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ServiceID instead. It exists only for internal usage by the builders.
+func (m *DeploymentMutation) ServiceIDs() (ids []uuid.UUID) {
+	if id := m.service; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetService resets all changes to the "service" edge.
+func (m *DeploymentMutation) ResetService() {
+	m.service = nil
+	m.clearedservice = false
+}
+
 // Where appends a list predicates to the DeploymentMutation builder.
 func (m *DeploymentMutation) Where(ps ...predicate.Deployment) {
 	m.predicates = append(m.predicates, ps...)
@@ -1288,12 +690,36 @@ func (m *DeploymentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeploymentMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, deployment.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, deployment.FieldUpdatedAt)
+	}
+	if m.service != nil {
+		fields = append(fields, deployment.FieldServiceID)
+	}
+	if m.status != nil {
+		fields = append(fields, deployment.FieldStatus)
+	}
+	if m.error != nil {
+		fields = append(fields, deployment.FieldError)
+	}
+	if m.started_at != nil {
+		fields = append(fields, deployment.FieldStartedAt)
+	}
+	if m.completed_at != nil {
+		fields = append(fields, deployment.FieldCompletedAt)
+	}
+	if m.kubernetes_job_name != nil {
+		fields = append(fields, deployment.FieldKubernetesJobName)
+	}
+	if m.kubernetes_job_status != nil {
+		fields = append(fields, deployment.FieldKubernetesJobStatus)
+	}
+	if m.attempts != nil {
+		fields = append(fields, deployment.FieldAttempts)
 	}
 	return fields
 }
@@ -1307,6 +733,22 @@ func (m *DeploymentMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case deployment.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case deployment.FieldServiceID:
+		return m.ServiceID()
+	case deployment.FieldStatus:
+		return m.Status()
+	case deployment.FieldError:
+		return m.Error()
+	case deployment.FieldStartedAt:
+		return m.StartedAt()
+	case deployment.FieldCompletedAt:
+		return m.CompletedAt()
+	case deployment.FieldKubernetesJobName:
+		return m.KubernetesJobName()
+	case deployment.FieldKubernetesJobStatus:
+		return m.KubernetesJobStatus()
+	case deployment.FieldAttempts:
+		return m.Attempts()
 	}
 	return nil, false
 }
@@ -1320,6 +762,22 @@ func (m *DeploymentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCreatedAt(ctx)
 	case deployment.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case deployment.FieldServiceID:
+		return m.OldServiceID(ctx)
+	case deployment.FieldStatus:
+		return m.OldStatus(ctx)
+	case deployment.FieldError:
+		return m.OldError(ctx)
+	case deployment.FieldStartedAt:
+		return m.OldStartedAt(ctx)
+	case deployment.FieldCompletedAt:
+		return m.OldCompletedAt(ctx)
+	case deployment.FieldKubernetesJobName:
+		return m.OldKubernetesJobName(ctx)
+	case deployment.FieldKubernetesJobStatus:
+		return m.OldKubernetesJobStatus(ctx)
+	case deployment.FieldAttempts:
+		return m.OldAttempts(ctx)
 	}
 	return nil, fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1343,6 +801,62 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case deployment.FieldServiceID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServiceID(v)
+		return nil
+	case deployment.FieldStatus:
+		v, ok := value.(schema.DeploymentStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case deployment.FieldError:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetError(v)
+		return nil
+	case deployment.FieldStartedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartedAt(v)
+		return nil
+	case deployment.FieldCompletedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCompletedAt(v)
+		return nil
+	case deployment.FieldKubernetesJobName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesJobName(v)
+		return nil
+	case deployment.FieldKubernetesJobStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesJobStatus(v)
+		return nil
+	case deployment.FieldAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAttempts(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1350,13 +864,21 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *DeploymentMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addattempts != nil {
+		fields = append(fields, deployment.FieldAttempts)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *DeploymentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case deployment.FieldAttempts:
+		return m.AddedAttempts()
+	}
 	return nil, false
 }
 
@@ -1365,6 +887,13 @@ func (m *DeploymentMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *DeploymentMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case deployment.FieldAttempts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAttempts(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Deployment numeric field %s", name)
 }
@@ -1372,7 +901,23 @@ func (m *DeploymentMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *DeploymentMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(deployment.FieldError) {
+		fields = append(fields, deployment.FieldError)
+	}
+	if m.FieldCleared(deployment.FieldStartedAt) {
+		fields = append(fields, deployment.FieldStartedAt)
+	}
+	if m.FieldCleared(deployment.FieldCompletedAt) {
+		fields = append(fields, deployment.FieldCompletedAt)
+	}
+	if m.FieldCleared(deployment.FieldKubernetesJobName) {
+		fields = append(fields, deployment.FieldKubernetesJobName)
+	}
+	if m.FieldCleared(deployment.FieldKubernetesJobStatus) {
+		fields = append(fields, deployment.FieldKubernetesJobStatus)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1385,6 +930,23 @@ func (m *DeploymentMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *DeploymentMutation) ClearField(name string) error {
+	switch name {
+	case deployment.FieldError:
+		m.ClearError()
+		return nil
+	case deployment.FieldStartedAt:
+		m.ClearStartedAt()
+		return nil
+	case deployment.FieldCompletedAt:
+		m.ClearCompletedAt()
+		return nil
+	case deployment.FieldKubernetesJobName:
+		m.ClearKubernetesJobName()
+		return nil
+	case deployment.FieldKubernetesJobStatus:
+		m.ClearKubernetesJobStatus()
+		return nil
+	}
 	return fmt.Errorf("unknown Deployment nullable field %s", name)
 }
 
@@ -1398,25 +960,58 @@ func (m *DeploymentMutation) ResetField(name string) error {
 	case deployment.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
+	case deployment.FieldServiceID:
+		m.ResetServiceID()
+		return nil
+	case deployment.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case deployment.FieldError:
+		m.ResetError()
+		return nil
+	case deployment.FieldStartedAt:
+		m.ResetStartedAt()
+		return nil
+	case deployment.FieldCompletedAt:
+		m.ResetCompletedAt()
+		return nil
+	case deployment.FieldKubernetesJobName:
+		m.ResetKubernetesJobName()
+		return nil
+	case deployment.FieldKubernetesJobStatus:
+		m.ResetKubernetesJobStatus()
+		return nil
+	case deployment.FieldAttempts:
+		m.ResetAttempts()
+		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *DeploymentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.service != nil {
+		edges = append(edges, deployment.EdgeService)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *DeploymentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case deployment.EdgeService:
+		if id := m.service; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *DeploymentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -1428,25 +1023,42 @@ func (m *DeploymentMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *DeploymentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedservice {
+		edges = append(edges, deployment.EdgeService)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *DeploymentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case deployment.EdgeService:
+		return m.clearedservice
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *DeploymentMutation) ClearEdge(name string) error {
+	switch name {
+	case deployment.EdgeService:
+		m.ClearService()
+		return nil
+	}
 	return fmt.Errorf("unknown Deployment unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *DeploymentMutation) ResetEdge(name string) error {
+	switch name {
+	case deployment.EdgeService:
+		m.ResetService()
+		return nil
+	}
 	return fmt.Errorf("unknown Deployment edge %s", name)
 }
 
@@ -9038,7 +8650,6 @@ type ServiceMutation struct {
 	framework                  *enum.Framework
 	git_repository             *string
 	kubernetes_secret          *string
-	kubernetes_build_secret    *string
 	clearedFields              map[string]struct{}
 	environment                *uuid.UUID
 	clearedenvironment         bool
@@ -9046,9 +8657,9 @@ type ServiceMutation struct {
 	clearedgithub_installation bool
 	service_config             *uuid.UUID
 	clearedservice_config      bool
-	build_jobs                 map[uuid.UUID]struct{}
-	removedbuild_jobs          map[uuid.UUID]struct{}
-	clearedbuild_jobs          bool
+	deployments                map[uuid.UUID]struct{}
+	removeddeployments         map[uuid.UUID]struct{}
+	cleareddeployments         bool
 	done                       bool
 	oldValue                   func(context.Context) (*Service, error)
 	predicates                 []predicate.Service
@@ -9691,42 +9302,6 @@ func (m *ServiceMutation) ResetKubernetesSecret() {
 	m.kubernetes_secret = nil
 }
 
-// SetKubernetesBuildSecret sets the "kubernetes_build_secret" field.
-func (m *ServiceMutation) SetKubernetesBuildSecret(s string) {
-	m.kubernetes_build_secret = &s
-}
-
-// KubernetesBuildSecret returns the value of the "kubernetes_build_secret" field in the mutation.
-func (m *ServiceMutation) KubernetesBuildSecret() (r string, exists bool) {
-	v := m.kubernetes_build_secret
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldKubernetesBuildSecret returns the old "kubernetes_build_secret" field's value of the Service entity.
-// If the Service object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldKubernetesBuildSecret(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldKubernetesBuildSecret is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldKubernetesBuildSecret requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldKubernetesBuildSecret: %w", err)
-	}
-	return oldValue.KubernetesBuildSecret, nil
-}
-
-// ResetKubernetesBuildSecret resets all changes to the "kubernetes_build_secret" field.
-func (m *ServiceMutation) ResetKubernetesBuildSecret() {
-	m.kubernetes_build_secret = nil
-}
-
 // ClearEnvironment clears the "environment" edge to the Environment entity.
 func (m *ServiceMutation) ClearEnvironment() {
 	m.clearedenvironment = true
@@ -9820,58 +9395,58 @@ func (m *ServiceMutation) ResetServiceConfig() {
 	m.clearedservice_config = false
 }
 
-// AddBuildJobIDs adds the "build_jobs" edge to the BuildJob entity by ids.
-func (m *ServiceMutation) AddBuildJobIDs(ids ...uuid.UUID) {
-	if m.build_jobs == nil {
-		m.build_jobs = make(map[uuid.UUID]struct{})
+// AddDeploymentIDs adds the "deployments" edge to the Deployment entity by ids.
+func (m *ServiceMutation) AddDeploymentIDs(ids ...uuid.UUID) {
+	if m.deployments == nil {
+		m.deployments = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.build_jobs[ids[i]] = struct{}{}
+		m.deployments[ids[i]] = struct{}{}
 	}
 }
 
-// ClearBuildJobs clears the "build_jobs" edge to the BuildJob entity.
-func (m *ServiceMutation) ClearBuildJobs() {
-	m.clearedbuild_jobs = true
+// ClearDeployments clears the "deployments" edge to the Deployment entity.
+func (m *ServiceMutation) ClearDeployments() {
+	m.cleareddeployments = true
 }
 
-// BuildJobsCleared reports if the "build_jobs" edge to the BuildJob entity was cleared.
-func (m *ServiceMutation) BuildJobsCleared() bool {
-	return m.clearedbuild_jobs
+// DeploymentsCleared reports if the "deployments" edge to the Deployment entity was cleared.
+func (m *ServiceMutation) DeploymentsCleared() bool {
+	return m.cleareddeployments
 }
 
-// RemoveBuildJobIDs removes the "build_jobs" edge to the BuildJob entity by IDs.
-func (m *ServiceMutation) RemoveBuildJobIDs(ids ...uuid.UUID) {
-	if m.removedbuild_jobs == nil {
-		m.removedbuild_jobs = make(map[uuid.UUID]struct{})
+// RemoveDeploymentIDs removes the "deployments" edge to the Deployment entity by IDs.
+func (m *ServiceMutation) RemoveDeploymentIDs(ids ...uuid.UUID) {
+	if m.removeddeployments == nil {
+		m.removeddeployments = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.build_jobs, ids[i])
-		m.removedbuild_jobs[ids[i]] = struct{}{}
+		delete(m.deployments, ids[i])
+		m.removeddeployments[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedBuildJobs returns the removed IDs of the "build_jobs" edge to the BuildJob entity.
-func (m *ServiceMutation) RemovedBuildJobsIDs() (ids []uuid.UUID) {
-	for id := range m.removedbuild_jobs {
+// RemovedDeployments returns the removed IDs of the "deployments" edge to the Deployment entity.
+func (m *ServiceMutation) RemovedDeploymentsIDs() (ids []uuid.UUID) {
+	for id := range m.removeddeployments {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// BuildJobsIDs returns the "build_jobs" edge IDs in the mutation.
-func (m *ServiceMutation) BuildJobsIDs() (ids []uuid.UUID) {
-	for id := range m.build_jobs {
+// DeploymentsIDs returns the "deployments" edge IDs in the mutation.
+func (m *ServiceMutation) DeploymentsIDs() (ids []uuid.UUID) {
+	for id := range m.deployments {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetBuildJobs resets all changes to the "build_jobs" edge.
-func (m *ServiceMutation) ResetBuildJobs() {
-	m.build_jobs = nil
-	m.clearedbuild_jobs = false
-	m.removedbuild_jobs = nil
+// ResetDeployments resets all changes to the "deployments" edge.
+func (m *ServiceMutation) ResetDeployments() {
+	m.deployments = nil
+	m.cleareddeployments = false
+	m.removeddeployments = nil
 }
 
 // Where appends a list predicates to the ServiceMutation builder.
@@ -9908,7 +9483,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 13)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -9948,9 +9523,6 @@ func (m *ServiceMutation) Fields() []string {
 	if m.kubernetes_secret != nil {
 		fields = append(fields, service.FieldKubernetesSecret)
 	}
-	if m.kubernetes_build_secret != nil {
-		fields = append(fields, service.FieldKubernetesBuildSecret)
-	}
 	return fields
 }
 
@@ -9985,8 +9557,6 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.GitRepository()
 	case service.FieldKubernetesSecret:
 		return m.KubernetesSecret()
-	case service.FieldKubernetesBuildSecret:
-		return m.KubernetesBuildSecret()
 	}
 	return nil, false
 }
@@ -10022,8 +9592,6 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldGitRepository(ctx)
 	case service.FieldKubernetesSecret:
 		return m.OldKubernetesSecret(ctx)
-	case service.FieldKubernetesBuildSecret:
-		return m.OldKubernetesBuildSecret(ctx)
 	}
 	return nil, fmt.Errorf("unknown Service field %s", name)
 }
@@ -10123,13 +9691,6 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetKubernetesSecret(v)
-		return nil
-	case service.FieldKubernetesBuildSecret:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetKubernetesBuildSecret(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
@@ -10255,9 +9816,6 @@ func (m *ServiceMutation) ResetField(name string) error {
 	case service.FieldKubernetesSecret:
 		m.ResetKubernetesSecret()
 		return nil
-	case service.FieldKubernetesBuildSecret:
-		m.ResetKubernetesBuildSecret()
-		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
 }
@@ -10274,8 +9832,8 @@ func (m *ServiceMutation) AddedEdges() []string {
 	if m.service_config != nil {
 		edges = append(edges, service.EdgeServiceConfig)
 	}
-	if m.build_jobs != nil {
-		edges = append(edges, service.EdgeBuildJobs)
+	if m.deployments != nil {
+		edges = append(edges, service.EdgeDeployments)
 	}
 	return edges
 }
@@ -10296,9 +9854,9 @@ func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 		if id := m.service_config; id != nil {
 			return []ent.Value{*id}
 		}
-	case service.EdgeBuildJobs:
-		ids := make([]ent.Value, 0, len(m.build_jobs))
-		for id := range m.build_jobs {
+	case service.EdgeDeployments:
+		ids := make([]ent.Value, 0, len(m.deployments))
+		for id := range m.deployments {
 			ids = append(ids, id)
 		}
 		return ids
@@ -10309,8 +9867,8 @@ func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ServiceMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 4)
-	if m.removedbuild_jobs != nil {
-		edges = append(edges, service.EdgeBuildJobs)
+	if m.removeddeployments != nil {
+		edges = append(edges, service.EdgeDeployments)
 	}
 	return edges
 }
@@ -10319,9 +9877,9 @@ func (m *ServiceMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *ServiceMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case service.EdgeBuildJobs:
-		ids := make([]ent.Value, 0, len(m.removedbuild_jobs))
-		for id := range m.removedbuild_jobs {
+	case service.EdgeDeployments:
+		ids := make([]ent.Value, 0, len(m.removeddeployments))
+		for id := range m.removeddeployments {
 			ids = append(ids, id)
 		}
 		return ids
@@ -10341,8 +9899,8 @@ func (m *ServiceMutation) ClearedEdges() []string {
 	if m.clearedservice_config {
 		edges = append(edges, service.EdgeServiceConfig)
 	}
-	if m.clearedbuild_jobs {
-		edges = append(edges, service.EdgeBuildJobs)
+	if m.cleareddeployments {
+		edges = append(edges, service.EdgeDeployments)
 	}
 	return edges
 }
@@ -10357,8 +9915,8 @@ func (m *ServiceMutation) EdgeCleared(name string) bool {
 		return m.clearedgithub_installation
 	case service.EdgeServiceConfig:
 		return m.clearedservice_config
-	case service.EdgeBuildJobs:
-		return m.clearedbuild_jobs
+	case service.EdgeDeployments:
+		return m.cleareddeployments
 	}
 	return false
 }
@@ -10393,8 +9951,8 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 	case service.EdgeServiceConfig:
 		m.ResetServiceConfig()
 		return nil
-	case service.EdgeBuildJobs:
-		m.ResetBuildJobs()
+	case service.EdgeDeployments:
+		m.ResetDeployments()
 		return nil
 	}
 	return fmt.Errorf("unknown Service edge %s", name)

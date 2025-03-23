@@ -1,4 +1,4 @@
-package builds_handler
+package deployments_handler
 
 import (
 	"errors"
@@ -23,24 +23,24 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "list-builds",
-			Summary:     "List Builds",
-			Description: "List builds for a specific service",
+			OperationID: "list-deployments",
+			Summary:     "List Deployments",
+			Description: "List deployments for a specific service",
 			Path:        "/list",
 			Method:      http.MethodGet,
 		},
-		handlers.ListBuildJobs,
+		handlers.ListDeployments,
 	)
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "trigger-build",
-			Summary:     "Trigger Build",
-			Description: "Trigger a new build for a service manually",
+			OperationID: "trigger-deployment",
+			Summary:     "Trigger Deployment",
+			Description: "Trigger a new deployment for a service manually",
 			Path:        "/create",
 			Method:      http.MethodPost,
 		},
-		handlers.CreateBuild,
+		handlers.CreateDeployment,
 	)
 }
 
@@ -54,6 +54,6 @@ func (self *HandlerGroup) handleErr(err error) error {
 	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
 		return huma.Error404NotFound("entity not found", err)
 	}
-	log.Error("Unexpected error in build handler", "err", err)
+	log.Error("Unexpected error in deployment handler", "err", err)
 	return huma.Error500InternalServerError("Internal server error")
 }

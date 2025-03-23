@@ -49,8 +49,6 @@ type Service struct {
 	GitRepository *string `json:"git_repository,omitempty"`
 	// Kubernetes secret for this service
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
-	// Kubernetes secret reference, used for builds.
-	KubernetesBuildSecret string `json:"kubernetes_build_secret,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -65,8 +63,8 @@ type ServiceEdges struct {
 	GithubInstallation *GithubInstallation `json:"github_installation,omitempty"`
 	// ServiceConfig holds the value of the service_config edge.
 	ServiceConfig *ServiceConfig `json:"service_config,omitempty"`
-	// BuildJobs holds the value of the build_jobs edge.
-	BuildJobs []*BuildJob `json:"build_jobs,omitempty"`
+	// Deployments holds the value of the deployments edge.
+	Deployments []*Deployment `json:"deployments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [4]bool
@@ -105,13 +103,13 @@ func (e ServiceEdges) ServiceConfigOrErr() (*ServiceConfig, error) {
 	return nil, &NotLoadedError{edge: "service_config"}
 }
 
-// BuildJobsOrErr returns the BuildJobs value or an error if the edge
+// DeploymentsOrErr returns the Deployments value or an error if the edge
 // was not loaded in eager-loading.
-func (e ServiceEdges) BuildJobsOrErr() ([]*BuildJob, error) {
+func (e ServiceEdges) DeploymentsOrErr() ([]*Deployment, error) {
 	if e.loadedTypes[3] {
-		return e.BuildJobs, nil
+		return e.Deployments, nil
 	}
-	return nil, &NotLoadedError{edge: "build_jobs"}
+	return nil, &NotLoadedError{edge: "deployments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -121,7 +119,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldProvider, service.FieldFramework, service.FieldGitRepository, service.FieldKubernetesSecret, service.FieldKubernetesBuildSecret:
+		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldType, service.FieldBuilder, service.FieldProvider, service.FieldFramework, service.FieldGitRepository, service.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -230,12 +228,6 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.KubernetesSecret = value.String
 			}
-		case service.FieldKubernetesBuildSecret:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field kubernetes_build_secret", values[i])
-			} else if value.Valid {
-				s.KubernetesBuildSecret = value.String
-			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -264,9 +256,9 @@ func (s *Service) QueryServiceConfig() *ServiceConfigQuery {
 	return NewServiceClient(s.config).QueryServiceConfig(s)
 }
 
-// QueryBuildJobs queries the "build_jobs" edge of the Service entity.
-func (s *Service) QueryBuildJobs() *BuildJobQuery {
-	return NewServiceClient(s.config).QueryBuildJobs(s)
+// QueryDeployments queries the "deployments" edge of the Service entity.
+func (s *Service) QueryDeployments() *DeploymentQuery {
+	return NewServiceClient(s.config).QueryDeployments(s)
 }
 
 // Update returns a builder for updating this Service.
@@ -338,9 +330,6 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("kubernetes_secret=")
 	builder.WriteString(s.KubernetesSecret)
-	builder.WriteString(", ")
-	builder.WriteString("kubernetes_build_secret=")
-	builder.WriteString(s.KubernetesBuildSecret)
 	builder.WriteByte(')')
 	return builder.String()
 }

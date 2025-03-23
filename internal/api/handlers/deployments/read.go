@@ -1,4 +1,4 @@
-package builds_handler
+package deployments_handler
 
 import (
 	"context"
@@ -9,23 +9,23 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-type ListBuildJobsInput struct {
+type ListDeploymentsInput struct {
 	server.BaseAuthInput
-	models.GetBuildJobsInput
+	models.GetDeploymentsInput
 }
 
-type ListBuildJobResponseData struct {
-	Jobs     []*models.BuildJobResponse         `json:"jobs"`
+type ListDeploymentResponseData struct {
+	Jobs     []*models.DeploymentResponse       `json:"jobs"`
 	Metadata *models.PaginationResponseMetadata `json:"metadata"`
 }
 
-type ListBuildJobsResponse struct {
+type ListDeploymentsResponse struct {
 	Body struct {
-		Data *ListBuildJobResponseData `json:"data"`
+		Data *ListDeploymentResponseData `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) ListBuildJobs(ctx context.Context, input *ListBuildJobsInput) (*ListBuildJobsResponse, error) {
+func (self *HandlerGroup) ListDeployments(ctx context.Context, input *ListDeploymentsInput) (*ListDeploymentsResponse, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -33,12 +33,12 @@ func (self *HandlerGroup) ListBuildJobs(ctx context.Context, input *ListBuildJob
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
-	response, metadata, err := self.srv.BuildJobService.GetBuildJobsForService(ctx, user.ID, &input.GetBuildJobsInput)
+	response, metadata, err := self.srv.DeploymentService.GetDeploymentsForService(ctx, user.ID, &input.GetDeploymentsInput)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}
 
-	resp := &ListBuildJobsResponse{}
+	resp := &ListDeploymentsResponse{}
 	resp.Body.Data.Jobs = response
 	resp.Body.Data.Metadata = metadata
 	return resp, nil

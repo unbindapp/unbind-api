@@ -14,6 +14,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/deployment"
+	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/ent/service"
 )
 
 // DeploymentCreate is the builder for creating a Deployment entity.
@@ -52,6 +54,102 @@ func (dc *DeploymentCreate) SetNillableUpdatedAt(t *time.Time) *DeploymentCreate
 	return dc
 }
 
+// SetServiceID sets the "service_id" field.
+func (dc *DeploymentCreate) SetServiceID(u uuid.UUID) *DeploymentCreate {
+	dc.mutation.SetServiceID(u)
+	return dc
+}
+
+// SetStatus sets the "status" field.
+func (dc *DeploymentCreate) SetStatus(ss schema.DeploymentStatus) *DeploymentCreate {
+	dc.mutation.SetStatus(ss)
+	return dc
+}
+
+// SetError sets the "error" field.
+func (dc *DeploymentCreate) SetError(s string) *DeploymentCreate {
+	dc.mutation.SetError(s)
+	return dc
+}
+
+// SetNillableError sets the "error" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableError(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetError(*s)
+	}
+	return dc
+}
+
+// SetStartedAt sets the "started_at" field.
+func (dc *DeploymentCreate) SetStartedAt(t time.Time) *DeploymentCreate {
+	dc.mutation.SetStartedAt(t)
+	return dc
+}
+
+// SetNillableStartedAt sets the "started_at" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableStartedAt(t *time.Time) *DeploymentCreate {
+	if t != nil {
+		dc.SetStartedAt(*t)
+	}
+	return dc
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (dc *DeploymentCreate) SetCompletedAt(t time.Time) *DeploymentCreate {
+	dc.mutation.SetCompletedAt(t)
+	return dc
+}
+
+// SetNillableCompletedAt sets the "completed_at" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableCompletedAt(t *time.Time) *DeploymentCreate {
+	if t != nil {
+		dc.SetCompletedAt(*t)
+	}
+	return dc
+}
+
+// SetKubernetesJobName sets the "kubernetes_job_name" field.
+func (dc *DeploymentCreate) SetKubernetesJobName(s string) *DeploymentCreate {
+	dc.mutation.SetKubernetesJobName(s)
+	return dc
+}
+
+// SetNillableKubernetesJobName sets the "kubernetes_job_name" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableKubernetesJobName(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetKubernetesJobName(*s)
+	}
+	return dc
+}
+
+// SetKubernetesJobStatus sets the "kubernetes_job_status" field.
+func (dc *DeploymentCreate) SetKubernetesJobStatus(s string) *DeploymentCreate {
+	dc.mutation.SetKubernetesJobStatus(s)
+	return dc
+}
+
+// SetNillableKubernetesJobStatus sets the "kubernetes_job_status" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableKubernetesJobStatus(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetKubernetesJobStatus(*s)
+	}
+	return dc
+}
+
+// SetAttempts sets the "attempts" field.
+func (dc *DeploymentCreate) SetAttempts(i int) *DeploymentCreate {
+	dc.mutation.SetAttempts(i)
+	return dc
+}
+
+// SetNillableAttempts sets the "attempts" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableAttempts(i *int) *DeploymentCreate {
+	if i != nil {
+		dc.SetAttempts(*i)
+	}
+	return dc
+}
+
 // SetID sets the "id" field.
 func (dc *DeploymentCreate) SetID(u uuid.UUID) *DeploymentCreate {
 	dc.mutation.SetID(u)
@@ -64,6 +162,11 @@ func (dc *DeploymentCreate) SetNillableID(u *uuid.UUID) *DeploymentCreate {
 		dc.SetID(*u)
 	}
 	return dc
+}
+
+// SetService sets the "service" edge to the Service entity.
+func (dc *DeploymentCreate) SetService(s *Service) *DeploymentCreate {
+	return dc.SetServiceID(s.ID)
 }
 
 // Mutation returns the DeploymentMutation object of the builder.
@@ -109,6 +212,10 @@ func (dc *DeploymentCreate) defaults() {
 		v := deployment.DefaultUpdatedAt()
 		dc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := dc.mutation.Attempts(); !ok {
+		v := deployment.DefaultAttempts
+		dc.mutation.SetAttempts(v)
+	}
 	if _, ok := dc.mutation.ID(); !ok {
 		v := deployment.DefaultID()
 		dc.mutation.SetID(v)
@@ -122,6 +229,23 @@ func (dc *DeploymentCreate) check() error {
 	}
 	if _, ok := dc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Deployment.updated_at"`)}
+	}
+	if _, ok := dc.mutation.ServiceID(); !ok {
+		return &ValidationError{Name: "service_id", err: errors.New(`ent: missing required field "Deployment.service_id"`)}
+	}
+	if _, ok := dc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Deployment.status"`)}
+	}
+	if v, ok := dc.mutation.Status(); ok {
+		if err := deployment.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Deployment.status": %w`, err)}
+		}
+	}
+	if _, ok := dc.mutation.Attempts(); !ok {
+		return &ValidationError{Name: "attempts", err: errors.New(`ent: missing required field "Deployment.attempts"`)}
+	}
+	if len(dc.mutation.ServiceIDs()) == 0 {
+		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "Deployment.service"`)}
 	}
 	return nil
 }
@@ -166,6 +290,51 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 	if value, ok := dc.mutation.UpdatedAt(); ok {
 		_spec.SetField(deployment.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := dc.mutation.Status(); ok {
+		_spec.SetField(deployment.FieldStatus, field.TypeEnum, value)
+		_node.Status = value
+	}
+	if value, ok := dc.mutation.Error(); ok {
+		_spec.SetField(deployment.FieldError, field.TypeString, value)
+		_node.Error = value
+	}
+	if value, ok := dc.mutation.StartedAt(); ok {
+		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)
+		_node.StartedAt = &value
+	}
+	if value, ok := dc.mutation.CompletedAt(); ok {
+		_spec.SetField(deployment.FieldCompletedAt, field.TypeTime, value)
+		_node.CompletedAt = &value
+	}
+	if value, ok := dc.mutation.KubernetesJobName(); ok {
+		_spec.SetField(deployment.FieldKubernetesJobName, field.TypeString, value)
+		_node.KubernetesJobName = value
+	}
+	if value, ok := dc.mutation.KubernetesJobStatus(); ok {
+		_spec.SetField(deployment.FieldKubernetesJobStatus, field.TypeString, value)
+		_node.KubernetesJobStatus = value
+	}
+	if value, ok := dc.mutation.Attempts(); ok {
+		_spec.SetField(deployment.FieldAttempts, field.TypeInt, value)
+		_node.Attempts = value
+	}
+	if nodes := dc.mutation.ServiceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   deployment.ServiceTable,
+			Columns: []string{deployment.ServiceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ServiceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -231,6 +400,138 @@ func (u *DeploymentUpsert) UpdateUpdatedAt() *DeploymentUpsert {
 	return u
 }
 
+// SetServiceID sets the "service_id" field.
+func (u *DeploymentUpsert) SetServiceID(v uuid.UUID) *DeploymentUpsert {
+	u.Set(deployment.FieldServiceID, v)
+	return u
+}
+
+// UpdateServiceID sets the "service_id" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateServiceID() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldServiceID)
+	return u
+}
+
+// SetStatus sets the "status" field.
+func (u *DeploymentUpsert) SetStatus(v schema.DeploymentStatus) *DeploymentUpsert {
+	u.Set(deployment.FieldStatus, v)
+	return u
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateStatus() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldStatus)
+	return u
+}
+
+// SetError sets the "error" field.
+func (u *DeploymentUpsert) SetError(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldError, v)
+	return u
+}
+
+// UpdateError sets the "error" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateError() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldError)
+	return u
+}
+
+// ClearError clears the value of the "error" field.
+func (u *DeploymentUpsert) ClearError() *DeploymentUpsert {
+	u.SetNull(deployment.FieldError)
+	return u
+}
+
+// SetStartedAt sets the "started_at" field.
+func (u *DeploymentUpsert) SetStartedAt(v time.Time) *DeploymentUpsert {
+	u.Set(deployment.FieldStartedAt, v)
+	return u
+}
+
+// UpdateStartedAt sets the "started_at" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateStartedAt() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldStartedAt)
+	return u
+}
+
+// ClearStartedAt clears the value of the "started_at" field.
+func (u *DeploymentUpsert) ClearStartedAt() *DeploymentUpsert {
+	u.SetNull(deployment.FieldStartedAt)
+	return u
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (u *DeploymentUpsert) SetCompletedAt(v time.Time) *DeploymentUpsert {
+	u.Set(deployment.FieldCompletedAt, v)
+	return u
+}
+
+// UpdateCompletedAt sets the "completed_at" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateCompletedAt() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldCompletedAt)
+	return u
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (u *DeploymentUpsert) ClearCompletedAt() *DeploymentUpsert {
+	u.SetNull(deployment.FieldCompletedAt)
+	return u
+}
+
+// SetKubernetesJobName sets the "kubernetes_job_name" field.
+func (u *DeploymentUpsert) SetKubernetesJobName(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldKubernetesJobName, v)
+	return u
+}
+
+// UpdateKubernetesJobName sets the "kubernetes_job_name" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateKubernetesJobName() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldKubernetesJobName)
+	return u
+}
+
+// ClearKubernetesJobName clears the value of the "kubernetes_job_name" field.
+func (u *DeploymentUpsert) ClearKubernetesJobName() *DeploymentUpsert {
+	u.SetNull(deployment.FieldKubernetesJobName)
+	return u
+}
+
+// SetKubernetesJobStatus sets the "kubernetes_job_status" field.
+func (u *DeploymentUpsert) SetKubernetesJobStatus(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldKubernetesJobStatus, v)
+	return u
+}
+
+// UpdateKubernetesJobStatus sets the "kubernetes_job_status" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateKubernetesJobStatus() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldKubernetesJobStatus)
+	return u
+}
+
+// ClearKubernetesJobStatus clears the value of the "kubernetes_job_status" field.
+func (u *DeploymentUpsert) ClearKubernetesJobStatus() *DeploymentUpsert {
+	u.SetNull(deployment.FieldKubernetesJobStatus)
+	return u
+}
+
+// SetAttempts sets the "attempts" field.
+func (u *DeploymentUpsert) SetAttempts(v int) *DeploymentUpsert {
+	u.Set(deployment.FieldAttempts, v)
+	return u
+}
+
+// UpdateAttempts sets the "attempts" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateAttempts() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldAttempts)
+	return u
+}
+
+// AddAttempts adds v to the "attempts" field.
+func (u *DeploymentUpsert) AddAttempts(v int) *DeploymentUpsert {
+	u.Add(deployment.FieldAttempts, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -293,6 +594,160 @@ func (u *DeploymentUpsertOne) SetUpdatedAt(v time.Time) *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) UpdateUpdatedAt() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetServiceID sets the "service_id" field.
+func (u *DeploymentUpsertOne) SetServiceID(v uuid.UUID) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetServiceID(v)
+	})
+}
+
+// UpdateServiceID sets the "service_id" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateServiceID() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateServiceID()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *DeploymentUpsertOne) SetStatus(v schema.DeploymentStatus) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateStatus() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetError sets the "error" field.
+func (u *DeploymentUpsertOne) SetError(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetError(v)
+	})
+}
+
+// UpdateError sets the "error" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateError() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateError()
+	})
+}
+
+// ClearError clears the value of the "error" field.
+func (u *DeploymentUpsertOne) ClearError() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearError()
+	})
+}
+
+// SetStartedAt sets the "started_at" field.
+func (u *DeploymentUpsertOne) SetStartedAt(v time.Time) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetStartedAt(v)
+	})
+}
+
+// UpdateStartedAt sets the "started_at" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateStartedAt() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateStartedAt()
+	})
+}
+
+// ClearStartedAt clears the value of the "started_at" field.
+func (u *DeploymentUpsertOne) ClearStartedAt() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearStartedAt()
+	})
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (u *DeploymentUpsertOne) SetCompletedAt(v time.Time) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCompletedAt(v)
+	})
+}
+
+// UpdateCompletedAt sets the "completed_at" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateCompletedAt() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCompletedAt()
+	})
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (u *DeploymentUpsertOne) ClearCompletedAt() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCompletedAt()
+	})
+}
+
+// SetKubernetesJobName sets the "kubernetes_job_name" field.
+func (u *DeploymentUpsertOne) SetKubernetesJobName(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetKubernetesJobName(v)
+	})
+}
+
+// UpdateKubernetesJobName sets the "kubernetes_job_name" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateKubernetesJobName() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateKubernetesJobName()
+	})
+}
+
+// ClearKubernetesJobName clears the value of the "kubernetes_job_name" field.
+func (u *DeploymentUpsertOne) ClearKubernetesJobName() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearKubernetesJobName()
+	})
+}
+
+// SetKubernetesJobStatus sets the "kubernetes_job_status" field.
+func (u *DeploymentUpsertOne) SetKubernetesJobStatus(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetKubernetesJobStatus(v)
+	})
+}
+
+// UpdateKubernetesJobStatus sets the "kubernetes_job_status" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateKubernetesJobStatus() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateKubernetesJobStatus()
+	})
+}
+
+// ClearKubernetesJobStatus clears the value of the "kubernetes_job_status" field.
+func (u *DeploymentUpsertOne) ClearKubernetesJobStatus() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearKubernetesJobStatus()
+	})
+}
+
+// SetAttempts sets the "attempts" field.
+func (u *DeploymentUpsertOne) SetAttempts(v int) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetAttempts(v)
+	})
+}
+
+// AddAttempts adds v to the "attempts" field.
+func (u *DeploymentUpsertOne) AddAttempts(v int) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.AddAttempts(v)
+	})
+}
+
+// UpdateAttempts sets the "attempts" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateAttempts() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateAttempts()
 	})
 }
 
@@ -525,6 +980,160 @@ func (u *DeploymentUpsertBulk) SetUpdatedAt(v time.Time) *DeploymentUpsertBulk {
 func (u *DeploymentUpsertBulk) UpdateUpdatedAt() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.UpdateUpdatedAt()
+	})
+}
+
+// SetServiceID sets the "service_id" field.
+func (u *DeploymentUpsertBulk) SetServiceID(v uuid.UUID) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetServiceID(v)
+	})
+}
+
+// UpdateServiceID sets the "service_id" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateServiceID() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateServiceID()
+	})
+}
+
+// SetStatus sets the "status" field.
+func (u *DeploymentUpsertBulk) SetStatus(v schema.DeploymentStatus) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetStatus(v)
+	})
+}
+
+// UpdateStatus sets the "status" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateStatus() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateStatus()
+	})
+}
+
+// SetError sets the "error" field.
+func (u *DeploymentUpsertBulk) SetError(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetError(v)
+	})
+}
+
+// UpdateError sets the "error" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateError() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateError()
+	})
+}
+
+// ClearError clears the value of the "error" field.
+func (u *DeploymentUpsertBulk) ClearError() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearError()
+	})
+}
+
+// SetStartedAt sets the "started_at" field.
+func (u *DeploymentUpsertBulk) SetStartedAt(v time.Time) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetStartedAt(v)
+	})
+}
+
+// UpdateStartedAt sets the "started_at" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateStartedAt() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateStartedAt()
+	})
+}
+
+// ClearStartedAt clears the value of the "started_at" field.
+func (u *DeploymentUpsertBulk) ClearStartedAt() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearStartedAt()
+	})
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (u *DeploymentUpsertBulk) SetCompletedAt(v time.Time) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCompletedAt(v)
+	})
+}
+
+// UpdateCompletedAt sets the "completed_at" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateCompletedAt() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCompletedAt()
+	})
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (u *DeploymentUpsertBulk) ClearCompletedAt() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCompletedAt()
+	})
+}
+
+// SetKubernetesJobName sets the "kubernetes_job_name" field.
+func (u *DeploymentUpsertBulk) SetKubernetesJobName(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetKubernetesJobName(v)
+	})
+}
+
+// UpdateKubernetesJobName sets the "kubernetes_job_name" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateKubernetesJobName() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateKubernetesJobName()
+	})
+}
+
+// ClearKubernetesJobName clears the value of the "kubernetes_job_name" field.
+func (u *DeploymentUpsertBulk) ClearKubernetesJobName() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearKubernetesJobName()
+	})
+}
+
+// SetKubernetesJobStatus sets the "kubernetes_job_status" field.
+func (u *DeploymentUpsertBulk) SetKubernetesJobStatus(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetKubernetesJobStatus(v)
+	})
+}
+
+// UpdateKubernetesJobStatus sets the "kubernetes_job_status" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateKubernetesJobStatus() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateKubernetesJobStatus()
+	})
+}
+
+// ClearKubernetesJobStatus clears the value of the "kubernetes_job_status" field.
+func (u *DeploymentUpsertBulk) ClearKubernetesJobStatus() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearKubernetesJobStatus()
+	})
+}
+
+// SetAttempts sets the "attempts" field.
+func (u *DeploymentUpsertBulk) SetAttempts(v int) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetAttempts(v)
+	})
+}
+
+// AddAttempts adds v to the "attempts" field.
+func (u *DeploymentUpsertBulk) AddAttempts(v int) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.AddAttempts(v)
+	})
+}
+
+// UpdateAttempts sets the "attempts" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateAttempts() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateAttempts()
 	})
 }
 

@@ -31,7 +31,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("host").Optional().Nillable().Comment("External domain for the service, e.g., unbind.app"),
 		field.Int("port").Optional().Nillable().Comment("Main container port"),
 		field.Int32("replicas").Default(2).Comment("Number of replicas for the service"),
-		field.Bool("auto_deploy").Default(true).Comment("Whether to automatically deploy on git push"),
+		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
 		field.Bool("public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),
 		field.String("image").Optional().Comment("Custom Docker image if not building from git"),
@@ -51,18 +51,5 @@ func (ServiceConfig) Annotations() []schema.Annotation {
 		entsql.Annotation{
 			Table: "service_configs",
 		},
-	}
-}
-
-// Deployment holds information about service deployments
-type Deployment struct {
-	ent.Schema
-}
-
-// Mixin of the Deployment.
-func (Deployment) Mixin() []ent.Mixin {
-	return []ent.Mixin{
-		mixin.PKMixin{},
-		mixin.TimeMixin{},
 	}
 }

@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/deployment"
+	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/ent/service"
 )
 
 // Deployment is the model entity for the Deployment schema.
@@ -22,8 +24,47 @@ type Deployment struct {
 	// The time at which the entity was created.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// ServiceID holds the value of the "service_id" field.
+	ServiceID uuid.UUID `json:"service_id,omitempty"`
+	// Status holds the value of the "status" field.
+	Status schema.DeploymentStatus `json:"status,omitempty"`
+	// Error holds the value of the "error" field.
+	Error string `json:"error,omitempty"`
+	// StartedAt holds the value of the "started_at" field.
+	StartedAt *time.Time `json:"started_at,omitempty"`
+	// CompletedAt holds the value of the "completed_at" field.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+	// The name of the kubernetes job
+	KubernetesJobName string `json:"kubernetes_job_name,omitempty"`
+	// The status of the kubernetes job
+	KubernetesJobStatus string `json:"kubernetes_job_status,omitempty"`
+	// Attempts holds the value of the "attempts" field.
+	Attempts int `json:"attempts,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the DeploymentQuery when eager-loading is set.
+	Edges        DeploymentEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// DeploymentEdges holds the relations/edges for other nodes in the graph.
+type DeploymentEdges struct {
+	// Service holds the value of the service edge.
+	Service *Service `json:"service,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ServiceOrErr returns the Service value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e DeploymentEdges) ServiceOrErr() (*Service, error) {
+	if e.Service != nil {
+		return e.Service, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: service.Label}
+	}
+	return nil, &NotLoadedError{edge: "service"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -31,9 +72,13 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt:
+		case deployment.FieldAttempts:
+			values[i] = new(sql.NullInt64)
+		case deployment.FieldStatus, deployment.FieldError, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus:
+			values[i] = new(sql.NullString)
+		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt, deployment.FieldStartedAt, deployment.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
-		case deployment.FieldID:
+		case deployment.FieldID, deployment.FieldServiceID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -68,6 +113,56 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				d.UpdatedAt = value.Time
 			}
+		case deployment.FieldServiceID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field service_id", values[i])
+			} else if value != nil {
+				d.ServiceID = *value
+			}
+		case deployment.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				d.Status = schema.DeploymentStatus(value.String)
+			}
+		case deployment.FieldError:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field error", values[i])
+			} else if value.Valid {
+				d.Error = value.String
+			}
+		case deployment.FieldStartedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field started_at", values[i])
+			} else if value.Valid {
+				d.StartedAt = new(time.Time)
+				*d.StartedAt = value.Time
+			}
+		case deployment.FieldCompletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field completed_at", values[i])
+			} else if value.Valid {
+				d.CompletedAt = new(time.Time)
+				*d.CompletedAt = value.Time
+			}
+		case deployment.FieldKubernetesJobName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_job_name", values[i])
+			} else if value.Valid {
+				d.KubernetesJobName = value.String
+			}
+		case deployment.FieldKubernetesJobStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_job_status", values[i])
+			} else if value.Valid {
+				d.KubernetesJobStatus = value.String
+			}
+		case deployment.FieldAttempts:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field attempts", values[i])
+			} else if value.Valid {
+				d.Attempts = int(value.Int64)
+			}
 		default:
 			d.selectValues.Set(columns[i], values[i])
 		}
@@ -79,6 +174,11 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (d *Deployment) Value(name string) (ent.Value, error) {
 	return d.selectValues.Get(name)
+}
+
+// QueryService queries the "service" edge of the Deployment entity.
+func (d *Deployment) QueryService() *ServiceQuery {
+	return NewDeploymentClient(d.config).QueryService(d)
 }
 
 // Update returns a builder for updating this Deployment.
@@ -109,6 +209,34 @@ func (d *Deployment) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(d.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("service_id=")
+	builder.WriteString(fmt.Sprintf("%v", d.ServiceID))
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(fmt.Sprintf("%v", d.Status))
+	builder.WriteString(", ")
+	builder.WriteString("error=")
+	builder.WriteString(d.Error)
+	builder.WriteString(", ")
+	if v := d.StartedAt; v != nil {
+		builder.WriteString("started_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := d.CompletedAt; v != nil {
+		builder.WriteString("completed_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("kubernetes_job_name=")
+	builder.WriteString(d.KubernetesJobName)
+	builder.WriteString(", ")
+	builder.WriteString("kubernetes_job_status=")
+	builder.WriteString(d.KubernetesJobStatus)
+	builder.WriteString(", ")
+	builder.WriteString("attempts=")
+	builder.WriteString(fmt.Sprintf("%v", d.Attempts))
 	builder.WriteByte(')')
 	return builder.String()
 }
