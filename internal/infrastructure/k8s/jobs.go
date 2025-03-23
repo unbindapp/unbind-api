@@ -50,6 +50,8 @@ func (self *KubeClient) CreateBuildJob(ctx context.Context, serviceID string, jo
 			TTLSecondsAfterFinished: utils.ToPtr[int32](300),
 			BackoffLimit:            utils.ToPtr[int32](0),
 			Parallelism:             utils.ToPtr[int32](1),
+			// Timeout
+			ActiveDeadlineSeconds: utils.ToPtr[int64](1200),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
@@ -74,13 +76,26 @@ until buildctl --addr tcp://localhost:1234 debug workers >/dev/null 2>&1; do
   echo "Waiting for BuildKit daemon to be ready...";
   sleep 1;
 done;
+
+# Wait for Docker daemon to be ready
+until docker info >/dev/null 2>&1; do
+  echo "Waiting for Docker daemon to be ready...";
+  sleep 1;
+done;
+
 # Run the builder with BuildKit
 exec /app/builder`,
 							},
-							Env: append(envVars, corev1.EnvVar{
-								Name:  "BUILDKIT_HOST",
-								Value: "tcp://localhost:1234",
-							}),
+							Env: append(envVars, []corev1.EnvVar{
+								{
+									Name:  "BUILDKIT_HOST",
+									Value: "tcp://localhost:1234",
+								},
+								{
+									Name:  "DOCKER_HOST",
+									Value: "tcp://localhost:2375",
+								},
+							}...),
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "buildkit-socket",
@@ -90,7 +105,7 @@ exec /app/builder`,
 						},
 						{
 							Name:  "buildkit-daemon",
-							Image: "moby/buildkit:v0.21.0",
+							Image: "moby/buildkit:v0.20.1-rootless",
 							Args: []string{
 								"--addr", "tcp://0.0.0.0:1234",
 								"--oci-worker-no-process-sandbox",
@@ -130,6 +145,29 @@ exec /app/builder`,
 								},
 								InitialDelaySeconds: 5,
 								PeriodSeconds:       3,
+							},
+						},
+						{
+							Name:  "docker-daemon",
+							Image: "docker:27.5-dind",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "DOCKER_TLS_CERTDIR",
+									Value: "",
+								},
+							},
+							// Uncomment if you need to use an insecure registry
+							// Args: []string{
+							//     fmt.Sprintf("--insecure-registry=%s", self.config.ContainerRegistryHost),
+							// },
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: utils.ToPtr(true),
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "docker-graph-storage",
+									MountPath: "/var/lib/docker",
+								},
 							},
 						},
 						{
@@ -184,6 +222,12 @@ sleep infinity`, self.config.ContainerRegistryHost,
 						},
 						{
 							Name: "cache-dir",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+						{
+							Name: "docker-graph-storage",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},

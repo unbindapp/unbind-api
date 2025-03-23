@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -85,6 +89,15 @@ func startAPI(cfg *config.Config) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Set up signal handling
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-signalCh
+		slog.Info("Received shutdown signal", "signal", sig)
+		cancel() // This will propagate cancellation to all derived contexts
+	}()
+
 	// Initialize valkey (redis)
 	valkeyClient, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
 	if err != nil {
@@ -115,7 +128,7 @@ func startAPI(cfg *config.Config) {
 	githubClient := github.NewGithubClient(cfg)
 
 	// Create build controller
-	buildController := buildctl.NewBuildController(ctx, cfg, kubeClient, valkeyClient, repo, githubClient)
+	buildController := buildctl.NewBuildController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient)
 
 	// Implementation
 	srvImpl := &server.Server{
@@ -326,6 +339,9 @@ func startAPI(cfg *config.Config) {
 		Addr:    addr,
 		Handler: r,
 	}
+
+	// Start build queue processeor
+	buildController.StartAsync()
 
 	// Start the server in a goroutine
 	go func() {

@@ -115,7 +115,7 @@ func (self *ServiceService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 		return nil, err
 	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets))
+	secretResponse := make([]*models.SecretResponse, len(secrets)+len(buildSecrets))
 	i := 0
 	for k, v := range secrets {
 		secretResponse[i] = &models.SecretResponse{
@@ -126,12 +126,13 @@ func (self *ServiceService) GetSecrets(ctx context.Context, userID uuid.UUID, be
 		i++
 	}
 	for k, v := range buildSecrets {
-		secretResponse = append(secretResponse, &models.SecretResponse{
+		secretResponse[i] = &models.SecretResponse{
 			Type:          models.ServiceSecret,
 			Name:          k,
 			Value:         string(v),
 			IsBuildSecret: true,
-		})
+		}
+		i++
 	}
 
 	return secretResponse, nil
