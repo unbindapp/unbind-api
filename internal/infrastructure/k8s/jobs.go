@@ -65,54 +65,57 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 					RestartPolicy:         corev1.RestartPolicyNever,
 					ShareProcessNamespace: utils.ToPtr(true), // Share process namespace between containers
 
+					// Single init container that starts both daemons in background
 					InitContainers: []corev1.Container{
 						{
-							Name:  "buildkit-daemon",
-							Image: "moby/buildkit:v0.20.1-rootless",
-							Args: []string{
-								"--addr", "tcp://0.0.0.0:1234",
-								"--oci-worker-no-process-sandbox",
-							},
-							Env: []corev1.EnvVar{
-								{
-									Name:  "BUILDKIT_STEP_LOG_MAX_SIZE",
-									Value: "-1", // Disable truncating of logs
-								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "buildkit-socket",
-									MountPath: "/run/buildkit",
-								},
-								{
-									Name:      "buildkit-storage",
-									MountPath: "/var/lib/buildkit",
-								},
-								{
-									Name:      "cache-dir",
-									MountPath: "/cache",
-								},
-							},
-						},
-						{
-							Name:  "docker-daemon",
+							Name:  "start-daemons",
 							Image: "docker:27.5-dind",
+							Command: []string{
+								"sh",
+								"-c",
+								`# Start buildkit daemon in the background using the Docker image
+	echo "Starting BuildKit daemon in background..."
+	nohup dockerd-entrypoint.sh --host=tcp://0.0.0.0:2375 > /tmp/dockerd.log 2>&1 &
+	
+	# Wait for Docker daemon to be ready
+	echo "Waiting for Docker daemon..."
+	until docker --host tcp://localhost:2375 info > /dev/null 2>&1; do
+		echo "Docker daemon not ready yet, retrying..."
+		sleep 2
+	done
+	echo "Docker daemon ready"
+	
+	# Use Docker to run BuildKit
+	echo "Starting BuildKit daemon using Docker..."
+	docker --host tcp://localhost:2375 run -d --name buildkitd --privileged moby/buildkit:v0.20.1 --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox
+	
+	# Wait for BuildKit to be accessible inside its container
+	echo "Waiting for BuildKit daemon to initialize..."
+	until docker --host tcp://localhost:2375 exec buildkitd buildctl --addr tcp://0.0.0.0:1234 debug workers > /dev/null 2>&1; do
+		echo "BuildKit daemon not ready yet, retrying..."
+		sleep 2
+	done
+	
+	# Forward the port from the BuildKit container to the host
+	echo "Setting up port forwarding for BuildKit..."
+	docker --host tcp://localhost:2375 run -d --name buildkit-proxy -p 1234:1234 alpine/socat tcp-listen:1234,fork,reuseaddr tcp-connect:buildkitd:1234
+	
+	echo "Verifying BuildKit connection..."
+	sleep 3
+	if curl -s http://localhost:1234/debug/workers > /dev/null; then
+		echo "BuildKit daemon ready and accessible"
+	else
+		echo "WARNING: BuildKit daemon may not be properly exposed"
+	fi
+	
+	echo "All daemons started and ready"
+	`,
+							},
 							Env: []corev1.EnvVar{
 								{
 									Name:  "DOCKER_TLS_CERTDIR",
 									Value: "",
 								},
-								{
-									Name:  "DOCKER_HOST",
-									Value: "",
-								},
-							},
-							Args: []string{
-								"--host=tcp://0.0.0.0:2375",
-								"--host=unix:///var/run/docker.sock",
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: utils.ToPtr(true),
@@ -122,32 +125,13 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									Name:      "docker-graph-storage",
 									MountPath: "/var/lib/docker",
 								},
-							},
-						},
-						{
-							Name:  "wait-for-daemons",
-							Image: self.config.BuildImage,
-							Command: []string{
-								"sh",
-								"-c",
-								`# Wait for buildkitd to be ready
-	until buildctl --addr tcp://localhost:1234 debug workers > /dev/null 2>&1; do
-		echo "Waiting for BuildKit daemon to be ready...";
-		sleep 2;
-	done
-	echo "BuildKit daemon is ready"
-	
-	# Wait for Docker daemon to be ready
-	until docker info > /dev/null 2>&1; do
-		echo "Waiting for Docker daemon to be ready...";
-		sleep 2;
-	done
-	echo "Docker daemon is ready"`,
-							},
-							Env: []corev1.EnvVar{
 								{
-									Name:  "DOCKER_HOST",
-									Value: "tcp://localhost:2375",
+									Name:      "buildkit-storage",
+									MountPath: "/var/lib/buildkit",
+								},
+								{
+									Name:      "cache-dir",
+									MountPath: "/cache",
 								},
 							},
 						},
@@ -160,7 +144,16 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 							Command: []string{
 								"sh",
 								"-c",
-								`# Run the builder with BuildKit and Docker daemons already running
+								`# Double-check that services are available
+	echo "Verifying Docker daemon..."
+	docker info > /dev/null 2>&1 || { echo "Docker daemon not accessible"; exit 1; }
+	
+	echo "Verifying BuildKit daemon..."
+	buildctl --addr tcp://localhost:1234 debug workers > /dev/null 2>&1 || { echo "BuildKit daemon not accessible"; exit 1; }
+	
+	echo "All services verified, starting build..."
+	
+	# Run the builder with BuildKit
 	exec /app/builder`,
 							},
 							Env: append(envVars, []corev1.EnvVar{
@@ -217,7 +210,6 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 			},
 		},
 	}
-
 	// Create the Job in Kubernetes
 	_, err = self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).Create(ctx, job, metav1.CreateOptions{})
 	return jobName, err
