@@ -22,11 +22,11 @@ import (
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
-	secrets_handler "github.com/unbindapp/unbind-api/internal/api/handlers/secrets"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
 	user_handler "github.com/unbindapp/unbind-api/internal/api/handlers/user"
+	variables_handler "github.com/unbindapp/unbind-api/internal/api/handlers/variables"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -314,14 +314,14 @@ func startAPI(cfg *config.Config) {
 	})
 	service_handler.RegisterHandlers(srvImpl, servicesGroup)
 
-	// /secrets group
-	secretsGroup := huma.NewGroup(api, "/secrets")
-	secretsGroup.UseMiddleware(mw.Authenticate)
-	secretsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Secrets"}
+	// /variables group
+	variablesGroup := huma.NewGroup(api, "/variables")
+	variablesGroup.UseMiddleware(mw.Authenticate)
+	variablesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Variables"}
 		next(op)
 	})
-	secrets_handler.RegisterHandlers(srvImpl, secretsGroup)
+	variables_handler.RegisterHandlers(srvImpl, variablesGroup)
 
 	// /logs group
 	logsGroup := huma.NewGroup(api, "/logs")
