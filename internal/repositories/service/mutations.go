@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
@@ -18,10 +19,6 @@ func (self *ServiceRepository) Create(
 	name string,
 	displayName string,
 	description string,
-	serviceType service.Type,
-	builder service.Builder,
-	provider *enum.Provider,
-	framework *enum.Framework,
 	environmentID uuid.UUID,
 	gitHubInstallationID *int64,
 	gitRepository *string,
@@ -36,10 +33,6 @@ func (self *ServiceRepository) Create(
 		SetName(name).
 		SetDisplayName(displayName).
 		SetDescription(description).
-		SetType(serviceType).
-		SetBuilder(builder).
-		SetNillableProvider(provider).
-		SetNillableFramework(framework).
 		SetEnvironmentID(environmentID).
 		SetNillableGithubInstallationID(gitHubInstallationID).
 		SetNillableGitRepository(gitRepository).
@@ -52,6 +45,10 @@ func (self *ServiceRepository) CreateConfig(
 	ctx context.Context,
 	tx repository.TxInterface,
 	serviceID uuid.UUID,
+	serviceType schema.ServiceType,
+	builder schema.ServiceBuilder,
+	provider *enum.Provider,
+	framework *enum.Framework,
 	gitBranch *string,
 	port *int,
 	host *string,
@@ -68,6 +65,10 @@ func (self *ServiceRepository) CreateConfig(
 
 	return db.ServiceConfig.Create().
 		SetServiceID(serviceID).
+		SetType(serviceType).
+		SetBuilder(builder).
+		SetNillableProvider(provider).
+		SetNillableFramework(framework).
 		SetNillableGitBranch(gitBranch).
 		SetNillablePort(port).
 		SetNillableHost(host).
@@ -103,6 +104,8 @@ func (self *ServiceRepository) UpdateConfig(
 	ctx context.Context,
 	tx repository.TxInterface,
 	serviceID uuid.UUID,
+	serviceType *schema.ServiceType,
+	builder *schema.ServiceBuilder,
 	gitBranch *string,
 	port *int,
 	host *string,
@@ -119,6 +122,8 @@ func (self *ServiceRepository) UpdateConfig(
 
 	return db.ServiceConfig.Update().
 		Where(serviceconfig.ServiceID(serviceID)).
+		SetNillableType(serviceType).
+		SetNillableBuilder(builder).
 		SetNillableGitBranch(gitBranch).
 		SetNillablePort(port).
 		SetNillableHost(host).

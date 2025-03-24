@@ -5,8 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/service"
-	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ServiceResponse defines the response structure for service operations
@@ -15,10 +13,6 @@ type ServiceResponse struct {
 	Name                 string                 `json:"name"`
 	DisplayName          string                 `json:"display_name"`
 	Description          string                 `json:"description"`
-	Type                 service.Type           `json:"type"`
-	Builder              service.Builder        `json:"builder"`
-	Provider             *enum.Provider         `json:"provider,omitempty"`
-	Framework            *enum.Framework        `json:"framework,omitempty"`
 	EnvironmentID        uuid.UUID              `json:"environment_id"`
 	GitHubInstallationID *int64                 `json:"github_installation_id,omitempty"`
 	GitRepository        *string                `json:"git_repository,omitempty"`
@@ -36,10 +30,6 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 			Name:                 entity.Name,
 			DisplayName:          entity.DisplayName,
 			Description:          entity.Description,
-			Type:                 entity.Type,
-			Builder:              entity.Builder,
-			Provider:             entity.Provider,
-			Framework:            entity.Framework,
 			EnvironmentID:        entity.EnvironmentID,
 			GitHubInstallationID: entity.GithubInstallationID,
 			GitRepository:        entity.GitRepository,

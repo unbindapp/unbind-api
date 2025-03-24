@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ServiceConfig is the model entity for the ServiceConfig schema.
@@ -26,6 +28,14 @@ type ServiceConfig struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// ServiceID holds the value of the "service_id" field.
 	ServiceID uuid.UUID `json:"service_id,omitempty"`
+	// Type of service
+	Type schema.ServiceType `json:"type,omitempty"`
+	// Builder holds the value of the "builder" field.
+	Builder schema.ServiceBuilder `json:"builder,omitempty"`
+	// Provider (e.g. Go, Python, Node, Deno)
+	Provider *enum.Provider `json:"provider,omitempty"`
+	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
+	Framework *enum.Framework `json:"framework,omitempty"`
 	// Branch to build from
 	GitBranch *string `json:"git_branch,omitempty"`
 	// External domain for the service, e.g., unbind.app
@@ -77,7 +87,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldPort, serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldGitBranch, serviceconfig.FieldHost, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldHost, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -121,6 +131,32 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field service_id", values[i])
 			} else if value != nil {
 				sc.ServiceID = *value
+			}
+		case serviceconfig.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				sc.Type = schema.ServiceType(value.String)
+			}
+		case serviceconfig.FieldBuilder:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field builder", values[i])
+			} else if value.Valid {
+				sc.Builder = schema.ServiceBuilder(value.String)
+			}
+		case serviceconfig.FieldProvider:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field provider", values[i])
+			} else if value.Valid {
+				sc.Provider = new(enum.Provider)
+				*sc.Provider = enum.Provider(value.String)
+			}
+		case serviceconfig.FieldFramework:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field framework", values[i])
+			} else if value.Valid {
+				sc.Framework = new(enum.Framework)
+				*sc.Framework = enum.Framework(value.String)
 			}
 		case serviceconfig.FieldGitBranch:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -223,6 +259,22 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("service_id=")
 	builder.WriteString(fmt.Sprintf("%v", sc.ServiceID))
+	builder.WriteString(", ")
+	builder.WriteString("type=")
+	builder.WriteString(fmt.Sprintf("%v", sc.Type))
+	builder.WriteString(", ")
+	builder.WriteString("builder=")
+	builder.WriteString(fmt.Sprintf("%v", sc.Builder))
+	builder.WriteString(", ")
+	if v := sc.Provider; v != nil {
+		builder.WriteString("provider=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := sc.Framework; v != nil {
+		builder.WriteString("framework=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	if v := sc.GitBranch; v != nil {
 		builder.WriteString("git_branch=")

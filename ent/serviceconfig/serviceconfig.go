@@ -3,11 +3,14 @@
 package serviceconfig
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 const (
@@ -21,6 +24,14 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldServiceID holds the string denoting the service_id field in the database.
 	FieldServiceID = "service_id"
+	// FieldType holds the string denoting the type field in the database.
+	FieldType = "type"
+	// FieldBuilder holds the string denoting the builder field in the database.
+	FieldBuilder = "builder"
+	// FieldProvider holds the string denoting the provider field in the database.
+	FieldProvider = "provider"
+	// FieldFramework holds the string denoting the framework field in the database.
+	FieldFramework = "framework"
 	// FieldGitBranch holds the string denoting the git_branch field in the database.
 	FieldGitBranch = "git_branch"
 	// FieldHost holds the string denoting the host field in the database.
@@ -56,6 +67,10 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldServiceID,
+	FieldType,
+	FieldBuilder,
+	FieldProvider,
+	FieldFramework,
 	FieldGitBranch,
 	FieldHost,
 	FieldPort,
@@ -93,6 +108,46 @@ var (
 	DefaultID func() uuid.UUID
 )
 
+// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
+func TypeValidator(_type schema.ServiceType) error {
+	switch _type {
+	case "git", "dockerfile":
+		return nil
+	default:
+		return fmt.Errorf("serviceconfig: invalid enum value for type field: %q", _type)
+	}
+}
+
+// BuilderValidator is a validator for the "builder" field enum values. It is called by the builders before save.
+func BuilderValidator(b schema.ServiceBuilder) error {
+	switch b {
+	case "ServiceBuilder", "railpack", "docker":
+		return nil
+	default:
+		return fmt.Errorf("serviceconfig: invalid enum value for builder field: %q", b)
+	}
+}
+
+// ProviderValidator is a validator for the "provider" field enum values. It is called by the builders before save.
+func ProviderValidator(pr enum.Provider) error {
+	switch pr {
+	case "node", "deno", "go", "java", "php", "python", "staticfile", "unknown":
+		return nil
+	default:
+		return fmt.Errorf("serviceconfig: invalid enum value for provider field: %q", pr)
+	}
+}
+
+// FrameworkValidator is a validator for the "framework" field enum values. It is called by the builders before save.
+func FrameworkValidator(f enum.Framework) error {
+	switch f {
+	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown":
+		return nil
+	default:
+		return fmt.Errorf("serviceconfig: invalid enum value for framework field: %q", f)
+	}
+}
+
 // OrderOption defines the ordering options for the ServiceConfig queries.
 type OrderOption func(*sql.Selector)
 
@@ -114,6 +169,26 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByServiceID orders the results by the service_id field.
 func ByServiceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServiceID, opts...).ToFunc()
+}
+
+// ByType orders the results by the type field.
+func ByType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldType, opts...).ToFunc()
+}
+
+// ByBuilder orders the results by the builder field.
+func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
+}
+
+// ByProvider orders the results by the provider field.
+func ByProvider(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProvider, opts...).ToFunc()
+}
+
+// ByFramework orders the results by the framework field.
+func ByFramework(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFramework, opts...).ToFunc()
 }
 
 // ByGitBranch orders the results by the git_branch field.

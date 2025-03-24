@@ -92,19 +92,23 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 	providers = make(map[uuid.UUID][]enum.Provider)
 	frameworks = make(map[uuid.UUID][]enum.Framework)
 	services, err := self.base.DB.Service.Query().
-		Select(service.FieldEnvironmentID, service.FieldProvider, service.FieldFramework).
+		Select(service.FieldEnvironmentID).
 		Where(service.EnvironmentIDIn(environmentIDs...)).
+		WithServiceConfig().
 		All(ctx)
 	if err != nil {
 		return
 	}
 	for _, svc := range services {
 		counts[svc.EnvironmentID]++
-		if svc.Provider != nil {
-			providers[svc.EnvironmentID] = append(providers[svc.EnvironmentID], *svc.Provider)
+		if svc.Edges.ServiceConfig == nil {
+			continue
 		}
-		if svc.Framework != nil {
-			frameworks[svc.EnvironmentID] = append(frameworks[svc.EnvironmentID], *svc.Framework)
+		if svc.Edges.ServiceConfig.Provider != nil {
+			providers[svc.EnvironmentID] = append(providers[svc.EnvironmentID], *svc.Edges.ServiceConfig.Provider)
+		}
+		if svc.Edges.ServiceConfig.Framework != nil {
+			frameworks[svc.EnvironmentID] = append(frameworks[svc.EnvironmentID], *svc.Edges.ServiceConfig.Framework)
 		}
 	}
 	return

@@ -13,8 +13,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ServiceConfigCreate is the builder for creating a ServiceConfig entity.
@@ -56,6 +58,46 @@ func (scc *ServiceConfigCreate) SetNillableUpdatedAt(t *time.Time) *ServiceConfi
 // SetServiceID sets the "service_id" field.
 func (scc *ServiceConfigCreate) SetServiceID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetServiceID(u)
+	return scc
+}
+
+// SetType sets the "type" field.
+func (scc *ServiceConfigCreate) SetType(st schema.ServiceType) *ServiceConfigCreate {
+	scc.mutation.SetType(st)
+	return scc
+}
+
+// SetBuilder sets the "builder" field.
+func (scc *ServiceConfigCreate) SetBuilder(sb schema.ServiceBuilder) *ServiceConfigCreate {
+	scc.mutation.SetBuilder(sb)
+	return scc
+}
+
+// SetProvider sets the "provider" field.
+func (scc *ServiceConfigCreate) SetProvider(e enum.Provider) *ServiceConfigCreate {
+	scc.mutation.SetProvider(e)
+	return scc
+}
+
+// SetNillableProvider sets the "provider" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableProvider(e *enum.Provider) *ServiceConfigCreate {
+	if e != nil {
+		scc.SetProvider(*e)
+	}
+	return scc
+}
+
+// SetFramework sets the "framework" field.
+func (scc *ServiceConfigCreate) SetFramework(e enum.Framework) *ServiceConfigCreate {
+	scc.mutation.SetFramework(e)
+	return scc
+}
+
+// SetNillableFramework sets the "framework" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableFramework(e *enum.Framework) *ServiceConfigCreate {
+	if e != nil {
+		scc.SetFramework(*e)
+	}
 	return scc
 }
 
@@ -262,6 +304,32 @@ func (scc *ServiceConfigCreate) check() error {
 	if _, ok := scc.mutation.ServiceID(); !ok {
 		return &ValidationError{Name: "service_id", err: errors.New(`ent: missing required field "ServiceConfig.service_id"`)}
 	}
+	if _, ok := scc.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "ServiceConfig.type"`)}
+	}
+	if v, ok := scc.mutation.GetType(); ok {
+		if err := serviceconfig.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.type": %w`, err)}
+		}
+	}
+	if _, ok := scc.mutation.Builder(); !ok {
+		return &ValidationError{Name: "builder", err: errors.New(`ent: missing required field "ServiceConfig.builder"`)}
+	}
+	if v, ok := scc.mutation.Builder(); ok {
+		if err := serviceconfig.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
+		}
+	}
+	if v, ok := scc.mutation.Provider(); ok {
+		if err := serviceconfig.ProviderValidator(v); err != nil {
+			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.provider": %w`, err)}
+		}
+	}
+	if v, ok := scc.mutation.Framework(); ok {
+		if err := serviceconfig.FrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
+		}
+	}
 	if _, ok := scc.mutation.Replicas(); !ok {
 		return &ValidationError{Name: "replicas", err: errors.New(`ent: missing required field "ServiceConfig.replicas"`)}
 	}
@@ -317,6 +385,22 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := scc.mutation.GetType(); ok {
+		_spec.SetField(serviceconfig.FieldType, field.TypeEnum, value)
+		_node.Type = value
+	}
+	if value, ok := scc.mutation.Builder(); ok {
+		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
+		_node.Builder = value
+	}
+	if value, ok := scc.mutation.Provider(); ok {
+		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
+		_node.Provider = &value
+	}
+	if value, ok := scc.mutation.Framework(); ok {
+		_spec.SetField(serviceconfig.FieldFramework, field.TypeEnum, value)
+		_node.Framework = &value
 	}
 	if value, ok := scc.mutation.GitBranch(); ok {
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
@@ -440,6 +524,66 @@ func (u *ServiceConfigUpsert) SetServiceID(v uuid.UUID) *ServiceConfigUpsert {
 // UpdateServiceID sets the "service_id" field to the value that was provided on create.
 func (u *ServiceConfigUpsert) UpdateServiceID() *ServiceConfigUpsert {
 	u.SetExcluded(serviceconfig.FieldServiceID)
+	return u
+}
+
+// SetType sets the "type" field.
+func (u *ServiceConfigUpsert) SetType(v schema.ServiceType) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldType, v)
+	return u
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateType() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldType)
+	return u
+}
+
+// SetBuilder sets the "builder" field.
+func (u *ServiceConfigUpsert) SetBuilder(v schema.ServiceBuilder) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldBuilder, v)
+	return u
+}
+
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateBuilder() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldBuilder)
+	return u
+}
+
+// SetProvider sets the "provider" field.
+func (u *ServiceConfigUpsert) SetProvider(v enum.Provider) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldProvider, v)
+	return u
+}
+
+// UpdateProvider sets the "provider" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateProvider() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldProvider)
+	return u
+}
+
+// ClearProvider clears the value of the "provider" field.
+func (u *ServiceConfigUpsert) ClearProvider() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldProvider)
+	return u
+}
+
+// SetFramework sets the "framework" field.
+func (u *ServiceConfigUpsert) SetFramework(v enum.Framework) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldFramework, v)
+	return u
+}
+
+// UpdateFramework sets the "framework" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateFramework() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldFramework)
+	return u
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (u *ServiceConfigUpsert) ClearFramework() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldFramework)
 	return u
 }
 
@@ -657,6 +801,76 @@ func (u *ServiceConfigUpsertOne) SetServiceID(v uuid.UUID) *ServiceConfigUpsertO
 func (u *ServiceConfigUpsertOne) UpdateServiceID() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateServiceID()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *ServiceConfigUpsertOne) SetType(v schema.ServiceType) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateType() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetBuilder sets the "builder" field.
+func (u *ServiceConfigUpsertOne) SetBuilder(v schema.ServiceBuilder) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBuilder(v)
+	})
+}
+
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateBuilder() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBuilder()
+	})
+}
+
+// SetProvider sets the "provider" field.
+func (u *ServiceConfigUpsertOne) SetProvider(v enum.Provider) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetProvider(v)
+	})
+}
+
+// UpdateProvider sets the "provider" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateProvider() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateProvider()
+	})
+}
+
+// ClearProvider clears the value of the "provider" field.
+func (u *ServiceConfigUpsertOne) ClearProvider() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearProvider()
+	})
+}
+
+// SetFramework sets the "framework" field.
+func (u *ServiceConfigUpsertOne) SetFramework(v enum.Framework) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetFramework(v)
+	})
+}
+
+// UpdateFramework sets the "framework" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateFramework() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateFramework()
+	})
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (u *ServiceConfigUpsertOne) ClearFramework() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearFramework()
 	})
 }
 
@@ -1064,6 +1278,76 @@ func (u *ServiceConfigUpsertBulk) SetServiceID(v uuid.UUID) *ServiceConfigUpsert
 func (u *ServiceConfigUpsertBulk) UpdateServiceID() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateServiceID()
+	})
+}
+
+// SetType sets the "type" field.
+func (u *ServiceConfigUpsertBulk) SetType(v schema.ServiceType) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateType() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateType()
+	})
+}
+
+// SetBuilder sets the "builder" field.
+func (u *ServiceConfigUpsertBulk) SetBuilder(v schema.ServiceBuilder) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBuilder(v)
+	})
+}
+
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateBuilder() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBuilder()
+	})
+}
+
+// SetProvider sets the "provider" field.
+func (u *ServiceConfigUpsertBulk) SetProvider(v enum.Provider) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetProvider(v)
+	})
+}
+
+// UpdateProvider sets the "provider" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateProvider() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateProvider()
+	})
+}
+
+// ClearProvider clears the value of the "provider" field.
+func (u *ServiceConfigUpsertBulk) ClearProvider() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearProvider()
+	})
+}
+
+// SetFramework sets the "framework" field.
+func (u *ServiceConfigUpsertBulk) SetFramework(v enum.Framework) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetFramework(v)
+	})
+}
+
+// UpdateFramework sets the "framework" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateFramework() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateFramework()
+	})
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (u *ServiceConfigUpsertBulk) ClearFramework() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearFramework()
 	})
 }
 

@@ -8644,10 +8644,6 @@ type ServiceMutation struct {
 	name                       *string
 	display_name               *string
 	description                *string
-	_type                      *service.Type
-	builder                    *service.Builder
-	provider                   *enum.Provider
-	framework                  *enum.Framework
 	git_repository             *string
 	kubernetes_secret          *string
 	clearedFields              map[string]struct{}
@@ -8960,176 +8956,6 @@ func (m *ServiceMutation) DescriptionCleared() bool {
 func (m *ServiceMutation) ResetDescription() {
 	m.description = nil
 	delete(m.clearedFields, service.FieldDescription)
-}
-
-// SetType sets the "type" field.
-func (m *ServiceMutation) SetType(s service.Type) {
-	m._type = &s
-}
-
-// GetType returns the value of the "type" field in the mutation.
-func (m *ServiceMutation) GetType() (r service.Type, exists bool) {
-	v := m._type
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldType returns the old "type" field's value of the Service entity.
-// If the Service object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldType(ctx context.Context) (v service.Type, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldType is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldType requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldType: %w", err)
-	}
-	return oldValue.Type, nil
-}
-
-// ResetType resets all changes to the "type" field.
-func (m *ServiceMutation) ResetType() {
-	m._type = nil
-}
-
-// SetBuilder sets the "builder" field.
-func (m *ServiceMutation) SetBuilder(s service.Builder) {
-	m.builder = &s
-}
-
-// Builder returns the value of the "builder" field in the mutation.
-func (m *ServiceMutation) Builder() (r service.Builder, exists bool) {
-	v := m.builder
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldBuilder returns the old "builder" field's value of the Service entity.
-// If the Service object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldBuilder(ctx context.Context) (v service.Builder, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBuilder is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBuilder requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBuilder: %w", err)
-	}
-	return oldValue.Builder, nil
-}
-
-// ResetBuilder resets all changes to the "builder" field.
-func (m *ServiceMutation) ResetBuilder() {
-	m.builder = nil
-}
-
-// SetProvider sets the "provider" field.
-func (m *ServiceMutation) SetProvider(e enum.Provider) {
-	m.provider = &e
-}
-
-// Provider returns the value of the "provider" field in the mutation.
-func (m *ServiceMutation) Provider() (r enum.Provider, exists bool) {
-	v := m.provider
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldProvider returns the old "provider" field's value of the Service entity.
-// If the Service object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldProvider(ctx context.Context) (v *enum.Provider, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProvider requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProvider: %w", err)
-	}
-	return oldValue.Provider, nil
-}
-
-// ClearProvider clears the value of the "provider" field.
-func (m *ServiceMutation) ClearProvider() {
-	m.provider = nil
-	m.clearedFields[service.FieldProvider] = struct{}{}
-}
-
-// ProviderCleared returns if the "provider" field was cleared in this mutation.
-func (m *ServiceMutation) ProviderCleared() bool {
-	_, ok := m.clearedFields[service.FieldProvider]
-	return ok
-}
-
-// ResetProvider resets all changes to the "provider" field.
-func (m *ServiceMutation) ResetProvider() {
-	m.provider = nil
-	delete(m.clearedFields, service.FieldProvider)
-}
-
-// SetFramework sets the "framework" field.
-func (m *ServiceMutation) SetFramework(e enum.Framework) {
-	m.framework = &e
-}
-
-// Framework returns the value of the "framework" field in the mutation.
-func (m *ServiceMutation) Framework() (r enum.Framework, exists bool) {
-	v := m.framework
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFramework returns the old "framework" field's value of the Service entity.
-// If the Service object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldFramework(ctx context.Context) (v *enum.Framework, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFramework is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFramework requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFramework: %w", err)
-	}
-	return oldValue.Framework, nil
-}
-
-// ClearFramework clears the value of the "framework" field.
-func (m *ServiceMutation) ClearFramework() {
-	m.framework = nil
-	m.clearedFields[service.FieldFramework] = struct{}{}
-}
-
-// FrameworkCleared returns if the "framework" field was cleared in this mutation.
-func (m *ServiceMutation) FrameworkCleared() bool {
-	_, ok := m.clearedFields[service.FieldFramework]
-	return ok
-}
-
-// ResetFramework resets all changes to the "framework" field.
-func (m *ServiceMutation) ResetFramework() {
-	m.framework = nil
-	delete(m.clearedFields, service.FieldFramework)
 }
 
 // SetEnvironmentID sets the "environment_id" field.
@@ -9483,7 +9309,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -9498,18 +9324,6 @@ func (m *ServiceMutation) Fields() []string {
 	}
 	if m.description != nil {
 		fields = append(fields, service.FieldDescription)
-	}
-	if m._type != nil {
-		fields = append(fields, service.FieldType)
-	}
-	if m.builder != nil {
-		fields = append(fields, service.FieldBuilder)
-	}
-	if m.provider != nil {
-		fields = append(fields, service.FieldProvider)
-	}
-	if m.framework != nil {
-		fields = append(fields, service.FieldFramework)
 	}
 	if m.environment != nil {
 		fields = append(fields, service.FieldEnvironmentID)
@@ -9541,14 +9355,6 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.DisplayName()
 	case service.FieldDescription:
 		return m.Description()
-	case service.FieldType:
-		return m.GetType()
-	case service.FieldBuilder:
-		return m.Builder()
-	case service.FieldProvider:
-		return m.Provider()
-	case service.FieldFramework:
-		return m.Framework()
 	case service.FieldEnvironmentID:
 		return m.EnvironmentID()
 	case service.FieldGithubInstallationID:
@@ -9576,14 +9382,6 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldDisplayName(ctx)
 	case service.FieldDescription:
 		return m.OldDescription(ctx)
-	case service.FieldType:
-		return m.OldType(ctx)
-	case service.FieldBuilder:
-		return m.OldBuilder(ctx)
-	case service.FieldProvider:
-		return m.OldProvider(ctx)
-	case service.FieldFramework:
-		return m.OldFramework(ctx)
 	case service.FieldEnvironmentID:
 		return m.OldEnvironmentID(ctx)
 	case service.FieldGithubInstallationID:
@@ -9635,34 +9433,6 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
-		return nil
-	case service.FieldType:
-		v, ok := value.(service.Type)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetType(v)
-		return nil
-	case service.FieldBuilder:
-		v, ok := value.(service.Builder)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetBuilder(v)
-		return nil
-	case service.FieldProvider:
-		v, ok := value.(enum.Provider)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetProvider(v)
-		return nil
-	case service.FieldFramework:
-		v, ok := value.(enum.Framework)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFramework(v)
 		return nil
 	case service.FieldEnvironmentID:
 		v, ok := value.(uuid.UUID)
@@ -9728,12 +9498,6 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldDescription) {
 		fields = append(fields, service.FieldDescription)
 	}
-	if m.FieldCleared(service.FieldProvider) {
-		fields = append(fields, service.FieldProvider)
-	}
-	if m.FieldCleared(service.FieldFramework) {
-		fields = append(fields, service.FieldFramework)
-	}
 	if m.FieldCleared(service.FieldGithubInstallationID) {
 		fields = append(fields, service.FieldGithubInstallationID)
 	}
@@ -9756,12 +9520,6 @@ func (m *ServiceMutation) ClearField(name string) error {
 	switch name {
 	case service.FieldDescription:
 		m.ClearDescription()
-		return nil
-	case service.FieldProvider:
-		m.ClearProvider()
-		return nil
-	case service.FieldFramework:
-		m.ClearFramework()
 		return nil
 	case service.FieldGithubInstallationID:
 		m.ClearGithubInstallationID()
@@ -9791,18 +9549,6 @@ func (m *ServiceMutation) ResetField(name string) error {
 		return nil
 	case service.FieldDescription:
 		m.ResetDescription()
-		return nil
-	case service.FieldType:
-		m.ResetType()
-		return nil
-	case service.FieldBuilder:
-		m.ResetBuilder()
-		return nil
-	case service.FieldProvider:
-		m.ResetProvider()
-		return nil
-	case service.FieldFramework:
-		m.ResetFramework()
 		return nil
 	case service.FieldEnvironmentID:
 		m.ResetEnvironmentID()
@@ -9966,6 +9712,10 @@ type ServiceConfigMutation struct {
 	id             *uuid.UUID
 	created_at     *time.Time
 	updated_at     *time.Time
+	_type          *schema.ServiceType
+	builder        *schema.ServiceBuilder
+	provider       *enum.Provider
+	framework      *enum.Framework
 	git_branch     *string
 	host           *string
 	port           *int
@@ -10194,6 +9944,176 @@ func (m *ServiceConfigMutation) OldServiceID(ctx context.Context) (v uuid.UUID, 
 // ResetServiceID resets all changes to the "service_id" field.
 func (m *ServiceConfigMutation) ResetServiceID() {
 	m.service = nil
+}
+
+// SetType sets the "type" field.
+func (m *ServiceConfigMutation) SetType(st schema.ServiceType) {
+	m._type = &st
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *ServiceConfigMutation) GetType() (r schema.ServiceType, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldType(ctx context.Context) (v schema.ServiceType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *ServiceConfigMutation) ResetType() {
+	m._type = nil
+}
+
+// SetBuilder sets the "builder" field.
+func (m *ServiceConfigMutation) SetBuilder(sb schema.ServiceBuilder) {
+	m.builder = &sb
+}
+
+// Builder returns the value of the "builder" field in the mutation.
+func (m *ServiceConfigMutation) Builder() (r schema.ServiceBuilder, exists bool) {
+	v := m.builder
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBuilder returns the old "builder" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldBuilder(ctx context.Context) (v schema.ServiceBuilder, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBuilder is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBuilder requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBuilder: %w", err)
+	}
+	return oldValue.Builder, nil
+}
+
+// ResetBuilder resets all changes to the "builder" field.
+func (m *ServiceConfigMutation) ResetBuilder() {
+	m.builder = nil
+}
+
+// SetProvider sets the "provider" field.
+func (m *ServiceConfigMutation) SetProvider(e enum.Provider) {
+	m.provider = &e
+}
+
+// Provider returns the value of the "provider" field in the mutation.
+func (m *ServiceConfigMutation) Provider() (r enum.Provider, exists bool) {
+	v := m.provider
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProvider returns the old "provider" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldProvider(ctx context.Context) (v *enum.Provider, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProvider requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProvider: %w", err)
+	}
+	return oldValue.Provider, nil
+}
+
+// ClearProvider clears the value of the "provider" field.
+func (m *ServiceConfigMutation) ClearProvider() {
+	m.provider = nil
+	m.clearedFields[serviceconfig.FieldProvider] = struct{}{}
+}
+
+// ProviderCleared returns if the "provider" field was cleared in this mutation.
+func (m *ServiceConfigMutation) ProviderCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldProvider]
+	return ok
+}
+
+// ResetProvider resets all changes to the "provider" field.
+func (m *ServiceConfigMutation) ResetProvider() {
+	m.provider = nil
+	delete(m.clearedFields, serviceconfig.FieldProvider)
+}
+
+// SetFramework sets the "framework" field.
+func (m *ServiceConfigMutation) SetFramework(e enum.Framework) {
+	m.framework = &e
+}
+
+// Framework returns the value of the "framework" field in the mutation.
+func (m *ServiceConfigMutation) Framework() (r enum.Framework, exists bool) {
+	v := m.framework
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFramework returns the old "framework" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldFramework(ctx context.Context) (v *enum.Framework, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFramework is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFramework requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFramework: %w", err)
+	}
+	return oldValue.Framework, nil
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (m *ServiceConfigMutation) ClearFramework() {
+	m.framework = nil
+	m.clearedFields[serviceconfig.FieldFramework] = struct{}{}
+}
+
+// FrameworkCleared returns if the "framework" field was cleared in this mutation.
+func (m *ServiceConfigMutation) FrameworkCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldFramework]
+	return ok
+}
+
+// ResetFramework resets all changes to the "framework" field.
+func (m *ServiceConfigMutation) ResetFramework() {
+	m.framework = nil
+	delete(m.clearedFields, serviceconfig.FieldFramework)
 }
 
 // SetGitBranch sets the "git_branch" field.
@@ -10651,7 +10571,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 15)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -10660,6 +10580,18 @@ func (m *ServiceConfigMutation) Fields() []string {
 	}
 	if m.service != nil {
 		fields = append(fields, serviceconfig.FieldServiceID)
+	}
+	if m._type != nil {
+		fields = append(fields, serviceconfig.FieldType)
+	}
+	if m.builder != nil {
+		fields = append(fields, serviceconfig.FieldBuilder)
+	}
+	if m.provider != nil {
+		fields = append(fields, serviceconfig.FieldProvider)
+	}
+	if m.framework != nil {
+		fields = append(fields, serviceconfig.FieldFramework)
 	}
 	if m.git_branch != nil {
 		fields = append(fields, serviceconfig.FieldGitBranch)
@@ -10699,6 +10631,14 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case serviceconfig.FieldServiceID:
 		return m.ServiceID()
+	case serviceconfig.FieldType:
+		return m.GetType()
+	case serviceconfig.FieldBuilder:
+		return m.Builder()
+	case serviceconfig.FieldProvider:
+		return m.Provider()
+	case serviceconfig.FieldFramework:
+		return m.Framework()
 	case serviceconfig.FieldGitBranch:
 		return m.GitBranch()
 	case serviceconfig.FieldHost:
@@ -10730,6 +10670,14 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldUpdatedAt(ctx)
 	case serviceconfig.FieldServiceID:
 		return m.OldServiceID(ctx)
+	case serviceconfig.FieldType:
+		return m.OldType(ctx)
+	case serviceconfig.FieldBuilder:
+		return m.OldBuilder(ctx)
+	case serviceconfig.FieldProvider:
+		return m.OldProvider(ctx)
+	case serviceconfig.FieldFramework:
+		return m.OldFramework(ctx)
 	case serviceconfig.FieldGitBranch:
 		return m.OldGitBranch(ctx)
 	case serviceconfig.FieldHost:
@@ -10775,6 +10723,34 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetServiceID(v)
+		return nil
+	case serviceconfig.FieldType:
+		v, ok := value.(schema.ServiceType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case serviceconfig.FieldBuilder:
+		v, ok := value.(schema.ServiceBuilder)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBuilder(v)
+		return nil
+	case serviceconfig.FieldProvider:
+		v, ok := value.(enum.Provider)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProvider(v)
+		return nil
+	case serviceconfig.FieldFramework:
+		v, ok := value.(enum.Framework)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFramework(v)
 		return nil
 	case serviceconfig.FieldGitBranch:
 		v, ok := value.(string)
@@ -10889,6 +10865,12 @@ func (m *ServiceConfigMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ServiceConfigMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(serviceconfig.FieldProvider) {
+		fields = append(fields, serviceconfig.FieldProvider)
+	}
+	if m.FieldCleared(serviceconfig.FieldFramework) {
+		fields = append(fields, serviceconfig.FieldFramework)
+	}
 	if m.FieldCleared(serviceconfig.FieldGitBranch) {
 		fields = append(fields, serviceconfig.FieldGitBranch)
 	}
@@ -10918,6 +10900,12 @@ func (m *ServiceConfigMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ServiceConfigMutation) ClearField(name string) error {
 	switch name {
+	case serviceconfig.FieldProvider:
+		m.ClearProvider()
+		return nil
+	case serviceconfig.FieldFramework:
+		m.ClearFramework()
+		return nil
 	case serviceconfig.FieldGitBranch:
 		m.ClearGitBranch()
 		return nil
@@ -10949,6 +10937,18 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldServiceID:
 		m.ResetServiceID()
+		return nil
+	case serviceconfig.FieldType:
+		m.ResetType()
+		return nil
+	case serviceconfig.FieldBuilder:
+		m.ResetBuilder()
+		return nil
+	case serviceconfig.FieldProvider:
+		m.ResetProvider()
+		return nil
+	case serviceconfig.FieldFramework:
+		m.ResetFramework()
 		return nil
 	case serviceconfig.FieldGitBranch:
 		m.ResetGitBranch()

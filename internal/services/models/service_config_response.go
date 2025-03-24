@@ -1,17 +1,25 @@
 package models
 
-import "github.com/unbindapp/unbind-api/ent"
+import (
+	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+)
 
 // ServiceConfigResponse defines the configuration response for a service
 type ServiceConfigResponse struct {
-	GitBranch  *string `json:"git_branch,omitempty"`
-	Host       *string `json:"host,omitempty"`
-	Port       *int    `json:"port,omitempty"`
-	Replicas   int32   `json:"replicas"`
-	AutoDeploy bool    `json:"auto_deploy"`
-	RunCommand *string `json:"run_command,omitempty"`
-	Public     bool    `json:"public"`
-	Image      string  `json:"image,omitempty"`
+	GitBranch  *string               `json:"git_branch,omitempty"`
+	Type       schema.ServiceType    `json:"type"`
+	Builder    schema.ServiceBuilder `json:"builder"`
+	Provider   *enum.Provider        `json:"provider,omitempty"`
+	Framework  *enum.Framework       `json:"framework,omitempty"`
+	Host       *string               `json:"host,omitempty"`
+	Port       *int                  `json:"port,omitempty"`
+	Replicas   int32                 `json:"replicas"`
+	AutoDeploy bool                  `json:"auto_deploy"`
+	RunCommand *string               `json:"run_command,omitempty"`
+	Public     bool                  `json:"public"`
+	Image      string                `json:"image,omitempty"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -20,6 +28,10 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 	if entity != nil {
 		response = &ServiceConfigResponse{
 			GitBranch:  entity.GitBranch,
+			Type:       entity.Type,
+			Builder:    entity.Builder,
+			Provider:   entity.Provider,
+			Framework:  entity.Framework,
 			Host:       entity.Host,
 			Port:       entity.Port,
 			Replicas:   entity.Replicas,

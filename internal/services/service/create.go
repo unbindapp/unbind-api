@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
@@ -22,13 +22,11 @@ import (
 
 // CreateServiceInput defines the input for creating a new service
 type CreateServiceInput struct {
-	TeamID        uuid.UUID       `validate:"required,uuid4" required:"true" json:"team_id"`
-	ProjectID     uuid.UUID       `validate:"required,uuid4" required:"true" json:"project_id"`
-	EnvironmentID uuid.UUID       `validate:"required,uuid4" required:"true" json:"environment_id"`
-	DisplayName   string          `validate:"required" required:"true" json:"display_name"`
-	Type          service.Type    `validate:"required,oneof=docker git" required:"true" doc:"Type of service, e.g. 'git', 'docker'" json:"type"`
-	Builder       service.Builder `validate:"required,oneof=railpack docker" required:"true" doc:"Builder of the service - docker, railpack" json:"builder"`
-	Description   string          `json:"description,omitempty"`
+	TeamID        uuid.UUID `validate:"required,uuid4" required:"true" json:"team_id"`
+	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
+	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
+	DisplayName   string    `validate:"required" required:"true" json:"display_name"`
+	Description   string    `json:"description,omitempty"`
 
 	// GitHub integration
 	GitHubInstallationID *int64  `json:"github_installation_id,omitempty"`
@@ -36,14 +34,16 @@ type CreateServiceInput struct {
 	RepositoryName       *string `json:"repository_name,omitempty"`
 
 	// Configuration
-	GitBranch  *string `json:"git_branch,omitempty"`
-	Host       *string `json:"host,omitempty"`
-	Port       *int    `validate:"min=1,max=65535" json:"port,omitempty"`
-	Replicas   *int32  `validate:"min=1,max=10" json:"replicas,omitempty"`
-	AutoDeploy *bool   `json:"auto_deploy,omitempty"`
-	RunCommand *string `json:"run_command,omitempty"`
-	Public     *bool   `json:"public,omitempty"`
-	Image      *string `json:"image,omitempty"`
+	Type       schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'git', 'docker'" json:"type"`
+	Builder    schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
+	GitBranch  *string               `json:"git_branch,omitempty"`
+	Host       *string               `json:"host,omitempty"`
+	Port       *int                  `validate:"min=1,max=65535" json:"port,omitempty"`
+	Replicas   *int32                `validate:"min=1,max=10" json:"replicas,omitempty"`
+	AutoDeploy *bool                 `json:"auto_deploy,omitempty"`
+	RunCommand *string               `json:"run_command,omitempty"`
+	Public     *bool                 `json:"public,omitempty"`
+	Image      *string               `json:"image,omitempty"`
 }
 
 // CreateService creates a new service and its configuration
@@ -54,12 +54,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// ! TODO - support docka
-	if input.Type != service.TypeGit {
+	if input.Type != schema.ServiceTypeGit {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only git services supported")
 	}
 
 	// ! TODO - support docka
-	if input.Builder != service.BuilderRailpack {
+	if input.Builder != schema.ServiceBuilderNixpacks {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack builder supported")
 	}
 
@@ -167,7 +167,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	var serviceConfig *ent.ServiceConfig
 
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
-		var runtime *enum.Provider
+		var provider *enum.Provider
 		var framework *enum.Framework
 		host := input.Host
 		port := input.Port
@@ -175,7 +175,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		if analysisResult != nil {
 			// Service core information
 			if analysisResult.Provider != enum.UnknownProvider {
-				runtime = utils.ToPtr(analysisResult.Provider)
+				provider = utils.ToPtr(analysisResult.Provider)
 			}
 			if analysisResult.Framework != enum.UnknownFramework {
 				framework = utils.ToPtr(analysisResult.Framework)
@@ -242,10 +242,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			name,
 			input.DisplayName,
 			input.Description,
-			input.Type,
-			input.Builder,
-			runtime,
-			framework,
 			input.EnvironmentID,
 			input.GitHubInstallationID,
 			input.RepositoryName,
@@ -258,6 +254,10 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		// Create the service config
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx,
 			service.ID,
+			input.Type,
+			input.Builder,
+			provider,
+			framework,
 			input.GitBranch,
 			port,
 			host,

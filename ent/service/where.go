@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
-	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ID filters vertices based on their ID field.
@@ -385,126 +384,6 @@ func DescriptionEqualFold(v string) predicate.Service {
 // DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
 func DescriptionContainsFold(v string) predicate.Service {
 	return predicate.Service(sql.FieldContainsFold(FieldDescription, v))
-}
-
-// TypeEQ applies the EQ predicate on the "type" field.
-func TypeEQ(v Type) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldType, v))
-}
-
-// TypeNEQ applies the NEQ predicate on the "type" field.
-func TypeNEQ(v Type) predicate.Service {
-	return predicate.Service(sql.FieldNEQ(FieldType, v))
-}
-
-// TypeIn applies the In predicate on the "type" field.
-func TypeIn(vs ...Type) predicate.Service {
-	return predicate.Service(sql.FieldIn(FieldType, vs...))
-}
-
-// TypeNotIn applies the NotIn predicate on the "type" field.
-func TypeNotIn(vs ...Type) predicate.Service {
-	return predicate.Service(sql.FieldNotIn(FieldType, vs...))
-}
-
-// BuilderEQ applies the EQ predicate on the "builder" field.
-func BuilderEQ(v Builder) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldBuilder, v))
-}
-
-// BuilderNEQ applies the NEQ predicate on the "builder" field.
-func BuilderNEQ(v Builder) predicate.Service {
-	return predicate.Service(sql.FieldNEQ(FieldBuilder, v))
-}
-
-// BuilderIn applies the In predicate on the "builder" field.
-func BuilderIn(vs ...Builder) predicate.Service {
-	return predicate.Service(sql.FieldIn(FieldBuilder, vs...))
-}
-
-// BuilderNotIn applies the NotIn predicate on the "builder" field.
-func BuilderNotIn(vs ...Builder) predicate.Service {
-	return predicate.Service(sql.FieldNotIn(FieldBuilder, vs...))
-}
-
-// ProviderEQ applies the EQ predicate on the "provider" field.
-func ProviderEQ(v enum.Provider) predicate.Service {
-	vc := v
-	return predicate.Service(sql.FieldEQ(FieldProvider, vc))
-}
-
-// ProviderNEQ applies the NEQ predicate on the "provider" field.
-func ProviderNEQ(v enum.Provider) predicate.Service {
-	vc := v
-	return predicate.Service(sql.FieldNEQ(FieldProvider, vc))
-}
-
-// ProviderIn applies the In predicate on the "provider" field.
-func ProviderIn(vs ...enum.Provider) predicate.Service {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Service(sql.FieldIn(FieldProvider, v...))
-}
-
-// ProviderNotIn applies the NotIn predicate on the "provider" field.
-func ProviderNotIn(vs ...enum.Provider) predicate.Service {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Service(sql.FieldNotIn(FieldProvider, v...))
-}
-
-// ProviderIsNil applies the IsNil predicate on the "provider" field.
-func ProviderIsNil() predicate.Service {
-	return predicate.Service(sql.FieldIsNull(FieldProvider))
-}
-
-// ProviderNotNil applies the NotNil predicate on the "provider" field.
-func ProviderNotNil() predicate.Service {
-	return predicate.Service(sql.FieldNotNull(FieldProvider))
-}
-
-// FrameworkEQ applies the EQ predicate on the "framework" field.
-func FrameworkEQ(v enum.Framework) predicate.Service {
-	vc := v
-	return predicate.Service(sql.FieldEQ(FieldFramework, vc))
-}
-
-// FrameworkNEQ applies the NEQ predicate on the "framework" field.
-func FrameworkNEQ(v enum.Framework) predicate.Service {
-	vc := v
-	return predicate.Service(sql.FieldNEQ(FieldFramework, vc))
-}
-
-// FrameworkIn applies the In predicate on the "framework" field.
-func FrameworkIn(vs ...enum.Framework) predicate.Service {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Service(sql.FieldIn(FieldFramework, v...))
-}
-
-// FrameworkNotIn applies the NotIn predicate on the "framework" field.
-func FrameworkNotIn(vs ...enum.Framework) predicate.Service {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Service(sql.FieldNotIn(FieldFramework, v...))
-}
-
-// FrameworkIsNil applies the IsNil predicate on the "framework" field.
-func FrameworkIsNil() predicate.Service {
-	return predicate.Service(sql.FieldIsNull(FieldFramework))
-}
-
-// FrameworkNotNil applies the NotNil predicate on the "framework" field.
-func FrameworkNotNil() predicate.Service {
-	return predicate.Service(sql.FieldNotNull(FieldFramework))
 }
 
 // EnvironmentIDEQ applies the EQ predicate on the "environment_id" field.

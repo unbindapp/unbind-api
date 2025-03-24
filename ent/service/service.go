@@ -3,13 +3,11 @@
 package service
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 const (
@@ -27,14 +25,6 @@ const (
 	FieldDisplayName = "display_name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
-	// FieldType holds the string denoting the type field in the database.
-	FieldType = "type"
-	// FieldBuilder holds the string denoting the builder field in the database.
-	FieldBuilder = "builder"
-	// FieldProvider holds the string denoting the provider field in the database.
-	FieldProvider = "provider"
-	// FieldFramework holds the string denoting the framework field in the database.
-	FieldFramework = "framework"
 	// FieldEnvironmentID holds the string denoting the environment_id field in the database.
 	FieldEnvironmentID = "environment_id"
 	// FieldGithubInstallationID holds the string denoting the github_installation_id field in the database.
@@ -91,10 +81,6 @@ var Columns = []string{
 	FieldName,
 	FieldDisplayName,
 	FieldDescription,
-	FieldType,
-	FieldBuilder,
-	FieldProvider,
-	FieldFramework,
 	FieldEnvironmentID,
 	FieldGithubInstallationID,
 	FieldGitRepository,
@@ -123,72 +109,6 @@ var (
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
-
-// Type defines the type for the "type" enum field.
-type Type string
-
-// Type values.
-const (
-	TypeGit        Type = "git"
-	TypeDockerfile Type = "dockerfile"
-)
-
-func (_type Type) String() string {
-	return string(_type)
-}
-
-// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
-func TypeValidator(_type Type) error {
-	switch _type {
-	case TypeGit, TypeDockerfile:
-		return nil
-	default:
-		return fmt.Errorf("service: invalid enum value for type field: %q", _type)
-	}
-}
-
-// Builder defines the type for the "builder" enum field.
-type Builder string
-
-// Builder values.
-const (
-	BuilderRailpack Builder = "railpack"
-	BuilderDocker   Builder = "docker"
-)
-
-func (b Builder) String() string {
-	return string(b)
-}
-
-// BuilderValidator is a validator for the "builder" field enum values. It is called by the builders before save.
-func BuilderValidator(b Builder) error {
-	switch b {
-	case BuilderRailpack, BuilderDocker:
-		return nil
-	default:
-		return fmt.Errorf("service: invalid enum value for builder field: %q", b)
-	}
-}
-
-// ProviderValidator is a validator for the "provider" field enum values. It is called by the builders before save.
-func ProviderValidator(pr enum.Provider) error {
-	switch pr {
-	case "node", "deno", "go", "java", "php", "python", "staticfile", "unknown":
-		return nil
-	default:
-		return fmt.Errorf("service: invalid enum value for provider field: %q", pr)
-	}
-}
-
-// FrameworkValidator is a validator for the "framework" field enum values. It is called by the builders before save.
-func FrameworkValidator(f enum.Framework) error {
-	switch f {
-	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown":
-		return nil
-	default:
-		return fmt.Errorf("service: invalid enum value for framework field: %q", f)
-	}
-}
 
 // OrderOption defines the ordering options for the Service queries.
 type OrderOption func(*sql.Selector)
@@ -221,26 +141,6 @@ func ByDisplayName(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
-}
-
-// ByType orders the results by the type field.
-func ByType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldType, opts...).ToFunc()
-}
-
-// ByBuilder orders the results by the builder field.
-func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
-}
-
-// ByProvider orders the results by the provider field.
-func ByProvider(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldProvider, opts...).ToFunc()
-}
-
-// ByFramework orders the results by the framework field.
-func ByFramework(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFramework, opts...).ToFunc()
 }
 
 // ByEnvironmentID orders the results by the environment_id field.

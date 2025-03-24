@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
@@ -24,14 +25,16 @@ type UpdateServiceInput struct {
 	Description   *string   `validate:"optional" required:"false" json:"description"`
 
 	// Configuration
-	GitBranch  *string `json:"git_branch,omitempty" required:"false"`
-	Host       *string `json:"host,omitempty" required:"false"`
-	Port       *int    `validate:"min=1,max=65535" json:"port,omitempty" required:"false"`
-	Replicas   *int32  `validate:"min=1,max=10" json:"replicas,omitempty" required:"false"`
-	AutoDeploy *bool   `json:"auto_deploy,omitempty" required:"false"`
-	RunCommand *string `json:"run_command,omitempty" required:"false"`
-	Public     *bool   `json:"public,omitempty" required:"false"`
-	Image      *string `json:"image,omitempty" required:"false"`
+	GitBranch  *string                `json:"git_branch,omitempty" required:"false"`
+	Type       *schema.ServiceType    `json:"type,omitempty" required:"false"`
+	Builder    *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
+	Host       *string                `json:"host,omitempty" required:"false"`
+	Port       *int                   `validate:"min=1,max=65535" json:"port,omitempty" required:"false"`
+	Replicas   *int32                 `validate:"min=1,max=10" json:"replicas,omitempty" required:"false"`
+	AutoDeploy *bool                  `json:"auto_deploy,omitempty" required:"false"`
+	RunCommand *string                `json:"run_command,omitempty" required:"false"`
+	Public     *bool                  `json:"public,omitempty" required:"false"`
+	Image      *string                `json:"image,omitempty" required:"false"`
 }
 
 // UpdateService updates a service and its configuration
@@ -100,7 +103,19 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		// Update the service config
-		if err := self.repo.Service().UpdateConfig(ctx, tx, input.ServiceID, input.GitBranch, input.Port, input.Host, input.Replicas, input.AutoDeploy, input.RunCommand, input.Public, input.Image); err != nil {
+		if err := self.repo.Service().UpdateConfig(ctx,
+			tx,
+			input.ServiceID,
+			input.Type,
+			input.Builder,
+			input.GitBranch,
+			input.Port,
+			input.Host,
+			input.Replicas,
+			input.AutoDeploy,
+			input.RunCommand,
+			input.Public,
+			input.Image); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)
 		}
 

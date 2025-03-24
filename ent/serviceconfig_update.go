@@ -13,8 +13,10 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
 // ServiceConfigUpdate is the builder for updating ServiceConfig entities.
@@ -48,6 +50,74 @@ func (scu *ServiceConfigUpdate) SetNillableServiceID(u *uuid.UUID) *ServiceConfi
 	if u != nil {
 		scu.SetServiceID(*u)
 	}
+	return scu
+}
+
+// SetType sets the "type" field.
+func (scu *ServiceConfigUpdate) SetType(st schema.ServiceType) *ServiceConfigUpdate {
+	scu.mutation.SetType(st)
+	return scu
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableType(st *schema.ServiceType) *ServiceConfigUpdate {
+	if st != nil {
+		scu.SetType(*st)
+	}
+	return scu
+}
+
+// SetBuilder sets the "builder" field.
+func (scu *ServiceConfigUpdate) SetBuilder(sb schema.ServiceBuilder) *ServiceConfigUpdate {
+	scu.mutation.SetBuilder(sb)
+	return scu
+}
+
+// SetNillableBuilder sets the "builder" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableBuilder(sb *schema.ServiceBuilder) *ServiceConfigUpdate {
+	if sb != nil {
+		scu.SetBuilder(*sb)
+	}
+	return scu
+}
+
+// SetProvider sets the "provider" field.
+func (scu *ServiceConfigUpdate) SetProvider(e enum.Provider) *ServiceConfigUpdate {
+	scu.mutation.SetProvider(e)
+	return scu
+}
+
+// SetNillableProvider sets the "provider" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableProvider(e *enum.Provider) *ServiceConfigUpdate {
+	if e != nil {
+		scu.SetProvider(*e)
+	}
+	return scu
+}
+
+// ClearProvider clears the value of the "provider" field.
+func (scu *ServiceConfigUpdate) ClearProvider() *ServiceConfigUpdate {
+	scu.mutation.ClearProvider()
+	return scu
+}
+
+// SetFramework sets the "framework" field.
+func (scu *ServiceConfigUpdate) SetFramework(e enum.Framework) *ServiceConfigUpdate {
+	scu.mutation.SetFramework(e)
+	return scu
+}
+
+// SetNillableFramework sets the "framework" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableFramework(e *enum.Framework) *ServiceConfigUpdate {
+	if e != nil {
+		scu.SetFramework(*e)
+	}
+	return scu
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (scu *ServiceConfigUpdate) ClearFramework() *ServiceConfigUpdate {
+	scu.mutation.ClearFramework()
 	return scu
 }
 
@@ -261,6 +331,26 @@ func (scu *ServiceConfigUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (scu *ServiceConfigUpdate) check() error {
+	if v, ok := scu.mutation.GetType(); ok {
+		if err := serviceconfig.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.type": %w`, err)}
+		}
+	}
+	if v, ok := scu.mutation.Builder(); ok {
+		if err := serviceconfig.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
+		}
+	}
+	if v, ok := scu.mutation.Provider(); ok {
+		if err := serviceconfig.ProviderValidator(v); err != nil {
+			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.provider": %w`, err)}
+		}
+	}
+	if v, ok := scu.mutation.Framework(); ok {
+		if err := serviceconfig.FrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
+		}
+	}
 	if scu.mutation.ServiceCleared() && len(scu.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ServiceConfig.service"`)
 	}
@@ -287,6 +377,24 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := scu.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := scu.mutation.GetType(); ok {
+		_spec.SetField(serviceconfig.FieldType, field.TypeEnum, value)
+	}
+	if value, ok := scu.mutation.Builder(); ok {
+		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := scu.mutation.Provider(); ok {
+		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
+	}
+	if scu.mutation.ProviderCleared() {
+		_spec.ClearField(serviceconfig.FieldProvider, field.TypeEnum)
+	}
+	if value, ok := scu.mutation.Framework(); ok {
+		_spec.SetField(serviceconfig.FieldFramework, field.TypeEnum, value)
+	}
+	if scu.mutation.FrameworkCleared() {
+		_spec.ClearField(serviceconfig.FieldFramework, field.TypeEnum)
 	}
 	if value, ok := scu.mutation.GitBranch(); ok {
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
@@ -401,6 +509,74 @@ func (scuo *ServiceConfigUpdateOne) SetNillableServiceID(u *uuid.UUID) *ServiceC
 	if u != nil {
 		scuo.SetServiceID(*u)
 	}
+	return scuo
+}
+
+// SetType sets the "type" field.
+func (scuo *ServiceConfigUpdateOne) SetType(st schema.ServiceType) *ServiceConfigUpdateOne {
+	scuo.mutation.SetType(st)
+	return scuo
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableType(st *schema.ServiceType) *ServiceConfigUpdateOne {
+	if st != nil {
+		scuo.SetType(*st)
+	}
+	return scuo
+}
+
+// SetBuilder sets the "builder" field.
+func (scuo *ServiceConfigUpdateOne) SetBuilder(sb schema.ServiceBuilder) *ServiceConfigUpdateOne {
+	scuo.mutation.SetBuilder(sb)
+	return scuo
+}
+
+// SetNillableBuilder sets the "builder" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableBuilder(sb *schema.ServiceBuilder) *ServiceConfigUpdateOne {
+	if sb != nil {
+		scuo.SetBuilder(*sb)
+	}
+	return scuo
+}
+
+// SetProvider sets the "provider" field.
+func (scuo *ServiceConfigUpdateOne) SetProvider(e enum.Provider) *ServiceConfigUpdateOne {
+	scuo.mutation.SetProvider(e)
+	return scuo
+}
+
+// SetNillableProvider sets the "provider" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableProvider(e *enum.Provider) *ServiceConfigUpdateOne {
+	if e != nil {
+		scuo.SetProvider(*e)
+	}
+	return scuo
+}
+
+// ClearProvider clears the value of the "provider" field.
+func (scuo *ServiceConfigUpdateOne) ClearProvider() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearProvider()
+	return scuo
+}
+
+// SetFramework sets the "framework" field.
+func (scuo *ServiceConfigUpdateOne) SetFramework(e enum.Framework) *ServiceConfigUpdateOne {
+	scuo.mutation.SetFramework(e)
+	return scuo
+}
+
+// SetNillableFramework sets the "framework" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableFramework(e *enum.Framework) *ServiceConfigUpdateOne {
+	if e != nil {
+		scuo.SetFramework(*e)
+	}
+	return scuo
+}
+
+// ClearFramework clears the value of the "framework" field.
+func (scuo *ServiceConfigUpdateOne) ClearFramework() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearFramework()
 	return scuo
 }
 
@@ -627,6 +803,26 @@ func (scuo *ServiceConfigUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (scuo *ServiceConfigUpdateOne) check() error {
+	if v, ok := scuo.mutation.GetType(); ok {
+		if err := serviceconfig.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.type": %w`, err)}
+		}
+	}
+	if v, ok := scuo.mutation.Builder(); ok {
+		if err := serviceconfig.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
+		}
+	}
+	if v, ok := scuo.mutation.Provider(); ok {
+		if err := serviceconfig.ProviderValidator(v); err != nil {
+			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.provider": %w`, err)}
+		}
+	}
+	if v, ok := scuo.mutation.Framework(); ok {
+		if err := serviceconfig.FrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
+		}
+	}
 	if scuo.mutation.ServiceCleared() && len(scuo.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ServiceConfig.service"`)
 	}
@@ -670,6 +866,24 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if value, ok := scuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := scuo.mutation.GetType(); ok {
+		_spec.SetField(serviceconfig.FieldType, field.TypeEnum, value)
+	}
+	if value, ok := scuo.mutation.Builder(); ok {
+		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := scuo.mutation.Provider(); ok {
+		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
+	}
+	if scuo.mutation.ProviderCleared() {
+		_spec.ClearField(serviceconfig.FieldProvider, field.TypeEnum)
+	}
+	if value, ok := scuo.mutation.Framework(); ok {
+		_spec.SetField(serviceconfig.FieldFramework, field.TypeEnum, value)
+	}
+	if scuo.mutation.FrameworkCleared() {
+		_spec.ClearField(serviceconfig.FieldFramework, field.TypeEnum)
 	}
 	if value, ok := scuo.mutation.GitBranch(); ok {
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
