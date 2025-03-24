@@ -134,3 +134,12 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableImage(image).
 		Exec(ctx)
 }
+
+func (self *ServiceRepository) Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Service.DeleteOneID(serviceID).Exec(ctx)
+}

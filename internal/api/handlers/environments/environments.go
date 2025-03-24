@@ -31,6 +31,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.GetEnvironment,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "delete-environment",
+			Summary:     "Delete Environment",
+			Description: "Delete an environment by ID",
+			Path:        "/delete",
+			Method:      http.MethodDelete,
+		},
+		handlers.DeleteEnvironment,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

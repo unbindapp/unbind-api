@@ -39,6 +39,10 @@ func (self *ProjectRepository) Update(ctx context.Context, projectID uuid.UUID, 
 	return m.Save(ctx)
 }
 
-func (self *ProjectRepository) Delete(ctx context.Context, projectID uuid.UUID) error {
-	return self.base.DB.Project.DeleteOneID(projectID).Exec(ctx)
+func (self *ProjectRepository) Delete(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	return db.Project.DeleteOneID(projectID).Exec(ctx)
 }

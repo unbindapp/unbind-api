@@ -64,6 +64,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.UpdateService,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "delete-service",
+			Summary:     "Delete Service",
+			Description: "Delete a service",
+			Path:        "/delete",
+			Method:      http.MethodDelete,
+		},
+		handlers.DeleteService,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

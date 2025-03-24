@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	entProject "github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -51,7 +51,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 	}
 
 	// Check if the team exists
-	_, err := self.repo.Team().GetByID(ctx, input.TeamID)
+	team, err := self.repo.Team().GetByID(ctx, input.TeamID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
@@ -60,15 +60,15 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 	}
 
 	// Make sure project exists and is in the team
-	project, err := self.repo.Project().GetByID(ctx, input.ProjectID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
+	var project *ent.Project
+	for _, p := range team.Edges.Projects {
+		if p.ID == input.ProjectID {
+			project = p
+			break
 		}
-		return err
 	}
-	if project.TeamID != input.TeamID {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project not in team")
+	if project == nil {
+		return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
 	}
 
 	// Create kubernetes client
@@ -77,20 +77,57 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		return err
 	}
 
-	// Delete the project
-	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
-		client := tx.Client()
-		if _, err := client.Project.Delete().Where(entProject.ID(input.ProjectID)).Exec(ctx); err != nil {
-			return err
-		}
+	environmnets, err := self.repo.Environment().GetForProject(ctx, input.ProjectID)
+	if err != nil {
+		return err
+	}
 
-		// Delete kubernetes secrets
-		if err := self.k8s.DeleteSecret(ctx, project.Edges.Environments[0].KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
-			return err
+	// Create kubernetes client
+	client, err := self.k8s.CreateClientWithToken(bearerToken)
+	if err != nil {
+		return err
+	}
+
+	// Delete the project in cascading fashion
+	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		// Delete environments
+		for _, environment := range environmnets {
+			// Delete services
+			for _, service := range environment.Edges.Services {
+				if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.Name); err != nil {
+					log.Error("Error deleting service from k8s", "svc", service.Name, "err", err)
+
+					return err
+				}
+
+				// Delete secret
+				if err := self.k8s.DeleteSecret(ctx, service.KubernetesSecret, team.Namespace, client); err != nil {
+					log.Error("Error deleting secret from k8s", "secret", service.KubernetesSecret, "err", err)
+					return err
+				}
+
+				if err := self.repo.Service().Delete(ctx, tx, service.ID); err != nil {
+					return err
+				}
+			}
+
+			// Delete environment
+			if err := self.k8s.DeleteSecret(ctx, environment.KubernetesSecret, team.Namespace, client); err != nil {
+				log.Error("Error deleting secret", "secret", environment.KubernetesSecret, "err", err)
+			}
+
+			if err := self.repo.Environment().Delete(ctx, tx, environment.ID); err != nil {
+				return err
+			}
 		}
 
 		// Delete project secret
-		if err := self.k8s.DeleteSecret(ctx, project.KubernetesSecret, project.Edges.Team.Namespace, k8sClient); err != nil {
+		if err := self.k8s.DeleteSecret(ctx, project.KubernetesSecret, team.Namespace, k8sClient); err != nil {
+			return err
+		}
+
+		// Delete project by ID
+		if err := self.repo.Project().Delete(ctx, tx, input.ProjectID); err != nil {
 			return err
 		}
 

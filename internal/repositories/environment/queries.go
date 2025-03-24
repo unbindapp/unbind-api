@@ -13,3 +13,9 @@ func (self *EnvironmentRepository) GetByID(ctx context.Context, id uuid.UUID) (*
 		q.WithTeam()
 	}).Only(ctx)
 }
+
+// Return all environments for a project with service edge populated
+func (self *EnvironmentRepository) GetForProject(ctx context.Context, projectID uuid.UUID) ([]*ent.Environment, error) {
+	return self.base.DB.Environment.Query().Where(environment.ProjectIDEQ(projectID)).
+		WithServices().All(ctx)
+}

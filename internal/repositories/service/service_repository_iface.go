@@ -22,6 +22,7 @@ type ServiceRepositoryInterface interface {
 	Update(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, displayName *string, description *string) error
 	// Update service config
 	UpdateConfig(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, serviceType *schema.ServiceType, builder *schema.ServiceBuilder, gitBranch *string, port *int, host *string, replicas *int32, autoDeploy *bool, runCommand *string, public *bool, image *string) error
+	Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error
 	GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error)
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
 	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error)

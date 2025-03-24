@@ -33,7 +33,7 @@ var (
 				Symbol:     "deployments_services_deployments",
 				Columns:    []*schema.Column{DeploymentsColumns[10]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -292,7 +292,7 @@ var (
 				Symbol:     "services_environments_services",
 				Columns:    []*schema.Column{ServicesColumns[8]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "services_github_installations_services",
@@ -331,7 +331,7 @@ var (
 				Symbol:     "service_configs_services_service_config",
 				Columns:    []*schema.Column{ServiceConfigsColumns[15]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}

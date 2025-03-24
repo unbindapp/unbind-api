@@ -37,6 +37,11 @@ rules:
     "customresourcedefinitions"
   ]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Custom operator CRD resources
+# ! TODO - we can also make this one related to user tokens like some of the other roles
+- apiGroups: ["unbind.unbind.app"]
+  resources: ["services"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

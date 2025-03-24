@@ -22,3 +22,12 @@ func (self *EnvironmentRepository) Create(ctx context.Context, tx repository.TxI
 		SetKubernetesSecret(kuberneteSecret).
 		Save(ctx)
 }
+
+func (self *EnvironmentRepository) Delete(ctx context.Context, tx repository.TxInterface, environmentID uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Environment.DeleteOneID(environmentID).Exec(ctx)
+}
