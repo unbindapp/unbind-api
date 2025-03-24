@@ -24,6 +24,7 @@ import (
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
 	secrets_handler "github.com/unbindapp/unbind-api/internal/api/handlers/secrets"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
+	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
 	user_handler "github.com/unbindapp/unbind-api/internal/api/handlers/user"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
@@ -243,6 +244,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	logintmp_handler.RegisterHandlers(srvImpl, authGroup)
+
+	// /system group
+	systemGroup := huma.NewGroup(api, "/system")
+	systemGroup.UseMiddleware(mw.Authenticate)
+	systemGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"System"}
+		next(op)
+	})
+	system_handler.RegisterHandlers(srvImpl, systemGroup)
 
 	// /users group
 	userGroup := huma.NewGroup(api, "/users")
