@@ -109,9 +109,26 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 							Command: []string{
 								"sh",
 								"-c",
-								// Trap SIGTERM, log a message, then exit with 0.
-								`trap 'echo "Received SIGTERM, shutting down gracefully"; exit 0' SIGTERM;
-									 rootlesskit buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox`,
+								`
+				# Trap SIGTERM/SIGINT and forward it to buildkitd
+				trap "echo Received SIGTERM, forwarding to buildkitd; kill -TERM $child" SIGTERM SIGINT
+				
+				# Start buildkitd in the background
+				rootlesskit buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox &
+				child=$!
+				
+				# Wait for buildkitd to exit
+				wait $child
+				status=$?
+				
+				# If the exit code is 1 (from our SIGTERM), convert it to 0
+				if [ $status -eq 1 ]; then
+						echo "Buildkitd exited with status 1, converting to 0 to signal graceful shutdown"
+						exit 0
+				else
+						exit $status
+				fi
+								`,
 							},
 							Env: []corev1.EnvVar{
 								{
