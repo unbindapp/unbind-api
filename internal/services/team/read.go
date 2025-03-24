@@ -2,23 +2,16 @@ package team_service
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-type GetTeamResponse struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	DisplayName string    `json:"display_name"`
-	Description *string   `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
 // ListTeams retrieves all teams the user has permission to view
-func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearerToken string) ([]*GetTeamResponse, error) {
+func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearerToken string) ([]*models.TeamResponse, error) {
 	// Start with a base query
 	query := self.repo.Ent().Team.Query()
 
@@ -63,19 +56,14 @@ func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearer
 	}
 
 	// Filter dbTeams to only include those with namespaces in k8sNamespaces
-	var filteredTeams []*GetTeamResponse
+	var filteredTeams []*ent.Team
 	for _, team := range dbTeams {
-		// Assuming team.Namespace exists, if not you'll need to adjust this
-		if k8sNamespaces[team.Namespace] {
-			filteredTeams = append(filteredTeams, &GetTeamResponse{
-				ID:          team.ID,
-				Name:        team.Name,
-				DisplayName: team.DisplayName,
-				Description: team.Description,
-				CreatedAt:   team.CreatedAt,
-			})
+		_, namespaceExists := k8sNamespaces[team.Namespace]
+		if !namespaceExists {
+			continue
 		}
+		filteredTeams = append(filteredTeams, team)
 	}
 
-	return filteredTeams, nil
+	return models.TransformTeamEntities(filteredTeams), nil
 }

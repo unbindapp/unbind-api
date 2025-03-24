@@ -10,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 )
 
@@ -24,7 +25,7 @@ type UpdateTeamInput struct {
 
 type UpdateTeamResponse struct {
 	Body struct {
-		Data *team_service.GetTeamResponse `json:"data"`
+		Data *models.TeamResponse `json:"data"`
 	}
 }
 

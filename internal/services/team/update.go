@@ -8,6 +8,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 type TeamUpdateInput struct {
@@ -17,7 +18,7 @@ type TeamUpdateInput struct {
 }
 
 // UpdateTeam updates a specific team
-func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input *TeamUpdateInput) (*GetTeamResponse, error) {
+func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input *TeamUpdateInput) (*models.TeamResponse, error) {
 	// Validate input
 	err := validate.Validator().Struct(input)
 	if err != nil {
@@ -64,10 +65,5 @@ func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input
 		return nil, err
 	}
 
-	return &GetTeamResponse{
-		ID:          updatedTeam.ID,
-		Name:        updatedTeam.Name,
-		DisplayName: updatedTeam.DisplayName,
-		CreatedAt:   updatedTeam.CreatedAt,
-	}, nil
+	return models.TransformTeamEntity(updatedTeam), nil
 }
