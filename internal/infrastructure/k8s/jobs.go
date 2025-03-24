@@ -169,6 +169,37 @@ exec /app/builder`,
 								},
 							},
 						},
+						{
+							Name:  "cleanup-monitor",
+							Image: "alpine",
+							Command: []string{
+								"sh",
+								"-c",
+								`# Wait for the /app/builder process to start
+while ! pgrep -f "/app/builder" > /dev/null; do
+    sleep 1
+done
+
+# Get the PID of the actual builder process
+builder_pid=$(pgrep -f "/app/builder")
+
+# Monitor the builder process
+while kill -0 $builder_pid 2>/dev/null; do
+    sleep 1
+done
+
+# Give a small grace period for any cleanup
+sleep 5
+
+# Once build is complete, gracefully stop the Docker daemon
+pkill dockerd
+pkill buildkitd
+echo "Build complete, Docker daemon stopped"`,
+							},
+							SecurityContext: &corev1.SecurityContext{
+								Privileged: utils.ToPtr(true),
+							},
+						},
 					},
 					Volumes: []corev1.Volume{
 						{
