@@ -61,8 +61,9 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 					},
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName: "builder-serviceaccount",
-					RestartPolicy:      corev1.RestartPolicyNever,
+					ServiceAccountName:    "builder-serviceaccount",
+					RestartPolicy:         corev1.RestartPolicyNever,
+					ShareProcessNamespace: utils.ToPtr(true), // Share process namespace between containers
 					Containers: []corev1.Container{
 						{
 							Name:  "build-container",
@@ -71,19 +72,19 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 								"sh",
 								"-c",
 								`# Wait for buildkitd to be ready
-until buildctl --addr tcp://localhost:1234 debug workers >/dev/null 2>&1; do
-  echo "Waiting for BuildKit daemon to be ready...";
-  sleep 1;
-done;
-
-# Wait for Docker daemon to be ready
-until docker info >/dev/null 2>&1; do
-  echo "Waiting for Docker daemon to be ready...";
-  sleep 1;
-done;
-
-# Run the builder with BuildKit
-exec /app/builder`,
+	until buildctl --addr tcp://localhost:1234 debug workers >/dev/null 2>&1; do
+		echo "Waiting for BuildKit daemon to be ready...";
+		sleep 1;
+	done;
+	
+	# Wait for Docker daemon to be ready
+	until docker info >/dev/null 2>&1; do
+		echo "Waiting for Docker daemon to be ready...";
+		sleep 1;
+	done;
+	
+	# Run the builder with BuildKit
+	exec /app/builder`,
 							},
 							Env: append(envVars, []corev1.EnvVar{
 								{
@@ -175,26 +176,42 @@ exec /app/builder`,
 							Command: []string{
 								"sh",
 								"-c",
-								`# Wait for the /app/builder process to start
-while ! pgrep -f "/app/builder" > /dev/null; do
-    sleep 1
-done
-
-# Get the PID of the actual builder process
-builder_pid=$(pgrep -f "/app/builder")
-
-# Monitor the builder process
-while kill -0 $builder_pid 2>/dev/null; do
-    sleep 1
-done
-
-# Give a small grace period for any cleanup
-sleep 5
-
-# Once build is complete, gracefully stop the Docker daemon
-pkill dockerd
-pkill buildkitd
-echo "Build complete, Docker daemon stopped"`,
+								`# Install necessary tools
+	apk add --no-cache procps
+	
+	# Wait for the /app/builder process to start
+	while ! pgrep -f "/app/builder" > /dev/null; do
+			echo "Waiting for builder to start..."
+			sleep 1
+	done
+	
+	# Get the PID of the actual builder process
+	builder_pid=$(pgrep -f "/app/builder")
+	echo "Builder process started with PID: $builder_pid"
+	
+	# Monitor the builder process
+	while kill -0 $builder_pid 2>/dev/null; do
+			sleep 2
+	done
+	
+	echo "Builder process has completed"
+	
+	# Give a small grace period for any cleanup
+	sleep 5
+	
+	# Once build is complete, gracefully stop the Docker daemon and buildkit
+	echo "Stopping docker and buildkit daemons..."
+	pkill -15 dockerd || true
+	pkill -15 buildkitd || true
+	sleep 3
+	
+	# Force kill if still running
+	pkill -9 dockerd || true 
+	pkill -9 buildkitd || true
+	echo "Build complete, Docker and BuildKit daemons stopped"
+	
+	# Exit with success to mark the job as complete
+	exit 0`,
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: utils.ToPtr(true),
