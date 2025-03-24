@@ -30,8 +30,8 @@ type UpdateServiceInput struct {
 	GitBranch  *string                `json:"git_branch,omitempty" required:"false"`
 	Type       *schema.ServiceType    `json:"type,omitempty" required:"false"`
 	Builder    *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
-	Host       *string                `json:"host,omitempty" required:"false"`
-	Port       *int                   `validate:"min=1,max=65535" json:"port,omitempty" required:"false"`
+	Hosts      []schema.HostSpec      `json:"hosts,omitempty" required:"false"`
+	Ports      []schema.PortSpec      `validate:"min=1,max=65535" json:"ports,omitempty" required:"false"`
 	Replicas   *int32                 `validate:"min=1,max=10" json:"replicas,omitempty" required:"false"`
 	AutoDeploy *bool                  `json:"auto_deploy,omitempty" required:"false"`
 	RunCommand *string                `json:"run_command,omitempty" required:"false"`
@@ -104,13 +104,25 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("failed to update service: %w", err)
 		}
 
-		host := input.Host
-		if service.Edges.ServiceConfig.Host == nil && input.Public != nil && *input.Public && input.Host == nil {
+		if len(service.Edges.ServiceConfig.Hosts) < 1 && input.Public != nil && *input.Public && len(input.Hosts) < 1 {
 			host, err := utils.GenerateSubdomain(service.DisplayName, service.Edges.Environment.DisplayName, self.cfg.ExternalURL)
 			if err != nil {
 				log.Warn("failed to generate subdomain", "error", err)
 			} else {
-				input.Host = &host
+				input.Hosts = []schema.HostSpec{
+					{
+						Host: host,
+						Path: "/",
+					},
+				}
+				// Figure out ports
+				if len(input.Ports) > 0 {
+					input.Hosts[0].Port = &input.Ports[0].Port
+				} else {
+					if len(service.Edges.ServiceConfig.Ports) > 0 {
+						input.Hosts[0].Port = &service.Edges.ServiceConfig.Ports[0].Port
+					}
+				}
 			}
 		}
 
@@ -121,8 +133,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			input.Type,
 			input.Builder,
 			input.GitBranch,
-			input.Port,
-			host,
+			input.Ports,
+			input.Hosts,
 			input.Replicas,
 			input.AutoDeploy,
 			input.RunCommand,

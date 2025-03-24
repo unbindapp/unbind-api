@@ -115,31 +115,15 @@ func (scc *ServiceConfigCreate) SetNillableGitBranch(s *string) *ServiceConfigCr
 	return scc
 }
 
-// SetHost sets the "host" field.
-func (scc *ServiceConfigCreate) SetHost(s string) *ServiceConfigCreate {
-	scc.mutation.SetHost(s)
+// SetHosts sets the "hosts" field.
+func (scc *ServiceConfigCreate) SetHosts(ss []schema.HostSpec) *ServiceConfigCreate {
+	scc.mutation.SetHosts(ss)
 	return scc
 }
 
-// SetNillableHost sets the "host" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableHost(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetHost(*s)
-	}
-	return scc
-}
-
-// SetPort sets the "port" field.
-func (scc *ServiceConfigCreate) SetPort(i int) *ServiceConfigCreate {
-	scc.mutation.SetPort(i)
-	return scc
-}
-
-// SetNillablePort sets the "port" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillablePort(i *int) *ServiceConfigCreate {
-	if i != nil {
-		scc.SetPort(*i)
-	}
+// SetPorts sets the "ports" field.
+func (scc *ServiceConfigCreate) SetPorts(ss []schema.PortSpec) *ServiceConfigCreate {
+	scc.mutation.SetPorts(ss)
 	return scc
 }
 
@@ -406,13 +390,13 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
 		_node.GitBranch = &value
 	}
-	if value, ok := scc.mutation.Host(); ok {
-		_spec.SetField(serviceconfig.FieldHost, field.TypeString, value)
-		_node.Host = &value
+	if value, ok := scc.mutation.Hosts(); ok {
+		_spec.SetField(serviceconfig.FieldHosts, field.TypeJSON, value)
+		_node.Hosts = value
 	}
-	if value, ok := scc.mutation.Port(); ok {
-		_spec.SetField(serviceconfig.FieldPort, field.TypeInt, value)
-		_node.Port = &value
+	if value, ok := scc.mutation.Ports(); ok {
+		_spec.SetField(serviceconfig.FieldPorts, field.TypeJSON, value)
+		_node.Ports = value
 	}
 	if value, ok := scc.mutation.Replicas(); ok {
 		_spec.SetField(serviceconfig.FieldReplicas, field.TypeInt32, value)
@@ -605,45 +589,39 @@ func (u *ServiceConfigUpsert) ClearGitBranch() *ServiceConfigUpsert {
 	return u
 }
 
-// SetHost sets the "host" field.
-func (u *ServiceConfigUpsert) SetHost(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldHost, v)
+// SetHosts sets the "hosts" field.
+func (u *ServiceConfigUpsert) SetHosts(v []schema.HostSpec) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldHosts, v)
 	return u
 }
 
-// UpdateHost sets the "host" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateHost() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldHost)
+// UpdateHosts sets the "hosts" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateHosts() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldHosts)
 	return u
 }
 
-// ClearHost clears the value of the "host" field.
-func (u *ServiceConfigUpsert) ClearHost() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldHost)
+// ClearHosts clears the value of the "hosts" field.
+func (u *ServiceConfigUpsert) ClearHosts() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldHosts)
 	return u
 }
 
-// SetPort sets the "port" field.
-func (u *ServiceConfigUpsert) SetPort(v int) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldPort, v)
+// SetPorts sets the "ports" field.
+func (u *ServiceConfigUpsert) SetPorts(v []schema.PortSpec) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldPorts, v)
 	return u
 }
 
-// UpdatePort sets the "port" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdatePort() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldPort)
+// UpdatePorts sets the "ports" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdatePorts() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldPorts)
 	return u
 }
 
-// AddPort adds v to the "port" field.
-func (u *ServiceConfigUpsert) AddPort(v int) *ServiceConfigUpsert {
-	u.Add(serviceconfig.FieldPort, v)
-	return u
-}
-
-// ClearPort clears the value of the "port" field.
-func (u *ServiceConfigUpsert) ClearPort() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldPort)
+// ClearPorts clears the value of the "ports" field.
+func (u *ServiceConfigUpsert) ClearPorts() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldPorts)
 	return u
 }
 
@@ -895,52 +873,45 @@ func (u *ServiceConfigUpsertOne) ClearGitBranch() *ServiceConfigUpsertOne {
 	})
 }
 
-// SetHost sets the "host" field.
-func (u *ServiceConfigUpsertOne) SetHost(v string) *ServiceConfigUpsertOne {
+// SetHosts sets the "hosts" field.
+func (u *ServiceConfigUpsertOne) SetHosts(v []schema.HostSpec) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetHost(v)
+		s.SetHosts(v)
 	})
 }
 
-// UpdateHost sets the "host" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateHost() *ServiceConfigUpsertOne {
+// UpdateHosts sets the "hosts" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateHosts() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateHost()
+		s.UpdateHosts()
 	})
 }
 
-// ClearHost clears the value of the "host" field.
-func (u *ServiceConfigUpsertOne) ClearHost() *ServiceConfigUpsertOne {
+// ClearHosts clears the value of the "hosts" field.
+func (u *ServiceConfigUpsertOne) ClearHosts() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearHost()
+		s.ClearHosts()
 	})
 }
 
-// SetPort sets the "port" field.
-func (u *ServiceConfigUpsertOne) SetPort(v int) *ServiceConfigUpsertOne {
+// SetPorts sets the "ports" field.
+func (u *ServiceConfigUpsertOne) SetPorts(v []schema.PortSpec) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetPort(v)
+		s.SetPorts(v)
 	})
 }
 
-// AddPort adds v to the "port" field.
-func (u *ServiceConfigUpsertOne) AddPort(v int) *ServiceConfigUpsertOne {
+// UpdatePorts sets the "ports" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdatePorts() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.AddPort(v)
+		s.UpdatePorts()
 	})
 }
 
-// UpdatePort sets the "port" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdatePort() *ServiceConfigUpsertOne {
+// ClearPorts clears the value of the "ports" field.
+func (u *ServiceConfigUpsertOne) ClearPorts() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdatePort()
-	})
-}
-
-// ClearPort clears the value of the "port" field.
-func (u *ServiceConfigUpsertOne) ClearPort() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearPort()
+		s.ClearPorts()
 	})
 }
 
@@ -1372,52 +1343,45 @@ func (u *ServiceConfigUpsertBulk) ClearGitBranch() *ServiceConfigUpsertBulk {
 	})
 }
 
-// SetHost sets the "host" field.
-func (u *ServiceConfigUpsertBulk) SetHost(v string) *ServiceConfigUpsertBulk {
+// SetHosts sets the "hosts" field.
+func (u *ServiceConfigUpsertBulk) SetHosts(v []schema.HostSpec) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetHost(v)
+		s.SetHosts(v)
 	})
 }
 
-// UpdateHost sets the "host" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateHost() *ServiceConfigUpsertBulk {
+// UpdateHosts sets the "hosts" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateHosts() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateHost()
+		s.UpdateHosts()
 	})
 }
 
-// ClearHost clears the value of the "host" field.
-func (u *ServiceConfigUpsertBulk) ClearHost() *ServiceConfigUpsertBulk {
+// ClearHosts clears the value of the "hosts" field.
+func (u *ServiceConfigUpsertBulk) ClearHosts() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearHost()
+		s.ClearHosts()
 	})
 }
 
-// SetPort sets the "port" field.
-func (u *ServiceConfigUpsertBulk) SetPort(v int) *ServiceConfigUpsertBulk {
+// SetPorts sets the "ports" field.
+func (u *ServiceConfigUpsertBulk) SetPorts(v []schema.PortSpec) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetPort(v)
+		s.SetPorts(v)
 	})
 }
 
-// AddPort adds v to the "port" field.
-func (u *ServiceConfigUpsertBulk) AddPort(v int) *ServiceConfigUpsertBulk {
+// UpdatePorts sets the "ports" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdatePorts() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.AddPort(v)
+		s.UpdatePorts()
 	})
 }
 
-// UpdatePort sets the "port" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdatePort() *ServiceConfigUpsertBulk {
+// ClearPorts clears the value of the "ports" field.
+func (u *ServiceConfigUpsertBulk) ClearPorts() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdatePort()
-	})
-}
-
-// ClearPort clears the value of the "port" field.
-func (u *ServiceConfigUpsertBulk) ClearPort() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearPort()
+		s.ClearPorts()
 	})
 }
 

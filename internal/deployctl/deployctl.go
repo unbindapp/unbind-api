@@ -201,12 +201,22 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_BUILDER"] = string(service.Edges.ServiceConfig.Builder)
 	}
 
-	if service.Edges.ServiceConfig.Port != nil {
-		env["SERVICE_PORT"] = strconv.Itoa(*service.Edges.ServiceConfig.Port)
+	if len(service.Edges.ServiceConfig.Ports) > 0 {
+		// Serialize
+		marshalled, err := json.Marshal(service.Edges.ServiceConfig.Ports)
+		if err != nil {
+			return nil, err
+		}
+		env["SERVICE_PORTS"] = string(marshalled)
 	}
 
-	if service.Edges.ServiceConfig.Host != nil {
-		env["SERVICE_HOST"] = *service.Edges.ServiceConfig.Host
+	if len(service.Edges.ServiceConfig.Hosts) > 0 {
+		// Serialize
+		marshalled, err := json.Marshal(service.Edges.ServiceConfig.Hosts)
+		if err != nil {
+			return nil, err
+		}
+		env["SERVICE_HOSTS"] = string(marshalled)
 	}
 
 	// ! TODO - we need to support the custom run commands, the operator supports it

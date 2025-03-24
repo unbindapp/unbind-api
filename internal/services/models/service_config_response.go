@@ -13,8 +13,8 @@ type ServiceConfigResponse struct {
 	Builder    schema.ServiceBuilder `json:"builder"`
 	Provider   *enum.Provider        `json:"provider,omitempty"`
 	Framework  *enum.Framework       `json:"framework,omitempty"`
-	Host       *string               `json:"host,omitempty"`
-	Port       *int                  `json:"port,omitempty"`
+	Host       []schema.HostSpec     `json:"hosts,omitempty"`
+	Port       []schema.PortSpec     `json:"ports,omitempty"`
 	Replicas   int32                 `json:"replicas"`
 	AutoDeploy bool                  `json:"auto_deploy"`
 	RunCommand *string               `json:"run_command,omitempty"`
@@ -32,8 +32,8 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			Builder:    entity.Builder,
 			Provider:   entity.Provider,
 			Framework:  entity.Framework,
-			Host:       entity.Host,
-			Port:       entity.Port,
+			Host:       entity.Hosts,
+			Port:       entity.Ports,
 			Replicas:   entity.Replicas,
 			AutoDeploy: entity.AutoDeploy,
 			RunCommand: entity.RunCommand,

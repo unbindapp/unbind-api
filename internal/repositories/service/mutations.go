@@ -50,8 +50,8 @@ func (self *ServiceRepository) CreateConfig(
 	provider *enum.Provider,
 	framework *enum.Framework,
 	gitBranch *string,
-	port *int,
-	host *string,
+	ports []schema.PortSpec,
+	hosts []schema.HostSpec,
 	replicas *int32,
 	autoDeploy *bool,
 	runCommand *string,
@@ -63,21 +63,28 @@ func (self *ServiceRepository) CreateConfig(
 		db = tx.Client()
 	}
 
-	return db.ServiceConfig.Create().
+	c := db.ServiceConfig.Create().
 		SetServiceID(serviceID).
 		SetType(serviceType).
 		SetBuilder(builder).
 		SetNillableProvider(provider).
 		SetNillableFramework(framework).
 		SetNillableGitBranch(gitBranch).
-		SetNillablePort(port).
-		SetNillableHost(host).
 		SetNillableReplicas(replicas).
 		SetNillableAutoDeploy(autoDeploy).
 		SetNillableRunCommand(runCommand).
 		SetNillablePublic(public).
-		SetNillableImage(image).
-		Save(ctx)
+		SetNillableImage(image)
+
+	if len(ports) > 0 {
+		c.SetPorts(ports)
+	}
+
+	if len(hosts) > 0 {
+		c.SetHosts(hosts)
+	}
+
+	return c.Save(ctx)
 }
 
 // Update the service
@@ -107,8 +114,8 @@ func (self *ServiceRepository) UpdateConfig(
 	serviceType *schema.ServiceType,
 	builder *schema.ServiceBuilder,
 	gitBranch *string,
-	port *int,
-	host *string,
+	ports []schema.PortSpec,
+	hosts []schema.HostSpec,
 	replicas *int32,
 	autoDeploy *bool,
 	runCommand *string,
@@ -120,19 +127,25 @@ func (self *ServiceRepository) UpdateConfig(
 		db = tx.Client()
 	}
 
-	return db.ServiceConfig.Update().
+	upd := db.ServiceConfig.Update().
 		Where(serviceconfig.ServiceID(serviceID)).
 		SetNillableType(serviceType).
 		SetNillableBuilder(builder).
 		SetNillableGitBranch(gitBranch).
-		SetNillablePort(port).
-		SetNillableHost(host).
 		SetNillableReplicas(replicas).
 		SetNillableAutoDeploy(autoDeploy).
 		SetNillableRunCommand(runCommand).
 		SetNillablePublic(public).
-		SetNillableImage(image).
-		Exec(ctx)
+		SetNillableImage(image)
+
+	if len(ports) > 0 {
+		upd.SetPorts(ports)
+	}
+	if len(hosts) > 0 {
+		upd.SetHosts(hosts)
+	}
+
+	return upd.Exec(ctx)
 }
 
 func (self *ServiceRepository) Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error {

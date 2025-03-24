@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -141,50 +142,39 @@ func (scu *ServiceConfigUpdate) ClearGitBranch() *ServiceConfigUpdate {
 	return scu
 }
 
-// SetHost sets the "host" field.
-func (scu *ServiceConfigUpdate) SetHost(s string) *ServiceConfigUpdate {
-	scu.mutation.SetHost(s)
+// SetHosts sets the "hosts" field.
+func (scu *ServiceConfigUpdate) SetHosts(ss []schema.HostSpec) *ServiceConfigUpdate {
+	scu.mutation.SetHosts(ss)
 	return scu
 }
 
-// SetNillableHost sets the "host" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableHost(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetHost(*s)
-	}
+// AppendHosts appends ss to the "hosts" field.
+func (scu *ServiceConfigUpdate) AppendHosts(ss []schema.HostSpec) *ServiceConfigUpdate {
+	scu.mutation.AppendHosts(ss)
 	return scu
 }
 
-// ClearHost clears the value of the "host" field.
-func (scu *ServiceConfigUpdate) ClearHost() *ServiceConfigUpdate {
-	scu.mutation.ClearHost()
+// ClearHosts clears the value of the "hosts" field.
+func (scu *ServiceConfigUpdate) ClearHosts() *ServiceConfigUpdate {
+	scu.mutation.ClearHosts()
 	return scu
 }
 
-// SetPort sets the "port" field.
-func (scu *ServiceConfigUpdate) SetPort(i int) *ServiceConfigUpdate {
-	scu.mutation.ResetPort()
-	scu.mutation.SetPort(i)
+// SetPorts sets the "ports" field.
+func (scu *ServiceConfigUpdate) SetPorts(ss []schema.PortSpec) *ServiceConfigUpdate {
+	scu.mutation.SetPorts(ss)
 	return scu
 }
 
-// SetNillablePort sets the "port" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillablePort(i *int) *ServiceConfigUpdate {
-	if i != nil {
-		scu.SetPort(*i)
-	}
+// AppendPorts appends ss to the "ports" field.
+func (scu *ServiceConfigUpdate) AppendPorts(ss []schema.PortSpec) *ServiceConfigUpdate {
+	scu.mutation.AppendPorts(ss)
 	return scu
 }
 
-// AddPort adds i to the "port" field.
-func (scu *ServiceConfigUpdate) AddPort(i int) *ServiceConfigUpdate {
-	scu.mutation.AddPort(i)
-	return scu
-}
-
-// ClearPort clears the value of the "port" field.
-func (scu *ServiceConfigUpdate) ClearPort() *ServiceConfigUpdate {
-	scu.mutation.ClearPort()
+// ClearPorts clears the value of the "ports" field.
+func (scu *ServiceConfigUpdate) ClearPorts() *ServiceConfigUpdate {
+	scu.mutation.ClearPorts()
 	return scu
 }
 
@@ -402,20 +392,27 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if scu.mutation.GitBranchCleared() {
 		_spec.ClearField(serviceconfig.FieldGitBranch, field.TypeString)
 	}
-	if value, ok := scu.mutation.Host(); ok {
-		_spec.SetField(serviceconfig.FieldHost, field.TypeString, value)
+	if value, ok := scu.mutation.Hosts(); ok {
+		_spec.SetField(serviceconfig.FieldHosts, field.TypeJSON, value)
 	}
-	if scu.mutation.HostCleared() {
-		_spec.ClearField(serviceconfig.FieldHost, field.TypeString)
+	if value, ok := scu.mutation.AppendedHosts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldHosts, value)
+		})
 	}
-	if value, ok := scu.mutation.Port(); ok {
-		_spec.SetField(serviceconfig.FieldPort, field.TypeInt, value)
+	if scu.mutation.HostsCleared() {
+		_spec.ClearField(serviceconfig.FieldHosts, field.TypeJSON)
 	}
-	if value, ok := scu.mutation.AddedPort(); ok {
-		_spec.AddField(serviceconfig.FieldPort, field.TypeInt, value)
+	if value, ok := scu.mutation.Ports(); ok {
+		_spec.SetField(serviceconfig.FieldPorts, field.TypeJSON, value)
 	}
-	if scu.mutation.PortCleared() {
-		_spec.ClearField(serviceconfig.FieldPort, field.TypeInt)
+	if value, ok := scu.mutation.AppendedPorts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldPorts, value)
+		})
+	}
+	if scu.mutation.PortsCleared() {
+		_spec.ClearField(serviceconfig.FieldPorts, field.TypeJSON)
 	}
 	if value, ok := scu.mutation.Replicas(); ok {
 		_spec.SetField(serviceconfig.FieldReplicas, field.TypeInt32, value)
@@ -600,50 +597,39 @@ func (scuo *ServiceConfigUpdateOne) ClearGitBranch() *ServiceConfigUpdateOne {
 	return scuo
 }
 
-// SetHost sets the "host" field.
-func (scuo *ServiceConfigUpdateOne) SetHost(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetHost(s)
+// SetHosts sets the "hosts" field.
+func (scuo *ServiceConfigUpdateOne) SetHosts(ss []schema.HostSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.SetHosts(ss)
 	return scuo
 }
 
-// SetNillableHost sets the "host" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableHost(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetHost(*s)
-	}
+// AppendHosts appends ss to the "hosts" field.
+func (scuo *ServiceConfigUpdateOne) AppendHosts(ss []schema.HostSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendHosts(ss)
 	return scuo
 }
 
-// ClearHost clears the value of the "host" field.
-func (scuo *ServiceConfigUpdateOne) ClearHost() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearHost()
+// ClearHosts clears the value of the "hosts" field.
+func (scuo *ServiceConfigUpdateOne) ClearHosts() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearHosts()
 	return scuo
 }
 
-// SetPort sets the "port" field.
-func (scuo *ServiceConfigUpdateOne) SetPort(i int) *ServiceConfigUpdateOne {
-	scuo.mutation.ResetPort()
-	scuo.mutation.SetPort(i)
+// SetPorts sets the "ports" field.
+func (scuo *ServiceConfigUpdateOne) SetPorts(ss []schema.PortSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.SetPorts(ss)
 	return scuo
 }
 
-// SetNillablePort sets the "port" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillablePort(i *int) *ServiceConfigUpdateOne {
-	if i != nil {
-		scuo.SetPort(*i)
-	}
+// AppendPorts appends ss to the "ports" field.
+func (scuo *ServiceConfigUpdateOne) AppendPorts(ss []schema.PortSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendPorts(ss)
 	return scuo
 }
 
-// AddPort adds i to the "port" field.
-func (scuo *ServiceConfigUpdateOne) AddPort(i int) *ServiceConfigUpdateOne {
-	scuo.mutation.AddPort(i)
-	return scuo
-}
-
-// ClearPort clears the value of the "port" field.
-func (scuo *ServiceConfigUpdateOne) ClearPort() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearPort()
+// ClearPorts clears the value of the "ports" field.
+func (scuo *ServiceConfigUpdateOne) ClearPorts() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearPorts()
 	return scuo
 }
 
@@ -891,20 +877,27 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	if scuo.mutation.GitBranchCleared() {
 		_spec.ClearField(serviceconfig.FieldGitBranch, field.TypeString)
 	}
-	if value, ok := scuo.mutation.Host(); ok {
-		_spec.SetField(serviceconfig.FieldHost, field.TypeString, value)
+	if value, ok := scuo.mutation.Hosts(); ok {
+		_spec.SetField(serviceconfig.FieldHosts, field.TypeJSON, value)
 	}
-	if scuo.mutation.HostCleared() {
-		_spec.ClearField(serviceconfig.FieldHost, field.TypeString)
+	if value, ok := scuo.mutation.AppendedHosts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldHosts, value)
+		})
 	}
-	if value, ok := scuo.mutation.Port(); ok {
-		_spec.SetField(serviceconfig.FieldPort, field.TypeInt, value)
+	if scuo.mutation.HostsCleared() {
+		_spec.ClearField(serviceconfig.FieldHosts, field.TypeJSON)
 	}
-	if value, ok := scuo.mutation.AddedPort(); ok {
-		_spec.AddField(serviceconfig.FieldPort, field.TypeInt, value)
+	if value, ok := scuo.mutation.Ports(); ok {
+		_spec.SetField(serviceconfig.FieldPorts, field.TypeJSON, value)
 	}
-	if scuo.mutation.PortCleared() {
-		_spec.ClearField(serviceconfig.FieldPort, field.TypeInt)
+	if value, ok := scuo.mutation.AppendedPorts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldPorts, value)
+		})
+	}
+	if scuo.mutation.PortsCleared() {
+		_spec.ClearField(serviceconfig.FieldPorts, field.TypeJSON)
 	}
 	if value, ok := scuo.mutation.Replicas(); ok {
 		_spec.SetField(serviceconfig.FieldReplicas, field.TypeInt32, value)

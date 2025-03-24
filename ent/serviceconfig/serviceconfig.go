@@ -34,10 +34,10 @@ const (
 	FieldFramework = "framework"
 	// FieldGitBranch holds the string denoting the git_branch field in the database.
 	FieldGitBranch = "git_branch"
-	// FieldHost holds the string denoting the host field in the database.
-	FieldHost = "host"
-	// FieldPort holds the string denoting the port field in the database.
-	FieldPort = "port"
+	// FieldHosts holds the string denoting the hosts field in the database.
+	FieldHosts = "hosts"
+	// FieldPorts holds the string denoting the ports field in the database.
+	FieldPorts = "ports"
 	// FieldReplicas holds the string denoting the replicas field in the database.
 	FieldReplicas = "replicas"
 	// FieldAutoDeploy holds the string denoting the auto_deploy field in the database.
@@ -72,8 +72,8 @@ var Columns = []string{
 	FieldProvider,
 	FieldFramework,
 	FieldGitBranch,
-	FieldHost,
-	FieldPort,
+	FieldHosts,
+	FieldPorts,
 	FieldReplicas,
 	FieldAutoDeploy,
 	FieldRunCommand,
@@ -194,16 +194,6 @@ func ByFramework(opts ...sql.OrderTermOption) OrderOption {
 // ByGitBranch orders the results by the git_branch field.
 func ByGitBranch(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGitBranch, opts...).ToFunc()
-}
-
-// ByHost orders the results by the host field.
-func ByHost(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHost, opts...).ToFunc()
-}
-
-// ByPort orders the results by the port field.
-func ByPort(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPort, opts...).ToFunc()
 }
 
 // ByReplicas orders the results by the replicas field.

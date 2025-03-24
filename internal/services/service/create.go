@@ -37,8 +37,8 @@ type CreateServiceInput struct {
 	Type       schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'git', 'docker'" json:"type"`
 	Builder    schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
 	GitBranch  *string               `json:"git_branch,omitempty"`
-	Host       *string               `json:"host,omitempty"`
-	Port       *int                  `validate:"min=1,max=65535" json:"port,omitempty"`
+	Hosts      []schema.HostSpec     `json:"hosts,omitempty"`
+	Ports      []schema.PortSpec     `validate:"min=1,max=65535" json:"port,omitempty"`
 	Replicas   *int32                `validate:"min=1,max=10" json:"replicas,omitempty"`
 	AutoDeploy *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand *string               `json:"run_command,omitempty"`
@@ -169,8 +169,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		var provider *enum.Provider
 		var framework *enum.Framework
-		host := input.Host
-		port := input.Port
+		hosts := input.Hosts
+		ports := input.Ports
 		public := false
 		if analysisResult != nil {
 			// Service core information
@@ -182,13 +182,15 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 
 			// Default configuration information
-			if port == nil && analysisResult.Port != nil {
-				port = analysisResult.Port
+			if len(ports) == 0 && analysisResult.Port != nil {
+				ports = append(ports, schema.PortSpec{
+					Port: int32(*analysisResult.Port),
+				})
 				public = true
 			}
 		}
 
-		if host == nil && public {
+		if len(hosts) == 0 && public {
 			// Generate a subdomain
 			domain, err := utils.GenerateSubdomain(input.DisplayName, environment.Name, self.cfg.ExternalURL)
 			if err != nil {
@@ -212,7 +214,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				}
 
 				if domain != "" {
-					host = utils.ToPtr(domain)
+					hosts = append(hosts, schema.HostSpec{
+						Host: domain,
+						Path: "/",
+						Port: utils.ToPtr(ports[0].Port),
+					})
 				}
 			}
 		}
@@ -259,8 +265,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			provider,
 			framework,
 			input.GitBranch,
-			port,
-			host,
+			ports,
+			hosts,
 			input.Replicas,
 			input.AutoDeploy,
 			input.RunCommand,

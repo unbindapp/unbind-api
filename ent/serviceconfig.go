@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -38,10 +39,10 @@ type ServiceConfig struct {
 	Framework *enum.Framework `json:"framework,omitempty"`
 	// Branch to build from
 	GitBranch *string `json:"git_branch,omitempty"`
-	// External domain for the service, e.g., unbind.app
-	Host *string `json:"host,omitempty"`
-	// Main container port
-	Port *int `json:"port,omitempty"`
+	// External domains and paths for the service
+	Hosts []schema.HostSpec `json:"hosts,omitempty"`
+	// Container ports to expose
+	Ports []schema.PortSpec `json:"ports,omitempty"`
 	// Number of replicas for the service
 	Replicas int32 `json:"replicas,omitempty"`
 	// Whether to automatically deploy on git push
@@ -83,11 +84,13 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts:
+			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldPublic:
 			values[i] = new(sql.NullBool)
-		case serviceconfig.FieldPort, serviceconfig.FieldReplicas:
+		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldHost, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -165,19 +168,21 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				sc.GitBranch = new(string)
 				*sc.GitBranch = value.String
 			}
-		case serviceconfig.FieldHost:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field host", values[i])
-			} else if value.Valid {
-				sc.Host = new(string)
-				*sc.Host = value.String
+		case serviceconfig.FieldHosts:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field hosts", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.Hosts); err != nil {
+					return fmt.Errorf("unmarshal field hosts: %w", err)
+				}
 			}
-		case serviceconfig.FieldPort:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field port", values[i])
-			} else if value.Valid {
-				sc.Port = new(int)
-				*sc.Port = int(value.Int64)
+		case serviceconfig.FieldPorts:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field ports", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.Ports); err != nil {
+					return fmt.Errorf("unmarshal field ports: %w", err)
+				}
 			}
 		case serviceconfig.FieldReplicas:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -281,15 +286,11 @@ func (sc *ServiceConfig) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := sc.Host; v != nil {
-		builder.WriteString("host=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("hosts=")
+	builder.WriteString(fmt.Sprintf("%v", sc.Hosts))
 	builder.WriteString(", ")
-	if v := sc.Port; v != nil {
-		builder.WriteString("port=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
+	builder.WriteString("ports=")
+	builder.WriteString(fmt.Sprintf("%v", sc.Ports))
 	builder.WriteString(", ")
 	builder.WriteString("replicas=")
 	builder.WriteString(fmt.Sprintf("%v", sc.Replicas))

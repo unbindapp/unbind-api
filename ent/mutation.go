@@ -9717,9 +9717,10 @@ type ServiceConfigMutation struct {
 	provider       *enum.Provider
 	framework      *enum.Framework
 	git_branch     *string
-	host           *string
-	port           *int
-	addport        *int
+	hosts          *[]schema.HostSpec
+	appendhosts    []schema.HostSpec
+	ports          *[]schema.PortSpec
+	appendports    []schema.PortSpec
 	replicas       *int32
 	addreplicas    *int32
 	auto_deploy    *bool
@@ -10165,123 +10166,134 @@ func (m *ServiceConfigMutation) ResetGitBranch() {
 	delete(m.clearedFields, serviceconfig.FieldGitBranch)
 }
 
-// SetHost sets the "host" field.
-func (m *ServiceConfigMutation) SetHost(s string) {
-	m.host = &s
+// SetHosts sets the "hosts" field.
+func (m *ServiceConfigMutation) SetHosts(ss []schema.HostSpec) {
+	m.hosts = &ss
+	m.appendhosts = nil
 }
 
-// Host returns the value of the "host" field in the mutation.
-func (m *ServiceConfigMutation) Host() (r string, exists bool) {
-	v := m.host
+// Hosts returns the value of the "hosts" field in the mutation.
+func (m *ServiceConfigMutation) Hosts() (r []schema.HostSpec, exists bool) {
+	v := m.hosts
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldHost returns the old "host" field's value of the ServiceConfig entity.
+// OldHosts returns the old "hosts" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldHost(ctx context.Context) (v *string, err error) {
+func (m *ServiceConfigMutation) OldHosts(ctx context.Context) (v []schema.HostSpec, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldHost is only allowed on UpdateOne operations")
+		return v, errors.New("OldHosts is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldHost requires an ID field in the mutation")
+		return v, errors.New("OldHosts requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldHost: %w", err)
+		return v, fmt.Errorf("querying old value for OldHosts: %w", err)
 	}
-	return oldValue.Host, nil
+	return oldValue.Hosts, nil
 }
 
-// ClearHost clears the value of the "host" field.
-func (m *ServiceConfigMutation) ClearHost() {
-	m.host = nil
-	m.clearedFields[serviceconfig.FieldHost] = struct{}{}
+// AppendHosts adds ss to the "hosts" field.
+func (m *ServiceConfigMutation) AppendHosts(ss []schema.HostSpec) {
+	m.appendhosts = append(m.appendhosts, ss...)
 }
 
-// HostCleared returns if the "host" field was cleared in this mutation.
-func (m *ServiceConfigMutation) HostCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldHost]
+// AppendedHosts returns the list of values that were appended to the "hosts" field in this mutation.
+func (m *ServiceConfigMutation) AppendedHosts() ([]schema.HostSpec, bool) {
+	if len(m.appendhosts) == 0 {
+		return nil, false
+	}
+	return m.appendhosts, true
+}
+
+// ClearHosts clears the value of the "hosts" field.
+func (m *ServiceConfigMutation) ClearHosts() {
+	m.hosts = nil
+	m.appendhosts = nil
+	m.clearedFields[serviceconfig.FieldHosts] = struct{}{}
+}
+
+// HostsCleared returns if the "hosts" field was cleared in this mutation.
+func (m *ServiceConfigMutation) HostsCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldHosts]
 	return ok
 }
 
-// ResetHost resets all changes to the "host" field.
-func (m *ServiceConfigMutation) ResetHost() {
-	m.host = nil
-	delete(m.clearedFields, serviceconfig.FieldHost)
+// ResetHosts resets all changes to the "hosts" field.
+func (m *ServiceConfigMutation) ResetHosts() {
+	m.hosts = nil
+	m.appendhosts = nil
+	delete(m.clearedFields, serviceconfig.FieldHosts)
 }
 
-// SetPort sets the "port" field.
-func (m *ServiceConfigMutation) SetPort(i int) {
-	m.port = &i
-	m.addport = nil
+// SetPorts sets the "ports" field.
+func (m *ServiceConfigMutation) SetPorts(ss []schema.PortSpec) {
+	m.ports = &ss
+	m.appendports = nil
 }
 
-// Port returns the value of the "port" field in the mutation.
-func (m *ServiceConfigMutation) Port() (r int, exists bool) {
-	v := m.port
+// Ports returns the value of the "ports" field in the mutation.
+func (m *ServiceConfigMutation) Ports() (r []schema.PortSpec, exists bool) {
+	v := m.ports
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldPort returns the old "port" field's value of the ServiceConfig entity.
+// OldPorts returns the old "ports" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldPort(ctx context.Context) (v *int, err error) {
+func (m *ServiceConfigMutation) OldPorts(ctx context.Context) (v []schema.PortSpec, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPort is only allowed on UpdateOne operations")
+		return v, errors.New("OldPorts is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPort requires an ID field in the mutation")
+		return v, errors.New("OldPorts requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPort: %w", err)
+		return v, fmt.Errorf("querying old value for OldPorts: %w", err)
 	}
-	return oldValue.Port, nil
+	return oldValue.Ports, nil
 }
 
-// AddPort adds i to the "port" field.
-func (m *ServiceConfigMutation) AddPort(i int) {
-	if m.addport != nil {
-		*m.addport += i
-	} else {
-		m.addport = &i
+// AppendPorts adds ss to the "ports" field.
+func (m *ServiceConfigMutation) AppendPorts(ss []schema.PortSpec) {
+	m.appendports = append(m.appendports, ss...)
+}
+
+// AppendedPorts returns the list of values that were appended to the "ports" field in this mutation.
+func (m *ServiceConfigMutation) AppendedPorts() ([]schema.PortSpec, bool) {
+	if len(m.appendports) == 0 {
+		return nil, false
 	}
+	return m.appendports, true
 }
 
-// AddedPort returns the value that was added to the "port" field in this mutation.
-func (m *ServiceConfigMutation) AddedPort() (r int, exists bool) {
-	v := m.addport
-	if v == nil {
-		return
-	}
-	return *v, true
+// ClearPorts clears the value of the "ports" field.
+func (m *ServiceConfigMutation) ClearPorts() {
+	m.ports = nil
+	m.appendports = nil
+	m.clearedFields[serviceconfig.FieldPorts] = struct{}{}
 }
 
-// ClearPort clears the value of the "port" field.
-func (m *ServiceConfigMutation) ClearPort() {
-	m.port = nil
-	m.addport = nil
-	m.clearedFields[serviceconfig.FieldPort] = struct{}{}
-}
-
-// PortCleared returns if the "port" field was cleared in this mutation.
-func (m *ServiceConfigMutation) PortCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldPort]
+// PortsCleared returns if the "ports" field was cleared in this mutation.
+func (m *ServiceConfigMutation) PortsCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldPorts]
 	return ok
 }
 
-// ResetPort resets all changes to the "port" field.
-func (m *ServiceConfigMutation) ResetPort() {
-	m.port = nil
-	m.addport = nil
-	delete(m.clearedFields, serviceconfig.FieldPort)
+// ResetPorts resets all changes to the "ports" field.
+func (m *ServiceConfigMutation) ResetPorts() {
+	m.ports = nil
+	m.appendports = nil
+	delete(m.clearedFields, serviceconfig.FieldPorts)
 }
 
 // SetReplicas sets the "replicas" field.
@@ -10596,11 +10608,11 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.git_branch != nil {
 		fields = append(fields, serviceconfig.FieldGitBranch)
 	}
-	if m.host != nil {
-		fields = append(fields, serviceconfig.FieldHost)
+	if m.hosts != nil {
+		fields = append(fields, serviceconfig.FieldHosts)
 	}
-	if m.port != nil {
-		fields = append(fields, serviceconfig.FieldPort)
+	if m.ports != nil {
+		fields = append(fields, serviceconfig.FieldPorts)
 	}
 	if m.replicas != nil {
 		fields = append(fields, serviceconfig.FieldReplicas)
@@ -10641,10 +10653,10 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.Framework()
 	case serviceconfig.FieldGitBranch:
 		return m.GitBranch()
-	case serviceconfig.FieldHost:
-		return m.Host()
-	case serviceconfig.FieldPort:
-		return m.Port()
+	case serviceconfig.FieldHosts:
+		return m.Hosts()
+	case serviceconfig.FieldPorts:
+		return m.Ports()
 	case serviceconfig.FieldReplicas:
 		return m.Replicas()
 	case serviceconfig.FieldAutoDeploy:
@@ -10680,10 +10692,10 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldFramework(ctx)
 	case serviceconfig.FieldGitBranch:
 		return m.OldGitBranch(ctx)
-	case serviceconfig.FieldHost:
-		return m.OldHost(ctx)
-	case serviceconfig.FieldPort:
-		return m.OldPort(ctx)
+	case serviceconfig.FieldHosts:
+		return m.OldHosts(ctx)
+	case serviceconfig.FieldPorts:
+		return m.OldPorts(ctx)
 	case serviceconfig.FieldReplicas:
 		return m.OldReplicas(ctx)
 	case serviceconfig.FieldAutoDeploy:
@@ -10759,19 +10771,19 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetGitBranch(v)
 		return nil
-	case serviceconfig.FieldHost:
-		v, ok := value.(string)
+	case serviceconfig.FieldHosts:
+		v, ok := value.([]schema.HostSpec)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetHost(v)
+		m.SetHosts(v)
 		return nil
-	case serviceconfig.FieldPort:
-		v, ok := value.(int)
+	case serviceconfig.FieldPorts:
+		v, ok := value.([]schema.PortSpec)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetPort(v)
+		m.SetPorts(v)
 		return nil
 	case serviceconfig.FieldReplicas:
 		v, ok := value.(int32)
@@ -10816,9 +10828,6 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *ServiceConfigMutation) AddedFields() []string {
 	var fields []string
-	if m.addport != nil {
-		fields = append(fields, serviceconfig.FieldPort)
-	}
 	if m.addreplicas != nil {
 		fields = append(fields, serviceconfig.FieldReplicas)
 	}
@@ -10830,8 +10839,6 @@ func (m *ServiceConfigMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *ServiceConfigMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case serviceconfig.FieldPort:
-		return m.AddedPort()
 	case serviceconfig.FieldReplicas:
 		return m.AddedReplicas()
 	}
@@ -10843,13 +10850,6 @@ func (m *ServiceConfigMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ServiceConfigMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case serviceconfig.FieldPort:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddPort(v)
-		return nil
 	case serviceconfig.FieldReplicas:
 		v, ok := value.(int32)
 		if !ok {
@@ -10874,11 +10874,11 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldGitBranch) {
 		fields = append(fields, serviceconfig.FieldGitBranch)
 	}
-	if m.FieldCleared(serviceconfig.FieldHost) {
-		fields = append(fields, serviceconfig.FieldHost)
+	if m.FieldCleared(serviceconfig.FieldHosts) {
+		fields = append(fields, serviceconfig.FieldHosts)
 	}
-	if m.FieldCleared(serviceconfig.FieldPort) {
-		fields = append(fields, serviceconfig.FieldPort)
+	if m.FieldCleared(serviceconfig.FieldPorts) {
+		fields = append(fields, serviceconfig.FieldPorts)
 	}
 	if m.FieldCleared(serviceconfig.FieldRunCommand) {
 		fields = append(fields, serviceconfig.FieldRunCommand)
@@ -10909,11 +10909,11 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 	case serviceconfig.FieldGitBranch:
 		m.ClearGitBranch()
 		return nil
-	case serviceconfig.FieldHost:
-		m.ClearHost()
+	case serviceconfig.FieldHosts:
+		m.ClearHosts()
 		return nil
-	case serviceconfig.FieldPort:
-		m.ClearPort()
+	case serviceconfig.FieldPorts:
+		m.ClearPorts()
 		return nil
 	case serviceconfig.FieldRunCommand:
 		m.ClearRunCommand()
@@ -10953,11 +10953,11 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 	case serviceconfig.FieldGitBranch:
 		m.ResetGitBranch()
 		return nil
-	case serviceconfig.FieldHost:
-		m.ResetHost()
+	case serviceconfig.FieldHosts:
+		m.ResetHosts()
 		return nil
-	case serviceconfig.FieldPort:
-		m.ResetPort()
+	case serviceconfig.FieldPorts:
+		m.ResetPorts()
 		return nil
 	case serviceconfig.FieldReplicas:
 		m.ResetReplicas()

@@ -78,16 +78,6 @@ func GitBranch(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldGitBranch, v))
 }
 
-// Host applies equality check predicate on the "host" field. It's identical to HostEQ.
-func Host(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldHost, v))
-}
-
-// Port applies equality check predicate on the "port" field. It's identical to PortEQ.
-func Port(v int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldPort, v))
-}
-
 // Replicas applies equality check predicate on the "replicas" field. It's identical to ReplicasEQ.
 func Replicas(v int32) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldReplicas, v))
@@ -428,129 +418,24 @@ func GitBranchContainsFold(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldContainsFold(FieldGitBranch, v))
 }
 
-// HostEQ applies the EQ predicate on the "host" field.
-func HostEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldHost, v))
+// HostsIsNil applies the IsNil predicate on the "hosts" field.
+func HostsIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldHosts))
 }
 
-// HostNEQ applies the NEQ predicate on the "host" field.
-func HostNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldHost, v))
+// HostsNotNil applies the NotNil predicate on the "hosts" field.
+func HostsNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldHosts))
 }
 
-// HostIn applies the In predicate on the "host" field.
-func HostIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldHost, vs...))
+// PortsIsNil applies the IsNil predicate on the "ports" field.
+func PortsIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldPorts))
 }
 
-// HostNotIn applies the NotIn predicate on the "host" field.
-func HostNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldHost, vs...))
-}
-
-// HostGT applies the GT predicate on the "host" field.
-func HostGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldHost, v))
-}
-
-// HostGTE applies the GTE predicate on the "host" field.
-func HostGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldHost, v))
-}
-
-// HostLT applies the LT predicate on the "host" field.
-func HostLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldHost, v))
-}
-
-// HostLTE applies the LTE predicate on the "host" field.
-func HostLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldHost, v))
-}
-
-// HostContains applies the Contains predicate on the "host" field.
-func HostContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldHost, v))
-}
-
-// HostHasPrefix applies the HasPrefix predicate on the "host" field.
-func HostHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldHost, v))
-}
-
-// HostHasSuffix applies the HasSuffix predicate on the "host" field.
-func HostHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldHost, v))
-}
-
-// HostIsNil applies the IsNil predicate on the "host" field.
-func HostIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldHost))
-}
-
-// HostNotNil applies the NotNil predicate on the "host" field.
-func HostNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldHost))
-}
-
-// HostEqualFold applies the EqualFold predicate on the "host" field.
-func HostEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldHost, v))
-}
-
-// HostContainsFold applies the ContainsFold predicate on the "host" field.
-func HostContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldHost, v))
-}
-
-// PortEQ applies the EQ predicate on the "port" field.
-func PortEQ(v int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldPort, v))
-}
-
-// PortNEQ applies the NEQ predicate on the "port" field.
-func PortNEQ(v int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldPort, v))
-}
-
-// PortIn applies the In predicate on the "port" field.
-func PortIn(vs ...int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldPort, vs...))
-}
-
-// PortNotIn applies the NotIn predicate on the "port" field.
-func PortNotIn(vs ...int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldPort, vs...))
-}
-
-// PortGT applies the GT predicate on the "port" field.
-func PortGT(v int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldPort, v))
-}
-
-// PortGTE applies the GTE predicate on the "port" field.
-func PortGTE(v int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldPort, v))
-}
-
-// PortLT applies the LT predicate on the "port" field.
-func PortLT(v int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldPort, v))
-}
-
-// PortLTE applies the LTE predicate on the "port" field.
-func PortLTE(v int) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldPort, v))
-}
-
-// PortIsNil applies the IsNil predicate on the "port" field.
-func PortIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldPort))
-}
-
-// PortNotNil applies the NotNil predicate on the "port" field.
-func PortNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldPort))
+// PortsNotNil applies the NotNil predicate on the "ports" field.
+func PortsNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldPorts))
 }
 
 // ReplicasEQ applies the EQ predicate on the "replicas" field.
