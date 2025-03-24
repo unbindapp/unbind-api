@@ -1,4 +1,4 @@
-package environment_service
+package service_service
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *EnvironmentService) GetSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID) ([]*models.SecretResponse, error) {
+func (self *ServiceService) GetVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -43,6 +43,12 @@ func (self *EnvironmentService) GetSecrets(ctx context.Context, userID uuid.UUID
 			ResourceType: permission.ResourceTypeEnvironment,
 			ResourceID:   environmentID.String(),
 		},
+		// Has permission to read this specific service
+		{
+			Action:       permission.ActionRead,
+			ResourceType: permission.ResourceTypeService,
+			ResourceID:   serviceID.String(),
+		},
 	}
 
 	if err := self.repo.Permissions().Check(
@@ -51,6 +57,20 @@ func (self *EnvironmentService) GetSecrets(ctx context.Context, userID uuid.UUID
 		permissionChecks,
 	); err != nil {
 		return nil, err
+	}
+
+	// ! TODO - repeat this less
+	// Get service
+	service, err := self.repo.Service().GetByID(ctx, serviceID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
+		}
+		return nil, err
+	}
+
+	if service.EnvironmentID != environmentID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Service does not belong to the specified project")
 	}
 
 	// Get environment
@@ -86,27 +106,26 @@ func (self *EnvironmentService) GetSecrets(ctx context.Context, userID uuid.UUID
 	}
 
 	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, client)
+	secrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets))
+	variablesResponse := make([]*models.VariableResponse, len(secrets))
 	i := 0
 	for k, v := range secrets {
-		secretResponse[i] = &models.SecretResponse{
-			Type:  models.EnvironmentSecret,
+		variablesResponse[i] = &models.VariableResponse{
+			Type:  models.ServiceVariable,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
 	}
-
-	return secretResponse, nil
+	return variablesResponse, nil
 }
 
 // Create secrets in bulk
-func (self *EnvironmentService) UpsertSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, newSecrets map[string][]byte) ([]*models.SecretResponse, error) {
+func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, newVariables map[string][]byte, isBuildSecret bool) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -138,6 +157,12 @@ func (self *EnvironmentService) UpsertSecrets(ctx context.Context, userID uuid.U
 			ResourceType: permission.ResourceTypeEnvironment,
 			ResourceID:   environmentID.String(),
 		},
+		// Has permission to read this specific service
+		{
+			Action:       permission.ActionEdit,
+			ResourceType: permission.ResourceTypeService,
+			ResourceID:   serviceID.String(),
+		},
 	}
 
 	if err := self.repo.Permissions().Check(
@@ -146,6 +171,19 @@ func (self *EnvironmentService) UpsertSecrets(ctx context.Context, userID uuid.U
 		permissionChecks,
 	); err != nil {
 		return nil, err
+	}
+
+	// Get service
+	service, err := self.repo.Service().GetByID(ctx, serviceID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
+		}
+		return nil, err
+	}
+
+	if service.EnvironmentID != environmentID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Service does not belong to the specified project")
 	}
 
 	// Get environment
@@ -181,33 +219,33 @@ func (self *EnvironmentService) UpsertSecrets(ctx context.Context, userID uuid.U
 	}
 
 	// make secrets
-	_, err = self.k8s.UpsertSecretValues(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, newSecrets, client)
+	_, err = self.k8s.UpsertSecretValues(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, newVariables, client)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, client)
+	secrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets))
+	variablesResponse := make([]*models.VariableResponse, len(secrets))
 	i := 0
 	for k, v := range secrets {
-		secretResponse[i] = &models.SecretResponse{
-			Type:  models.EnvironmentSecret,
+		variablesResponse[i] = &models.VariableResponse{
+			Type:  models.ServiceVariable,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
 	}
 
-	return secretResponse, nil
+	return variablesResponse, nil
 }
 
 // Delete a secret by key
-func (self *EnvironmentService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, keys []models.SecretDeleteInput) ([]*models.SecretResponse, error) {
+func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, keys []models.VariableDeleteInput, isBuildSecret bool) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -239,6 +277,12 @@ func (self *EnvironmentService) DeleteSecretsByKey(ctx context.Context, userID u
 			ResourceType: permission.ResourceTypeEnvironment,
 			ResourceID:   environmentID.String(),
 		},
+		// Has permission to read this specific service
+		{
+			Action:       permission.ActionEdit,
+			ResourceType: permission.ResourceTypeService,
+			ResourceID:   serviceID.String(),
+		},
 	}
 
 	if err := self.repo.Permissions().Check(
@@ -247,6 +291,19 @@ func (self *EnvironmentService) DeleteSecretsByKey(ctx context.Context, userID u
 		permissionChecks,
 	); err != nil {
 		return nil, err
+	}
+
+	// Get service
+	service, err := self.repo.Service().GetByID(ctx, serviceID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
+		}
+		return nil, err
+	}
+
+	if service.EnvironmentID != environmentID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Service does not belong to the specified project")
 	}
 
 	// Get environment
@@ -282,7 +339,7 @@ func (self *EnvironmentService) DeleteSecretsByKey(ctx context.Context, userID u
 	}
 
 	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, client)
+	secrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
@@ -293,21 +350,21 @@ func (self *EnvironmentService) DeleteSecretsByKey(ctx context.Context, userID u
 	}
 
 	// Update secrets
-	_, err = self.k8s.UpdateSecret(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, secrets, client)
+	_, err = self.k8s.UpdateSecret(ctx, service.KubernetesSecret, project.Edges.Team.Namespace, secrets, client)
 	if err != nil {
 		return nil, err
 	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets))
+	variablesResponse := make([]*models.VariableResponse, len(secrets))
 	i := 0
 	for k, v := range secrets {
-		secretResponse[i] = &models.SecretResponse{
-			Type:  models.EnvironmentSecret,
+		variablesResponse[i] = &models.VariableResponse{
+			Type:  models.ServiceVariable,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
 	}
 
-	return secretResponse, nil
+	return variablesResponse, nil
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *TeamService) GetSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID) ([]*models.SecretResponse, error) {
+func (self *TeamService) GetVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -56,28 +56,28 @@ func (self *TeamService) GetSecrets(ctx context.Context, userID uuid.UUID, beare
 		return nil, err
 	}
 
-	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, team.KubernetesSecret, team.Namespace, client)
+	// Get variables
+	variables, err := self.k8s.GetSecretMap(ctx, team.KubernetesSecret, team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets))
+	variablesResponse := make([]*models.VariableResponse, len(variables))
 	i := 0
-	for k, v := range secrets {
-		secretResponse[i] = &models.SecretResponse{
-			Type:  models.TeamSecret,
+	for k, v := range variables {
+		variablesResponse[i] = &models.VariableResponse{
+			Type:  models.TeamVariable,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
 	}
 
-	return secretResponse, nil
+	return variablesResponse, nil
 }
 
-// Create secrets in bulk
-func (self *TeamService) UpsertSecrets(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, newSecrets map[string][]byte) ([]*models.SecretResponse, error) {
+// Create variables in bulk
+func (self *TeamService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -122,34 +122,34 @@ func (self *TeamService) UpsertSecrets(ctx context.Context, userID uuid.UUID, be
 		return nil, err
 	}
 
-	// make secrets
-	_, err = self.k8s.UpsertSecretValues(ctx, team.KubernetesSecret, team.Namespace, newSecrets, client)
+	// make variables
+	_, err = self.k8s.UpsertSecretValues(ctx, team.KubernetesSecret, team.Namespace, newVariables, client)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, team.KubernetesSecret, team.Namespace, client)
+	// Get variables
+	variables, err := self.k8s.GetSecretMap(ctx, team.KubernetesSecret, team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets))
+	variablesResponse := make([]*models.VariableResponse, len(variables))
 	i := 0
-	for k, v := range secrets {
-		secretResponse[i] = &models.SecretResponse{
-			Type:  models.TeamSecret,
+	for k, v := range variables {
+		variablesResponse[i] = &models.VariableResponse{
+			Type:  models.TeamVariable,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
 	}
 
-	return secretResponse, nil
+	return variablesResponse, nil
 }
 
 // Delete a secret by key
-func (self *TeamService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, keys []models.SecretDeleteInput) ([]*models.SecretResponse, error) {
+func (self *TeamService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, keys []models.VariableDeleteInput) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -194,33 +194,33 @@ func (self *TeamService) DeleteSecretsByKey(ctx context.Context, userID uuid.UUI
 		return nil, err
 	}
 
-	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, team.KubernetesSecret, team.Namespace, client)
+	// Get variables
+	variables, err := self.k8s.GetSecretMap(ctx, team.KubernetesSecret, team.Namespace, client)
 	if err != nil {
 		return nil, err
 	}
 
 	// Remove from map
 	for _, secretKey := range keys {
-		delete(secrets, secretKey.Name)
+		delete(variables, secretKey.Name)
 	}
 
-	// Update secrets
-	_, err = self.k8s.UpdateSecret(ctx, team.KubernetesSecret, team.Namespace, secrets, client)
+	// Update variables
+	_, err = self.k8s.UpdateSecret(ctx, team.KubernetesSecret, team.Namespace, variables, client)
 	if err != nil {
 		return nil, err
 	}
 
-	secretResponse := make([]*models.SecretResponse, len(secrets))
+	variablesResponse := make([]*models.VariableResponse, len(variables))
 	i := 0
-	for k, v := range secrets {
-		secretResponse[i] = &models.SecretResponse{
-			Type:  models.TeamSecret,
+	for k, v := range variables {
+		variablesResponse[i] = &models.VariableResponse{
+			Type:  models.TeamVariable,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
 	}
 
-	return secretResponse, nil
+	return variablesResponse, nil
 }

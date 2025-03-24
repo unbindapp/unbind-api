@@ -2,11 +2,11 @@
   "search.exclude": {
     "database/ent/**": true,
     "database/ent/schema": false,
-    "**/go.sum": true,
+    "**/go.sum": true
   },
-    // Disable CSS validation in HTML files
+  // Disable CSS validation in HTML files
   "css.validate": false,
   "less.validate": false,
-  "scss.validate": false,  
-  "html.validate.styles": false,
+  "scss.validate": false,
+  "html.validate.styles": false
 }
