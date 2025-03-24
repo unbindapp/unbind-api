@@ -96,13 +96,6 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									MountPath: "/cache",
 								},
 							},
-							// We need to start this and keep it running in background, so we use an infinite sleep command
-							Command: []string{
-								"sh",
-								"-c",
-								`# Start buildkit in background
-	exec buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox`,
-							},
 						},
 						{
 							Name:  "docker-daemon",
