@@ -13,7 +13,7 @@ import (
 
 // DeploymentRepositoryInterface ...
 type DeploymentRepositoryInterface interface {
-	Create(ctx context.Context, serviceID uuid.UUID) (*ent.Deployment, error)
+	Create(ctx context.Context, serviceID uuid.UUID, CommitSHA, CommitMessage string, source schema.DeploymentSource) (*ent.Deployment, error)
 	MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error)
 	MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string) (*ent.Deployment, error)
 	MarkSucceeded(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error)

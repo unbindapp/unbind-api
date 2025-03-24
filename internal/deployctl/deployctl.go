@@ -30,8 +30,11 @@ const BUILDER_QUEUE_KEY = "unbind:build:queue"
 
 // The request to deploy a service, includes environment for builder image
 type DeploymentJobRequest struct {
-	ServiceID   uuid.UUID         `json:"service_id"`
-	Environment map[string]string `json:"environment"`
+	ServiceID     uuid.UUID               `json:"service_id"`
+	Source        schema.DeploymentSource `json:"source"`
+	CommitSHA     string                  `json:"commit_sha"`
+	CommitMessage string                  `json:"commit_message"`
+	Environment   map[string]string       `json:"environment"`
 }
 
 // Handles triggering builds for services
@@ -235,6 +238,9 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 	job, err = self.repo.Deployment().Create(
 		ctx,
 		req.ServiceID,
+		req.CommitSHA,
+		req.CommitMessage,
+		req.Source,
 	)
 
 	if err != nil {

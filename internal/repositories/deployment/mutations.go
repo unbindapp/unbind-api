@@ -10,11 +10,18 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
-func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUID) (*ent.Deployment, error) {
-	return self.base.DB.Deployment.Create().
+func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUID, CommitSHA, CommitMessage string, source schema.DeploymentSource) (*ent.Deployment, error) {
+	c := self.base.DB.Deployment.Create().
 		SetServiceID(serviceID).
 		SetStatus(schema.DeploymentStatusQueued).
-		Save(ctx)
+		SetSource(source)
+	if CommitSHA != "" {
+		c.SetCommitSha(CommitSHA)
+	}
+	if CommitMessage != "" {
+		c.SetCommitMessage(CommitMessage)
+	}
+	return c.Save(ctx)
 }
 
 func (self *DeploymentRepository) MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error) {

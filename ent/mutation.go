@@ -65,7 +65,10 @@ type DeploymentMutation struct {
 	created_at            *time.Time
 	updated_at            *time.Time
 	status                *schema.DeploymentStatus
+	source                *schema.DeploymentSource
 	error                 *string
+	commit_sha            *string
+	commit_message        *string
 	started_at            *time.Time
 	completed_at          *time.Time
 	kubernetes_job_name   *string
@@ -328,6 +331,42 @@ func (m *DeploymentMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetSource sets the "source" field.
+func (m *DeploymentMutation) SetSource(ss schema.DeploymentSource) {
+	m.source = &ss
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *DeploymentMutation) Source() (r schema.DeploymentSource, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldSource(ctx context.Context) (v schema.DeploymentSource, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *DeploymentMutation) ResetSource() {
+	m.source = nil
+}
+
 // SetError sets the "error" field.
 func (m *DeploymentMutation) SetError(s string) {
 	m.error = &s
@@ -375,6 +414,104 @@ func (m *DeploymentMutation) ErrorCleared() bool {
 func (m *DeploymentMutation) ResetError() {
 	m.error = nil
 	delete(m.clearedFields, deployment.FieldError)
+}
+
+// SetCommitSha sets the "commit_sha" field.
+func (m *DeploymentMutation) SetCommitSha(s string) {
+	m.commit_sha = &s
+}
+
+// CommitSha returns the value of the "commit_sha" field in the mutation.
+func (m *DeploymentMutation) CommitSha() (r string, exists bool) {
+	v := m.commit_sha
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommitSha returns the old "commit_sha" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldCommitSha(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommitSha is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommitSha requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommitSha: %w", err)
+	}
+	return oldValue.CommitSha, nil
+}
+
+// ClearCommitSha clears the value of the "commit_sha" field.
+func (m *DeploymentMutation) ClearCommitSha() {
+	m.commit_sha = nil
+	m.clearedFields[deployment.FieldCommitSha] = struct{}{}
+}
+
+// CommitShaCleared returns if the "commit_sha" field was cleared in this mutation.
+func (m *DeploymentMutation) CommitShaCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldCommitSha]
+	return ok
+}
+
+// ResetCommitSha resets all changes to the "commit_sha" field.
+func (m *DeploymentMutation) ResetCommitSha() {
+	m.commit_sha = nil
+	delete(m.clearedFields, deployment.FieldCommitSha)
+}
+
+// SetCommitMessage sets the "commit_message" field.
+func (m *DeploymentMutation) SetCommitMessage(s string) {
+	m.commit_message = &s
+}
+
+// CommitMessage returns the value of the "commit_message" field in the mutation.
+func (m *DeploymentMutation) CommitMessage() (r string, exists bool) {
+	v := m.commit_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommitMessage returns the old "commit_message" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldCommitMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommitMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommitMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommitMessage: %w", err)
+	}
+	return oldValue.CommitMessage, nil
+}
+
+// ClearCommitMessage clears the value of the "commit_message" field.
+func (m *DeploymentMutation) ClearCommitMessage() {
+	m.commit_message = nil
+	m.clearedFields[deployment.FieldCommitMessage] = struct{}{}
+}
+
+// CommitMessageCleared returns if the "commit_message" field was cleared in this mutation.
+func (m *DeploymentMutation) CommitMessageCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldCommitMessage]
+	return ok
+}
+
+// ResetCommitMessage resets all changes to the "commit_message" field.
+func (m *DeploymentMutation) ResetCommitMessage() {
+	m.commit_message = nil
+	delete(m.clearedFields, deployment.FieldCommitMessage)
 }
 
 // SetStartedAt sets the "started_at" field.
@@ -690,7 +827,7 @@ func (m *DeploymentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeploymentMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 13)
 	if m.created_at != nil {
 		fields = append(fields, deployment.FieldCreatedAt)
 	}
@@ -703,8 +840,17 @@ func (m *DeploymentMutation) Fields() []string {
 	if m.status != nil {
 		fields = append(fields, deployment.FieldStatus)
 	}
+	if m.source != nil {
+		fields = append(fields, deployment.FieldSource)
+	}
 	if m.error != nil {
 		fields = append(fields, deployment.FieldError)
+	}
+	if m.commit_sha != nil {
+		fields = append(fields, deployment.FieldCommitSha)
+	}
+	if m.commit_message != nil {
+		fields = append(fields, deployment.FieldCommitMessage)
 	}
 	if m.started_at != nil {
 		fields = append(fields, deployment.FieldStartedAt)
@@ -737,8 +883,14 @@ func (m *DeploymentMutation) Field(name string) (ent.Value, bool) {
 		return m.ServiceID()
 	case deployment.FieldStatus:
 		return m.Status()
+	case deployment.FieldSource:
+		return m.Source()
 	case deployment.FieldError:
 		return m.Error()
+	case deployment.FieldCommitSha:
+		return m.CommitSha()
+	case deployment.FieldCommitMessage:
+		return m.CommitMessage()
 	case deployment.FieldStartedAt:
 		return m.StartedAt()
 	case deployment.FieldCompletedAt:
@@ -766,8 +918,14 @@ func (m *DeploymentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldServiceID(ctx)
 	case deployment.FieldStatus:
 		return m.OldStatus(ctx)
+	case deployment.FieldSource:
+		return m.OldSource(ctx)
 	case deployment.FieldError:
 		return m.OldError(ctx)
+	case deployment.FieldCommitSha:
+		return m.OldCommitSha(ctx)
+	case deployment.FieldCommitMessage:
+		return m.OldCommitMessage(ctx)
 	case deployment.FieldStartedAt:
 		return m.OldStartedAt(ctx)
 	case deployment.FieldCompletedAt:
@@ -815,12 +973,33 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
+	case deployment.FieldSource:
+		v, ok := value.(schema.DeploymentSource)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
 	case deployment.FieldError:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetError(v)
+		return nil
+	case deployment.FieldCommitSha:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommitSha(v)
+		return nil
+	case deployment.FieldCommitMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommitMessage(v)
 		return nil
 	case deployment.FieldStartedAt:
 		v, ok := value.(time.Time)
@@ -905,6 +1084,12 @@ func (m *DeploymentMutation) ClearedFields() []string {
 	if m.FieldCleared(deployment.FieldError) {
 		fields = append(fields, deployment.FieldError)
 	}
+	if m.FieldCleared(deployment.FieldCommitSha) {
+		fields = append(fields, deployment.FieldCommitSha)
+	}
+	if m.FieldCleared(deployment.FieldCommitMessage) {
+		fields = append(fields, deployment.FieldCommitMessage)
+	}
 	if m.FieldCleared(deployment.FieldStartedAt) {
 		fields = append(fields, deployment.FieldStartedAt)
 	}
@@ -933,6 +1118,12 @@ func (m *DeploymentMutation) ClearField(name string) error {
 	switch name {
 	case deployment.FieldError:
 		m.ClearError()
+		return nil
+	case deployment.FieldCommitSha:
+		m.ClearCommitSha()
+		return nil
+	case deployment.FieldCommitMessage:
+		m.ClearCommitMessage()
 		return nil
 	case deployment.FieldStartedAt:
 		m.ClearStartedAt()
@@ -966,8 +1157,17 @@ func (m *DeploymentMutation) ResetField(name string) error {
 	case deployment.FieldStatus:
 		m.ResetStatus()
 		return nil
+	case deployment.FieldSource:
+		m.ResetSource()
+		return nil
 	case deployment.FieldError:
 		m.ResetError()
+		return nil
+	case deployment.FieldCommitSha:
+		m.ResetCommitSha()
+		return nil
+	case deployment.FieldCommitMessage:
+		m.ResetCommitMessage()
 		return nil
 	case deployment.FieldStartedAt:
 		m.ResetStartedAt()

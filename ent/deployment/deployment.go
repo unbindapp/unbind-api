@@ -25,8 +25,14 @@ const (
 	FieldServiceID = "service_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldSource holds the string denoting the source field in the database.
+	FieldSource = "source"
 	// FieldError holds the string denoting the error field in the database.
 	FieldError = "error"
+	// FieldCommitSha holds the string denoting the commit_sha field in the database.
+	FieldCommitSha = "commit_sha"
+	// FieldCommitMessage holds the string denoting the commit_message field in the database.
+	FieldCommitMessage = "commit_message"
 	// FieldStartedAt holds the string denoting the started_at field in the database.
 	FieldStartedAt = "started_at"
 	// FieldCompletedAt holds the string denoting the completed_at field in the database.
@@ -57,7 +63,10 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldServiceID,
 	FieldStatus,
+	FieldSource,
 	FieldError,
+	FieldCommitSha,
+	FieldCommitMessage,
 	FieldStartedAt,
 	FieldCompletedAt,
 	FieldKubernetesJobName,
@@ -98,6 +107,18 @@ func StatusValidator(s schema.DeploymentStatus) error {
 	}
 }
 
+const DefaultSource schema.DeploymentSource = "manual"
+
+// SourceValidator is a validator for the "source" field enum values. It is called by the builders before save.
+func SourceValidator(s schema.DeploymentSource) error {
+	switch s {
+	case "manual", "git":
+		return nil
+	default:
+		return fmt.Errorf("deployment: invalid enum value for source field: %q", s)
+	}
+}
+
 // OrderOption defines the ordering options for the Deployment queries.
 type OrderOption func(*sql.Selector)
 
@@ -126,9 +147,24 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
+// BySource orders the results by the source field.
+func BySource(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSource, opts...).ToFunc()
+}
+
 // ByError orders the results by the error field.
 func ByError(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldError, opts...).ToFunc()
+}
+
+// ByCommitSha orders the results by the commit_sha field.
+func ByCommitSha(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommitSha, opts...).ToFunc()
+}
+
+// ByCommitMessage orders the results by the commit_message field.
+func ByCommitMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommitMessage, opts...).ToFunc()
 }
 
 // ByStartedAt orders the results by the started_at field.

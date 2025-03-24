@@ -15,7 +15,10 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "running", "succeeded", "cancelled", "failed"}},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"manual", "git"}, Default: "manual"},
 		{Name: "error", Type: field.TypeString, Nullable: true},
+		{Name: "commit_sha", Type: field.TypeString, Nullable: true},
+		{Name: "commit_message", Type: field.TypeString, Nullable: true},
 		{Name: "started_at", Type: field.TypeTime, Nullable: true},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "kubernetes_job_name", Type: field.TypeString, Nullable: true},
@@ -31,7 +34,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "deployments_services_deployments",
-				Columns:    []*schema.Column{DeploymentsColumns[10]},
+				Columns:    []*schema.Column{DeploymentsColumns[13]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

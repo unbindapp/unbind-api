@@ -307,12 +307,19 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			}
 
 			log.Info("Enqueuing build", "repo", repoName, "branch", ref, "serviceID", service.ID, "installationID", installationID, "appID", installation.GithubAppID, "repoUrl", repoUrl)
+			req := deployctl.DeploymentJobRequest{
+				ServiceID:   service.ID,
+				Environment: env,
+				Source:      schema.DeploymentSourceGit,
+			}
+			headCommit := e.GetHeadCommit()
+			if headCommit != nil {
+				req.CommitSHA = headCommit.GetSHA()
+				req.CommitMessage = headCommit.GetMessage()
+			}
 			jobID, err := self.srv.DeploymentController.EnqueueDeploymentJob(
 				ctx,
-				deployctl.DeploymentJobRequest{
-					ServiceID:   service.ID,
-					Environment: env,
-				},
+				req,
 			)
 
 			if err != nil {

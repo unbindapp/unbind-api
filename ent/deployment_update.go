@@ -66,6 +66,20 @@ func (du *DeploymentUpdate) SetNillableStatus(ss *schema.DeploymentStatus) *Depl
 	return du
 }
 
+// SetSource sets the "source" field.
+func (du *DeploymentUpdate) SetSource(ss schema.DeploymentSource) *DeploymentUpdate {
+	du.mutation.SetSource(ss)
+	return du
+}
+
+// SetNillableSource sets the "source" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableSource(ss *schema.DeploymentSource) *DeploymentUpdate {
+	if ss != nil {
+		du.SetSource(*ss)
+	}
+	return du
+}
+
 // SetError sets the "error" field.
 func (du *DeploymentUpdate) SetError(s string) *DeploymentUpdate {
 	du.mutation.SetError(s)
@@ -83,6 +97,46 @@ func (du *DeploymentUpdate) SetNillableError(s *string) *DeploymentUpdate {
 // ClearError clears the value of the "error" field.
 func (du *DeploymentUpdate) ClearError() *DeploymentUpdate {
 	du.mutation.ClearError()
+	return du
+}
+
+// SetCommitSha sets the "commit_sha" field.
+func (du *DeploymentUpdate) SetCommitSha(s string) *DeploymentUpdate {
+	du.mutation.SetCommitSha(s)
+	return du
+}
+
+// SetNillableCommitSha sets the "commit_sha" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableCommitSha(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetCommitSha(*s)
+	}
+	return du
+}
+
+// ClearCommitSha clears the value of the "commit_sha" field.
+func (du *DeploymentUpdate) ClearCommitSha() *DeploymentUpdate {
+	du.mutation.ClearCommitSha()
+	return du
+}
+
+// SetCommitMessage sets the "commit_message" field.
+func (du *DeploymentUpdate) SetCommitMessage(s string) *DeploymentUpdate {
+	du.mutation.SetCommitMessage(s)
+	return du
+}
+
+// SetNillableCommitMessage sets the "commit_message" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableCommitMessage(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetCommitMessage(*s)
+	}
+	return du
+}
+
+// ClearCommitMessage clears the value of the "commit_message" field.
+func (du *DeploymentUpdate) ClearCommitMessage() *DeploymentUpdate {
+	du.mutation.ClearCommitMessage()
 	return du
 }
 
@@ -246,6 +300,11 @@ func (du *DeploymentUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Deployment.status": %w`, err)}
 		}
 	}
+	if v, ok := du.mutation.Source(); ok {
+		if err := deployment.SourceValidator(v); err != nil {
+			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Deployment.source": %w`, err)}
+		}
+	}
 	if du.mutation.ServiceCleared() && len(du.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Deployment.service"`)
 	}
@@ -276,11 +335,26 @@ func (du *DeploymentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := du.mutation.Status(); ok {
 		_spec.SetField(deployment.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := du.mutation.Source(); ok {
+		_spec.SetField(deployment.FieldSource, field.TypeEnum, value)
+	}
 	if value, ok := du.mutation.Error(); ok {
 		_spec.SetField(deployment.FieldError, field.TypeString, value)
 	}
 	if du.mutation.ErrorCleared() {
 		_spec.ClearField(deployment.FieldError, field.TypeString)
+	}
+	if value, ok := du.mutation.CommitSha(); ok {
+		_spec.SetField(deployment.FieldCommitSha, field.TypeString, value)
+	}
+	if du.mutation.CommitShaCleared() {
+		_spec.ClearField(deployment.FieldCommitSha, field.TypeString)
+	}
+	if value, ok := du.mutation.CommitMessage(); ok {
+		_spec.SetField(deployment.FieldCommitMessage, field.TypeString, value)
+	}
+	if du.mutation.CommitMessageCleared() {
+		_spec.ClearField(deployment.FieldCommitMessage, field.TypeString)
 	}
 	if value, ok := du.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)
@@ -397,6 +471,20 @@ func (duo *DeploymentUpdateOne) SetNillableStatus(ss *schema.DeploymentStatus) *
 	return duo
 }
 
+// SetSource sets the "source" field.
+func (duo *DeploymentUpdateOne) SetSource(ss schema.DeploymentSource) *DeploymentUpdateOne {
+	duo.mutation.SetSource(ss)
+	return duo
+}
+
+// SetNillableSource sets the "source" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableSource(ss *schema.DeploymentSource) *DeploymentUpdateOne {
+	if ss != nil {
+		duo.SetSource(*ss)
+	}
+	return duo
+}
+
 // SetError sets the "error" field.
 func (duo *DeploymentUpdateOne) SetError(s string) *DeploymentUpdateOne {
 	duo.mutation.SetError(s)
@@ -414,6 +502,46 @@ func (duo *DeploymentUpdateOne) SetNillableError(s *string) *DeploymentUpdateOne
 // ClearError clears the value of the "error" field.
 func (duo *DeploymentUpdateOne) ClearError() *DeploymentUpdateOne {
 	duo.mutation.ClearError()
+	return duo
+}
+
+// SetCommitSha sets the "commit_sha" field.
+func (duo *DeploymentUpdateOne) SetCommitSha(s string) *DeploymentUpdateOne {
+	duo.mutation.SetCommitSha(s)
+	return duo
+}
+
+// SetNillableCommitSha sets the "commit_sha" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableCommitSha(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetCommitSha(*s)
+	}
+	return duo
+}
+
+// ClearCommitSha clears the value of the "commit_sha" field.
+func (duo *DeploymentUpdateOne) ClearCommitSha() *DeploymentUpdateOne {
+	duo.mutation.ClearCommitSha()
+	return duo
+}
+
+// SetCommitMessage sets the "commit_message" field.
+func (duo *DeploymentUpdateOne) SetCommitMessage(s string) *DeploymentUpdateOne {
+	duo.mutation.SetCommitMessage(s)
+	return duo
+}
+
+// SetNillableCommitMessage sets the "commit_message" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableCommitMessage(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetCommitMessage(*s)
+	}
+	return duo
+}
+
+// ClearCommitMessage clears the value of the "commit_message" field.
+func (duo *DeploymentUpdateOne) ClearCommitMessage() *DeploymentUpdateOne {
+	duo.mutation.ClearCommitMessage()
 	return duo
 }
 
@@ -590,6 +718,11 @@ func (duo *DeploymentUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Deployment.status": %w`, err)}
 		}
 	}
+	if v, ok := duo.mutation.Source(); ok {
+		if err := deployment.SourceValidator(v); err != nil {
+			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Deployment.source": %w`, err)}
+		}
+	}
 	if duo.mutation.ServiceCleared() && len(duo.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Deployment.service"`)
 	}
@@ -637,11 +770,26 @@ func (duo *DeploymentUpdateOne) sqlSave(ctx context.Context) (_node *Deployment,
 	if value, ok := duo.mutation.Status(); ok {
 		_spec.SetField(deployment.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := duo.mutation.Source(); ok {
+		_spec.SetField(deployment.FieldSource, field.TypeEnum, value)
+	}
 	if value, ok := duo.mutation.Error(); ok {
 		_spec.SetField(deployment.FieldError, field.TypeString, value)
 	}
 	if duo.mutation.ErrorCleared() {
 		_spec.ClearField(deployment.FieldError, field.TypeString)
+	}
+	if value, ok := duo.mutation.CommitSha(); ok {
+		_spec.SetField(deployment.FieldCommitSha, field.TypeString, value)
+	}
+	if duo.mutation.CommitShaCleared() {
+		_spec.ClearField(deployment.FieldCommitSha, field.TypeString)
+	}
+	if value, ok := duo.mutation.CommitMessage(); ok {
+		_spec.SetField(deployment.FieldCommitMessage, field.TypeString, value)
+	}
+	if duo.mutation.CommitMessageCleared() {
+		_spec.ClearField(deployment.FieldCommitMessage, field.TypeString)
 	}
 	if value, ok := duo.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)

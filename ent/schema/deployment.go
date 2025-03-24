@@ -54,6 +54,41 @@ func (u DeploymentStatus) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/DeploymentStatus"}
 }
 
+// Source enum
+type DeploymentSource string
+
+const (
+	DeploymentSourceManual DeploymentSource = "manual"
+	DeploymentSourceGit    DeploymentSource = "git"
+)
+
+var allDeploymentSources = []DeploymentSource{
+	DeploymentSourceManual,
+	DeploymentSourceGit,
+}
+
+// Values provides list valid values for Enum.
+func (DeploymentSource) Values() (kinds []string) {
+	for _, s := range allDeploymentSources {
+		kinds = append(kinds, string(s))
+	}
+	return
+}
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u DeploymentSource) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["DeploymentSource"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "DeploymentSource")
+		schemaRef.Title = "DeploymentSource"
+		for _, v := range allDeploymentSources {
+			schemaRef.Enum = append(schemaRef.Enum, string(v))
+		}
+		r.Map()["DeploymentSource"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/DeploymentSource"}
+}
+
 // Deployment holds the schema definition for the Deployment entity.
 type Deployment struct {
 	ent.Schema
@@ -72,7 +107,13 @@ func (Deployment) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("service_id", uuid.UUID{}),
 		field.Enum("status").GoType(DeploymentStatus("")),
+		// ! TODO - remove default
+		field.Enum("source").GoType(DeploymentSource("")).Default(string(DeploymentSourceManual)),
 		field.String("error").
+			Optional(),
+		field.String("commit_sha").
+			Optional(),
+		field.String("commit_message").
 			Optional(),
 		field.Time("started_at").
 			Optional().

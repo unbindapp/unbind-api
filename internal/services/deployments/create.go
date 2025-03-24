@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
@@ -66,6 +67,7 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	job, err := self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
 		ServiceID:   input.ServiceID,
 		Environment: env,
+		Source:      schema.DeploymentSourceManual,
 	})
 	if err != nil {
 		return nil, err

@@ -29,8 +29,14 @@ type Deployment struct {
 	ServiceID uuid.UUID `json:"service_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status schema.DeploymentStatus `json:"status,omitempty"`
+	// Source holds the value of the "source" field.
+	Source schema.DeploymentSource `json:"source,omitempty"`
 	// Error holds the value of the "error" field.
 	Error string `json:"error,omitempty"`
+	// CommitSha holds the value of the "commit_sha" field.
+	CommitSha string `json:"commit_sha,omitempty"`
+	// CommitMessage holds the value of the "commit_message" field.
+	CommitMessage string `json:"commit_message,omitempty"`
 	// StartedAt holds the value of the "started_at" field.
 	StartedAt *time.Time `json:"started_at,omitempty"`
 	// CompletedAt holds the value of the "completed_at" field.
@@ -74,7 +80,7 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case deployment.FieldAttempts:
 			values[i] = new(sql.NullInt64)
-		case deployment.FieldStatus, deployment.FieldError, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus:
+		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus:
 			values[i] = new(sql.NullString)
 		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt, deployment.FieldStartedAt, deployment.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
@@ -125,11 +131,29 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				d.Status = schema.DeploymentStatus(value.String)
 			}
+		case deployment.FieldSource:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source", values[i])
+			} else if value.Valid {
+				d.Source = schema.DeploymentSource(value.String)
+			}
 		case deployment.FieldError:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field error", values[i])
 			} else if value.Valid {
 				d.Error = value.String
+			}
+		case deployment.FieldCommitSha:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field commit_sha", values[i])
+			} else if value.Valid {
+				d.CommitSha = value.String
+			}
+		case deployment.FieldCommitMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field commit_message", values[i])
+			} else if value.Valid {
+				d.CommitMessage = value.String
 			}
 		case deployment.FieldStartedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -216,8 +240,17 @@ func (d *Deployment) String() string {
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", d.Status))
 	builder.WriteString(", ")
+	builder.WriteString("source=")
+	builder.WriteString(fmt.Sprintf("%v", d.Source))
+	builder.WriteString(", ")
 	builder.WriteString("error=")
 	builder.WriteString(d.Error)
+	builder.WriteString(", ")
+	builder.WriteString("commit_sha=")
+	builder.WriteString(d.CommitSha)
+	builder.WriteString(", ")
+	builder.WriteString("commit_message=")
+	builder.WriteString(d.CommitMessage)
 	builder.WriteString(", ")
 	if v := d.StartedAt; v != nil {
 		builder.WriteString("started_at=")

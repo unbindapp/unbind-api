@@ -66,6 +66,20 @@ func (dc *DeploymentCreate) SetStatus(ss schema.DeploymentStatus) *DeploymentCre
 	return dc
 }
 
+// SetSource sets the "source" field.
+func (dc *DeploymentCreate) SetSource(ss schema.DeploymentSource) *DeploymentCreate {
+	dc.mutation.SetSource(ss)
+	return dc
+}
+
+// SetNillableSource sets the "source" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableSource(ss *schema.DeploymentSource) *DeploymentCreate {
+	if ss != nil {
+		dc.SetSource(*ss)
+	}
+	return dc
+}
+
 // SetError sets the "error" field.
 func (dc *DeploymentCreate) SetError(s string) *DeploymentCreate {
 	dc.mutation.SetError(s)
@@ -76,6 +90,34 @@ func (dc *DeploymentCreate) SetError(s string) *DeploymentCreate {
 func (dc *DeploymentCreate) SetNillableError(s *string) *DeploymentCreate {
 	if s != nil {
 		dc.SetError(*s)
+	}
+	return dc
+}
+
+// SetCommitSha sets the "commit_sha" field.
+func (dc *DeploymentCreate) SetCommitSha(s string) *DeploymentCreate {
+	dc.mutation.SetCommitSha(s)
+	return dc
+}
+
+// SetNillableCommitSha sets the "commit_sha" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableCommitSha(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetCommitSha(*s)
+	}
+	return dc
+}
+
+// SetCommitMessage sets the "commit_message" field.
+func (dc *DeploymentCreate) SetCommitMessage(s string) *DeploymentCreate {
+	dc.mutation.SetCommitMessage(s)
+	return dc
+}
+
+// SetNillableCommitMessage sets the "commit_message" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableCommitMessage(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetCommitMessage(*s)
 	}
 	return dc
 }
@@ -212,6 +254,10 @@ func (dc *DeploymentCreate) defaults() {
 		v := deployment.DefaultUpdatedAt()
 		dc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := dc.mutation.Source(); !ok {
+		v := deployment.DefaultSource
+		dc.mutation.SetSource(v)
+	}
 	if _, ok := dc.mutation.Attempts(); !ok {
 		v := deployment.DefaultAttempts
 		dc.mutation.SetAttempts(v)
@@ -239,6 +285,14 @@ func (dc *DeploymentCreate) check() error {
 	if v, ok := dc.mutation.Status(); ok {
 		if err := deployment.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Deployment.status": %w`, err)}
+		}
+	}
+	if _, ok := dc.mutation.Source(); !ok {
+		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "Deployment.source"`)}
+	}
+	if v, ok := dc.mutation.Source(); ok {
+		if err := deployment.SourceValidator(v); err != nil {
+			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Deployment.source": %w`, err)}
 		}
 	}
 	if _, ok := dc.mutation.Attempts(); !ok {
@@ -295,9 +349,21 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 		_spec.SetField(deployment.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
+	if value, ok := dc.mutation.Source(); ok {
+		_spec.SetField(deployment.FieldSource, field.TypeEnum, value)
+		_node.Source = value
+	}
 	if value, ok := dc.mutation.Error(); ok {
 		_spec.SetField(deployment.FieldError, field.TypeString, value)
 		_node.Error = value
+	}
+	if value, ok := dc.mutation.CommitSha(); ok {
+		_spec.SetField(deployment.FieldCommitSha, field.TypeString, value)
+		_node.CommitSha = value
+	}
+	if value, ok := dc.mutation.CommitMessage(); ok {
+		_spec.SetField(deployment.FieldCommitMessage, field.TypeString, value)
+		_node.CommitMessage = value
 	}
 	if value, ok := dc.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)
@@ -424,6 +490,18 @@ func (u *DeploymentUpsert) UpdateStatus() *DeploymentUpsert {
 	return u
 }
 
+// SetSource sets the "source" field.
+func (u *DeploymentUpsert) SetSource(v schema.DeploymentSource) *DeploymentUpsert {
+	u.Set(deployment.FieldSource, v)
+	return u
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateSource() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldSource)
+	return u
+}
+
 // SetError sets the "error" field.
 func (u *DeploymentUpsert) SetError(v string) *DeploymentUpsert {
 	u.Set(deployment.FieldError, v)
@@ -439,6 +517,42 @@ func (u *DeploymentUpsert) UpdateError() *DeploymentUpsert {
 // ClearError clears the value of the "error" field.
 func (u *DeploymentUpsert) ClearError() *DeploymentUpsert {
 	u.SetNull(deployment.FieldError)
+	return u
+}
+
+// SetCommitSha sets the "commit_sha" field.
+func (u *DeploymentUpsert) SetCommitSha(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldCommitSha, v)
+	return u
+}
+
+// UpdateCommitSha sets the "commit_sha" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateCommitSha() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldCommitSha)
+	return u
+}
+
+// ClearCommitSha clears the value of the "commit_sha" field.
+func (u *DeploymentUpsert) ClearCommitSha() *DeploymentUpsert {
+	u.SetNull(deployment.FieldCommitSha)
+	return u
+}
+
+// SetCommitMessage sets the "commit_message" field.
+func (u *DeploymentUpsert) SetCommitMessage(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldCommitMessage, v)
+	return u
+}
+
+// UpdateCommitMessage sets the "commit_message" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateCommitMessage() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldCommitMessage)
+	return u
+}
+
+// ClearCommitMessage clears the value of the "commit_message" field.
+func (u *DeploymentUpsert) ClearCommitMessage() *DeploymentUpsert {
+	u.SetNull(deployment.FieldCommitMessage)
 	return u
 }
 
@@ -625,6 +739,20 @@ func (u *DeploymentUpsertOne) UpdateStatus() *DeploymentUpsertOne {
 	})
 }
 
+// SetSource sets the "source" field.
+func (u *DeploymentUpsertOne) SetSource(v schema.DeploymentSource) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateSource() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateSource()
+	})
+}
+
 // SetError sets the "error" field.
 func (u *DeploymentUpsertOne) SetError(v string) *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
@@ -643,6 +771,48 @@ func (u *DeploymentUpsertOne) UpdateError() *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) ClearError() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearError()
+	})
+}
+
+// SetCommitSha sets the "commit_sha" field.
+func (u *DeploymentUpsertOne) SetCommitSha(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCommitSha(v)
+	})
+}
+
+// UpdateCommitSha sets the "commit_sha" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateCommitSha() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCommitSha()
+	})
+}
+
+// ClearCommitSha clears the value of the "commit_sha" field.
+func (u *DeploymentUpsertOne) ClearCommitSha() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCommitSha()
+	})
+}
+
+// SetCommitMessage sets the "commit_message" field.
+func (u *DeploymentUpsertOne) SetCommitMessage(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCommitMessage(v)
+	})
+}
+
+// UpdateCommitMessage sets the "commit_message" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateCommitMessage() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCommitMessage()
+	})
+}
+
+// ClearCommitMessage clears the value of the "commit_message" field.
+func (u *DeploymentUpsertOne) ClearCommitMessage() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCommitMessage()
 	})
 }
 
@@ -1011,6 +1181,20 @@ func (u *DeploymentUpsertBulk) UpdateStatus() *DeploymentUpsertBulk {
 	})
 }
 
+// SetSource sets the "source" field.
+func (u *DeploymentUpsertBulk) SetSource(v schema.DeploymentSource) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetSource(v)
+	})
+}
+
+// UpdateSource sets the "source" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateSource() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateSource()
+	})
+}
+
 // SetError sets the "error" field.
 func (u *DeploymentUpsertBulk) SetError(v string) *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
@@ -1029,6 +1213,48 @@ func (u *DeploymentUpsertBulk) UpdateError() *DeploymentUpsertBulk {
 func (u *DeploymentUpsertBulk) ClearError() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearError()
+	})
+}
+
+// SetCommitSha sets the "commit_sha" field.
+func (u *DeploymentUpsertBulk) SetCommitSha(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCommitSha(v)
+	})
+}
+
+// UpdateCommitSha sets the "commit_sha" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateCommitSha() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCommitSha()
+	})
+}
+
+// ClearCommitSha clears the value of the "commit_sha" field.
+func (u *DeploymentUpsertBulk) ClearCommitSha() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCommitSha()
+	})
+}
+
+// SetCommitMessage sets the "commit_message" field.
+func (u *DeploymentUpsertBulk) SetCommitMessage(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCommitMessage(v)
+	})
+}
+
+// UpdateCommitMessage sets the "commit_message" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateCommitMessage() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCommitMessage()
+	})
+}
+
+// ClearCommitMessage clears the value of the "commit_message" field.
+func (u *DeploymentUpsertBulk) ClearCommitMessage() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCommitMessage()
 	})
 }
 

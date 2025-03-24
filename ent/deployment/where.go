@@ -77,6 +77,16 @@ func Error(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldError, v))
 }
 
+// CommitSha applies equality check predicate on the "commit_sha" field. It's identical to CommitShaEQ.
+func CommitSha(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldCommitSha, v))
+}
+
+// CommitMessage applies equality check predicate on the "commit_message" field. It's identical to CommitMessageEQ.
+func CommitMessage(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldCommitMessage, v))
+}
+
 // StartedAt applies equality check predicate on the "started_at" field. It's identical to StartedAtEQ.
 func StartedAt(v time.Time) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldStartedAt, v))
@@ -232,6 +242,36 @@ func StatusNotIn(vs ...schema.DeploymentStatus) predicate.Deployment {
 	return predicate.Deployment(sql.FieldNotIn(FieldStatus, v...))
 }
 
+// SourceEQ applies the EQ predicate on the "source" field.
+func SourceEQ(v schema.DeploymentSource) predicate.Deployment {
+	vc := v
+	return predicate.Deployment(sql.FieldEQ(FieldSource, vc))
+}
+
+// SourceNEQ applies the NEQ predicate on the "source" field.
+func SourceNEQ(v schema.DeploymentSource) predicate.Deployment {
+	vc := v
+	return predicate.Deployment(sql.FieldNEQ(FieldSource, vc))
+}
+
+// SourceIn applies the In predicate on the "source" field.
+func SourceIn(vs ...schema.DeploymentSource) predicate.Deployment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Deployment(sql.FieldIn(FieldSource, v...))
+}
+
+// SourceNotIn applies the NotIn predicate on the "source" field.
+func SourceNotIn(vs ...schema.DeploymentSource) predicate.Deployment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Deployment(sql.FieldNotIn(FieldSource, v...))
+}
+
 // ErrorEQ applies the EQ predicate on the "error" field.
 func ErrorEQ(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldError, v))
@@ -305,6 +345,156 @@ func ErrorEqualFold(v string) predicate.Deployment {
 // ErrorContainsFold applies the ContainsFold predicate on the "error" field.
 func ErrorContainsFold(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldContainsFold(FieldError, v))
+}
+
+// CommitShaEQ applies the EQ predicate on the "commit_sha" field.
+func CommitShaEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldCommitSha, v))
+}
+
+// CommitShaNEQ applies the NEQ predicate on the "commit_sha" field.
+func CommitShaNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldCommitSha, v))
+}
+
+// CommitShaIn applies the In predicate on the "commit_sha" field.
+func CommitShaIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldCommitSha, vs...))
+}
+
+// CommitShaNotIn applies the NotIn predicate on the "commit_sha" field.
+func CommitShaNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldCommitSha, vs...))
+}
+
+// CommitShaGT applies the GT predicate on the "commit_sha" field.
+func CommitShaGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldCommitSha, v))
+}
+
+// CommitShaGTE applies the GTE predicate on the "commit_sha" field.
+func CommitShaGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldCommitSha, v))
+}
+
+// CommitShaLT applies the LT predicate on the "commit_sha" field.
+func CommitShaLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldCommitSha, v))
+}
+
+// CommitShaLTE applies the LTE predicate on the "commit_sha" field.
+func CommitShaLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldCommitSha, v))
+}
+
+// CommitShaContains applies the Contains predicate on the "commit_sha" field.
+func CommitShaContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldCommitSha, v))
+}
+
+// CommitShaHasPrefix applies the HasPrefix predicate on the "commit_sha" field.
+func CommitShaHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldCommitSha, v))
+}
+
+// CommitShaHasSuffix applies the HasSuffix predicate on the "commit_sha" field.
+func CommitShaHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldCommitSha, v))
+}
+
+// CommitShaIsNil applies the IsNil predicate on the "commit_sha" field.
+func CommitShaIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldCommitSha))
+}
+
+// CommitShaNotNil applies the NotNil predicate on the "commit_sha" field.
+func CommitShaNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldCommitSha))
+}
+
+// CommitShaEqualFold applies the EqualFold predicate on the "commit_sha" field.
+func CommitShaEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldCommitSha, v))
+}
+
+// CommitShaContainsFold applies the ContainsFold predicate on the "commit_sha" field.
+func CommitShaContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldCommitSha, v))
+}
+
+// CommitMessageEQ applies the EQ predicate on the "commit_message" field.
+func CommitMessageEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldCommitMessage, v))
+}
+
+// CommitMessageNEQ applies the NEQ predicate on the "commit_message" field.
+func CommitMessageNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldCommitMessage, v))
+}
+
+// CommitMessageIn applies the In predicate on the "commit_message" field.
+func CommitMessageIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldCommitMessage, vs...))
+}
+
+// CommitMessageNotIn applies the NotIn predicate on the "commit_message" field.
+func CommitMessageNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldCommitMessage, vs...))
+}
+
+// CommitMessageGT applies the GT predicate on the "commit_message" field.
+func CommitMessageGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldCommitMessage, v))
+}
+
+// CommitMessageGTE applies the GTE predicate on the "commit_message" field.
+func CommitMessageGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldCommitMessage, v))
+}
+
+// CommitMessageLT applies the LT predicate on the "commit_message" field.
+func CommitMessageLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldCommitMessage, v))
+}
+
+// CommitMessageLTE applies the LTE predicate on the "commit_message" field.
+func CommitMessageLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldCommitMessage, v))
+}
+
+// CommitMessageContains applies the Contains predicate on the "commit_message" field.
+func CommitMessageContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldCommitMessage, v))
+}
+
+// CommitMessageHasPrefix applies the HasPrefix predicate on the "commit_message" field.
+func CommitMessageHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldCommitMessage, v))
+}
+
+// CommitMessageHasSuffix applies the HasSuffix predicate on the "commit_message" field.
+func CommitMessageHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldCommitMessage, v))
+}
+
+// CommitMessageIsNil applies the IsNil predicate on the "commit_message" field.
+func CommitMessageIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldCommitMessage))
+}
+
+// CommitMessageNotNil applies the NotNil predicate on the "commit_message" field.
+func CommitMessageNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldCommitMessage))
+}
+
+// CommitMessageEqualFold applies the EqualFold predicate on the "commit_message" field.
+func CommitMessageEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldCommitMessage, v))
+}
+
+// CommitMessageContainsFold applies the ContainsFold predicate on the "commit_message" field.
+func CommitMessageContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldCommitMessage, v))
 }
 
 // StartedAtEQ applies the EQ predicate on the "started_at" field.
