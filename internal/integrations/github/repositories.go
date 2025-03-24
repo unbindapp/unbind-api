@@ -165,6 +165,11 @@ func (self *GithubClient) fetchOrganizationAdminRepos(ctx context.Context, clien
 
 		// Filter admin repositories
 		for _, repo := range ghRepositories {
+			if perms := repo.GetPermissions(); perms != nil {
+				log.Info("Permissions", "perms", perms)
+			} else {
+				log.Info("Permissions are nil")
+			}
 			// TODO: Check if the user is an admin
 			isAdmin := true
 			if isAdmin {
