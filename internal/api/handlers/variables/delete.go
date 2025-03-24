@@ -15,8 +15,7 @@ type DeleteVariablesInput struct {
 	server.BaseAuthInput
 	Body struct {
 		BaseVariablesJSONInput
-		Variables       []models.VariableDeleteInput `json:"variables" validate:"required"`
-		IsBuildVariable bool                         `json:"is_build_variable" required:"false"`
+		Variables []models.VariableDeleteInput `json:"variables" validate:"required"`
 	}
 }
 
@@ -45,7 +44,7 @@ func (self *HandlerGroup) DeleteVariables(ctx context.Context, input *DeleteVari
 	case models.EnvironmentVariable:
 		variables, err = self.srv.EnvironmentService.DeleteVariablesByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.Variables)
 	case models.ServiceVariable:
-		variables, err = self.srv.ServiceService.DeleteVariablesByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, input.Body.Variables, input.Body.IsBuildVariable)
+		variables, err = self.srv.ServiceService.DeleteVariablesByKey(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, input.Body.Variables)
 	}
 
 	if err != nil {

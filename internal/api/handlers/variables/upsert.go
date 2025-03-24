@@ -15,8 +15,7 @@ type UpsertVariablesInput struct {
 	server.BaseAuthInput
 	Body struct {
 		BaseVariablesJSONInput
-		IsBuildVariable bool `json:"is_build_variable" required:"false"`
-		Variables       []*struct {
+		Variables []*struct {
 			Name  string `json:"name" required:"true"`
 			Value string `json:"value" required:"true"`
 		} `json:"variables" required:"true"`
@@ -53,7 +52,7 @@ func (self *HandlerGroup) UpsertVariables(ctx context.Context, input *UpsertVari
 	case models.EnvironmentVariable:
 		variables, err = self.srv.EnvironmentService.UpsertVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, variablesUpdateMap)
 	case models.ServiceVariable:
-		variables, err = self.srv.ServiceService.UpsertVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, variablesUpdateMap, input.Body.IsBuildVariable)
+		variables, err = self.srv.ServiceService.UpsertVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, variablesUpdateMap)
 	}
 
 	if err != nil {

@@ -125,7 +125,7 @@ func (self *ServiceService) GetVariables(ctx context.Context, userID uuid.UUID, 
 }
 
 // Create secrets in bulk
-func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, newVariables map[string][]byte, isBuildSecret bool) ([]*models.VariableResponse, error) {
+func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
@@ -245,7 +245,7 @@ func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUI
 }
 
 // Delete a secret by key
-func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, keys []models.VariableDeleteInput, isBuildSecret bool) ([]*models.VariableResponse, error) {
+func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID, keys []models.VariableDeleteInput) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
