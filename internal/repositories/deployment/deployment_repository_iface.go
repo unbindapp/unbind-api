@@ -16,7 +16,7 @@ type DeploymentRepositoryInterface interface {
 	Create(ctx context.Context, serviceID uuid.UUID) (*ent.Deployment, error)
 	MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error)
 	MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string) (*ent.Deployment, error)
-	MarkCompleted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error)
+	MarkSucceeded(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error)
 	// Cancels all jobs that are not in a finished state
 	MarkCancelled(ctx context.Context, serviceID uuid.UUID) error
 	// Mark cancelled by IDs

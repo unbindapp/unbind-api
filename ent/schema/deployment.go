@@ -19,7 +19,7 @@ type DeploymentStatus string
 const (
 	DeploymentStatusQueued    DeploymentStatus = "queued"
 	DeploymentStatusRunning   DeploymentStatus = "running"
-	DeploymentStatusCompleted DeploymentStatus = "completed"
+	DeploymentStatusSucceeded DeploymentStatus = "suceeded"
 	DeploymentStatusCancelled DeploymentStatus = "cancelled"
 	DeploymentStatusFailed    DeploymentStatus = "failed"
 )
@@ -27,7 +27,7 @@ const (
 var allDeploymentStatuses = []DeploymentStatus{
 	DeploymentStatusQueued,
 	DeploymentStatusRunning,
-	DeploymentStatusCompleted,
+	DeploymentStatusSucceeded,
 	DeploymentStatusCancelled,
 	DeploymentStatusFailed,
 }

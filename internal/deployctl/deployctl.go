@@ -335,8 +335,8 @@ func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 
 		// Update based on Kubernetes status
 		switch k8sStatus.ConditionType {
-		case k8s.JobComplete:
-			_, err = self.repo.Deployment().MarkCompleted(ctx, job.ID)
+		case k8s.JobSucceeded:
+			_, err = self.repo.Deployment().MarkSucceeded(ctx, job.ID)
 		case k8s.JobFailed:
 			_, err = self.repo.Deployment().MarkFailed(ctx, job.ID, k8sStatus.FailureReason)
 		default:

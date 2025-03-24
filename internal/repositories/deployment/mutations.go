@@ -32,9 +32,9 @@ func (self *DeploymentRepository) MarkFailed(ctx context.Context, buildJobID uui
 		Save(ctx)
 }
 
-func (self *DeploymentRepository) MarkCompleted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error) {
+func (self *DeploymentRepository) MarkSucceeded(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.UpdateOneID(buildJobID).
-		SetStatus(schema.DeploymentStatusCompleted).
+		SetStatus(schema.DeploymentStatusSucceeded).
 		SetCompletedAt(time.Now()).
 		Save(ctx)
 }
@@ -46,7 +46,7 @@ func (self *DeploymentRepository) MarkCancelled(ctx context.Context, serviceID u
 		SetCompletedAt(time.Now()).
 		Where(
 			deployment.ServiceIDEQ(serviceID),
-			deployment.StatusNotIn(schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusCompleted),
+			deployment.StatusNotIn(schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
 		).
 		Exec(ctx)
 }
@@ -58,7 +58,7 @@ func (self *DeploymentRepository) MarkAsCancelled(ctx context.Context, jobIDs []
 		SetCompletedAt(time.Now()).
 		Where(
 			deployment.IDIn(jobIDs...),
-			deployment.StatusNotIn(schema.DeploymentStatusRunning, schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusCompleted),
+			deployment.StatusNotIn(schema.DeploymentStatusRunning, schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
 		).
 		Exec(ctx)
 }

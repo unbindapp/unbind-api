@@ -305,14 +305,14 @@ func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID str
 type JobConditionType int
 
 const (
-	JobComplete JobConditionType = iota
+	JobSucceeded JobConditionType = iota
 	JobFailed
 	JobRunning
 	JobPending
 )
 
 func (js JobConditionType) String() string {
-	return [...]string{"JobComplete", "JobFailed", "JobRunning", "JobPending"}[js]
+	return [...]string{"JobSucceeded", "JobFailed", "JobRunning", "JobPending"}[js]
 }
 
 // JobStatus represents the status of a job with additional details
@@ -332,7 +332,7 @@ func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobSt
 
 	// Determine status based on job conditions
 	if job.Status.Succeeded > 0 {
-		result.ConditionType = JobComplete
+		result.ConditionType = JobSucceeded
 	} else if job.Status.Failed > 0 {
 		result.ConditionType = JobFailed
 		// Try to extract failure reason from conditions
