@@ -102,7 +102,7 @@ func (u ServiceType) Schema(r huma.Registry) *huma.Schema {
 type ServiceBuilder string
 
 const (
-	ServiceBuilderNixpacks ServiceBuilder = "ServiceBuilder"
+	ServiceBuilderNixpacks ServiceBuilder = "nixpacks"
 	ServiceBuilderRailpack ServiceBuilder = "railpack"
 	ServiceBuilderDocker   ServiceBuilder = "docker"
 )
