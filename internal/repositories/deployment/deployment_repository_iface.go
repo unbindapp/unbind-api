@@ -25,5 +25,5 @@ type DeploymentRepositoryInterface interface {
 	AssignKubernetesJobName(ctx context.Context, buildJobID uuid.UUID, jobName string) (*ent.Deployment, error)
 	SetKubernetesJobStatus(ctx context.Context, buildJobID uuid.UUID, status string) (*ent.Deployment, error)
 	GetJobsByStatus(ctx context.Context, status schema.DeploymentStatus) ([]*ent.Deployment, error)
-	GetByServiceIDPaginated(ctx context.Context, serviceID uuid.UUID, cursor *time.Time, statusFilter *schema.DeploymentStatus) (jobs []*ent.Deployment, nextCursor *time.Time, err error)
+	GetByServiceIDPaginated(ctx context.Context, serviceID uuid.UUID, cursor *time.Time, statusFilter []schema.DeploymentStatus) (jobs []*ent.Deployment, nextCursor *time.Time, err error)
 }

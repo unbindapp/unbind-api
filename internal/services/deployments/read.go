@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/ent/schema"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -57,12 +56,8 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 	if !input.Cursor.IsZero() {
 		cursor = &input.Cursor
 	}
-	var status *schema.DeploymentStatus
-	if input.Status != "" {
-		status = &input.Status
-	}
 	// Get build jobs
-	deployments, nextCursor, err := self.repo.Deployment().GetByServiceIDPaginated(ctx, input.ServiceID, cursor, status)
+	deployments, nextCursor, err := self.repo.Deployment().GetByServiceIDPaginated(ctx, input.ServiceID, cursor, input.Statuses)
 	if err != nil {
 		return nil, nil, err
 	}
