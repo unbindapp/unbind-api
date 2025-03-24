@@ -15,6 +15,7 @@ type DeploymentInputRequirements interface {
 type GetDeploymentsInput struct {
 	PaginationParams
 	Status        schema.DeploymentStatus `query:"status" required:"false" doc:"Filter by status"`
+	ID            uuid.UUID               `query:"id" required:"true" doc:"The ID of the build"`
 	TeamID        uuid.UUID               `query:"team_id" required:"true" doc:"The ID of the team"`
 	ProjectID     uuid.UUID               `query:"project_id" required:"true" doc:"The ID of the project"`
 	EnvironmentID uuid.UUID               `query:"environment_id" required:"true" doc:"The ID of the environment"`
