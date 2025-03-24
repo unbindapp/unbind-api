@@ -14,7 +14,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "running", "suceeded", "cancelled", "failed"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "running", "succeeded", "cancelled", "failed"}},
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "started_at", Type: field.TypeTime, Nullable: true},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},

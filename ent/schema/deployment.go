@@ -19,7 +19,7 @@ type DeploymentStatus string
 const (
 	DeploymentStatusQueued    DeploymentStatus = "queued"
 	DeploymentStatusRunning   DeploymentStatus = "running"
-	DeploymentStatusSucceeded DeploymentStatus = "suceeded"
+	DeploymentStatusSucceeded DeploymentStatus = "succeeded"
 	DeploymentStatusCancelled DeploymentStatus = "cancelled"
 	DeploymentStatusFailed    DeploymentStatus = "failed"
 )

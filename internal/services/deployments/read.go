@@ -73,5 +73,4 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 	}
 
 	return resp, metadata, nil
-
 }

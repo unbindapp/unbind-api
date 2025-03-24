@@ -15,8 +15,8 @@ type ListDeploymentsInput struct {
 }
 
 type ListDeploymentResponseData struct {
-	Jobs     []*models.DeploymentResponse       `json:"jobs"`
-	Metadata *models.PaginationResponseMetadata `json:"metadata"`
+	Deployments []*models.DeploymentResponse       `json:"deployments"`
+	Metadata    *models.PaginationResponseMetadata `json:"metadata"`
 }
 
 type ListDeploymentsResponse struct {
@@ -38,8 +38,14 @@ func (self *HandlerGroup) ListDeployments(ctx context.Context, input *ListDeploy
 		return nil, self.handleErr(err)
 	}
 
-	resp := &ListDeploymentsResponse{}
-	resp.Body.Data.Jobs = response
-	resp.Body.Data.Metadata = metadata
-	return resp, nil
+	return &ListDeploymentsResponse{
+		Body: struct {
+			Data *ListDeploymentResponseData `json:"data"`
+		}{
+			Data: &ListDeploymentResponseData{
+				Deployments: response,
+				Metadata:    metadata,
+			},
+		},
+	}, nil
 }
