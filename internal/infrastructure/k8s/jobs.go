@@ -64,45 +64,8 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 					ServiceAccountName:    "builder-serviceaccount",
 					RestartPolicy:         corev1.RestartPolicyNever,
 					ShareProcessNamespace: utils.ToPtr(true), // Share process namespace between containers
-					Containers: []corev1.Container{
-						{
-							Name:  "build-container",
-							Image: self.config.BuildImage,
-							Command: []string{
-								"sh",
-								"-c",
-								`# Wait for buildkitd to be ready
-	until buildctl --addr tcp://localhost:1234 debug workers >/dev/null 2>&1; do
-		echo "Waiting for BuildKit daemon to be ready...";
-		sleep 1;
-	done;
-	
-	# Wait for Docker daemon to be ready
-	until docker info >/dev/null 2>&1; do
-		echo "Waiting for Docker daemon to be ready...";
-		sleep 1;
-	done;
-	
-	# Run the builder with BuildKit
-	exec /app/builder`,
-							},
-							Env: append(envVars, []corev1.EnvVar{
-								{
-									Name:  "BUILDKIT_HOST",
-									Value: "tcp://localhost:1234",
-								},
-								{
-									Name:  "DOCKER_HOST",
-									Value: "tcp://localhost:2375",
-								},
-							}...),
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "buildkit-socket",
-									MountPath: "/run/buildkit",
-								},
-							},
-						},
+
+					InitContainers: []corev1.Container{
 						{
 							Name:  "buildkit-daemon",
 							Image: "moby/buildkit:v0.20.1-rootless",
@@ -117,7 +80,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 								},
 							},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true), // Can be avoided with proper setup
+								Privileged: utils.ToPtr(true),
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -133,18 +96,12 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									MountPath: "/cache",
 								},
 							},
-							ReadinessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									Exec: &corev1.ExecAction{
-										Command: []string{
-											"buildctl",
-											"--addr", "tcp://localhost:1234",
-											"debug", "workers",
-										},
-									},
-								},
-								InitialDelaySeconds: 5,
-								PeriodSeconds:       3,
+							// We need to start this and keep it running in background, so we use an infinite sleep command
+							Command: []string{
+								"sh",
+								"-c",
+								`# Start buildkit in background
+	exec buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox`,
 							},
 						},
 						{
@@ -169,52 +126,72 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									MountPath: "/var/lib/docker",
 								},
 							},
+							// We start dockerd directly
+							Command: []string{
+								"sh",
+								"-c",
+								`# Start dockerd in foreground
+	exec dockerd`,
+							},
 						},
 						{
-							Name:  "cleanup-monitor",
+							Name:  "wait-for-daemons",
 							Image: "alpine",
 							Command: []string{
 								"sh",
 								"-c",
 								`# Install necessary tools
-	apk add --no-cache procps
+	apk add --no-cache curl
 	
-	# Wait for the /app/builder process to start
-	while ! pgrep -f "/app/builder" > /dev/null; do
-			echo "Waiting for builder to start..."
-			sleep 1
+	# Wait for buildkitd to be ready
+	until curl -s http://localhost:1234/debug/workers > /dev/null; do
+		echo "Waiting for BuildKit daemon to be ready...";
+		sleep 1;
 	done
+	echo "BuildKit daemon is ready"
 	
-	# Get the PID of the actual builder process
-	builder_pid=$(pgrep -f "/app/builder")
-	echo "Builder process started with PID: $builder_pid"
-	
-	# Monitor the builder process
-	while kill -0 $builder_pid 2>/dev/null; do
-			sleep 2
+	# Wait for Docker daemon to be ready
+	until docker info > /dev/null 2>&1; do
+		echo "Waiting for Docker daemon to be ready...";
+		sleep 1;
 	done
-	
-	echo "Builder process has completed"
-	
-	# Give a small grace period for any cleanup
-	sleep 5
-	
-	# Once build is complete, gracefully stop the Docker daemon and buildkit
-	echo "Stopping docker and buildkit daemons..."
-	pkill -15 dockerd || true
-	pkill -15 buildkitd || true
-	sleep 3
-	
-	# Force kill if still running
-	pkill -9 dockerd || true 
-	pkill -9 buildkitd || true
-	echo "Build complete, Docker and BuildKit daemons stopped"
-	
-	# Exit with success to mark the job as complete
-	exit 0`,
+	echo "Docker daemon is ready"`,
 							},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true),
+							Env: []corev1.EnvVar{
+								{
+									Name:  "DOCKER_HOST",
+									Value: "tcp://localhost:2375",
+								},
+							},
+						},
+					},
+
+					// Only the main container and its sidecar remain
+					Containers: []corev1.Container{
+						{
+							Name:  "build-container",
+							Image: self.config.BuildImage,
+							Command: []string{
+								"sh",
+								"-c",
+								`# Run the builder with BuildKit and Docker daemons already running
+	exec /app/builder`,
+							},
+							Env: append(envVars, []corev1.EnvVar{
+								{
+									Name:  "BUILDKIT_HOST",
+									Value: "tcp://localhost:1234",
+								},
+								{
+									Name:  "DOCKER_HOST",
+									Value: "tcp://localhost:2375",
+								},
+							}...),
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "buildkit-socket",
+									MountPath: "/run/buildkit",
+								},
 							},
 						},
 					},
