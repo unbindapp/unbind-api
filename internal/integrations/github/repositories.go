@@ -62,7 +62,7 @@ func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, install
 			}
 
 			// Format and add to the result slice in a thread-safe way
-			formattedRepos := formatRepositoryResponse(adminRepos)
+			formattedRepos := formatRepositoryResponse(adminRepos, inst.ID)
 			mu.Lock()
 			allAdminRepos = append(allAdminRepos, formattedRepos...)
 			mu.Unlock()
@@ -75,6 +75,9 @@ func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, install
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
+
+	// Sort
+	sortRepositories(allAdminRepos)
 
 	// Remove any duplicates
 	return removeDuplicateRepositories(allAdminRepos), nil
@@ -215,17 +218,18 @@ type GithubRepositoryOwner struct {
 }
 
 type GithubRepository struct {
-	ID        int64                 `json:"id"`
-	Name      string                `json:"name"`
-	FullName  string                `json:"full_name"`
-	HTMLURL   string                `json:"html_url"`
-	CloneURL  string                `json:"clone_url"`
-	HomePage  string                `json:"homepage"`
-	Owner     GithubRepositoryOwner `json:"owner"`
-	UpdatedAt time.Time             `json:"updated_at"`
+	ID             int64                 `json:"id"`
+	InstallationID int64                 `json:"installation_id"`
+	Name           string                `json:"name"`
+	FullName       string                `json:"full_name"`
+	HTMLURL        string                `json:"html_url"`
+	CloneURL       string                `json:"clone_url"`
+	HomePage       string                `json:"homepage"`
+	Owner          GithubRepositoryOwner `json:"owner"`
+	UpdatedAt      time.Time             `json:"updated_at"`
 }
 
-func formatRepositoryResponse(repositories []*github.Repository) []*GithubRepository {
+func formatRepositoryResponse(repositories []*github.Repository, installationID int64) []*GithubRepository {
 	// Pre-allocate the slice to the exact size needed to avoid reallocations
 	response := make([]*GithubRepository, 0, len(repositories))
 
@@ -237,12 +241,13 @@ func formatRepositoryResponse(repositories []*github.Repository) []*GithubReposi
 		}
 
 		response = append(response, &GithubRepository{
-			ID:       repository.GetID(),
-			Name:     repository.GetName(),
-			FullName: repository.GetFullName(),
-			HTMLURL:  repository.GetHTMLURL(),
-			CloneURL: repository.GetCloneURL(),
-			HomePage: repository.GetHomepage(),
+			ID:             repository.GetID(),
+			InstallationID: installationID,
+			Name:           repository.GetName(),
+			FullName:       repository.GetFullName(),
+			HTMLURL:        repository.GetHTMLURL(),
+			CloneURL:       repository.GetCloneURL(),
+			HomePage:       repository.GetHomepage(),
 			Owner: GithubRepositoryOwner{
 				ID:        repository.Owner.GetID(),
 				Name:      repository.Owner.GetName(),
