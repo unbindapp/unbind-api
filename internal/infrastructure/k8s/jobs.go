@@ -105,11 +105,15 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									Name:  "DOCKER_TLS_CERTDIR",
 									Value: "",
 								},
+								{
+									Name:  "DOCKER_HOST",
+									Value: "",
+								},
 							},
-							// Uncomment if you need to use an insecure registry
-							// Args: []string{
-							//     fmt.Sprintf("--insecure-registry=%s", self.config.ContainerRegistryHost),
-							// },
+							Args: []string{
+								"--host=tcp://0.0.0.0:2375",
+								"--host=unix:///var/run/docker.sock",
+							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: utils.ToPtr(true),
 							},
@@ -119,34 +123,24 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									MountPath: "/var/lib/docker",
 								},
 							},
-							// We start dockerd directly
-							Command: []string{
-								"sh",
-								"-c",
-								`# Start dockerd in foreground
-	exec dockerd`,
-							},
 						},
 						{
 							Name:  "wait-for-daemons",
-							Image: "alpine",
+							Image: self.config.BuildImage,
 							Command: []string{
 								"sh",
 								"-c",
-								`# Install necessary tools
-	apk add --no-cache curl
-	
-	# Wait for buildkitd to be ready
-	until curl -s http://localhost:1234/debug/workers > /dev/null; do
+								`# Wait for buildkitd to be ready
+	until buildctl --addr tcp://localhost:1234 debug workers > /dev/null 2>&1; do
 		echo "Waiting for BuildKit daemon to be ready...";
-		sleep 1;
+		sleep 2;
 	done
 	echo "BuildKit daemon is ready"
 	
 	# Wait for Docker daemon to be ready
 	until docker info > /dev/null 2>&1; do
 		echo "Waiting for Docker daemon to be ready...";
-		sleep 1;
+		sleep 2;
 	done
 	echo "Docker daemon is ready"`,
 							},
@@ -159,7 +153,6 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 						},
 					},
 
-					// Only the main container and its sidecar remain
 					Containers: []corev1.Container{
 						{
 							Name:  "build-container",
