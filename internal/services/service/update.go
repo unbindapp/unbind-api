@@ -9,6 +9,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -102,6 +104,16 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("failed to update service: %w", err)
 		}
 
+		host := input.Host
+		if service.Edges.ServiceConfig.Host == nil && input.Public != nil && *input.Public && input.Host == nil {
+			host, err := utils.GenerateSubdomain(service.DisplayName, service.Edges.Environment.DisplayName, self.cfg.ExternalURL)
+			if err != nil {
+				log.Warn("failed to generate subdomain", "error", err)
+			} else {
+				input.Host = &host
+			}
+		}
+
 		// Update the service config
 		if err := self.repo.Service().UpdateConfig(ctx,
 			tx,
@@ -110,7 +122,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			input.Builder,
 			input.GitBranch,
 			input.Port,
-			input.Host,
+			host,
 			input.Replicas,
 			input.AutoDeploy,
 			input.RunCommand,
