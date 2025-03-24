@@ -59,8 +59,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// ! TODO - support docka
-	if input.Builder != schema.ServiceBuilderNixpacks {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack builder supported")
+	if input.Builder != schema.ServiceBuilderNixpacks && input.Builder != schema.ServiceBuilderRailpack {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack and nixpacks builder supported")
 	}
 
 	// Validate that if GitHub info is provided, all fields are set

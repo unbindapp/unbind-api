@@ -2,7 +2,6 @@ package k8s
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -167,36 +166,6 @@ exec /app/builder`,
 								{
 									Name:      "docker-graph-storage",
 									MountPath: "/var/lib/docker",
-								},
-							},
-						},
-						{
-							Name:  "registry-auth",
-							Image: "alpine",
-							Command: []string{
-								"sh",
-								"-c",
-								fmt.Sprintf(`mkdir -p /home/buildkit/.docker
-cat > /home/buildkit/.docker/config.json << EOF
-{
-  "auths": {
-    "%s": {
-      "auth": "%s"
-    }
-  }
-}
-EOF
-chmod 600 /home/buildkit/.docker/config.json
-echo "Registry credentials configured"
-sleep infinity`, self.config.ContainerRegistryHost,
-									base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s",
-										self.config.ContainerRegistryUser,
-										self.config.ContainerRegistryPassword)))),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "docker-config",
-									MountPath: "/home/buildkit/.docker",
 								},
 							},
 						},
