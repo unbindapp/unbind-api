@@ -65,7 +65,7 @@ func NewDeploymentController(ctx context.Context, cancel context.CancelFunc, cfg
 // Start queue processor
 func (self *DeploymentController) StartAsync() {
 	// Start the job processor
-	self.jobQueue.StartProcessor(self.ctx, self.processJob)
+	self.jobQueue.StartProcessor(self.ctx, self.processJob, self.k8s.CountActiveDeploymentJobs)
 
 	// Start the job status synchronizer
 	go self.startStatusSynchronizer()

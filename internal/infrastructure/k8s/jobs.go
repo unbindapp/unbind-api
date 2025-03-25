@@ -38,10 +38,10 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jobName,
 			Labels: map[string]string{
-				"deployment": "true",
-				"jobID":      jobID,
-				"serviceID":  serviceID,
-				"job-name":   jobName,
+				"unbind-deployment-job": "true",
+				"jobID":                 jobID,
+				"serviceID":             serviceID,
+				"job-name":              jobName,
 			},
 			Annotations: annotations,
 		},
@@ -54,10 +54,10 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"deployment": "true",
-						"jobID":      jobID,
-						"serviceID":  serviceID,
-						"job-name":   jobName,
+						"unbind-deployment-job": "true",
+						"jobID":                 jobID,
+						"serviceID":             serviceID,
+						"job-name":              jobName,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -299,6 +299,24 @@ func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID str
 		}
 	}
 	return nil
+}
+
+func (self *KubeClient) CountActiveDeploymentJobs(ctx context.Context) (int, error) {
+	jobList, err := self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).List(ctx, metav1.ListOptions{
+		LabelSelector: "unbind-deployment-job=true",
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to list jobs: %v", err)
+	}
+
+	activeCount := 0
+	for _, job := range jobList.Items {
+		if job.Status.Active > 0 {
+			activeCount++
+		}
+	}
+
+	return activeCount, nil
 }
 
 // Get status of a kubernetes Job resource

@@ -200,21 +200,24 @@ func (q *Queue[T]) Remove(ctx context.Context, id string) error {
 	return fmt.Errorf("item with ID %s not found in queue", id)
 }
 
-func (q *Queue[T]) StartProcessor(ctx context.Context, processor func(ctx context.Context, item *QueueItem[T]) error) {
-	// Channel to control the number of concurrent processors
-	semaphore := make(chan struct{}, QUEUE_CONCURRENCY)
-
+func (q *Queue[T]) StartProcessor(ctx context.Context, processor func(ctx context.Context, item *QueueItem[T]) error, jobCounter func(ctx context.Context) (int, error)) {
 	go func() {
 		ticker := time.NewTicker(q.pollInterval)
 		defer ticker.Stop()
-
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				// Check how many slots are available
-				availableSlots := QUEUE_CONCURRENCY - len(semaphore)
+				// Check how many active jobs are running in Kubernetes
+				activeJobs, err := jobCounter(ctx)
+				if err != nil {
+					log.Errorf("Error counting active jobs: %v", err)
+					continue
+				}
+
+				// Calculate available slots
+				availableSlots := QUEUE_CONCURRENCY - activeJobs
 				if availableSlots <= 0 {
 					continue
 				}
@@ -225,17 +228,11 @@ func (q *Queue[T]) StartProcessor(ctx context.Context, processor func(ctx contex
 					continue
 				}
 
-				// Process each item in a separate goroutine
+				// Process each item
 				for _, item := range items {
-					// Acquire a slot
-					semaphore <- struct{}{}
-
+					// Process the item directly without additional goroutines
+					// since we're already limiting based on active K8s jobs
 					go func(i *QueueItem[T]) {
-						defer func() {
-							<-semaphore
-						}()
-
-						// Process the item
 						if err := processor(ctx, i); err != nil {
 							log.Errorf("Error processing item %s: %v", i.ID, err)
 						}
