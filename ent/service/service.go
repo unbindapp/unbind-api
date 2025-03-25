@@ -29,6 +29,8 @@ const (
 	FieldEnvironmentID = "environment_id"
 	// FieldGithubInstallationID holds the string denoting the github_installation_id field in the database.
 	FieldGithubInstallationID = "github_installation_id"
+	// FieldGitRepositoryOwner holds the string denoting the git_repository_owner field in the database.
+	FieldGitRepositoryOwner = "git_repository_owner"
 	// FieldGitRepository holds the string denoting the git_repository field in the database.
 	FieldGitRepository = "git_repository"
 	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
@@ -83,6 +85,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldEnvironmentID,
 	FieldGithubInstallationID,
+	FieldGitRepositoryOwner,
 	FieldGitRepository,
 	FieldKubernetesSecret,
 }
@@ -151,6 +154,11 @@ func ByEnvironmentID(opts ...sql.OrderTermOption) OrderOption {
 // ByGithubInstallationID orders the results by the github_installation_id field.
 func ByGithubInstallationID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGithubInstallationID, opts...).ToFunc()
+}
+
+// ByGitRepositoryOwner orders the results by the git_repository_owner field.
+func ByGitRepositoryOwner(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGitRepositoryOwner, opts...).ToFunc()
 }
 
 // ByGitRepository orders the results by the git_repository field.

@@ -102,6 +102,20 @@ func (sc *ServiceCreate) SetNillableGithubInstallationID(i *int64) *ServiceCreat
 	return sc
 }
 
+// SetGitRepositoryOwner sets the "git_repository_owner" field.
+func (sc *ServiceCreate) SetGitRepositoryOwner(s string) *ServiceCreate {
+	sc.mutation.SetGitRepositoryOwner(s)
+	return sc
+}
+
+// SetNillableGitRepositoryOwner sets the "git_repository_owner" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableGitRepositoryOwner(s *string) *ServiceCreate {
+	if s != nil {
+		sc.SetGitRepositoryOwner(*s)
+	}
+	return sc
+}
+
 // SetGitRepository sets the "git_repository" field.
 func (sc *ServiceCreate) SetGitRepository(s string) *ServiceCreate {
 	sc.mutation.SetGitRepository(s)
@@ -313,6 +327,10 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
+	if value, ok := sc.mutation.GitRepositoryOwner(); ok {
+		_spec.SetField(service.FieldGitRepositoryOwner, field.TypeString, value)
+		_node.GitRepositoryOwner = &value
+	}
 	if value, ok := sc.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)
 		_node.GitRepository = &value
@@ -523,6 +541,24 @@ func (u *ServiceUpsert) ClearGithubInstallationID() *ServiceUpsert {
 	return u
 }
 
+// SetGitRepositoryOwner sets the "git_repository_owner" field.
+func (u *ServiceUpsert) SetGitRepositoryOwner(v string) *ServiceUpsert {
+	u.Set(service.FieldGitRepositoryOwner, v)
+	return u
+}
+
+// UpdateGitRepositoryOwner sets the "git_repository_owner" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateGitRepositoryOwner() *ServiceUpsert {
+	u.SetExcluded(service.FieldGitRepositoryOwner)
+	return u
+}
+
+// ClearGitRepositoryOwner clears the value of the "git_repository_owner" field.
+func (u *ServiceUpsert) ClearGitRepositoryOwner() *ServiceUpsert {
+	u.SetNull(service.FieldGitRepositoryOwner)
+	return u
+}
+
 // SetGitRepository sets the "git_repository" field.
 func (u *ServiceUpsert) SetGitRepository(v string) *ServiceUpsert {
 	u.Set(service.FieldGitRepository, v)
@@ -699,6 +735,27 @@ func (u *ServiceUpsertOne) UpdateGithubInstallationID() *ServiceUpsertOne {
 func (u *ServiceUpsertOne) ClearGithubInstallationID() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearGithubInstallationID()
+	})
+}
+
+// SetGitRepositoryOwner sets the "git_repository_owner" field.
+func (u *ServiceUpsertOne) SetGitRepositoryOwner(v string) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetGitRepositoryOwner(v)
+	})
+}
+
+// UpdateGitRepositoryOwner sets the "git_repository_owner" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateGitRepositoryOwner() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateGitRepositoryOwner()
+	})
+}
+
+// ClearGitRepositoryOwner clears the value of the "git_repository_owner" field.
+func (u *ServiceUpsertOne) ClearGitRepositoryOwner() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearGitRepositoryOwner()
 	})
 }
 
@@ -1050,6 +1107,27 @@ func (u *ServiceUpsertBulk) UpdateGithubInstallationID() *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) ClearGithubInstallationID() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearGithubInstallationID()
+	})
+}
+
+// SetGitRepositoryOwner sets the "git_repository_owner" field.
+func (u *ServiceUpsertBulk) SetGitRepositoryOwner(v string) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetGitRepositoryOwner(v)
+	})
+}
+
+// UpdateGitRepositoryOwner sets the "git_repository_owner" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateGitRepositoryOwner() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateGitRepositoryOwner()
+	})
+}
+
+// ClearGitRepositoryOwner clears the value of the "git_repository_owner" field.
+func (u *ServiceUpsertBulk) ClearGitRepositoryOwner() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearGitRepositoryOwner()
 	})
 }
 

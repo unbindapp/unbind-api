@@ -31,7 +31,8 @@ func (Service) Fields() []ent.Field {
 		field.String("description").Optional(),
 		field.UUID("environment_id", uuid.UUID{}),
 		field.Int64("github_installation_id").Optional().Nillable().Comment("Optional reference to GitHub installation"),
-		field.String("git_repository").Optional().Nillable().Comment("GitHub repository name"),
+		field.String("git_repository_owner").Optional().Nillable().Comment("Git repository owner"),
+		field.String("git_repository").Optional().Nillable().Comment("Git repository name"),
 		field.String("kubernetes_secret").Comment("Kubernetes secret for this service"),
 	}
 }

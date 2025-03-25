@@ -91,6 +91,11 @@ func GithubInstallationID(v int64) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldGithubInstallationID, v))
 }
 
+// GitRepositoryOwner applies equality check predicate on the "git_repository_owner" field. It's identical to GitRepositoryOwnerEQ.
+func GitRepositoryOwner(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldGitRepositoryOwner, v))
+}
+
 // GitRepository applies equality check predicate on the "git_repository" field. It's identical to GitRepositoryEQ.
 func GitRepository(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldGitRepository, v))
@@ -434,6 +439,81 @@ func GithubInstallationIDIsNil() predicate.Service {
 // GithubInstallationIDNotNil applies the NotNil predicate on the "github_installation_id" field.
 func GithubInstallationIDNotNil() predicate.Service {
 	return predicate.Service(sql.FieldNotNull(FieldGithubInstallationID))
+}
+
+// GitRepositoryOwnerEQ applies the EQ predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerNEQ applies the NEQ predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerIn applies the In predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldGitRepositoryOwner, vs...))
+}
+
+// GitRepositoryOwnerNotIn applies the NotIn predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldGitRepositoryOwner, vs...))
+}
+
+// GitRepositoryOwnerGT applies the GT predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerGTE applies the GTE predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerLT applies the LT predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerLTE applies the LTE predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerContains applies the Contains predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerHasPrefix applies the HasPrefix predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerHasSuffix applies the HasSuffix predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerIsNil applies the IsNil predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldGitRepositoryOwner))
+}
+
+// GitRepositoryOwnerNotNil applies the NotNil predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldGitRepositoryOwner))
+}
+
+// GitRepositoryOwnerEqualFold applies the EqualFold predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldGitRepositoryOwner, v))
+}
+
+// GitRepositoryOwnerContainsFold applies the ContainsFold predicate on the "git_repository_owner" field.
+func GitRepositoryOwnerContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldGitRepositoryOwner, v))
 }
 
 // GitRepositoryEQ applies the EQ predicate on the "git_repository" field.

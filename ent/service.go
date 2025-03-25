@@ -36,7 +36,9 @@ type Service struct {
 	EnvironmentID uuid.UUID `json:"environment_id,omitempty"`
 	// Optional reference to GitHub installation
 	GithubInstallationID *int64 `json:"github_installation_id,omitempty"`
-	// GitHub repository name
+	// Git repository owner
+	GitRepositoryOwner *string `json:"git_repository_owner,omitempty"`
+	// Git repository name
 	GitRepository *string `json:"git_repository,omitempty"`
 	// Kubernetes secret for this service
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
@@ -110,7 +112,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldGitRepository, service.FieldKubernetesSecret:
+		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldGitRepositoryOwner, service.FieldGitRepository, service.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -179,6 +181,13 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.GithubInstallationID = new(int64)
 				*s.GithubInstallationID = value.Int64
+			}
+		case service.FieldGitRepositoryOwner:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field git_repository_owner", values[i])
+			} else if value.Valid {
+				s.GitRepositoryOwner = new(string)
+				*s.GitRepositoryOwner = value.String
 			}
 		case service.FieldGitRepository:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -270,6 +279,11 @@ func (s *Service) String() string {
 	if v := s.GithubInstallationID; v != nil {
 		builder.WriteString("github_installation_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := s.GitRepositoryOwner; v != nil {
+		builder.WriteString("git_repository_owner=")
+		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	if v := s.GitRepository; v != nil {

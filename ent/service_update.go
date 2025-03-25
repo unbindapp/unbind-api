@@ -122,6 +122,26 @@ func (su *ServiceUpdate) ClearGithubInstallationID() *ServiceUpdate {
 	return su
 }
 
+// SetGitRepositoryOwner sets the "git_repository_owner" field.
+func (su *ServiceUpdate) SetGitRepositoryOwner(s string) *ServiceUpdate {
+	su.mutation.SetGitRepositoryOwner(s)
+	return su
+}
+
+// SetNillableGitRepositoryOwner sets the "git_repository_owner" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableGitRepositoryOwner(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetGitRepositoryOwner(*s)
+	}
+	return su
+}
+
+// ClearGitRepositoryOwner clears the value of the "git_repository_owner" field.
+func (su *ServiceUpdate) ClearGitRepositoryOwner() *ServiceUpdate {
+	su.mutation.ClearGitRepositoryOwner()
+	return su
+}
+
 // SetGitRepository sets the "git_repository" field.
 func (su *ServiceUpdate) SetGitRepository(s string) *ServiceUpdate {
 	su.mutation.SetGitRepository(s)
@@ -325,6 +345,12 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if su.mutation.DescriptionCleared() {
 		_spec.ClearField(service.FieldDescription, field.TypeString)
+	}
+	if value, ok := su.mutation.GitRepositoryOwner(); ok {
+		_spec.SetField(service.FieldGitRepositoryOwner, field.TypeString, value)
+	}
+	if su.mutation.GitRepositoryOwnerCleared() {
+		_spec.ClearField(service.FieldGitRepositoryOwner, field.TypeString)
 	}
 	if value, ok := su.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)
@@ -577,6 +603,26 @@ func (suo *ServiceUpdateOne) ClearGithubInstallationID() *ServiceUpdateOne {
 	return suo
 }
 
+// SetGitRepositoryOwner sets the "git_repository_owner" field.
+func (suo *ServiceUpdateOne) SetGitRepositoryOwner(s string) *ServiceUpdateOne {
+	suo.mutation.SetGitRepositoryOwner(s)
+	return suo
+}
+
+// SetNillableGitRepositoryOwner sets the "git_repository_owner" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableGitRepositoryOwner(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetGitRepositoryOwner(*s)
+	}
+	return suo
+}
+
+// ClearGitRepositoryOwner clears the value of the "git_repository_owner" field.
+func (suo *ServiceUpdateOne) ClearGitRepositoryOwner() *ServiceUpdateOne {
+	suo.mutation.ClearGitRepositoryOwner()
+	return suo
+}
+
 // SetGitRepository sets the "git_repository" field.
 func (suo *ServiceUpdateOne) SetGitRepository(s string) *ServiceUpdateOne {
 	suo.mutation.SetGitRepository(s)
@@ -810,6 +856,12 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	}
 	if suo.mutation.DescriptionCleared() {
 		_spec.ClearField(service.FieldDescription, field.TypeString)
+	}
+	if value, ok := suo.mutation.GitRepositoryOwner(); ok {
+		_spec.SetField(service.FieldGitRepositoryOwner, field.TypeString, value)
+	}
+	if suo.mutation.GitRepositoryOwnerCleared() {
+		_spec.ClearField(service.FieldGitRepositoryOwner, field.TypeString)
 	}
 	if value, ok := suo.mutation.GitRepository(); ok {
 		_spec.SetField(service.FieldGitRepository, field.TypeString, value)

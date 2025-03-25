@@ -115,6 +115,9 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
+	// Git integrations
+	var gitOwnerName *string
+
 	// If GitHub integration is provided, verify repository access
 	var analysisResult *sourceanalyzer.AnalysisResult
 	if input.GitHubInstallationID != nil {
@@ -126,6 +129,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 			return nil, err
 		}
+		// Set owner
+		gitOwnerName = utils.ToPtr(installation.AccountLogin)
 
 		// Verify repository access
 		canAccess, cloneUrl, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, *input.RepositoryOwner, *input.RepositoryName)
@@ -251,6 +256,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			input.EnvironmentID,
 			input.GitHubInstallationID,
 			input.RepositoryName,
+			gitOwnerName,
 			secret.Name)
 		if err != nil {
 			return fmt.Errorf("failed to create service: %w", err)

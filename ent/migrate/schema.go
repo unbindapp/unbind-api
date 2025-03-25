@@ -280,6 +280,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "git_repository_owner", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
 		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "environment_id", Type: field.TypeUUID},
@@ -293,13 +294,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[8]},
+				Columns:    []*schema.Column{ServicesColumns[9]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[9]},
+				Columns:    []*schema.Column{ServicesColumns[10]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

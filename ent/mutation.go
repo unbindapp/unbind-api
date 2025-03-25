@@ -8844,6 +8844,7 @@ type ServiceMutation struct {
 	name                       *string
 	display_name               *string
 	description                *string
+	git_repository_owner       *string
 	git_repository             *string
 	kubernetes_secret          *string
 	clearedFields              map[string]struct{}
@@ -9243,6 +9244,55 @@ func (m *ServiceMutation) ResetGithubInstallationID() {
 	delete(m.clearedFields, service.FieldGithubInstallationID)
 }
 
+// SetGitRepositoryOwner sets the "git_repository_owner" field.
+func (m *ServiceMutation) SetGitRepositoryOwner(s string) {
+	m.git_repository_owner = &s
+}
+
+// GitRepositoryOwner returns the value of the "git_repository_owner" field in the mutation.
+func (m *ServiceMutation) GitRepositoryOwner() (r string, exists bool) {
+	v := m.git_repository_owner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitRepositoryOwner returns the old "git_repository_owner" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldGitRepositoryOwner(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitRepositoryOwner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitRepositoryOwner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitRepositoryOwner: %w", err)
+	}
+	return oldValue.GitRepositoryOwner, nil
+}
+
+// ClearGitRepositoryOwner clears the value of the "git_repository_owner" field.
+func (m *ServiceMutation) ClearGitRepositoryOwner() {
+	m.git_repository_owner = nil
+	m.clearedFields[service.FieldGitRepositoryOwner] = struct{}{}
+}
+
+// GitRepositoryOwnerCleared returns if the "git_repository_owner" field was cleared in this mutation.
+func (m *ServiceMutation) GitRepositoryOwnerCleared() bool {
+	_, ok := m.clearedFields[service.FieldGitRepositoryOwner]
+	return ok
+}
+
+// ResetGitRepositoryOwner resets all changes to the "git_repository_owner" field.
+func (m *ServiceMutation) ResetGitRepositoryOwner() {
+	m.git_repository_owner = nil
+	delete(m.clearedFields, service.FieldGitRepositoryOwner)
+}
+
 // SetGitRepository sets the "git_repository" field.
 func (m *ServiceMutation) SetGitRepository(s string) {
 	m.git_repository = &s
@@ -9509,7 +9559,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -9530,6 +9580,9 @@ func (m *ServiceMutation) Fields() []string {
 	}
 	if m.github_installation != nil {
 		fields = append(fields, service.FieldGithubInstallationID)
+	}
+	if m.git_repository_owner != nil {
+		fields = append(fields, service.FieldGitRepositoryOwner)
 	}
 	if m.git_repository != nil {
 		fields = append(fields, service.FieldGitRepository)
@@ -9559,6 +9612,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.EnvironmentID()
 	case service.FieldGithubInstallationID:
 		return m.GithubInstallationID()
+	case service.FieldGitRepositoryOwner:
+		return m.GitRepositoryOwner()
 	case service.FieldGitRepository:
 		return m.GitRepository()
 	case service.FieldKubernetesSecret:
@@ -9586,6 +9641,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldEnvironmentID(ctx)
 	case service.FieldGithubInstallationID:
 		return m.OldGithubInstallationID(ctx)
+	case service.FieldGitRepositoryOwner:
+		return m.OldGitRepositoryOwner(ctx)
 	case service.FieldGitRepository:
 		return m.OldGitRepository(ctx)
 	case service.FieldKubernetesSecret:
@@ -9648,6 +9705,13 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetGithubInstallationID(v)
 		return nil
+	case service.FieldGitRepositoryOwner:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitRepositoryOwner(v)
+		return nil
 	case service.FieldGitRepository:
 		v, ok := value.(string)
 		if !ok {
@@ -9701,6 +9765,9 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldGithubInstallationID) {
 		fields = append(fields, service.FieldGithubInstallationID)
 	}
+	if m.FieldCleared(service.FieldGitRepositoryOwner) {
+		fields = append(fields, service.FieldGitRepositoryOwner)
+	}
 	if m.FieldCleared(service.FieldGitRepository) {
 		fields = append(fields, service.FieldGitRepository)
 	}
@@ -9723,6 +9790,9 @@ func (m *ServiceMutation) ClearField(name string) error {
 		return nil
 	case service.FieldGithubInstallationID:
 		m.ClearGithubInstallationID()
+		return nil
+	case service.FieldGitRepositoryOwner:
+		m.ClearGitRepositoryOwner()
 		return nil
 	case service.FieldGitRepository:
 		m.ClearGitRepository()
@@ -9755,6 +9825,9 @@ func (m *ServiceMutation) ResetField(name string) error {
 		return nil
 	case service.FieldGithubInstallationID:
 		m.ResetGithubInstallationID()
+		return nil
+	case service.FieldGitRepositoryOwner:
+		m.ResetGitRepositoryOwner()
 		return nil
 	case service.FieldGitRepository:
 		m.ResetGitRepository()

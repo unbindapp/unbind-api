@@ -22,6 +22,7 @@ func (self *ServiceRepository) Create(
 	environmentID uuid.UUID,
 	gitHubInstallationID *int64,
 	gitRepository *string,
+	gitRepositoryOwner *string,
 	kubernetesSecret string,
 ) (*ent.Service, error) {
 	db := self.base.DB
@@ -36,6 +37,7 @@ func (self *ServiceRepository) Create(
 		SetEnvironmentID(environmentID).
 		SetNillableGithubInstallationID(gitHubInstallationID).
 		SetNillableGitRepository(gitRepository).
+		SetNillableGitRepositoryOwner(gitRepositoryOwner).
 		SetKubernetesSecret(kubernetesSecret).
 		Save(ctx)
 }
