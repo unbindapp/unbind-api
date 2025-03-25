@@ -34,7 +34,7 @@ type CreateServiceInput struct {
 	RepositoryName       *string `json:"repository_name,omitempty"`
 
 	// Configuration
-	Type       schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'git', 'docker'" json:"type"`
+	Type       schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
 	Builder    schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
 	GitBranch  *string               `json:"git_branch,omitempty"`
 	Hosts      []schema.HostSpec     `json:"hosts,omitempty"`
@@ -54,8 +54,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// ! TODO - support docka
-	if input.Type != schema.ServiceTypeGit {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only git services supported")
+	if input.Type != schema.ServiceTypeGithub {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only github services supported")
 	}
 
 	// ! TODO - support docka

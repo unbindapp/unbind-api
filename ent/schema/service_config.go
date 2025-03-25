@@ -80,13 +80,13 @@ func (ServiceConfig) Annotations() []schema.Annotation {
 type ServiceType string
 
 const (
-	ServiceTypeGit        ServiceType = "git"
-	ServiceTypeDockerfile ServiceType = "dockerfile"
+	ServiceTypeGithub      ServiceType = "github"
+	ServiceTypeDockerimage ServiceType = "docker-image"
 )
 
 var allServiceTypes = []ServiceType{
-	ServiceTypeGit,
-	ServiceTypeDockerfile,
+	ServiceTypeGithub,
+	ServiceTypeDockerimage,
 }
 
 // Values provides list valid values for Enum.

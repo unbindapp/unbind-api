@@ -111,7 +111,7 @@ var (
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type schema.ServiceType) error {
 	switch _type {
-	case "git", "dockerfile":
+	case "github", "docker-image":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for type field: %q", _type)

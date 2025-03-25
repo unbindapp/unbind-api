@@ -310,7 +310,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"git", "dockerfile"}},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"github", "docker-image"}},
 		{Name: "builder", Type: field.TypeEnum, Enums: []string{"nixpacks", "railpack", "docker"}},
 		{Name: "provider", Type: field.TypeEnum, Nullable: true, Enums: []string{"node", "deno", "go", "java", "php", "python", "staticfile", "unknown"}},
 		{Name: "framework", Type: field.TypeEnum, Nullable: true, Enums: []string{"next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown"}},
