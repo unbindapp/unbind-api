@@ -14,7 +14,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "running", "succeeded", "cancelled", "failed"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "building", "succeeded", "cancelled", "failed"}},
 		{Name: "source", Type: field.TypeEnum, Enums: []string{"manual", "git"}, Default: "manual"},
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "commit_sha", Type: field.TypeString, Nullable: true},

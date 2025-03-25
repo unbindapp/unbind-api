@@ -26,7 +26,7 @@ func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUI
 
 func (self *DeploymentRepository) MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.UpdateOneID(buildJobID).
-		SetStatus(schema.DeploymentStatusRunning).
+		SetStatus(schema.DeploymentStatusBuilding).
 		SetStartedAt(time.Now()).
 		Save(ctx)
 }
@@ -65,7 +65,7 @@ func (self *DeploymentRepository) MarkAsCancelled(ctx context.Context, jobIDs []
 		SetCompletedAt(time.Now()).
 		Where(
 			deployment.IDIn(jobIDs...),
-			deployment.StatusNotIn(schema.DeploymentStatusRunning, schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
+			deployment.StatusNotIn(schema.DeploymentStatusBuilding, schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
 		).
 		Exec(ctx)
 }

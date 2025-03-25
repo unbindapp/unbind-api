@@ -334,7 +334,7 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 // SyncJobStatuses synchronizes the status of all processing jobs with Kubernetes
 func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 	// Get all job marked running status
-	jobs, err := self.repo.Deployment().GetJobsByStatus(ctx, schema.DeploymentStatusRunning)
+	jobs, err := self.repo.Deployment().GetJobsByStatus(ctx, schema.DeploymentStatusBuilding)
 	if err != nil {
 		return fmt.Errorf("failed to query processing jobs: %w", err)
 	}
