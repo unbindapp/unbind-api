@@ -10,7 +10,10 @@ import (
 )
 
 func (self *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Team, error) {
-	return self.base.DB.Team.Get(ctx, id)
+	return self.base.DB.Team.Query().
+		Where(team.ID(id)).
+		WithProjects().
+		Only(ctx)
 }
 
 func (self *TeamRepository) HasUserWithID(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) (bool, error) {
