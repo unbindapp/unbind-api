@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -20,6 +21,10 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 		Where(service.IDEQ(serviceID)).
 		WithEnvironment().
 		WithServiceConfig().
+		WithDeployments(func(dq *ent.DeploymentQuery) {
+			dq.Order(ent.Desc(deployment.FieldCreatedAt))
+			dq.Limit(1)
+		}).
 		Only(ctx)
 }
 
@@ -28,6 +33,10 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 		Where(service.GithubInstallationIDEQ(installationID)).
 		Where(service.GitRepositoryEQ(repoName)).
 		WithServiceConfig().
+		WithDeployments(func(dq *ent.DeploymentQuery) {
+			dq.Order(ent.Desc(deployment.FieldCreatedAt))
+			dq.Limit(1)
+		}).
 		All(ctx)
 }
 
@@ -35,6 +44,10 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 	return self.base.DB.Service.Query().
 		Where(service.EnvironmentIDEQ(environmentID)).
 		WithServiceConfig().
+		WithDeployments(func(dq *ent.DeploymentQuery) {
+			dq.Order(ent.Desc(deployment.FieldCreatedAt))
+			dq.Limit(1)
+		}).
 		All(ctx)
 }
 
