@@ -38,7 +38,7 @@ type CreateServiceInput struct {
 	Builder    schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
 	GitBranch  *string               `json:"git_branch,omitempty"`
 	Hosts      []schema.HostSpec     `json:"hosts,omitempty"`
-	Ports      []schema.PortSpec     `validate:"min=1,max=65535" json:"port,omitempty"`
+	Ports      []schema.PortSpec     `json:"ports,omitempty"`
 	Replicas   *int32                `validate:"min=1,max=10" json:"replicas,omitempty"`
 	AutoDeploy *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand *string               `json:"run_command,omitempty"`
