@@ -264,6 +264,7 @@ func formatRepositoryResponse(repositories []*github.Repository, installationID 
 // GithubRepositoryDetail contains detailed information about a repository
 type GithubRepositoryDetail struct {
 	ID              int64                  `json:"id"`
+	InstallationID  int64                  `json:"installationId"`
 	Name            string                 `json:"name"`
 	FullName        string                 `json:"fullName"`
 	Description     string                 `json:"description"`
@@ -355,6 +356,7 @@ func (self *GithubClient) GetRepositoryDetail(ctx context.Context, installation 
 	// Format the response
 	repoDetail := &GithubRepositoryDetail{
 		ID:              ghRepo.GetID(),
+		InstallationID:  installation.ID,
 		Name:            ghRepo.GetName(),
 		FullName:        ghRepo.GetFullName(),
 		Description:     ghRepo.GetDescription(),
