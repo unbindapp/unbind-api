@@ -2,6 +2,7 @@ package webhook_handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -250,6 +251,11 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			log.Errorf("Received push event with missing repo or installation %v", e)
 			return &GithubWebhookOutput{}, nil
 		}
+
+		// Serialize
+		marshalled, _ := json.Marshal(e)
+		log.Info("Received push event", "event", string(marshalled))
+
 		repoName := e.Repo.GetName()
 		repoUrl := e.Repo.GetCloneURL()
 		installationID := e.Installation.GetID()
