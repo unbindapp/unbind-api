@@ -35,6 +35,7 @@ type DeploymentJobRequest struct {
 	CommitSHA     string                  `json:"commit_sha"`
 	CommitMessage string                  `json:"commit_message"`
 	Environment   map[string]string       `json:"environment"`
+	Committer     *schema.GitCommitter    `json:"committer"`
 }
 
 // Handles triggering builds for services
@@ -240,6 +241,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		req.ServiceID,
 		req.CommitSHA,
 		req.CommitMessage,
+		req.Committer,
 		req.Source,
 	)
 

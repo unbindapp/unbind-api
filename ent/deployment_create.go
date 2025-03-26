@@ -122,6 +122,12 @@ func (dc *DeploymentCreate) SetNillableCommitMessage(s *string) *DeploymentCreat
 	return dc
 }
 
+// SetCommitAuthor sets the "commit_author" field.
+func (dc *DeploymentCreate) SetCommitAuthor(sc *schema.GitCommitter) *DeploymentCreate {
+	dc.mutation.SetCommitAuthor(sc)
+	return dc
+}
+
 // SetStartedAt sets the "started_at" field.
 func (dc *DeploymentCreate) SetStartedAt(t time.Time) *DeploymentCreate {
 	dc.mutation.SetStartedAt(t)
@@ -379,6 +385,10 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 		_spec.SetField(deployment.FieldCommitMessage, field.TypeString, value)
 		_node.CommitMessage = value
 	}
+	if value, ok := dc.mutation.CommitAuthor(); ok {
+		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)
+		_node.CommitAuthor = value
+	}
 	if value, ok := dc.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)
 		_node.StartedAt = &value
@@ -571,6 +581,24 @@ func (u *DeploymentUpsert) UpdateCommitMessage() *DeploymentUpsert {
 // ClearCommitMessage clears the value of the "commit_message" field.
 func (u *DeploymentUpsert) ClearCommitMessage() *DeploymentUpsert {
 	u.SetNull(deployment.FieldCommitMessage)
+	return u
+}
+
+// SetCommitAuthor sets the "commit_author" field.
+func (u *DeploymentUpsert) SetCommitAuthor(v *schema.GitCommitter) *DeploymentUpsert {
+	u.Set(deployment.FieldCommitAuthor, v)
+	return u
+}
+
+// UpdateCommitAuthor sets the "commit_author" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateCommitAuthor() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldCommitAuthor)
+	return u
+}
+
+// ClearCommitAuthor clears the value of the "commit_author" field.
+func (u *DeploymentUpsert) ClearCommitAuthor() *DeploymentUpsert {
+	u.SetNull(deployment.FieldCommitAuthor)
 	return u
 }
 
@@ -849,6 +877,27 @@ func (u *DeploymentUpsertOne) UpdateCommitMessage() *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) ClearCommitMessage() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearCommitMessage()
+	})
+}
+
+// SetCommitAuthor sets the "commit_author" field.
+func (u *DeploymentUpsertOne) SetCommitAuthor(v *schema.GitCommitter) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCommitAuthor(v)
+	})
+}
+
+// UpdateCommitAuthor sets the "commit_author" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateCommitAuthor() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCommitAuthor()
+	})
+}
+
+// ClearCommitAuthor clears the value of the "commit_author" field.
+func (u *DeploymentUpsertOne) ClearCommitAuthor() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCommitAuthor()
 	})
 }
 
@@ -1312,6 +1361,27 @@ func (u *DeploymentUpsertBulk) UpdateCommitMessage() *DeploymentUpsertBulk {
 func (u *DeploymentUpsertBulk) ClearCommitMessage() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearCommitMessage()
+	})
+}
+
+// SetCommitAuthor sets the "commit_author" field.
+func (u *DeploymentUpsertBulk) SetCommitAuthor(v *schema.GitCommitter) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetCommitAuthor(v)
+	})
+}
+
+// UpdateCommitAuthor sets the "commit_author" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateCommitAuthor() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateCommitAuthor()
+	})
+}
+
+// ClearCommitAuthor clears the value of the "commit_author" field.
+func (u *DeploymentUpsertBulk) ClearCommitAuthor() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearCommitAuthor()
 	})
 }
 

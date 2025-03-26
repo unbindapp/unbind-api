@@ -140,6 +140,18 @@ func (du *DeploymentUpdate) ClearCommitMessage() *DeploymentUpdate {
 	return du
 }
 
+// SetCommitAuthor sets the "commit_author" field.
+func (du *DeploymentUpdate) SetCommitAuthor(sc *schema.GitCommitter) *DeploymentUpdate {
+	du.mutation.SetCommitAuthor(sc)
+	return du
+}
+
+// ClearCommitAuthor clears the value of the "commit_author" field.
+func (du *DeploymentUpdate) ClearCommitAuthor() *DeploymentUpdate {
+	du.mutation.ClearCommitAuthor()
+	return du
+}
+
 // SetStartedAt sets the "started_at" field.
 func (du *DeploymentUpdate) SetStartedAt(t time.Time) *DeploymentUpdate {
 	du.mutation.SetStartedAt(t)
@@ -376,6 +388,12 @@ func (du *DeploymentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if du.mutation.CommitMessageCleared() {
 		_spec.ClearField(deployment.FieldCommitMessage, field.TypeString)
 	}
+	if value, ok := du.mutation.CommitAuthor(); ok {
+		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)
+	}
+	if du.mutation.CommitAuthorCleared() {
+		_spec.ClearField(deployment.FieldCommitAuthor, field.TypeJSON)
+	}
 	if value, ok := du.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)
 	}
@@ -568,6 +586,18 @@ func (duo *DeploymentUpdateOne) SetNillableCommitMessage(s *string) *DeploymentU
 // ClearCommitMessage clears the value of the "commit_message" field.
 func (duo *DeploymentUpdateOne) ClearCommitMessage() *DeploymentUpdateOne {
 	duo.mutation.ClearCommitMessage()
+	return duo
+}
+
+// SetCommitAuthor sets the "commit_author" field.
+func (duo *DeploymentUpdateOne) SetCommitAuthor(sc *schema.GitCommitter) *DeploymentUpdateOne {
+	duo.mutation.SetCommitAuthor(sc)
+	return duo
+}
+
+// ClearCommitAuthor clears the value of the "commit_author" field.
+func (duo *DeploymentUpdateOne) ClearCommitAuthor() *DeploymentUpdateOne {
+	duo.mutation.ClearCommitAuthor()
 	return duo
 }
 
@@ -836,6 +866,12 @@ func (duo *DeploymentUpdateOne) sqlSave(ctx context.Context) (_node *Deployment,
 	}
 	if duo.mutation.CommitMessageCleared() {
 		_spec.ClearField(deployment.FieldCommitMessage, field.TypeString)
+	}
+	if value, ok := duo.mutation.CommitAuthor(); ok {
+		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)
+	}
+	if duo.mutation.CommitAuthorCleared() {
+		_spec.ClearField(deployment.FieldCommitAuthor, field.TypeJSON)
 	}
 	if value, ok := duo.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)

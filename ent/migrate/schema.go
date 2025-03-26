@@ -19,6 +19,7 @@ var (
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "commit_sha", Type: field.TypeString, Nullable: true},
 		{Name: "commit_message", Type: field.TypeString, Nullable: true},
+		{Name: "commit_author", Type: field.TypeJSON, Nullable: true},
 		{Name: "started_at", Type: field.TypeTime, Nullable: true},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "kubernetes_job_name", Type: field.TypeString, Nullable: true},
@@ -35,7 +36,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "deployments_services_deployments",
-				Columns:    []*schema.Column{DeploymentsColumns[14]},
+				Columns:    []*schema.Column{DeploymentsColumns[15]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

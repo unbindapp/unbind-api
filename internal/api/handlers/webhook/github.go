@@ -2,7 +2,6 @@ package webhook_handler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -252,9 +251,30 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			return &GithubWebhookOutput{}, nil
 		}
 
-		// Serialize
-		marshalled, _ := json.Marshal(e)
-		log.Info("Received push event", "event", string(marshalled))
+		// Get info
+		sender := e.GetSender()
+		headCommit := e.GetHeadCommit()
+		var committer *schema.GitCommitter
+		var commitSHA string
+		var commitMessage string
+
+		if sender != nil {
+			committer = &schema.GitCommitter{
+				Name:      sender.GetLogin(),
+				AvatarURL: sender.GetAvatarURL(),
+			}
+			log.Info("sender", "login", sender.GetLogin(), "avatar", sender.GetAvatarURL())
+		} else {
+			log.Info("NIL Sender")
+		}
+
+		if headCommit != nil {
+			commitSHA = headCommit.GetSHA()
+			commitMessage = headCommit.GetMessage()
+			log.Info("head commit", "sha", commitSHA, "message", commitMessage)
+		} else {
+			log.Info("NIL Head Commit")
+		}
 
 		repoName := e.Repo.GetName()
 		repoUrl := e.Repo.GetCloneURL()
@@ -314,14 +334,12 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 
 			log.Info("Enqueuing build", "repo", repoName, "branch", ref, "serviceID", service.ID, "installationID", installationID, "appID", installation.GithubAppID, "repoUrl", repoUrl)
 			req := deployctl.DeploymentJobRequest{
-				ServiceID:   service.ID,
-				Environment: env,
-				Source:      schema.DeploymentSourceGit,
-			}
-			headCommit := e.GetHeadCommit()
-			if headCommit != nil {
-				req.CommitSHA = headCommit.GetSHA()
-				req.CommitMessage = headCommit.GetMessage()
+				ServiceID:     service.ID,
+				Environment:   env,
+				Source:        schema.DeploymentSourceGit,
+				CommitSHA:     commitSHA,
+				CommitMessage: commitMessage,
+				Committer:     committer,
 			}
 			jobID, err := self.srv.DeploymentController.EnqueueDeploymentJob(
 				ctx,

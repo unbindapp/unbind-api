@@ -44,7 +44,7 @@ func init() {
 	// deployment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	deployment.UpdateDefaultUpdatedAt = deploymentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// deploymentDescAttempts is the schema descriptor for attempts field.
-	deploymentDescAttempts := deploymentFields[10].Descriptor()
+	deploymentDescAttempts := deploymentFields[11].Descriptor()
 	// deployment.DefaultAttempts holds the default value on creation for the attempts field.
 	deployment.DefaultAttempts = deploymentDescAttempts.Default.(int)
 	// deploymentDescID is the schema descriptor for id field.

@@ -502,6 +502,16 @@ func CommitMessageContainsFold(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldContainsFold(FieldCommitMessage, v))
 }
 
+// CommitAuthorIsNil applies the IsNil predicate on the "commit_author" field.
+func CommitAuthorIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldCommitAuthor))
+}
+
+// CommitAuthorNotNil applies the NotNil predicate on the "commit_author" field.
+func CommitAuthorNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldCommitAuthor))
+}
+
 // StartedAtEQ applies the EQ predicate on the "started_at" field.
 func StartedAtEQ(v time.Time) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldStartedAt, v))

@@ -33,6 +33,8 @@ const (
 	FieldCommitSha = "commit_sha"
 	// FieldCommitMessage holds the string denoting the commit_message field in the database.
 	FieldCommitMessage = "commit_message"
+	// FieldCommitAuthor holds the string denoting the commit_author field in the database.
+	FieldCommitAuthor = "commit_author"
 	// FieldStartedAt holds the string denoting the started_at field in the database.
 	FieldStartedAt = "started_at"
 	// FieldCompletedAt holds the string denoting the completed_at field in the database.
@@ -69,6 +71,7 @@ var Columns = []string{
 	FieldError,
 	FieldCommitSha,
 	FieldCommitMessage,
+	FieldCommitAuthor,
 	FieldStartedAt,
 	FieldCompletedAt,
 	FieldKubernetesJobName,

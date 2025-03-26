@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -37,6 +38,8 @@ type Deployment struct {
 	CommitSha string `json:"commit_sha,omitempty"`
 	// CommitMessage holds the value of the "commit_message" field.
 	CommitMessage string `json:"commit_message,omitempty"`
+	// CommitAuthor holds the value of the "commit_author" field.
+	CommitAuthor *schema.GitCommitter `json:"commit_author,omitempty"`
 	// StartedAt holds the value of the "started_at" field.
 	StartedAt *time.Time `json:"started_at,omitempty"`
 	// CompletedAt holds the value of the "completed_at" field.
@@ -80,6 +83,8 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case deployment.FieldCommitAuthor:
+			values[i] = new([]byte)
 		case deployment.FieldAttempts:
 			values[i] = new(sql.NullInt64)
 		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus, deployment.FieldImage:
@@ -156,6 +161,14 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field commit_message", values[i])
 			} else if value.Valid {
 				d.CommitMessage = value.String
+			}
+		case deployment.FieldCommitAuthor:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field commit_author", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &d.CommitAuthor); err != nil {
+					return fmt.Errorf("unmarshal field commit_author: %w", err)
+				}
 			}
 		case deployment.FieldStartedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -259,6 +272,9 @@ func (d *Deployment) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("commit_message=")
 	builder.WriteString(d.CommitMessage)
+	builder.WriteString(", ")
+	builder.WriteString("commit_author=")
+	builder.WriteString(fmt.Sprintf("%v", d.CommitAuthor))
 	builder.WriteString(", ")
 	if v := d.StartedAt; v != nil {
 		builder.WriteString("started_at=")

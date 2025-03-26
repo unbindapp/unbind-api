@@ -89,6 +89,12 @@ func (u DeploymentSource) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/DeploymentSource"}
 }
 
+// Type to keep track of git committer
+type GitCommitter struct {
+	Name      string `json:"name"`
+	AvatarURL string `json:"avatar_url"`
+}
+
 // Deployment holds the schema definition for the Deployment entity.
 type Deployment struct {
 	ent.Schema
@@ -114,6 +120,8 @@ func (Deployment) Fields() []ent.Field {
 		field.String("commit_sha").
 			Optional(),
 		field.String("commit_message").
+			Optional(),
+		field.JSON("commit_author", &GitCommitter{}).
 			Optional(),
 		field.Time("started_at").
 			Optional().
