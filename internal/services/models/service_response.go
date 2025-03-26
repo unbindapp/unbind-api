@@ -18,7 +18,7 @@ type ServiceResponse struct {
 	GitRepository        *string                `json:"git_repository,omitempty"`
 	CreatedAt            time.Time              `json:"created_at"`
 	UpdatedAt            time.Time              `json:"updated_at"`
-	CurrentDeployment    *DeploymentResponse    `json:"current_deployment_id,omitempty"`
+	CurrentDeployment    *DeploymentResponse    `json:"current_deployment,omitempty"`
 	LastDeployment       *DeploymentResponse    `json:"last_deployment,omitempty"`
 	Config               *ServiceConfigResponse `json:"config"`
 }
