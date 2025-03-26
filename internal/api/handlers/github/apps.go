@@ -164,7 +164,7 @@ type GithubAppListInput struct {
 
 type GithubAppListResponse struct {
 	Body struct {
-		Data []*ent.GithubApp `json:"data"`
+		Data []*GithubAppAPIResponse `json:"data"`
 	}
 }
 
@@ -176,6 +176,40 @@ func (self *HandlerGroup) HandleListGithubApps(ctx context.Context, input *Githu
 	}
 
 	resp := &GithubAppListResponse{}
-	resp.Body.Data = apps
+	resp.Body.Data = transformGithubAppEntities(apps)
 	return resp, nil
+}
+
+func transformGithubAppEntity(entity *ent.GithubApp) *GithubAppAPIResponse {
+	return &GithubAppAPIResponse{
+		ID:            entity.ID,
+		CreatedAt:     entity.CreatedAt,
+		UpdatedAt:     entity.UpdatedAt,
+		CreatedBy:     entity.CreatedBy,
+		Name:          entity.Name,
+		Installations: transformGithubInstallationEntities(entity.Edges.Installations),
+	}
+}
+
+func transformGithubAppEntities(entities []*ent.GithubApp) []*GithubAppAPIResponse {
+	result := make([]*GithubAppAPIResponse, len(entities))
+	for i, entity := range entities {
+		result[i] = transformGithubAppEntity(entity)
+	}
+	return result
+}
+
+type GithubAppAPIResponse struct {
+	// ID of the ent.
+	// The GitHub App ID
+	ID int64 `json:"id,omitempty"`
+	// The time at which the entity was created.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// The time at which the entity was last updated.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// The user that created this github app.
+	CreatedBy uuid.UUID `json:"created_by,omitempty"`
+	// Name of the GitHub App
+	Name          string                           `json:"name,omitempty"`
+	Installations []*GithubInstallationAPIResponse `json:"installations,omitempty"`
 }
