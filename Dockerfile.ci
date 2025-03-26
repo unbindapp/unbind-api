@@ -5,8 +5,8 @@ COPY ./internal/oauth2server/template/* /app/template/
 COPY ./cmd/api/api /app/api
 COPY ./cmd/oauth2server/oauth2server /app/oauth2server
 COPY ./cmd/cli/cli /app/cli
-COPY ./cmd/builder/builder /app/builder
 
-EXPOSE 8080
+EXPOSE 8089
+EXPOSE 8090
 
 CMD ["/app/server"]

@@ -98,6 +98,16 @@ jobs:
           file: ./Dockerfile.ci
           tags: unbindapp/unbind-api:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
 
+      - name: Build and push builder image
+        if: success()
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          file: ./Dockerfile.ci-builder
+          tags: unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
+
   deploy_prod:
     name: 🚀 Deploy Apps (PROD)
     runs-on: ubuntu-latest
