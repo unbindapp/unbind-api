@@ -49,7 +49,7 @@ func (self *GithubClient) CreateAppManifest(redirectUrl string, setupUrl string,
 	manifest = &GitHubAppManifest{
 		Name:        appName,
 		Description: "Application to connect unbind with Github",
-		URL:         self.cfg.ExternalURL,
+		URL:         self.cfg.ExternalAPIURL,
 		HookAttributes: HookAttributes{
 			URL: self.cfg.GithubWebhookURL,
 		},

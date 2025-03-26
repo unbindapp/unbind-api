@@ -12,8 +12,10 @@ import (
 
 type Config struct {
 	// Root
-	ExternalURL       string `env:"EXTERNAL_URL" envDefault:"http://localhost:8089"`
-	ExternalOauth2URL string `env:"EXTERNAL_OAUTH2_URL" envDefault:"http://localhost:8090"`
+	ExternalAPIURL string `env:"EXTERNAL_API_URL" envDefault:"http://localhost:8089"`
+	// This is for generating subdomains
+	ExternalWildcardBaseURL string `env:"EXTERNAL_WILDCARD_BASE_URL" envDefault:"http://localhost:8089"`
+	ExternalOauth2URL       string `env:"EXTERNAL_OAUTH2_URL" envDefault:"http://localhost:8090"`
 	// Github Specific
 	GithubURL        string `env:"GITHUB_URL" envDefault:"https://github.com"` // Override for github enterprise
 	GithubWebhookURL string
@@ -56,7 +58,7 @@ func NewConfig() *Config {
 
 	// Get suffix if not present
 	if cfg.UnbindSuffix == "" {
-		suffix, err := utils.ValidateAndExtractDomain(cfg.ExternalURL)
+		suffix, err := utils.ValidateAndExtractDomain(cfg.ExternalAPIURL)
 		if err != nil {
 			log.Fatal("Error extracting domain from external URL", "err", err)
 		}
@@ -64,7 +66,7 @@ func NewConfig() *Config {
 	}
 
 	// Parse github callback URL
-	baseURL, _ := url.Parse(cfg.ExternalURL)
+	baseURL, _ := url.Parse(cfg.ExternalAPIURL)
 	baseURL.Path = path.Join(baseURL.Path, "webhook/github")
 	cfg.GithubWebhookURL = baseURL.String()
 

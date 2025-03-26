@@ -145,7 +145,7 @@ func startAPI(cfg *config.Config) {
 				TokenURL: cfg.DexIssuerURL + "/token",
 			},
 			// ! TODO - adjust redirect when necessary
-			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalURL),
+			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalAPIURL),
 			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 		},
 		GithubClient:         githubClient,
@@ -182,7 +182,7 @@ func startAPI(cfg *config.Config) {
 	config.DocsPath = ""
 	config.OpenAPI.Servers = []*huma.Server{
 		{
-			URL: cfg.ExternalURL,
+			URL: cfg.ExternalAPIURL,
 		},
 	}
 	api := humachi.New(r, config)

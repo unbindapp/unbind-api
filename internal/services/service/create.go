@@ -197,7 +197,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		if len(hosts) == 0 && public {
 			// Generate a subdomain
-			domain, err := utils.GenerateSubdomain(input.DisplayName, environment.Name, self.cfg.ExternalURL)
+			domain, err := utils.GenerateSubdomain(input.DisplayName, environment.Name, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
 				log.Warnf("Failed to generate subdomain: %v", err)
 				public = false
@@ -210,7 +210,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				}
 				if domainCount > 0 {
 					// Re-generate with numerical suffix
-					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s%d", input.DisplayName, domainCount), environment.Name, self.cfg.ExternalURL)
+					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s%d", input.DisplayName, domainCount), environment.Name, self.cfg.ExternalWildcardBaseURL)
 					if err != nil {
 						log.Warnf("Failed to generate subdomain: %v", err)
 						public = false
