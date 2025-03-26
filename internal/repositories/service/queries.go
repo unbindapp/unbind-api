@@ -25,6 +25,7 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 			dq.Order(ent.Desc(deployment.FieldCreatedAt))
 			dq.Limit(1)
 		}).
+		WithCurrentDeployment().
 		Only(ctx)
 }
 
@@ -37,6 +38,7 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 			dq.Order(ent.Desc(deployment.FieldCreatedAt))
 			dq.Limit(1)
 		}).
+		WithCurrentDeployment().
 		All(ctx)
 }
 
@@ -48,6 +50,7 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 			dq.Order(ent.Desc(deployment.FieldCreatedAt))
 			dq.Limit(1)
 		}).
+		WithCurrentDeployment().
 		All(ctx)
 }
 
