@@ -102,6 +102,11 @@ func main() {
 		log.Error("Failed to attach deployment metadata", "deployment_id", cfg.ServiceDeploymentID, "err", err)
 	}
 
+	// Update active deployment
+	if err = repo.Service().SetCurrentDeployment(ctx, cfg.ServiceID, cfg.ServiceDeploymentID); err != nil {
+		log.Error("Failed to set current deployment", "service_id", cfg.ServiceID, "deployment_id", cfg.ServiceDeploymentID, "err", err)
+	}
+
 	// Pretty print the CRD as YAML
 	crdYAML, err := yaml.Marshal(createdCRD)
 	if err != nil {

@@ -39,6 +39,7 @@ type Config struct {
 	// Deployment namespace (kubernetes)
 	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
 	// Service specific
+	ServiceID           uuid.UUID `env:"SERVICE_ID"`
 	ServiceDeploymentID uuid.UUID `env:"SERVICE_DEPLOYMENT_ID"`
 	ServiceName         string    `env:"SERVICE_NAME"`
 	ServiceProvider     string    `env:"SERVICE_PROVIDER"`
