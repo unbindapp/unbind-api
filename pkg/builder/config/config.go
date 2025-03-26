@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -38,14 +39,15 @@ type Config struct {
 	// Deployment namespace (kubernetes)
 	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
 	// Service specific
-	ServiceName         string `env:"SERVICE_NAME"`
-	ServiceProvider     string `env:"SERVICE_PROVIDER"`
-	ServiceFramework    string `env:"SERVICE_FRAMEWORK"`
-	ServicePublic       *bool  `env:"SERVICE_PUBLIC"`
-	ServiceReplicas     *int32 `env:"SERVICE_REPLICAS"`
-	ServiceSecretName   string `env:"SERVICE_SECRET_NAME,required"`
-	ServiceBuildSecrets string `env:"SERVICE_BUILD_SECRETS"`
-	ServiceBuilder      string `env:"SERVICE_BUILDER"`
+	ServiceDeploymentID uuid.UUID `env:"SERVICE_DEPLOYMENT_ID"`
+	ServiceName         string    `env:"SERVICE_NAME"`
+	ServiceProvider     string    `env:"SERVICE_PROVIDER"`
+	ServiceFramework    string    `env:"SERVICE_FRAMEWORK"`
+	ServicePublic       *bool     `env:"SERVICE_PUBLIC"`
+	ServiceReplicas     *int32    `env:"SERVICE_REPLICAS"`
+	ServiceSecretName   string    `env:"SERVICE_SECRET_NAME,required"`
+	ServiceBuildSecrets string    `env:"SERVICE_BUILD_SECRETS"`
+	ServiceBuilder      string    `env:"SERVICE_BUILDER"`
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec
@@ -55,6 +57,26 @@ type Config struct {
 	// Non-env config
 	Hosts []v1.HostSpec
 	Ports []v1.PortSpec
+}
+
+func (self *Config) GetPostgresHost() string {
+	return self.PostgresHost
+}
+
+func (self *Config) GetPostgresPort() int {
+	return self.PostgresPort
+}
+
+func (self *Config) GetPostgresUser() string {
+	return self.PostgresUser
+}
+
+func (self *Config) GetPostgresPassword() string {
+	return self.PostgresPassword
+}
+
+func (self *Config) GetPostgresDB() string {
+	return self.PostgresDB
 }
 
 // Parse environment variables into a Config struct

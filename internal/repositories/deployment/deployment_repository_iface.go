@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // DeploymentRepositoryInterface ...
@@ -24,6 +25,7 @@ type DeploymentRepositoryInterface interface {
 	// Assigns the kubernetes "Job" name to the build job
 	AssignKubernetesJobName(ctx context.Context, buildJobID uuid.UUID, jobName string) (*ent.Deployment, error)
 	SetKubernetesJobStatus(ctx context.Context, buildJobID uuid.UUID, status string) (*ent.Deployment, error)
+	AttachDeploymentMetadata(ctx context.Context, deploymentID uuid.UUID, imageName string, resourceDefinition *v1.Service) (*ent.Deployment, error)
 	GetJobsByStatus(ctx context.Context, status schema.DeploymentStatus) ([]*ent.Deployment, error)
 	GetByServiceIDPaginated(ctx context.Context, serviceID uuid.UUID, cursor *time.Time, statusFilter []schema.DeploymentStatus) (jobs []*ent.Deployment, nextCursor *time.Time, err error)
 }

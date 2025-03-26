@@ -214,8 +214,8 @@ func (dc *DeploymentCreate) SetNillableImage(s *string) *DeploymentCreate {
 }
 
 // SetResourceDefinition sets the "resource_definition" field.
-func (dc *DeploymentCreate) SetResourceDefinition(vs *v1.ServiceSpec) *DeploymentCreate {
-	dc.mutation.SetResourceDefinition(vs)
+func (dc *DeploymentCreate) SetResourceDefinition(v *v1.Service) *DeploymentCreate {
+	dc.mutation.SetResourceDefinition(v)
 	return dc
 }
 
@@ -722,7 +722,7 @@ func (u *DeploymentUpsert) ClearImage() *DeploymentUpsert {
 }
 
 // SetResourceDefinition sets the "resource_definition" field.
-func (u *DeploymentUpsert) SetResourceDefinition(v *v1.ServiceSpec) *DeploymentUpsert {
+func (u *DeploymentUpsert) SetResourceDefinition(v *v1.Service) *DeploymentUpsert {
 	u.Set(deployment.FieldResourceDefinition, v)
 	return u
 }
@@ -1057,7 +1057,7 @@ func (u *DeploymentUpsertOne) ClearImage() *DeploymentUpsertOne {
 }
 
 // SetResourceDefinition sets the "resource_definition" field.
-func (u *DeploymentUpsertOne) SetResourceDefinition(v *v1.ServiceSpec) *DeploymentUpsertOne {
+func (u *DeploymentUpsertOne) SetResourceDefinition(v *v1.Service) *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.SetResourceDefinition(v)
 	})
@@ -1562,7 +1562,7 @@ func (u *DeploymentUpsertBulk) ClearImage() *DeploymentUpsertBulk {
 }
 
 // SetResourceDefinition sets the "resource_definition" field.
-func (u *DeploymentUpsertBulk) SetResourceDefinition(v *v1.ServiceSpec) *DeploymentUpsertBulk {
+func (u *DeploymentUpsertBulk) SetResourceDefinition(v *v1.Service) *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.SetResourceDefinition(v)
 	})

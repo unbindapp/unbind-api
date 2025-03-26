@@ -275,8 +275,8 @@ func (du *DeploymentUpdate) ClearImage() *DeploymentUpdate {
 }
 
 // SetResourceDefinition sets the "resource_definition" field.
-func (du *DeploymentUpdate) SetResourceDefinition(vs *v1.ServiceSpec) *DeploymentUpdate {
-	du.mutation.SetResourceDefinition(vs)
+func (du *DeploymentUpdate) SetResourceDefinition(v *v1.Service) *DeploymentUpdate {
+	du.mutation.SetResourceDefinition(v)
 	return du
 }
 
@@ -742,8 +742,8 @@ func (duo *DeploymentUpdateOne) ClearImage() *DeploymentUpdateOne {
 }
 
 // SetResourceDefinition sets the "resource_definition" field.
-func (duo *DeploymentUpdateOne) SetResourceDefinition(vs *v1.ServiceSpec) *DeploymentUpdateOne {
-	duo.mutation.SetResourceDefinition(vs)
+func (duo *DeploymentUpdateOne) SetResourceDefinition(v *v1.Service) *DeploymentUpdateOne {
+	duo.mutation.SetResourceDefinition(v)
 	return duo
 }
 

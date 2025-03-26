@@ -10,6 +10,14 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
+type ConfigInterface interface {
+	GetPostgresHost() string
+	GetPostgresPort() int
+	GetPostgresUser() string
+	GetPostgresPassword() string
+	GetPostgresDB() string
+}
+
 type Config struct {
 	// Root
 	ExternalAPIURL string `env:"EXTERNAL_API_URL" envDefault:"http://localhost:8089"`
@@ -47,6 +55,26 @@ type Config struct {
 	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD,required"`
 	// ! TODO - remove me some day, for bypassing oauth
 	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
+}
+
+func (self *Config) GetPostgresHost() string {
+	return self.PostgresHost
+}
+
+func (self *Config) GetPostgresPort() int {
+	return self.PostgresPort
+}
+
+func (self *Config) GetPostgresUser() string {
+	return self.PostgresUser
+}
+
+func (self *Config) GetPostgresPassword() string {
+	return self.PostgresPassword
+}
+
+func (self *Config) GetPostgresDB() string {
+	return self.PostgresDB
 }
 
 // Parse environment variables into a Config struct

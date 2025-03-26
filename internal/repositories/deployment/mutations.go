@@ -8,6 +8,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error) {
@@ -83,5 +84,12 @@ func (self *DeploymentRepository) AssignKubernetesJobName(ctx context.Context, b
 func (self *DeploymentRepository) SetKubernetesJobStatus(ctx context.Context, buildJobID uuid.UUID, status string) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.UpdateOneID(buildJobID).
 		SetKubernetesJobStatus(status).
+		Save(ctx)
+}
+
+func (self *DeploymentRepository) AttachDeploymentMetadata(ctx context.Context, deploymentID uuid.UUID, imageName string, resourceDefinition *v1.Service) (*ent.Deployment, error) {
+	return self.base.DB.Deployment.UpdateOneID(deploymentID).
+		SetImage(imageName).
+		SetResourceDefinition(resourceDefinition).
 		Save(ctx)
 }

@@ -16,7 +16,7 @@ import (
 
 // DeployImage creates (or replaces) the service resource in the target namespace
 // for deployment after a successful build job.
-func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (*unstructured.Unstructured, error) {
+func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (*unstructured.Unstructured, *v1.Service, error) {
 	// Extract GitHub repository name from the Git URL
 	gitRepository := extractGitRepository(self.config.GitRepoURL)
 
@@ -86,7 +86,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 	// Convert to unstructured for the dynamic client
 	unstructuredObj, err := convertToUnstructured(service)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert service to unstructured: %v", err)
+		return nil, nil, fmt.Errorf("failed to convert service to unstructured: %v", err)
 	}
 
 	// Define the GroupVersionResource for the Service custom resource
@@ -101,12 +101,13 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 	if err != nil {
 		// If the resource already exists, update it
 		if apierrors.IsAlreadyExists(err) {
-			return updateExistingServiceCR(ctx, self, serviceGVR, unstructuredObj)
+			res, err := updateExistingServiceCR(ctx, self, serviceGVR, unstructuredObj)
+			return res, service, err
 		}
-		return nil, fmt.Errorf("failed to create service custom resource: %v", err)
+		return nil, nil, fmt.Errorf("failed to create service custom resource: %v", err)
 	}
 
-	return createdCR, nil
+	return createdCR, service, nil
 }
 
 // updateExistingServiceCR handles updating an existing Service custom resource

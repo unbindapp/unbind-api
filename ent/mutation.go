@@ -78,7 +78,7 @@ type DeploymentMutation struct {
 	attempts              *int
 	addattempts           *int
 	image                 *string
-	resource_definition   **v1.ServiceSpec
+	resource_definition   **v1.Service
 	clearedFields         map[string]struct{}
 	service               *uuid.UUID
 	clearedservice        bool
@@ -869,12 +869,12 @@ func (m *DeploymentMutation) ResetImage() {
 }
 
 // SetResourceDefinition sets the "resource_definition" field.
-func (m *DeploymentMutation) SetResourceDefinition(vs *v1.ServiceSpec) {
-	m.resource_definition = &vs
+func (m *DeploymentMutation) SetResourceDefinition(v *v1.Service) {
+	m.resource_definition = &v
 }
 
 // ResourceDefinition returns the value of the "resource_definition" field in the mutation.
-func (m *DeploymentMutation) ResourceDefinition() (r *v1.ServiceSpec, exists bool) {
+func (m *DeploymentMutation) ResourceDefinition() (r *v1.Service, exists bool) {
 	v := m.resource_definition
 	if v == nil {
 		return
@@ -885,7 +885,7 @@ func (m *DeploymentMutation) ResourceDefinition() (r *v1.ServiceSpec, exists boo
 // OldResourceDefinition returns the old "resource_definition" field's value of the Deployment entity.
 // If the Deployment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DeploymentMutation) OldResourceDefinition(ctx context.Context) (v *v1.ServiceSpec, err error) {
+func (m *DeploymentMutation) OldResourceDefinition(ctx context.Context) (v *v1.Service, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceDefinition is only allowed on UpdateOne operations")
 	}
@@ -1223,7 +1223,7 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 		m.SetImage(v)
 		return nil
 	case deployment.FieldResourceDefinition:
-		v, ok := value.(*v1.ServiceSpec)
+		v, ok := value.(*v1.Service)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

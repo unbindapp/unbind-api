@@ -54,7 +54,7 @@ type Deployment struct {
 	// Reference to the image used for the deployment
 	Image *string `json:"image,omitempty"`
 	// The Kubernetes resource definition for the deployment
-	ResourceDefinition *v1.ServiceSpec `json:"resource_definition,omitempty"`
+	ResourceDefinition *v1.Service `json:"resource_definition,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DeploymentQuery when eager-loading is set.
 	Edges        DeploymentEdges `json:"edges"`

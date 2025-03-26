@@ -65,7 +65,6 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	var committer *schema.GitCommitter
 
 	if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
-
 		commitSHA, commitMessage, committer, err = self.githubClient.GetBranchHeadSummary(ctx,
 			service.Edges.GithubInstallation,
 			service.Edges.GithubInstallation.AccountLogin,

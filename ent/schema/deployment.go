@@ -144,7 +144,7 @@ func (Deployment) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Comment("Reference to the image used for the deployment"),
-		field.JSON("resource_definition", &v1.ServiceSpec{}).
+		field.JSON("resource_definition", &v1.Service{}).
 			Optional().
 			Comment("The Kubernetes resource definition for the deployment"),
 	}

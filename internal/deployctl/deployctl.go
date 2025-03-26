@@ -249,6 +249,8 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		return nil, fmt.Errorf("failed to create deployment record: %w", err)
 	}
 
+	req.Environment["SERVICE_DEPLOYMENT_ID"] = job.ID.String()
+
 	// Add to the queue
 	err = self.jobQueue.Enqueue(ctx, job.ID.String(), req)
 	if err != nil {

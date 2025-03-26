@@ -51,16 +51,16 @@ func (c *SqliteConn) Dialect() string {
 func (c *SqliteConn) Driver() string { return "sqlite" }
 
 // Gets the DB connection information based on environment variables
-func GetSqlDbConn(cfg *config.Config, mock bool) (SqlDBConn, error) {
+func GetSqlDbConn(cfg config.ConfigInterface, mock bool) (SqlDBConn, error) {
 	if mock {
 		return &SqliteConn{FileName: "testing", Mode: "memory"}, nil
 	}
 	// Use postgres
-	postgresDb := cfg.PostgresDB
-	postgresUser := cfg.PostgresUser
-	postgresPassword := cfg.PostgresPassword
-	postgresHost := cfg.PostgresHost
-	postgresPort := cfg.PostgresPort
+	postgresDb := cfg.GetPostgresDB()
+	postgresUser := cfg.GetPostgresUser()
+	postgresPassword := cfg.GetPostgresPassword()
+	postgresHost := cfg.GetPostgresHost()
+	postgresPort := cfg.GetPostgresPort()
 
 	if postgresDb == "" || postgresUser == "" || postgresPassword == "" {
 		log.Error("Postgres environment variables not set, not sure what to do? so exiting")
