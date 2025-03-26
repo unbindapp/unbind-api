@@ -47,6 +47,8 @@ const (
 	FieldAttempts = "attempts"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldResourceDefinition holds the string denoting the resource_definition field in the database.
+	FieldResourceDefinition = "resource_definition"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// Table holds the table name of the deployment in the database.
@@ -78,6 +80,7 @@ var Columns = []string{
 	FieldKubernetesJobStatus,
 	FieldAttempts,
 	FieldImage,
+	FieldResourceDefinition,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

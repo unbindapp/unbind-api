@@ -157,7 +157,7 @@ func startAPI(cfg *config.Config) {
 		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
 		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
 		LogService:           logs_service.NewLogsService(repo, kubeClient),
-		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController),
+		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient),
 	}
 
 	// New chi router

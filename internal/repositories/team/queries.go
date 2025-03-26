@@ -12,7 +12,18 @@ import (
 func (self *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Team, error) {
 	return self.base.DB.Team.Query().
 		Where(team.ID(id)).
-		WithProjects().
+		WithProjects(func(pq *ent.ProjectQuery) {
+			pq.WithEnvironments(
+				func(eq *ent.EnvironmentQuery) {
+					eq.WithServices(
+						func(sq *ent.ServiceQuery) {
+							sq.WithGithubInstallation()
+							sq.WithServiceConfig()
+						},
+					)
+				},
+			)
+		}).
 		Only(ctx)
 }
 

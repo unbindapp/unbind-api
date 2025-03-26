@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // DeploymentCreate is the builder for creating a Deployment entity.
@@ -212,6 +213,12 @@ func (dc *DeploymentCreate) SetNillableImage(s *string) *DeploymentCreate {
 	return dc
 }
 
+// SetResourceDefinition sets the "resource_definition" field.
+func (dc *DeploymentCreate) SetResourceDefinition(vs *v1.ServiceSpec) *DeploymentCreate {
+	dc.mutation.SetResourceDefinition(vs)
+	return dc
+}
+
 // SetID sets the "id" field.
 func (dc *DeploymentCreate) SetID(u uuid.UUID) *DeploymentCreate {
 	dc.mutation.SetID(u)
@@ -379,11 +386,11 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := dc.mutation.CommitSha(); ok {
 		_spec.SetField(deployment.FieldCommitSha, field.TypeString, value)
-		_node.CommitSha = value
+		_node.CommitSha = &value
 	}
 	if value, ok := dc.mutation.CommitMessage(); ok {
 		_spec.SetField(deployment.FieldCommitMessage, field.TypeString, value)
-		_node.CommitMessage = value
+		_node.CommitMessage = &value
 	}
 	if value, ok := dc.mutation.CommitAuthor(); ok {
 		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)
@@ -411,7 +418,11 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := dc.mutation.Image(); ok {
 		_spec.SetField(deployment.FieldImage, field.TypeString, value)
-		_node.Image = value
+		_node.Image = &value
+	}
+	if value, ok := dc.mutation.ResourceDefinition(); ok {
+		_spec.SetField(deployment.FieldResourceDefinition, field.TypeJSON, value)
+		_node.ResourceDefinition = value
 	}
 	if nodes := dc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -707,6 +718,24 @@ func (u *DeploymentUpsert) UpdateImage() *DeploymentUpsert {
 // ClearImage clears the value of the "image" field.
 func (u *DeploymentUpsert) ClearImage() *DeploymentUpsert {
 	u.SetNull(deployment.FieldImage)
+	return u
+}
+
+// SetResourceDefinition sets the "resource_definition" field.
+func (u *DeploymentUpsert) SetResourceDefinition(v *v1.ServiceSpec) *DeploymentUpsert {
+	u.Set(deployment.FieldResourceDefinition, v)
+	return u
+}
+
+// UpdateResourceDefinition sets the "resource_definition" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateResourceDefinition() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldResourceDefinition)
+	return u
+}
+
+// ClearResourceDefinition clears the value of the "resource_definition" field.
+func (u *DeploymentUpsert) ClearResourceDefinition() *DeploymentUpsert {
+	u.SetNull(deployment.FieldResourceDefinition)
 	return u
 }
 
@@ -1024,6 +1053,27 @@ func (u *DeploymentUpsertOne) UpdateImage() *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) ClearImage() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearImage()
+	})
+}
+
+// SetResourceDefinition sets the "resource_definition" field.
+func (u *DeploymentUpsertOne) SetResourceDefinition(v *v1.ServiceSpec) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetResourceDefinition(v)
+	})
+}
+
+// UpdateResourceDefinition sets the "resource_definition" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateResourceDefinition() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateResourceDefinition()
+	})
+}
+
+// ClearResourceDefinition clears the value of the "resource_definition" field.
+func (u *DeploymentUpsertOne) ClearResourceDefinition() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearResourceDefinition()
 	})
 }
 
@@ -1508,6 +1558,27 @@ func (u *DeploymentUpsertBulk) UpdateImage() *DeploymentUpsertBulk {
 func (u *DeploymentUpsertBulk) ClearImage() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearImage()
+	})
+}
+
+// SetResourceDefinition sets the "resource_definition" field.
+func (u *DeploymentUpsertBulk) SetResourceDefinition(v *v1.ServiceSpec) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetResourceDefinition(v)
+	})
+}
+
+// UpdateResourceDefinition sets the "resource_definition" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateResourceDefinition() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateResourceDefinition()
+	})
+}
+
+// ClearResourceDefinition clears the value of the "resource_definition" field.
+func (u *DeploymentUpsertBulk) ClearResourceDefinition() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearResourceDefinition()
 	})
 }
 

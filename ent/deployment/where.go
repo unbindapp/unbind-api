@@ -877,6 +877,16 @@ func ImageContainsFold(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldContainsFold(FieldImage, v))
 }
 
+// ResourceDefinitionIsNil applies the IsNil predicate on the "resource_definition" field.
+func ResourceDefinitionIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldResourceDefinition))
+}
+
+// ResourceDefinitionNotNil applies the NotNil predicate on the "resource_definition" field.
+func ResourceDefinitionNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldResourceDefinition))
+}
+
 // HasService applies the HasEdge predicate on the "service" edge.
 func HasService() predicate.Deployment {
 	return predicate.Deployment(func(s *sql.Selector) {

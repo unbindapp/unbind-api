@@ -14,6 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // Deployment is the model entity for the Deployment schema.
@@ -35,9 +36,9 @@ type Deployment struct {
 	// Error holds the value of the "error" field.
 	Error string `json:"error,omitempty"`
 	// CommitSha holds the value of the "commit_sha" field.
-	CommitSha string `json:"commit_sha,omitempty"`
+	CommitSha *string `json:"commit_sha,omitempty"`
 	// CommitMessage holds the value of the "commit_message" field.
-	CommitMessage string `json:"commit_message,omitempty"`
+	CommitMessage *string `json:"commit_message,omitempty"`
 	// CommitAuthor holds the value of the "commit_author" field.
 	CommitAuthor *schema.GitCommitter `json:"commit_author,omitempty"`
 	// StartedAt holds the value of the "started_at" field.
@@ -51,7 +52,9 @@ type Deployment struct {
 	// Attempts holds the value of the "attempts" field.
 	Attempts int `json:"attempts,omitempty"`
 	// Reference to the image used for the deployment
-	Image string `json:"image,omitempty"`
+	Image *string `json:"image,omitempty"`
+	// The Kubernetes resource definition for the deployment
+	ResourceDefinition *v1.ServiceSpec `json:"resource_definition,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DeploymentQuery when eager-loading is set.
 	Edges        DeploymentEdges `json:"edges"`
@@ -83,7 +86,7 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case deployment.FieldCommitAuthor:
+		case deployment.FieldCommitAuthor, deployment.FieldResourceDefinition:
 			values[i] = new([]byte)
 		case deployment.FieldAttempts:
 			values[i] = new(sql.NullInt64)
@@ -154,13 +157,15 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field commit_sha", values[i])
 			} else if value.Valid {
-				d.CommitSha = value.String
+				d.CommitSha = new(string)
+				*d.CommitSha = value.String
 			}
 		case deployment.FieldCommitMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field commit_message", values[i])
 			} else if value.Valid {
-				d.CommitMessage = value.String
+				d.CommitMessage = new(string)
+				*d.CommitMessage = value.String
 			}
 		case deployment.FieldCommitAuthor:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -206,7 +211,16 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field image", values[i])
 			} else if value.Valid {
-				d.Image = value.String
+				d.Image = new(string)
+				*d.Image = value.String
+			}
+		case deployment.FieldResourceDefinition:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field resource_definition", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &d.ResourceDefinition); err != nil {
+					return fmt.Errorf("unmarshal field resource_definition: %w", err)
+				}
 			}
 		default:
 			d.selectValues.Set(columns[i], values[i])
@@ -267,11 +281,15 @@ func (d *Deployment) String() string {
 	builder.WriteString("error=")
 	builder.WriteString(d.Error)
 	builder.WriteString(", ")
-	builder.WriteString("commit_sha=")
-	builder.WriteString(d.CommitSha)
+	if v := d.CommitSha; v != nil {
+		builder.WriteString("commit_sha=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("commit_message=")
-	builder.WriteString(d.CommitMessage)
+	if v := d.CommitMessage; v != nil {
+		builder.WriteString("commit_message=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("commit_author=")
 	builder.WriteString(fmt.Sprintf("%v", d.CommitAuthor))
@@ -295,8 +313,13 @@ func (d *Deployment) String() string {
 	builder.WriteString("attempts=")
 	builder.WriteString(fmt.Sprintf("%v", d.Attempts))
 	builder.WriteString(", ")
-	builder.WriteString("image=")
-	builder.WriteString(d.Image)
+	if v := d.Image; v != nil {
+		builder.WriteString("image=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("resource_definition=")
+	builder.WriteString(fmt.Sprintf("%v", d.ResourceDefinition))
 	builder.WriteByte(')')
 	return builder.String()
 }

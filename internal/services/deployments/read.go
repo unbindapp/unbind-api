@@ -47,7 +47,8 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 		return nil, nil, err
 	}
 
-	if err := self.validateInputs(ctx, input); err != nil {
+	_, err := self.validateInputs(ctx, input)
+	if err != nil {
 		return nil, nil, err
 	}
 

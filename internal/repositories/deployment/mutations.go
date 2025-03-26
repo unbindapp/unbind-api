@@ -28,6 +28,8 @@ func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUI
 func (self *DeploymentRepository) MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.UpdateOneID(buildJobID).
 		SetStatus(schema.DeploymentStatusBuilding).
+		// ! TODO - retry deployments?
+		SetAttempts(1).
 		SetStartedAt(time.Now()).
 		Save(ctx)
 }

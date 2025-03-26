@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"golang.org/x/sync/errgroup"
 )
@@ -503,4 +504,43 @@ func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installati
 
 	log.Errorf("Error verifying repository access: %v", err)
 	return false, "", nil
+}
+
+// Get branch head summary - sha, message, author
+func (self *GithubClient) GetBranchHeadSummary(ctx context.Context, installation *ent.GithubInstallation, owner, repo, branch string) (commitSHA, commitMessage string, committer *schema.GitCommitter, err error) {
+	if installation == nil || installation.Edges.GithubApp == nil {
+		return "", "", nil, fmt.Errorf("invalid installation: missing app edge or nil")
+	}
+
+	// Use a timeout context to ensure we don't hang indefinitely
+	timeoutCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	// Get authenticated client
+	authenticatedClient, err := self.GetAuthenticatedClient(timeoutCtx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
+	}
+	defer authenticatedClient.Client().CloseIdleConnections()
+
+	// Get branch information (which includes the head commit SHA)
+	branchInfo, _, err := authenticatedClient.Repositories.GetBranch(ctx, owner, repo, branch, 3)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("error getting branch %s for repository %s/%s: %v", branch, owner, repo, err)
+	}
+
+	repoCommit := branchInfo.GetCommit()
+	commit := repoCommit.GetCommit()
+	author := repoCommit.GetAuthor()
+
+	commitSHA = commit.GetSHA()
+	commitMessage = commit.GetMessage()
+	if author != nil {
+		committer = &schema.GitCommitter{
+			Name:      author.GetLogin(),
+			AvatarURL: author.GetAvatarURL(),
+		}
+	}
+
+	return commitSHA, commitMessage, committer, nil
 }

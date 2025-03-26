@@ -11,6 +11,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // Status enum
@@ -118,9 +119,11 @@ func (Deployment) Fields() []ent.Field {
 		field.String("error").
 			Optional(),
 		field.String("commit_sha").
-			Optional(),
+			Optional().
+			Nillable(),
 		field.String("commit_message").
-			Optional(),
+			Optional().
+			Nillable(),
 		field.JSON("commit_author", &GitCommitter{}).
 			Optional(),
 		field.Time("started_at").
@@ -139,7 +142,11 @@ func (Deployment) Fields() []ent.Field {
 			Default(0),
 		field.String("image").
 			Optional().
+			Nillable().
 			Comment("Reference to the image used for the deployment"),
+		field.JSON("resource_definition", &v1.ServiceSpec{}).
+			Optional().
+			Comment("The Kubernetes resource definition for the deployment"),
 	}
 }
 

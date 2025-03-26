@@ -54,8 +54,28 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 		return nil, err
 	}
 
-	if err := self.validateInputs(ctx, input); err != nil {
+	service, err := self.validateInputs(ctx, input)
+	if err != nil {
 		return nil, err
+	}
+
+	// Get git information if applicable
+	var commitSHA string
+	var commitMessage string
+	var committer *schema.GitCommitter
+
+	if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
+
+		commitSHA, commitMessage, committer, err = self.githubClient.GetBranchHeadSummary(ctx,
+			service.Edges.GithubInstallation,
+			service.Edges.GithubInstallation.AccountLogin,
+			*service.GitRepository,
+			*service.Edges.ServiceConfig.GitBranch)
+
+		// ! TODO - Should we hard fail here?
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Enqueue build job
@@ -65,9 +85,12 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	}
 
 	job, err := self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
-		ServiceID:   input.ServiceID,
-		Environment: env,
-		Source:      schema.DeploymentSourceManual,
+		ServiceID:     input.ServiceID,
+		Environment:   env,
+		Source:        schema.DeploymentSourceManual,
+		CommitSHA:     commitSHA,
+		CommitMessage: commitMessage,
+		Committer:     committer,
 	})
 	if err != nil {
 		return nil, err

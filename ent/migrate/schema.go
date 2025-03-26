@@ -26,6 +26,7 @@ var (
 		{Name: "kubernetes_job_status", Type: field.TypeString, Nullable: true},
 		{Name: "attempts", Type: field.TypeInt, Default: 0},
 		{Name: "image", Type: field.TypeString, Nullable: true},
+		{Name: "resource_definition", Type: field.TypeJSON, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID},
 	}
 	// DeploymentsTable holds the schema information for the "deployments" table.
@@ -36,7 +37,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "deployments_services_deployments",
-				Columns:    []*schema.Column{DeploymentsColumns[15]},
+				Columns:    []*schema.Column{DeploymentsColumns[16]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

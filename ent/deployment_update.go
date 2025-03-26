@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // DeploymentUpdate is the builder for updating Deployment entities.
@@ -273,6 +274,18 @@ func (du *DeploymentUpdate) ClearImage() *DeploymentUpdate {
 	return du
 }
 
+// SetResourceDefinition sets the "resource_definition" field.
+func (du *DeploymentUpdate) SetResourceDefinition(vs *v1.ServiceSpec) *DeploymentUpdate {
+	du.mutation.SetResourceDefinition(vs)
+	return du
+}
+
+// ClearResourceDefinition clears the value of the "resource_definition" field.
+func (du *DeploymentUpdate) ClearResourceDefinition() *DeploymentUpdate {
+	du.mutation.ClearResourceDefinition()
+	return du
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (du *DeploymentUpdate) SetService(s *Service) *DeploymentUpdate {
 	return du.SetServiceID(s.ID)
@@ -429,6 +442,12 @@ func (du *DeploymentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if du.mutation.ImageCleared() {
 		_spec.ClearField(deployment.FieldImage, field.TypeString)
+	}
+	if value, ok := du.mutation.ResourceDefinition(); ok {
+		_spec.SetField(deployment.FieldResourceDefinition, field.TypeJSON, value)
+	}
+	if du.mutation.ResourceDefinitionCleared() {
+		_spec.ClearField(deployment.FieldResourceDefinition, field.TypeJSON)
 	}
 	if du.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -722,6 +741,18 @@ func (duo *DeploymentUpdateOne) ClearImage() *DeploymentUpdateOne {
 	return duo
 }
 
+// SetResourceDefinition sets the "resource_definition" field.
+func (duo *DeploymentUpdateOne) SetResourceDefinition(vs *v1.ServiceSpec) *DeploymentUpdateOne {
+	duo.mutation.SetResourceDefinition(vs)
+	return duo
+}
+
+// ClearResourceDefinition clears the value of the "resource_definition" field.
+func (duo *DeploymentUpdateOne) ClearResourceDefinition() *DeploymentUpdateOne {
+	duo.mutation.ClearResourceDefinition()
+	return duo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (duo *DeploymentUpdateOne) SetService(s *Service) *DeploymentUpdateOne {
 	return duo.SetServiceID(s.ID)
@@ -908,6 +939,12 @@ func (duo *DeploymentUpdateOne) sqlSave(ctx context.Context) (_node *Deployment,
 	}
 	if duo.mutation.ImageCleared() {
 		_spec.ClearField(deployment.FieldImage, field.TypeString)
+	}
+	if value, ok := duo.mutation.ResourceDefinition(); ok {
+		_spec.SetField(deployment.FieldResourceDefinition, field.TypeJSON, value)
+	}
+	if duo.mutation.ResourceDefinitionCleared() {
+		_spec.ClearField(deployment.FieldResourceDefinition, field.TypeJSON)
 	}
 	if duo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -78,6 +78,7 @@ type DeploymentMutation struct {
 	attempts              *int
 	addattempts           *int
 	image                 *string
+	resource_definition   **v1.ServiceSpec
 	clearedFields         map[string]struct{}
 	service               *uuid.UUID
 	clearedservice        bool
@@ -436,7 +437,7 @@ func (m *DeploymentMutation) CommitSha() (r string, exists bool) {
 // OldCommitSha returns the old "commit_sha" field's value of the Deployment entity.
 // If the Deployment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DeploymentMutation) OldCommitSha(ctx context.Context) (v string, err error) {
+func (m *DeploymentMutation) OldCommitSha(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCommitSha is only allowed on UpdateOne operations")
 	}
@@ -485,7 +486,7 @@ func (m *DeploymentMutation) CommitMessage() (r string, exists bool) {
 // OldCommitMessage returns the old "commit_message" field's value of the Deployment entity.
 // If the Deployment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DeploymentMutation) OldCommitMessage(ctx context.Context) (v string, err error) {
+func (m *DeploymentMutation) OldCommitMessage(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCommitMessage is only allowed on UpdateOne operations")
 	}
@@ -835,7 +836,7 @@ func (m *DeploymentMutation) Image() (r string, exists bool) {
 // OldImage returns the old "image" field's value of the Deployment entity.
 // If the Deployment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DeploymentMutation) OldImage(ctx context.Context) (v string, err error) {
+func (m *DeploymentMutation) OldImage(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldImage is only allowed on UpdateOne operations")
 	}
@@ -865,6 +866,55 @@ func (m *DeploymentMutation) ImageCleared() bool {
 func (m *DeploymentMutation) ResetImage() {
 	m.image = nil
 	delete(m.clearedFields, deployment.FieldImage)
+}
+
+// SetResourceDefinition sets the "resource_definition" field.
+func (m *DeploymentMutation) SetResourceDefinition(vs *v1.ServiceSpec) {
+	m.resource_definition = &vs
+}
+
+// ResourceDefinition returns the value of the "resource_definition" field in the mutation.
+func (m *DeploymentMutation) ResourceDefinition() (r *v1.ServiceSpec, exists bool) {
+	v := m.resource_definition
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceDefinition returns the old "resource_definition" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldResourceDefinition(ctx context.Context) (v *v1.ServiceSpec, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceDefinition is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceDefinition requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceDefinition: %w", err)
+	}
+	return oldValue.ResourceDefinition, nil
+}
+
+// ClearResourceDefinition clears the value of the "resource_definition" field.
+func (m *DeploymentMutation) ClearResourceDefinition() {
+	m.resource_definition = nil
+	m.clearedFields[deployment.FieldResourceDefinition] = struct{}{}
+}
+
+// ResourceDefinitionCleared returns if the "resource_definition" field was cleared in this mutation.
+func (m *DeploymentMutation) ResourceDefinitionCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldResourceDefinition]
+	return ok
+}
+
+// ResetResourceDefinition resets all changes to the "resource_definition" field.
+func (m *DeploymentMutation) ResetResourceDefinition() {
+	m.resource_definition = nil
+	delete(m.clearedFields, deployment.FieldResourceDefinition)
 }
 
 // ClearService clears the "service" edge to the Service entity.
@@ -928,7 +978,7 @@ func (m *DeploymentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeploymentMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
 	if m.created_at != nil {
 		fields = append(fields, deployment.FieldCreatedAt)
 	}
@@ -974,6 +1024,9 @@ func (m *DeploymentMutation) Fields() []string {
 	if m.image != nil {
 		fields = append(fields, deployment.FieldImage)
 	}
+	if m.resource_definition != nil {
+		fields = append(fields, deployment.FieldResourceDefinition)
+	}
 	return fields
 }
 
@@ -1012,6 +1065,8 @@ func (m *DeploymentMutation) Field(name string) (ent.Value, bool) {
 		return m.Attempts()
 	case deployment.FieldImage:
 		return m.Image()
+	case deployment.FieldResourceDefinition:
+		return m.ResourceDefinition()
 	}
 	return nil, false
 }
@@ -1051,6 +1106,8 @@ func (m *DeploymentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldAttempts(ctx)
 	case deployment.FieldImage:
 		return m.OldImage(ctx)
+	case deployment.FieldResourceDefinition:
+		return m.OldResourceDefinition(ctx)
 	}
 	return nil, fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1165,6 +1222,13 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetImage(v)
 		return nil
+	case deployment.FieldResourceDefinition:
+		v, ok := value.(*v1.ServiceSpec)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceDefinition(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1237,6 +1301,9 @@ func (m *DeploymentMutation) ClearedFields() []string {
 	if m.FieldCleared(deployment.FieldImage) {
 		fields = append(fields, deployment.FieldImage)
 	}
+	if m.FieldCleared(deployment.FieldResourceDefinition) {
+		fields = append(fields, deployment.FieldResourceDefinition)
+	}
 	return fields
 }
 
@@ -1277,6 +1344,9 @@ func (m *DeploymentMutation) ClearField(name string) error {
 		return nil
 	case deployment.FieldImage:
 		m.ClearImage()
+		return nil
+	case deployment.FieldResourceDefinition:
+		m.ClearResourceDefinition()
 		return nil
 	}
 	return fmt.Errorf("unknown Deployment nullable field %s", name)
@@ -1330,6 +1400,9 @@ func (m *DeploymentMutation) ResetField(name string) error {
 		return nil
 	case deployment.FieldImage:
 		m.ResetImage()
+		return nil
+	case deployment.FieldResourceDefinition:
+		m.ResetResourceDefinition()
 		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)

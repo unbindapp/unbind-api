@@ -263,17 +263,11 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				Name:      sender.GetLogin(),
 				AvatarURL: sender.GetAvatarURL(),
 			}
-			log.Info("sender", "login", sender.GetLogin(), "avatar", sender.GetAvatarURL())
-		} else {
-			log.Info("NIL Sender")
 		}
 
 		if headCommit != nil {
-			commitSHA = headCommit.GetSHA()
+			commitSHA = headCommit.GetID()
 			commitMessage = headCommit.GetMessage()
-			log.Info("head commit", "sha", commitSHA, "message", commitMessage)
-		} else {
-			log.Info("NIL Head Commit")
 		}
 
 		repoName := e.Repo.GetName()

@@ -3,11 +3,10 @@ package deployments_service
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
+	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -16,61 +15,65 @@ import (
 type DeploymentService struct {
 	repo                 repositories.RepositoriesInterface
 	deploymentController *deployctl.DeploymentController
+	githubClient         *github.GithubClient
 }
 
-func NewDeploymentService(repo repositories.RepositoriesInterface, deploymentController *deployctl.DeploymentController) *DeploymentService {
+func NewDeploymentService(repo repositories.RepositoriesInterface, deploymentController *deployctl.DeploymentController, githubClient *github.GithubClient) *DeploymentService {
 	return &DeploymentService{
 		repo:                 repo,
 		deploymentController: deploymentController,
+		githubClient:         githubClient,
 	}
 }
 
-func (self *DeploymentService) validateInputs(ctx context.Context, input models.DeploymentInputRequirements) error {
+func (self *DeploymentService) validateInputs(ctx context.Context, input models.DeploymentInputRequirements) (*ent.Service, error) {
 	// Get team
 	team, err := self.repo.Team().GetByID(ctx, input.GetTeamID())
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, input.GetTeamID().String())
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, input.GetTeamID().String())
 		}
-		return err
+		return nil, err
 	}
 
-	// Get project
-	project, err := self.repo.Project().GetByID(ctx, input.GetProjectID())
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, input.GetProjectID().String())
-		}
-		return err
-	}
-
-	if project.TeamID != team.ID {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "project does not belong to team")
-	}
-
-	var environmentID *uuid.UUID
-	for _, env := range project.Edges.Environments {
-		if env.ID == input.GetEnvironmentID() {
-			environmentID = utils.ToPtr(env.ID)
+	// Validate project
+	var project *ent.Project
+	for _, proj := range team.Edges.Projects {
+		if proj.ID == input.GetProjectID() {
+			project = proj
 			break
 		}
 	}
 
-	if environmentID == nil {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "environment does not belong to project")
+	if project == nil {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "project does not belong to team")
 	}
 
-	// Get service
-	service, err := self.repo.Service().GetByID(ctx, input.GetServiceID())
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "service not found")
+	// Validate environment
+	var environment *ent.Environment
+	for _, env := range project.Edges.Environments {
+		if env.ID == input.GetEnvironmentID() {
+			environment = env
+			break
 		}
-		return err
 	}
 
-	if service.EnvironmentID != *environmentID {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "service does not belong to environment")
+	if environment == nil {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "environment does not belong to project")
 	}
-	return nil
+
+	// Validate service
+	var service *ent.Service
+	for _, svc := range environment.Edges.Services {
+		if svc.ID == input.GetServiceID() {
+			service = svc
+			break
+		}
+	}
+
+	if service == nil {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "service does not belong to environment")
+	}
+
+	return service, nil
 }
