@@ -19,6 +19,7 @@ type DeploymentResponse struct {
 	CommitSHA     *string                 `json:"commit_sha,omitempty" required:"false"`
 	CommitMessage *string                 `json:"commit_message,omitempty" required:"false"`
 	CommitAuthor  *schema.GitCommitter    `json:"commit_author,omitempty" required:"false"`
+	Image         *string                 `json:"image,omitempty" required:"false"`
 	CreatedAt     time.Time               `json:"created_at"`
 	UpdatedAt     time.Time               `json:"updated_at"`
 }
@@ -38,6 +39,7 @@ func TransformDeploymentEntity(entity *ent.Deployment) *DeploymentResponse {
 			CommitSHA:     entity.CommitSha,
 			CommitMessage: entity.CommitMessage,
 			CommitAuthor:  entity.CommitAuthor,
+			Image:         entity.Image,
 			CreatedAt:     entity.CreatedAt,
 			UpdatedAt:     entity.UpdatedAt,
 		}
