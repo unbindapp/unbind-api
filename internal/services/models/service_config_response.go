@@ -14,8 +14,8 @@ type ServiceConfigResponse struct {
 	Builder    schema.ServiceBuilder `json:"builder"`
 	Provider   *enum.Provider        `json:"provider,omitempty"`
 	Framework  *enum.Framework       `json:"framework,omitempty"`
-	Host       []v1.HostSpec         `json:"hosts,omitempty"`
-	Port       []v1.PortSpec         `json:"ports,omitempty"`
+	Host       []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
+	Port       []v1.PortSpec         `json:"ports,omitempty" nullable:"false"`
 	Replicas   int32                 `json:"replicas"`
 	AutoDeploy bool                  `json:"auto_deploy"`
 	RunCommand *string               `json:"run_command,omitempty"`
