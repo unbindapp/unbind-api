@@ -1,6 +1,5 @@
 FROM unbindapp/builder-base:latest
 
-COPY ./cmd/builder /app/builder
 COPY ./cmd/builder/builder /app/builder
 
 CMD ["/app/builder"]
