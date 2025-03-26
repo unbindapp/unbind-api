@@ -77,12 +77,6 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 		sleep 1;
 	done;
 	
-	# Wait for Docker daemon to be ready
-	until docker info >/dev/null 2>&1; do
-		echo "Waiting for Docker daemon to be ready...";
-		sleep 1;
-	done;
-	
 	# Run the builder with BuildKit
 	exec /app/builder`,
 							},
@@ -92,8 +86,24 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									Value: "tcp://localhost:1234",
 								},
 								{
-									Name:  "DOCKER_HOST",
-									Value: "tcp://localhost:2375",
+									Name:  "POSTGRES_HOST",
+									Value: self.config.PostgresHost,
+								},
+								{
+									Name:  "POSTGRES_PORT",
+									Value: fmt.Sprintf("%d", self.config.PostgresPort),
+								},
+								{
+									Name:  "POSTGRES_USER",
+									Value: self.config.PostgresUser,
+								},
+								{
+									Name:  "POSTGRES_PASSWORD",
+									Value: self.config.PostgresPassword,
+								},
+								{
+									Name:  "POSTGRES_DB",
+									Value: self.config.PostgresDB,
 								},
 							}...),
 							VolumeMounts: []corev1.VolumeMount{
@@ -167,26 +177,6 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 								PeriodSeconds:       3,
 							},
 						},
-
-						{
-							Name:  "docker-daemon",
-							Image: "docker:27.5-dind",
-							Env: []corev1.EnvVar{
-								{
-									Name:  "DOCKER_TLS_CERTDIR",
-									Value: "",
-								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "docker-graph-storage",
-									MountPath: "/var/lib/docker",
-								},
-							},
-						},
 						{
 							Name:  "cleanup-monitor",
 							Image: "alpine",
@@ -216,16 +206,14 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 	# Give a small grace period for any cleanup
 	sleep 5
 	
-	# Once build is complete, gracefully stop the Docker daemon and buildkit
-	echo "Stopping docker and buildkit daemons..."
-	pkill -15 dockerd || true
+	# Once build is complete, gracefully stop the buildkit daemon
+	echo "Stopping buildkit daemon..."
 	pkill -15 buildkitd || true
 	sleep 3
 	
 	# Force kill if still running
-	pkill -9 dockerd || true 
 	pkill -9 buildkitd || true
-	echo "Build complete, Docker and BuildKit daemons stopped"
+	echo "Build complete, BuildKit daemon stopped"
 	
 	# Exit with success to mark the job as complete
 	exit 0`,
@@ -249,19 +237,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 							},
 						},
 						{
-							Name: "docker-config",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
 							Name: "cache-dir",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "docker-graph-storage",
 							VolumeSource: corev1.VolumeSource{
 								EmptyDir: &corev1.EmptyDirVolumeSource{},
 							},

@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // CreateServiceInput defines the input for creating a new service
@@ -37,8 +38,8 @@ type CreateServiceInput struct {
 	Type       schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
 	Builder    schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
 	GitBranch  *string               `json:"git_branch,omitempty"`
-	Hosts      []schema.HostSpec     `json:"hosts,omitempty"`
-	Ports      []schema.PortSpec     `json:"ports,omitempty"`
+	Hosts      []v1.HostSpec         `json:"hosts,omitempty"`
+	Ports      []v1.PortSpec         `json:"ports,omitempty"`
 	Replicas   *int32                `validate:"min=1,max=10" json:"replicas,omitempty"`
 	AutoDeploy *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand *string               `json:"run_command,omitempty"`
@@ -59,7 +60,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// ! TODO - support docka
-	if input.Builder != schema.ServiceBuilderNixpacks && input.Builder != schema.ServiceBuilderRailpack {
+	if input.Builder != schema.ServiceBuilderRailpack {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack and nixpacks builder supported")
 	}
 
@@ -188,7 +189,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 			// Default configuration information
 			if len(ports) == 0 && analysisResult.Port != nil {
-				ports = append(ports, schema.PortSpec{
+				ports = append(ports, v1.PortSpec{
 					Port: int32(*analysisResult.Port),
 				})
 				public = true
@@ -219,7 +220,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				}
 
 				if domain != "" {
-					hosts = append(hosts, schema.HostSpec{
+					hosts = append(hosts, v1.HostSpec{
 						Host: domain,
 						Path: "/",
 						Port: utils.ToPtr(ports[0].Port),

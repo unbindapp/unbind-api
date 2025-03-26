@@ -24,6 +24,7 @@ var (
 		{Name: "kubernetes_job_name", Type: field.TypeString, Nullable: true},
 		{Name: "kubernetes_job_status", Type: field.TypeString, Nullable: true},
 		{Name: "attempts", Type: field.TypeInt, Default: 0},
+		{Name: "image", Type: field.TypeString, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID},
 	}
 	// DeploymentsTable holds the schema information for the "deployments" table.
@@ -34,7 +35,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "deployments_services_deployments",
-				Columns:    []*schema.Column{DeploymentsColumns[13]},
+				Columns:    []*schema.Column{DeploymentsColumns[14]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -285,6 +286,7 @@ var (
 		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "current_deployment_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// ServicesTable holds the schema information for the "services" table.
 	ServicesTable = &schema.Table{
@@ -304,6 +306,12 @@ var (
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
+			{
+				Symbol:     "services_deployments_current_deployment",
+				Columns:    []*schema.Column{ServicesColumns[11]},
+				RefColumns: []*schema.Column{DeploymentsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
 		},
 	}
 	// ServiceConfigsColumns holds the columns for the "service_configs" table.
@@ -312,7 +320,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"github", "docker-image"}},
-		{Name: "builder", Type: field.TypeEnum, Enums: []string{"nixpacks", "railpack", "docker"}},
+		{Name: "builder", Type: field.TypeEnum, Enums: []string{"railpack", "docker"}},
 		{Name: "provider", Type: field.TypeEnum, Nullable: true, Enums: []string{"node", "deno", "go", "java", "php", "python", "staticfile", "unknown"}},
 		{Name: "framework", Type: field.TypeEnum, Nullable: true, Enums: []string{"next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown"}},
 		{Name: "git_branch", Type: field.TypeString, Nullable: true},
@@ -508,6 +516,7 @@ func init() {
 	}
 	ServicesTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	ServicesTable.ForeignKeys[1].RefTable = GithubInstallationsTable
+	ServicesTable.ForeignKeys[2].RefTable = DeploymentsTable
 	ServicesTable.Annotation = &entsql.Annotation{
 		Table: "services",
 	}

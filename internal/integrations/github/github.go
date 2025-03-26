@@ -17,14 +17,14 @@ type GithubClient struct {
 	client *github.Client
 }
 
-func NewGithubClient(cfg *config.Config) *GithubClient {
+func NewGithubClient(githubURL string, cfg *config.Config) *GithubClient {
 	httpClient := &http.Client{}
 	var githubClient *github.Client
 
 	// Check if we're using GitHub Enterprise
-	if cfg.GithubURL != "https://github.com" && cfg.GithubURL != "" {
+	if githubURL != "https://github.com" && githubURL != "" {
 		// For GitHub Enterprise, we need to set the base URL for the API
-		baseURL := cfg.GithubURL
+		baseURL := githubURL
 		// Make sure the URL has a trailing slash for the github client
 		if !strings.HasSuffix(baseURL, "/") {
 			baseURL = baseURL + "/"

@@ -176,6 +176,26 @@ func (su *ServiceUpdate) SetNillableKubernetesSecret(s *string) *ServiceUpdate {
 	return su
 }
 
+// SetCurrentDeploymentID sets the "current_deployment_id" field.
+func (su *ServiceUpdate) SetCurrentDeploymentID(u uuid.UUID) *ServiceUpdate {
+	su.mutation.SetCurrentDeploymentID(u)
+	return su
+}
+
+// SetNillableCurrentDeploymentID sets the "current_deployment_id" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableCurrentDeploymentID(u *uuid.UUID) *ServiceUpdate {
+	if u != nil {
+		su.SetCurrentDeploymentID(*u)
+	}
+	return su
+}
+
+// ClearCurrentDeploymentID clears the value of the "current_deployment_id" field.
+func (su *ServiceUpdate) ClearCurrentDeploymentID() *ServiceUpdate {
+	su.mutation.ClearCurrentDeploymentID()
+	return su
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
 	return su.SetEnvironmentID(e.ID)
@@ -220,6 +240,11 @@ func (su *ServiceUpdate) AddDeployments(d ...*Deployment) *ServiceUpdate {
 	return su.AddDeploymentIDs(ids...)
 }
 
+// SetCurrentDeployment sets the "current_deployment" edge to the Deployment entity.
+func (su *ServiceUpdate) SetCurrentDeployment(d *Deployment) *ServiceUpdate {
+	return su.SetCurrentDeploymentID(d.ID)
+}
+
 // Mutation returns the ServiceMutation object of the builder.
 func (su *ServiceUpdate) Mutation() *ServiceMutation {
 	return su.mutation
@@ -262,6 +287,12 @@ func (su *ServiceUpdate) RemoveDeployments(d ...*Deployment) *ServiceUpdate {
 		ids[i] = d[i].ID
 	}
 	return su.RemoveDeploymentIDs(ids...)
+}
+
+// ClearCurrentDeployment clears the "current_deployment" edge to the Deployment entity.
+func (su *ServiceUpdate) ClearCurrentDeployment() *ServiceUpdate {
+	su.mutation.ClearCurrentDeployment()
+	return su
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -493,6 +524,35 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if su.mutation.CurrentDeploymentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   service.CurrentDeploymentTable,
+			Columns: []string{service.CurrentDeploymentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.CurrentDeploymentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   service.CurrentDeploymentTable,
+			Columns: []string{service.CurrentDeploymentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(su.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -657,6 +717,26 @@ func (suo *ServiceUpdateOne) SetNillableKubernetesSecret(s *string) *ServiceUpda
 	return suo
 }
 
+// SetCurrentDeploymentID sets the "current_deployment_id" field.
+func (suo *ServiceUpdateOne) SetCurrentDeploymentID(u uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.SetCurrentDeploymentID(u)
+	return suo
+}
+
+// SetNillableCurrentDeploymentID sets the "current_deployment_id" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableCurrentDeploymentID(u *uuid.UUID) *ServiceUpdateOne {
+	if u != nil {
+		suo.SetCurrentDeploymentID(*u)
+	}
+	return suo
+}
+
+// ClearCurrentDeploymentID clears the value of the "current_deployment_id" field.
+func (suo *ServiceUpdateOne) ClearCurrentDeploymentID() *ServiceUpdateOne {
+	suo.mutation.ClearCurrentDeploymentID()
+	return suo
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
 	return suo.SetEnvironmentID(e.ID)
@@ -701,6 +781,11 @@ func (suo *ServiceUpdateOne) AddDeployments(d ...*Deployment) *ServiceUpdateOne 
 	return suo.AddDeploymentIDs(ids...)
 }
 
+// SetCurrentDeployment sets the "current_deployment" edge to the Deployment entity.
+func (suo *ServiceUpdateOne) SetCurrentDeployment(d *Deployment) *ServiceUpdateOne {
+	return suo.SetCurrentDeploymentID(d.ID)
+}
+
 // Mutation returns the ServiceMutation object of the builder.
 func (suo *ServiceUpdateOne) Mutation() *ServiceMutation {
 	return suo.mutation
@@ -743,6 +828,12 @@ func (suo *ServiceUpdateOne) RemoveDeployments(d ...*Deployment) *ServiceUpdateO
 		ids[i] = d[i].ID
 	}
 	return suo.RemoveDeploymentIDs(ids...)
+}
+
+// ClearCurrentDeployment clears the "current_deployment" edge to the Deployment entity.
+func (suo *ServiceUpdateOne) ClearCurrentDeployment() *ServiceUpdateOne {
+	suo.mutation.ClearCurrentDeployment()
+	return suo
 }
 
 // Where appends a list predicates to the ServiceUpdate builder.
@@ -994,6 +1085,35 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 			Inverse: false,
 			Table:   service.DeploymentsTable,
 			Columns: []string{service.DeploymentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.CurrentDeploymentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   service.CurrentDeploymentTable,
+			Columns: []string{service.CurrentDeploymentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.CurrentDeploymentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   service.CurrentDeploymentTable,
+			Columns: []string{service.CurrentDeploymentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),

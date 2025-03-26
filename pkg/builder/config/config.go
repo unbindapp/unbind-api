@@ -1,0 +1,113 @@
+package config
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/caarlos0/env/v11"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
+)
+
+type Config struct {
+	GithubAppID int64 `env:"GITHUB_APP_ID,required"`
+	// Installation ID of the app
+	GithubInstallationID int64 `env:"GITHUB_INSTALLATION_ID,required"`
+	// Repository to clone (github, https)
+	GitRepoURL string `env:"GITHUB_REPO_URL,required"`
+	// Branch to checkout and build
+	GitRef string `env:"GIT_REF,required"`
+	// Github URL (if using github enterprise)
+	GithubURL string `env:"GITHUB_URL" envDefault:"https://github.com"`
+	// Github app private key
+	GithubAppPrivateKey string `env:"GITHUB_APP_PRIVATE_KEY,required"`
+	// Registry specific
+	ContainerRegistryHost     string `env:"CONTAINER_REGISTRY_HOST,required" envDefault:"docker-registry.unbind-system:5000"`
+	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER,required" envDefault:"admin"`
+	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD,required"`
+	// Database access
+	PostgresHost     string `env:"POSTGRES_HOST" envDefault:"localhost"`
+	PostgresPort     int    `env:"POSTGRES_PORT" envDefault:"5432"`
+	PostgresUser     string `env:"POSTGRES_USER" envDefault:"postgres"`
+	PostgresPassword string `env:"POSTGRES_PASSWORD" envDefault:"postgres"`
+	PostgresDB       string `env:"POSTGRES_DB" envDefault:"unbind"`
+	// Docker host because nixpacks ignores the variable https://github.com/railwayapp/nixpacks/issues/1194
+	DockerHost   string `env:"DOCKER_HOST" envDefault:"unix:///var/run/docker.sock"`
+	BuildkitHost string `env:"BUILDKIT_HOST" envDefault:"docker-container://buildkit"`
+	// Deployment namespace (kubernetes)
+	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
+	// Service specific
+	ServiceName         string `env:"SERVICE_NAME"`
+	ServiceProvider     string `env:"SERVICE_PROVIDER"`
+	ServiceFramework    string `env:"SERVICE_FRAMEWORK"`
+	ServicePublic       *bool  `env:"SERVICE_PUBLIC"`
+	ServiceReplicas     *int32 `env:"SERVICE_REPLICAS"`
+	ServiceSecretName   string `env:"SERVICE_SECRET_NAME,required"`
+	ServiceBuildSecrets string `env:"SERVICE_BUILD_SECRETS"`
+	ServiceBuilder      string `env:"SERVICE_BUILDER"`
+	// Json serialized []HostSpec
+	ServiceHosts string `env:"SERVICE_HOSTS"`
+	// JsonSerialized []PortSpec
+	ServicePorts string `env:"SERVICE_PORTS"`
+	// Kubeconfig for local testing
+	KubeConfig string `env:"KUBECONFIG"`
+	// Non-env config
+	Hosts []v1.HostSpec
+	Ports []v1.PortSpec
+}
+
+// Parse environment variables into a Config struct
+func NewConfig() *Config {
+	cfg := Config{}
+	if err := env.Parse(&cfg); err != nil {
+		log.Fatal("Error parsing environment", "err", err)
+	}
+	cfg.Hosts, _ = parseHosts(&cfg)
+	cfg.Ports, _ = parsePorts(&cfg)
+	return &cfg
+}
+
+// parseHosts parses host configuration from environment variables
+func parseHosts(cfg *Config) ([]v1.HostSpec, error) {
+	hosts := []v1.HostSpec{}
+
+	if cfg.ServiceHosts != "" {
+		var jsonHosts []v1.HostSpec
+		if err := json.Unmarshal([]byte(cfg.ServiceHosts), &jsonHosts); err != nil {
+			return nil, fmt.Errorf("failed to parse hosts: %w", err)
+		}
+		for i := range jsonHosts {
+			if jsonHosts[i].Path == "" {
+				jsonHosts[i].Path = "/"
+			}
+		}
+		// If we already had legacy hosts, append the new ones
+		hosts = append(hosts, jsonHosts...)
+	}
+
+	return hosts, nil
+}
+
+// parsePorts parses port configuration from environment variables
+func parsePorts(cfg *Config) ([]v1.PortSpec, error) {
+	ports := []v1.PortSpec{}
+
+	if cfg.ServicePorts != "" {
+		var jsonPorts []v1.PortSpec
+		if err := json.Unmarshal([]byte(cfg.ServicePorts), &jsonPorts); err != nil {
+			return nil, fmt.Errorf("failed to parse ports: %w", err)
+		}
+		for i := range jsonPorts {
+			// Set default protocol if not specified
+			if jsonPorts[i].Protocol == nil {
+				tcpProtocol := corev1.ProtocolTCP
+				jsonPorts[i].Protocol = &tcpProtocol
+			}
+		}
+		// Append to existing ports
+		ports = append(ports, jsonPorts...)
+	}
+
+	return ports, nil
+}

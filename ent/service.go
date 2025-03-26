@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -42,6 +43,8 @@ type Service struct {
 	GitRepository *string `json:"git_repository,omitempty"`
 	// Kubernetes secret for this service
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
+	// Reference the current active deployment
+	CurrentDeploymentID *uuid.UUID `json:"current_deployment_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -58,9 +61,11 @@ type ServiceEdges struct {
 	ServiceConfig *ServiceConfig `json:"service_config,omitempty"`
 	// Deployments holds the value of the deployments edge.
 	Deployments []*Deployment `json:"deployments,omitempty"`
+	// Optional reference to the currently active deployment
+	CurrentDeployment *Deployment `json:"current_deployment,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // EnvironmentOrErr returns the Environment value or an error if the edge
@@ -105,11 +110,24 @@ func (e ServiceEdges) DeploymentsOrErr() ([]*Deployment, error) {
 	return nil, &NotLoadedError{edge: "deployments"}
 }
 
+// CurrentDeploymentOrErr returns the CurrentDeployment value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ServiceEdges) CurrentDeploymentOrErr() (*Deployment, error) {
+	if e.CurrentDeployment != nil {
+		return e.CurrentDeployment, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: deployment.Label}
+	}
+	return nil, &NotLoadedError{edge: "current_deployment"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Service) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case service.FieldCurrentDeploymentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
 		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldGitRepositoryOwner, service.FieldGitRepository, service.FieldKubernetesSecret:
@@ -202,6 +220,13 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.KubernetesSecret = value.String
 			}
+		case service.FieldCurrentDeploymentID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field current_deployment_id", values[i])
+			} else if value.Valid {
+				s.CurrentDeploymentID = new(uuid.UUID)
+				*s.CurrentDeploymentID = *value.S.(*uuid.UUID)
+			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -233,6 +258,11 @@ func (s *Service) QueryServiceConfig() *ServiceConfigQuery {
 // QueryDeployments queries the "deployments" edge of the Service entity.
 func (s *Service) QueryDeployments() *DeploymentQuery {
 	return NewServiceClient(s.config).QueryDeployments(s)
+}
+
+// QueryCurrentDeployment queries the "current_deployment" edge of the Service entity.
+func (s *Service) QueryCurrentDeployment() *DeploymentQuery {
+	return NewServiceClient(s.config).QueryCurrentDeployment(s)
 }
 
 // Update returns a builder for updating this Service.
@@ -293,6 +323,11 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("kubernetes_secret=")
 	builder.WriteString(s.KubernetesSecret)
+	builder.WriteString(", ")
+	if v := s.CurrentDeploymentID; v != nil {
+		builder.WriteString("current_deployment_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

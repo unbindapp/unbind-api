@@ -2058,6 +2058,22 @@ func (c *ServiceClient) QueryDeployments(s *Service) *DeploymentQuery {
 	return query
 }
 
+// QueryCurrentDeployment queries the current_deployment edge of a Service.
+func (c *ServiceClient) QueryCurrentDeployment(s *Service) *DeploymentQuery {
+	query := (&DeploymentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(deployment.Table, deployment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, service.CurrentDeploymentTable, service.CurrentDeploymentColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *ServiceClient) Hooks() []Hook {
 	return c.hooks.Service

@@ -84,6 +84,10 @@ jobs:
         run: |
           cd cmd/cli && GOARCH=arm64 go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -X main.BuildStart=${{ env.BUILD_START }}" -o ./cli && cd ../..
 
+      - name: Build Builder Binary
+        run: |
+          cd cmd/builder && GOARCH=arm64 go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -X main.BuildStart=${{ env.BUILD_START }}" -o ./builder && cd ../..
+
       - name: Build and push image
         if: success()
         uses: docker/build-push-action@v3

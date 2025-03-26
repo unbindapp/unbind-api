@@ -131,8 +131,17 @@ func (self *ServiceRepository) GetDeploymentNamespace(ctx context.Context, servi
 // Summarize services in environment
 func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]enum.Provider, frameworks map[uuid.UUID][]enum.Framework, err error) {
 	counts = make(map[uuid.UUID]int)
-	providers = make(map[uuid.UUID][]enum.Provider)
-	frameworks = make(map[uuid.UUID][]enum.Framework)
+
+	// Maps to not duplicate providers and frameworks
+	providerSets := make(map[uuid.UUID]map[enum.Provider]struct{})
+	frameworkSets := make(map[uuid.UUID]map[enum.Framework]struct{})
+
+	// Initialize sets for each environment ID
+	for _, envID := range environmentIDs {
+		providerSets[envID] = make(map[enum.Provider]struct{})
+		frameworkSets[envID] = make(map[enum.Framework]struct{})
+	}
+
 	services, err := self.base.DB.Service.Query().
 		Select(service.FieldEnvironmentID).
 		Where(service.EnvironmentIDIn(environmentIDs...)).
@@ -141,17 +150,38 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 	if err != nil {
 		return
 	}
+
 	for _, svc := range services {
 		counts[svc.EnvironmentID]++
+
 		if svc.Edges.ServiceConfig == nil {
 			continue
 		}
+
 		if svc.Edges.ServiceConfig.Provider != nil {
-			providers[svc.EnvironmentID] = append(providers[svc.EnvironmentID], *svc.Edges.ServiceConfig.Provider)
+			providerSets[svc.EnvironmentID][*svc.Edges.ServiceConfig.Provider] = struct{}{}
 		}
+
 		if svc.Edges.ServiceConfig.Framework != nil {
-			frameworks[svc.EnvironmentID] = append(frameworks[svc.EnvironmentID], *svc.Edges.ServiceConfig.Framework)
+			frameworkSets[svc.EnvironmentID][*svc.Edges.ServiceConfig.Framework] = struct{}{}
 		}
 	}
+
+	// Convert to slices
+	providers = make(map[uuid.UUID][]enum.Provider)
+	frameworks = make(map[uuid.UUID][]enum.Framework)
+
+	for envID, providerSet := range providerSets {
+		for provider := range providerSet {
+			providers[envID] = append(providers[envID], provider)
+		}
+	}
+
+	for envID, frameworkSet := range frameworkSets {
+		for framework := range frameworkSet {
+			frameworks[envID] = append(frameworks[envID], framework)
+		}
+	}
+
 	return
 }

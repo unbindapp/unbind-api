@@ -29,6 +29,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 const (
@@ -75,6 +76,7 @@ type DeploymentMutation struct {
 	kubernetes_job_status *string
 	attempts              *int
 	addattempts           *int
+	image                 *string
 	clearedFields         map[string]struct{}
 	service               *uuid.UUID
 	clearedservice        bool
@@ -766,6 +768,55 @@ func (m *DeploymentMutation) ResetAttempts() {
 	m.addattempts = nil
 }
 
+// SetImage sets the "image" field.
+func (m *DeploymentMutation) SetImage(s string) {
+	m.image = &s
+}
+
+// Image returns the value of the "image" field in the mutation.
+func (m *DeploymentMutation) Image() (r string, exists bool) {
+	v := m.image
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImage returns the old "image" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldImage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImage: %w", err)
+	}
+	return oldValue.Image, nil
+}
+
+// ClearImage clears the value of the "image" field.
+func (m *DeploymentMutation) ClearImage() {
+	m.image = nil
+	m.clearedFields[deployment.FieldImage] = struct{}{}
+}
+
+// ImageCleared returns if the "image" field was cleared in this mutation.
+func (m *DeploymentMutation) ImageCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldImage]
+	return ok
+}
+
+// ResetImage resets all changes to the "image" field.
+func (m *DeploymentMutation) ResetImage() {
+	m.image = nil
+	delete(m.clearedFields, deployment.FieldImage)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *DeploymentMutation) ClearService() {
 	m.clearedservice = true
@@ -827,7 +878,7 @@ func (m *DeploymentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeploymentMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, deployment.FieldCreatedAt)
 	}
@@ -867,6 +918,9 @@ func (m *DeploymentMutation) Fields() []string {
 	if m.attempts != nil {
 		fields = append(fields, deployment.FieldAttempts)
 	}
+	if m.image != nil {
+		fields = append(fields, deployment.FieldImage)
+	}
 	return fields
 }
 
@@ -901,6 +955,8 @@ func (m *DeploymentMutation) Field(name string) (ent.Value, bool) {
 		return m.KubernetesJobStatus()
 	case deployment.FieldAttempts:
 		return m.Attempts()
+	case deployment.FieldImage:
+		return m.Image()
 	}
 	return nil, false
 }
@@ -936,6 +992,8 @@ func (m *DeploymentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldKubernetesJobStatus(ctx)
 	case deployment.FieldAttempts:
 		return m.OldAttempts(ctx)
+	case deployment.FieldImage:
+		return m.OldImage(ctx)
 	}
 	return nil, fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1036,6 +1094,13 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetAttempts(v)
 		return nil
+	case deployment.FieldImage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImage(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1102,6 +1167,9 @@ func (m *DeploymentMutation) ClearedFields() []string {
 	if m.FieldCleared(deployment.FieldKubernetesJobStatus) {
 		fields = append(fields, deployment.FieldKubernetesJobStatus)
 	}
+	if m.FieldCleared(deployment.FieldImage) {
+		fields = append(fields, deployment.FieldImage)
+	}
 	return fields
 }
 
@@ -1136,6 +1204,9 @@ func (m *DeploymentMutation) ClearField(name string) error {
 		return nil
 	case deployment.FieldKubernetesJobStatus:
 		m.ClearKubernetesJobStatus()
+		return nil
+	case deployment.FieldImage:
+		m.ClearImage()
 		return nil
 	}
 	return fmt.Errorf("unknown Deployment nullable field %s", name)
@@ -1183,6 +1254,9 @@ func (m *DeploymentMutation) ResetField(name string) error {
 		return nil
 	case deployment.FieldAttempts:
 		m.ResetAttempts()
+		return nil
+	case deployment.FieldImage:
+		m.ResetImage()
 		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)
@@ -8857,6 +8931,8 @@ type ServiceMutation struct {
 	deployments                map[uuid.UUID]struct{}
 	removeddeployments         map[uuid.UUID]struct{}
 	cleareddeployments         bool
+	current_deployment         *uuid.UUID
+	clearedcurrent_deployment  bool
 	done                       bool
 	oldValue                   func(context.Context) (*Service, error)
 	predicates                 []predicate.Service
@@ -9378,6 +9454,55 @@ func (m *ServiceMutation) ResetKubernetesSecret() {
 	m.kubernetes_secret = nil
 }
 
+// SetCurrentDeploymentID sets the "current_deployment_id" field.
+func (m *ServiceMutation) SetCurrentDeploymentID(u uuid.UUID) {
+	m.current_deployment = &u
+}
+
+// CurrentDeploymentID returns the value of the "current_deployment_id" field in the mutation.
+func (m *ServiceMutation) CurrentDeploymentID() (r uuid.UUID, exists bool) {
+	v := m.current_deployment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCurrentDeploymentID returns the old "current_deployment_id" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldCurrentDeploymentID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCurrentDeploymentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCurrentDeploymentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCurrentDeploymentID: %w", err)
+	}
+	return oldValue.CurrentDeploymentID, nil
+}
+
+// ClearCurrentDeploymentID clears the value of the "current_deployment_id" field.
+func (m *ServiceMutation) ClearCurrentDeploymentID() {
+	m.current_deployment = nil
+	m.clearedFields[service.FieldCurrentDeploymentID] = struct{}{}
+}
+
+// CurrentDeploymentIDCleared returns if the "current_deployment_id" field was cleared in this mutation.
+func (m *ServiceMutation) CurrentDeploymentIDCleared() bool {
+	_, ok := m.clearedFields[service.FieldCurrentDeploymentID]
+	return ok
+}
+
+// ResetCurrentDeploymentID resets all changes to the "current_deployment_id" field.
+func (m *ServiceMutation) ResetCurrentDeploymentID() {
+	m.current_deployment = nil
+	delete(m.clearedFields, service.FieldCurrentDeploymentID)
+}
+
 // ClearEnvironment clears the "environment" edge to the Environment entity.
 func (m *ServiceMutation) ClearEnvironment() {
 	m.clearedenvironment = true
@@ -9525,6 +9650,33 @@ func (m *ServiceMutation) ResetDeployments() {
 	m.removeddeployments = nil
 }
 
+// ClearCurrentDeployment clears the "current_deployment" edge to the Deployment entity.
+func (m *ServiceMutation) ClearCurrentDeployment() {
+	m.clearedcurrent_deployment = true
+	m.clearedFields[service.FieldCurrentDeploymentID] = struct{}{}
+}
+
+// CurrentDeploymentCleared reports if the "current_deployment" edge to the Deployment entity was cleared.
+func (m *ServiceMutation) CurrentDeploymentCleared() bool {
+	return m.CurrentDeploymentIDCleared() || m.clearedcurrent_deployment
+}
+
+// CurrentDeploymentIDs returns the "current_deployment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CurrentDeploymentID instead. It exists only for internal usage by the builders.
+func (m *ServiceMutation) CurrentDeploymentIDs() (ids []uuid.UUID) {
+	if id := m.current_deployment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCurrentDeployment resets all changes to the "current_deployment" edge.
+func (m *ServiceMutation) ResetCurrentDeployment() {
+	m.current_deployment = nil
+	m.clearedcurrent_deployment = false
+}
+
 // Where appends a list predicates to the ServiceMutation builder.
 func (m *ServiceMutation) Where(ps ...predicate.Service) {
 	m.predicates = append(m.predicates, ps...)
@@ -9559,7 +9711,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -9590,6 +9742,9 @@ func (m *ServiceMutation) Fields() []string {
 	if m.kubernetes_secret != nil {
 		fields = append(fields, service.FieldKubernetesSecret)
 	}
+	if m.current_deployment != nil {
+		fields = append(fields, service.FieldCurrentDeploymentID)
+	}
 	return fields
 }
 
@@ -9618,6 +9773,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.GitRepository()
 	case service.FieldKubernetesSecret:
 		return m.KubernetesSecret()
+	case service.FieldCurrentDeploymentID:
+		return m.CurrentDeploymentID()
 	}
 	return nil, false
 }
@@ -9647,6 +9804,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldGitRepository(ctx)
 	case service.FieldKubernetesSecret:
 		return m.OldKubernetesSecret(ctx)
+	case service.FieldCurrentDeploymentID:
+		return m.OldCurrentDeploymentID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Service field %s", name)
 }
@@ -9726,6 +9885,13 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetKubernetesSecret(v)
 		return nil
+	case service.FieldCurrentDeploymentID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCurrentDeploymentID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
 }
@@ -9771,6 +9937,9 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldGitRepository) {
 		fields = append(fields, service.FieldGitRepository)
 	}
+	if m.FieldCleared(service.FieldCurrentDeploymentID) {
+		fields = append(fields, service.FieldCurrentDeploymentID)
+	}
 	return fields
 }
 
@@ -9796,6 +9965,9 @@ func (m *ServiceMutation) ClearField(name string) error {
 		return nil
 	case service.FieldGitRepository:
 		m.ClearGitRepository()
+		return nil
+	case service.FieldCurrentDeploymentID:
+		m.ClearCurrentDeploymentID()
 		return nil
 	}
 	return fmt.Errorf("unknown Service nullable field %s", name)
@@ -9835,13 +10007,16 @@ func (m *ServiceMutation) ResetField(name string) error {
 	case service.FieldKubernetesSecret:
 		m.ResetKubernetesSecret()
 		return nil
+	case service.FieldCurrentDeploymentID:
+		m.ResetCurrentDeploymentID()
+		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ServiceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.environment != nil {
 		edges = append(edges, service.EdgeEnvironment)
 	}
@@ -9853,6 +10028,9 @@ func (m *ServiceMutation) AddedEdges() []string {
 	}
 	if m.deployments != nil {
 		edges = append(edges, service.EdgeDeployments)
+	}
+	if m.current_deployment != nil {
+		edges = append(edges, service.EdgeCurrentDeployment)
 	}
 	return edges
 }
@@ -9879,13 +10057,17 @@ func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case service.EdgeCurrentDeployment:
+		if id := m.current_deployment; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ServiceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removeddeployments != nil {
 		edges = append(edges, service.EdgeDeployments)
 	}
@@ -9908,7 +10090,7 @@ func (m *ServiceMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ServiceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedenvironment {
 		edges = append(edges, service.EdgeEnvironment)
 	}
@@ -9920,6 +10102,9 @@ func (m *ServiceMutation) ClearedEdges() []string {
 	}
 	if m.cleareddeployments {
 		edges = append(edges, service.EdgeDeployments)
+	}
+	if m.clearedcurrent_deployment {
+		edges = append(edges, service.EdgeCurrentDeployment)
 	}
 	return edges
 }
@@ -9936,6 +10121,8 @@ func (m *ServiceMutation) EdgeCleared(name string) bool {
 		return m.clearedservice_config
 	case service.EdgeDeployments:
 		return m.cleareddeployments
+	case service.EdgeCurrentDeployment:
+		return m.clearedcurrent_deployment
 	}
 	return false
 }
@@ -9952,6 +10139,9 @@ func (m *ServiceMutation) ClearEdge(name string) error {
 		return nil
 	case service.EdgeServiceConfig:
 		m.ClearServiceConfig()
+		return nil
+	case service.EdgeCurrentDeployment:
+		m.ClearCurrentDeployment()
 		return nil
 	}
 	return fmt.Errorf("unknown Service unique edge %s", name)
@@ -9973,6 +10163,9 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 	case service.EdgeDeployments:
 		m.ResetDeployments()
 		return nil
+	case service.EdgeCurrentDeployment:
+		m.ResetCurrentDeployment()
+		return nil
 	}
 	return fmt.Errorf("unknown Service edge %s", name)
 }
@@ -9990,10 +10183,10 @@ type ServiceConfigMutation struct {
 	provider       *enum.Provider
 	framework      *enum.Framework
 	git_branch     *string
-	hosts          *[]schema.HostSpec
-	appendhosts    []schema.HostSpec
-	ports          *[]schema.PortSpec
-	appendports    []schema.PortSpec
+	hosts          *[]v1.HostSpec
+	appendhosts    []v1.HostSpec
+	ports          *[]v1.PortSpec
+	appendports    []v1.PortSpec
 	replicas       *int32
 	addreplicas    *int32
 	auto_deploy    *bool
@@ -10440,13 +10633,13 @@ func (m *ServiceConfigMutation) ResetGitBranch() {
 }
 
 // SetHosts sets the "hosts" field.
-func (m *ServiceConfigMutation) SetHosts(ss []schema.HostSpec) {
-	m.hosts = &ss
+func (m *ServiceConfigMutation) SetHosts(vs []v1.HostSpec) {
+	m.hosts = &vs
 	m.appendhosts = nil
 }
 
 // Hosts returns the value of the "hosts" field in the mutation.
-func (m *ServiceConfigMutation) Hosts() (r []schema.HostSpec, exists bool) {
+func (m *ServiceConfigMutation) Hosts() (r []v1.HostSpec, exists bool) {
 	v := m.hosts
 	if v == nil {
 		return
@@ -10457,7 +10650,7 @@ func (m *ServiceConfigMutation) Hosts() (r []schema.HostSpec, exists bool) {
 // OldHosts returns the old "hosts" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldHosts(ctx context.Context) (v []schema.HostSpec, err error) {
+func (m *ServiceConfigMutation) OldHosts(ctx context.Context) (v []v1.HostSpec, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHosts is only allowed on UpdateOne operations")
 	}
@@ -10471,13 +10664,13 @@ func (m *ServiceConfigMutation) OldHosts(ctx context.Context) (v []schema.HostSp
 	return oldValue.Hosts, nil
 }
 
-// AppendHosts adds ss to the "hosts" field.
-func (m *ServiceConfigMutation) AppendHosts(ss []schema.HostSpec) {
-	m.appendhosts = append(m.appendhosts, ss...)
+// AppendHosts adds vs to the "hosts" field.
+func (m *ServiceConfigMutation) AppendHosts(vs []v1.HostSpec) {
+	m.appendhosts = append(m.appendhosts, vs...)
 }
 
 // AppendedHosts returns the list of values that were appended to the "hosts" field in this mutation.
-func (m *ServiceConfigMutation) AppendedHosts() ([]schema.HostSpec, bool) {
+func (m *ServiceConfigMutation) AppendedHosts() ([]v1.HostSpec, bool) {
 	if len(m.appendhosts) == 0 {
 		return nil, false
 	}
@@ -10505,13 +10698,13 @@ func (m *ServiceConfigMutation) ResetHosts() {
 }
 
 // SetPorts sets the "ports" field.
-func (m *ServiceConfigMutation) SetPorts(ss []schema.PortSpec) {
-	m.ports = &ss
+func (m *ServiceConfigMutation) SetPorts(vs []v1.PortSpec) {
+	m.ports = &vs
 	m.appendports = nil
 }
 
 // Ports returns the value of the "ports" field in the mutation.
-func (m *ServiceConfigMutation) Ports() (r []schema.PortSpec, exists bool) {
+func (m *ServiceConfigMutation) Ports() (r []v1.PortSpec, exists bool) {
 	v := m.ports
 	if v == nil {
 		return
@@ -10522,7 +10715,7 @@ func (m *ServiceConfigMutation) Ports() (r []schema.PortSpec, exists bool) {
 // OldPorts returns the old "ports" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldPorts(ctx context.Context) (v []schema.PortSpec, err error) {
+func (m *ServiceConfigMutation) OldPorts(ctx context.Context) (v []v1.PortSpec, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPorts is only allowed on UpdateOne operations")
 	}
@@ -10536,13 +10729,13 @@ func (m *ServiceConfigMutation) OldPorts(ctx context.Context) (v []schema.PortSp
 	return oldValue.Ports, nil
 }
 
-// AppendPorts adds ss to the "ports" field.
-func (m *ServiceConfigMutation) AppendPorts(ss []schema.PortSpec) {
-	m.appendports = append(m.appendports, ss...)
+// AppendPorts adds vs to the "ports" field.
+func (m *ServiceConfigMutation) AppendPorts(vs []v1.PortSpec) {
+	m.appendports = append(m.appendports, vs...)
 }
 
 // AppendedPorts returns the list of values that were appended to the "ports" field in this mutation.
-func (m *ServiceConfigMutation) AppendedPorts() ([]schema.PortSpec, bool) {
+func (m *ServiceConfigMutation) AppendedPorts() ([]v1.PortSpec, bool) {
 	if len(m.appendports) == 0 {
 		return nil, false
 	}
@@ -11045,14 +11238,14 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		m.SetGitBranch(v)
 		return nil
 	case serviceconfig.FieldHosts:
-		v, ok := value.([]schema.HostSpec)
+		v, ok := value.([]v1.HostSpec)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetHosts(v)
 		return nil
 	case serviceconfig.FieldPorts:
-		v, ok := value.([]schema.PortSpec)
+		v, ok := value.([]v1.PortSpec)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

@@ -47,6 +47,8 @@ type Deployment struct {
 	KubernetesJobStatus string `json:"kubernetes_job_status,omitempty"`
 	// Attempts holds the value of the "attempts" field.
 	Attempts int `json:"attempts,omitempty"`
+	// Reference to the image used for the deployment
+	Image string `json:"image,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DeploymentQuery when eager-loading is set.
 	Edges        DeploymentEdges `json:"edges"`
@@ -80,7 +82,7 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case deployment.FieldAttempts:
 			values[i] = new(sql.NullInt64)
-		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus:
+		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus, deployment.FieldImage:
 			values[i] = new(sql.NullString)
 		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt, deployment.FieldStartedAt, deployment.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
@@ -187,6 +189,12 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				d.Attempts = int(value.Int64)
 			}
+		case deployment.FieldImage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field image", values[i])
+			} else if value.Valid {
+				d.Image = value.String
+			}
 		default:
 			d.selectValues.Set(columns[i], values[i])
 		}
@@ -270,6 +278,9 @@ func (d *Deployment) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("attempts=")
 	builder.WriteString(fmt.Sprintf("%v", d.Attempts))
+	builder.WriteString(", ")
+	builder.WriteString("image=")
+	builder.WriteString(d.Image)
 	builder.WriteByte(')')
 	return builder.String()
 }

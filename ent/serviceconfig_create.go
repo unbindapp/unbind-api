@@ -17,6 +17,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfigCreate is the builder for creating a ServiceConfig entity.
@@ -116,14 +117,14 @@ func (scc *ServiceConfigCreate) SetNillableGitBranch(s *string) *ServiceConfigCr
 }
 
 // SetHosts sets the "hosts" field.
-func (scc *ServiceConfigCreate) SetHosts(ss []schema.HostSpec) *ServiceConfigCreate {
-	scc.mutation.SetHosts(ss)
+func (scc *ServiceConfigCreate) SetHosts(vs []v1.HostSpec) *ServiceConfigCreate {
+	scc.mutation.SetHosts(vs)
 	return scc
 }
 
 // SetPorts sets the "ports" field.
-func (scc *ServiceConfigCreate) SetPorts(ss []schema.PortSpec) *ServiceConfigCreate {
-	scc.mutation.SetPorts(ss)
+func (scc *ServiceConfigCreate) SetPorts(vs []v1.PortSpec) *ServiceConfigCreate {
+	scc.mutation.SetPorts(vs)
 	return scc
 }
 
@@ -590,7 +591,7 @@ func (u *ServiceConfigUpsert) ClearGitBranch() *ServiceConfigUpsert {
 }
 
 // SetHosts sets the "hosts" field.
-func (u *ServiceConfigUpsert) SetHosts(v []schema.HostSpec) *ServiceConfigUpsert {
+func (u *ServiceConfigUpsert) SetHosts(v []v1.HostSpec) *ServiceConfigUpsert {
 	u.Set(serviceconfig.FieldHosts, v)
 	return u
 }
@@ -608,7 +609,7 @@ func (u *ServiceConfigUpsert) ClearHosts() *ServiceConfigUpsert {
 }
 
 // SetPorts sets the "ports" field.
-func (u *ServiceConfigUpsert) SetPorts(v []schema.PortSpec) *ServiceConfigUpsert {
+func (u *ServiceConfigUpsert) SetPorts(v []v1.PortSpec) *ServiceConfigUpsert {
 	u.Set(serviceconfig.FieldPorts, v)
 	return u
 }
@@ -874,7 +875,7 @@ func (u *ServiceConfigUpsertOne) ClearGitBranch() *ServiceConfigUpsertOne {
 }
 
 // SetHosts sets the "hosts" field.
-func (u *ServiceConfigUpsertOne) SetHosts(v []schema.HostSpec) *ServiceConfigUpsertOne {
+func (u *ServiceConfigUpsertOne) SetHosts(v []v1.HostSpec) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetHosts(v)
 	})
@@ -895,7 +896,7 @@ func (u *ServiceConfigUpsertOne) ClearHosts() *ServiceConfigUpsertOne {
 }
 
 // SetPorts sets the "ports" field.
-func (u *ServiceConfigUpsertOne) SetPorts(v []schema.PortSpec) *ServiceConfigUpsertOne {
+func (u *ServiceConfigUpsertOne) SetPorts(v []v1.PortSpec) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetPorts(v)
 	})
@@ -1344,7 +1345,7 @@ func (u *ServiceConfigUpsertBulk) ClearGitBranch() *ServiceConfigUpsertBulk {
 }
 
 // SetHosts sets the "hosts" field.
-func (u *ServiceConfigUpsertBulk) SetHosts(v []schema.HostSpec) *ServiceConfigUpsertBulk {
+func (u *ServiceConfigUpsertBulk) SetHosts(v []v1.HostSpec) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetHosts(v)
 	})
@@ -1365,7 +1366,7 @@ func (u *ServiceConfigUpsertBulk) ClearHosts() *ServiceConfigUpsertBulk {
 }
 
 // SetPorts sets the "ports" field.
-func (u *ServiceConfigUpsertBulk) SetPorts(v []schema.PortSpec) *ServiceConfigUpsertBulk {
+func (u *ServiceConfigUpsertBulk) SetPorts(v []v1.PortSpec) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetPorts(v)
 	})

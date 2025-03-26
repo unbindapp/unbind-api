@@ -35,6 +35,8 @@ const (
 	FieldGitRepository = "git_repository"
 	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
 	FieldKubernetesSecret = "kubernetes_secret"
+	// FieldCurrentDeploymentID holds the string denoting the current_deployment_id field in the database.
+	FieldCurrentDeploymentID = "current_deployment_id"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
 	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
@@ -43,6 +45,8 @@ const (
 	EdgeServiceConfig = "service_config"
 	// EdgeDeployments holds the string denoting the deployments edge name in mutations.
 	EdgeDeployments = "deployments"
+	// EdgeCurrentDeployment holds the string denoting the current_deployment edge name in mutations.
+	EdgeCurrentDeployment = "current_deployment"
 	// Table holds the table name of the service in the database.
 	Table = "services"
 	// EnvironmentTable is the table that holds the environment relation/edge.
@@ -73,6 +77,13 @@ const (
 	DeploymentsInverseTable = "deployments"
 	// DeploymentsColumn is the table column denoting the deployments relation/edge.
 	DeploymentsColumn = "service_id"
+	// CurrentDeploymentTable is the table that holds the current_deployment relation/edge.
+	CurrentDeploymentTable = "services"
+	// CurrentDeploymentInverseTable is the table name for the Deployment entity.
+	// It exists in this package in order to avoid circular dependency with the "deployment" package.
+	CurrentDeploymentInverseTable = "deployments"
+	// CurrentDeploymentColumn is the table column denoting the current_deployment relation/edge.
+	CurrentDeploymentColumn = "current_deployment_id"
 )
 
 // Columns holds all SQL columns for service fields.
@@ -88,6 +99,7 @@ var Columns = []string{
 	FieldGitRepositoryOwner,
 	FieldGitRepository,
 	FieldKubernetesSecret,
+	FieldCurrentDeploymentID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -171,6 +183,11 @@ func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
 }
 
+// ByCurrentDeploymentID orders the results by the current_deployment_id field.
+func ByCurrentDeploymentID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCurrentDeploymentID, opts...).ToFunc()
+}
+
 // ByEnvironmentField orders the results by environment field.
 func ByEnvironmentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -205,6 +222,13 @@ func ByDeployments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newDeploymentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCurrentDeploymentField orders the results by current_deployment field.
+func ByCurrentDeploymentField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCurrentDeploymentStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newEnvironmentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -231,5 +255,12 @@ func newDeploymentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DeploymentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, DeploymentsTable, DeploymentsColumn),
+	)
+}
+func newCurrentDeploymentStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CurrentDeploymentInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, CurrentDeploymentTable, CurrentDeploymentColumn),
 	)
 }

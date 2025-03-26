@@ -241,6 +241,26 @@ func (du *DeploymentUpdate) AddAttempts(i int) *DeploymentUpdate {
 	return du
 }
 
+// SetImage sets the "image" field.
+func (du *DeploymentUpdate) SetImage(s string) *DeploymentUpdate {
+	du.mutation.SetImage(s)
+	return du
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableImage(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetImage(*s)
+	}
+	return du
+}
+
+// ClearImage clears the value of the "image" field.
+func (du *DeploymentUpdate) ClearImage() *DeploymentUpdate {
+	du.mutation.ClearImage()
+	return du
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (du *DeploymentUpdate) SetService(s *Service) *DeploymentUpdate {
 	return du.SetServiceID(s.ID)
@@ -385,6 +405,12 @@ func (du *DeploymentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := du.mutation.AddedAttempts(); ok {
 		_spec.AddField(deployment.FieldAttempts, field.TypeInt, value)
+	}
+	if value, ok := du.mutation.Image(); ok {
+		_spec.SetField(deployment.FieldImage, field.TypeString, value)
+	}
+	if du.mutation.ImageCleared() {
+		_spec.ClearField(deployment.FieldImage, field.TypeString)
 	}
 	if du.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -646,6 +672,26 @@ func (duo *DeploymentUpdateOne) AddAttempts(i int) *DeploymentUpdateOne {
 	return duo
 }
 
+// SetImage sets the "image" field.
+func (duo *DeploymentUpdateOne) SetImage(s string) *DeploymentUpdateOne {
+	duo.mutation.SetImage(s)
+	return duo
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableImage(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetImage(*s)
+	}
+	return duo
+}
+
+// ClearImage clears the value of the "image" field.
+func (duo *DeploymentUpdateOne) ClearImage() *DeploymentUpdateOne {
+	duo.mutation.ClearImage()
+	return duo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (duo *DeploymentUpdateOne) SetService(s *Service) *DeploymentUpdateOne {
 	return duo.SetServiceID(s.ID)
@@ -820,6 +866,12 @@ func (duo *DeploymentUpdateOne) sqlSave(ctx context.Context) (_node *Deployment,
 	}
 	if value, ok := duo.mutation.AddedAttempts(); ok {
 		_spec.AddField(deployment.FieldAttempts, field.TypeInt, value)
+	}
+	if value, ok := duo.mutation.Image(); ok {
+		_spec.SetField(deployment.FieldImage, field.TypeString, value)
+	}
+	if duo.mutation.ImageCleared() {
+		_spec.ClearField(deployment.FieldImage, field.TypeString)
 	}
 	if duo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

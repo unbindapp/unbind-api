@@ -106,6 +106,11 @@ func KubernetesSecret(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldKubernetesSecret, v))
 }
 
+// CurrentDeploymentID applies equality check predicate on the "current_deployment_id" field. It's identical to CurrentDeploymentIDEQ.
+func CurrentDeploymentID(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldCurrentDeploymentID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldCreatedAt, v))
@@ -656,6 +661,36 @@ func KubernetesSecretContainsFold(v string) predicate.Service {
 	return predicate.Service(sql.FieldContainsFold(FieldKubernetesSecret, v))
 }
 
+// CurrentDeploymentIDEQ applies the EQ predicate on the "current_deployment_id" field.
+func CurrentDeploymentIDEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldCurrentDeploymentID, v))
+}
+
+// CurrentDeploymentIDNEQ applies the NEQ predicate on the "current_deployment_id" field.
+func CurrentDeploymentIDNEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldCurrentDeploymentID, v))
+}
+
+// CurrentDeploymentIDIn applies the In predicate on the "current_deployment_id" field.
+func CurrentDeploymentIDIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldCurrentDeploymentID, vs...))
+}
+
+// CurrentDeploymentIDNotIn applies the NotIn predicate on the "current_deployment_id" field.
+func CurrentDeploymentIDNotIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldCurrentDeploymentID, vs...))
+}
+
+// CurrentDeploymentIDIsNil applies the IsNil predicate on the "current_deployment_id" field.
+func CurrentDeploymentIDIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldCurrentDeploymentID))
+}
+
+// CurrentDeploymentIDNotNil applies the NotNil predicate on the "current_deployment_id" field.
+func CurrentDeploymentIDNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldCurrentDeploymentID))
+}
+
 // HasEnvironment applies the HasEdge predicate on the "environment" edge.
 func HasEnvironment() predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
@@ -740,6 +775,29 @@ func HasDeployments() predicate.Service {
 func HasDeploymentsWith(preds ...predicate.Deployment) predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
 		step := newDeploymentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCurrentDeployment applies the HasEdge predicate on the "current_deployment" edge.
+func HasCurrentDeployment() predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, CurrentDeploymentTable, CurrentDeploymentColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCurrentDeploymentWith applies the HasEdge predicate on the "current_deployment" edge with a given conditions (other predicates).
+func HasCurrentDeploymentWith(preds ...predicate.Deployment) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := newCurrentDeploymentStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

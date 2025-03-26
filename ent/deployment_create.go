@@ -192,6 +192,20 @@ func (dc *DeploymentCreate) SetNillableAttempts(i *int) *DeploymentCreate {
 	return dc
 }
 
+// SetImage sets the "image" field.
+func (dc *DeploymentCreate) SetImage(s string) *DeploymentCreate {
+	dc.mutation.SetImage(s)
+	return dc
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableImage(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetImage(*s)
+	}
+	return dc
+}
+
 // SetID sets the "id" field.
 func (dc *DeploymentCreate) SetID(u uuid.UUID) *DeploymentCreate {
 	dc.mutation.SetID(u)
@@ -384,6 +398,10 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 	if value, ok := dc.mutation.Attempts(); ok {
 		_spec.SetField(deployment.FieldAttempts, field.TypeInt, value)
 		_node.Attempts = value
+	}
+	if value, ok := dc.mutation.Image(); ok {
+		_spec.SetField(deployment.FieldImage, field.TypeString, value)
+		_node.Image = value
 	}
 	if nodes := dc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -643,6 +661,24 @@ func (u *DeploymentUpsert) UpdateAttempts() *DeploymentUpsert {
 // AddAttempts adds v to the "attempts" field.
 func (u *DeploymentUpsert) AddAttempts(v int) *DeploymentUpsert {
 	u.Add(deployment.FieldAttempts, v)
+	return u
+}
+
+// SetImage sets the "image" field.
+func (u *DeploymentUpsert) SetImage(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldImage, v)
+	return u
+}
+
+// UpdateImage sets the "image" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateImage() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldImage)
+	return u
+}
+
+// ClearImage clears the value of the "image" field.
+func (u *DeploymentUpsert) ClearImage() *DeploymentUpsert {
+	u.SetNull(deployment.FieldImage)
 	return u
 }
 
@@ -918,6 +954,27 @@ func (u *DeploymentUpsertOne) AddAttempts(v int) *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) UpdateAttempts() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.UpdateAttempts()
+	})
+}
+
+// SetImage sets the "image" field.
+func (u *DeploymentUpsertOne) SetImage(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetImage(v)
+	})
+}
+
+// UpdateImage sets the "image" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateImage() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateImage()
+	})
+}
+
+// ClearImage clears the value of the "image" field.
+func (u *DeploymentUpsertOne) ClearImage() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearImage()
 	})
 }
 
@@ -1360,6 +1417,27 @@ func (u *DeploymentUpsertBulk) AddAttempts(v int) *DeploymentUpsertBulk {
 func (u *DeploymentUpsertBulk) UpdateAttempts() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.UpdateAttempts()
+	})
+}
+
+// SetImage sets the "image" field.
+func (u *DeploymentUpsertBulk) SetImage(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetImage(v)
+	})
+}
+
+// UpdateImage sets the "image" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateImage() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateImage()
+	})
+}
+
+// ClearImage clears the value of the "image" field.
+func (u *DeploymentUpsertBulk) ClearImage() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearImage()
 	})
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // Create the service
@@ -52,8 +53,8 @@ func (self *ServiceRepository) CreateConfig(
 	provider *enum.Provider,
 	framework *enum.Framework,
 	gitBranch *string,
-	ports []schema.PortSpec,
-	hosts []schema.HostSpec,
+	ports []v1.PortSpec,
+	hosts []v1.HostSpec,
 	replicas *int32,
 	autoDeploy *bool,
 	runCommand *string,
@@ -116,8 +117,8 @@ func (self *ServiceRepository) UpdateConfig(
 	serviceType *schema.ServiceType,
 	builder *schema.ServiceBuilder,
 	gitBranch *string,
-	ports []schema.PortSpec,
-	hosts []schema.HostSpec,
+	ports []v1.PortSpec,
+	hosts []v1.HostSpec,
 	replicas *int32,
 	autoDeploy *bool,
 	runCommand *string,

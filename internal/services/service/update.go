@@ -15,6 +15,7 @@ import (
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // UpdateServiceConfigInput defines the input for updating a service configuration
@@ -30,8 +31,8 @@ type UpdateServiceInput struct {
 	GitBranch  *string                `json:"git_branch,omitempty" required:"false"`
 	Type       *schema.ServiceType    `json:"type,omitempty" required:"false"`
 	Builder    *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
-	Hosts      []schema.HostSpec      `json:"hosts,omitempty" required:"false"`
-	Ports      []schema.PortSpec      `validate:"min=1,max=65535" json:"ports,omitempty" required:"false"`
+	Hosts      []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
+	Ports      []v1.PortSpec          `validate:"min=1,max=65535" json:"ports,omitempty" required:"false"`
 	Replicas   *int32                 `validate:"min=1,max=10" json:"replicas,omitempty" required:"false"`
 	AutoDeploy *bool                  `json:"auto_deploy,omitempty" required:"false"`
 	RunCommand *string                `json:"run_command,omitempty" required:"false"`
@@ -109,7 +110,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			if err != nil {
 				log.Warn("failed to generate subdomain", "error", err)
 			} else {
-				input.Hosts = []schema.HostSpec{
+				input.Hosts = []v1.HostSpec{
 					{
 						Host: host,
 						Path: "/",

@@ -129,6 +129,9 @@ func (Deployment) Fields() []ent.Field {
 			Comment("The status of the kubernetes job"),
 		field.Int("attempts").
 			Default(0),
+		field.String("image").
+			Optional().
+			Comment("Reference to the image used for the deployment"),
 	}
 }
 

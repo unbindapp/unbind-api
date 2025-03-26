@@ -126,7 +126,7 @@ func startAPI(cfg *config.Config) {
 	kubeClient := k8s.NewKubeClient(cfg)
 
 	// Create github client
-	githubClient := github.NewGithubClient(cfg)
+	githubClient := github.NewGithubClient(cfg.GithubURL, cfg)
 
 	// Create deployment controller
 	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient)

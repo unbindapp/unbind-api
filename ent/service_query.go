@@ -32,6 +32,7 @@ type ServiceQuery struct {
 	withGithubInstallation *GithubInstallationQuery
 	withServiceConfig      *ServiceConfigQuery
 	withDeployments        *DeploymentQuery
+	withCurrentDeployment  *DeploymentQuery
 	modifiers              []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -150,6 +151,28 @@ func (sq *ServiceQuery) QueryDeployments() *DeploymentQuery {
 			sqlgraph.From(service.Table, service.FieldID, selector),
 			sqlgraph.To(deployment.Table, deployment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, service.DeploymentsTable, service.DeploymentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCurrentDeployment chains the current query on the "current_deployment" edge.
+func (sq *ServiceQuery) QueryCurrentDeployment() *DeploymentQuery {
+	query := (&DeploymentClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, selector),
+			sqlgraph.To(deployment.Table, deployment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, service.CurrentDeploymentTable, service.CurrentDeploymentColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -353,6 +376,7 @@ func (sq *ServiceQuery) Clone() *ServiceQuery {
 		withGithubInstallation: sq.withGithubInstallation.Clone(),
 		withServiceConfig:      sq.withServiceConfig.Clone(),
 		withDeployments:        sq.withDeployments.Clone(),
+		withCurrentDeployment:  sq.withCurrentDeployment.Clone(),
 		// clone intermediate query.
 		sql:       sq.sql.Clone(),
 		path:      sq.path,
@@ -401,6 +425,17 @@ func (sq *ServiceQuery) WithDeployments(opts ...func(*DeploymentQuery)) *Service
 		opt(query)
 	}
 	sq.withDeployments = query
+	return sq
+}
+
+// WithCurrentDeployment tells the query-builder to eager-load the nodes that are connected to
+// the "current_deployment" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ServiceQuery) WithCurrentDeployment(opts ...func(*DeploymentQuery)) *ServiceQuery {
+	query := (&DeploymentClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withCurrentDeployment = query
 	return sq
 }
 
@@ -482,11 +517,12 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 	var (
 		nodes       = []*Service{}
 		_spec       = sq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			sq.withEnvironment != nil,
 			sq.withGithubInstallation != nil,
 			sq.withServiceConfig != nil,
 			sq.withDeployments != nil,
+			sq.withCurrentDeployment != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -532,6 +568,12 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 		if err := sq.loadDeployments(ctx, query, nodes,
 			func(n *Service) { n.Edges.Deployments = []*Deployment{} },
 			func(n *Service, e *Deployment) { n.Edges.Deployments = append(n.Edges.Deployments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withCurrentDeployment; query != nil {
+		if err := sq.loadCurrentDeployment(ctx, query, nodes, nil,
+			func(n *Service, e *Deployment) { n.Edges.CurrentDeployment = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -656,6 +698,38 @@ func (sq *ServiceQuery) loadDeployments(ctx context.Context, query *DeploymentQu
 	}
 	return nil
 }
+func (sq *ServiceQuery) loadCurrentDeployment(ctx context.Context, query *DeploymentQuery, nodes []*Service, init func(*Service), assign func(*Service, *Deployment)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Service)
+	for i := range nodes {
+		if nodes[i].CurrentDeploymentID == nil {
+			continue
+		}
+		fk := *nodes[i].CurrentDeploymentID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(deployment.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "current_deployment_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (sq *ServiceQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := sq.querySpec()
@@ -690,6 +764,9 @@ func (sq *ServiceQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if sq.withGithubInstallation != nil {
 			_spec.Node.AddColumnOnce(service.FieldGithubInstallationID)
+		}
+		if sq.withCurrentDeployment != nil {
+			_spec.Node.AddColumnOnce(service.FieldCurrentDeploymentID)
 		}
 	}
 	if ps := sq.predicates; len(ps) > 0 {

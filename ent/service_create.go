@@ -136,6 +136,20 @@ func (sc *ServiceCreate) SetKubernetesSecret(s string) *ServiceCreate {
 	return sc
 }
 
+// SetCurrentDeploymentID sets the "current_deployment_id" field.
+func (sc *ServiceCreate) SetCurrentDeploymentID(u uuid.UUID) *ServiceCreate {
+	sc.mutation.SetCurrentDeploymentID(u)
+	return sc
+}
+
+// SetNillableCurrentDeploymentID sets the "current_deployment_id" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableCurrentDeploymentID(u *uuid.UUID) *ServiceCreate {
+	if u != nil {
+		sc.SetCurrentDeploymentID(*u)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *ServiceCreate) SetID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetID(u)
@@ -192,6 +206,11 @@ func (sc *ServiceCreate) AddDeployments(d ...*Deployment) *ServiceCreate {
 		ids[i] = d[i].ID
 	}
 	return sc.AddDeploymentIDs(ids...)
+}
+
+// SetCurrentDeployment sets the "current_deployment" edge to the Deployment entity.
+func (sc *ServiceCreate) SetCurrentDeployment(d *Deployment) *ServiceCreate {
+	return sc.SetCurrentDeploymentID(d.ID)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -405,6 +424,23 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := sc.mutation.CurrentDeploymentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   service.CurrentDeploymentTable,
+			Columns: []string{service.CurrentDeploymentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.CurrentDeploymentID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -586,6 +622,24 @@ func (u *ServiceUpsert) SetKubernetesSecret(v string) *ServiceUpsert {
 // UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
 func (u *ServiceUpsert) UpdateKubernetesSecret() *ServiceUpsert {
 	u.SetExcluded(service.FieldKubernetesSecret)
+	return u
+}
+
+// SetCurrentDeploymentID sets the "current_deployment_id" field.
+func (u *ServiceUpsert) SetCurrentDeploymentID(v uuid.UUID) *ServiceUpsert {
+	u.Set(service.FieldCurrentDeploymentID, v)
+	return u
+}
+
+// UpdateCurrentDeploymentID sets the "current_deployment_id" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateCurrentDeploymentID() *ServiceUpsert {
+	u.SetExcluded(service.FieldCurrentDeploymentID)
+	return u
+}
+
+// ClearCurrentDeploymentID clears the value of the "current_deployment_id" field.
+func (u *ServiceUpsert) ClearCurrentDeploymentID() *ServiceUpsert {
+	u.SetNull(service.FieldCurrentDeploymentID)
 	return u
 }
 
@@ -791,6 +845,27 @@ func (u *ServiceUpsertOne) SetKubernetesSecret(v string) *ServiceUpsertOne {
 func (u *ServiceUpsertOne) UpdateKubernetesSecret() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateKubernetesSecret()
+	})
+}
+
+// SetCurrentDeploymentID sets the "current_deployment_id" field.
+func (u *ServiceUpsertOne) SetCurrentDeploymentID(v uuid.UUID) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetCurrentDeploymentID(v)
+	})
+}
+
+// UpdateCurrentDeploymentID sets the "current_deployment_id" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateCurrentDeploymentID() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateCurrentDeploymentID()
+	})
+}
+
+// ClearCurrentDeploymentID clears the value of the "current_deployment_id" field.
+func (u *ServiceUpsertOne) ClearCurrentDeploymentID() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearCurrentDeploymentID()
 	})
 }
 
@@ -1163,6 +1238,27 @@ func (u *ServiceUpsertBulk) SetKubernetesSecret(v string) *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) UpdateKubernetesSecret() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateKubernetesSecret()
+	})
+}
+
+// SetCurrentDeploymentID sets the "current_deployment_id" field.
+func (u *ServiceUpsertBulk) SetCurrentDeploymentID(v uuid.UUID) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetCurrentDeploymentID(v)
+	})
+}
+
+// UpdateCurrentDeploymentID sets the "current_deployment_id" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateCurrentDeploymentID() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateCurrentDeploymentID()
+	})
+}
+
+// ClearCurrentDeploymentID clears the value of the "current_deployment_id" field.
+func (u *ServiceUpsertBulk) ClearCurrentDeploymentID() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearCurrentDeploymentID()
 	})
 }
 

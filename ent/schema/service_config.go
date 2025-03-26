@@ -12,20 +12,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
-
-// HostSpec defines host configuration for a service
-type HostSpec struct {
-	Host string `json:"host"`                            // External domain for the service
-	Path string `json:"path"`                            // Path for the host, defaults to "/"
-	Port *int32 `json:"port,omitempty" required:"false"` // Optional port override for this host
-}
-
-// PortSpec defines port configuration for a service
-type PortSpec struct {
-	Port     int32   `json:"port"`                                // Container port to expose
-	Protocol *string `json:"protocol,omitempty" required:"false"` // Protocol (TCP, UDP, SCTP), defaults to TCP
-}
 
 // ServiceConfig holds environment-specific configuration for a service
 type ServiceConfig struct {
@@ -49,8 +37,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.Enum("provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
 		field.Enum("framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
 		field.String("git_branch").Optional().Nillable().Comment("Branch to build from"),
-		field.JSON("hosts", []HostSpec{}).Optional().Comment("External domains and paths for the service"),
-		field.JSON("ports", []PortSpec{}).Optional().Comment("Container ports to expose"),
+		field.JSON("hosts", []v1.HostSpec{}).Optional().Comment("External domains and paths for the service"),
+		field.JSON("ports", []v1.PortSpec{}).Optional().Comment("Container ports to expose"),
 		field.Int32("replicas").Default(2).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
@@ -115,13 +103,11 @@ func (u ServiceType) Schema(r huma.Registry) *huma.Schema {
 type ServiceBuilder string
 
 const (
-	ServiceBuilderNixpacks ServiceBuilder = "nixpacks"
 	ServiceBuilderRailpack ServiceBuilder = "railpack"
 	ServiceBuilderDocker   ServiceBuilder = "docker"
 )
 
 var allServiceBuilders = []ServiceBuilder{
-	ServiceBuilderNixpacks,
 	ServiceBuilderRailpack,
 	ServiceBuilderDocker,
 }

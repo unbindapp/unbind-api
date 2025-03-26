@@ -43,6 +43,8 @@ const (
 	FieldKubernetesJobStatus = "kubernetes_job_status"
 	// FieldAttempts holds the string denoting the attempts field in the database.
 	FieldAttempts = "attempts"
+	// FieldImage holds the string denoting the image field in the database.
+	FieldImage = "image"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// Table holds the table name of the deployment in the database.
@@ -72,6 +74,7 @@ var Columns = []string{
 	FieldKubernetesJobName,
 	FieldKubernetesJobStatus,
 	FieldAttempts,
+	FieldImage,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -190,6 +193,11 @@ func ByKubernetesJobStatus(opts ...sql.OrderTermOption) OrderOption {
 // ByAttempts orders the results by the attempts field.
 func ByAttempts(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAttempts, opts...).ToFunc()
+}
+
+// ByImage orders the results by the image field.
+func ByImage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldImage, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

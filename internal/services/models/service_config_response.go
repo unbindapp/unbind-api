@@ -4,6 +4,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfigResponse defines the configuration response for a service
@@ -13,8 +14,8 @@ type ServiceConfigResponse struct {
 	Builder    schema.ServiceBuilder `json:"builder"`
 	Provider   *enum.Provider        `json:"provider,omitempty"`
 	Framework  *enum.Framework       `json:"framework,omitempty"`
-	Host       []schema.HostSpec     `json:"hosts,omitempty"`
-	Port       []schema.PortSpec     `json:"ports,omitempty"`
+	Host       []v1.HostSpec         `json:"hosts,omitempty"`
+	Port       []v1.PortSpec         `json:"ports,omitempty"`
 	Replicas   int32                 `json:"replicas"`
 	AutoDeploy bool                  `json:"auto_deploy"`
 	RunCommand *string               `json:"run_command,omitempty"`

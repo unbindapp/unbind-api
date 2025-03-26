@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfigUpdate is the builder for updating ServiceConfig entities.
@@ -143,14 +144,14 @@ func (scu *ServiceConfigUpdate) ClearGitBranch() *ServiceConfigUpdate {
 }
 
 // SetHosts sets the "hosts" field.
-func (scu *ServiceConfigUpdate) SetHosts(ss []schema.HostSpec) *ServiceConfigUpdate {
-	scu.mutation.SetHosts(ss)
+func (scu *ServiceConfigUpdate) SetHosts(vs []v1.HostSpec) *ServiceConfigUpdate {
+	scu.mutation.SetHosts(vs)
 	return scu
 }
 
-// AppendHosts appends ss to the "hosts" field.
-func (scu *ServiceConfigUpdate) AppendHosts(ss []schema.HostSpec) *ServiceConfigUpdate {
-	scu.mutation.AppendHosts(ss)
+// AppendHosts appends vs to the "hosts" field.
+func (scu *ServiceConfigUpdate) AppendHosts(vs []v1.HostSpec) *ServiceConfigUpdate {
+	scu.mutation.AppendHosts(vs)
 	return scu
 }
 
@@ -161,14 +162,14 @@ func (scu *ServiceConfigUpdate) ClearHosts() *ServiceConfigUpdate {
 }
 
 // SetPorts sets the "ports" field.
-func (scu *ServiceConfigUpdate) SetPorts(ss []schema.PortSpec) *ServiceConfigUpdate {
-	scu.mutation.SetPorts(ss)
+func (scu *ServiceConfigUpdate) SetPorts(vs []v1.PortSpec) *ServiceConfigUpdate {
+	scu.mutation.SetPorts(vs)
 	return scu
 }
 
-// AppendPorts appends ss to the "ports" field.
-func (scu *ServiceConfigUpdate) AppendPorts(ss []schema.PortSpec) *ServiceConfigUpdate {
-	scu.mutation.AppendPorts(ss)
+// AppendPorts appends vs to the "ports" field.
+func (scu *ServiceConfigUpdate) AppendPorts(vs []v1.PortSpec) *ServiceConfigUpdate {
+	scu.mutation.AppendPorts(vs)
 	return scu
 }
 
@@ -598,14 +599,14 @@ func (scuo *ServiceConfigUpdateOne) ClearGitBranch() *ServiceConfigUpdateOne {
 }
 
 // SetHosts sets the "hosts" field.
-func (scuo *ServiceConfigUpdateOne) SetHosts(ss []schema.HostSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.SetHosts(ss)
+func (scuo *ServiceConfigUpdateOne) SetHosts(vs []v1.HostSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.SetHosts(vs)
 	return scuo
 }
 
-// AppendHosts appends ss to the "hosts" field.
-func (scuo *ServiceConfigUpdateOne) AppendHosts(ss []schema.HostSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.AppendHosts(ss)
+// AppendHosts appends vs to the "hosts" field.
+func (scuo *ServiceConfigUpdateOne) AppendHosts(vs []v1.HostSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendHosts(vs)
 	return scuo
 }
 
@@ -616,14 +617,14 @@ func (scuo *ServiceConfigUpdateOne) ClearHosts() *ServiceConfigUpdateOne {
 }
 
 // SetPorts sets the "ports" field.
-func (scuo *ServiceConfigUpdateOne) SetPorts(ss []schema.PortSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.SetPorts(ss)
+func (scuo *ServiceConfigUpdateOne) SetPorts(vs []v1.PortSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.SetPorts(vs)
 	return scuo
 }
 
-// AppendPorts appends ss to the "ports" field.
-func (scuo *ServiceConfigUpdateOne) AppendPorts(ss []schema.PortSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.AppendPorts(ss)
+// AppendPorts appends vs to the "ports" field.
+func (scuo *ServiceConfigUpdateOne) AppendPorts(vs []v1.PortSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendPorts(vs)
 	return scuo
 }
 
