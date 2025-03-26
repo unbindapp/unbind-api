@@ -17,7 +17,11 @@ func (self *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Tea
 				func(eq *ent.EnvironmentQuery) {
 					eq.WithServices(
 						func(sq *ent.ServiceQuery) {
-							sq.WithGithubInstallation()
+							sq.WithGithubInstallation(
+								func(giq *ent.GithubInstallationQuery) {
+									giq.WithGithubApp()
+								},
+							)
 							sq.WithServiceConfig()
 						},
 					)
