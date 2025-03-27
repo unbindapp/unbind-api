@@ -101,7 +101,13 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	}
 
 	// Perform update
-	var service *ent.Service
+	service, err := self.repo.Service().GetByID(ctx, input.ServiceID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
+		}
+		return nil, err
+	}
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Update the service
 		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.DisplayName, input.Description); err != nil {
