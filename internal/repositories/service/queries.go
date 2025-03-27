@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/deployment"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -30,6 +31,7 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 }
 
 func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error) {
+
 	return self.base.DB.Service.Query().
 		Where(service.GithubInstallationIDEQ(installationID)).
 		Where(service.GitRepositoryEQ(repoName)).
@@ -43,8 +45,10 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 }
 
 func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error) {
-	return self.base.DB.Debug().Service.Query().
-		Where(service.EnvironmentIDEQ(environmentID)).
+	return self.base.DB.Debug().
+		Environment.Query().
+		Where(environment.ID(environmentID)).
+		QueryServices().
 		WithServiceConfig().
 		WithDeployments(func(dq *ent.DeploymentQuery) {
 			dq.Order(ent.Desc(deployment.FieldCreatedAt))
