@@ -35,8 +35,8 @@ type UpdateServiceInput struct {
 	Type       *schema.ServiceType    `json:"type,omitempty" required:"false"`
 	Builder    *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
 	Hosts      []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
-	Ports      []v1.PortSpec          `validate:"min=1,max=65535" json:"ports,omitempty" required:"false"`
-	Replicas   *int32                 `validate:"min=1,max=10" json:"replicas,omitempty" required:"false"`
+	Ports      []v1.PortSpec          `json:"ports,omitempty" required:"false"`
+	Replicas   *int32                 `json:"replicas,omitempty" required:"false"`
 	AutoDeploy *bool                  `json:"auto_deploy,omitempty" required:"false"`
 	RunCommand *string                `json:"run_command,omitempty" required:"false"`
 	Public     *bool                  `json:"public,omitempty" required:"false"`
