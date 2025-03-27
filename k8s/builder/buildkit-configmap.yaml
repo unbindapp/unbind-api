@@ -11,3 +11,5 @@ data:
     [registry."docker-registry.unbind-system:5000"]
       http = true
       insecure = true
+    [frontend."dockerfile.v0"]
+      enabled = true

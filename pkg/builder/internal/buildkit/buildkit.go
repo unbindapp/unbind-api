@@ -3,7 +3,6 @@ package buildkit
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"time"
@@ -79,7 +78,6 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 
 	// Setup channel for progress monitoring
 	ch := make(chan *client.SolveStatus)
-	var pipeW *io.PipeWriter
 
 	progressDone := make(chan bool)
 	go func() {
@@ -242,10 +240,6 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 
 	// Wait for progress monitoring to complete
 	<-progressDone
-
-	if pipeW != nil {
-		pipeW.Close()
-	}
 
 	if err != nil {
 		return fmt.Errorf("failed to solve: %w", err)

@@ -148,6 +148,14 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 							},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: utils.ToPtr(true),
+								SeccompProfile: &corev1.SeccompProfile{
+									Type: corev1.SeccompProfileTypeUnconfined,
+								},
+								AppArmorProfile: &corev1.AppArmorProfile{
+									Type: corev1.AppArmorProfileTypeUnconfined,
+								},
+								RunAsUser:  utils.ToPtr[int64](1000),
+								RunAsGroup: utils.ToPtr[int64](1000),
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
