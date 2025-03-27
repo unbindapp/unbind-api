@@ -43,7 +43,7 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 }
 
 func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error) {
-	return self.base.DB.Service.Query().
+	return self.base.DB.Debug().Service.Query().
 		Where(service.EnvironmentIDEQ(environmentID)).
 		WithServiceConfig().
 		WithDeployments(func(dq *ent.DeploymentQuery) {
