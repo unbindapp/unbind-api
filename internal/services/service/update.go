@@ -27,8 +27,8 @@ type UpdateServiceInput struct {
 	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
 	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
 	ServiceID     uuid.UUID `validate:"required,uuid4" required:"true" json:"service_id"`
-	DisplayName   *string   `validate:"optional" required:"false" json:"display_name"`
-	Description   *string   `validate:"optional" required:"false" json:"description"`
+	DisplayName   *string   ` required:"false" json:"display_name"`
+	Description   *string   ` required:"false" json:"description"`
 
 	// Configuration
 	GitBranch  *string                `json:"git_branch,omitempty" required:"false"`
