@@ -55,7 +55,7 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 			Where(deployment.ServiceIDEQ(svc.ID)).
 			Order(ent.Desc(deployment.FieldCreatedAt)).
 			Limit(1).
-			Only(ctx)
+			First(ctx)
 
 		if err != nil && !ent.IsNotFound(err) {
 			return nil, err
