@@ -4,25 +4,17 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/railwayapp/railpack/core"
 	a "github.com/railwayapp/railpack/core/app"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/pkg/builder/internal/buildkit"
 )
 
 func (self *Builder) BuildWithRailpack(ctx context.Context, buildSecrets map[string]string) (imageName, repoName string, err error) {
-	// -- Generate image name
-	repoName, err = utils.ExtractRepoName(self.config.GitRepoURL)
-	if err != nil {
-		log.Warnf("Failed to extract repository name: %v", err)
-		repoName = fmt.Sprintf("unbind-build-%d", time.Now().Unix())
-	}
-	outputImage := fmt.Sprintf("%s/%s:%d", self.config.ContainerRegistryHost, repoName, time.Now().Unix())
-	cacheKey := fmt.Sprintf("%s/%s:buildcache", self.config.ContainerRegistryHost, repoName)
+	// Metadata
+	repoName, outputImage, cacheKey := self.GenerateBuildMetadata()
 
 	// -- Create github client
 	ghClient := github.NewGithubClient(self.config.GithubURL, nil)
@@ -59,12 +51,11 @@ func (self *Builder) BuildWithRailpack(ctx context.Context, buildSecrets map[str
 	err = buildkit.BuildWithBuildkitClient(
 		self.config,
 		app.Source,
-		buildResult.Plan,
 		buildkit.BuildWithBuildkitClientOptions{
-			ImageName: outputImage,
-			CacheKey:  cacheKey,
-			Secrets:   buildSecrets,
-			// ! TODO - add IMport/Export cache
+			ImageName:         outputImage,
+			RailpackBuildPlan: buildResult.Plan,
+			CacheKey:          cacheKey,
+			Secrets:           buildSecrets,
 		},
 	)
 

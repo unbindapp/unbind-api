@@ -73,6 +73,11 @@ func ServiceID(v uuid.UUID) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldServiceID, v))
 }
 
+// DockerfilePath applies equality check predicate on the "dockerfile_path" field. It's identical to DockerfilePathEQ.
+func DockerfilePath(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerfilePath, v))
+}
+
 // GitBranch applies equality check predicate on the "git_branch" field. It's identical to GitBranchEQ.
 func GitBranch(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldGitBranch, v))
@@ -261,6 +266,81 @@ func BuilderNotIn(vs ...schema.ServiceBuilder) predicate.ServiceConfig {
 		v[i] = vs[i]
 	}
 	return predicate.ServiceConfig(sql.FieldNotIn(FieldBuilder, v...))
+}
+
+// DockerfilePathEQ applies the EQ predicate on the "dockerfile_path" field.
+func DockerfilePathEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerfilePath, v))
+}
+
+// DockerfilePathNEQ applies the NEQ predicate on the "dockerfile_path" field.
+func DockerfilePathNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldDockerfilePath, v))
+}
+
+// DockerfilePathIn applies the In predicate on the "dockerfile_path" field.
+func DockerfilePathIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldDockerfilePath, vs...))
+}
+
+// DockerfilePathNotIn applies the NotIn predicate on the "dockerfile_path" field.
+func DockerfilePathNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldDockerfilePath, vs...))
+}
+
+// DockerfilePathGT applies the GT predicate on the "dockerfile_path" field.
+func DockerfilePathGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldDockerfilePath, v))
+}
+
+// DockerfilePathGTE applies the GTE predicate on the "dockerfile_path" field.
+func DockerfilePathGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldDockerfilePath, v))
+}
+
+// DockerfilePathLT applies the LT predicate on the "dockerfile_path" field.
+func DockerfilePathLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldDockerfilePath, v))
+}
+
+// DockerfilePathLTE applies the LTE predicate on the "dockerfile_path" field.
+func DockerfilePathLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldDockerfilePath, v))
+}
+
+// DockerfilePathContains applies the Contains predicate on the "dockerfile_path" field.
+func DockerfilePathContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldDockerfilePath, v))
+}
+
+// DockerfilePathHasPrefix applies the HasPrefix predicate on the "dockerfile_path" field.
+func DockerfilePathHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldDockerfilePath, v))
+}
+
+// DockerfilePathHasSuffix applies the HasSuffix predicate on the "dockerfile_path" field.
+func DockerfilePathHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldDockerfilePath, v))
+}
+
+// DockerfilePathIsNil applies the IsNil predicate on the "dockerfile_path" field.
+func DockerfilePathIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldDockerfilePath))
+}
+
+// DockerfilePathNotNil applies the NotNil predicate on the "dockerfile_path" field.
+func DockerfilePathNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldDockerfilePath))
+}
+
+// DockerfilePathEqualFold applies the EqualFold predicate on the "dockerfile_path" field.
+func DockerfilePathEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldDockerfilePath, v))
+}
+
+// DockerfilePathContainsFold applies the ContainsFold predicate on the "dockerfile_path" field.
+func DockerfilePathContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldDockerfilePath, v))
 }
 
 // ProviderEQ applies the EQ predicate on the "provider" field.

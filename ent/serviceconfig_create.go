@@ -74,6 +74,20 @@ func (scc *ServiceConfigCreate) SetBuilder(sb schema.ServiceBuilder) *ServiceCon
 	return scc
 }
 
+// SetDockerfilePath sets the "dockerfile_path" field.
+func (scc *ServiceConfigCreate) SetDockerfilePath(s string) *ServiceConfigCreate {
+	scc.mutation.SetDockerfilePath(s)
+	return scc
+}
+
+// SetNillableDockerfilePath sets the "dockerfile_path" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDockerfilePath(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetDockerfilePath(*s)
+	}
+	return scc
+}
+
 // SetProvider sets the "provider" field.
 func (scc *ServiceConfigCreate) SetProvider(e enum.Provider) *ServiceConfigCreate {
 	scc.mutation.SetProvider(e)
@@ -379,6 +393,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 		_node.Builder = value
 	}
+	if value, ok := scc.mutation.DockerfilePath(); ok {
+		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
+		_node.DockerfilePath = &value
+	}
 	if value, ok := scc.mutation.Provider(); ok {
 		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
 		_node.Provider = &value
@@ -533,6 +551,24 @@ func (u *ServiceConfigUpsert) SetBuilder(v schema.ServiceBuilder) *ServiceConfig
 // UpdateBuilder sets the "builder" field to the value that was provided on create.
 func (u *ServiceConfigUpsert) UpdateBuilder() *ServiceConfigUpsert {
 	u.SetExcluded(serviceconfig.FieldBuilder)
+	return u
+}
+
+// SetDockerfilePath sets the "dockerfile_path" field.
+func (u *ServiceConfigUpsert) SetDockerfilePath(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDockerfilePath, v)
+	return u
+}
+
+// UpdateDockerfilePath sets the "dockerfile_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDockerfilePath() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDockerfilePath)
+	return u
+}
+
+// ClearDockerfilePath clears the value of the "dockerfile_path" field.
+func (u *ServiceConfigUpsert) ClearDockerfilePath() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDockerfilePath)
 	return u
 }
 
@@ -808,6 +844,27 @@ func (u *ServiceConfigUpsertOne) SetBuilder(v schema.ServiceBuilder) *ServiceCon
 func (u *ServiceConfigUpsertOne) UpdateBuilder() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateBuilder()
+	})
+}
+
+// SetDockerfilePath sets the "dockerfile_path" field.
+func (u *ServiceConfigUpsertOne) SetDockerfilePath(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDockerfilePath(v)
+	})
+}
+
+// UpdateDockerfilePath sets the "dockerfile_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDockerfilePath() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDockerfilePath()
+	})
+}
+
+// ClearDockerfilePath clears the value of the "dockerfile_path" field.
+func (u *ServiceConfigUpsertOne) ClearDockerfilePath() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDockerfilePath()
 	})
 }
 
@@ -1278,6 +1335,27 @@ func (u *ServiceConfigUpsertBulk) SetBuilder(v schema.ServiceBuilder) *ServiceCo
 func (u *ServiceConfigUpsertBulk) UpdateBuilder() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateBuilder()
+	})
+}
+
+// SetDockerfilePath sets the "dockerfile_path" field.
+func (u *ServiceConfigUpsertBulk) SetDockerfilePath(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDockerfilePath(v)
+	})
+}
+
+// UpdateDockerfilePath sets the "dockerfile_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDockerfilePath() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDockerfilePath()
+	})
+}
+
+// ClearDockerfilePath clears the value of the "dockerfile_path" field.
+func (u *ServiceConfigUpsertBulk) ClearDockerfilePath() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDockerfilePath()
 	})
 }
 

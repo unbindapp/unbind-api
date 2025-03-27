@@ -323,6 +323,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"github", "docker-image"}},
 		{Name: "builder", Type: field.TypeEnum, Enums: []string{"railpack", "docker"}},
+		{Name: "dockerfile_path", Type: field.TypeString, Nullable: true},
 		{Name: "provider", Type: field.TypeEnum, Nullable: true, Enums: []string{"node", "deno", "go", "java", "php", "python", "staticfile", "unknown"}},
 		{Name: "framework", Type: field.TypeEnum, Nullable: true, Enums: []string{"next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "unknown"}},
 		{Name: "git_branch", Type: field.TypeString, Nullable: true},
@@ -343,7 +344,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[15]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[16]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

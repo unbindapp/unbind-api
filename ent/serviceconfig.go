@@ -34,6 +34,8 @@ type ServiceConfig struct {
 	Type schema.ServiceType `json:"type,omitempty"`
 	// Builder holds the value of the "builder" field.
 	Builder schema.ServiceBuilder `json:"builder,omitempty"`
+	// Path to Dockerfile if using docker builder
+	DockerfilePath *string `json:"dockerfile_path,omitempty"`
 	// Provider (e.g. Go, Python, Node, Deno)
 	Provider *enum.Provider `json:"provider,omitempty"`
 	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
@@ -91,7 +93,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDockerfilePath, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -147,6 +149,13 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field builder", values[i])
 			} else if value.Valid {
 				sc.Builder = schema.ServiceBuilder(value.String)
+			}
+		case serviceconfig.FieldDockerfilePath:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field dockerfile_path", values[i])
+			} else if value.Valid {
+				sc.DockerfilePath = new(string)
+				*sc.DockerfilePath = value.String
 			}
 		case serviceconfig.FieldProvider:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -271,6 +280,11 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("builder=")
 	builder.WriteString(fmt.Sprintf("%v", sc.Builder))
+	builder.WriteString(", ")
+	if v := sc.DockerfilePath; v != nil {
+		builder.WriteString("dockerfile_path=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := sc.Provider; v != nil {
 		builder.WriteString("provider=")

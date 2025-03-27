@@ -83,6 +83,26 @@ func (scu *ServiceConfigUpdate) SetNillableBuilder(sb *schema.ServiceBuilder) *S
 	return scu
 }
 
+// SetDockerfilePath sets the "dockerfile_path" field.
+func (scu *ServiceConfigUpdate) SetDockerfilePath(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDockerfilePath(s)
+	return scu
+}
+
+// SetNillableDockerfilePath sets the "dockerfile_path" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDockerfilePath(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetDockerfilePath(*s)
+	}
+	return scu
+}
+
+// ClearDockerfilePath clears the value of the "dockerfile_path" field.
+func (scu *ServiceConfigUpdate) ClearDockerfilePath() *ServiceConfigUpdate {
+	scu.mutation.ClearDockerfilePath()
+	return scu
+}
+
 // SetProvider sets the "provider" field.
 func (scu *ServiceConfigUpdate) SetProvider(e enum.Provider) *ServiceConfigUpdate {
 	scu.mutation.SetProvider(e)
@@ -375,6 +395,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 	}
+	if value, ok := scu.mutation.DockerfilePath(); ok {
+		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
+	}
+	if scu.mutation.DockerfilePathCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerfilePath, field.TypeString)
+	}
 	if value, ok := scu.mutation.Provider(); ok {
 		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
 	}
@@ -535,6 +561,26 @@ func (scuo *ServiceConfigUpdateOne) SetNillableBuilder(sb *schema.ServiceBuilder
 	if sb != nil {
 		scuo.SetBuilder(*sb)
 	}
+	return scuo
+}
+
+// SetDockerfilePath sets the "dockerfile_path" field.
+func (scuo *ServiceConfigUpdateOne) SetDockerfilePath(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDockerfilePath(s)
+	return scuo
+}
+
+// SetNillableDockerfilePath sets the "dockerfile_path" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDockerfilePath(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetDockerfilePath(*s)
+	}
+	return scuo
+}
+
+// ClearDockerfilePath clears the value of the "dockerfile_path" field.
+func (scuo *ServiceConfigUpdateOne) ClearDockerfilePath() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDockerfilePath()
 	return scuo
 }
 
@@ -859,6 +905,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if value, ok := scuo.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := scuo.mutation.DockerfilePath(); ok {
+		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
+	}
+	if scuo.mutation.DockerfilePathCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerfilePath, field.TypeString)
 	}
 	if value, ok := scuo.mutation.Provider(); ok {
 		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)

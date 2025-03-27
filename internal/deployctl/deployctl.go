@@ -159,6 +159,11 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
+	// Add dockerfile override
+	if service.Edges.ServiceConfig.DockerfilePath != nil {
+		env["SERVICE_DOCKERFILE_PATH"] = *service.Edges.ServiceConfig.DockerfilePath
+	}
+
 	// Add Github fields
 	if service.GithubInstallationID != nil {
 		if service.GitRepository == nil || service.Edges.ServiceConfig.GitBranch == nil {

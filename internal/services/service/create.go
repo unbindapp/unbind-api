@@ -35,16 +35,17 @@ type CreateServiceInput struct {
 	RepositoryName       *string `json:"repository_name,omitempty"`
 
 	// Configuration
-	Type       schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
-	Builder    schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
-	GitBranch  *string               `json:"git_branch,omitempty"`
-	Hosts      []v1.HostSpec         `json:"hosts,omitempty"`
-	Ports      []v1.PortSpec         `json:"ports,omitempty"`
-	Replicas   *int32                `validate:"min=1,max=10" json:"replicas,omitempty"`
-	AutoDeploy *bool                 `json:"auto_deploy,omitempty"`
-	RunCommand *string               `json:"run_command,omitempty"`
-	Public     *bool                 `json:"public,omitempty"`
-	Image      *string               `json:"image,omitempty"`
+	Type           schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
+	Builder        schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
+	GitBranch      *string               `json:"git_branch,omitempty"`
+	Hosts          []v1.HostSpec         `json:"hosts,omitempty"`
+	Ports          []v1.PortSpec         `json:"ports,omitempty"`
+	Replicas       *int32                `validate:"min=1,max=10" json:"replicas,omitempty"`
+	AutoDeploy     *bool                 `json:"auto_deploy,omitempty"`
+	RunCommand     *string               `json:"run_command,omitempty"`
+	Public         *bool                 `json:"public,omitempty"`
+	Image          *string               `json:"image,omitempty"`
+	DockerfilePath *string               `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder"`
 }
 
 // CreateService creates a new service and its configuration
@@ -59,9 +60,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only github services supported")
 	}
 
-	// ! TODO - support docka
-	if input.Builder != schema.ServiceBuilderRailpack {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack and nixpacks builder supported")
+	if input.Builder != schema.ServiceBuilderRailpack && input.Builder != schema.ServiceBuilderDocker {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack and docker builder supported")
 	}
 
 	// Validate that if GitHub info is provided, all fields are set
@@ -278,7 +278,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			input.AutoDeploy,
 			input.RunCommand,
 			input.Public,
-			input.Image)
+			input.Image,
+			input.DockerfilePath)
 		if err != nil {
 			return fmt.Errorf("failed to create service config: %w", err)
 		}

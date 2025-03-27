@@ -32,16 +32,17 @@ type UpdateServiceInput struct {
 	Description   *string   ` required:"false" json:"description"`
 
 	// Configuration
-	GitBranch  *string                `json:"git_branch,omitempty" required:"false"`
-	Type       *schema.ServiceType    `json:"type,omitempty" required:"false"`
-	Builder    *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
-	Hosts      []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
-	Ports      []v1.PortSpec          `json:"ports,omitempty" required:"false"`
-	Replicas   *int32                 `json:"replicas,omitempty" required:"false"`
-	AutoDeploy *bool                  `json:"auto_deploy,omitempty" required:"false"`
-	RunCommand *string                `json:"run_command,omitempty" required:"false"`
-	Public     *bool                  `json:"public,omitempty" required:"false"`
-	Image      *string                `json:"image,omitempty" required:"false"`
+	GitBranch      *string                `json:"git_branch,omitempty" required:"false"`
+	Type           *schema.ServiceType    `json:"type,omitempty" required:"false"`
+	Builder        *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
+	Hosts          []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
+	Ports          []v1.PortSpec          `json:"ports,omitempty" required:"false"`
+	Replicas       *int32                 `json:"replicas,omitempty" required:"false"`
+	AutoDeploy     *bool                  `json:"auto_deploy,omitempty" required:"false"`
+	RunCommand     *string                `json:"run_command,omitempty" required:"false"`
+	Public         *bool                  `json:"public,omitempty" required:"false"`
+	Image          *string                `json:"image,omitempty" required:"false"`
+	DockerfilePath *string                `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder - set empty string to reset to default"`
 }
 
 // UpdateService updates a service and its configuration
@@ -150,7 +151,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			input.AutoDeploy,
 			input.RunCommand,
 			input.Public,
-			input.Image); err != nil {
+			input.Image,
+			input.DockerfilePath); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)
 		}
 

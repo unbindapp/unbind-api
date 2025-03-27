@@ -6,6 +6,7 @@ import (
 
 	"github.com/caarlos0/env/v11"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -39,19 +40,20 @@ type Config struct {
 	// Deployment namespace (kubernetes)
 	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
 	// Service specific
-	ServiceID             uuid.UUID `env:"SERVICE_ID"`
-	ServiceDeploymentID   uuid.UUID `env:"SERVICE_DEPLOYMENT_ID"`
-	ServiceName           string    `env:"SERVICE_NAME"`
-	ServiceProvider       string    `env:"SERVICE_PROVIDER"`
-	ServiceFramework      string    `env:"SERVICE_FRAMEWORK"`
-	ServicePublic         *bool     `env:"SERVICE_PUBLIC"`
-	ServiceReplicas       *int32    `env:"SERVICE_REPLICAS"`
-	ServiceSecretName     string    `env:"SERVICE_SECRET_NAME,required"`
-	ServiceBuildSecrets   string    `env:"SERVICE_BUILD_SECRETS"`
-	ServiceBuilder        string    `env:"SERVICE_BUILDER"`
-	ServiceTeamRef        string    `env:"SERVICE_TEAM_REF"`
-	ServiceProjectRef     string    `env:"SERVICE_PROJECT_REF"`
-	ServiceEnvironmentRef string    `env:"SERVICE_ENVIRONMENT_REF"`
+	ServiceID             uuid.UUID             `env:"SERVICE_ID"`
+	ServiceDeploymentID   uuid.UUID             `env:"SERVICE_DEPLOYMENT_ID"`
+	ServiceName           string                `env:"SERVICE_NAME"`
+	ServiceProvider       string                `env:"SERVICE_PROVIDER"`
+	ServiceFramework      string                `env:"SERVICE_FRAMEWORK"`
+	ServicePublic         *bool                 `env:"SERVICE_PUBLIC"`
+	ServiceReplicas       *int32                `env:"SERVICE_REPLICAS"`
+	ServiceSecretName     string                `env:"SERVICE_SECRET_NAME,required"`
+	ServiceBuildSecrets   string                `env:"SERVICE_BUILD_SECRETS"`
+	ServiceBuilder        schema.ServiceBuilder `env:"SERVICE_BUILDER"`
+	ServiceTeamRef        string                `env:"SERVICE_TEAM_REF"`
+	ServiceProjectRef     string                `env:"SERVICE_PROJECT_REF"`
+	ServiceEnvironmentRef string                `env:"SERVICE_ENVIRONMENT_REF"`
+	ServiceDockerfilePath string                `env:"SERVICE_DOCKERFILE_PATH"` // Path to Dockerfile in the repo (optional)
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

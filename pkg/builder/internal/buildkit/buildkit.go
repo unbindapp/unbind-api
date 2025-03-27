@@ -25,14 +25,16 @@ import (
 )
 
 type BuildWithBuildkitClientOptions struct {
-	ImageName   string
-	Platform    rpBuildkit.BuildPlatform
-	SecretsHash string
-	Secrets     map[string]string
-	CacheKey    string
+	ImageName         string
+	RailpackBuildPlan *plan.BuildPlan
+	Platform          rpBuildkit.BuildPlatform
+	SecretsHash       string
+	Secrets           map[string]string
+	CacheKey          string
+	DockerfilePath    string
 }
 
-func BuildWithBuildkitClient(cfg *config.Config, appDir string, plan *plan.BuildPlan, opts BuildWithBuildkitClientOptions) error {
+func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBuildkitClientOptions) error {
 	ctx := appcontext.Context()
 
 	imageName := opts.ImageName
@@ -73,25 +75,6 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, plan *plan.Build
 	buildPlatform := opts.Platform
 	if (buildPlatform == rpBuildkit.BuildPlatform{}) {
 		buildPlatform = rpBuildkit.DetermineBuildPlatformFromHost()
-	}
-
-	llbState, image, err := rpBuildkit.ConvertPlanToLLB(plan, rpBuildkit.ConvertPlanOptions{
-		BuildPlatform: buildPlatform,
-		SecretsHash:   opts.SecretsHash,
-		CacheKey:      opts.CacheKey,
-	})
-	if err != nil {
-		return fmt.Errorf("error converting plan to LLB: %w", err)
-	}
-
-	imageBytes, err := json.Marshal(image)
-	if err != nil {
-		return fmt.Errorf("error marshalling image: %w", err)
-	}
-
-	def, err := llbState.Marshal(ctx, llb.LinuxAmd64)
-	if err != nil {
-		return fmt.Errorf("error marshaling LLB state: %w", err)
 	}
 
 	// Setup channel for progress monitoring
@@ -158,28 +141,79 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, plan *plan.Build
 		sessionAttachables = append(sessionAttachables, authprovider.NewDockerAuthProvider(cfg))
 	}
 
-	solveOpts := client.SolveOpt{}
-
-	// Export to registry
-	exportAttrs := map[string]string{
-		"name":                  imageName,
-		"containerimage.config": string(imageBytes),
-		"push":                  "true",
-		"compression":           "gzip",
-		"compression-level":     "3",
-		"registry.insecure":     "true",
-	}
-
-	solveOpts = client.SolveOpt{
+	solveOpts := client.SolveOpt{
 		LocalMounts: map[string]fsutil.FS{
 			"context": appFS,
 		},
 		Session: sessionAttachables,
-		Exports: []client.ExportEntry{
-			{
-				Type:  client.ExporterImage,
-				Attrs: exportAttrs,
-			},
+	}
+
+	var def *llb.Definition
+	exportAttrs := map[string]string{
+		"name":              imageName,
+		"push":              "true",
+		"compression":       "gzip",
+		"compression-level": "3",
+		"registry.insecure": "true",
+	}
+
+	if opts.DockerfilePath != "" {
+		// Using Dockerfile frontend
+		log.Infof("Building image from Dockerfile: %s with BuildKit %s", opts.DockerfilePath, info.BuildkitVersion.Version)
+
+		// Set the frontend to use Dockerfile
+		solveOpts.Frontend = "dockerfile.v0"
+		solveOpts.FrontendAttrs = map[string]string{
+			"filename": opts.DockerfilePath,
+		}
+
+		// Export attributes for Dockerfile build
+		exportAttrs = map[string]string{
+			"name":              imageName,
+			"push":              "true",
+			"compression":       "gzip",
+			"compression-level": "3",
+			"registry.insecure": "true",
+		}
+	} else if opts.RailpackBuildPlan != nil {
+		// Using RailPack BuildPlan
+		buildPlatform := opts.Platform
+		if (buildPlatform == rpBuildkit.BuildPlatform{}) {
+			buildPlatform = rpBuildkit.DetermineBuildPlatformFromHost()
+		}
+
+		log.Infof("Building image for %s with BuildKit %s", buildPlatform.String(), info.BuildkitVersion.Version)
+
+		llbState, image, err := rpBuildkit.ConvertPlanToLLB(opts.RailpackBuildPlan, rpBuildkit.ConvertPlanOptions{
+			BuildPlatform: buildPlatform,
+			SecretsHash:   opts.SecretsHash,
+			CacheKey:      opts.CacheKey,
+		})
+		if err != nil {
+			return fmt.Errorf("error converting plan to LLB: %w", err)
+		}
+
+		imageBytes, err := json.Marshal(image)
+		if err != nil {
+			return fmt.Errorf("error marshalling image: %w", err)
+		}
+
+		def, err = llbState.Marshal(ctx, llb.LinuxAmd64)
+		if err != nil {
+			return fmt.Errorf("error marshaling LLB state: %w", err)
+		}
+
+		// Export attributes for BuildPlan
+		exportAttrs["containerimage.config"] = string(imageBytes)
+	} else {
+		return fmt.Errorf("no Dockerfile or Railpack build plan provided")
+	}
+
+	// Set the export configuration
+	solveOpts.Exports = []client.ExportEntry{
+		{
+			Type:  client.ExporterImage,
+			Attrs: exportAttrs,
 		},
 	}
 
@@ -231,17 +265,4 @@ func getImageName(appDir string) string {
 		name = "railpack-app" // Fallback if path ends in separator
 	}
 	return name
-}
-
-// Helper function to parse key=value strings into a map
-func parseKeyValue(s string) map[string]string {
-	attrs := make(map[string]string)
-	parts := strings.Split(s, ",")
-	for _, part := range parts {
-		kv := strings.SplitN(part, "=", 2)
-		if len(kv) == 2 {
-			attrs[kv[0]] = kv[1]
-		}
-	}
-	return attrs
 }

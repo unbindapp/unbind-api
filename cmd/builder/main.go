@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
@@ -66,7 +67,7 @@ func main() {
 	// Build with context
 	var dockerImg, repoName string
 	switch cfg.ServiceBuilder {
-	case "railpack":
+	case schema.ServiceBuilderRailpack:
 		dockerImg, repoName, err = builder.BuildWithRailpack(ctx, buildSecrets)
 		if err != nil {
 			log.Fatalf("Failed to build with railpack: %v", err)

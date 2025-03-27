@@ -34,6 +34,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.UUID("service_id", uuid.UUID{}),
 		field.Enum("type").GoType(ServiceType("")).Comment("Type of service"),
 		field.Enum("builder").GoType(ServiceBuilder("")),
+		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
 		field.Enum("provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
 		field.Enum("framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
 		field.String("git_branch").Optional().Nillable().Comment("Branch to build from"),
