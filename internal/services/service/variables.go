@@ -7,6 +7,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -59,7 +60,12 @@ func (self *ServiceService) GetVariables(ctx context.Context, userID uuid.UUID, 
 		return nil, err
 	}
 
-	// ! TODO - repeat this less
+	// Verify input
+	_, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get service
 	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
@@ -71,32 +77,6 @@ func (self *ServiceService) GetVariables(ctx context.Context, userID uuid.UUID, 
 
 	if service.EnvironmentID != environmentID {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Service does not belong to the specified project")
-	}
-
-	// Get environment
-	environment, err := self.repo.Environment().GetByID(ctx, environmentID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
-		}
-		return nil, err
-	}
-
-	if environment.ProjectID != projectID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment does not belong to the specified project")
-	}
-
-	// Get project
-	project, err := self.repo.Project().GetByID(ctx, projectID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
-		}
-		return nil, err
-	}
-
-	if project.TeamID != teamID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to the specified team")
 	}
 
 	// Create kubernetes client
@@ -173,6 +153,11 @@ func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUI
 		return nil, err
 	}
 
+	_, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get service
 	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
@@ -184,32 +169,6 @@ func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUI
 
 	if service.EnvironmentID != environmentID {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Service does not belong to the specified project")
-	}
-
-	// Get environment
-	environment, err := self.repo.Environment().GetByID(ctx, environmentID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
-		}
-		return nil, err
-	}
-
-	if environment.ProjectID != projectID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment does not belong to the specified project")
-	}
-
-	// Get project
-	project, err := self.repo.Project().GetByID(ctx, projectID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
-		}
-		return nil, err
-	}
-
-	if project.TeamID != teamID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to the specified team")
 	}
 
 	// Create kubernetes client
@@ -239,6 +198,13 @@ func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUI
 			Value: string(v),
 		}
 		i++
+	}
+
+	// Perform a restart of pods...
+	err = self.k8s.RollingRestartPodsByLabel(ctx, project.Edges.Team.Namespace, "unbind-service", service.Name, client)
+	if err != nil {
+		log.Error("Failed to restart pods", "err", err, "service", service.Name)
+		return nil, err
 	}
 
 	return variablesResponse, nil
@@ -293,6 +259,12 @@ func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uui
 		return nil, err
 	}
 
+	// Verify inputs
+	_, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get service
 	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
@@ -305,33 +277,6 @@ func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uui
 	if service.EnvironmentID != environmentID {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Service does not belong to the specified project")
 	}
-
-	// Get environment
-	environment, err := self.repo.Environment().GetByID(ctx, environmentID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Environment not found")
-		}
-		return nil, err
-	}
-
-	if environment.ProjectID != projectID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment does not belong to the specified project")
-	}
-
-	// Get project
-	project, err := self.repo.Project().GetByID(ctx, projectID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
-		}
-		return nil, err
-	}
-
-	if project.TeamID != teamID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to the specified team")
-	}
-
 	// Create kubernetes client
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
@@ -364,6 +309,13 @@ func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uui
 			Value: string(v),
 		}
 		i++
+	}
+
+	// Perform a restart of pods...
+	err = self.k8s.RollingRestartPodsByLabel(ctx, project.Edges.Team.Namespace, "unbind-service", service.Name, client)
+	if err != nil {
+		log.Error("Failed to restart pods", "err", err, "service", service.Name)
+		return nil, err
 	}
 
 	return variablesResponse, nil

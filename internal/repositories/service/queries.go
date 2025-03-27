@@ -2,6 +2,8 @@ package service_repo
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/google/uuid"
@@ -12,8 +14,10 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error) {
@@ -206,4 +210,67 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 	}
 
 	return
+}
+
+// See if a service needs a new deployment
+type NeedsDeploymentResponse string
+
+const (
+	NeedsBuildAndDeployment NeedsDeploymentResponse = "needs_build_and_deployment"
+	NeedsDeployment         NeedsDeploymentResponse = "needs_deployment"
+	NoDeploymentNeeded      NeedsDeploymentResponse = "no_deployment_needed"
+)
+
+func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent.Service) (NeedsDeploymentResponse, error) {
+	if service.Edges.CurrentDeployment == nil || service.Edges.CurrentDeployment.ResourceDefinition == nil {
+		return NoDeploymentNeeded, nil
+	}
+	// See if a deployment is needed
+	// Create a an object with only fields we care to compare
+	existingCrd := &v1.Service{
+		Spec: v1.ServiceSpec{
+			Config: v1.ServiceConfigSpec{
+				GitBranch:  service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.GitBranch,
+				Hosts:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Hosts,
+				Replicas:   service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Replicas,
+				Ports:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Ports,
+				AutoDeploy: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.AutoDeploy,
+				RunCommand: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.RunCommand,
+				Public:     service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Public,
+			},
+		},
+	}
+	// Create a new CRD to compare it
+	var gitBranch string
+	if service.Edges.ServiceConfig.GitBranch != nil {
+		gitBranch = *service.Edges.ServiceConfig.GitBranch
+		if !strings.HasPrefix(gitBranch, "refs/heads/") {
+			gitBranch = fmt.Sprintf("refs/heads/%s", gitBranch)
+		}
+	}
+	newCrd := &v1.Service{
+		Spec: v1.ServiceSpec{
+			Config: v1.ServiceConfigSpec{
+				GitBranch:  gitBranch,
+				Hosts:      service.Edges.ServiceConfig.Hosts,
+				Replicas:   utils.ToPtr(service.Edges.ServiceConfig.Replicas),
+				Ports:      service.Edges.ServiceConfig.Ports,
+				AutoDeploy: service.Edges.ServiceConfig.AutoDeploy,
+				RunCommand: service.Edges.ServiceConfig.RunCommand,
+				Public:     service.Edges.ServiceConfig.Public,
+			},
+		},
+	}
+
+	// Branch needs a new build
+	if existingCrd.Spec.Config.GitBranch != newCrd.Spec.Config.GitBranch {
+		return NeedsBuildAndDeployment, nil
+	}
+
+	// Just update the custom resource
+	if !reflect.DeepEqual(existingCrd, newCrd) {
+		return NeedsDeployment, nil
+	}
+
+	return NoDeploymentNeeded, nil
 }

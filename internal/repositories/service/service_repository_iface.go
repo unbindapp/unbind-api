@@ -33,4 +33,5 @@ type ServiceRepositoryInterface interface {
 	GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error)
 	// Summarize services in environment
 	SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]enum.Provider, frameworks map[uuid.UUID][]enum.Framework, err error)
+	NeedsDeployment(ctx context.Context, service *ent.Service) (NeedsDeploymentResponse, error)
 }
