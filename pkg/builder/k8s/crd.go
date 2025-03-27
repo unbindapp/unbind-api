@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	// Import the operator API package
+	"github.com/unbindapp/unbind-api/ent/schema"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -20,6 +21,7 @@ type ServiceParams struct {
 	Namespace   string
 
 	// Service type configuration
+	Builder          schema.ServiceBuilder
 	Provider         string
 	Framework        string
 	TeamRef          string
@@ -66,7 +68,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			DisplayName:      params.DisplayName,
 			Description:      params.Description,
 			Type:             "git",
-			Builder:          "railpack",
+			Builder:          string(params.Builder),
 			Provider:         params.Provider,
 			Framework:        params.Framework,
 			TeamRef:          params.TeamRef,
@@ -123,6 +125,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		DisplayName:      serviceName,
 		Description:      fmt.Sprintf("Auto-deployed service for %s", crdName),
 		Namespace:        self.builderConfig.DeploymentNamespace,
+		Builder:          self.builderConfig.ServiceBuilder,
 		Provider:         self.builderConfig.ServiceProvider,
 		Framework:        self.builderConfig.ServiceFramework,
 		TeamRef:          self.builderConfig.ServiceTeamRef,

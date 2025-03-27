@@ -229,6 +229,7 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 	// Create a an object with only fields we care to compare
 	existingCrd := &v1.Service{
 		Spec: v1.ServiceSpec{
+			Builder: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Builder,
 			Config: v1.ServiceConfigSpec{
 				GitBranch:  service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.GitBranch,
 				Hosts:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Hosts,
@@ -250,6 +251,7 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 	}
 	newCrd := &v1.Service{
 		Spec: v1.ServiceSpec{
+			Builder: string(service.Edges.ServiceConfig.Builder),
 			Config: v1.ServiceConfigSpec{
 				GitBranch:  gitBranch,
 				Hosts:      service.Edges.ServiceConfig.Hosts,
@@ -260,6 +262,11 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 				Public:     service.Edges.ServiceConfig.Public,
 			},
 		},
+	}
+
+	// Changing builder requires a new build
+	if existingCrd.Spec.Builder != newCrd.Spec.Builder {
+		return NeedsBuildAndDeployment, nil
 	}
 
 	// Branch needs a new build
