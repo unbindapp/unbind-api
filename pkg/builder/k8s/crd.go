@@ -127,7 +127,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		Framework:        self.builderConfig.ServiceFramework,
 		TeamRef:          self.builderConfig.ServiceTeamRef,
 		ProjectRef:       self.builderConfig.ServiceProjectRef,
-		EnvironmentID:    self.builderConfig.ServiceProjectRef,
+		EnvironmentID:    self.builderConfig.ServiceEnvironmentRef,
 		KubernetesSecret: self.builderConfig.ServiceSecretName,
 		GitRepoURL:       self.builderConfig.GitRepoURL,
 		GitRef:           self.builderConfig.GitRef,
