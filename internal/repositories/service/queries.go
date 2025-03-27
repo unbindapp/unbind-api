@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/deployment"
-	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -31,31 +30,43 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 }
 
 func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error) {
-
 	return self.base.DB.Service.Query().
 		Where(service.GithubInstallationIDEQ(installationID)).
 		Where(service.GitRepositoryEQ(repoName)).
 		WithServiceConfig().
-		WithDeployments(func(dq *ent.DeploymentQuery) {
-			dq.Order(ent.Desc(deployment.FieldCreatedAt))
-			dq.Limit(1)
-		}).
 		WithCurrentDeployment().
 		All(ctx)
 }
 
 func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error) {
-	return self.base.DB.Debug().
-		Environment.Query().
-		Where(environment.ID(environmentID)).
-		QueryServices().
+	services, err := self.base.DB.Service.Query().
+		Where(service.EnvironmentIDEQ(environmentID)).
 		WithServiceConfig().
-		WithDeployments(func(dq *ent.DeploymentQuery) {
-			dq.Order(ent.Desc(deployment.FieldCreatedAt))
-			dq.Limit(1)
-		}).
 		WithCurrentDeployment().
 		All(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the latest deployment for each service
+	for _, svc := range services {
+		latestDeployment, err := self.base.DB.Deployment.Query().
+			Where(deployment.ServiceIDEQ(svc.ID)).
+			Order(ent.Desc(deployment.FieldCreatedAt)).
+			Limit(1).
+			Only(ctx)
+
+		if err != nil && !ent.IsNotFound(err) {
+			return nil, err
+		}
+
+		if latestDeployment != nil {
+			svc.Edges.Deployments = []*ent.Deployment{latestDeployment}
+		}
+	}
+
+	return services, nil
 }
 
 func (self *ServiceRepository) GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error) {
