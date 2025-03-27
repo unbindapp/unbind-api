@@ -278,6 +278,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 					service.Edges.CurrentDeployment.CommitAuthor,
 					service.Edges.CurrentDeployment.Source,
 				)
+				log.Info("Created deployment", "sha", commitSha, "message", commitMessage, "current_deployment", service.Edges.CurrentDeployment.ID)
 				if err != nil {
 					return err
 				}
