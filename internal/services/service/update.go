@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -154,7 +155,6 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		return nil
-
 	}); err != nil {
 		return nil, err
 	}
@@ -185,6 +185,9 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		var gitBranch string
 		if service.Edges.ServiceConfig.GitBranch != nil {
 			gitBranch = *service.Edges.ServiceConfig.GitBranch
+			if !strings.HasPrefix(gitBranch, "refs/heads/") {
+				gitBranch = fmt.Sprintf("refs/heads/%s", gitBranch)
+			}
 		}
 		newCrd := &v1.Service{
 			Spec: v1.ServiceSpec{
@@ -328,6 +331,12 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 				return nil
 			}); err != nil {
 				log.Errorf("failed to deploy new CRD: %v", err)
+				return nil, err
+			}
+
+			// Re-fetch service
+			service, err = self.repo.Service().GetByID(ctx, input.ServiceID)
+			if err != nil {
 				return nil, err
 			}
 		}
