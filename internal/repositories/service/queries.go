@@ -19,7 +19,11 @@ import (
 func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error) {
 	return self.base.DB.Service.Query().
 		Where(service.IDEQ(serviceID)).
-		WithEnvironment().
+		WithEnvironment(func(eq *ent.EnvironmentQuery) {
+			eq.WithProject(func(pq *ent.ProjectQuery) {
+				pq.WithTeam()
+			})
+		}).
 		WithServiceConfig().
 		WithDeployments(func(dq *ent.DeploymentQuery) {
 			dq.Order(ent.Desc(deployment.FieldCreatedAt))

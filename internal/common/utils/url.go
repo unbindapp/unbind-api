@@ -63,7 +63,7 @@ func transformDomain(domain string) string {
 }
 
 // Generate a default subdomain
-func GenerateSubdomain(displayName, environmentName, externalURL string) (string, error) {
+func GenerateSubdomain(displayName, externalURL string) (string, error) {
 	// Extract the domain from externalURL (without protocol)
 	u, err := url.Parse(externalURL)
 	if err != nil {
@@ -74,27 +74,14 @@ func GenerateSubdomain(displayName, environmentName, externalURL string) (string
 
 	// Sanitize displayName and environmentName
 	sanitizedDisplay := sanitizeForSubdomain(displayName)
-	sanitizedEnv := sanitizeForSubdomain(environmentName)
 
 	// Check if we have valid components
-	if sanitizedEnv == "" && sanitizedDisplay == "" {
-		return "", fmt.Errorf("could not generate subdomain: both environment name and display name sanitized to empty strings")
+	if sanitizedDisplay == "" {
+		return "", fmt.Errorf("could not generate subdomain: display name sanitized to empty string")
 	}
 
 	// Create the subdomain pattern
-	var subdomain string
-	if sanitizedEnv != "" && sanitizedDisplay != "" {
-		subdomain = fmt.Sprintf("%s-%s", sanitizedEnv, sanitizedDisplay)
-	} else if sanitizedEnv != "" {
-		subdomain = sanitizedEnv
-	} else {
-		subdomain = sanitizedDisplay
-	}
-
-	// Ensure the subdomain is valid
-	if subdomain == "" {
-		return "", fmt.Errorf("could not generate a valid subdomain")
-	}
+	subdomain := sanitizedDisplay
 
 	// Form the complete domain
 	fullDomain := fmt.Sprintf("%s.%s", subdomain, domain)

@@ -14,14 +14,45 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// DeployImage creates (or replaces) the service resource in the target namespace
-// for deployment after a successful build job.
-func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (*unstructured.Unstructured, *v1.Service, error) {
-	// Extract GitHub repository name from the Git URL
-	gitRepository := extractGitRepository(self.config.GitRepoURL)
+// ServiceParams contains all parameters needed to create a v1.Service object
+type ServiceParams struct {
+	// Basic service information
+	Name        string
+	DisplayName string
+	Description string
+	Namespace   string
 
-	// Generate a sanitized service name from the repo name
-	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
+	// Service type configuration
+	Provider         string
+	Framework        string
+	TeamRef          string
+	ProjectRef       string
+	EnvironmentID    string
+	KubernetesSecret string
+
+	// Git configuration
+	GitRepoURL           string
+	GitRef               string
+	GithubInstallationID *int64
+
+	// Deployment configuration
+	Image    string
+	Hosts    []v1.HostSpec
+	Ports    []v1.PortSpec
+	Public   *bool
+	Replicas *int32
+}
+
+// CreateServiceObject creates a new v1.Service object with the provided parameters
+func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
+	// Extract GitHub repository name from the Git URL
+	gitRepository := extractGitRepository(params.GitRepoURL)
+
+	// Generate a sanitized service name if not provided
+	serviceName := params.Name
+	if serviceName == "" {
+		return nil, fmt.Errorf("service name cannot be empty")
+	}
 
 	// Create a new Service CR using the official structs
 	service := &v1.Service{
@@ -31,28 +62,95 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,
-			Namespace: self.config.DeploymentNamespace,
+			Namespace: params.Namespace,
 		},
 		Spec: v1.ServiceSpec{
 			Name:             serviceName,
-			DisplayName:      serviceName,
-			Description:      fmt.Sprintf("Auto-deployed service for %s", crdName),
+			DisplayName:      params.DisplayName,
+			Description:      params.Description,
 			Type:             "git",
 			Builder:          "railpack",
-			Provider:         self.config.ServiceProvider,
-			Framework:        self.config.ServiceFramework,
-			TeamRef:          "default",
-			ProjectRef:       "default",
-			EnvironmentID:    "prod",
-			KubernetesSecret: self.config.ServiceSecretName,
+			Provider:         params.Provider,
+			Framework:        params.Framework,
+			TeamRef:          params.TeamRef,
+			ProjectRef:       params.ProjectRef,
+			EnvironmentID:    params.EnvironmentID,
+			KubernetesSecret: params.KubernetesSecret,
 			GitRepository:    gitRepository,
 		},
 	}
 
 	// Set GitHub installation ID if provided
+	if params.GithubInstallationID != nil {
+		service.Spec.GitHubInstallationID = params.GithubInstallationID
+	}
+
+	// Build service configuration
+	service.Spec.Config = v1.ServiceConfigSpec{
+		GitBranch: params.GitRef,
+		Image:     params.Image,
+	}
+
+	// Add host configuration if provided
+	if len(params.Hosts) > 0 {
+		service.Spec.Config.Hosts = params.Hosts
+	}
+
+	// Add port configuration if provided
+	if len(params.Ports) > 0 {
+		service.Spec.Config.Ports = params.Ports
+	}
+
+	// Set public flag if provided
+	if params.Public != nil {
+		service.Spec.Config.Public = *params.Public
+	}
+
+	// Set replicas if provided
+	if params.Replicas != nil {
+		replicas := int32(*params.Replicas)
+		service.Spec.Config.Replicas = &replicas
+	}
+
+	return service, nil
+}
+
+// DeployImage creates (or replaces) the service resource in the target namespace
+// for deployment after a successful build job.
+func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (*unstructured.Unstructured, *v1.Service, error) {
+	// Generate a sanitized service name from the repo name
+	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
+
+	params := ServiceParams{
+		Name:             serviceName,
+		DisplayName:      serviceName,
+		Description:      fmt.Sprintf("Auto-deployed service for %s", crdName),
+		Namespace:        self.config.DeploymentNamespace,
+		Provider:         self.config.ServiceProvider,
+		Framework:        self.config.ServiceFramework,
+		TeamRef:          self.config.ServiceTeamRef,
+		ProjectRef:       self.config.ServiceProjectRef,
+		EnvironmentID:    self.config.ServiceProjectRef,
+		KubernetesSecret: self.config.ServiceSecretName,
+		GitRepoURL:       self.config.GitRepoURL,
+		GitRef:           self.config.GitRef,
+		Image:            image,
+		Hosts:            self.config.Hosts,
+		Ports:            self.config.Ports,
+		Public:           self.config.ServicePublic,
+		Replicas:         self.config.ServiceReplicas,
+	}
+
+	// Set GitHub installation ID if provided
 	if self.config.GithubInstallationID != 0 {
 		installationID := self.config.GithubInstallationID
-		service.Spec.GitHubInstallationID = &installationID
+		params.GithubInstallationID = &installationID
+	}
+
+	// Create the Service object
+	service, err := CreateServiceObject(params)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create service object: %v", err)
 	}
 
 	// Build service configuration
@@ -60,27 +158,6 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		GitBranch:  self.config.GitRef,
 		AutoDeploy: true,
 		Image:      image,
-	}
-
-	// Add host configuration if provided
-	if len(self.config.Hosts) > 0 {
-		service.Spec.Config.Hosts = self.config.Hosts
-	}
-
-	// Add port configuration if provided
-	if len(self.config.Ports) > 0 {
-		service.Spec.Config.Ports = self.config.Ports
-	}
-
-	// Set public flag if provided
-	if self.config.ServicePublic != nil {
-		service.Spec.Config.Public = *self.config.ServicePublic
-	}
-
-	// Set replicas if provided
-	if self.config.ServiceReplicas != nil {
-		replicas := int32(*self.config.ServiceReplicas)
-		service.Spec.Config.Replicas = &replicas
 	}
 
 	// Convert to unstructured for the dynamic client

@@ -8,3 +8,6 @@ data:
     [worker.oci]
       # Limit concurrency of build steps:
       max-parallelism = 2
+    [registry."docker-registry.unbind-system:5000"]
+      http = true
+      insecure = true

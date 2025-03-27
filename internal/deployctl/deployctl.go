@@ -149,6 +149,16 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		"SERVICE_BUILD_SECRETS":       string(secretsJSON),
 	}
 
+	if service.Edges.Environment != nil {
+		env["SERVICE_ENVIRONMENT_REF"] = service.Edges.Environment.Name
+		if service.Edges.Environment.Edges.Project != nil {
+			env["SERVICE_PROJECT_REF"] = service.Edges.Environment.Edges.Project.Name
+			if service.Edges.Environment.Edges.Project.Edges.Team != nil {
+				env["SERVICE_TEAM_REF"] = service.Edges.Environment.Edges.Project.Edges.Team.Name
+			}
+		}
+	}
+
 	// Add Github fields
 	if service.GithubInstallationID != nil {
 		if service.GitRepository == nil || service.Edges.ServiceConfig.GitBranch == nil {
