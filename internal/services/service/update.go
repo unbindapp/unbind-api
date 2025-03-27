@@ -153,16 +153,16 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("failed to update service config: %w", err)
 		}
 
-		// Re-fetch the service
-		service, err = self.repo.Service().GetByID(ctx, input.ServiceID)
-		if err != nil {
-			return fmt.Errorf("failed to re-fetch service: %w", err)
-		}
-
 		return nil
 
 	}); err != nil {
 		return nil, err
+	}
+
+	// Re-fetch the service
+	service, err = self.repo.Service().GetByID(ctx, input.ServiceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to re-fetch service: %w", err)
 	}
 
 	// See if a deployment is needed
