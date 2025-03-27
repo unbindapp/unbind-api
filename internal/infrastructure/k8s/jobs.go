@@ -124,7 +124,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 				trap "echo Received SIGTERM, forwarding to buildkitd; kill -TERM $child" SIGTERM SIGINT
 				
 				# Start buildkitd in the background
-				rootlesskit buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox &
+				rootlesskit buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox --oci-worker-max-parallelism=2 &
 				child=$!
 				
 				# Wait for buildkitd to exit
