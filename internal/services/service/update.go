@@ -14,6 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
+	"github.com/unbindapp/unbind-api/internal/deployctl"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -193,8 +194,44 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			},
 		}
 
-		// Compare the two
-		if !reflect.DeepEqual(existingCrd, newCrd) {
+		// Changing git branch requires a whole new build
+		if existingCrd.Spec.Config.GitBranch != newCrd.Spec.Config.GitBranch {
+			// New full build needed
+			env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID)
+			if err != nil {
+				return nil, err
+			}
+
+			var commitSHA string
+			var commitMessage string
+			var committer *schema.GitCommitter
+
+			if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
+				commitSHA, commitMessage, committer, err = self.githubClient.GetBranchHeadSummary(ctx,
+					service.Edges.GithubInstallation,
+					service.Edges.GithubInstallation.AccountLogin,
+					*service.GitRepository,
+					*service.Edges.ServiceConfig.GitBranch)
+
+				// ! TODO - Should we hard fail here?
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			_, err = self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
+				ServiceID:     input.ServiceID,
+				Environment:   env,
+				Source:        schema.DeploymentSourceManual,
+				CommitSHA:     commitSHA,
+				CommitMessage: commitMessage,
+				Committer:     committer,
+			})
+			if err != nil {
+				log.Errorf("failed to enqueue deployment job: %v", err)
+				return nil, err
+			}
+		} else if !reflect.DeepEqual(existingCrd, newCrd) {
 			// New adhoc deployment needed
 			crdToDeploy := &v1.Service{}
 			// Metadata
