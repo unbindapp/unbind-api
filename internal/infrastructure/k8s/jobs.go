@@ -124,7 +124,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 				trap "echo Received SIGTERM, forwarding to buildkitd; kill -TERM $child" SIGTERM SIGINT
 				
 				# Start buildkitd in the background
-				rootlesskit buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox --oci-worker-max-parallelism=2 &
+				rootlesskit buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox --config /etc/buildkit/buildkitd.toml &
 				child=$!
 				
 				# Wait for buildkitd to exit
@@ -159,8 +159,9 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									MountPath: "/var/lib/buildkit",
 								},
 								{
-									Name:      "cache-dir",
-									MountPath: "/cache",
+									Name:      "buildkit-config",
+									MountPath: "/etc/buildkit",
+									ReadOnly:  true,
 								},
 							},
 							ReadinessProbe: &corev1.Probe{
@@ -237,9 +238,19 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 							},
 						},
 						{
-							Name: "cache-dir",
+							Name: "buildkit-config",
 							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									Items: []corev1.KeyToPath{
+										{
+											Key:  "buildkitd.toml",
+											Path: "buildkitd.toml",
+										},
+									},
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "buildkit-config",
+									},
+								},
 							},
 						},
 					},

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: buildkit-config
+  namespace: unbind-system
+data:
+  buildkitd.toml: |
+    [worker.oci]
+      # Limit concurrency of build steps:
+      max-parallelism = 2
