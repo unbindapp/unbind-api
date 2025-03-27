@@ -154,7 +154,7 @@ func startAPI(cfg *config.Config) {
 		DeploymentController: deploymentController,
 		TeamService:          team_service.NewTeamService(repo, kubeClient),
 		ProjectService:       project_service.NewProjectService(repo, kubeClient),
-		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient),
+		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController),
 		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
 		LogService:           logs_service.NewLogsService(repo, kubeClient),
 		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient),
