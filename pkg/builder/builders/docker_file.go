@@ -60,7 +60,7 @@ func (self *Builder) BuildDockerfile(ctx context.Context, buildSecrets map[strin
 			ImageName:      outputImage,
 			CacheKey:       cacheKey,
 			Secrets:        buildSecrets,
-			DockerfilePath: fullDockerfilePath,
+			DockerfilePath: self.config.ServiceDockerfilePath,
 		},
 	)
 	if err != nil {
