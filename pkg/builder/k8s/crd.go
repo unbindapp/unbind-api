@@ -150,13 +150,6 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		return nil, nil, fmt.Errorf("failed to create service object: %v", err)
 	}
 
-	// Build service configuration
-	service.Spec.Config = v1.ServiceConfigSpec{
-		GitBranch:  self.builderConfig.GitRef,
-		AutoDeploy: true,
-		Image:      image,
-	}
-
 	return self.k8s.DeployUnbindService(ctx, service)
 }
 
