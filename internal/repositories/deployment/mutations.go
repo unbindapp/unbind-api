@@ -26,27 +26,27 @@ func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUI
 	return c.Save(ctx)
 }
 
-func (self *DeploymentRepository) MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error) {
+func (self *DeploymentRepository) MarkStarted(ctx context.Context, buildJobID uuid.UUID, startedAt time.Time) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.UpdateOneID(buildJobID).
 		SetStatus(schema.DeploymentStatusBuilding).
 		// ! TODO - retry deployments?
 		SetAttempts(1).
-		SetStartedAt(time.Now()).
+		SetStartedAt(startedAt).
 		Save(ctx)
 }
 
-func (self *DeploymentRepository) MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string) (*ent.Deployment, error) {
+func (self *DeploymentRepository) MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string, failedAt time.Time) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.UpdateOneID(buildJobID).
 		SetStatus(schema.DeploymentStatusFailed).
-		SetCompletedAt(time.Now()).
+		SetCompletedAt(failedAt).
 		SetError(message).
 		Save(ctx)
 }
 
-func (self *DeploymentRepository) MarkSucceeded(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error) {
+func (self *DeploymentRepository) MarkSucceeded(ctx context.Context, buildJobID uuid.UUID, completedAt time.Time) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.UpdateOneID(buildJobID).
 		SetStatus(schema.DeploymentStatusSucceeded).
-		SetCompletedAt(time.Now()).
+		SetCompletedAt(completedAt).
 		Save(ctx)
 }
 

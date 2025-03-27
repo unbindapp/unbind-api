@@ -15,9 +15,9 @@ import (
 // DeploymentRepositoryInterface ...
 type DeploymentRepositoryInterface interface {
 	Create(ctx context.Context, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error)
-	MarkStarted(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error)
-	MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string) (*ent.Deployment, error)
-	MarkSucceeded(ctx context.Context, buildJobID uuid.UUID) (*ent.Deployment, error)
+	MarkStarted(ctx context.Context, buildJobID uuid.UUID, startedAt time.Time) (*ent.Deployment, error)
+	MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string, failedAt time.Time) (*ent.Deployment, error)
+	MarkSucceeded(ctx context.Context, buildJobID uuid.UUID, completedAt time.Time) (*ent.Deployment, error)
 	// Cancels all jobs that are not in a finished state
 	MarkCancelled(ctx context.Context, serviceID uuid.UUID) error
 	// Mark cancelled by IDs

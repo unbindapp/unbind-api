@@ -322,8 +322,11 @@ func (js JobConditionType) String() string {
 
 // JobStatus represents the status of a job with additional details
 type JobStatus struct {
-	ConditionType JobConditionType
-	FailureReason string
+	ConditionType JobConditionType // JobPending, JobRunning, JobSucceeded, JobFailed
+	FailureReason string           // Reason for failure if ConditionType is JobFailed
+	StartTime     time.Time        // When the job started running
+	CompletedTime time.Time        // When the job completed successfully
+	FailedTime    time.Time        // When the job failed
 }
 
 func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobStatus, error) {
@@ -338,12 +341,29 @@ func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobSt
 	// Determine status based on job conditions
 	if job.Status.Succeeded > 0 {
 		result.ConditionType = JobSucceeded
+		// Add completion time if available
+		if job.Status.CompletionTime != nil {
+			result.CompletedTime = job.Status.CompletionTime.Time
+		} else {
+			// Use now as fallback
+			log.Warnf("Job %s has no completion time, using current time as fallback", jobName)
+			result.CompletedTime = time.Now()
+		}
 	} else if job.Status.Failed > 0 {
 		result.ConditionType = JobFailed
+
 		// Try to extract failure reason from conditions
 		for _, condition := range job.Status.Conditions {
 			if condition.Type == batchv1.JobFailed && condition.Status == corev1.ConditionTrue {
 				result.FailureReason = condition.Reason + ": " + condition.Message
+				// Set the time from the condition's last transition time
+				if !condition.LastTransitionTime.IsZero() {
+					result.FailedTime = condition.LastTransitionTime.Time
+				} else {
+					// Use now as fallback
+					log.Warnf("Job %s has no last transition time, using current time as fallback", jobName)
+					result.FailedTime = time.Now()
+				}
 				break
 			}
 		}
@@ -351,9 +371,30 @@ func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobSt
 		// If no reason found in conditions, try to get it from the associated pods
 		if result.FailureReason == "" {
 			result.FailureReason = self.getJobPodsFailureReason(ctx, job.Name)
+
+			// If no failed time set from conditions, use the job's start time
+			// plus the active deadline if available, or current time as fallback
+			if result.FailedTime.IsZero() {
+				if job.Spec.ActiveDeadlineSeconds != nil && job.Status.StartTime != nil {
+					deadline := time.Duration(*job.Spec.ActiveDeadlineSeconds) * time.Second
+					result.FailedTime = job.Status.StartTime.Add(deadline)
+				} else {
+					// fallback to current time
+					log.Warnf("Job %s has no failed time, using current time as fallback", jobName)
+					result.FailedTime = time.Now()
+				}
+			}
 		}
 	} else if job.Status.Active > 0 {
 		result.ConditionType = JobRunning
+		// Add start time if available
+		if job.Status.StartTime != nil {
+			result.StartTime = job.Status.StartTime.Time
+		} else {
+			// Use now as fallback
+			log.Warnf("Job %s has no start time, using current time as fallback", jobName)
+			result.StartTime = time.Now()
+		}
 	} else {
 		result.ConditionType = JobPending
 	}
