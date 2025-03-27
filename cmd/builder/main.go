@@ -72,6 +72,11 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to build with railpack: %v", err)
 		}
+	case schema.ServiceBuilderDocker:
+		dockerImg, repoName, err = builder.BuildDockerfile(ctx, buildSecrets)
+		if err != nil {
+			log.Fatalf("Failed to build with docker: %v", err)
+		}
 	default:
 		log.Fatalf("Unknown builder: %s", cfg.ServiceBuilder)
 	}
