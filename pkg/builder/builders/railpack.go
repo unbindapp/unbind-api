@@ -22,6 +22,7 @@ func (self *Builder) BuildWithRailpack(ctx context.Context, buildSecrets map[str
 		repoName = fmt.Sprintf("unbind-build-%d", time.Now().Unix())
 	}
 	outputImage := fmt.Sprintf("%s/%s:%d", self.config.ContainerRegistryHost, repoName, time.Now().Unix())
+	cacheKey := fmt.Sprintf("%s/%s:buildcache", self.config.ContainerRegistryHost, repoName)
 
 	// -- Create github client
 	ghClient := github.NewGithubClient(self.config.GithubURL, nil)
@@ -61,7 +62,7 @@ func (self *Builder) BuildWithRailpack(ctx context.Context, buildSecrets map[str
 		buildResult.Plan,
 		buildkit.BuildWithBuildkitClientOptions{
 			ImageName: outputImage,
-			CacheKey:  repoName,
+			CacheKey:  cacheKey,
 			Secrets:   buildSecrets,
 			// ! TODO - add IMport/Export cache
 		},

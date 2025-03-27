@@ -29,8 +29,6 @@ type BuildWithBuildkitClientOptions struct {
 	Platform    rpBuildkit.BuildPlatform
 	SecretsHash string
 	Secrets     map[string]string
-	ImportCache string
-	ExportCache string
 	CacheKey    string
 }
 
@@ -43,7 +41,6 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, plan *plan.Build
 	}
 
 	// Prepend registry URL to image name if configured
-	var buildCacheRef string
 	if cfg.ContainerRegistryHost != "" {
 		// Only prepend registry URL if the image name doesn't already have registry information
 		// and if it doesn't contain a port number or domain suffix (like '.com')
@@ -58,9 +55,6 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, plan *plan.Build
 
 			// Prepend the registry URL to the image name
 			imageName = fmt.Sprintf("%s/%s", registryURL, imageName)
-
-			// Set the cache ref to the registry URL
-			buildCacheRef = fmt.Sprintf("%s/%s:buildcache", registryURL, opts.CacheKey)
 		}
 	}
 
@@ -187,39 +181,26 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, plan *plan.Build
 				Attrs: exportAttrs,
 			},
 		},
-		CacheImports: []client.CacheOptionsEntry{
+	}
+
+	if opts.CacheKey != "" {
+		solveOpts.CacheImports = []client.CacheOptionsEntry{
 			{
 				Type: "registry",
 				Attrs: map[string]string{
-					"ref": buildCacheRef,
+					"ref": opts.CacheKey,
 				},
 			},
-		},
-		CacheExports: []client.CacheOptionsEntry{
+		}
+		solveOpts.CacheExports = []client.CacheOptionsEntry{
 			{
 				Type: "registry",
 				Attrs: map[string]string{
-					"ref":  buildCacheRef,
+					"ref":  opts.CacheKey,
 					"mode": "max",
 				},
 			},
-		},
-	}
-
-	// Add cache import if specified
-	if opts.ImportCache != "" {
-		solveOpts.CacheImports = append(solveOpts.CacheImports, client.CacheOptionsEntry{
-			Type:  "gha",
-			Attrs: parseKeyValue(opts.ImportCache),
-		})
-	}
-
-	// Add cache export if specified
-	if opts.ExportCache != "" {
-		solveOpts.CacheExports = append(solveOpts.CacheExports, client.CacheOptionsEntry{
-			Type:  "gha",
-			Attrs: parseKeyValue(opts.ExportCache),
-		})
+		}
 	}
 
 	startTime := time.Now()
