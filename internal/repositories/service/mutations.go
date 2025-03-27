@@ -160,6 +160,10 @@ func (self *ServiceRepository) Delete(ctx context.Context, tx repository.TxInter
 	return db.Service.DeleteOneID(serviceID).Exec(ctx)
 }
 
-func (self *ServiceRepository) SetCurrentDeployment(ctx context.Context, serviceID uuid.UUID, deploymentID uuid.UUID) error {
-	return self.base.DB.Service.UpdateOneID(serviceID).SetCurrentDeploymentID(deploymentID).Exec(ctx)
+func (self *ServiceRepository) SetCurrentDeployment(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, deploymentID uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	return db.Service.UpdateOneID(serviceID).SetCurrentDeploymentID(deploymentID).Exec(ctx)
 }

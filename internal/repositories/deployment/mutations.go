@@ -8,11 +8,17 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
-func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error) {
-	c := self.base.DB.Deployment.Create().
+func (self *DeploymentRepository) Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	c := db.Deployment.Create().
 		SetServiceID(serviceID).
 		SetStatus(schema.DeploymentStatusQueued).
 		SetSource(source).
@@ -26,8 +32,13 @@ func (self *DeploymentRepository) Create(ctx context.Context, serviceID uuid.UUI
 	return c.Save(ctx)
 }
 
-func (self *DeploymentRepository) MarkStarted(ctx context.Context, buildJobID uuid.UUID, startedAt time.Time) (*ent.Deployment, error) {
-	return self.base.DB.Deployment.UpdateOneID(buildJobID).
+func (self *DeploymentRepository) MarkStarted(ctx context.Context, tx repository.TxInterface, buildJobID uuid.UUID, startedAt time.Time) (*ent.Deployment, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Deployment.UpdateOneID(buildJobID).
 		SetStatus(schema.DeploymentStatusBuilding).
 		// ! TODO - retry deployments?
 		SetAttempts(1).
@@ -35,16 +46,26 @@ func (self *DeploymentRepository) MarkStarted(ctx context.Context, buildJobID uu
 		Save(ctx)
 }
 
-func (self *DeploymentRepository) MarkFailed(ctx context.Context, buildJobID uuid.UUID, message string, failedAt time.Time) (*ent.Deployment, error) {
-	return self.base.DB.Deployment.UpdateOneID(buildJobID).
+func (self *DeploymentRepository) MarkFailed(ctx context.Context, tx repository.TxInterface, buildJobID uuid.UUID, message string, failedAt time.Time) (*ent.Deployment, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Deployment.UpdateOneID(buildJobID).
 		SetStatus(schema.DeploymentStatusFailed).
 		SetCompletedAt(failedAt).
 		SetError(message).
 		Save(ctx)
 }
 
-func (self *DeploymentRepository) MarkSucceeded(ctx context.Context, buildJobID uuid.UUID, completedAt time.Time) (*ent.Deployment, error) {
-	return self.base.DB.Deployment.UpdateOneID(buildJobID).
+func (self *DeploymentRepository) MarkSucceeded(ctx context.Context, tx repository.TxInterface, buildJobID uuid.UUID, completedAt time.Time) (*ent.Deployment, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Deployment.UpdateOneID(buildJobID).
 		SetStatus(schema.DeploymentStatusSucceeded).
 		SetCompletedAt(completedAt).
 		Save(ctx)
@@ -87,8 +108,13 @@ func (self *DeploymentRepository) SetKubernetesJobStatus(ctx context.Context, bu
 		Save(ctx)
 }
 
-func (self *DeploymentRepository) AttachDeploymentMetadata(ctx context.Context, deploymentID uuid.UUID, imageName string, resourceDefinition *v1.Service) (*ent.Deployment, error) {
-	return self.base.DB.Deployment.UpdateOneID(deploymentID).
+func (self *DeploymentRepository) AttachDeploymentMetadata(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, imageName string, resourceDefinition *v1.Service) (*ent.Deployment, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Deployment.UpdateOneID(deploymentID).
 		SetImage(imageName).
 		SetResourceDefinition(resourceDefinition).
 		Save(ctx)

@@ -249,6 +249,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 	// Create a record in the database
 	job, err = self.repo.Deployment().Create(
 		ctx,
+		nil,
 		req.ServiceID,
 		req.CommitSHA,
 		req.CommitMessage,
@@ -316,7 +317,7 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 		log.Warnf("Failed to mark job as cancelled: %v service: %s", err, req.ServiceID)
 	}
 	// ! This is our time starting the job, not the actual time kubernetes started running it - maybe we should do soemthing different
-	_, err = self.repo.Deployment().MarkStarted(ctx, jobID, time.Now())
+	_, err = self.repo.Deployment().MarkStarted(ctx, nil, jobID, time.Now())
 
 	if err != nil {
 		return fmt.Errorf("failed to mark job started: %w", err)
@@ -328,7 +329,7 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 		log.Error("Failed to create Kubernetes job", "err", err)
 
 		// Update status to failed
-		_, dbErr := self.repo.Deployment().MarkFailed(ctx, jobID, err.Error(), time.Now())
+		_, dbErr := self.repo.Deployment().MarkFailed(ctx, nil, jobID, err.Error(), time.Now())
 
 		if dbErr != nil {
 			log.Error("Failed to update job failure status", "err", dbErr)
@@ -369,9 +370,9 @@ func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 		// Update based on Kubernetes status
 		switch k8sStatus.ConditionType {
 		case k8s.JobSucceeded:
-			_, err = self.repo.Deployment().MarkSucceeded(ctx, job.ID, k8sStatus.CompletedTime)
+			_, err = self.repo.Deployment().MarkSucceeded(ctx, nil, job.ID, k8sStatus.CompletedTime)
 		case k8s.JobFailed:
-			_, err = self.repo.Deployment().MarkFailed(ctx, job.ID, k8sStatus.FailureReason, k8sStatus.FailedTime)
+			_, err = self.repo.Deployment().MarkFailed(ctx, nil, job.ID, k8sStatus.FailureReason, k8sStatus.FailedTime)
 		default:
 			_, err = self.repo.Deployment().SetKubernetesJobStatus(ctx, job.ID, k8sStatus.ConditionType.String())
 		}

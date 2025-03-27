@@ -67,7 +67,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 					Containers: []corev1.Container{
 						{
 							Name:  "build-container",
-							Image: self.config.BuildImage,
+							Image: self.config.GetBuildImage(),
 							Command: []string{
 								"sh",
 								"-c",
@@ -87,23 +87,23 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 								},
 								{
 									Name:  "POSTGRES_HOST",
-									Value: self.config.PostgresHost,
+									Value: self.config.GetPostgresHost(),
 								},
 								{
 									Name:  "POSTGRES_PORT",
-									Value: fmt.Sprintf("%d", self.config.PostgresPort),
+									Value: fmt.Sprintf("%d", self.config.GetPostgresPort()),
 								},
 								{
 									Name:  "POSTGRES_USER",
-									Value: self.config.PostgresUser,
+									Value: self.config.GetPostgresUser(),
 								},
 								{
 									Name:  "POSTGRES_PASSWORD",
-									Value: self.config.PostgresPassword,
+									Value: self.config.GetPostgresPassword(),
 								},
 								{
 									Name:  "POSTGRES_DB",
-									Value: self.config.PostgresDB,
+									Value: self.config.GetPostgresDB(),
 								},
 							}...),
 							VolumeMounts: []corev1.VolumeMount{
@@ -260,13 +260,13 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 	}
 
 	// Create the Job in Kubernetes
-	_, err = self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).Create(ctx, job, metav1.CreateOptions{})
+	_, err = self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).Create(ctx, job, metav1.CreateOptions{})
 	return jobName, err
 }
 
 // For canceling jobs.
 func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID string) error {
-	jobList, err := self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).List(ctx, metav1.ListOptions{
+	jobList, err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).List(ctx, metav1.ListOptions{
 		// We use the "serviceID" label to select jobs.
 		LabelSelector: fmt.Sprintf("serviceID=%s", serviceID),
 	})
@@ -277,7 +277,7 @@ func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID str
 		if job.Status.Active > 0 {
 			// Delete the job. Using foreground deletion ensures that the pods are cleaned up.
 			deletePolicy := metav1.DeletePropagationForeground
-			if err := self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+			if err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).Delete(ctx, job.Name, metav1.DeleteOptions{
 				PropagationPolicy: &deletePolicy,
 			}); err != nil {
 				return fmt.Errorf("failed to delete job %s: %v", job.Name, err)
@@ -289,7 +289,7 @@ func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID str
 }
 
 func (self *KubeClient) CountActiveDeploymentJobs(ctx context.Context) (int, error) {
-	jobList, err := self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).List(ctx, metav1.ListOptions{
+	jobList, err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).List(ctx, metav1.ListOptions{
 		LabelSelector: "unbind-deployment-job=true",
 	})
 	if err != nil {
@@ -331,7 +331,7 @@ type JobStatus struct {
 
 func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobStatus, error) {
 	// Get the job from Kubernetes API
-	job, err := self.clientset.BatchV1().Jobs(self.config.BuilderNamespace).Get(ctx, jobName, metav1.GetOptions{})
+	job, err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).Get(ctx, jobName, metav1.GetOptions{})
 	if err != nil {
 		return JobStatus{}, fmt.Errorf("failed to get job %s: %v", jobName, err)
 	}
@@ -406,7 +406,7 @@ func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobSt
 func (self *KubeClient) getJobPodsFailureReason(ctx context.Context, jobName string) string {
 	// Get pods with the job-name label
 	labelSelector := fmt.Sprintf("job-name=%s", jobName)
-	pods, err := self.clientset.CoreV1().Pods(self.config.BuilderNamespace).List(ctx, metav1.ListOptions{
+	pods, err := self.clientset.CoreV1().Pods(self.config.GetBuilderNamespace()).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 

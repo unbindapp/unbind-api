@@ -16,6 +16,10 @@ type ConfigInterface interface {
 	GetPostgresUser() string
 	GetPostgresPassword() string
 	GetPostgresDB() string
+	GetKubeConfig() string
+	GetBuildImage() string
+	GetBuilderNamespace() string
+	GetKubeProxyURL() string
 }
 
 type Config struct {
@@ -75,6 +79,22 @@ func (self *Config) GetPostgresPassword() string {
 
 func (self *Config) GetPostgresDB() string {
 	return self.PostgresDB
+}
+
+func (self *Config) GetKubeConfig() string {
+	return self.KubeConfig
+}
+
+func (self *Config) GetBuildImage() string {
+	return self.BuildImage
+}
+
+func (self *Config) GetBuilderNamespace() string {
+	return self.BuilderNamespace
+}
+
+func (self *Config) GetKubeProxyURL() string {
+	return self.KubeProxyURL
 }
 
 // Parse environment variables into a Config struct

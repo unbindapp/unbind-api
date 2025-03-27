@@ -42,7 +42,7 @@ func main() {
 	repo := repositories.NewRepositories(db)
 
 	builder := builders.NewBuilder(cfg)
-	k8s := k8s.NewK8SClient(cfg)
+	k8s := k8s.NewK8SClient(cfg, cfg)
 
 	// Parse secrets from env
 	serializableSecrets := make(map[string]string)
@@ -95,6 +95,7 @@ func main() {
 	// Update deployment metadata in the DB
 	if _, err = repo.Deployment().AttachDeploymentMetadata(
 		ctx,
+		nil,
 		cfg.ServiceDeploymentID,
 		dockerImg,
 		serviceSpec,
@@ -103,7 +104,7 @@ func main() {
 	}
 
 	// Update active deployment
-	if err = repo.Service().SetCurrentDeployment(ctx, cfg.ServiceID, cfg.ServiceDeploymentID); err != nil {
+	if err = repo.Service().SetCurrentDeployment(ctx, nil, cfg.ServiceID, cfg.ServiceDeploymentID); err != nil {
 		log.Error("Failed to set current deployment", "service_id", cfg.ServiceID, "deployment_id", cfg.ServiceDeploymentID, "err", err)
 	}
 

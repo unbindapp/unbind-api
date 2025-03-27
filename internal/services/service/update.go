@@ -3,6 +3,8 @@ package service_service
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -154,6 +156,137 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 	}); err != nil {
 		return nil, err
+	}
+
+	// See if a deployment is needed
+	if service.Edges.CurrentDeployment != nil && service.Edges.CurrentDeployment.ResourceDefinition != nil {
+		// Create a an object with only fields we care to compare
+		existingCrd := &v1.Service{
+			Spec: v1.ServiceSpec{
+				Config: v1.ServiceConfigSpec{
+					GitBranch:  service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.GitBranch,
+					Hosts:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Hosts,
+					Replicas:   service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Replicas,
+					Ports:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Ports,
+					AutoDeploy: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.AutoDeploy,
+					RunCommand: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.RunCommand,
+					Public:     service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Public,
+				},
+			},
+		}
+		// Create a new CRD to compare it
+		var gitBranch string
+		if service.Edges.ServiceConfig.GitBranch != nil {
+			gitBranch = *service.Edges.ServiceConfig.GitBranch
+		}
+		newCrd := &v1.Service{
+			Spec: v1.ServiceSpec{
+				Config: v1.ServiceConfigSpec{
+					GitBranch:  gitBranch,
+					Hosts:      service.Edges.ServiceConfig.Hosts,
+					Replicas:   utils.ToPtr(service.Edges.ServiceConfig.Replicas),
+					Ports:      service.Edges.ServiceConfig.Ports,
+					AutoDeploy: service.Edges.ServiceConfig.AutoDeploy,
+					RunCommand: service.Edges.ServiceConfig.RunCommand,
+					Public:     service.Edges.ServiceConfig.Public,
+				},
+			},
+		}
+
+		// Compare the two
+		if !reflect.DeepEqual(existingCrd, newCrd) {
+			// New adhoc deployment needed
+			crdToDeploy := &v1.Service{}
+			// Metadata
+			crdToDeploy.Name = service.Edges.CurrentDeployment.ResourceDefinition.Name
+			crdToDeploy.Namespace = service.Edges.CurrentDeployment.ResourceDefinition.Namespace
+			crdToDeploy.Kind = service.Edges.CurrentDeployment.ResourceDefinition.Kind
+			crdToDeploy.APIVersion = service.Edges.CurrentDeployment.ResourceDefinition.APIVersion
+			crdToDeploy.Labels = service.Edges.CurrentDeployment.ResourceDefinition.Labels
+			crdToDeploy.Spec = service.Edges.CurrentDeployment.ResourceDefinition.Spec
+
+			// Update the Spec
+			crdToDeploy.Spec.Config.GitBranch = gitBranch
+			crdToDeploy.Spec.Config.Hosts = service.Edges.ServiceConfig.Hosts
+			crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
+			crdToDeploy.Spec.Config.Ports = service.Edges.ServiceConfig.Ports
+			crdToDeploy.Spec.Config.AutoDeploy = service.Edges.ServiceConfig.AutoDeploy
+			crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
+			crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.Public
+
+			// Deploy the new CRD
+			if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+				// Create a record in the database
+				commitSha := ""
+				if service.Edges.CurrentDeployment.CommitSha != nil {
+					commitSha = *service.Edges.CurrentDeployment.CommitSha
+				}
+				commitMessage := ""
+				if service.Edges.CurrentDeployment.CommitMessage != nil {
+					commitMessage = *service.Edges.CurrentDeployment.CommitMessage
+				}
+
+				deployment, err := self.repo.Deployment().Create(
+					ctx,
+					tx,
+					service.Edges.CurrentDeployment.ServiceID,
+					commitSha,
+					commitMessage,
+					service.Edges.CurrentDeployment.CommitAuthor,
+					service.Edges.CurrentDeployment.Source,
+				)
+				if err != nil {
+					return err
+				}
+
+				// Mark the deployment as started
+				if _, err := self.repo.Deployment().MarkStarted(ctx, tx, deployment.ID, time.Now()); err != nil {
+					return err
+				}
+
+				// Deploy to kubernetes
+				_, newService, err := self.k8s.DeployUnbindService(ctx, crdToDeploy)
+				if err != nil {
+					// Mark failed
+					if _, err := self.repo.Deployment().MarkFailed(ctx, tx, deployment.ID, err.Error(), time.Now()); err != nil {
+						return err
+					}
+					// Pass through since we already marked the deployment as failed
+					return nil
+				}
+
+				// Attach metadata
+				if _, err := self.repo.Deployment().AttachDeploymentMetadata(
+					ctx,
+					tx,
+					deployment.ID,
+					crdToDeploy.Spec.Config.Image,
+					newService,
+				); err != nil {
+					// Mark failed
+					if _, err := self.repo.Deployment().MarkFailed(ctx, tx, deployment.ID, err.Error(), time.Now()); err != nil {
+						return err
+					}
+					// Pass through since we already marked the deployment as failed
+					return nil
+				}
+
+				// Mark as succeeded
+				if _, err := self.repo.Deployment().MarkSucceeded(ctx, tx, deployment.ID, time.Now()); err != nil {
+					return err
+				}
+
+				// Update the service with the new deployment
+				if err := self.repo.Service().SetCurrentDeployment(ctx, tx, service.ID, deployment.ID); err != nil {
+					return err
+				}
+
+				return nil
+			}); err != nil {
+				log.Errorf("failed to deploy new CRD: %v", err)
+				return nil, err
+			}
+		}
 	}
 
 	return models.TransformServiceEntity(service), nil

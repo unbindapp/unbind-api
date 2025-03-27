@@ -11,18 +11,18 @@ import (
 )
 
 type KubeClient struct {
-	config    *config.Config
+	config    config.ConfigInterface
 	client    *dynamic.DynamicClient
 	clientset *kubernetes.Clientset
 }
 
-func NewKubeClient(cfg *config.Config) *KubeClient {
+func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
 	var kubeConfig *rest.Config
 	var err error
 
-	if cfg.KubeConfig != "" {
+	if cfg.GetKubeConfig() != "" {
 		// Use provided kubeconfig if present
-		kubeConfig, err = clientcmd.BuildConfigFromFlags("", cfg.KubeConfig)
+		kubeConfig, err = clientcmd.BuildConfigFromFlags("", cfg.GetKubeConfig())
 		if err != nil {
 			log.Fatalf("Error building kubeconfig: %v", err)
 		}
@@ -53,7 +53,7 @@ func NewKubeClient(cfg *config.Config) *KubeClient {
 
 func (k *KubeClient) CreateClientWithToken(token string) (*kubernetes.Clientset, error) {
 	config := &rest.Config{
-		Host:        k.config.KubeProxyURL,
+		Host:        k.config.GetKubeProxyURL(),
 		BearerToken: token,
 		// Skip TLS verification for internal cluster communication
 		TLSClientConfig: rest.TLSClientConfig{

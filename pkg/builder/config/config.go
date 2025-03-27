@@ -83,6 +83,22 @@ func (self *Config) GetPostgresDB() string {
 	return self.PostgresDB
 }
 
+func (self *Config) GetKubeConfig() string {
+	return self.KubeConfig
+}
+
+func (self *Config) GetBuildImage() string {
+	return ""
+}
+
+func (self *Config) GetBuilderNamespace() string {
+	return ""
+}
+
+func (self *Config) GetKubeProxyURL() string {
+	return ""
+}
+
 // Parse environment variables into a Config struct
 func NewConfig() *Config {
 	cfg := Config{}
