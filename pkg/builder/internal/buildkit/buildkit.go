@@ -159,6 +159,9 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		// Using Dockerfile frontend
 		log.Infof("Building image from Dockerfile: %s with BuildKit %s", opts.DockerfilePath, info.BuildkitVersion.Version)
 
+		// Set mount
+		solveOpts.LocalMounts["dockerfile"] = appFS
+
 		// Set the frontend to use Dockerfile
 		solveOpts.Frontend = "dockerfile.v0"
 		solveOpts.FrontendAttrs = map[string]string{
