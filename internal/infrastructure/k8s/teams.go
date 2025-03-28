@@ -5,52 +5,39 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"sort"
-	"time"
 
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// A team has a name and an underlying namespace
-type UnbindTeam struct {
-	Name      string    `json:"name"`
-	Namespace string    `json:"namespace"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-// GetUnbindTeams returns a slice of UnbindTeam structs
-func (k *KubeClient) GetUnbindTeams(ctx context.Context, bearerToken string) ([]UnbindTeam, error) {
+// Gets specified namespaces
+func (k *KubeClient) GetNamespaces(ctx context.Context, namespaceNames []string, bearerToken string) ([]*v1.Namespace, error) {
 	client, err := k.CreateClientWithToken(bearerToken)
 	if err != nil {
 		log.Errorf("Error creating client with token: %v", err)
 		return nil, fmt.Errorf("error creating client with token: %v", err)
 	}
 
-	// List namespaces with the unbind-team label
-	namespaces, err := client.CoreV1().Namespaces().List(ctx, metav1.ListOptions{
-		LabelSelector: "unbind-team",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error listing namespaces: %v", err)
-	}
+	namespaces := make([]*v1.Namespace, 0, len(namespaceNames))
 
-	teams := make([]UnbindTeam, 0, len(namespaces.Items))
-	for _, ns := range namespaces.Items {
-		teamValue := ns.GetLabels()["unbind-team"]
-		if teamValue != "" {
-			teams = append(teams, UnbindTeam{
-				Name:      teamValue,
-				Namespace: ns.GetName(),
-				CreatedAt: ns.GetCreationTimestamp().Time,
-			})
+	// Get each namespace by name instead of listing all
+	for i, namespaceName := range namespaceNames {
+		// Skip empty namespace names
+		if namespaceName == "" {
+			continue
 		}
+
+		// Get the specific namespace
+		ns, err := client.CoreV1().Namespaces().Get(ctx, namespaceName, metav1.GetOptions{})
+		if err != nil {
+			// Log the error but continue with other namespaces
+			log.Warnf("Error getting namespace %s: %v", namespaceName, err)
+			continue
+		}
+
+		namespaces[i] = ns
 	}
 
-	// Sort by data created by default
-	sort.Slice(teams, func(i, j int) bool {
-		return teams[i].CreatedAt.After(teams[j].CreatedAt)
-	})
-
-	return teams, nil
+	return namespaces, nil
 }

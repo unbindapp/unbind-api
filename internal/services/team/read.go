@@ -36,15 +36,20 @@ func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearer
 		return nil, err
 	}
 
-	// Get teams from kubernetes
-	k8sTeams, err := self.k8s.GetUnbindTeams(ctx, bearerToken)
+	namespaceNames := make([]string, len(dbTeams))
+	for i, team := range dbTeams {
+		namespaceNames[i] = team.Namespace
+	}
+
+	// Get namespaces from kubernetes
+	namespaces, err := self.k8s.GetNamespaces(ctx, namespaceNames, bearerToken)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create a map of k8s namespaces
 	k8sNamespaces := make(map[string]bool)
-	for _, team := range k8sTeams {
+	for _, team := range namespaces {
 		k8sNamespaces[team.Namespace] = true
 	}
 
