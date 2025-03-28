@@ -316,6 +316,10 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 	jobID, _ := uuid.Parse(item.ID)
 	req := item.Data
 
+	// Cancel any existing jobs for this service
+	if err := self.k8s.CancelJobsByServiceID(ctx, req.ServiceID.String()); err != nil {
+		log.Warnf("Failed to cancel existing jobs: %v service: %s", err, req.ServiceID)
+	}
 	// Update the job status in the database
 	err := self.repo.Deployment().MarkCancelled(ctx, req.ServiceID)
 	if err != nil {
@@ -339,7 +343,6 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 		if dbErr != nil {
 			log.Error("Failed to update job failure status", "err", dbErr)
 		}
-
 		return err
 	}
 

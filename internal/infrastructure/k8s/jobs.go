@@ -13,11 +13,6 @@ import (
 )
 
 func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, jobID string, env map[string]string) (jobName string, err error) {
-	// Cancel any active job for this service
-	if err = self.CancelJobsByServiceID(ctx, serviceID); err != nil {
-		return "", err
-	}
-
 	// Build a unique job name
 	jobName = fmt.Sprintf("%s-deployment-%d", jobID, time.Now().Unix())
 
