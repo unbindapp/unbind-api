@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // Permission is the model entity for the Permission schema.
@@ -24,16 +25,12 @@ type Permission struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// Action holds the value of the "action" field.
-	Action permission.Action `json:"action,omitempty"`
-	// Type of resource: 'teams', 'projects', 'k8s', etc.
-	ResourceType permission.ResourceType `json:"resource_type,omitempty"`
-	// Specific resource ID or '*' for all resources of this type
-	ResourceID string `json:"resource_id,omitempty"`
-	// For additional filtering (e.g., k8s namespaces, specific fields)
-	Scope string `json:"scope,omitempty"`
-	// Resource labels for K8s label selectors
-	Labels map[string]string `json:"labels,omitempty"`
+	// Action that can be performed
+	Action schema.PermittedAction `json:"action,omitempty"`
+	// Type of resource: 'teams', 'projects', etc.
+	ResourceType schema.ResourceType `json:"resource_type,omitempty"`
+	// Resource selector for this permission
+	ResourceSelector schema.ResourceSelector `json:"resource_selector,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PermissionQuery when eager-loading is set.
 	Edges        PermissionEdges `json:"edges"`
@@ -63,9 +60,9 @@ func (*Permission) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case permission.FieldLabels:
+		case permission.FieldResourceSelector:
 			values[i] = new([]byte)
-		case permission.FieldAction, permission.FieldResourceType, permission.FieldResourceID, permission.FieldScope:
+		case permission.FieldAction, permission.FieldResourceType:
 			values[i] = new(sql.NullString)
 		case permission.FieldCreatedAt, permission.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -108,32 +105,20 @@ func (pe *Permission) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field action", values[i])
 			} else if value.Valid {
-				pe.Action = permission.Action(value.String)
+				pe.Action = schema.PermittedAction(value.String)
 			}
 		case permission.FieldResourceType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field resource_type", values[i])
 			} else if value.Valid {
-				pe.ResourceType = permission.ResourceType(value.String)
+				pe.ResourceType = schema.ResourceType(value.String)
 			}
-		case permission.FieldResourceID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field resource_id", values[i])
-			} else if value.Valid {
-				pe.ResourceID = value.String
-			}
-		case permission.FieldScope:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field scope", values[i])
-			} else if value.Valid {
-				pe.Scope = value.String
-			}
-		case permission.FieldLabels:
+		case permission.FieldResourceSelector:
 			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field labels", values[i])
+				return fmt.Errorf("unexpected type %T for field resource_selector", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &pe.Labels); err != nil {
-					return fmt.Errorf("unmarshal field labels: %w", err)
+				if err := json.Unmarshal(*value, &pe.ResourceSelector); err != nil {
+					return fmt.Errorf("unmarshal field resource_selector: %w", err)
 				}
 			}
 		default:
@@ -189,14 +174,8 @@ func (pe *Permission) String() string {
 	builder.WriteString("resource_type=")
 	builder.WriteString(fmt.Sprintf("%v", pe.ResourceType))
 	builder.WriteString(", ")
-	builder.WriteString("resource_id=")
-	builder.WriteString(pe.ResourceID)
-	builder.WriteString(", ")
-	builder.WriteString("scope=")
-	builder.WriteString(pe.Scope)
-	builder.WriteString(", ")
-	builder.WriteString("labels=")
-	builder.WriteString(fmt.Sprintf("%v", pe.Labels))
+	builder.WriteString("resource_selector=")
+	builder.WriteString(fmt.Sprintf("%v", pe.ResourceSelector))
 	builder.WriteByte(')')
 	return builder.String()
 }

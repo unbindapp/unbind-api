@@ -43,11 +43,11 @@ func NewRepositories(db *ent.Client) *Repositories {
 	userRepo := user_repo.NewUserRepository(db)
 	projectRepo := project_repo.NewProjectRepository(db)
 	teamRepo := team_repo.NewTeamRepository(db)
-	permissionsRepo := permissions_repo.NewPermissionsRepository(db, userRepo, projectRepo, teamRepo)
-	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
 	environmentRepo := environment_repo.NewEnvironmentRepository(db)
 	serviceRepo := service_repo.NewServiceRepository(db)
 	deploymentRepo := deployment_repo.NewDeploymentRepository(db)
+	permissionsRepo := permissions_repo.NewPermissionsRepository(db, userRepo, projectRepo, environmentRepo, serviceRepo, teamRepo)
+	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
 	return &Repositories{
 		db:          db,
 		base:        base,

@@ -4362,10 +4362,7 @@ type GroupMutation struct {
 	updated_at         *time.Time
 	name               *string
 	description        *string
-	superuser          *bool
 	k8s_role_name      *string
-	identity_provider  *string
-	external_id        *string
 	clearedFields      map[string]struct{}
 	users              map[uuid.UUID]struct{}
 	removedusers       map[uuid.UUID]struct{}
@@ -4373,8 +4370,6 @@ type GroupMutation struct {
 	permissions        map[uuid.UUID]struct{}
 	removedpermissions map[uuid.UUID]struct{}
 	clearedpermissions bool
-	team               *uuid.UUID
-	clearedteam        bool
 	done               bool
 	oldValue           func(context.Context) (*Group, error)
 	predicates         []predicate.Group
@@ -4641,42 +4636,6 @@ func (m *GroupMutation) ResetDescription() {
 	delete(m.clearedFields, group.FieldDescription)
 }
 
-// SetSuperuser sets the "superuser" field.
-func (m *GroupMutation) SetSuperuser(b bool) {
-	m.superuser = &b
-}
-
-// Superuser returns the value of the "superuser" field in the mutation.
-func (m *GroupMutation) Superuser() (r bool, exists bool) {
-	v := m.superuser
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSuperuser returns the old "superuser" field's value of the Group entity.
-// If the Group object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldSuperuser(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSuperuser is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSuperuser requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSuperuser: %w", err)
-	}
-	return oldValue.Superuser, nil
-}
-
-// ResetSuperuser resets all changes to the "superuser" field.
-func (m *GroupMutation) ResetSuperuser() {
-	m.superuser = nil
-}
-
 // SetK8sRoleName sets the "k8s_role_name" field.
 func (m *GroupMutation) SetK8sRoleName(s string) {
 	m.k8s_role_name = &s
@@ -4694,7 +4653,7 @@ func (m *GroupMutation) K8sRoleName() (r string, exists bool) {
 // OldK8sRoleName returns the old "k8s_role_name" field's value of the Group entity.
 // If the Group object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldK8sRoleName(ctx context.Context) (v string, err error) {
+func (m *GroupMutation) OldK8sRoleName(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldK8sRoleName is only allowed on UpdateOne operations")
 	}
@@ -4724,153 +4683,6 @@ func (m *GroupMutation) K8sRoleNameCleared() bool {
 func (m *GroupMutation) ResetK8sRoleName() {
 	m.k8s_role_name = nil
 	delete(m.clearedFields, group.FieldK8sRoleName)
-}
-
-// SetIdentityProvider sets the "identity_provider" field.
-func (m *GroupMutation) SetIdentityProvider(s string) {
-	m.identity_provider = &s
-}
-
-// IdentityProvider returns the value of the "identity_provider" field in the mutation.
-func (m *GroupMutation) IdentityProvider() (r string, exists bool) {
-	v := m.identity_provider
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldIdentityProvider returns the old "identity_provider" field's value of the Group entity.
-// If the Group object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldIdentityProvider(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldIdentityProvider is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldIdentityProvider requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldIdentityProvider: %w", err)
-	}
-	return oldValue.IdentityProvider, nil
-}
-
-// ClearIdentityProvider clears the value of the "identity_provider" field.
-func (m *GroupMutation) ClearIdentityProvider() {
-	m.identity_provider = nil
-	m.clearedFields[group.FieldIdentityProvider] = struct{}{}
-}
-
-// IdentityProviderCleared returns if the "identity_provider" field was cleared in this mutation.
-func (m *GroupMutation) IdentityProviderCleared() bool {
-	_, ok := m.clearedFields[group.FieldIdentityProvider]
-	return ok
-}
-
-// ResetIdentityProvider resets all changes to the "identity_provider" field.
-func (m *GroupMutation) ResetIdentityProvider() {
-	m.identity_provider = nil
-	delete(m.clearedFields, group.FieldIdentityProvider)
-}
-
-// SetExternalID sets the "external_id" field.
-func (m *GroupMutation) SetExternalID(s string) {
-	m.external_id = &s
-}
-
-// ExternalID returns the value of the "external_id" field in the mutation.
-func (m *GroupMutation) ExternalID() (r string, exists bool) {
-	v := m.external_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldExternalID returns the old "external_id" field's value of the Group entity.
-// If the Group object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldExternalID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldExternalID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldExternalID: %w", err)
-	}
-	return oldValue.ExternalID, nil
-}
-
-// ClearExternalID clears the value of the "external_id" field.
-func (m *GroupMutation) ClearExternalID() {
-	m.external_id = nil
-	m.clearedFields[group.FieldExternalID] = struct{}{}
-}
-
-// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
-func (m *GroupMutation) ExternalIDCleared() bool {
-	_, ok := m.clearedFields[group.FieldExternalID]
-	return ok
-}
-
-// ResetExternalID resets all changes to the "external_id" field.
-func (m *GroupMutation) ResetExternalID() {
-	m.external_id = nil
-	delete(m.clearedFields, group.FieldExternalID)
-}
-
-// SetTeamID sets the "team_id" field.
-func (m *GroupMutation) SetTeamID(u uuid.UUID) {
-	m.team = &u
-}
-
-// TeamID returns the value of the "team_id" field in the mutation.
-func (m *GroupMutation) TeamID() (r uuid.UUID, exists bool) {
-	v := m.team
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTeamID returns the old "team_id" field's value of the Group entity.
-// If the Group object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldTeamID(ctx context.Context) (v *uuid.UUID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTeamID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
-	}
-	return oldValue.TeamID, nil
-}
-
-// ClearTeamID clears the value of the "team_id" field.
-func (m *GroupMutation) ClearTeamID() {
-	m.team = nil
-	m.clearedFields[group.FieldTeamID] = struct{}{}
-}
-
-// TeamIDCleared returns if the "team_id" field was cleared in this mutation.
-func (m *GroupMutation) TeamIDCleared() bool {
-	_, ok := m.clearedFields[group.FieldTeamID]
-	return ok
-}
-
-// ResetTeamID resets all changes to the "team_id" field.
-func (m *GroupMutation) ResetTeamID() {
-	m.team = nil
-	delete(m.clearedFields, group.FieldTeamID)
 }
 
 // AddUserIDs adds the "users" edge to the User entity by ids.
@@ -4981,33 +4793,6 @@ func (m *GroupMutation) ResetPermissions() {
 	m.removedpermissions = nil
 }
 
-// ClearTeam clears the "team" edge to the Team entity.
-func (m *GroupMutation) ClearTeam() {
-	m.clearedteam = true
-	m.clearedFields[group.FieldTeamID] = struct{}{}
-}
-
-// TeamCleared reports if the "team" edge to the Team entity was cleared.
-func (m *GroupMutation) TeamCleared() bool {
-	return m.TeamIDCleared() || m.clearedteam
-}
-
-// TeamIDs returns the "team" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// TeamID instead. It exists only for internal usage by the builders.
-func (m *GroupMutation) TeamIDs() (ids []uuid.UUID) {
-	if id := m.team; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetTeam resets all changes to the "team" edge.
-func (m *GroupMutation) ResetTeam() {
-	m.team = nil
-	m.clearedteam = false
-}
-
 // Where appends a list predicates to the GroupMutation builder.
 func (m *GroupMutation) Where(ps ...predicate.Group) {
 	m.predicates = append(m.predicates, ps...)
@@ -5042,7 +4827,7 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 5)
 	if m.created_at != nil {
 		fields = append(fields, group.FieldCreatedAt)
 	}
@@ -5055,20 +4840,8 @@ func (m *GroupMutation) Fields() []string {
 	if m.description != nil {
 		fields = append(fields, group.FieldDescription)
 	}
-	if m.superuser != nil {
-		fields = append(fields, group.FieldSuperuser)
-	}
 	if m.k8s_role_name != nil {
 		fields = append(fields, group.FieldK8sRoleName)
-	}
-	if m.identity_provider != nil {
-		fields = append(fields, group.FieldIdentityProvider)
-	}
-	if m.external_id != nil {
-		fields = append(fields, group.FieldExternalID)
-	}
-	if m.team != nil {
-		fields = append(fields, group.FieldTeamID)
 	}
 	return fields
 }
@@ -5086,16 +4859,8 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case group.FieldDescription:
 		return m.Description()
-	case group.FieldSuperuser:
-		return m.Superuser()
 	case group.FieldK8sRoleName:
 		return m.K8sRoleName()
-	case group.FieldIdentityProvider:
-		return m.IdentityProvider()
-	case group.FieldExternalID:
-		return m.ExternalID()
-	case group.FieldTeamID:
-		return m.TeamID()
 	}
 	return nil, false
 }
@@ -5113,16 +4878,8 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldName(ctx)
 	case group.FieldDescription:
 		return m.OldDescription(ctx)
-	case group.FieldSuperuser:
-		return m.OldSuperuser(ctx)
 	case group.FieldK8sRoleName:
 		return m.OldK8sRoleName(ctx)
-	case group.FieldIdentityProvider:
-		return m.OldIdentityProvider(ctx)
-	case group.FieldExternalID:
-		return m.OldExternalID(ctx)
-	case group.FieldTeamID:
-		return m.OldTeamID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Group field %s", name)
 }
@@ -5160,40 +4917,12 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDescription(v)
 		return nil
-	case group.FieldSuperuser:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSuperuser(v)
-		return nil
 	case group.FieldK8sRoleName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetK8sRoleName(v)
-		return nil
-	case group.FieldIdentityProvider:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetIdentityProvider(v)
-		return nil
-	case group.FieldExternalID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetExternalID(v)
-		return nil
-	case group.FieldTeamID:
-		v, ok := value.(uuid.UUID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTeamID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)
@@ -5231,15 +4960,6 @@ func (m *GroupMutation) ClearedFields() []string {
 	if m.FieldCleared(group.FieldK8sRoleName) {
 		fields = append(fields, group.FieldK8sRoleName)
 	}
-	if m.FieldCleared(group.FieldIdentityProvider) {
-		fields = append(fields, group.FieldIdentityProvider)
-	}
-	if m.FieldCleared(group.FieldExternalID) {
-		fields = append(fields, group.FieldExternalID)
-	}
-	if m.FieldCleared(group.FieldTeamID) {
-		fields = append(fields, group.FieldTeamID)
-	}
 	return fields
 }
 
@@ -5259,15 +4979,6 @@ func (m *GroupMutation) ClearField(name string) error {
 		return nil
 	case group.FieldK8sRoleName:
 		m.ClearK8sRoleName()
-		return nil
-	case group.FieldIdentityProvider:
-		m.ClearIdentityProvider()
-		return nil
-	case group.FieldExternalID:
-		m.ClearExternalID()
-		return nil
-	case group.FieldTeamID:
-		m.ClearTeamID()
 		return nil
 	}
 	return fmt.Errorf("unknown Group nullable field %s", name)
@@ -5289,20 +5000,8 @@ func (m *GroupMutation) ResetField(name string) error {
 	case group.FieldDescription:
 		m.ResetDescription()
 		return nil
-	case group.FieldSuperuser:
-		m.ResetSuperuser()
-		return nil
 	case group.FieldK8sRoleName:
 		m.ResetK8sRoleName()
-		return nil
-	case group.FieldIdentityProvider:
-		m.ResetIdentityProvider()
-		return nil
-	case group.FieldExternalID:
-		m.ResetExternalID()
-		return nil
-	case group.FieldTeamID:
-		m.ResetTeamID()
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)
@@ -5310,15 +5009,12 @@ func (m *GroupMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GroupMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.users != nil {
 		edges = append(edges, group.EdgeUsers)
 	}
 	if m.permissions != nil {
 		edges = append(edges, group.EdgePermissions)
-	}
-	if m.team != nil {
-		edges = append(edges, group.EdgeTeam)
 	}
 	return edges
 }
@@ -5339,17 +5035,13 @@ func (m *GroupMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case group.EdgeTeam:
-		if id := m.team; id != nil {
-			return []ent.Value{*id}
-		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GroupMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.removedusers != nil {
 		edges = append(edges, group.EdgeUsers)
 	}
@@ -5381,15 +5073,12 @@ func (m *GroupMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GroupMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.clearedusers {
 		edges = append(edges, group.EdgeUsers)
 	}
 	if m.clearedpermissions {
 		edges = append(edges, group.EdgePermissions)
-	}
-	if m.clearedteam {
-		edges = append(edges, group.EdgeTeam)
 	}
 	return edges
 }
@@ -5402,8 +5091,6 @@ func (m *GroupMutation) EdgeCleared(name string) bool {
 		return m.clearedusers
 	case group.EdgePermissions:
 		return m.clearedpermissions
-	case group.EdgeTeam:
-		return m.clearedteam
 	}
 	return false
 }
@@ -5412,9 +5099,6 @@ func (m *GroupMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *GroupMutation) ClearEdge(name string) error {
 	switch name {
-	case group.EdgeTeam:
-		m.ClearTeam()
-		return nil
 	}
 	return fmt.Errorf("unknown Group unique edge %s", name)
 }
@@ -5428,9 +5112,6 @@ func (m *GroupMutation) ResetEdge(name string) error {
 		return nil
 	case group.EdgePermissions:
 		m.ResetPermissions()
-		return nil
-	case group.EdgeTeam:
-		m.ResetTeam()
 		return nil
 	}
 	return fmt.Errorf("unknown Group edge %s", name)
@@ -7395,23 +7076,21 @@ func (m *Oauth2TokenMutation) ResetEdge(name string) error {
 // PermissionMutation represents an operation that mutates the Permission nodes in the graph.
 type PermissionMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	created_at    *time.Time
-	updated_at    *time.Time
-	action        *permission.Action
-	resource_type *permission.ResourceType
-	resource_id   *string
-	scope         *string
-	labels        *map[string]string
-	clearedFields map[string]struct{}
-	groups        map[uuid.UUID]struct{}
-	removedgroups map[uuid.UUID]struct{}
-	clearedgroups bool
-	done          bool
-	oldValue      func(context.Context) (*Permission, error)
-	predicates    []predicate.Permission
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	created_at        *time.Time
+	updated_at        *time.Time
+	action            *schema.PermittedAction
+	resource_type     *schema.ResourceType
+	resource_selector *schema.ResourceSelector
+	clearedFields     map[string]struct{}
+	groups            map[uuid.UUID]struct{}
+	removedgroups     map[uuid.UUID]struct{}
+	clearedgroups     bool
+	done              bool
+	oldValue          func(context.Context) (*Permission, error)
+	predicates        []predicate.Permission
 }
 
 var _ ent.Mutation = (*PermissionMutation)(nil)
@@ -7591,12 +7270,12 @@ func (m *PermissionMutation) ResetUpdatedAt() {
 }
 
 // SetAction sets the "action" field.
-func (m *PermissionMutation) SetAction(pe permission.Action) {
-	m.action = &pe
+func (m *PermissionMutation) SetAction(sa schema.PermittedAction) {
+	m.action = &sa
 }
 
 // Action returns the value of the "action" field in the mutation.
-func (m *PermissionMutation) Action() (r permission.Action, exists bool) {
+func (m *PermissionMutation) Action() (r schema.PermittedAction, exists bool) {
 	v := m.action
 	if v == nil {
 		return
@@ -7607,7 +7286,7 @@ func (m *PermissionMutation) Action() (r permission.Action, exists bool) {
 // OldAction returns the old "action" field's value of the Permission entity.
 // If the Permission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldAction(ctx context.Context) (v permission.Action, err error) {
+func (m *PermissionMutation) OldAction(ctx context.Context) (v schema.PermittedAction, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAction is only allowed on UpdateOne operations")
 	}
@@ -7627,12 +7306,12 @@ func (m *PermissionMutation) ResetAction() {
 }
 
 // SetResourceType sets the "resource_type" field.
-func (m *PermissionMutation) SetResourceType(pt permission.ResourceType) {
-	m.resource_type = &pt
+func (m *PermissionMutation) SetResourceType(st schema.ResourceType) {
+	m.resource_type = &st
 }
 
 // ResourceType returns the value of the "resource_type" field in the mutation.
-func (m *PermissionMutation) ResourceType() (r permission.ResourceType, exists bool) {
+func (m *PermissionMutation) ResourceType() (r schema.ResourceType, exists bool) {
 	v := m.resource_type
 	if v == nil {
 		return
@@ -7643,7 +7322,7 @@ func (m *PermissionMutation) ResourceType() (r permission.ResourceType, exists b
 // OldResourceType returns the old "resource_type" field's value of the Permission entity.
 // If the Permission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldResourceType(ctx context.Context) (v permission.ResourceType, err error) {
+func (m *PermissionMutation) OldResourceType(ctx context.Context) (v schema.ResourceType, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldResourceType is only allowed on UpdateOne operations")
 	}
@@ -7662,138 +7341,40 @@ func (m *PermissionMutation) ResetResourceType() {
 	m.resource_type = nil
 }
 
-// SetResourceID sets the "resource_id" field.
-func (m *PermissionMutation) SetResourceID(s string) {
-	m.resource_id = &s
+// SetResourceSelector sets the "resource_selector" field.
+func (m *PermissionMutation) SetResourceSelector(ss schema.ResourceSelector) {
+	m.resource_selector = &ss
 }
 
-// ResourceID returns the value of the "resource_id" field in the mutation.
-func (m *PermissionMutation) ResourceID() (r string, exists bool) {
-	v := m.resource_id
+// ResourceSelector returns the value of the "resource_selector" field in the mutation.
+func (m *PermissionMutation) ResourceSelector() (r schema.ResourceSelector, exists bool) {
+	v := m.resource_selector
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldResourceID returns the old "resource_id" field's value of the Permission entity.
+// OldResourceSelector returns the old "resource_selector" field's value of the Permission entity.
 // If the Permission object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldResourceID(ctx context.Context) (v string, err error) {
+func (m *PermissionMutation) OldResourceSelector(ctx context.Context) (v schema.ResourceSelector, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldResourceID is only allowed on UpdateOne operations")
+		return v, errors.New("OldResourceSelector is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldResourceID requires an ID field in the mutation")
+		return v, errors.New("OldResourceSelector requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldResourceID: %w", err)
+		return v, fmt.Errorf("querying old value for OldResourceSelector: %w", err)
 	}
-	return oldValue.ResourceID, nil
+	return oldValue.ResourceSelector, nil
 }
 
-// ResetResourceID resets all changes to the "resource_id" field.
-func (m *PermissionMutation) ResetResourceID() {
-	m.resource_id = nil
-}
-
-// SetScope sets the "scope" field.
-func (m *PermissionMutation) SetScope(s string) {
-	m.scope = &s
-}
-
-// Scope returns the value of the "scope" field in the mutation.
-func (m *PermissionMutation) Scope() (r string, exists bool) {
-	v := m.scope
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldScope returns the old "scope" field's value of the Permission entity.
-// If the Permission object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldScope(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldScope is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldScope requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldScope: %w", err)
-	}
-	return oldValue.Scope, nil
-}
-
-// ClearScope clears the value of the "scope" field.
-func (m *PermissionMutation) ClearScope() {
-	m.scope = nil
-	m.clearedFields[permission.FieldScope] = struct{}{}
-}
-
-// ScopeCleared returns if the "scope" field was cleared in this mutation.
-func (m *PermissionMutation) ScopeCleared() bool {
-	_, ok := m.clearedFields[permission.FieldScope]
-	return ok
-}
-
-// ResetScope resets all changes to the "scope" field.
-func (m *PermissionMutation) ResetScope() {
-	m.scope = nil
-	delete(m.clearedFields, permission.FieldScope)
-}
-
-// SetLabels sets the "labels" field.
-func (m *PermissionMutation) SetLabels(value map[string]string) {
-	m.labels = &value
-}
-
-// Labels returns the value of the "labels" field in the mutation.
-func (m *PermissionMutation) Labels() (r map[string]string, exists bool) {
-	v := m.labels
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldLabels returns the old "labels" field's value of the Permission entity.
-// If the Permission object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PermissionMutation) OldLabels(ctx context.Context) (v map[string]string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldLabels is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldLabels requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldLabels: %w", err)
-	}
-	return oldValue.Labels, nil
-}
-
-// ClearLabels clears the value of the "labels" field.
-func (m *PermissionMutation) ClearLabels() {
-	m.labels = nil
-	m.clearedFields[permission.FieldLabels] = struct{}{}
-}
-
-// LabelsCleared returns if the "labels" field was cleared in this mutation.
-func (m *PermissionMutation) LabelsCleared() bool {
-	_, ok := m.clearedFields[permission.FieldLabels]
-	return ok
-}
-
-// ResetLabels resets all changes to the "labels" field.
-func (m *PermissionMutation) ResetLabels() {
-	m.labels = nil
-	delete(m.clearedFields, permission.FieldLabels)
+// ResetResourceSelector resets all changes to the "resource_selector" field.
+func (m *PermissionMutation) ResetResourceSelector() {
+	m.resource_selector = nil
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by ids.
@@ -7884,7 +7465,7 @@ func (m *PermissionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PermissionMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 5)
 	if m.created_at != nil {
 		fields = append(fields, permission.FieldCreatedAt)
 	}
@@ -7897,14 +7478,8 @@ func (m *PermissionMutation) Fields() []string {
 	if m.resource_type != nil {
 		fields = append(fields, permission.FieldResourceType)
 	}
-	if m.resource_id != nil {
-		fields = append(fields, permission.FieldResourceID)
-	}
-	if m.scope != nil {
-		fields = append(fields, permission.FieldScope)
-	}
-	if m.labels != nil {
-		fields = append(fields, permission.FieldLabels)
+	if m.resource_selector != nil {
+		fields = append(fields, permission.FieldResourceSelector)
 	}
 	return fields
 }
@@ -7922,12 +7497,8 @@ func (m *PermissionMutation) Field(name string) (ent.Value, bool) {
 		return m.Action()
 	case permission.FieldResourceType:
 		return m.ResourceType()
-	case permission.FieldResourceID:
-		return m.ResourceID()
-	case permission.FieldScope:
-		return m.Scope()
-	case permission.FieldLabels:
-		return m.Labels()
+	case permission.FieldResourceSelector:
+		return m.ResourceSelector()
 	}
 	return nil, false
 }
@@ -7945,12 +7516,8 @@ func (m *PermissionMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldAction(ctx)
 	case permission.FieldResourceType:
 		return m.OldResourceType(ctx)
-	case permission.FieldResourceID:
-		return m.OldResourceID(ctx)
-	case permission.FieldScope:
-		return m.OldScope(ctx)
-	case permission.FieldLabels:
-		return m.OldLabels(ctx)
+	case permission.FieldResourceSelector:
+		return m.OldResourceSelector(ctx)
 	}
 	return nil, fmt.Errorf("unknown Permission field %s", name)
 }
@@ -7975,39 +7542,25 @@ func (m *PermissionMutation) SetField(name string, value ent.Value) error {
 		m.SetUpdatedAt(v)
 		return nil
 	case permission.FieldAction:
-		v, ok := value.(permission.Action)
+		v, ok := value.(schema.PermittedAction)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAction(v)
 		return nil
 	case permission.FieldResourceType:
-		v, ok := value.(permission.ResourceType)
+		v, ok := value.(schema.ResourceType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetResourceType(v)
 		return nil
-	case permission.FieldResourceID:
-		v, ok := value.(string)
+	case permission.FieldResourceSelector:
+		v, ok := value.(schema.ResourceSelector)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetResourceID(v)
-		return nil
-	case permission.FieldScope:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetScope(v)
-		return nil
-	case permission.FieldLabels:
-		v, ok := value.(map[string]string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetLabels(v)
+		m.SetResourceSelector(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Permission field %s", name)
@@ -8038,14 +7591,7 @@ func (m *PermissionMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *PermissionMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(permission.FieldScope) {
-		fields = append(fields, permission.FieldScope)
-	}
-	if m.FieldCleared(permission.FieldLabels) {
-		fields = append(fields, permission.FieldLabels)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -8058,14 +7604,6 @@ func (m *PermissionMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *PermissionMutation) ClearField(name string) error {
-	switch name {
-	case permission.FieldScope:
-		m.ClearScope()
-		return nil
-	case permission.FieldLabels:
-		m.ClearLabels()
-		return nil
-	}
 	return fmt.Errorf("unknown Permission nullable field %s", name)
 }
 
@@ -8085,14 +7623,8 @@ func (m *PermissionMutation) ResetField(name string) error {
 	case permission.FieldResourceType:
 		m.ResetResourceType()
 		return nil
-	case permission.FieldResourceID:
-		m.ResetResourceID()
-		return nil
-	case permission.FieldScope:
-		m.ResetScope()
-		return nil
-	case permission.FieldLabels:
-		m.ResetLabels()
+	case permission.FieldResourceSelector:
+		m.ResetResourceSelector()
 		return nil
 	}
 	return fmt.Errorf("unknown Permission field %s", name)
@@ -11757,9 +11289,6 @@ type TeamMutation struct {
 	members           map[uuid.UUID]struct{}
 	removedmembers    map[uuid.UUID]struct{}
 	clearedmembers    bool
-	groups            map[uuid.UUID]struct{}
-	removedgroups     map[uuid.UUID]struct{}
-	clearedgroups     bool
 	done              bool
 	oldValue          func(context.Context) (*Team, error)
 	predicates        []predicate.Team
@@ -12242,60 +11771,6 @@ func (m *TeamMutation) ResetMembers() {
 	m.removedmembers = nil
 }
 
-// AddGroupIDs adds the "groups" edge to the Group entity by ids.
-func (m *TeamMutation) AddGroupIDs(ids ...uuid.UUID) {
-	if m.groups == nil {
-		m.groups = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.groups[ids[i]] = struct{}{}
-	}
-}
-
-// ClearGroups clears the "groups" edge to the Group entity.
-func (m *TeamMutation) ClearGroups() {
-	m.clearedgroups = true
-}
-
-// GroupsCleared reports if the "groups" edge to the Group entity was cleared.
-func (m *TeamMutation) GroupsCleared() bool {
-	return m.clearedgroups
-}
-
-// RemoveGroupIDs removes the "groups" edge to the Group entity by IDs.
-func (m *TeamMutation) RemoveGroupIDs(ids ...uuid.UUID) {
-	if m.removedgroups == nil {
-		m.removedgroups = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.groups, ids[i])
-		m.removedgroups[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedGroups returns the removed IDs of the "groups" edge to the Group entity.
-func (m *TeamMutation) RemovedGroupsIDs() (ids []uuid.UUID) {
-	for id := range m.removedgroups {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// GroupsIDs returns the "groups" edge IDs in the mutation.
-func (m *TeamMutation) GroupsIDs() (ids []uuid.UUID) {
-	for id := range m.groups {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetGroups resets all changes to the "groups" edge.
-func (m *TeamMutation) ResetGroups() {
-	m.groups = nil
-	m.clearedgroups = false
-	m.removedgroups = nil
-}
-
 // Where appends a list predicates to the TeamMutation builder.
 func (m *TeamMutation) Where(ps ...predicate.Team) {
 	m.predicates = append(m.predicates, ps...)
@@ -12540,15 +12015,12 @@ func (m *TeamMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TeamMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.projects != nil {
 		edges = append(edges, team.EdgeProjects)
 	}
 	if m.members != nil {
 		edges = append(edges, team.EdgeMembers)
-	}
-	if m.groups != nil {
-		edges = append(edges, team.EdgeGroups)
 	}
 	return edges
 }
@@ -12569,27 +12041,18 @@ func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case team.EdgeGroups:
-		ids := make([]ent.Value, 0, len(m.groups))
-		for id := range m.groups {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TeamMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.removedprojects != nil {
 		edges = append(edges, team.EdgeProjects)
 	}
 	if m.removedmembers != nil {
 		edges = append(edges, team.EdgeMembers)
-	}
-	if m.removedgroups != nil {
-		edges = append(edges, team.EdgeGroups)
 	}
 	return edges
 }
@@ -12610,27 +12073,18 @@ func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case team.EdgeGroups:
-		ids := make([]ent.Value, 0, len(m.removedgroups))
-		for id := range m.removedgroups {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TeamMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.clearedprojects {
 		edges = append(edges, team.EdgeProjects)
 	}
 	if m.clearedmembers {
 		edges = append(edges, team.EdgeMembers)
-	}
-	if m.clearedgroups {
-		edges = append(edges, team.EdgeGroups)
 	}
 	return edges
 }
@@ -12643,8 +12097,6 @@ func (m *TeamMutation) EdgeCleared(name string) bool {
 		return m.clearedprojects
 	case team.EdgeMembers:
 		return m.clearedmembers
-	case team.EdgeGroups:
-		return m.clearedgroups
 	}
 	return false
 }
@@ -12666,9 +12118,6 @@ func (m *TeamMutation) ResetEdge(name string) error {
 		return nil
 	case team.EdgeMembers:
 		m.ResetMembers()
-		return nil
-	case team.EdgeGroups:
-		m.ResetGroups()
 		return nil
 	}
 	return fmt.Errorf("unknown Team edge %s", name)

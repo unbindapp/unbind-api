@@ -76,29 +76,9 @@ func Description(v string) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldDescription, v))
 }
 
-// Superuser applies equality check predicate on the "superuser" field. It's identical to SuperuserEQ.
-func Superuser(v bool) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldSuperuser, v))
-}
-
 // K8sRoleName applies equality check predicate on the "k8s_role_name" field. It's identical to K8sRoleNameEQ.
 func K8sRoleName(v string) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldK8sRoleName, v))
-}
-
-// IdentityProvider applies equality check predicate on the "identity_provider" field. It's identical to IdentityProviderEQ.
-func IdentityProvider(v string) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldIdentityProvider, v))
-}
-
-// ExternalID applies equality check predicate on the "external_id" field. It's identical to ExternalIDEQ.
-func ExternalID(v string) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldExternalID, v))
-}
-
-// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
-func TeamID(v uuid.UUID) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldTeamID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -321,16 +301,6 @@ func DescriptionContainsFold(v string) predicate.Group {
 	return predicate.Group(sql.FieldContainsFold(FieldDescription, v))
 }
 
-// SuperuserEQ applies the EQ predicate on the "superuser" field.
-func SuperuserEQ(v bool) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldSuperuser, v))
-}
-
-// SuperuserNEQ applies the NEQ predicate on the "superuser" field.
-func SuperuserNEQ(v bool) predicate.Group {
-	return predicate.Group(sql.FieldNEQ(FieldSuperuser, v))
-}
-
 // K8sRoleNameEQ applies the EQ predicate on the "k8s_role_name" field.
 func K8sRoleNameEQ(v string) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldK8sRoleName, v))
@@ -406,186 +376,6 @@ func K8sRoleNameContainsFold(v string) predicate.Group {
 	return predicate.Group(sql.FieldContainsFold(FieldK8sRoleName, v))
 }
 
-// IdentityProviderEQ applies the EQ predicate on the "identity_provider" field.
-func IdentityProviderEQ(v string) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldIdentityProvider, v))
-}
-
-// IdentityProviderNEQ applies the NEQ predicate on the "identity_provider" field.
-func IdentityProviderNEQ(v string) predicate.Group {
-	return predicate.Group(sql.FieldNEQ(FieldIdentityProvider, v))
-}
-
-// IdentityProviderIn applies the In predicate on the "identity_provider" field.
-func IdentityProviderIn(vs ...string) predicate.Group {
-	return predicate.Group(sql.FieldIn(FieldIdentityProvider, vs...))
-}
-
-// IdentityProviderNotIn applies the NotIn predicate on the "identity_provider" field.
-func IdentityProviderNotIn(vs ...string) predicate.Group {
-	return predicate.Group(sql.FieldNotIn(FieldIdentityProvider, vs...))
-}
-
-// IdentityProviderGT applies the GT predicate on the "identity_provider" field.
-func IdentityProviderGT(v string) predicate.Group {
-	return predicate.Group(sql.FieldGT(FieldIdentityProvider, v))
-}
-
-// IdentityProviderGTE applies the GTE predicate on the "identity_provider" field.
-func IdentityProviderGTE(v string) predicate.Group {
-	return predicate.Group(sql.FieldGTE(FieldIdentityProvider, v))
-}
-
-// IdentityProviderLT applies the LT predicate on the "identity_provider" field.
-func IdentityProviderLT(v string) predicate.Group {
-	return predicate.Group(sql.FieldLT(FieldIdentityProvider, v))
-}
-
-// IdentityProviderLTE applies the LTE predicate on the "identity_provider" field.
-func IdentityProviderLTE(v string) predicate.Group {
-	return predicate.Group(sql.FieldLTE(FieldIdentityProvider, v))
-}
-
-// IdentityProviderContains applies the Contains predicate on the "identity_provider" field.
-func IdentityProviderContains(v string) predicate.Group {
-	return predicate.Group(sql.FieldContains(FieldIdentityProvider, v))
-}
-
-// IdentityProviderHasPrefix applies the HasPrefix predicate on the "identity_provider" field.
-func IdentityProviderHasPrefix(v string) predicate.Group {
-	return predicate.Group(sql.FieldHasPrefix(FieldIdentityProvider, v))
-}
-
-// IdentityProviderHasSuffix applies the HasSuffix predicate on the "identity_provider" field.
-func IdentityProviderHasSuffix(v string) predicate.Group {
-	return predicate.Group(sql.FieldHasSuffix(FieldIdentityProvider, v))
-}
-
-// IdentityProviderIsNil applies the IsNil predicate on the "identity_provider" field.
-func IdentityProviderIsNil() predicate.Group {
-	return predicate.Group(sql.FieldIsNull(FieldIdentityProvider))
-}
-
-// IdentityProviderNotNil applies the NotNil predicate on the "identity_provider" field.
-func IdentityProviderNotNil() predicate.Group {
-	return predicate.Group(sql.FieldNotNull(FieldIdentityProvider))
-}
-
-// IdentityProviderEqualFold applies the EqualFold predicate on the "identity_provider" field.
-func IdentityProviderEqualFold(v string) predicate.Group {
-	return predicate.Group(sql.FieldEqualFold(FieldIdentityProvider, v))
-}
-
-// IdentityProviderContainsFold applies the ContainsFold predicate on the "identity_provider" field.
-func IdentityProviderContainsFold(v string) predicate.Group {
-	return predicate.Group(sql.FieldContainsFold(FieldIdentityProvider, v))
-}
-
-// ExternalIDEQ applies the EQ predicate on the "external_id" field.
-func ExternalIDEQ(v string) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldExternalID, v))
-}
-
-// ExternalIDNEQ applies the NEQ predicate on the "external_id" field.
-func ExternalIDNEQ(v string) predicate.Group {
-	return predicate.Group(sql.FieldNEQ(FieldExternalID, v))
-}
-
-// ExternalIDIn applies the In predicate on the "external_id" field.
-func ExternalIDIn(vs ...string) predicate.Group {
-	return predicate.Group(sql.FieldIn(FieldExternalID, vs...))
-}
-
-// ExternalIDNotIn applies the NotIn predicate on the "external_id" field.
-func ExternalIDNotIn(vs ...string) predicate.Group {
-	return predicate.Group(sql.FieldNotIn(FieldExternalID, vs...))
-}
-
-// ExternalIDGT applies the GT predicate on the "external_id" field.
-func ExternalIDGT(v string) predicate.Group {
-	return predicate.Group(sql.FieldGT(FieldExternalID, v))
-}
-
-// ExternalIDGTE applies the GTE predicate on the "external_id" field.
-func ExternalIDGTE(v string) predicate.Group {
-	return predicate.Group(sql.FieldGTE(FieldExternalID, v))
-}
-
-// ExternalIDLT applies the LT predicate on the "external_id" field.
-func ExternalIDLT(v string) predicate.Group {
-	return predicate.Group(sql.FieldLT(FieldExternalID, v))
-}
-
-// ExternalIDLTE applies the LTE predicate on the "external_id" field.
-func ExternalIDLTE(v string) predicate.Group {
-	return predicate.Group(sql.FieldLTE(FieldExternalID, v))
-}
-
-// ExternalIDContains applies the Contains predicate on the "external_id" field.
-func ExternalIDContains(v string) predicate.Group {
-	return predicate.Group(sql.FieldContains(FieldExternalID, v))
-}
-
-// ExternalIDHasPrefix applies the HasPrefix predicate on the "external_id" field.
-func ExternalIDHasPrefix(v string) predicate.Group {
-	return predicate.Group(sql.FieldHasPrefix(FieldExternalID, v))
-}
-
-// ExternalIDHasSuffix applies the HasSuffix predicate on the "external_id" field.
-func ExternalIDHasSuffix(v string) predicate.Group {
-	return predicate.Group(sql.FieldHasSuffix(FieldExternalID, v))
-}
-
-// ExternalIDIsNil applies the IsNil predicate on the "external_id" field.
-func ExternalIDIsNil() predicate.Group {
-	return predicate.Group(sql.FieldIsNull(FieldExternalID))
-}
-
-// ExternalIDNotNil applies the NotNil predicate on the "external_id" field.
-func ExternalIDNotNil() predicate.Group {
-	return predicate.Group(sql.FieldNotNull(FieldExternalID))
-}
-
-// ExternalIDEqualFold applies the EqualFold predicate on the "external_id" field.
-func ExternalIDEqualFold(v string) predicate.Group {
-	return predicate.Group(sql.FieldEqualFold(FieldExternalID, v))
-}
-
-// ExternalIDContainsFold applies the ContainsFold predicate on the "external_id" field.
-func ExternalIDContainsFold(v string) predicate.Group {
-	return predicate.Group(sql.FieldContainsFold(FieldExternalID, v))
-}
-
-// TeamIDEQ applies the EQ predicate on the "team_id" field.
-func TeamIDEQ(v uuid.UUID) predicate.Group {
-	return predicate.Group(sql.FieldEQ(FieldTeamID, v))
-}
-
-// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
-func TeamIDNEQ(v uuid.UUID) predicate.Group {
-	return predicate.Group(sql.FieldNEQ(FieldTeamID, v))
-}
-
-// TeamIDIn applies the In predicate on the "team_id" field.
-func TeamIDIn(vs ...uuid.UUID) predicate.Group {
-	return predicate.Group(sql.FieldIn(FieldTeamID, vs...))
-}
-
-// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
-func TeamIDNotIn(vs ...uuid.UUID) predicate.Group {
-	return predicate.Group(sql.FieldNotIn(FieldTeamID, vs...))
-}
-
-// TeamIDIsNil applies the IsNil predicate on the "team_id" field.
-func TeamIDIsNil() predicate.Group {
-	return predicate.Group(sql.FieldIsNull(FieldTeamID))
-}
-
-// TeamIDNotNil applies the NotNil predicate on the "team_id" field.
-func TeamIDNotNil() predicate.Group {
-	return predicate.Group(sql.FieldNotNull(FieldTeamID))
-}
-
 // HasUsers applies the HasEdge predicate on the "users" edge.
 func HasUsers() predicate.Group {
 	return predicate.Group(func(s *sql.Selector) {
@@ -624,29 +414,6 @@ func HasPermissions() predicate.Group {
 func HasPermissionsWith(preds ...predicate.Permission) predicate.Group {
 	return predicate.Group(func(s *sql.Selector) {
 		step := newPermissionsStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasTeam applies the HasEdge predicate on the "team" edge.
-func HasTeam() predicate.Group {
-	return predicate.Group(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasTeamWith applies the HasEdge predicate on the "team" edge with a given conditions (other predicates).
-func HasTeamWith(preds ...predicate.Team) predicate.Group {
-	return predicate.Group(func(s *sql.Selector) {
-		step := newTeamStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

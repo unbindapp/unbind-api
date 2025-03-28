@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 const (
@@ -24,12 +25,8 @@ const (
 	FieldAction = "action"
 	// FieldResourceType holds the string denoting the resource_type field in the database.
 	FieldResourceType = "resource_type"
-	// FieldResourceID holds the string denoting the resource_id field in the database.
-	FieldResourceID = "resource_id"
-	// FieldScope holds the string denoting the scope field in the database.
-	FieldScope = "scope"
-	// FieldLabels holds the string denoting the labels field in the database.
-	FieldLabels = "labels"
+	// FieldResourceSelector holds the string denoting the resource_selector field in the database.
+	FieldResourceSelector = "resource_selector"
 	// EdgeGroups holds the string denoting the groups edge name in mutations.
 	EdgeGroups = "groups"
 	// Table holds the table name of the permission in the database.
@@ -48,9 +45,7 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldAction,
 	FieldResourceType,
-	FieldResourceID,
-	FieldScope,
-	FieldLabels,
+	FieldResourceSelector,
 }
 
 var (
@@ -76,64 +71,24 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// ResourceIDValidator is a validator for the "resource_id" field. It is called by the builders before save.
-	ResourceIDValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
 
-// Action defines the type for the "action" enum field.
-type Action string
-
-// Action values.
-const (
-	ActionRead   Action = "read"
-	ActionCreate Action = "create"
-	ActionUpdate Action = "update"
-	ActionDelete Action = "delete"
-	ActionManage Action = "manage"
-	ActionAdmin  Action = "admin"
-	ActionEdit   Action = "edit"
-	ActionView   Action = "view"
-)
-
-func (a Action) String() string {
-	return string(a)
-}
-
 // ActionValidator is a validator for the "action" field enum values. It is called by the builders before save.
-func ActionValidator(a Action) error {
+func ActionValidator(a schema.PermittedAction) error {
 	switch a {
-	case ActionRead, ActionCreate, ActionUpdate, ActionDelete, ActionManage, ActionAdmin, ActionEdit, ActionView:
+	case "admin", "edit", "view":
 		return nil
 	default:
 		return fmt.Errorf("permission: invalid enum value for action field: %q", a)
 	}
 }
 
-// ResourceType defines the type for the "resource_type" enum field.
-type ResourceType string
-
-// ResourceType values.
-const (
-	ResourceTypeTeam        ResourceType = "team"
-	ResourceTypeProject     ResourceType = "project"
-	ResourceTypeGroup       ResourceType = "group"
-	ResourceTypeEnvironment ResourceType = "environment"
-	ResourceTypePermission  ResourceType = "permission"
-	ResourceTypeUser        ResourceType = "user"
-	ResourceTypeSystem      ResourceType = "system"
-	ResourceTypeService     ResourceType = "service"
-)
-
-func (rt ResourceType) String() string {
-	return string(rt)
-}
-
 // ResourceTypeValidator is a validator for the "resource_type" field enum values. It is called by the builders before save.
-func ResourceTypeValidator(rt ResourceType) error {
+func ResourceTypeValidator(rt schema.ResourceType) error {
 	switch rt {
-	case ResourceTypeTeam, ResourceTypeProject, ResourceTypeGroup, ResourceTypeEnvironment, ResourceTypePermission, ResourceTypeUser, ResourceTypeSystem, ResourceTypeService:
+	case "team", "project", "environment", "service":
 		return nil
 	default:
 		return fmt.Errorf("permission: invalid enum value for resource_type field: %q", rt)
@@ -166,16 +121,6 @@ func ByAction(opts ...sql.OrderTermOption) OrderOption {
 // ByResourceType orders the results by the resource_type field.
 func ByResourceType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldResourceType, opts...).ToFunc()
-}
-
-// ByResourceID orders the results by the resource_id field.
-func ByResourceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldResourceID, opts...).ToFunc()
-}
-
-// ByScope orders the results by the scope field.
-func ByScope(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldScope, opts...).ToFunc()
 }
 
 // ByGroupsCount orders the results by groups count.

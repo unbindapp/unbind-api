@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // PermissionCreate is the builder for creating a Permission entity.
@@ -54,40 +55,20 @@ func (pc *PermissionCreate) SetNillableUpdatedAt(t *time.Time) *PermissionCreate
 }
 
 // SetAction sets the "action" field.
-func (pc *PermissionCreate) SetAction(pe permission.Action) *PermissionCreate {
-	pc.mutation.SetAction(pe)
+func (pc *PermissionCreate) SetAction(sa schema.PermittedAction) *PermissionCreate {
+	pc.mutation.SetAction(sa)
 	return pc
 }
 
 // SetResourceType sets the "resource_type" field.
-func (pc *PermissionCreate) SetResourceType(pt permission.ResourceType) *PermissionCreate {
-	pc.mutation.SetResourceType(pt)
+func (pc *PermissionCreate) SetResourceType(st schema.ResourceType) *PermissionCreate {
+	pc.mutation.SetResourceType(st)
 	return pc
 }
 
-// SetResourceID sets the "resource_id" field.
-func (pc *PermissionCreate) SetResourceID(s string) *PermissionCreate {
-	pc.mutation.SetResourceID(s)
-	return pc
-}
-
-// SetScope sets the "scope" field.
-func (pc *PermissionCreate) SetScope(s string) *PermissionCreate {
-	pc.mutation.SetScope(s)
-	return pc
-}
-
-// SetNillableScope sets the "scope" field if the given value is not nil.
-func (pc *PermissionCreate) SetNillableScope(s *string) *PermissionCreate {
-	if s != nil {
-		pc.SetScope(*s)
-	}
-	return pc
-}
-
-// SetLabels sets the "labels" field.
-func (pc *PermissionCreate) SetLabels(m map[string]string) *PermissionCreate {
-	pc.mutation.SetLabels(m)
+// SetResourceSelector sets the "resource_selector" field.
+func (pc *PermissionCreate) SetResourceSelector(ss schema.ResourceSelector) *PermissionCreate {
+	pc.mutation.SetResourceSelector(ss)
 	return pc
 }
 
@@ -193,13 +174,8 @@ func (pc *PermissionCreate) check() error {
 			return &ValidationError{Name: "resource_type", err: fmt.Errorf(`ent: validator failed for field "Permission.resource_type": %w`, err)}
 		}
 	}
-	if _, ok := pc.mutation.ResourceID(); !ok {
-		return &ValidationError{Name: "resource_id", err: errors.New(`ent: missing required field "Permission.resource_id"`)}
-	}
-	if v, ok := pc.mutation.ResourceID(); ok {
-		if err := permission.ResourceIDValidator(v); err != nil {
-			return &ValidationError{Name: "resource_id", err: fmt.Errorf(`ent: validator failed for field "Permission.resource_id": %w`, err)}
-		}
+	if _, ok := pc.mutation.ResourceSelector(); !ok {
+		return &ValidationError{Name: "resource_selector", err: errors.New(`ent: missing required field "Permission.resource_selector"`)}
 	}
 	return nil
 }
@@ -253,17 +229,9 @@ func (pc *PermissionCreate) createSpec() (*Permission, *sqlgraph.CreateSpec) {
 		_spec.SetField(permission.FieldResourceType, field.TypeEnum, value)
 		_node.ResourceType = value
 	}
-	if value, ok := pc.mutation.ResourceID(); ok {
-		_spec.SetField(permission.FieldResourceID, field.TypeString, value)
-		_node.ResourceID = value
-	}
-	if value, ok := pc.mutation.Scope(); ok {
-		_spec.SetField(permission.FieldScope, field.TypeString, value)
-		_node.Scope = value
-	}
-	if value, ok := pc.mutation.Labels(); ok {
-		_spec.SetField(permission.FieldLabels, field.TypeJSON, value)
-		_node.Labels = value
+	if value, ok := pc.mutation.ResourceSelector(); ok {
+		_spec.SetField(permission.FieldResourceSelector, field.TypeJSON, value)
+		_node.ResourceSelector = value
 	}
 	if nodes := pc.mutation.GroupsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -346,7 +314,7 @@ func (u *PermissionUpsert) UpdateUpdatedAt() *PermissionUpsert {
 }
 
 // SetAction sets the "action" field.
-func (u *PermissionUpsert) SetAction(v permission.Action) *PermissionUpsert {
+func (u *PermissionUpsert) SetAction(v schema.PermittedAction) *PermissionUpsert {
 	u.Set(permission.FieldAction, v)
 	return u
 }
@@ -358,7 +326,7 @@ func (u *PermissionUpsert) UpdateAction() *PermissionUpsert {
 }
 
 // SetResourceType sets the "resource_type" field.
-func (u *PermissionUpsert) SetResourceType(v permission.ResourceType) *PermissionUpsert {
+func (u *PermissionUpsert) SetResourceType(v schema.ResourceType) *PermissionUpsert {
 	u.Set(permission.FieldResourceType, v)
 	return u
 }
@@ -369,51 +337,15 @@ func (u *PermissionUpsert) UpdateResourceType() *PermissionUpsert {
 	return u
 }
 
-// SetResourceID sets the "resource_id" field.
-func (u *PermissionUpsert) SetResourceID(v string) *PermissionUpsert {
-	u.Set(permission.FieldResourceID, v)
+// SetResourceSelector sets the "resource_selector" field.
+func (u *PermissionUpsert) SetResourceSelector(v schema.ResourceSelector) *PermissionUpsert {
+	u.Set(permission.FieldResourceSelector, v)
 	return u
 }
 
-// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
-func (u *PermissionUpsert) UpdateResourceID() *PermissionUpsert {
-	u.SetExcluded(permission.FieldResourceID)
-	return u
-}
-
-// SetScope sets the "scope" field.
-func (u *PermissionUpsert) SetScope(v string) *PermissionUpsert {
-	u.Set(permission.FieldScope, v)
-	return u
-}
-
-// UpdateScope sets the "scope" field to the value that was provided on create.
-func (u *PermissionUpsert) UpdateScope() *PermissionUpsert {
-	u.SetExcluded(permission.FieldScope)
-	return u
-}
-
-// ClearScope clears the value of the "scope" field.
-func (u *PermissionUpsert) ClearScope() *PermissionUpsert {
-	u.SetNull(permission.FieldScope)
-	return u
-}
-
-// SetLabels sets the "labels" field.
-func (u *PermissionUpsert) SetLabels(v map[string]string) *PermissionUpsert {
-	u.Set(permission.FieldLabels, v)
-	return u
-}
-
-// UpdateLabels sets the "labels" field to the value that was provided on create.
-func (u *PermissionUpsert) UpdateLabels() *PermissionUpsert {
-	u.SetExcluded(permission.FieldLabels)
-	return u
-}
-
-// ClearLabels clears the value of the "labels" field.
-func (u *PermissionUpsert) ClearLabels() *PermissionUpsert {
-	u.SetNull(permission.FieldLabels)
+// UpdateResourceSelector sets the "resource_selector" field to the value that was provided on create.
+func (u *PermissionUpsert) UpdateResourceSelector() *PermissionUpsert {
+	u.SetExcluded(permission.FieldResourceSelector)
 	return u
 }
 
@@ -483,7 +415,7 @@ func (u *PermissionUpsertOne) UpdateUpdatedAt() *PermissionUpsertOne {
 }
 
 // SetAction sets the "action" field.
-func (u *PermissionUpsertOne) SetAction(v permission.Action) *PermissionUpsertOne {
+func (u *PermissionUpsertOne) SetAction(v schema.PermittedAction) *PermissionUpsertOne {
 	return u.Update(func(s *PermissionUpsert) {
 		s.SetAction(v)
 	})
@@ -497,7 +429,7 @@ func (u *PermissionUpsertOne) UpdateAction() *PermissionUpsertOne {
 }
 
 // SetResourceType sets the "resource_type" field.
-func (u *PermissionUpsertOne) SetResourceType(v permission.ResourceType) *PermissionUpsertOne {
+func (u *PermissionUpsertOne) SetResourceType(v schema.ResourceType) *PermissionUpsertOne {
 	return u.Update(func(s *PermissionUpsert) {
 		s.SetResourceType(v)
 	})
@@ -510,59 +442,17 @@ func (u *PermissionUpsertOne) UpdateResourceType() *PermissionUpsertOne {
 	})
 }
 
-// SetResourceID sets the "resource_id" field.
-func (u *PermissionUpsertOne) SetResourceID(v string) *PermissionUpsertOne {
+// SetResourceSelector sets the "resource_selector" field.
+func (u *PermissionUpsertOne) SetResourceSelector(v schema.ResourceSelector) *PermissionUpsertOne {
 	return u.Update(func(s *PermissionUpsert) {
-		s.SetResourceID(v)
+		s.SetResourceSelector(v)
 	})
 }
 
-// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
-func (u *PermissionUpsertOne) UpdateResourceID() *PermissionUpsertOne {
+// UpdateResourceSelector sets the "resource_selector" field to the value that was provided on create.
+func (u *PermissionUpsertOne) UpdateResourceSelector() *PermissionUpsertOne {
 	return u.Update(func(s *PermissionUpsert) {
-		s.UpdateResourceID()
-	})
-}
-
-// SetScope sets the "scope" field.
-func (u *PermissionUpsertOne) SetScope(v string) *PermissionUpsertOne {
-	return u.Update(func(s *PermissionUpsert) {
-		s.SetScope(v)
-	})
-}
-
-// UpdateScope sets the "scope" field to the value that was provided on create.
-func (u *PermissionUpsertOne) UpdateScope() *PermissionUpsertOne {
-	return u.Update(func(s *PermissionUpsert) {
-		s.UpdateScope()
-	})
-}
-
-// ClearScope clears the value of the "scope" field.
-func (u *PermissionUpsertOne) ClearScope() *PermissionUpsertOne {
-	return u.Update(func(s *PermissionUpsert) {
-		s.ClearScope()
-	})
-}
-
-// SetLabels sets the "labels" field.
-func (u *PermissionUpsertOne) SetLabels(v map[string]string) *PermissionUpsertOne {
-	return u.Update(func(s *PermissionUpsert) {
-		s.SetLabels(v)
-	})
-}
-
-// UpdateLabels sets the "labels" field to the value that was provided on create.
-func (u *PermissionUpsertOne) UpdateLabels() *PermissionUpsertOne {
-	return u.Update(func(s *PermissionUpsert) {
-		s.UpdateLabels()
-	})
-}
-
-// ClearLabels clears the value of the "labels" field.
-func (u *PermissionUpsertOne) ClearLabels() *PermissionUpsertOne {
-	return u.Update(func(s *PermissionUpsert) {
-		s.ClearLabels()
+		s.UpdateResourceSelector()
 	})
 }
 
@@ -799,7 +689,7 @@ func (u *PermissionUpsertBulk) UpdateUpdatedAt() *PermissionUpsertBulk {
 }
 
 // SetAction sets the "action" field.
-func (u *PermissionUpsertBulk) SetAction(v permission.Action) *PermissionUpsertBulk {
+func (u *PermissionUpsertBulk) SetAction(v schema.PermittedAction) *PermissionUpsertBulk {
 	return u.Update(func(s *PermissionUpsert) {
 		s.SetAction(v)
 	})
@@ -813,7 +703,7 @@ func (u *PermissionUpsertBulk) UpdateAction() *PermissionUpsertBulk {
 }
 
 // SetResourceType sets the "resource_type" field.
-func (u *PermissionUpsertBulk) SetResourceType(v permission.ResourceType) *PermissionUpsertBulk {
+func (u *PermissionUpsertBulk) SetResourceType(v schema.ResourceType) *PermissionUpsertBulk {
 	return u.Update(func(s *PermissionUpsert) {
 		s.SetResourceType(v)
 	})
@@ -826,59 +716,17 @@ func (u *PermissionUpsertBulk) UpdateResourceType() *PermissionUpsertBulk {
 	})
 }
 
-// SetResourceID sets the "resource_id" field.
-func (u *PermissionUpsertBulk) SetResourceID(v string) *PermissionUpsertBulk {
+// SetResourceSelector sets the "resource_selector" field.
+func (u *PermissionUpsertBulk) SetResourceSelector(v schema.ResourceSelector) *PermissionUpsertBulk {
 	return u.Update(func(s *PermissionUpsert) {
-		s.SetResourceID(v)
+		s.SetResourceSelector(v)
 	})
 }
 
-// UpdateResourceID sets the "resource_id" field to the value that was provided on create.
-func (u *PermissionUpsertBulk) UpdateResourceID() *PermissionUpsertBulk {
+// UpdateResourceSelector sets the "resource_selector" field to the value that was provided on create.
+func (u *PermissionUpsertBulk) UpdateResourceSelector() *PermissionUpsertBulk {
 	return u.Update(func(s *PermissionUpsert) {
-		s.UpdateResourceID()
-	})
-}
-
-// SetScope sets the "scope" field.
-func (u *PermissionUpsertBulk) SetScope(v string) *PermissionUpsertBulk {
-	return u.Update(func(s *PermissionUpsert) {
-		s.SetScope(v)
-	})
-}
-
-// UpdateScope sets the "scope" field to the value that was provided on create.
-func (u *PermissionUpsertBulk) UpdateScope() *PermissionUpsertBulk {
-	return u.Update(func(s *PermissionUpsert) {
-		s.UpdateScope()
-	})
-}
-
-// ClearScope clears the value of the "scope" field.
-func (u *PermissionUpsertBulk) ClearScope() *PermissionUpsertBulk {
-	return u.Update(func(s *PermissionUpsert) {
-		s.ClearScope()
-	})
-}
-
-// SetLabels sets the "labels" field.
-func (u *PermissionUpsertBulk) SetLabels(v map[string]string) *PermissionUpsertBulk {
-	return u.Update(func(s *PermissionUpsert) {
-		s.SetLabels(v)
-	})
-}
-
-// UpdateLabels sets the "labels" field to the value that was provided on create.
-func (u *PermissionUpsertBulk) UpdateLabels() *PermissionUpsertBulk {
-	return u.Update(func(s *PermissionUpsert) {
-		s.UpdateLabels()
-	})
-}
-
-// ClearLabels clears the value of the "labels" field.
-func (u *PermissionUpsertBulk) ClearLabels() *PermissionUpsertBulk {
-	return u.Update(func(s *PermissionUpsert) {
-		s.ClearLabels()
+		s.UpdateResourceSelector()
 	})
 }
 

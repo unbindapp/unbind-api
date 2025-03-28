@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -30,23 +30,11 @@ func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input
 	}
 
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to update system resources
+		// Has permission to update team
 		{
-			Action:       permission.ActionUpdate,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to update teams
-		{
-			Action:       permission.ActionUpdate,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to update the specific team
-		{
-			Action:       permission.ActionUpdate,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   input.ID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   input.ID,
 		},
 	}
 

@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // ID filters vertices based on their ID field.
@@ -64,16 +65,6 @@ func CreatedAt(v time.Time) predicate.Permission {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.Permission {
 	return predicate.Permission(sql.FieldEQ(FieldUpdatedAt, v))
-}
-
-// ResourceID applies equality check predicate on the "resource_id" field. It's identical to ResourceIDEQ.
-func ResourceID(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldEQ(FieldResourceID, v))
-}
-
-// Scope applies equality check predicate on the "scope" field. It's identical to ScopeEQ.
-func Scope(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldEQ(FieldScope, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -157,193 +148,63 @@ func UpdatedAtLTE(v time.Time) predicate.Permission {
 }
 
 // ActionEQ applies the EQ predicate on the "action" field.
-func ActionEQ(v Action) predicate.Permission {
-	return predicate.Permission(sql.FieldEQ(FieldAction, v))
+func ActionEQ(v schema.PermittedAction) predicate.Permission {
+	vc := v
+	return predicate.Permission(sql.FieldEQ(FieldAction, vc))
 }
 
 // ActionNEQ applies the NEQ predicate on the "action" field.
-func ActionNEQ(v Action) predicate.Permission {
-	return predicate.Permission(sql.FieldNEQ(FieldAction, v))
+func ActionNEQ(v schema.PermittedAction) predicate.Permission {
+	vc := v
+	return predicate.Permission(sql.FieldNEQ(FieldAction, vc))
 }
 
 // ActionIn applies the In predicate on the "action" field.
-func ActionIn(vs ...Action) predicate.Permission {
-	return predicate.Permission(sql.FieldIn(FieldAction, vs...))
+func ActionIn(vs ...schema.PermittedAction) predicate.Permission {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Permission(sql.FieldIn(FieldAction, v...))
 }
 
 // ActionNotIn applies the NotIn predicate on the "action" field.
-func ActionNotIn(vs ...Action) predicate.Permission {
-	return predicate.Permission(sql.FieldNotIn(FieldAction, vs...))
+func ActionNotIn(vs ...schema.PermittedAction) predicate.Permission {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Permission(sql.FieldNotIn(FieldAction, v...))
 }
 
 // ResourceTypeEQ applies the EQ predicate on the "resource_type" field.
-func ResourceTypeEQ(v ResourceType) predicate.Permission {
-	return predicate.Permission(sql.FieldEQ(FieldResourceType, v))
+func ResourceTypeEQ(v schema.ResourceType) predicate.Permission {
+	vc := v
+	return predicate.Permission(sql.FieldEQ(FieldResourceType, vc))
 }
 
 // ResourceTypeNEQ applies the NEQ predicate on the "resource_type" field.
-func ResourceTypeNEQ(v ResourceType) predicate.Permission {
-	return predicate.Permission(sql.FieldNEQ(FieldResourceType, v))
+func ResourceTypeNEQ(v schema.ResourceType) predicate.Permission {
+	vc := v
+	return predicate.Permission(sql.FieldNEQ(FieldResourceType, vc))
 }
 
 // ResourceTypeIn applies the In predicate on the "resource_type" field.
-func ResourceTypeIn(vs ...ResourceType) predicate.Permission {
-	return predicate.Permission(sql.FieldIn(FieldResourceType, vs...))
+func ResourceTypeIn(vs ...schema.ResourceType) predicate.Permission {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Permission(sql.FieldIn(FieldResourceType, v...))
 }
 
 // ResourceTypeNotIn applies the NotIn predicate on the "resource_type" field.
-func ResourceTypeNotIn(vs ...ResourceType) predicate.Permission {
-	return predicate.Permission(sql.FieldNotIn(FieldResourceType, vs...))
-}
-
-// ResourceIDEQ applies the EQ predicate on the "resource_id" field.
-func ResourceIDEQ(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldEQ(FieldResourceID, v))
-}
-
-// ResourceIDNEQ applies the NEQ predicate on the "resource_id" field.
-func ResourceIDNEQ(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldNEQ(FieldResourceID, v))
-}
-
-// ResourceIDIn applies the In predicate on the "resource_id" field.
-func ResourceIDIn(vs ...string) predicate.Permission {
-	return predicate.Permission(sql.FieldIn(FieldResourceID, vs...))
-}
-
-// ResourceIDNotIn applies the NotIn predicate on the "resource_id" field.
-func ResourceIDNotIn(vs ...string) predicate.Permission {
-	return predicate.Permission(sql.FieldNotIn(FieldResourceID, vs...))
-}
-
-// ResourceIDGT applies the GT predicate on the "resource_id" field.
-func ResourceIDGT(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldGT(FieldResourceID, v))
-}
-
-// ResourceIDGTE applies the GTE predicate on the "resource_id" field.
-func ResourceIDGTE(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldGTE(FieldResourceID, v))
-}
-
-// ResourceIDLT applies the LT predicate on the "resource_id" field.
-func ResourceIDLT(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldLT(FieldResourceID, v))
-}
-
-// ResourceIDLTE applies the LTE predicate on the "resource_id" field.
-func ResourceIDLTE(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldLTE(FieldResourceID, v))
-}
-
-// ResourceIDContains applies the Contains predicate on the "resource_id" field.
-func ResourceIDContains(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldContains(FieldResourceID, v))
-}
-
-// ResourceIDHasPrefix applies the HasPrefix predicate on the "resource_id" field.
-func ResourceIDHasPrefix(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldHasPrefix(FieldResourceID, v))
-}
-
-// ResourceIDHasSuffix applies the HasSuffix predicate on the "resource_id" field.
-func ResourceIDHasSuffix(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldHasSuffix(FieldResourceID, v))
-}
-
-// ResourceIDEqualFold applies the EqualFold predicate on the "resource_id" field.
-func ResourceIDEqualFold(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldEqualFold(FieldResourceID, v))
-}
-
-// ResourceIDContainsFold applies the ContainsFold predicate on the "resource_id" field.
-func ResourceIDContainsFold(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldContainsFold(FieldResourceID, v))
-}
-
-// ScopeEQ applies the EQ predicate on the "scope" field.
-func ScopeEQ(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldEQ(FieldScope, v))
-}
-
-// ScopeNEQ applies the NEQ predicate on the "scope" field.
-func ScopeNEQ(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldNEQ(FieldScope, v))
-}
-
-// ScopeIn applies the In predicate on the "scope" field.
-func ScopeIn(vs ...string) predicate.Permission {
-	return predicate.Permission(sql.FieldIn(FieldScope, vs...))
-}
-
-// ScopeNotIn applies the NotIn predicate on the "scope" field.
-func ScopeNotIn(vs ...string) predicate.Permission {
-	return predicate.Permission(sql.FieldNotIn(FieldScope, vs...))
-}
-
-// ScopeGT applies the GT predicate on the "scope" field.
-func ScopeGT(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldGT(FieldScope, v))
-}
-
-// ScopeGTE applies the GTE predicate on the "scope" field.
-func ScopeGTE(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldGTE(FieldScope, v))
-}
-
-// ScopeLT applies the LT predicate on the "scope" field.
-func ScopeLT(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldLT(FieldScope, v))
-}
-
-// ScopeLTE applies the LTE predicate on the "scope" field.
-func ScopeLTE(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldLTE(FieldScope, v))
-}
-
-// ScopeContains applies the Contains predicate on the "scope" field.
-func ScopeContains(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldContains(FieldScope, v))
-}
-
-// ScopeHasPrefix applies the HasPrefix predicate on the "scope" field.
-func ScopeHasPrefix(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldHasPrefix(FieldScope, v))
-}
-
-// ScopeHasSuffix applies the HasSuffix predicate on the "scope" field.
-func ScopeHasSuffix(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldHasSuffix(FieldScope, v))
-}
-
-// ScopeIsNil applies the IsNil predicate on the "scope" field.
-func ScopeIsNil() predicate.Permission {
-	return predicate.Permission(sql.FieldIsNull(FieldScope))
-}
-
-// ScopeNotNil applies the NotNil predicate on the "scope" field.
-func ScopeNotNil() predicate.Permission {
-	return predicate.Permission(sql.FieldNotNull(FieldScope))
-}
-
-// ScopeEqualFold applies the EqualFold predicate on the "scope" field.
-func ScopeEqualFold(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldEqualFold(FieldScope, v))
-}
-
-// ScopeContainsFold applies the ContainsFold predicate on the "scope" field.
-func ScopeContainsFold(v string) predicate.Permission {
-	return predicate.Permission(sql.FieldContainsFold(FieldScope, v))
-}
-
-// LabelsIsNil applies the IsNil predicate on the "labels" field.
-func LabelsIsNil() predicate.Permission {
-	return predicate.Permission(sql.FieldIsNull(FieldLabels))
-}
-
-// LabelsNotNil applies the NotNil predicate on the "labels" field.
-func LabelsNotNil() predicate.Permission {
-	return predicate.Permission(sql.FieldNotNull(FieldLabels))
+func ResourceTypeNotIn(vs ...schema.ResourceType) predicate.Permission {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Permission(sql.FieldNotIn(FieldResourceType, v...))
 }
 
 // HasGroups applies the HasEdge predicate on the "groups" edge.

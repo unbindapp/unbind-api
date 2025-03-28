@@ -10,7 +10,10 @@ import (
 )
 
 func (self *GroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Group, error) {
-	return self.base.DB.Group.Get(ctx, id)
+	return self.base.DB.Group.Query().
+		Where(group.ID(id)).
+		WithPermissions().
+		Only(ctx)
 }
 
 func (self *GroupRepository) GetAllWithK8sRole(ctx context.Context) ([]*ent.Group, error) {

@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/log"
@@ -88,7 +87,6 @@ func main() {
 
 	groupName := groupCreateFlagSet.String("name", "", "Name of the group")
 	groupDescription := groupCreateFlagSet.String("description", "", "Description of the group")
-	groupTeamID := groupCreateFlagSet.String("team-id", "", "ID of the team to associate the group with (Optional)")
 
 	addUserEmail := groupAddUserFlagSet.String("email", "", "Email of the user to add to the group")
 	addUserGroupName := groupAddUserFlagSet.String("group-name", "", "Name of the group to add the user to")
@@ -99,7 +97,6 @@ func main() {
 	grantAction := groupGrantPermissionFlagSet.String("action", "", "Action to grant permissions for")
 	grantResourceType := groupGrantPermissionFlagSet.String("resource-type", "", "Resource type to grant permissions for")
 	grantResourceID := groupGrantPermissionFlagSet.String("resource-id", "", "Resource ID to grant permissions for")
-	grantScope := groupGrantPermissionFlagSet.String("scope", "", "Scope to grant permissions for")
 
 	teamName := teamCreateFlagSet.String("name", "", "Name of the team")
 	teamDisplayName := teamCreateFlagSet.String("displayname", "", "Display name of the team")
@@ -150,16 +147,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			var parsedTeamID *uuid.UUID
-			if *groupTeamID != "" {
-				parsed, err := uuid.Parse(*groupTeamID)
-				if err != nil {
-					log.Fatalf("Failed to parse team ID: %v", err)
-				}
-				parsedTeamID = &parsed
-			}
-
-			cli.createGroup(*groupName, *groupDescription, parsedTeamID)
+			cli.createGroup(*groupName, *groupDescription)
 		},
 	}
 
@@ -210,7 +198,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			cli.grantPermission(*grantGroupName, *grantAction, *grantResourceType, *grantResourceID, *grantScope)
+			cli.grantPermission(*grantGroupName, *grantAction, *grantResourceType, *grantResourceID)
 		},
 	}
 

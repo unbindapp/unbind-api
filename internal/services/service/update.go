@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
@@ -54,41 +53,11 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to manage teams
+		// Has permission to admin service
 		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to manage this team
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   input.TeamID.String(),
-		},
-		// Has permission to manage projects
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		},
-		// Has permission to manage this project
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   input.ProjectID.String(),
-		},
-		// Has permission to manage this specific environment
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   input.EnvironmentID.String(),
-		},
-		// Has permission to update this service
-		{
-			Action:       permission.ActionUpdate,
-			ResourceType: permission.ResourceTypeService,
-			ResourceID:   input.ServiceID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeService,
+			ResourceID:   input.ServiceID,
 		},
 	}
 

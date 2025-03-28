@@ -15,6 +15,5 @@ type UserRepositoryInterface interface {
 	GetByEmail(ctx context.Context, email string) (*ent.User, error)
 	// Authenticate verifies a user's credentials and returns the user if successful
 	Authenticate(ctx context.Context, email, password string) (*ent.User, error)
-	IsSuperUser(ctx context.Context, userID uuid.UUID) (bool, error)
 	GetGroups(ctx context.Context, userID uuid.UUID) ([]*ent.Group, error)
 }

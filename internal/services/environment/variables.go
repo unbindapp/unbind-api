@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -13,35 +13,10 @@ import (
 
 func (self *EnvironmentService) GetVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to read environments
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific environment
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   environmentID.String(),
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeEnvironment,
+			ResourceID:   environmentID,
 		},
 	}
 
@@ -109,35 +84,10 @@ func (self *EnvironmentService) GetVariables(ctx context.Context, userID uuid.UU
 // Create secrets in bulk
 func (self *EnvironmentService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to read environments
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific environment
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   environmentID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeEnvironment,
+			ResourceID:   environmentID,
 		},
 	}
 
@@ -211,35 +161,10 @@ func (self *EnvironmentService) UpsertVariables(ctx context.Context, userID uuid
 // Delete a secret by key
 func (self *EnvironmentService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, keys []models.VariableDeleteInput) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to read environments
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific environment
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   environmentID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeEnvironment,
+			ResourceID:   environmentID,
 		},
 	}
 

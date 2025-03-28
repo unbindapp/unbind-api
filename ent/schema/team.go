@@ -38,7 +38,6 @@ func (Team) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("projects", Project.Type),
 		edge.From("members", User.Type).Ref("teams"),
-		edge.To("groups", Group.Type),
 	}
 }
 

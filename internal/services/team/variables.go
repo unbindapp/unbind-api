@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -13,23 +13,10 @@ import (
 
 func (self *TeamService) GetVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   teamID,
 		},
 	}
 
@@ -80,23 +67,10 @@ func (self *TeamService) GetVariables(ctx context.Context, userID uuid.UUID, bea
 // Create variables in bulk
 func (self *TeamService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   teamID,
 		},
 	}
 
@@ -153,23 +127,10 @@ func (self *TeamService) UpsertVariables(ctx context.Context, userID uuid.UUID, 
 // Delete a secret by key
 func (self *TeamService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, keys []models.VariableDeleteInput) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
+			Action:       schema.ActionAdmin,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   teamID,
 		},
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // PermissionUpdate is the builder for updating Permission entities.
@@ -38,76 +39,44 @@ func (pu *PermissionUpdate) SetUpdatedAt(t time.Time) *PermissionUpdate {
 }
 
 // SetAction sets the "action" field.
-func (pu *PermissionUpdate) SetAction(pe permission.Action) *PermissionUpdate {
-	pu.mutation.SetAction(pe)
+func (pu *PermissionUpdate) SetAction(sa schema.PermittedAction) *PermissionUpdate {
+	pu.mutation.SetAction(sa)
 	return pu
 }
 
 // SetNillableAction sets the "action" field if the given value is not nil.
-func (pu *PermissionUpdate) SetNillableAction(pe *permission.Action) *PermissionUpdate {
-	if pe != nil {
-		pu.SetAction(*pe)
+func (pu *PermissionUpdate) SetNillableAction(sa *schema.PermittedAction) *PermissionUpdate {
+	if sa != nil {
+		pu.SetAction(*sa)
 	}
 	return pu
 }
 
 // SetResourceType sets the "resource_type" field.
-func (pu *PermissionUpdate) SetResourceType(pt permission.ResourceType) *PermissionUpdate {
-	pu.mutation.SetResourceType(pt)
+func (pu *PermissionUpdate) SetResourceType(st schema.ResourceType) *PermissionUpdate {
+	pu.mutation.SetResourceType(st)
 	return pu
 }
 
 // SetNillableResourceType sets the "resource_type" field if the given value is not nil.
-func (pu *PermissionUpdate) SetNillableResourceType(pt *permission.ResourceType) *PermissionUpdate {
-	if pt != nil {
-		pu.SetResourceType(*pt)
+func (pu *PermissionUpdate) SetNillableResourceType(st *schema.ResourceType) *PermissionUpdate {
+	if st != nil {
+		pu.SetResourceType(*st)
 	}
 	return pu
 }
 
-// SetResourceID sets the "resource_id" field.
-func (pu *PermissionUpdate) SetResourceID(s string) *PermissionUpdate {
-	pu.mutation.SetResourceID(s)
+// SetResourceSelector sets the "resource_selector" field.
+func (pu *PermissionUpdate) SetResourceSelector(ss schema.ResourceSelector) *PermissionUpdate {
+	pu.mutation.SetResourceSelector(ss)
 	return pu
 }
 
-// SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (pu *PermissionUpdate) SetNillableResourceID(s *string) *PermissionUpdate {
-	if s != nil {
-		pu.SetResourceID(*s)
+// SetNillableResourceSelector sets the "resource_selector" field if the given value is not nil.
+func (pu *PermissionUpdate) SetNillableResourceSelector(ss *schema.ResourceSelector) *PermissionUpdate {
+	if ss != nil {
+		pu.SetResourceSelector(*ss)
 	}
-	return pu
-}
-
-// SetScope sets the "scope" field.
-func (pu *PermissionUpdate) SetScope(s string) *PermissionUpdate {
-	pu.mutation.SetScope(s)
-	return pu
-}
-
-// SetNillableScope sets the "scope" field if the given value is not nil.
-func (pu *PermissionUpdate) SetNillableScope(s *string) *PermissionUpdate {
-	if s != nil {
-		pu.SetScope(*s)
-	}
-	return pu
-}
-
-// ClearScope clears the value of the "scope" field.
-func (pu *PermissionUpdate) ClearScope() *PermissionUpdate {
-	pu.mutation.ClearScope()
-	return pu
-}
-
-// SetLabels sets the "labels" field.
-func (pu *PermissionUpdate) SetLabels(m map[string]string) *PermissionUpdate {
-	pu.mutation.SetLabels(m)
-	return pu
-}
-
-// ClearLabels clears the value of the "labels" field.
-func (pu *PermissionUpdate) ClearLabels() *PermissionUpdate {
-	pu.mutation.ClearLabels()
 	return pu
 }
 
@@ -200,11 +169,6 @@ func (pu *PermissionUpdate) check() error {
 			return &ValidationError{Name: "resource_type", err: fmt.Errorf(`ent: validator failed for field "Permission.resource_type": %w`, err)}
 		}
 	}
-	if v, ok := pu.mutation.ResourceID(); ok {
-		if err := permission.ResourceIDValidator(v); err != nil {
-			return &ValidationError{Name: "resource_id", err: fmt.Errorf(`ent: validator failed for field "Permission.resource_id": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -235,20 +199,8 @@ func (pu *PermissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.ResourceType(); ok {
 		_spec.SetField(permission.FieldResourceType, field.TypeEnum, value)
 	}
-	if value, ok := pu.mutation.ResourceID(); ok {
-		_spec.SetField(permission.FieldResourceID, field.TypeString, value)
-	}
-	if value, ok := pu.mutation.Scope(); ok {
-		_spec.SetField(permission.FieldScope, field.TypeString, value)
-	}
-	if pu.mutation.ScopeCleared() {
-		_spec.ClearField(permission.FieldScope, field.TypeString)
-	}
-	if value, ok := pu.mutation.Labels(); ok {
-		_spec.SetField(permission.FieldLabels, field.TypeJSON, value)
-	}
-	if pu.mutation.LabelsCleared() {
-		_spec.ClearField(permission.FieldLabels, field.TypeJSON)
+	if value, ok := pu.mutation.ResourceSelector(); ok {
+		_spec.SetField(permission.FieldResourceSelector, field.TypeJSON, value)
 	}
 	if pu.mutation.GroupsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -324,76 +276,44 @@ func (puo *PermissionUpdateOne) SetUpdatedAt(t time.Time) *PermissionUpdateOne {
 }
 
 // SetAction sets the "action" field.
-func (puo *PermissionUpdateOne) SetAction(pe permission.Action) *PermissionUpdateOne {
-	puo.mutation.SetAction(pe)
+func (puo *PermissionUpdateOne) SetAction(sa schema.PermittedAction) *PermissionUpdateOne {
+	puo.mutation.SetAction(sa)
 	return puo
 }
 
 // SetNillableAction sets the "action" field if the given value is not nil.
-func (puo *PermissionUpdateOne) SetNillableAction(pe *permission.Action) *PermissionUpdateOne {
-	if pe != nil {
-		puo.SetAction(*pe)
+func (puo *PermissionUpdateOne) SetNillableAction(sa *schema.PermittedAction) *PermissionUpdateOne {
+	if sa != nil {
+		puo.SetAction(*sa)
 	}
 	return puo
 }
 
 // SetResourceType sets the "resource_type" field.
-func (puo *PermissionUpdateOne) SetResourceType(pt permission.ResourceType) *PermissionUpdateOne {
-	puo.mutation.SetResourceType(pt)
+func (puo *PermissionUpdateOne) SetResourceType(st schema.ResourceType) *PermissionUpdateOne {
+	puo.mutation.SetResourceType(st)
 	return puo
 }
 
 // SetNillableResourceType sets the "resource_type" field if the given value is not nil.
-func (puo *PermissionUpdateOne) SetNillableResourceType(pt *permission.ResourceType) *PermissionUpdateOne {
-	if pt != nil {
-		puo.SetResourceType(*pt)
+func (puo *PermissionUpdateOne) SetNillableResourceType(st *schema.ResourceType) *PermissionUpdateOne {
+	if st != nil {
+		puo.SetResourceType(*st)
 	}
 	return puo
 }
 
-// SetResourceID sets the "resource_id" field.
-func (puo *PermissionUpdateOne) SetResourceID(s string) *PermissionUpdateOne {
-	puo.mutation.SetResourceID(s)
+// SetResourceSelector sets the "resource_selector" field.
+func (puo *PermissionUpdateOne) SetResourceSelector(ss schema.ResourceSelector) *PermissionUpdateOne {
+	puo.mutation.SetResourceSelector(ss)
 	return puo
 }
 
-// SetNillableResourceID sets the "resource_id" field if the given value is not nil.
-func (puo *PermissionUpdateOne) SetNillableResourceID(s *string) *PermissionUpdateOne {
-	if s != nil {
-		puo.SetResourceID(*s)
+// SetNillableResourceSelector sets the "resource_selector" field if the given value is not nil.
+func (puo *PermissionUpdateOne) SetNillableResourceSelector(ss *schema.ResourceSelector) *PermissionUpdateOne {
+	if ss != nil {
+		puo.SetResourceSelector(*ss)
 	}
-	return puo
-}
-
-// SetScope sets the "scope" field.
-func (puo *PermissionUpdateOne) SetScope(s string) *PermissionUpdateOne {
-	puo.mutation.SetScope(s)
-	return puo
-}
-
-// SetNillableScope sets the "scope" field if the given value is not nil.
-func (puo *PermissionUpdateOne) SetNillableScope(s *string) *PermissionUpdateOne {
-	if s != nil {
-		puo.SetScope(*s)
-	}
-	return puo
-}
-
-// ClearScope clears the value of the "scope" field.
-func (puo *PermissionUpdateOne) ClearScope() *PermissionUpdateOne {
-	puo.mutation.ClearScope()
-	return puo
-}
-
-// SetLabels sets the "labels" field.
-func (puo *PermissionUpdateOne) SetLabels(m map[string]string) *PermissionUpdateOne {
-	puo.mutation.SetLabels(m)
-	return puo
-}
-
-// ClearLabels clears the value of the "labels" field.
-func (puo *PermissionUpdateOne) ClearLabels() *PermissionUpdateOne {
-	puo.mutation.ClearLabels()
 	return puo
 }
 
@@ -499,11 +419,6 @@ func (puo *PermissionUpdateOne) check() error {
 			return &ValidationError{Name: "resource_type", err: fmt.Errorf(`ent: validator failed for field "Permission.resource_type": %w`, err)}
 		}
 	}
-	if v, ok := puo.mutation.ResourceID(); ok {
-		if err := permission.ResourceIDValidator(v); err != nil {
-			return &ValidationError{Name: "resource_id", err: fmt.Errorf(`ent: validator failed for field "Permission.resource_id": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -551,20 +466,8 @@ func (puo *PermissionUpdateOne) sqlSave(ctx context.Context) (_node *Permission,
 	if value, ok := puo.mutation.ResourceType(); ok {
 		_spec.SetField(permission.FieldResourceType, field.TypeEnum, value)
 	}
-	if value, ok := puo.mutation.ResourceID(); ok {
-		_spec.SetField(permission.FieldResourceID, field.TypeString, value)
-	}
-	if value, ok := puo.mutation.Scope(); ok {
-		_spec.SetField(permission.FieldScope, field.TypeString, value)
-	}
-	if puo.mutation.ScopeCleared() {
-		_spec.ClearField(permission.FieldScope, field.TypeString)
-	}
-	if value, ok := puo.mutation.Labels(); ok {
-		_spec.SetField(permission.FieldLabels, field.TypeJSON, value)
-	}
-	if puo.mutation.LabelsCleared() {
-		_spec.ClearField(permission.FieldLabels, field.TypeJSON)
+	if value, ok := puo.mutation.ResourceSelector(); ok {
+		_spec.SetField(permission.FieldResourceSelector, field.TypeJSON, value)
 	}
 	if puo.mutation.GroupsCleared() {
 		edge := &sqlgraph.EdgeSpec{

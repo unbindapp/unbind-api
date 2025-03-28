@@ -4,21 +4,23 @@ import (
 	"context"
 	"fmt"
 
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/predicate"
+	entSchema "github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
 // PermissionCheck defines a permission check to be performed
 type PermissionCheck struct {
-	Action       permission.Action
-	ResourceType permission.ResourceType
-	ResourceID   string
-
-	// If a custom check  is provided, it will be called in addition to the standard permission checks
+	Action       entSchema.PermittedAction
+	ResourceType entSchema.ResourceType
+	ResourceID   uuid.UUID
+	// If a custom check is provided, it will be called in addition to the standard permission checks
 	CustomCheck func(ctx context.Context, userID uuid.UUID) error
 }
 
@@ -28,66 +30,20 @@ func (self *PermissionsRepository) Check(
 	userID uuid.UUID,
 	checks []PermissionCheck,
 ) error {
-	checksPassed := false
-
 	// Nothing to check, so permission is granted by default
 	if len(checks) == 0 {
-		checksPassed = true
-	}
-
-	for _, c := range checks {
-		if c.Action != "" && c.ResourceType != "" && c.ResourceID != "" {
-			hasPermission, err := self.HasPermission(ctx, userID, c.Action, c.ResourceType, c.ResourceID)
-			if err != nil {
-				return fmt.Errorf("error checking permission: %w", err)
-			}
-
-			if hasPermission {
-				checksPassed = true
-				break
-			}
-		}
-
-		if c.CustomCheck != nil {
-			if err := c.CustomCheck(ctx, userID); err != nil {
-				log.Infof("custom permission check failed: %v", err)
-				return errdefs.ErrUnauthorized
-			}
-		}
-	}
-	if !checksPassed {
-		return errdefs.ErrUnauthorized
-	}
-	return nil
-}
-
-// HasPermission checks if a user has a specific permission on a resource
-func (self *PermissionsRepository) HasPermission(
-	ctx context.Context,
-	userID uuid.UUID,
-	action permission.Action,
-	resourceType permission.ResourceType,
-	resourceID string,
-) (bool, error) {
-	// Check super user
-	isSuperuser, err := self.userRepo.IsSuperUser(ctx, userID)
-	if err != nil {
-		return false, fmt.Errorf("error checking if user is superuser: %w", err)
-	}
-
-	if isSuperuser {
-		return true, nil
+		return nil
 	}
 
 	// Get all groups the user belongs to
 	userGroups, err := self.userRepo.GetGroups(ctx, userID)
 	if err != nil {
-		return false, fmt.Errorf("error fetching user groups: %w", err)
+		return fmt.Errorf("error fetching user groups: %w", err)
 	}
 
 	// If user doesn't belong to any group, permission is denied
 	if len(userGroups) == 0 {
-		return false, nil
+		return errdefs.ErrUnauthorized
 	}
 
 	// Extract group IDs
@@ -96,267 +52,334 @@ func (self *PermissionsRepository) HasPermission(
 		groupIDs = append(groupIDs, g.ID)
 	}
 
-	// Check for permission match
-	match, err := self.checkPermission(ctx, groupIDs, action, resourceType, resourceID)
-	if err != nil {
-		return false, err
-	}
-
-	if match.HasPermission {
-		return true, nil
-	}
-
-	// Check for implied permissions (e.g., admin implies read, create, update, delete)
-	impliedMatch, err := self.checkImpliedPermissions(ctx, groupIDs, action, resourceType, resourceID)
-	if err != nil {
-		return false, err
-	}
-
-	if impliedMatch.HasPermission {
-		return true, nil
-	}
-
-	// Check for hierarchical permissions (e.g., team -> project)
-	hierarchicalMatch, err := self.checkHierarchicalPermissions(ctx, groupIDs, action, resourceType, resourceID)
-	if err != nil {
-		return false, err
-	}
-
-	return hierarchicalMatch.HasPermission, nil
-}
-
-// PermissionResult represents the result of a permission check
-type PermissionResult struct {
-	HasPermission   bool
-	PermissionFound bool
-	Error           error
-}
-
-// checkPermission checks for an match of action, resource type, and resource ID
-func (self *PermissionsRepository) checkPermission(
-	ctx context.Context,
-	groupIDs []uuid.UUID,
-	action permission.Action,
-	resourceType permission.ResourceType,
-	resourceID string,
-) (PermissionResult, error) {
-	result := PermissionResult{}
-
-	// Convert string action to permission.Action
-	var permAction permission.Action
-	switch action {
-	case permission.ActionRead:
-		permAction = permission.ActionRead
-	case permission.ActionCreate:
-		permAction = permission.ActionCreate
-	case permission.ActionUpdate:
-		permAction = permission.ActionUpdate
-	case permission.ActionDelete:
-		permAction = permission.ActionDelete
-	case permission.ActionManage:
-		permAction = permission.ActionManage
-	case permission.ActionAdmin:
-		permAction = permission.ActionAdmin
-	case permission.ActionEdit:
-		permAction = permission.ActionEdit
-	case permission.ActionView:
-		permAction = permission.ActionView
-	default:
-		// If action doesn't match any known action, return false
-		return result, nil
-	}
-
-	// Check if any of the user's groups has the exact permission
-	count, err := self.base.DB.Permission.Query().
-		Where(
-			permission.HasGroupsWith(group.IDIn(groupIDs...)),
-			permission.ActionEQ(permAction),
-			permission.ResourceTypeEQ(resourceType),
-			permission.Or(
-				permission.ResourceIDEQ(resourceID),
-				permission.ResourceIDEQ("*"),
-			),
-		).
-		Count(ctx)
-
-	if err != nil {
-		result.Error = fmt.Errorf("error checking exact permissions: %w", err)
-		return result, result.Error
-	}
-
-	result.PermissionFound = count > 0
-	result.HasPermission = count > 0
-	return result, nil
-}
-
-// checkImpliedPermissions checks for permissions that imply the requested permission
-// For example, "admin" implies "read", "create", "update", "delete", etc.
-func (self *PermissionsRepository) checkImpliedPermissions(
-	ctx context.Context,
-	groupIDs []uuid.UUID,
-	action permission.Action,
-	resourceType permission.ResourceType,
-	resourceID string,
-) (PermissionResult, error) {
-	result := PermissionResult{}
-
-	// Define the implications
-	var impliedActions []permission.Action
-
-	switch action {
-	case permission.ActionRead:
-		// "read" is implied by these higher-level permissions
-		impliedActions = []permission.Action{
-			permission.ActionManage,
-			permission.ActionAdmin,
-			permission.ActionEdit,
-			permission.ActionView,
-		}
-	case permission.ActionCreate, permission.ActionUpdate, permission.ActionDelete:
-		// These are implied by manage and admin
-		impliedActions = []permission.Action{
-			permission.ActionManage,
-			permission.ActionAdmin,
-			permission.ActionEdit, // edit implies create and update but not delete
-		}
-		// Remove edit from implied actions if the action is delete
-		if action == permission.ActionDelete {
-			impliedActions = []permission.Action{
-				permission.ActionManage,
-				permission.ActionAdmin,
+	// Check each permission
+	for _, check := range checks {
+		// Run custom check if provided
+		if check.CustomCheck != nil {
+			if err := check.CustomCheck(ctx, userID); err == nil {
+				return nil // Custom check passed
 			}
 		}
-	case permission.ActionView:
-		// view is a subset of read and is only used for K8s permissions
-		impliedActions = []permission.Action{
-			permission.ActionRead,
-			permission.ActionManage,
-			permission.ActionAdmin,
-			permission.ActionEdit,
+
+		// Skip checks with empty values
+		if check.Action == "" || check.ResourceType == "" {
+			continue
 		}
-	case permission.ActionEdit:
-		// edit is implied by manage and admin
-		impliedActions = []permission.Action{
-			permission.ActionManage,
-			permission.ActionAdmin,
+
+		// Build a comprehensive permission check query
+		hasAccess, err := self.checkComprehensivePermission(ctx, groupIDs, check.Action, check.ResourceType, check.ResourceID)
+		if err != nil {
+			return fmt.Errorf("error checking permission: %w", err)
 		}
-	case permission.ActionManage:
-		// manage is implied by admin
-		impliedActions = []permission.Action{
-			permission.ActionAdmin,
+
+		if hasAccess {
+			return nil // Permission granted
 		}
-	default:
-		// No implications for other actions
-		return result, nil
 	}
 
-	// Check for exact resource ID
-	count, err := self.base.DB.Permission.Query().
-		Where(
-			permission.HasGroupsWith(group.IDIn(groupIDs...)),
-			permission.ActionIn(impliedActions...),
-			permission.ResourceTypeEQ(resourceType),
-			permission.Or(
-				permission.ResourceIDEQ(resourceID),
-				permission.ResourceIDEQ("*"),
-			),
-		).
-		Count(ctx)
-
-	if err != nil {
-		result.Error = fmt.Errorf("error checking implied permissions: %w", err)
-		return result, result.Error
-	}
-
-	result.PermissionFound = count > 0
-	result.HasPermission = count > 0
-	return result, nil
+	// No permission check passed
+	return errdefs.ErrUnauthorized
 }
 
-// checkHierarchicalPermissions checks for permissions in the resource hierarchy
-// For example, permission on a team implies permission on its projects
-func (self *PermissionsRepository) checkHierarchicalPermissions(
+// checkComprehensivePermission performs a comprehensive permission check including implied permissions and hierarchy
+func (self *PermissionsRepository) checkComprehensivePermission(
 	ctx context.Context,
 	groupIDs []uuid.UUID,
-	action permission.Action,
-	resourceType permission.ResourceType,
-	resourceID string,
-) (PermissionResult, error) {
-	result := PermissionResult{}
+	action entSchema.PermittedAction,
+	resourceType entSchema.ResourceType,
+	resourceID uuid.UUID,
+) (bool, error) {
+	// Get the resource hierarchy information
+	// This loads parent IDs and types that would grant permissions to this resource
+	hierarchyInfo, err := self.getResourceHierarchy(ctx, resourceType, resourceID)
+	if err != nil {
+		return false, fmt.Errorf("error getting resource hierarchy: %w", err)
+	}
 
-	// Define hierarchical relationships
-	switch resourceType {
-	case permission.ResourceTypeProject:
-		// Projects belong to teams
-		// If we're checking project permission, also check if the user has the same permission on the parent team
-		projectID, err := uuid.Parse(resourceID)
-		if err != nil {
-			return result, nil // Not a valid UUID, so no hierarchy to check
+	// ! If resource ID is nil just set it to a random value so it won't match ever
+	if resourceID == uuid.Nil {
+		resourceID = uuid.New()
+	}
+
+	// Determine which actions would satisfy this permission check
+	impliedActions := self.getImpliedActions(action)
+
+	// Build a query that handles:
+	// 1. Direct resource match
+	// 2. Resource hierarchy matches
+	// 3. Implied permission matches
+	// All in a single database query
+
+	// Base query that handles user's groups
+	query := self.base.DB.Permission.Query().
+		Where(permission.HasGroupsWith(group.IDIn(groupIDs...)))
+
+	// Create a slice of predicates for the different permission checks
+	var predicates []predicate.Permission
+
+	// 1. Direct resource match
+	directMatch := []predicate.Permission{
+		permission.ResourceTypeEQ(resourceType),
+		permission.ActionIn(impliedActions...),
+	}
+
+	// Build a predicate for the resource selector
+	resourcePredicates := []predicate.Permission{
+		// Access to specific resource ID
+		func(s *sql.Selector) {
+			sqljson.ValueEQ(permission.FieldResourceSelector, resourceID.String(), sqljson.Path("id"))
+		},
+		// Or superuser access
+		func(s *sql.Selector) {
+			sqljson.ValueEQ(permission.FieldResourceSelector, true, sqljson.Path("superuser"))
+		},
+	}
+
+	// Add direct match with resource selector predicates
+	directResourceMatch := append(directMatch, permission.Or(resourcePredicates...))
+	predicates = append(predicates, permission.And(directResourceMatch...))
+
+	// 2. Add hierarchy matches if available
+	for _, hierInfo := range hierarchyInfo {
+		// For each parent in the hierarchy
+		hierMatch := []predicate.Permission{
+			permission.ResourceTypeEQ(hierInfo.ResourceType),
+			permission.ActionIn(impliedActions...),
 		}
 
-		// Get the project and team
-		project, err := self.projectRepo.GetByID(ctx, projectID)
+		// Build predicate for the parent resource
+		hierResourcePredicates := []predicate.Permission{
+			// Access to specific parent resource ID
+			func(s *sql.Selector) {
+				sqljson.ValueEQ(permission.FieldResourceSelector, hierInfo.ResourceID.String(), sqljson.Path("id"))
+			},
+			// Or superuser access to the parent resource type
+			func(s *sql.Selector) {
+				sqljson.ValueEQ(permission.FieldResourceSelector, true, sqljson.Path("superuser"))
+			},
+		}
+
+		// Add hierarchy match with resource selector predicates
+		hierResourceMatch := append(hierMatch, permission.Or(hierResourcePredicates...))
+		predicates = append(predicates, permission.And(hierResourceMatch...))
+	}
+
+	// Add all predicates to the query using OR
+	query = query.Where(permission.Or(predicates...))
+
+	// Execute the query
+	count, err := query.Count(ctx)
+	if err != nil {
+		return false, fmt.Errorf("error checking permissions: %w", err)
+	}
+
+	return count > 0, nil
+}
+
+// ResourceHierarchyInfo represents a parent resource in the hierarchy
+type ResourceHierarchyInfo struct {
+	ResourceType entSchema.ResourceType
+	ResourceID   uuid.UUID
+}
+
+// getResourceHierarchy returns the hierarchy of resources that would grant permissions to this resource
+func (self *PermissionsRepository) getResourceHierarchy(
+	ctx context.Context,
+	resourceType entSchema.ResourceType,
+	resourceID uuid.UUID,
+) ([]ResourceHierarchyInfo, error) {
+	var hierarchy []ResourceHierarchyInfo
+
+	switch resourceType {
+	case entSchema.ResourceTypeProject:
+		// Projects belong to teams
+		project, err := self.projectRepo.GetByID(ctx, resourceID)
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return result, nil // Project not found, no hierarchy to check
+				return hierarchy, nil
 			}
-			result.Error = fmt.Errorf("error fetching project: %w", err)
-			return result, result.Error
+			return nil, fmt.Errorf("error fetching project: %w", err)
 		}
 
-		// Check for permission on the team
-		teamPermResult, err := self.checkPermission(ctx, groupIDs, action, permission.ResourceTypeTeam, project.Edges.Team.ID.String())
+		// Add team to hierarchy if the project has a team
+		if project.Edges.Team != nil {
+			hierarchy = append(hierarchy, ResourceHierarchyInfo{
+				ResourceType: entSchema.ResourceTypeTeam,
+				ResourceID:   project.Edges.Team.ID,
+			})
+		}
+
+	case entSchema.ResourceTypeEnvironment:
+		// Environments belong to projects, which belong to teams
+		env, err := self.environmentRepo.GetByID(ctx, resourceID)
 		if err != nil {
-			result.Error = err
-			return result, result.Error
-		}
-
-		if teamPermResult.HasPermission {
-			result.HasPermission = true
-			result.PermissionFound = true
-			return result, nil
-		}
-
-	case "k8s":
-		// Check if resourceID is a valid UUID (might be a team or project ID)
-		resourceUUID, err := uuid.Parse(resourceID)
-		if err == nil {
-			// Try as team ID first
-			team, err := self.teamRepo.GetByID(ctx, resourceUUID)
-			if err == nil {
-				// ResourceID is a team ID, check team permissions
-				teamPermResult, err := self.checkPermission(ctx, groupIDs, action, permission.ResourceTypeTeam, team.ID.String())
-				if err != nil {
-					result.Error = err
-					return result, result.Error
-				}
-
-				if teamPermResult.HasPermission {
-					result.HasPermission = true
-					result.PermissionFound = true
-					return result, nil
-				}
+			if ent.IsNotFound(err) {
+				return hierarchy, nil
 			}
+			return nil, fmt.Errorf("error fetching environment: %w", err)
+		}
 
-			// Try as project ID
-			project, err := self.projectRepo.GetByID(ctx, resourceUUID)
-			if err == nil {
-				// ResourceID is a project ID, check project permissions
-				projectPermResult, err := self.checkPermission(ctx, groupIDs, action, permission.ResourceTypeProject, project.ID.String())
-				if err != nil {
-					result.Error = err
-					return result, result.Error
-				}
+		// Add project to hierarchy if the environment has a project
+		if env.Edges.Project != nil {
+			hierarchy = append(hierarchy, ResourceHierarchyInfo{
+				ResourceType: entSchema.ResourceTypeProject,
+				ResourceID:   env.Edges.Project.ID,
+			})
 
-				if projectPermResult.HasPermission {
-					result.HasPermission = true
-					result.PermissionFound = true
-					return result, nil
+			// Add team to hierarchy if the project has a team
+			if env.Edges.Project.Edges.Team != nil {
+				hierarchy = append(hierarchy, ResourceHierarchyInfo{
+					ResourceType: entSchema.ResourceTypeTeam,
+					ResourceID:   env.Edges.Project.Edges.Team.ID,
+				})
+			}
+		}
+
+	case entSchema.ResourceTypeService:
+		// Services belong to environments, which belong to projects, which belong to teams
+		service, err := self.serviceRepo.GetByID(ctx, resourceID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return hierarchy, nil
+			}
+			return nil, fmt.Errorf("error fetching service: %w", err)
+		}
+
+		// Add environment to hierarchy if the service has an environment
+		if service.Edges.Environment != nil {
+			hierarchy = append(hierarchy, ResourceHierarchyInfo{
+				ResourceType: entSchema.ResourceTypeEnvironment,
+				ResourceID:   service.Edges.Environment.ID,
+			})
+
+			// Add project to hierarchy if the environment has a project
+			if service.Edges.Environment.Edges.Project != nil {
+				hierarchy = append(hierarchy, ResourceHierarchyInfo{
+					ResourceType: entSchema.ResourceTypeProject,
+					ResourceID:   service.Edges.Environment.Edges.Project.ID,
+				})
+
+				// Add team to hierarchy if the project has a team
+				if service.Edges.Environment.Edges.Project.Edges.Team != nil {
+					hierarchy = append(hierarchy, ResourceHierarchyInfo{
+						ResourceType: entSchema.ResourceTypeTeam,
+						ResourceID:   service.Edges.Environment.Edges.Project.Edges.Team.ID,
+					})
 				}
 			}
 		}
 	}
 
-	// No hierarchical permission found
+	return hierarchy, nil
+}
+
+// getImpliedActions returns a list of actions that would satisfy the requested action
+func (self *PermissionsRepository) getImpliedActions(action entSchema.PermittedAction) []entSchema.PermittedAction {
+	switch action {
+	case entSchema.ActionViewer:
+		// Viewer permissions are implied by all other permission levels
+		return []entSchema.PermittedAction{
+			entSchema.ActionViewer,
+			entSchema.ActionEditor,
+			entSchema.ActionAdmin,
+		}
+	case entSchema.ActionEditor:
+		// Editor permissions are implied by Editor and Admin
+		return []entSchema.PermittedAction{
+			entSchema.ActionEditor,
+			entSchema.ActionAdmin,
+		}
+	case entSchema.ActionAdmin:
+		// Admin permissions are only implied by Admin
+		return []entSchema.PermittedAction{
+			entSchema.ActionAdmin,
+		}
+	default:
+		// For any other action, just use that action
+		return []entSchema.PermittedAction{action}
+	}
+}
+
+// GetUserPermissionsForResource returns all permissions a user has for a specific resource
+func (self *PermissionsRepository) GetUserPermissionsForResource(
+	ctx context.Context,
+	userID uuid.UUID,
+	resourceType entSchema.ResourceType,
+	resourceID uuid.UUID,
+) ([]entSchema.PermittedAction, error) {
+	result := make([]entSchema.PermittedAction, 0)
+
+	// Check for all possible permission levels
+	for _, action := range []entSchema.PermittedAction{
+		entSchema.ActionAdmin,
+		entSchema.ActionEditor,
+		entSchema.ActionViewer,
+	} {
+		// Use the same comprehensive check we use for authorization
+		hasPermission, err := self.checkComprehensivePermission(
+			ctx,
+			self.getUserGroupIDs(ctx, userID),
+			action,
+			resourceType,
+			resourceID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if hasPermission {
+			result = append(result, action)
+		}
+	}
+
 	return result, nil
+}
+
+// getUserGroupIDs gets all group IDs for a user
+func (self *PermissionsRepository) getUserGroupIDs(ctx context.Context, userID uuid.UUID) []uuid.UUID {
+	userGroups, err := self.userRepo.GetGroups(ctx, userID)
+	if err != nil {
+		return []uuid.UUID{}
+	}
+
+	var groupIDs []uuid.UUID
+	for _, g := range userGroups {
+		groupIDs = append(groupIDs, g.ID)
+	}
+
+	return groupIDs
+}
+
+// CreatePermission creates a new permission
+func (self *PermissionsRepository) CreatePermission(
+	ctx context.Context,
+	groupID uuid.UUID,
+	action entSchema.PermittedAction,
+	resourceType entSchema.ResourceType,
+	selector entSchema.ResourceSelector,
+) (*ent.Permission, error) {
+	return self.base.DB.Permission.Create().
+		SetAction(action).
+		SetResourceType(resourceType).
+		SetResourceSelector(selector).
+		AddGroupIDs(groupID).
+		Save(ctx)
+}
+
+// DeletePermission deletes a permission
+func (self *PermissionsRepository) DeletePermission(
+	ctx context.Context,
+	permissionID uuid.UUID,
+) error {
+	return self.base.DB.Permission.DeleteOneID(permissionID).Exec(ctx)
+}
+
+// GetPermissionsByGroup gets all permissions for a group
+func (self *PermissionsRepository) GetPermissionsByGroup(
+	ctx context.Context,
+	groupID uuid.UUID,
+) ([]*ent.Permission, error) {
+	return self.base.DB.Permission.Query().
+		Where(permission.HasGroupsWith(group.ID(groupID))).
+		All(ctx)
 }

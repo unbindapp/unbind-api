@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -18,15 +18,8 @@ func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearer
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to read system resources
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeSystem,
 		},
 	}
 	if err := self.repo.Permissions().Check(

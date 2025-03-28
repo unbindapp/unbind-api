@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -12,38 +12,10 @@ import (
 // Get a single environment by ID
 func (self *EnvironmentService) GetEnvironmentByID(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID, projectID uuid.UUID, environmentID uuid.UUID) (*models.EnvironmentResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read the specific team
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   projectID.String(),
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   environmentID.String(),
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeEnvironment,
+			ResourceID:   environmentID,
 		},
 	}
 

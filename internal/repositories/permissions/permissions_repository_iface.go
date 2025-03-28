@@ -7,16 +7,23 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
+	entSchema "github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // PermissionsRepositoryInterface ...
 type PermissionsRepositoryInterface interface {
 	// Check if a user has any of the provided permissions. If any check passes, the permission is granted.
 	Check(ctx context.Context, userID uuid.UUID, checks []PermissionCheck) error
-	// HasPermission checks if a user has a specific permission on a resource
-	HasPermission(ctx context.Context, userID uuid.UUID, action permission.Action, resourceType permission.ResourceType, resourceID string) (bool, error)
-	Create(ctx context.Context, action permission.Action, resourceType permission.ResourceType, resourceID string, scope string) (*ent.Permission, error)
+	// GetUserPermissionsForResource returns all permissions a user has for a specific resource
+	GetUserPermissionsForResource(ctx context.Context, userID uuid.UUID, resourceType entSchema.ResourceType, resourceID uuid.UUID) ([]entSchema.PermittedAction, error)
+	// CreatePermission creates a new permission
+	CreatePermission(ctx context.Context, groupID uuid.UUID, action entSchema.PermittedAction, resourceType entSchema.ResourceType, selector entSchema.ResourceSelector) (*ent.Permission, error)
+	// DeletePermission deletes a permission
+	DeletePermission(ctx context.Context, permissionID uuid.UUID) error
+	// GetPermissionsByGroup gets all permissions for a group
+	GetPermissionsByGroup(ctx context.Context, groupID uuid.UUID) ([]*ent.Permission, error)
+	Create(ctx context.Context, action schema.PermittedAction, resourceType schema.ResourceType, selector schema.ResourceSelector) (*ent.Permission, error)
 	AddToGroup(ctx context.Context, groupID, permissionID uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	RemoveFromGroup(ctx context.Context, groupID, permissionID uuid.UUID) error

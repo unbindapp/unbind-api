@@ -12,6 +12,7 @@ import (
 // TeamRepositoryInterface ...
 type TeamRepositoryInterface interface {
 	Update(ctx context.Context, teamID uuid.UUID, displayName string, description *string) (*ent.Team, error)
+	GetAll(ctx context.Context) ([]*ent.Team, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.Team, error)
 	HasUserWithID(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) (bool, error)
 }

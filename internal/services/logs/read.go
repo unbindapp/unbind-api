@@ -8,7 +8,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/sse"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -108,82 +108,27 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 
 func (self *LogsService) validatePermissionsAndParseInputs(ctx context.Context, requesterUserID uuid.UUID, input *models.LogQueryInput) (*ent.Team, *ent.Project, *ent.Environment, *ent.Service, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
+		//Can read team, project, environmnent, or service depending on inputs
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   input.TeamID,
 		},
-		// Has permission to read teams
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeProject,
+			ResourceID:   input.ProjectID,
 		},
-		// Has permission to read this specific team
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   input.TeamID.String(),
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeEnvironment,
+			ResourceID:   input.EnvironmentID,
 		},
-	}
-
-	// Depends on type of logs for other permissions
-	if input.Type == models.LogTypeProject ||
-		input.Type == models.LogTypeEnvironment ||
-		input.Type == models.LogTypeService {
-		if input.ProjectID == uuid.Nil {
-			return nil, nil, nil, nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project ID is required")
-		}
-		// Has permission to read projects
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		})
-		// Has permission to read this specific project
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   input.ProjectID.String(),
-		})
-	}
-
-	if input.Type == models.LogTypeEnvironment ||
-		input.Type == models.LogTypeService {
-		if input.EnvironmentID == uuid.Nil {
-			return nil, nil, nil, nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Environment ID is required")
-		}
-		// Has permission to read environments
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   "*",
-		})
-		// Has permission to read this specific environment
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   input.EnvironmentID.String(),
-		})
-	}
-
-	if input.Type == models.LogTypeService {
-		if input.ServiceID == uuid.Nil {
-			return nil, nil, nil, nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Service ID is required")
-		}
-		// Has permission to read services
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeService,
-			ResourceID:   "*",
-		})
-		// Has permission to read this specific service
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeService,
-			ResourceID:   input.ServiceID.String(),
-		})
+		{
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeService,
+			ResourceID:   input.ServiceID,
+		},
 	}
 
 	// Check permissions

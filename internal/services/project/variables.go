@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -13,35 +13,10 @@ import (
 
 func (self *ProjectService) GetVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, projectID uuid.UUID) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to read projects
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific project
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   projectID.String(),
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeProject,
+			ResourceID:   projectID,
 		},
 	}
 
@@ -96,35 +71,10 @@ func (self *ProjectService) GetVariables(ctx context.Context, userID uuid.UUID, 
 // Create variables in bulk
 func (self *ProjectService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID uuid.UUID, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to read projects
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific project
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   projectID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeProject,
+			ResourceID:   projectID,
 		},
 	}
 
@@ -185,35 +135,10 @@ func (self *ProjectService) UpsertVariables(ctx context.Context, userID uuid.UUI
 // Delete a secret by key
 func (self *ProjectService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, projectID uuid.UUID, keys []models.VariableDeleteInput) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
 		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to read teams
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific team
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to read projects
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		},
-		// Has permission to read this specific project
-		{
-			Action:       permission.ActionEdit,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   projectID.String(),
+			Action:       schema.ActionAdmin,
+			ResourceType: schema.ResourceTypeProject,
+			ResourceID:   projectID,
 		},
 	}
 

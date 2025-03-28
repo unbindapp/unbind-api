@@ -15,7 +15,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/predicate"
-	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -73,20 +72,6 @@ func (gu *GroupUpdate) ClearDescription() *GroupUpdate {
 	return gu
 }
 
-// SetSuperuser sets the "superuser" field.
-func (gu *GroupUpdate) SetSuperuser(b bool) *GroupUpdate {
-	gu.mutation.SetSuperuser(b)
-	return gu
-}
-
-// SetNillableSuperuser sets the "superuser" field if the given value is not nil.
-func (gu *GroupUpdate) SetNillableSuperuser(b *bool) *GroupUpdate {
-	if b != nil {
-		gu.SetSuperuser(*b)
-	}
-	return gu
-}
-
 // SetK8sRoleName sets the "k8s_role_name" field.
 func (gu *GroupUpdate) SetK8sRoleName(s string) *GroupUpdate {
 	gu.mutation.SetK8sRoleName(s)
@@ -104,66 +89,6 @@ func (gu *GroupUpdate) SetNillableK8sRoleName(s *string) *GroupUpdate {
 // ClearK8sRoleName clears the value of the "k8s_role_name" field.
 func (gu *GroupUpdate) ClearK8sRoleName() *GroupUpdate {
 	gu.mutation.ClearK8sRoleName()
-	return gu
-}
-
-// SetIdentityProvider sets the "identity_provider" field.
-func (gu *GroupUpdate) SetIdentityProvider(s string) *GroupUpdate {
-	gu.mutation.SetIdentityProvider(s)
-	return gu
-}
-
-// SetNillableIdentityProvider sets the "identity_provider" field if the given value is not nil.
-func (gu *GroupUpdate) SetNillableIdentityProvider(s *string) *GroupUpdate {
-	if s != nil {
-		gu.SetIdentityProvider(*s)
-	}
-	return gu
-}
-
-// ClearIdentityProvider clears the value of the "identity_provider" field.
-func (gu *GroupUpdate) ClearIdentityProvider() *GroupUpdate {
-	gu.mutation.ClearIdentityProvider()
-	return gu
-}
-
-// SetExternalID sets the "external_id" field.
-func (gu *GroupUpdate) SetExternalID(s string) *GroupUpdate {
-	gu.mutation.SetExternalID(s)
-	return gu
-}
-
-// SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (gu *GroupUpdate) SetNillableExternalID(s *string) *GroupUpdate {
-	if s != nil {
-		gu.SetExternalID(*s)
-	}
-	return gu
-}
-
-// ClearExternalID clears the value of the "external_id" field.
-func (gu *GroupUpdate) ClearExternalID() *GroupUpdate {
-	gu.mutation.ClearExternalID()
-	return gu
-}
-
-// SetTeamID sets the "team_id" field.
-func (gu *GroupUpdate) SetTeamID(u uuid.UUID) *GroupUpdate {
-	gu.mutation.SetTeamID(u)
-	return gu
-}
-
-// SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (gu *GroupUpdate) SetNillableTeamID(u *uuid.UUID) *GroupUpdate {
-	if u != nil {
-		gu.SetTeamID(*u)
-	}
-	return gu
-}
-
-// ClearTeamID clears the value of the "team_id" field.
-func (gu *GroupUpdate) ClearTeamID() *GroupUpdate {
-	gu.mutation.ClearTeamID()
 	return gu
 }
 
@@ -195,11 +120,6 @@ func (gu *GroupUpdate) AddPermissions(p ...*Permission) *GroupUpdate {
 		ids[i] = p[i].ID
 	}
 	return gu.AddPermissionIDs(ids...)
-}
-
-// SetTeam sets the "team" edge to the Team entity.
-func (gu *GroupUpdate) SetTeam(t *Team) *GroupUpdate {
-	return gu.SetTeamID(t.ID)
 }
 
 // Mutation returns the GroupMutation object of the builder.
@@ -247,12 +167,6 @@ func (gu *GroupUpdate) RemovePermissions(p ...*Permission) *GroupUpdate {
 		ids[i] = p[i].ID
 	}
 	return gu.RemovePermissionIDs(ids...)
-}
-
-// ClearTeam clears the "team" edge to the Team entity.
-func (gu *GroupUpdate) ClearTeam() *GroupUpdate {
-	gu.mutation.ClearTeam()
-	return gu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -331,26 +245,11 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if gu.mutation.DescriptionCleared() {
 		_spec.ClearField(group.FieldDescription, field.TypeString)
 	}
-	if value, ok := gu.mutation.Superuser(); ok {
-		_spec.SetField(group.FieldSuperuser, field.TypeBool, value)
-	}
 	if value, ok := gu.mutation.K8sRoleName(); ok {
 		_spec.SetField(group.FieldK8sRoleName, field.TypeString, value)
 	}
 	if gu.mutation.K8sRoleNameCleared() {
 		_spec.ClearField(group.FieldK8sRoleName, field.TypeString)
-	}
-	if value, ok := gu.mutation.IdentityProvider(); ok {
-		_spec.SetField(group.FieldIdentityProvider, field.TypeString, value)
-	}
-	if gu.mutation.IdentityProviderCleared() {
-		_spec.ClearField(group.FieldIdentityProvider, field.TypeString)
-	}
-	if value, ok := gu.mutation.ExternalID(); ok {
-		_spec.SetField(group.FieldExternalID, field.TypeString, value)
-	}
-	if gu.mutation.ExternalIDCleared() {
-		_spec.ClearField(group.FieldExternalID, field.TypeString)
 	}
 	if gu.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -442,35 +341,6 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.TeamCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   group.TeamTable,
-			Columns: []string{group.TeamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := gu.mutation.TeamIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   group.TeamTable,
-			Columns: []string{group.TeamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	_spec.AddModifiers(gu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -533,20 +403,6 @@ func (guo *GroupUpdateOne) ClearDescription() *GroupUpdateOne {
 	return guo
 }
 
-// SetSuperuser sets the "superuser" field.
-func (guo *GroupUpdateOne) SetSuperuser(b bool) *GroupUpdateOne {
-	guo.mutation.SetSuperuser(b)
-	return guo
-}
-
-// SetNillableSuperuser sets the "superuser" field if the given value is not nil.
-func (guo *GroupUpdateOne) SetNillableSuperuser(b *bool) *GroupUpdateOne {
-	if b != nil {
-		guo.SetSuperuser(*b)
-	}
-	return guo
-}
-
 // SetK8sRoleName sets the "k8s_role_name" field.
 func (guo *GroupUpdateOne) SetK8sRoleName(s string) *GroupUpdateOne {
 	guo.mutation.SetK8sRoleName(s)
@@ -564,66 +420,6 @@ func (guo *GroupUpdateOne) SetNillableK8sRoleName(s *string) *GroupUpdateOne {
 // ClearK8sRoleName clears the value of the "k8s_role_name" field.
 func (guo *GroupUpdateOne) ClearK8sRoleName() *GroupUpdateOne {
 	guo.mutation.ClearK8sRoleName()
-	return guo
-}
-
-// SetIdentityProvider sets the "identity_provider" field.
-func (guo *GroupUpdateOne) SetIdentityProvider(s string) *GroupUpdateOne {
-	guo.mutation.SetIdentityProvider(s)
-	return guo
-}
-
-// SetNillableIdentityProvider sets the "identity_provider" field if the given value is not nil.
-func (guo *GroupUpdateOne) SetNillableIdentityProvider(s *string) *GroupUpdateOne {
-	if s != nil {
-		guo.SetIdentityProvider(*s)
-	}
-	return guo
-}
-
-// ClearIdentityProvider clears the value of the "identity_provider" field.
-func (guo *GroupUpdateOne) ClearIdentityProvider() *GroupUpdateOne {
-	guo.mutation.ClearIdentityProvider()
-	return guo
-}
-
-// SetExternalID sets the "external_id" field.
-func (guo *GroupUpdateOne) SetExternalID(s string) *GroupUpdateOne {
-	guo.mutation.SetExternalID(s)
-	return guo
-}
-
-// SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (guo *GroupUpdateOne) SetNillableExternalID(s *string) *GroupUpdateOne {
-	if s != nil {
-		guo.SetExternalID(*s)
-	}
-	return guo
-}
-
-// ClearExternalID clears the value of the "external_id" field.
-func (guo *GroupUpdateOne) ClearExternalID() *GroupUpdateOne {
-	guo.mutation.ClearExternalID()
-	return guo
-}
-
-// SetTeamID sets the "team_id" field.
-func (guo *GroupUpdateOne) SetTeamID(u uuid.UUID) *GroupUpdateOne {
-	guo.mutation.SetTeamID(u)
-	return guo
-}
-
-// SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (guo *GroupUpdateOne) SetNillableTeamID(u *uuid.UUID) *GroupUpdateOne {
-	if u != nil {
-		guo.SetTeamID(*u)
-	}
-	return guo
-}
-
-// ClearTeamID clears the value of the "team_id" field.
-func (guo *GroupUpdateOne) ClearTeamID() *GroupUpdateOne {
-	guo.mutation.ClearTeamID()
 	return guo
 }
 
@@ -655,11 +451,6 @@ func (guo *GroupUpdateOne) AddPermissions(p ...*Permission) *GroupUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return guo.AddPermissionIDs(ids...)
-}
-
-// SetTeam sets the "team" edge to the Team entity.
-func (guo *GroupUpdateOne) SetTeam(t *Team) *GroupUpdateOne {
-	return guo.SetTeamID(t.ID)
 }
 
 // Mutation returns the GroupMutation object of the builder.
@@ -707,12 +498,6 @@ func (guo *GroupUpdateOne) RemovePermissions(p ...*Permission) *GroupUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return guo.RemovePermissionIDs(ids...)
-}
-
-// ClearTeam clears the "team" edge to the Team entity.
-func (guo *GroupUpdateOne) ClearTeam() *GroupUpdateOne {
-	guo.mutation.ClearTeam()
-	return guo
 }
 
 // Where appends a list predicates to the GroupUpdate builder.
@@ -821,26 +606,11 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 	if guo.mutation.DescriptionCleared() {
 		_spec.ClearField(group.FieldDescription, field.TypeString)
 	}
-	if value, ok := guo.mutation.Superuser(); ok {
-		_spec.SetField(group.FieldSuperuser, field.TypeBool, value)
-	}
 	if value, ok := guo.mutation.K8sRoleName(); ok {
 		_spec.SetField(group.FieldK8sRoleName, field.TypeString, value)
 	}
 	if guo.mutation.K8sRoleNameCleared() {
 		_spec.ClearField(group.FieldK8sRoleName, field.TypeString)
-	}
-	if value, ok := guo.mutation.IdentityProvider(); ok {
-		_spec.SetField(group.FieldIdentityProvider, field.TypeString, value)
-	}
-	if guo.mutation.IdentityProviderCleared() {
-		_spec.ClearField(group.FieldIdentityProvider, field.TypeString)
-	}
-	if value, ok := guo.mutation.ExternalID(); ok {
-		_spec.SetField(group.FieldExternalID, field.TypeString, value)
-	}
-	if guo.mutation.ExternalIDCleared() {
-		_spec.ClearField(group.FieldExternalID, field.TypeString)
 	}
 	if guo.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -925,35 +695,6 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(permission.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if guo.mutation.TeamCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   group.TeamTable,
-			Columns: []string{group.TeamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := guo.mutation.TeamIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   group.TeamTable,
-			Columns: []string{group.TeamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

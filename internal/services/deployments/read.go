@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -14,34 +14,9 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 	// Check permissions
 	if err := self.repo.Permissions().Check(ctx, requesterUserId, []permissions_repo.PermissionCheck{
 		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   input.TeamID.String(),
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   input.ProjectID.String(),
-		},
-		{
-			Action:       permission.ActionRead,
-			ResourceType: permission.ResourceTypeService,
-			ResourceID:   input.ServiceID.String(),
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeService,
+			ResourceID:   input.ServiceID,
 		},
 	}); err != nil {
 		return nil, nil, err

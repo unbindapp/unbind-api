@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
@@ -27,21 +27,9 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to delete system resources
 		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to delete teams
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to delete the specific team
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   input.TeamID.String(),
+			Action:       schema.ActionAdmin,
+			ResourceType: schema.ResourceTypeProject,
+			ResourceID:   input.ProjectID,
 		},
 	}
 

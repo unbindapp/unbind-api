@@ -9,6 +9,11 @@ import (
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
+func (self *TeamRepository) GetAll(ctx context.Context) ([]*ent.Team, error) {
+	return self.base.DB.Team.Query().
+		All(ctx)
+}
+
 func (self *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Team, error) {
 	return self.base.DB.Team.Query().
 		Where(team.ID(id)).

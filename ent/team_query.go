@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
@@ -29,7 +28,6 @@ type TeamQuery struct {
 	predicates   []predicate.Team
 	withProjects *ProjectQuery
 	withMembers  *UserQuery
-	withGroups   *GroupQuery
 	modifiers    []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -104,28 +102,6 @@ func (tq *TeamQuery) QueryMembers() *UserQuery {
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, team.MembersTable, team.MembersPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryGroups chains the current query on the "groups" edge.
-func (tq *TeamQuery) QueryGroups() *GroupQuery {
-	query := (&GroupClient{config: tq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := tq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(team.Table, team.FieldID, selector),
-			sqlgraph.To(group.Table, group.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, team.GroupsTable, team.GroupsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -327,7 +303,6 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 		predicates:   append([]predicate.Team{}, tq.predicates...),
 		withProjects: tq.withProjects.Clone(),
 		withMembers:  tq.withMembers.Clone(),
-		withGroups:   tq.withGroups.Clone(),
 		// clone intermediate query.
 		sql:       tq.sql.Clone(),
 		path:      tq.path,
@@ -354,17 +329,6 @@ func (tq *TeamQuery) WithMembers(opts ...func(*UserQuery)) *TeamQuery {
 		opt(query)
 	}
 	tq.withMembers = query
-	return tq
-}
-
-// WithGroups tells the query-builder to eager-load the nodes that are connected to
-// the "groups" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TeamQuery) WithGroups(opts ...func(*GroupQuery)) *TeamQuery {
-	query := (&GroupClient{config: tq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	tq.withGroups = query
 	return tq
 }
 
@@ -446,10 +410,9 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 	var (
 		nodes       = []*Team{}
 		_spec       = tq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [2]bool{
 			tq.withProjects != nil,
 			tq.withMembers != nil,
-			tq.withGroups != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -484,13 +447,6 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 		if err := tq.loadMembers(ctx, query, nodes,
 			func(n *Team) { n.Edges.Members = []*User{} },
 			func(n *Team, e *User) { n.Edges.Members = append(n.Edges.Members, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := tq.withGroups; query != nil {
-		if err := tq.loadGroups(ctx, query, nodes,
-			func(n *Team) { n.Edges.Groups = []*Group{} },
-			func(n *Team, e *Group) { n.Edges.Groups = append(n.Edges.Groups, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -585,39 +541,6 @@ func (tq *TeamQuery) loadMembers(ctx context.Context, query *UserQuery, nodes []
 		for kn := range nodes {
 			assign(kn, n)
 		}
-	}
-	return nil
-}
-func (tq *TeamQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes []*Team, init func(*Team), assign func(*Team, *Group)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*Team)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(group.FieldTeamID)
-	}
-	query.Where(predicate.Group(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(team.GroupsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.TeamID
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_id" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
 	}
 	return nil
 }

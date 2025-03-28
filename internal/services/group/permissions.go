@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -22,10 +22,9 @@ func (self *GroupService) GrantPermissionToGroup(
 	ctx context.Context,
 	requesterUserID,
 	groupID uuid.UUID,
-	permAction permission.Action,
-	resourceType permission.ResourceType,
-	resourceID string,
-	scope string,
+	permAction schema.PermittedAction,
+	resourceType schema.ResourceType,
+	selector schema.ResourceSelector,
 ) (*ent.Permission, error) {
 	// Get the group
 	group, err := self.repo.Group().GetByID(ctx, groupID)
@@ -37,31 +36,10 @@ func (self *GroupService) GrantPermissionToGroup(
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to manage system resources
 		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
+			Action:       schema.ActionAdmin,
+			ResourceType: schema.ResourceTypeSystem,
+			ResourceID:   group.ID,
 		},
-		// Has permission to manage groups
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeGroup,
-			ResourceID:   "*",
-		},
-		// Has permission to manage this specific group
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeGroup,
-			ResourceID:   groupID.String(),
-		},
-	}
-
-	if group.TeamID != nil {
-		// For team groups, check team-level permission
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   group.TeamID.String(),
-		})
 	}
 
 	// Execute permission checks
@@ -71,34 +49,8 @@ func (self *GroupService) GrantPermissionToGroup(
 		}
 	}
 
-	// Validate resource permissions based on group scope
-	if group.TeamID != nil {
-		// Team-scoped groups can only have team-scoped permissions
-		// Verify the resourceID is either the team's ID or a project in that team
-		if resourceType == permission.ResourceTypeTeam && resourceID != group.TeamID.String() && resourceID != "*" {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "team-scoped group can only have permissions for its own team")
-		}
-
-		if resourceType == permission.ResourceTypeProject && resourceID != "*" {
-			// Check if project belongs to the team
-			projectUUID, err := uuid.Parse(resourceID)
-			if err != nil {
-				return nil, fmt.Errorf("invalid project ID: %w", err)
-			}
-
-			teamID, err := self.repo.Project().GetTeamID(ctx, projectUUID)
-			if err != nil {
-				return nil, err
-			}
-
-			if teamID != *group.TeamID {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "team-scoped group can only have permissions for projects in its team")
-			}
-		}
-	}
-
 	// Create the permission
-	perm, err := self.repo.Permissions().Create(ctx, permAction, resourceType, resourceID, scope)
+	perm, err := self.repo.Permissions().Create(ctx, permAction, resourceType, selector)
 	if err != nil {
 		return nil, fmt.Errorf("error creating permission: %w", err)
 	}
@@ -111,21 +63,11 @@ func (self *GroupService) GrantPermissionToGroup(
 	}
 
 	// Check if this permission affects Kubernetes resources
-	needsK8sSync := resourceType == permission.ResourceTypeTeam ||
-		resourceType == permission.ResourceTypeProject
+	needsK8sSync := resourceType == schema.ResourceTypeTeam
 
 	if needsK8sSync {
-		// Get updated permissions
-		perms, err := self.repo.Group().GetPermissions(ctx, groupID)
-		if err != nil {
-			return nil, err
-		}
-
-		// Create K8s RBAC config
-		config := self.rbacManager.CreateK8sConfigFromPermissions(perms)
-
 		// Sync the group's RBAC
-		if err := self.rbacManager.SyncGroupToK8s(ctx, groupID, config); err != nil {
+		if err := self.rbacManager.SyncGroupToK8s(ctx, group); err != nil {
 			// Log but continue
 			log.Warnf("Warning: error syncing K8s RBAC: %v", err)
 		}
@@ -170,30 +112,10 @@ func (self *GroupService) RevokePermissionFromGroup(
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to manage system resources
 		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
+			Action:       schema.ActionAdmin,
+			ResourceType: schema.ResourceTypeSystem,
+			ResourceID:   group.ID,
 		},
-		// Has permission to manage groups
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeGroup,
-			ResourceID:   "*",
-		},
-		// Has permission to manage this specific group
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeGroup,
-			ResourceID:   groupID.String(),
-		},
-	}
-	if group.TeamID != nil {
-		// Has permissions to manage the team resources
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   group.TeamID.String(),
-		})
 	}
 
 	// Execute permission checks
@@ -214,8 +136,8 @@ func (self *GroupService) RevokePermissionFromGroup(
 	}
 
 	// Check if permission affects Kubernetes resources
-	needsK8sSync := perm.ResourceType == permission.ResourceTypeTeam ||
-		perm.ResourceType == permission.ResourceTypeProject
+	needsK8sSync := perm.ResourceType == schema.ResourceTypeTeam
+
 	if needsK8sSync {
 		// Get updated permissions
 		perms, err := self.repo.Group().GetPermissions(ctx, groupID)
@@ -226,25 +148,21 @@ func (self *GroupService) RevokePermissionFromGroup(
 		// Check if there are any remaining permissions that would affect k8s
 		hasK8sPerms := false
 		for _, p := range perms {
-			if p.ResourceType == permission.ResourceTypeTeam ||
-				p.ResourceType == permission.ResourceTypeProject {
+			if p.ResourceType == schema.ResourceTypeTeam {
 				hasK8sPerms = true
 				break
 			}
 		}
 
 		if hasK8sPerms {
-			// Create K8s RBAC config
-			config := self.rbacManager.CreateK8sConfigFromPermissions(perms)
-
 			// Sync the group's RBAC
-			if err := self.rbacManager.SyncGroupToK8s(ctx, groupID, config); err != nil {
+			if err := self.rbacManager.SyncGroupToK8s(ctx, group); err != nil {
 				// Log but continue
 				fmt.Printf("Warning: error syncing K8s RBAC: %v", err)
 			}
 		} else {
 			// No k8s-related permissions left, remove RBAC
-			if err := self.rbacManager.DeleteK8sRBAC(ctx, groupID); err != nil {
+			if err := self.rbacManager.DeleteK8sRBAC(ctx, group); err != nil {
 				// Log but continue
 				fmt.Printf("Warning: error removing K8s RBAC: %v", err)
 			}
@@ -276,31 +194,10 @@ func (self *GroupService) GetGroupPermissions(
 		permissionChecks := []permissions_repo.PermissionCheck{
 			// Has permission to read system resources
 			{
-				Action:       permission.ActionRead,
-				ResourceType: permission.ResourceTypeSystem,
-				ResourceID:   "*",
+				Action:       schema.ActionViewer,
+				ResourceType: schema.ResourceTypeSystem,
+				ResourceID:   group.ID,
 			},
-			// Has permission to read groups
-			{
-				Action:       permission.ActionRead,
-				ResourceType: permission.ResourceTypeGroup,
-				ResourceID:   "*",
-			},
-			// Has permission to read this specific group
-			{
-				Action:       permission.ActionRead,
-				ResourceType: permission.ResourceTypeGroup,
-				ResourceID:   groupID.String(),
-			},
-		}
-
-		if group.TeamID != nil {
-			// Has permission to read team resources
-			permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-				Action:       permission.ActionRead,
-				ResourceType: permission.ResourceTypeTeam,
-				ResourceID:   group.TeamID.String(),
-			})
 		}
 
 		// Execute permission checks
@@ -324,21 +221,9 @@ func (self *GroupService) GetUserGroups(
 		permissionChecks := []permissions_repo.PermissionCheck{
 			// Has permission to read system resources
 			{
-				Action:       permission.ActionRead,
-				ResourceType: permission.ResourceTypeSystem,
-				ResourceID:   "*",
-			},
-			// Has permission to read any user
-			{
-				Action:       permission.ActionRead,
-				ResourceType: permission.ResourceTypeUser,
-				ResourceID:   "*",
-			},
-			// Has permission to read this user
-			{
-				Action:       permission.ActionRead,
-				ResourceType: permission.ResourceTypeUser,
-				ResourceID:   targetUserID.String(),
+				Action:       schema.ActionViewer,
+				ResourceType: schema.ResourceTypeSystem,
+				ResourceID:   targetUserID,
 			},
 		}
 

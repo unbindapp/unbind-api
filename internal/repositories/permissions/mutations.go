@@ -5,15 +5,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
-func (self *PermissionsRepository) Create(ctx context.Context, action permission.Action, resourceType permission.ResourceType, resourceID string, scope string) (*ent.Permission, error) {
+func (self *PermissionsRepository) Create(ctx context.Context, action schema.PermittedAction, resourceType schema.ResourceType, selector schema.ResourceSelector) (*ent.Permission, error) {
 	return self.base.DB.Permission.Create().
 		SetAction(action).
 		SetResourceType(resourceType).
-		SetResourceID(resourceID).
-		SetScope(scope).
+		SetResourceSelector(selector).
 		Save(ctx)
 }
 

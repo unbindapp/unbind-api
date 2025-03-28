@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/group"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
@@ -20,60 +20,22 @@ func (self *GroupService) DeleteGroup(ctx context.Context, userID uuid.UUID, gro
 	}
 
 	// Determine permissions based on group type (global vs team)
-	if groupToDelete.TeamID == nil {
-		if err := self.repo.Permissions().Check(
-			ctx,
-			userID,
-			[]permissions_repo.PermissionCheck{
-				// Has permission to manage system resources
-				{
-					Action:       permission.ActionManage,
-					ResourceType: permission.ResourceTypeSystem,
-					ResourceID:   "*",
-				},
-				// Has permission to manage groups
-				{
-					Action:       permission.ActionManage,
-					ResourceType: permission.ResourceTypeGroup,
-					ResourceID:   "*",
-				},
+	if err := self.repo.Permissions().Check(
+		ctx,
+		userID,
+		[]permissions_repo.PermissionCheck{
+			{
+				Action:       schema.ActionAdmin,
+				ResourceType: schema.ResourceTypeSystem,
 			},
-		); err != nil {
-			return err
-		}
-
-	} else {
-		if err := self.repo.Permissions().Check(
-			ctx,
-			userID,
-			[]permissions_repo.PermissionCheck{
-				// Has permission to manage system resources
-				{
-					Action:       permission.ActionManage,
-					ResourceType: permission.ResourceTypeSystem,
-					ResourceID:   "*",
-				},
-				// Has permission to manage team
-				{
-					Action:       permission.ActionManage,
-					ResourceType: permission.ResourceTypeTeam,
-					ResourceID:   groupToDelete.TeamID.String(),
-				},
-				// Has permission to manage groups
-				{
-					Action:       permission.ActionManage,
-					ResourceType: permission.ResourceTypeGroup,
-					ResourceID:   "*",
-				},
-			},
-		); err != nil {
-			return err
-		}
+		},
+	); err != nil {
+		return err
 	}
 
 	// If the group has K8s RBAC, clean it up first
-	if groupToDelete.K8sRoleName != "" {
-		if err := self.rbacManager.DeleteK8sRBAC(ctx, groupID); err != nil {
+	if groupToDelete.K8sRoleName != nil {
+		if err := self.rbacManager.DeleteK8sRBAC(ctx, groupToDelete); err != nil {
 			log.Warnf("Error cleaning up K8s RBAC: %v", err)
 		}
 	}

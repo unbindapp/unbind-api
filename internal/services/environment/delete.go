@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -13,29 +13,10 @@ import (
 func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID) error {
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to manage teams
 		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to manage this team
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to manage this project
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   projectID.String(),
-		},
-		// Has permission to manage this specific environment
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   environmentID.String(),
+			Action:       schema.ActionAdmin,
+			ResourceType: schema.ResourceTypeEnvironment,
+			ResourceID:   environmentID,
 		},
 	}
 

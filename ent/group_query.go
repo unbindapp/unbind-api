@@ -16,7 +16,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/predicate"
-	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -29,7 +28,6 @@ type GroupQuery struct {
 	predicates      []predicate.Group
 	withUsers       *UserQuery
 	withPermissions *PermissionQuery
-	withTeam        *TeamQuery
 	modifiers       []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -104,28 +102,6 @@ func (gq *GroupQuery) QueryPermissions() *PermissionQuery {
 			sqlgraph.From(group.Table, group.FieldID, selector),
 			sqlgraph.To(permission.Table, permission.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, group.PermissionsTable, group.PermissionsPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryTeam chains the current query on the "team" edge.
-func (gq *GroupQuery) QueryTeam() *TeamQuery {
-	query := (&TeamClient{config: gq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := gq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(group.Table, group.FieldID, selector),
-			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, group.TeamTable, group.TeamColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -327,7 +303,6 @@ func (gq *GroupQuery) Clone() *GroupQuery {
 		predicates:      append([]predicate.Group{}, gq.predicates...),
 		withUsers:       gq.withUsers.Clone(),
 		withPermissions: gq.withPermissions.Clone(),
-		withTeam:        gq.withTeam.Clone(),
 		// clone intermediate query.
 		sql:       gq.sql.Clone(),
 		path:      gq.path,
@@ -354,17 +329,6 @@ func (gq *GroupQuery) WithPermissions(opts ...func(*PermissionQuery)) *GroupQuer
 		opt(query)
 	}
 	gq.withPermissions = query
-	return gq
-}
-
-// WithTeam tells the query-builder to eager-load the nodes that are connected to
-// the "team" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GroupQuery) WithTeam(opts ...func(*TeamQuery)) *GroupQuery {
-	query := (&TeamClient{config: gq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	gq.withTeam = query
 	return gq
 }
 
@@ -446,10 +410,9 @@ func (gq *GroupQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Group,
 	var (
 		nodes       = []*Group{}
 		_spec       = gq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [2]bool{
 			gq.withUsers != nil,
 			gq.withPermissions != nil,
-			gq.withTeam != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -484,12 +447,6 @@ func (gq *GroupQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Group,
 		if err := gq.loadPermissions(ctx, query, nodes,
 			func(n *Group) { n.Edges.Permissions = []*Permission{} },
 			func(n *Group, e *Permission) { n.Edges.Permissions = append(n.Edges.Permissions, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := gq.withTeam; query != nil {
-		if err := gq.loadTeam(ctx, query, nodes, nil,
-			func(n *Group, e *Team) { n.Edges.Team = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -618,38 +575,6 @@ func (gq *GroupQuery) loadPermissions(ctx context.Context, query *PermissionQuer
 	}
 	return nil
 }
-func (gq *GroupQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes []*Group, init func(*Group), assign func(*Group, *Team)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Group)
-	for i := range nodes {
-		if nodes[i].TeamID == nil {
-			continue
-		}
-		fk := *nodes[i].TeamID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(team.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
 
 func (gq *GroupQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := gq.querySpec()
@@ -678,9 +603,6 @@ func (gq *GroupQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != group.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
-		}
-		if gq.withTeam != nil {
-			_spec.Node.AddColumnOnce(group.FieldTeamID)
 		}
 	}
 	if ps := gq.predicates; len(ps) > 0 {

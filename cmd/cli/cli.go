@@ -10,8 +10,8 @@ import (
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/group"
-	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/internal/common/log"
@@ -110,14 +110,8 @@ func (self *cli) listGroups() {
 		fmt.Printf("Name: %s\n", g.Name)
 		fmt.Printf("Description: %s\n", g.Description)
 
-		if g.TeamID != nil {
-			fmt.Printf("Team ID: %s\n", *g.TeamID)
-		} else {
-			fmt.Printf("Scope: Global\n")
-		}
-
-		if g.K8sRoleName != "" {
-			fmt.Printf("K8s Role: %s\n", g.K8sRoleName)
+		if g.K8sRoleName != nil {
+			fmt.Printf("K8s Role: %s\n", *g.K8sRoleName)
 		}
 
 		// Get members count
@@ -206,7 +200,7 @@ func (self *cli) createTeam(name, displayName string) {
 }
 
 // Create a new group
-func (self *cli) createGroup(name, description string, teamID *uuid.UUID) {
+func (self *cli) createGroup(name, description string) {
 	ctx := context.Background()
 
 	// Validate inputs
@@ -233,24 +227,6 @@ func (self *cli) createGroup(name, description string, teamID *uuid.UUID) {
 		SetName(name).
 		SetDescription(description)
 
-	// Set team ID if provided
-	if teamID != nil {
-		// Check if team exists
-		teamExists, err := self.repository.Ent().Team.Query().
-			Where(team.IDEQ(*teamID)).
-			Exist(ctx)
-		if err != nil {
-			log.Errorf("Error checking if team exists: %v", err)
-			return
-		}
-		if !teamExists {
-			log.Errorf("Error: Team with ID '%s' does not exist", teamID.String())
-			return
-		}
-
-		groupBuilder.SetTeamID(*teamID)
-	}
-
 	// Save the group
 	group, err := groupBuilder.Save(ctx)
 	if err != nil {
@@ -262,11 +238,6 @@ func (self *cli) createGroup(name, description string, teamID *uuid.UUID) {
 	fmt.Printf("ID: %s\n", group.ID)
 	fmt.Printf("Name: %s\n", group.Name)
 	fmt.Printf("Description: %s\n", group.Description)
-	if group.TeamID != nil {
-		fmt.Printf("Team ID: %s\n", *group.TeamID)
-	} else {
-		fmt.Printf("Scope: Global\n")
-	}
 }
 
 // Add a user to a group
@@ -338,17 +309,14 @@ func (self *cli) listGroupPermissions(groupName string) {
 	fmt.Printf("Permissions for group '%s':\n", groupName)
 	fmt.Println("-------------------------------------")
 	for i, p := range perms {
-		fmt.Printf("%d. %s %s:%s\n", i+1, p.Action, p.ResourceType, p.ResourceID)
-		if p.Scope != "" {
-			fmt.Printf("   Scope: %s\n", p.Scope)
-		}
+		fmt.Printf("%d. %s %s:%s\n", i+1, p.Action, p.ResourceType, p.ResourceSelector.ID)
 	}
 	fmt.Println("-------------------------------------")
 	fmt.Printf("Total permissions: %d\n", len(perms))
 }
 
 // Grant permission to a group
-func (self *cli) grantPermission(groupName, action, resourceType, resourceID, scope string) {
+func (self *cli) grantPermission(groupName, action, resourceType, resourceID string) {
 	ctx := context.Background()
 
 	// Get the group
@@ -361,47 +329,42 @@ func (self *cli) grantPermission(groupName, action, resourceType, resourceID, sc
 	}
 
 	// Parse action
-	var permAction permission.Action
+	var permAction schema.PermittedAction
 	switch strings.ToLower(action) {
-	case "read":
-		permAction = permission.ActionRead
-	case "create":
-		permAction = permission.ActionCreate
-	case "update":
-		permAction = permission.ActionUpdate
-	case "delete":
-		permAction = permission.ActionDelete
-	case "manage":
-		permAction = permission.ActionManage
-	case "admin":
-		permAction = permission.ActionAdmin
-	case "edit":
-		permAction = permission.ActionEdit
 	case "view":
-		permAction = permission.ActionView
+		permAction = schema.ActionViewer
+	case "admin":
+		permAction = schema.ActionAdmin
+	case "edit":
+		permAction = schema.ActionEditor
 	default:
-		fmt.Printf("Error: Invalid action '%s'. Valid actions are: read, create, update, delete, manage, admin, edit, view\n", action)
+		fmt.Printf("Error: Invalid action '%s'. Valid actions are: admin, edit, view \n", action)
 		return
 	}
 
 	// Parse resource type
-	var permResourceType permission.ResourceType
+	var permResourceType schema.ResourceType
 	switch strings.ToLower(resourceType) {
 	case "system":
-		permResourceType = permission.ResourceTypeSystem
-	case "user":
-		permResourceType = permission.ResourceTypeUser
-	case "group":
-		permResourceType = permission.ResourceTypeGroup
+		permResourceType = schema.ResourceTypeSystem
 	case "team":
-		permResourceType = permission.ResourceTypeTeam
+		permResourceType = schema.ResourceTypeTeam
 	case "project":
-		permResourceType = permission.ResourceTypeProject
-	case "permission":
-		permResourceType = permission.ResourceTypePermission
+		permResourceType = schema.ResourceTypeProject
+	case "environment":
+		permResourceType = schema.ResourceTypeEnvironment
+	case "service":
+		permResourceType = schema.ResourceTypeService
 	default:
-		fmt.Printf("Error: Invalid resource type '%s'. Valid types are: system, user, group, team, project, permission\n", resourceType)
+		fmt.Printf("Error: Invalid resource type '%s'. Valid types are: system, team, project, environmne, servvice\n", resourceType)
 		return
+	}
+
+	selector := schema.ResourceSelector{}
+	if resourceID == "*" {
+		selector.Superuser = true
+	} else {
+		selector.ID = uuid.MustParse(resourceID)
 	}
 
 	perm, err := self.groupService.GrantPermissionToGroup(
@@ -410,8 +373,7 @@ func (self *cli) grantPermission(groupName, action, resourceType, resourceID, sc
 		group.ID,
 		permAction,
 		permResourceType,
-		resourceID,
-		scope,
+		selector,
 	)
 	if err != nil {
 		fmt.Printf("Error granting permission: %v\n", err)
@@ -422,10 +384,7 @@ func (self *cli) grantPermission(groupName, action, resourceType, resourceID, sc
 	fmt.Printf("ID: %s\n", perm.ID)
 	fmt.Printf("Action: %s\n", perm.Action)
 	fmt.Printf("Resource Type: %s\n", perm.ResourceType)
-	fmt.Printf("Resource ID: %s\n", perm.ResourceID)
-	if perm.Scope != "" {
-		fmt.Printf("Scope: %s\n", perm.Scope)
-	}
+	fmt.Printf("Resource ID: %s\n", resourceID)
 }
 
 // Sync permissions with K8s

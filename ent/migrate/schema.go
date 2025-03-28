@@ -139,32 +139,13 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
-		{Name: "superuser", Type: field.TypeBool, Default: false},
 		{Name: "k8s_role_name", Type: field.TypeString, Nullable: true},
-		{Name: "identity_provider", Type: field.TypeString, Nullable: true},
-		{Name: "external_id", Type: field.TypeString, Nullable: true},
-		{Name: "team_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// GroupsTable holds the schema information for the "groups" table.
 	GroupsTable = &schema.Table{
 		Name:       "groups",
 		Columns:    GroupsColumns,
 		PrimaryKey: []*schema.Column{GroupsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "groups_teams_groups",
-				Columns:    []*schema.Column{GroupsColumns[9]},
-				RefColumns: []*schema.Column{TeamsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "group_name_team_id",
-				Unique:  true,
-				Columns: []*schema.Column{GroupsColumns[3], GroupsColumns[9]},
-			},
-		},
 	}
 	// JwtKeysColumns holds the columns for the "jwt_keys" table.
 	JwtKeysColumns = []*schema.Column{
@@ -237,11 +218,9 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "action", Type: field.TypeEnum, Enums: []string{"read", "create", "update", "delete", "manage", "admin", "edit", "view"}},
-		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "group", "environment", "permission", "user", "system", "service"}},
-		{Name: "resource_id", Type: field.TypeString},
-		{Name: "scope", Type: field.TypeString, Nullable: true},
-		{Name: "labels", Type: field.TypeJSON, Nullable: true},
+		{Name: "action", Type: field.TypeEnum, Enums: []string{"admin", "edit", "view"}},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "environment", "service"}},
+		{Name: "resource_selector", Type: field.TypeJSON},
 	}
 	// PermissionsTable holds the schema information for the "permissions" table.
 	PermissionsTable = &schema.Table{
@@ -495,7 +474,6 @@ func init() {
 	GithubInstallationsTable.Annotation = &entsql.Annotation{
 		Table: "github_installations",
 	}
-	GroupsTable.ForeignKeys[0].RefTable = TeamsTable
 	GroupsTable.Annotation = &entsql.Annotation{
 		Table: "groups",
 	}

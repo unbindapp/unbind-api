@@ -78,19 +78,6 @@ func verifyPassword(hashedPassword, plainPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 }
 
-func (self *UserRepository) IsSuperUser(ctx context.Context, userID uuid.UUID) (bool, error) {
-	userGrps, err := self.GetGroups(ctx, userID)
-	if err != nil {
-		return false, fmt.Errorf("error fetching user groups: %w", err)
-	}
-	for _, grp := range userGrps {
-		if grp.Superuser {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 func (self *UserRepository) GetGroups(ctx context.Context, userID uuid.UUID) ([]*ent.Group, error) {
 	return self.base.DB.User.Query().Where(user.ID(userID)).QueryGroups().All(ctx)
 }

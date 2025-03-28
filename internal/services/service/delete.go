@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
@@ -15,35 +15,11 @@ import (
 func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) error {
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to manage teams
+		// Has permission to admin service
 		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to manage this team
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   teamID.String(),
-		},
-		// Has permission to manage this project
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   projectID.String(),
-		},
-		// Has permission to manage this specific environment
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeEnvironment,
-			ResourceID:   environmentID.String(),
-		},
-		// Has permission to manage this specific service
-		{
-			Action:       permission.ActionDelete,
-			ResourceType: permission.ResourceTypeService,
-			ResourceID:   serviceID.String(),
+			Action:       schema.ActionAdmin,
+			ResourceType: schema.ResourceTypeService,
+			ResourceID:   serviceID,
 		},
 	}
 

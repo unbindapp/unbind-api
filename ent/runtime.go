@@ -159,10 +159,6 @@ func init() {
 	groupDescName := groupFields[0].Descriptor()
 	// group.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	group.NameValidator = groupDescName.Validators[0].(func(string) error)
-	// groupDescSuperuser is the schema descriptor for superuser field.
-	groupDescSuperuser := groupFields[2].Descriptor()
-	// group.DefaultSuperuser holds the default value on creation for the superuser field.
-	group.DefaultSuperuser = groupDescSuperuser.Default.(bool)
 	// groupDescID is the schema descriptor for id field.
 	groupDescID := groupMixinFields0[0].Descriptor()
 	// group.DefaultID holds the default value on creation for the id field.
@@ -234,10 +230,6 @@ func init() {
 	permission.DefaultUpdatedAt = permissionDescUpdatedAt.Default.(func() time.Time)
 	// permission.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	permission.UpdateDefaultUpdatedAt = permissionDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// permissionDescResourceID is the schema descriptor for resource_id field.
-	permissionDescResourceID := permissionFields[2].Descriptor()
-	// permission.ResourceIDValidator is a validator for the "resource_id" field. It is called by the builders before save.
-	permission.ResourceIDValidator = permissionDescResourceID.Validators[0].(func(string) error)
 	// permissionDescID is the schema descriptor for id field.
 	permissionDescID := permissionMixinFields0[0].Descriptor()
 	// permission.DefaultID holds the default value on creation for the id field.

@@ -45,11 +45,9 @@ type TeamEdges struct {
 	Projects []*Project `json:"projects,omitempty"`
 	// Members holds the value of the members edge.
 	Members []*User `json:"members,omitempty"`
-	// Groups holds the value of the groups edge.
-	Groups []*Group `json:"groups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 }
 
 // ProjectsOrErr returns the Projects value or an error if the edge
@@ -68,15 +66,6 @@ func (e TeamEdges) MembersOrErr() ([]*User, error) {
 		return e.Members, nil
 	}
 	return nil, &NotLoadedError{edge: "members"}
-}
-
-// GroupsOrErr returns the Groups value or an error if the edge
-// was not loaded in eager-loading.
-func (e TeamEdges) GroupsOrErr() ([]*Group, error) {
-	if e.loadedTypes[2] {
-		return e.Groups, nil
-	}
-	return nil, &NotLoadedError{edge: "groups"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -175,11 +164,6 @@ func (t *Team) QueryProjects() *ProjectQuery {
 // QueryMembers queries the "members" edge of the Team entity.
 func (t *Team) QueryMembers() *UserQuery {
 	return NewTeamClient(t.config).QueryMembers(t)
-}
-
-// QueryGroups queries the "groups" edge of the Team entity.
-func (t *Team) QueryGroups() *GroupQuery {
-	return NewTeamClient(t.config).QueryGroups(t)
 }
 
 // Update returns a builder for updating this Team.

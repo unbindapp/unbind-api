@@ -15,7 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/group"
 	"github.com/unbindapp/unbind-api/ent/permission"
-	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
@@ -75,20 +74,6 @@ func (gc *GroupCreate) SetNillableDescription(s *string) *GroupCreate {
 	return gc
 }
 
-// SetSuperuser sets the "superuser" field.
-func (gc *GroupCreate) SetSuperuser(b bool) *GroupCreate {
-	gc.mutation.SetSuperuser(b)
-	return gc
-}
-
-// SetNillableSuperuser sets the "superuser" field if the given value is not nil.
-func (gc *GroupCreate) SetNillableSuperuser(b *bool) *GroupCreate {
-	if b != nil {
-		gc.SetSuperuser(*b)
-	}
-	return gc
-}
-
 // SetK8sRoleName sets the "k8s_role_name" field.
 func (gc *GroupCreate) SetK8sRoleName(s string) *GroupCreate {
 	gc.mutation.SetK8sRoleName(s)
@@ -99,48 +84,6 @@ func (gc *GroupCreate) SetK8sRoleName(s string) *GroupCreate {
 func (gc *GroupCreate) SetNillableK8sRoleName(s *string) *GroupCreate {
 	if s != nil {
 		gc.SetK8sRoleName(*s)
-	}
-	return gc
-}
-
-// SetIdentityProvider sets the "identity_provider" field.
-func (gc *GroupCreate) SetIdentityProvider(s string) *GroupCreate {
-	gc.mutation.SetIdentityProvider(s)
-	return gc
-}
-
-// SetNillableIdentityProvider sets the "identity_provider" field if the given value is not nil.
-func (gc *GroupCreate) SetNillableIdentityProvider(s *string) *GroupCreate {
-	if s != nil {
-		gc.SetIdentityProvider(*s)
-	}
-	return gc
-}
-
-// SetExternalID sets the "external_id" field.
-func (gc *GroupCreate) SetExternalID(s string) *GroupCreate {
-	gc.mutation.SetExternalID(s)
-	return gc
-}
-
-// SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (gc *GroupCreate) SetNillableExternalID(s *string) *GroupCreate {
-	if s != nil {
-		gc.SetExternalID(*s)
-	}
-	return gc
-}
-
-// SetTeamID sets the "team_id" field.
-func (gc *GroupCreate) SetTeamID(u uuid.UUID) *GroupCreate {
-	gc.mutation.SetTeamID(u)
-	return gc
-}
-
-// SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (gc *GroupCreate) SetNillableTeamID(u *uuid.UUID) *GroupCreate {
-	if u != nil {
-		gc.SetTeamID(*u)
 	}
 	return gc
 }
@@ -189,11 +132,6 @@ func (gc *GroupCreate) AddPermissions(p ...*Permission) *GroupCreate {
 	return gc.AddPermissionIDs(ids...)
 }
 
-// SetTeam sets the "team" edge to the Team entity.
-func (gc *GroupCreate) SetTeam(t *Team) *GroupCreate {
-	return gc.SetTeamID(t.ID)
-}
-
 // Mutation returns the GroupMutation object of the builder.
 func (gc *GroupCreate) Mutation() *GroupMutation {
 	return gc.mutation
@@ -237,10 +175,6 @@ func (gc *GroupCreate) defaults() {
 		v := group.DefaultUpdatedAt()
 		gc.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := gc.mutation.Superuser(); !ok {
-		v := group.DefaultSuperuser
-		gc.mutation.SetSuperuser(v)
-	}
 	if _, ok := gc.mutation.ID(); !ok {
 		v := group.DefaultID()
 		gc.mutation.SetID(v)
@@ -262,9 +196,6 @@ func (gc *GroupCreate) check() error {
 		if err := group.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Group.name": %w`, err)}
 		}
-	}
-	if _, ok := gc.mutation.Superuser(); !ok {
-		return &ValidationError{Name: "superuser", err: errors.New(`ent: missing required field "Group.superuser"`)}
 	}
 	return nil
 }
@@ -318,21 +249,9 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 		_spec.SetField(group.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := gc.mutation.Superuser(); ok {
-		_spec.SetField(group.FieldSuperuser, field.TypeBool, value)
-		_node.Superuser = value
-	}
 	if value, ok := gc.mutation.K8sRoleName(); ok {
 		_spec.SetField(group.FieldK8sRoleName, field.TypeString, value)
-		_node.K8sRoleName = value
-	}
-	if value, ok := gc.mutation.IdentityProvider(); ok {
-		_spec.SetField(group.FieldIdentityProvider, field.TypeString, value)
-		_node.IdentityProvider = value
-	}
-	if value, ok := gc.mutation.ExternalID(); ok {
-		_spec.SetField(group.FieldExternalID, field.TypeString, value)
-		_node.ExternalID = value
+		_node.K8sRoleName = &value
 	}
 	if nodes := gc.mutation.UsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -364,23 +283,6 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := gc.mutation.TeamIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   group.TeamTable,
-			Columns: []string{group.TeamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.TeamID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -477,18 +379,6 @@ func (u *GroupUpsert) ClearDescription() *GroupUpsert {
 	return u
 }
 
-// SetSuperuser sets the "superuser" field.
-func (u *GroupUpsert) SetSuperuser(v bool) *GroupUpsert {
-	u.Set(group.FieldSuperuser, v)
-	return u
-}
-
-// UpdateSuperuser sets the "superuser" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateSuperuser() *GroupUpsert {
-	u.SetExcluded(group.FieldSuperuser)
-	return u
-}
-
 // SetK8sRoleName sets the "k8s_role_name" field.
 func (u *GroupUpsert) SetK8sRoleName(v string) *GroupUpsert {
 	u.Set(group.FieldK8sRoleName, v)
@@ -504,60 +394,6 @@ func (u *GroupUpsert) UpdateK8sRoleName() *GroupUpsert {
 // ClearK8sRoleName clears the value of the "k8s_role_name" field.
 func (u *GroupUpsert) ClearK8sRoleName() *GroupUpsert {
 	u.SetNull(group.FieldK8sRoleName)
-	return u
-}
-
-// SetIdentityProvider sets the "identity_provider" field.
-func (u *GroupUpsert) SetIdentityProvider(v string) *GroupUpsert {
-	u.Set(group.FieldIdentityProvider, v)
-	return u
-}
-
-// UpdateIdentityProvider sets the "identity_provider" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateIdentityProvider() *GroupUpsert {
-	u.SetExcluded(group.FieldIdentityProvider)
-	return u
-}
-
-// ClearIdentityProvider clears the value of the "identity_provider" field.
-func (u *GroupUpsert) ClearIdentityProvider() *GroupUpsert {
-	u.SetNull(group.FieldIdentityProvider)
-	return u
-}
-
-// SetExternalID sets the "external_id" field.
-func (u *GroupUpsert) SetExternalID(v string) *GroupUpsert {
-	u.Set(group.FieldExternalID, v)
-	return u
-}
-
-// UpdateExternalID sets the "external_id" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateExternalID() *GroupUpsert {
-	u.SetExcluded(group.FieldExternalID)
-	return u
-}
-
-// ClearExternalID clears the value of the "external_id" field.
-func (u *GroupUpsert) ClearExternalID() *GroupUpsert {
-	u.SetNull(group.FieldExternalID)
-	return u
-}
-
-// SetTeamID sets the "team_id" field.
-func (u *GroupUpsert) SetTeamID(v uuid.UUID) *GroupUpsert {
-	u.Set(group.FieldTeamID, v)
-	return u
-}
-
-// UpdateTeamID sets the "team_id" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateTeamID() *GroupUpsert {
-	u.SetExcluded(group.FieldTeamID)
-	return u
-}
-
-// ClearTeamID clears the value of the "team_id" field.
-func (u *GroupUpsert) ClearTeamID() *GroupUpsert {
-	u.SetNull(group.FieldTeamID)
 	return u
 }
 
@@ -661,20 +497,6 @@ func (u *GroupUpsertOne) ClearDescription() *GroupUpsertOne {
 	})
 }
 
-// SetSuperuser sets the "superuser" field.
-func (u *GroupUpsertOne) SetSuperuser(v bool) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetSuperuser(v)
-	})
-}
-
-// UpdateSuperuser sets the "superuser" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateSuperuser() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateSuperuser()
-	})
-}
-
 // SetK8sRoleName sets the "k8s_role_name" field.
 func (u *GroupUpsertOne) SetK8sRoleName(v string) *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
@@ -693,69 +515,6 @@ func (u *GroupUpsertOne) UpdateK8sRoleName() *GroupUpsertOne {
 func (u *GroupUpsertOne) ClearK8sRoleName() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.ClearK8sRoleName()
-	})
-}
-
-// SetIdentityProvider sets the "identity_provider" field.
-func (u *GroupUpsertOne) SetIdentityProvider(v string) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetIdentityProvider(v)
-	})
-}
-
-// UpdateIdentityProvider sets the "identity_provider" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateIdentityProvider() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateIdentityProvider()
-	})
-}
-
-// ClearIdentityProvider clears the value of the "identity_provider" field.
-func (u *GroupUpsertOne) ClearIdentityProvider() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearIdentityProvider()
-	})
-}
-
-// SetExternalID sets the "external_id" field.
-func (u *GroupUpsertOne) SetExternalID(v string) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetExternalID(v)
-	})
-}
-
-// UpdateExternalID sets the "external_id" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateExternalID() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateExternalID()
-	})
-}
-
-// ClearExternalID clears the value of the "external_id" field.
-func (u *GroupUpsertOne) ClearExternalID() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearExternalID()
-	})
-}
-
-// SetTeamID sets the "team_id" field.
-func (u *GroupUpsertOne) SetTeamID(v uuid.UUID) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetTeamID(v)
-	})
-}
-
-// UpdateTeamID sets the "team_id" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateTeamID() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateTeamID()
-	})
-}
-
-// ClearTeamID clears the value of the "team_id" field.
-func (u *GroupUpsertOne) ClearTeamID() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearTeamID()
 	})
 }
 
@@ -1026,20 +785,6 @@ func (u *GroupUpsertBulk) ClearDescription() *GroupUpsertBulk {
 	})
 }
 
-// SetSuperuser sets the "superuser" field.
-func (u *GroupUpsertBulk) SetSuperuser(v bool) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetSuperuser(v)
-	})
-}
-
-// UpdateSuperuser sets the "superuser" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateSuperuser() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateSuperuser()
-	})
-}
-
 // SetK8sRoleName sets the "k8s_role_name" field.
 func (u *GroupUpsertBulk) SetK8sRoleName(v string) *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
@@ -1058,69 +803,6 @@ func (u *GroupUpsertBulk) UpdateK8sRoleName() *GroupUpsertBulk {
 func (u *GroupUpsertBulk) ClearK8sRoleName() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.ClearK8sRoleName()
-	})
-}
-
-// SetIdentityProvider sets the "identity_provider" field.
-func (u *GroupUpsertBulk) SetIdentityProvider(v string) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetIdentityProvider(v)
-	})
-}
-
-// UpdateIdentityProvider sets the "identity_provider" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateIdentityProvider() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateIdentityProvider()
-	})
-}
-
-// ClearIdentityProvider clears the value of the "identity_provider" field.
-func (u *GroupUpsertBulk) ClearIdentityProvider() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearIdentityProvider()
-	})
-}
-
-// SetExternalID sets the "external_id" field.
-func (u *GroupUpsertBulk) SetExternalID(v string) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetExternalID(v)
-	})
-}
-
-// UpdateExternalID sets the "external_id" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateExternalID() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateExternalID()
-	})
-}
-
-// ClearExternalID clears the value of the "external_id" field.
-func (u *GroupUpsertBulk) ClearExternalID() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearExternalID()
-	})
-}
-
-// SetTeamID sets the "team_id" field.
-func (u *GroupUpsertBulk) SetTeamID(v uuid.UUID) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetTeamID(v)
-	})
-}
-
-// UpdateTeamID sets the "team_id" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateTeamID() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateTeamID()
-	})
-}
-
-// ClearTeamID clears the value of the "team_id" field.
-func (u *GroupUpsertBulk) ClearTeamID() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearTeamID()
 	})
 }
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
@@ -28,23 +28,11 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	}
 
 	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to manage system resources
+		// Team editor can create projects
 		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		// Has permission to manage teams
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		// Has permission to manage the specific team
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   input.TeamID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   input.TeamID,
 		},
 	}
 

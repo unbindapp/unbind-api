@@ -11,7 +11,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/group"
-	"github.com/unbindapp/unbind-api/ent/team"
 )
 
 // Group is the model entity for the Group schema.
@@ -28,16 +27,8 @@ type Group struct {
 	Name string `json:"name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
-	// Superuser status
-	Superuser bool `json:"superuser,omitempty"`
-	// Reference to the Kubernetes ClusterRole name
-	K8sRoleName string `json:"k8s_role_name,omitempty"`
-	// Identity provider prefix (e.g., 'oidc', 'ldap')
-	IdentityProvider string `json:"identity_provider,omitempty"`
-	// External identifier used in auth systems
-	ExternalID string `json:"external_id,omitempty"`
-	// If set, this group is scoped to a team
-	TeamID *uuid.UUID `json:"team_id,omitempty"`
+	// Reference to the Kubernetes Role name
+	K8sRoleName *string `json:"k8s_role_name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GroupQuery when eager-loading is set.
 	Edges        GroupEdges `json:"edges"`
@@ -50,11 +41,9 @@ type GroupEdges struct {
 	Users []*User `json:"users,omitempty"`
 	// Permissions holds the value of the permissions edge.
 	Permissions []*Permission `json:"permissions,omitempty"`
-	// Team holds the value of the team edge.
-	Team *Team `json:"team,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -75,27 +64,12 @@ func (e GroupEdges) PermissionsOrErr() ([]*Permission, error) {
 	return nil, &NotLoadedError{edge: "permissions"}
 }
 
-// TeamOrErr returns the Team value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e GroupEdges) TeamOrErr() (*Team, error) {
-	if e.Team != nil {
-		return e.Team, nil
-	} else if e.loadedTypes[2] {
-		return nil, &NotFoundError{label: team.Label}
-	}
-	return nil, &NotLoadedError{edge: "team"}
-}
-
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Group) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case group.FieldTeamID:
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case group.FieldSuperuser:
-			values[i] = new(sql.NullBool)
-		case group.FieldName, group.FieldDescription, group.FieldK8sRoleName, group.FieldIdentityProvider, group.FieldExternalID:
+		case group.FieldName, group.FieldDescription, group.FieldK8sRoleName:
 			values[i] = new(sql.NullString)
 		case group.FieldCreatedAt, group.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -146,36 +120,12 @@ func (gr *Group) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				gr.Description = value.String
 			}
-		case group.FieldSuperuser:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field superuser", values[i])
-			} else if value.Valid {
-				gr.Superuser = value.Bool
-			}
 		case group.FieldK8sRoleName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field k8s_role_name", values[i])
 			} else if value.Valid {
-				gr.K8sRoleName = value.String
-			}
-		case group.FieldIdentityProvider:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field identity_provider", values[i])
-			} else if value.Valid {
-				gr.IdentityProvider = value.String
-			}
-		case group.FieldExternalID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field external_id", values[i])
-			} else if value.Valid {
-				gr.ExternalID = value.String
-			}
-		case group.FieldTeamID:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field team_id", values[i])
-			} else if value.Valid {
-				gr.TeamID = new(uuid.UUID)
-				*gr.TeamID = *value.S.(*uuid.UUID)
+				gr.K8sRoleName = new(string)
+				*gr.K8sRoleName = value.String
 			}
 		default:
 			gr.selectValues.Set(columns[i], values[i])
@@ -198,11 +148,6 @@ func (gr *Group) QueryUsers() *UserQuery {
 // QueryPermissions queries the "permissions" edge of the Group entity.
 func (gr *Group) QueryPermissions() *PermissionQuery {
 	return NewGroupClient(gr.config).QueryPermissions(gr)
-}
-
-// QueryTeam queries the "team" edge of the Group entity.
-func (gr *Group) QueryTeam() *TeamQuery {
-	return NewGroupClient(gr.config).QueryTeam(gr)
 }
 
 // Update returns a builder for updating this Group.
@@ -240,21 +185,9 @@ func (gr *Group) String() string {
 	builder.WriteString("description=")
 	builder.WriteString(gr.Description)
 	builder.WriteString(", ")
-	builder.WriteString("superuser=")
-	builder.WriteString(fmt.Sprintf("%v", gr.Superuser))
-	builder.WriteString(", ")
-	builder.WriteString("k8s_role_name=")
-	builder.WriteString(gr.K8sRoleName)
-	builder.WriteString(", ")
-	builder.WriteString("identity_provider=")
-	builder.WriteString(gr.IdentityProvider)
-	builder.WriteString(", ")
-	builder.WriteString("external_id=")
-	builder.WriteString(gr.ExternalID)
-	builder.WriteString(", ")
-	if v := gr.TeamID; v != nil {
-		builder.WriteString("team_id=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
+	if v := gr.K8sRoleName; v != nil {
+		builder.WriteString("k8s_role_name=")
+		builder.WriteString(*v)
 	}
 	builder.WriteByte(')')
 	return builder.String()

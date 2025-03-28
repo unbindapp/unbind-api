@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
@@ -18,37 +17,12 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
-	// Check permissions
+	// Editor can create deployments
 	if err := self.repo.Permissions().Check(ctx, requesterUserId, []permissions_repo.PermissionCheck{
 		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
-		},
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   "*",
-		},
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   input.TeamID.String(),
-		},
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   "*",
-		},
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeProject,
-			ResourceID:   input.ProjectID.String(),
-		},
-		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeService,
-			ResourceID:   input.ServiceID.String(),
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeService,
+			ResourceID:   input.ServiceID,
 		},
 	}); err != nil {
 		return nil, err

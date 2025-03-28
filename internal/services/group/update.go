@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/permission"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
@@ -23,31 +23,10 @@ func (self *GroupService) UpdateGroup(ctx context.Context, userID uuid.UUID, gro
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to manage system resources
 		{
-			Action:       permission.ActionManage,
-			ResourceType: permission.ResourceTypeSystem,
-			ResourceID:   "*",
+			Action:       schema.ActionEditor,
+			ResourceType: schema.ResourceTypeSystem,
+			ResourceID:   group.ID,
 		},
-		// Has permission to manage groups
-		{
-			Action:       permission.ActionUpdate,
-			ResourceType: permission.ResourceTypeGroup,
-			ResourceID:   "*",
-		},
-		// has permission to update this specific group
-		{
-			Action:       permission.ActionUpdate,
-			ResourceType: permission.ResourceTypeGroup,
-			ResourceID:   groupID.String(),
-		},
-	}
-
-	if group.TeamID != nil {
-		// For team groups, check team-level permission
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       permission.ActionUpdate,
-			ResourceType: permission.ResourceTypeTeam,
-			ResourceID:   group.TeamID.String(),
-		})
 	}
 
 	// Execute permission checks
@@ -65,24 +44,6 @@ func (self *GroupService) UpdateGroup(ctx context.Context, userID uuid.UUID, gro
 
 	if input.Description != "" {
 		update.SetDescription(input.Description)
-	}
-
-	if input.IdentityProvider != "" {
-		update.SetIdentityProvider(input.IdentityProvider)
-	}
-
-	if input.ExternalID != "" {
-		update.SetExternalID(input.ExternalID)
-	}
-
-	// Cannot change team scope of an existing group
-	if input.TeamID != nil && group.TeamID != nil && *input.TeamID != *group.TeamID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "cannot change team scope of an existing group")
-	}
-
-	// Cannot change global group to team-scoped or vice versa
-	if (input.TeamID == nil && group.TeamID != nil) || (input.TeamID != nil && group.TeamID == nil) {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "cannot change group scope (global/team)")
 	}
 
 	// Execute the update
