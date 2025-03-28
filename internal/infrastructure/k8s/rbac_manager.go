@@ -28,8 +28,7 @@ func NewRBACManager(repository repositories.RepositoriesInterface, kubeClient *K
 
 // SyncGroupToK8s creates or updates Kubernetes RBAC resources for a group, must have permissions edge populated
 func (self *RBACManager) SyncGroupToK8s(ctx context.Context, group *ent.Group) error {
-	// Create a Kubernetes name for the group
-	k8sGroupName := fmt.Sprintf("unbind-group-%s", group.ID.String())
+	roleName, bindingName := getRoleAndBindingName(group.Name, group.ID.String())
 
 	var err error
 	// Create or update Role for each permission
@@ -52,8 +51,6 @@ func (self *RBACManager) SyncGroupToK8s(ctx context.Context, group *ent.Group) e
 		}
 
 		for _, team := range teams {
-			roleName, bindingName := getRoleAndBindingName(k8sGroupName, team.Namespace)
-
 			// Create or update the Role
 			if err := self.createOrUpdateRole(ctx, roleName, team.Namespace, group.Name, permission.Action); err != nil {
 				log.Warnf("Warning: failed to create/update Role for group %s in namespace %s: %v", group.Name, team.Namespace, err)
@@ -69,7 +66,7 @@ func (self *RBACManager) SyncGroupToK8s(ctx context.Context, group *ent.Group) e
 	}
 
 	// Update the group in our database to store K8s reference
-	err = self.repo.Group().UpdateK8sRoleName(ctx, group, k8sGroupName)
+	err = self.repo.Group().UpdateK8sRoleName(ctx, group, roleName)
 	if err != nil {
 		return fmt.Errorf("failed to update group: %w", err)
 	}
@@ -386,10 +383,10 @@ func (self *RBACManager) DeleteK8sRBAC(ctx context.Context, group *ent.Group) er
 		Resource: "rolebindings",
 	}
 
+	roleName, bindingName := getRoleAndBindingName(group.Name, group.ID.String())
+
 	// For each team, try to delete the Role and RoleBinding
 	for _, team := range teams {
-		roleName, bindingName := getRoleAndBindingName(group.Name, team.Namespace)
-
 		// Delete the RoleBinding first
 		err = self.kubeClient.client.Resource(rbResource).Namespace(team.Namespace).Delete(ctx, bindingName, metav1.DeleteOptions{})
 		if err == nil {
@@ -419,8 +416,8 @@ func interfaceFromStrings(strings []string) []interface{} {
 }
 
 // Helper to get role and binding name
-func getRoleAndBindingName(groupName string, namespace string) (string, string) {
-	roleName := fmt.Sprintf("unbind-group-%s-%s", groupName, namespace)
+func getRoleAndBindingName(groupName string, groupID string) (string, string) {
+	roleName := fmt.Sprintf("unbind-group-%s-%s", groupName, groupID)
 	bindingName := fmt.Sprintf("binding-%s", roleName)
 	return roleName, bindingName
 }

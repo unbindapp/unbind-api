@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -36,32 +35,33 @@ func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearer
 		return nil, err
 	}
 
-	namespaceNames := make([]string, len(dbTeams))
-	for i, team := range dbTeams {
-		namespaceNames[i] = team.Namespace
-	}
+	// ! Doesn't work with Role/RoleBinding
+	// namespaceNames := make([]string, len(dbTeams))
+	// for i, team := range dbTeams {
+	// 	namespaceNames[i] = team.Namespace
+	// }
 
-	// Get namespaces from kubernetes
-	namespaces, err := self.k8s.GetNamespaces(ctx, namespaceNames, bearerToken)
-	if err != nil {
-		return nil, err
-	}
+	// // Get namespaces from kubernetes
+	// namespaces, err := self.k8s.GetNamespaces(ctx, namespaceNames, bearerToken)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// Create a map of k8s namespaces
-	k8sNamespaces := make(map[string]bool)
-	for _, team := range namespaces {
-		k8sNamespaces[team.Namespace] = true
-	}
+	// // Create a map of k8s namespaces
+	// k8sNamespaces := make(map[string]bool)
+	// for _, team := range namespaces {
+	// 	k8sNamespaces[team.Namespace] = true
+	// }
 
-	// Filter dbTeams to only include those with namespaces in k8sNamespaces
-	var filteredTeams []*ent.Team
-	for _, team := range dbTeams {
-		_, namespaceExists := k8sNamespaces[team.Namespace]
-		if !namespaceExists {
-			continue
-		}
-		filteredTeams = append(filteredTeams, team)
-	}
+	// // Filter dbTeams to only include those with namespaces in k8sNamespaces
+	// var filteredTeams []*ent.Team
+	// for _, team := range dbTeams {
+	// 	_, namespaceExists := k8sNamespaces[team.Namespace]
+	// 	if !namespaceExists {
+	// 		continue
+	// 	}
+	// 	filteredTeams = append(filteredTeams, team)
+	// }
 
-	return models.TransformTeamEntities(filteredTeams), nil
+	return models.TransformTeamEntities(dbTeams), nil
 }
