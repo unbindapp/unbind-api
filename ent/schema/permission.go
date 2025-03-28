@@ -110,6 +110,7 @@ const (
 )
 
 var allResourceTypes = []ResourceType{
+	ResourceTypeSystem,
 	ResourceTypeTeam,
 	ResourceTypeProject,
 	ResourceTypeEnvironment,

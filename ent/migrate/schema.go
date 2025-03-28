@@ -219,7 +219,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "action", Type: field.TypeEnum, Enums: []string{"admin", "edit", "view"}},
-		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"team", "project", "environment", "service"}},
+		{Name: "resource_type", Type: field.TypeEnum, Enums: []string{"system", "team", "project", "environment", "service"}},
 		{Name: "resource_selector", Type: field.TypeJSON},
 	}
 	// PermissionsTable holds the schema information for the "permissions" table.

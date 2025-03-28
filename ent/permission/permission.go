@@ -88,7 +88,7 @@ func ActionValidator(a schema.PermittedAction) error {
 // ResourceTypeValidator is a validator for the "resource_type" field enum values. It is called by the builders before save.
 func ResourceTypeValidator(rt schema.ResourceType) error {
 	switch rt {
-	case "team", "project", "environment", "service":
+	case "system", "team", "project", "environment", "service":
 		return nil
 	default:
 		return fmt.Errorf("permission: invalid enum value for resource_type field: %q", rt)
