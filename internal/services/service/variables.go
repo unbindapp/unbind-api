@@ -101,6 +101,8 @@ func (self *ServiceService) GetVariables(ctx context.Context, userID uuid.UUID, 
 		}
 		i++
 	}
+
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }
 
@@ -207,6 +209,7 @@ func (self *ServiceService) UpsertVariables(ctx context.Context, userID uuid.UUI
 		return nil, err
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }
 
@@ -318,5 +321,6 @@ func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uui
 		return nil, err
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }

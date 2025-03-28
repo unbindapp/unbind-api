@@ -2,6 +2,7 @@ package models
 
 import (
 	"reflect"
+	"sort"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -44,4 +45,14 @@ type VariableResponse struct {
 
 type VariableDeleteInput struct {
 	Name string `json:"name" required:"true"`
+}
+
+// Sort by type then name
+func SortVariableResponse(vars []*VariableResponse) {
+	sort.Slice(vars, func(i, j int) bool {
+		if vars[i].Type != vars[j].Type {
+			return vars[i].Type < vars[j].Type
+		}
+		return vars[i].Name < vars[j].Name
+	})
 }

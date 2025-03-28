@@ -73,6 +73,7 @@ func (self *TeamService) GetVariables(ctx context.Context, userID uuid.UUID, bea
 		i++
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }
 
@@ -145,6 +146,7 @@ func (self *TeamService) UpsertVariables(ctx context.Context, userID uuid.UUID, 
 		i++
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }
 
@@ -222,5 +224,6 @@ func (self *TeamService) DeleteVariablesByKey(ctx context.Context, userID uuid.U
 		i++
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }

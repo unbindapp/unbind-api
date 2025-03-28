@@ -89,6 +89,7 @@ func (self *ProjectService) GetVariables(ctx context.Context, userID uuid.UUID, 
 		i++
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }
 
@@ -177,6 +178,7 @@ func (self *ProjectService) UpsertVariables(ctx context.Context, userID uuid.UUI
 		i++
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }
 
@@ -270,5 +272,6 @@ func (self *ProjectService) DeleteVariablesByKey(ctx context.Context, userID uui
 		i++
 	}
 
+	models.SortVariableResponse(variablesResponse)
 	return variablesResponse, nil
 }
