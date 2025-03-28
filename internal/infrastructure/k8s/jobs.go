@@ -34,6 +34,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 	}
 
 	// Define the Job object
+	// Define the Job object
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jobName,
@@ -61,9 +62,8 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 					},
 				},
 				Spec: corev1.PodSpec{
-					ServiceAccountName:    "builder-serviceaccount",
-					RestartPolicy:         corev1.RestartPolicyNever,
-					ShareProcessNamespace: utils.ToPtr(true), // Share process namespace between containers
+					ServiceAccountName: "builder-serviceaccount",
+					RestartPolicy:      corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
 							Name:  "build-container",
@@ -71,19 +71,19 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 							Command: []string{
 								"sh",
 								"-c",
-								`# Wait for buildkitd to be ready
-	until buildctl --addr tcp://localhost:1234 debug workers >/dev/null 2>&1; do
-		echo "Waiting for BuildKit daemon to be ready...";
-		sleep 1;
-	done;
-	
-	# Run the builder with BuildKit
-	exec /app/builder`,
+								`# Check if buildkitd is ready, fail if not
+if ! buildctl --addr tcp://buildkitd.unbind-system:1234 debug workers >/dev/null 2>&1; then
+	echo "Error: Cannot connect to BuildKit daemon at buildkitd.unbind-system:1234"
+	exit 1
+fi
+
+# Run the builder with BuildKit
+exec /app/builder`,
 							},
 							Env: append(envVars, []corev1.EnvVar{
 								{
 									Name:  "BUILDKIT_HOST",
-									Value: "tcp://localhost:1234",
+									Value: "tcp://buildkitd.unbind-system:1234",
 								},
 								{
 									Name:  "POSTGRES_HOST",
@@ -106,167 +106,12 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 									Value: self.config.GetPostgresDB(),
 								},
 							}...),
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "buildkit-socket",
-									MountPath: "/run/buildkit",
-								},
-							},
-						},
-						{
-							Name:  "buildkit-daemon",
-							Image: "moby/buildkit:v0.20.1-rootless",
-							Command: []string{
-								"sh",
-								"-c",
-								`
-				# Trap SIGTERM/SIGINT and forward it to buildkitd
-				trap "echo Received SIGTERM, forwarding to buildkitd; kill -TERM $child" SIGTERM SIGINT
-				
-				# Start buildkitd in the background
-				rootlesskit buildkitd --addr tcp://0.0.0.0:1234 --oci-worker-no-process-sandbox --config /etc/buildkit/buildkitd.toml &
-				child=$!
-				
-				# Wait for buildkitd to exit
-				wait $child
-				status=$?
-				
-				# If the exit code is 1 (from our SIGTERM), convert it to 0
-				if [ $status -eq 1 ]; then
-						echo "Buildkitd exited with status 1, converting to 0 to signal graceful shutdown"
-						exit 0
-				else
-						exit $status
-				fi
-								`,
-							},
-							Env: []corev1.EnvVar{
-								{
-									Name:  "BUILDKIT_STEP_LOG_MAX_SIZE",
-									Value: "-1", // Disable truncating logs
-								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true),
-								SeccompProfile: &corev1.SeccompProfile{
-									Type: corev1.SeccompProfileTypeUnconfined,
-								},
-								AppArmorProfile: &corev1.AppArmorProfile{
-									Type: corev1.AppArmorProfileTypeUnconfined,
-								},
-								RunAsUser:  utils.ToPtr[int64](1000),
-								RunAsGroup: utils.ToPtr[int64](1000),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "buildkit-socket",
-									MountPath: "/run/buildkit",
-								},
-								{
-									Name:      "buildkit-storage",
-									MountPath: "/var/lib/buildkit",
-								},
-								{
-									Name:      "buildkit-config",
-									MountPath: "/etc/buildkit",
-									ReadOnly:  true,
-								},
-							},
-							ReadinessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									Exec: &corev1.ExecAction{
-										Command: []string{
-											"buildctl",
-											"--addr", "tcp://localhost:1234",
-											"debug", "workers",
-										},
-									},
-								},
-								InitialDelaySeconds: 5,
-								PeriodSeconds:       3,
-							},
-						},
-						{
-							Name:  "cleanup-monitor",
-							Image: "alpine",
-							Command: []string{
-								"sh",
-								"-c",
-								`# Install necessary tools
-	apk add --no-cache procps
-	
-	# Wait for the /app/builder process to start
-	while ! pgrep -f "/app/builder" > /dev/null; do
-			echo "Waiting for builder to start..."
-			sleep 1
-	done
-	
-	# Get the PID of the actual builder process
-	builder_pid=$(pgrep -f "/app/builder")
-	echo "Builder process started with PID: $builder_pid"
-	
-	# Monitor the builder process
-	while kill -0 $builder_pid 2>/dev/null; do
-			sleep 2
-	done
-	
-	echo "Builder process has completed"
-	
-	# Give a small grace period for any cleanup
-	sleep 5
-	
-	# Once build is complete, gracefully stop the buildkit daemon
-	echo "Stopping buildkit daemon..."
-	pkill -15 buildkitd || true
-	sleep 3
-	
-	# Force kill if still running
-	pkill -9 buildkitd || true
-	echo "Build complete, BuildKit daemon stopped"
-	
-	# Exit with success to mark the job as complete
-	exit 0`,
-							},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: utils.ToPtr(true),
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "buildkit-socket",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "buildkit-storage",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-						{
-							Name: "buildkit-config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									Items: []corev1.KeyToPath{
-										{
-											Key:  "buildkitd.toml",
-											Path: "buildkitd.toml",
-										},
-									},
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "buildkit-config",
-									},
-								},
-							},
 						},
 					},
 				},
 			},
 		},
 	}
-
 	// Create the Job in Kubernetes
 	_, err = self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).Create(ctx, job, metav1.CreateOptions{})
 	return jobName, err
