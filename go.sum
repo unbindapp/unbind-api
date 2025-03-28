@@ -377,6 +377,8 @@ github.com/prometheus/procfs v0.15.1 h1:YagwOFzUgYfKKHX6Dr+sHT7km/hxC76UB0leargg
 github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoGhij/e3PBqk=
 github.com/railwayapp/railpack v0.0.57 h1:zcoRmfpu5NOw4E9qO/xNlwyNVPtOxSHT7XDJoU+Hxh4=
 github.com/railwayapp/railpack v0.0.57/go.mod h1:aN4rp48wfehvNQIXnbQWWez/FRU1i5DSAvaX39HexUg=
+github.com/railwayapp/railpack v0.0.58 h1:ZHypnTEiE+R7YTkexNqpX0GcEiq8AUQwD54p2ax/F9o=
+github.com/railwayapp/railpack v0.0.58/go.mod h1:aN4rp48wfehvNQIXnbQWWez/FRU1i5DSAvaX39HexUg=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=

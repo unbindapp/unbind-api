@@ -73,6 +73,12 @@ func DetectFramework(provider Provider, plan *core.BuildResult) Framework {
 				return Laravel
 			}
 		}
+	// Ruby frameworks
+	case Ruby:
+		railsFramework, ok := plan.Metadata["rubyRails"]
+		if ok && railsFramework == "true" {
+			return Rails
+		}
 	}
 
 	return UnknownFramework
@@ -103,6 +109,8 @@ const (
 	SpringBoot Framework = "spring-boot"
 	// * PHP frameworks
 	Laravel Framework = "laravel"
+	// * Ruby frameworks
+	Rails Framework = "rails"
 	// * not detected
 	UnknownFramework Framework = "unknown"
 )
@@ -113,6 +121,7 @@ var allFrameworks = []Framework{
 	Gin,
 	SpringBoot,
 	Laravel,
+	Rails,
 	UnknownFramework,
 }
 
