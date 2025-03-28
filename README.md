@@ -43,3 +43,16 @@ Install mockery and run `mockery` to re-generate mocks.
 - [valkey-go](https://github.com/valkey-io/valkey-go) - Valkey client
 - [ifacemaker](https://github.com/vburenin/ifacemaker) - Automatically generates interfaces from structs
 - [mockery](https://github.com/vektra/mockery) - Automatically creates mocks based on `.mockery.yaml`
+
+## Bootstrapping
+
+Bootsrap superuser:
+
+```
+/app/cli user:create --email=EMAIL --password=PASSWORD
+/app/cli group:create --name=superuser --description="Superuser Group"
+/app/cli group:add-user --email=EMAIL --group-name=superuser
+/app/cli group:grant-permission --group-name=superuser --resource-type=system --resource-id="*" --action=admin
+/app/cli group:grant-permission --group-name=superuser --resource-type=team --resource-id="*" --action=admin
+/app/cli sync:group-to-k8s
+```
