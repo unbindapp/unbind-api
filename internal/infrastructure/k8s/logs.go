@@ -36,7 +36,7 @@ type LogEvent struct {
 }
 
 // GetPodLogs retrieves logs for a specific pod based on provided options
-func (k *KubeClient) GetPodLogs(ctx context.Context, podName string, opts LogOptions, client *kubernetes.Clientset) (string, error) {
+func (self *KubeClient) GetPodLogs(ctx context.Context, podName string, opts LogOptions, client *kubernetes.Clientset) (string, error) {
 	podLogOptions := &corev1.PodLogOptions{
 		Follow:     opts.Follow,
 		Previous:   opts.Previous,
@@ -89,7 +89,7 @@ func (k *KubeClient) GetPodLogs(ctx context.Context, podName string, opts LogOpt
 }
 
 // StreamPodLogs streams logs from a pod to the provided writer with filtering
-func (k *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace string, opts LogOptions, eventChan chan<- LogEvent) error {
+func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace string, opts LogOptions, client *kubernetes.Clientset, eventChan chan<- LogEvent) error {
 	podLogOptions := &corev1.PodLogOptions{
 		Follow:     opts.Follow,
 		Previous:   opts.Previous,
@@ -112,7 +112,7 @@ func (k *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace strin
 		podLogOptions.LimitBytes = &opts.LimitBytes
 	}
 
-	req := k.clientset.CoreV1().Pods(namespace).GetLogs(podName, podLogOptions)
+	req := client.CoreV1().Pods(namespace).GetLogs(podName, podLogOptions)
 	stream, err := req.Stream(ctx)
 	if err != nil {
 		return fmt.Errorf("error opening log stream for pod %s: %v", podName, err)

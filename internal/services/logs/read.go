@@ -80,7 +80,7 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 	for _, pod := range pods.Items {
 		podName := pod.Name
 		go func(podName string) {
-			err := self.k8s.StreamPodLogs(streamCtx, podName, team.Namespace, logOptions, eventChan)
+			err := self.k8s.StreamPodLogs(streamCtx, podName, team.Namespace, logOptions, client, eventChan)
 			if err != nil {
 				// Send error as a log event
 				select {
