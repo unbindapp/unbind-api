@@ -6,17 +6,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/unbindapp/unbind-api/pkg/builder/builders"
 	"github.com/unbindapp/unbind-api/pkg/builder/config"
 	"github.com/unbindapp/unbind-api/pkg/builder/k8s"
 	"gopkg.in/yaml.v2"
 )
+
+func markDeploymentSuccessful(ctx context.Context, tx repository.TxInterface, repo *repositories.Repositories, deploymentID uuid.UUID) error {
+	_, err := repo.Deployment().MarkSucceeded(ctx, tx, deploymentID, time.Now())
+	return err
+}
+
+func markDeploymentFailed(ctx context.Context, repo *repositories.Repositories, reason string, deploymentID uuid.UUID) error {
+	_, err := repo.Deployment().MarkFailed(ctx, nil, deploymentID, reason, time.Now())
+	return err
+}
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -50,6 +63,9 @@ func main() {
 	buildSecrets := make(map[string]string)
 	if cfg.ServiceBuildSecrets != "" {
 		if err := json.Unmarshal([]byte(cfg.ServiceBuildSecrets), &serializableSecrets); err != nil {
+			if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed to unmarshal secrets %v", err), cfg.ServiceDeploymentID); err != nil {
+				log.Errorf("Failed to mark deployment as failed: %v", err)
+			}
 			log.Fatalf("Failed to parse secrets: %v", err)
 		}
 
@@ -70,14 +86,23 @@ func main() {
 	case schema.ServiceBuilderRailpack:
 		dockerImg, repoName, err = builder.BuildWithRailpack(ctx, buildSecrets)
 		if err != nil {
+			if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed railpack build %v", err), cfg.ServiceDeploymentID); err != nil {
+				log.Errorf("Failed to mark deployment as failed: %v", err)
+			}
 			log.Fatalf("Failed to build with railpack: %v", err)
 		}
 	case schema.ServiceBuilderDocker:
 		dockerImg, repoName, err = builder.BuildDockerfile(ctx, buildSecrets)
 		if err != nil {
+			if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed docker build %v", err), cfg.ServiceDeploymentID); err != nil {
+				log.Errorf("Failed to mark deployment as failed: %v", err)
+			}
 			log.Fatalf("Failed to build with docker: %v", err)
 		}
 	default:
+		if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("received request with unknown builder: %s", cfg.ServiceBuilder), cfg.ServiceDeploymentID); err != nil {
+			log.Errorf("Failed to mark deployment as failed: %v", err)
+		}
 		log.Fatalf("Unknown builder: %s", cfg.ServiceBuilder)
 	}
 
@@ -88,6 +113,9 @@ func main() {
 	}
 
 	if dockerImg == "" {
+		if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("no output image generated"), cfg.ServiceDeploymentID); err != nil {
+			log.Errorf("Failed to mark deployment as failed: %v", err)
+		}
 		log.Error("Failed to build image to deploy!")
 		os.Exit(1)
 	}
@@ -95,23 +123,38 @@ func main() {
 	// Deploy to kubernetes with context
 	createdCRD, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg)
 	if err != nil {
+		if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed to deploy image %v", err), cfg.ServiceDeploymentID); err != nil {
+			log.Errorf("Failed to mark deployment as failed: %v", err)
+		}
 		log.Fatalf("Failed to deploy image: %v", err)
 	}
 
 	// Update deployment metadata in the DB
-	if _, err = repo.Deployment().AttachDeploymentMetadata(
-		ctx,
-		nil,
-		cfg.ServiceDeploymentID,
-		dockerImg,
-		serviceSpec,
-	); err != nil {
-		log.Error("Failed to attach deployment metadata", "deployment_id", cfg.ServiceDeploymentID, "err", err)
-	}
+	if err := repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		if _, err = repo.Deployment().AttachDeploymentMetadata(
+			ctx,
+			tx,
+			cfg.ServiceDeploymentID,
+			dockerImg,
+			serviceSpec,
+		); err != nil {
+			log.Error("Failed to attach deployment metadata", "deployment_id", cfg.ServiceDeploymentID, "err", err)
+		}
 
-	// Update active deployment
-	if err = repo.Service().SetCurrentDeployment(ctx, nil, cfg.ServiceID, cfg.ServiceDeploymentID); err != nil {
-		log.Error("Failed to set current deployment", "service_id", cfg.ServiceID, "deployment_id", cfg.ServiceDeploymentID, "err", err)
+		// Update active deployment
+		if err = repo.Service().SetCurrentDeployment(ctx, tx, cfg.ServiceID, cfg.ServiceDeploymentID); err != nil {
+			log.Error("Failed to set current deployment", "service_id", cfg.ServiceID, "deployment_id", cfg.ServiceDeploymentID, "err", err)
+		}
+
+		if err = markDeploymentSuccessful(ctx, tx, repo, cfg.ServiceDeploymentID); err != nil {
+			log.Error("Failed to mark deployment as successful", "deployment_id", cfg.ServiceDeploymentID, "err", err)
+		}
+		return nil
+	}); err != nil {
+		if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed to update deployment metadata %v", err), cfg.ServiceDeploymentID); err != nil {
+			log.Errorf("Failed to mark deployment as failed: %v", err)
+		}
+		log.Fatalf("Failed to update deployment metadata: %v", err)
 	}
 
 	// Pretty print the CRD as YAML
