@@ -99,7 +99,14 @@ func (self *KubeClient) GetPodLogs(ctx context.Context, podName string, opts Log
 }
 
 // StreamPodLogs streams logs from a pod to the provided writer with filtering
-func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace string, opts LogOptions, meta LogMetadata, client *kubernetes.Clientset, eventChan chan<- []LogEvent) error {
+func (self *KubeClient) StreamPodLogs(
+	ctx context.Context,
+	podName, namespace string,
+	opts LogOptions,
+	meta LogMetadata,
+	client *kubernetes.Clientset,
+	eventChan chan<- []LogEvent,
+) error {
 	podLogOptions := &corev1.PodLogOptions{
 		Follow:     opts.Follow,
 		Previous:   opts.Previous,
@@ -127,93 +134,114 @@ func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace st
 
 	reader := bufio.NewReader(stream)
 
-	// Batch logs
 	const (
-		batchSize = 100
-		// Send partial batches after th is time
+		batchSize    = 100
 		maxBatchWait = 200 * time.Millisecond
 	)
+
+	// Channels for reading lines
+	linesChan := make(chan string)
+	readErrChan := make(chan error, 1)
+
+	// Kick off a goroutine to read the lines from the stream
+	go func() {
+		defer close(linesChan)
+		for {
+			line, err := reader.ReadBytes('\n')
+			if err != nil {
+				// Send the error and break
+				readErrChan <- err
+				return
+			}
+			linesChan <- string(line)
+		}
+	}()
 
 	batch := make([]LogEvent, 0, batchSize)
 	timer := time.NewTimer(maxBatchWait)
 
-	// Send current batch
+	// Function to send the current batch to the channel
 	sendBatch := func() {
 		if len(batch) == 0 {
 			return
 		}
-
-		// Create a copy of the batch to send
+		// Make a copy so we don’t race with subsequent appends
 		eventsCopy := make([]LogEvent, len(batch))
 		copy(eventsCopy, batch)
 
 		select {
 		case eventChan <- eventsCopy:
-			// Successfully sent the batch
+			// Successfully sent
 		case <-ctx.Done():
-			// Context canceled
+			// If context is canceled, just return
 		}
 
-		// Reset the batch
 		batch = batch[:0]
 	}
 
-	// Reset the timer
+	// Make sure we start the timer from “now”
 	if !timer.Stop() {
 		<-timer.C
 	}
 	timer.Reset(maxBatchWait)
 
+	// Main loop: block on either the timer, the context, or new lines
 	for {
 		select {
 		case <-ctx.Done():
+			// Context canceled, flush and quit
 			sendBatch()
 			return nil
 
+		case err := <-readErrChan:
+			// Could be io.EOF or a real error
+			if err == io.EOF {
+				sendBatch()
+				return nil
+			}
+			return fmt.Errorf("error reading from log stream: %v", err)
+
 		case <-timer.C:
+			// Timer fired: flush partial batch
 			sendBatch()
+			// Reset the timer
 			timer.Reset(maxBatchWait)
 
-		default:
-			// Try to read more log lines
-			line, err := reader.ReadBytes('\n')
-			if err != nil {
-				if err == io.EOF {
-					// Send remaining batch before returning
-					sendBatch()
-					return nil
-				}
-				return fmt.Errorf("error reading from log stream: %v", err)
+		case line, ok := <-linesChan:
+			// New line from the stream
+			if !ok {
+				// Channel closed, no more data
+				sendBatch()
+				return nil
 			}
 
-			lineStr := string(line)
-
-			// Apply search pattern filtering if needed
-			if opts.SearchPattern != "" && !strings.Contains(lineStr, opts.SearchPattern) {
+			// Filter if needed
+			if opts.SearchPattern != "" && !strings.Contains(line, opts.SearchPattern) {
 				continue
 			}
 
-			// Parse timestamp if included
+			// Extract timestamps if requested
 			var timestamp time.Time
 			var message string
 			if opts.Timestamps {
-				// K8s timestamp format is typically like: 2023-01-01T12:34:56.123456Z
-				parts := strings.SplitN(lineStr, " ", 2)
+				parts := strings.SplitN(line, " ", 2)
 				if len(parts) == 2 {
-					timestamp, err = time.Parse(time.RFC3339Nano, strings.TrimSpace(parts[0]))
-					if err == nil {
-						message = strings.TrimSpace(parts[1])
+					tsCandidate := strings.TrimSpace(parts[0])
+					msgCandidate := strings.TrimSpace(parts[1])
+					if t, err := time.Parse(time.RFC3339Nano, tsCandidate); err == nil {
+						timestamp = t
+						message = msgCandidate
 					} else {
-						message = lineStr
+						// Couldn’t parse, treat entire thing as message
+						message = line
 					}
 				} else {
-					message = lineStr
+					message = line
 				}
 			} else {
-				message = lineStr
+				message = line
 			}
 
-			// Add to the current batch
 			batch = append(batch, LogEvent{
 				PodName:   podName,
 				Timestamp: timestamp,
@@ -221,7 +249,7 @@ func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace st
 				Metadata:  meta,
 			})
 
-			// If batch is full, send it and reset the timer
+			// If the batch is full, send it now and reset timer
 			if len(batch) >= batchSize {
 				sendBatch()
 				if !timer.Stop() {
