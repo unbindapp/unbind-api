@@ -16,7 +16,7 @@ type ListDeploymentsInput struct {
 
 type ListDeploymentResponseData struct {
 	Deployments       []*models.DeploymentResponse       `json:"deployments"`
-	CurrentDeployment *models.DeploymentResponse         `json:"current_deployment"`
+	CurrentDeployment *models.DeploymentResponse         `json:"current_deployment,omitempty"`
 	Metadata          *models.PaginationResponseMetadata `json:"metadata"`
 }
 
