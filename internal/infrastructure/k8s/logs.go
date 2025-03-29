@@ -28,11 +28,20 @@ type LogOptions struct {
 	SearchPattern string            // Optional text pattern to grep for
 }
 
+type LogMetadata struct {
+	// Metadata to stick on
+	ServiceName     string // Service name
+	ProjectName     string // Project name
+	TeamName        string // Team name
+	EnvironmentName string // Environment name
+}
+
 // LogEvent represents a log line event sent via SSE
 type LogEvent struct {
-	PodName   string    `json:"pod_name"`
-	Timestamp time.Time `json:"timestamp,omitempty"`
-	Message   string    `json:"message"`
+	PodName   string      `json:"pod_name"`
+	Timestamp time.Time   `json:"timestamp,omitempty"`
+	Message   string      `json:"message"`
+	Metadata  LogMetadata `json:"metadata,omitempty"`
 }
 
 // GetPodLogs retrieves logs for a specific pod based on provided options
@@ -89,7 +98,7 @@ func (self *KubeClient) GetPodLogs(ctx context.Context, podName string, opts Log
 }
 
 // StreamPodLogs streams logs from a pod to the provided writer with filtering
-func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace string, opts LogOptions, client *kubernetes.Clientset, eventChan chan<- LogEvent) error {
+func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace string, opts LogOptions, meta LogMetadata, client *kubernetes.Clientset, eventChan chan<- LogEvent) error {
 	podLogOptions := &corev1.PodLogOptions{
 		Follow:     opts.Follow,
 		Previous:   opts.Previous,
@@ -166,6 +175,7 @@ func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace st
 				PodName:   podName,
 				Timestamp: timestamp,
 				Message:   message,
+				Metadata:  meta,
 			}:
 			case <-ctx.Done():
 				return nil
