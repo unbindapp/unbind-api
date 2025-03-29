@@ -61,7 +61,7 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 	}
 
 	// Create a channel for log events
-	eventChan := make(chan []k8s.LogEvent, 100)
+	eventChan := make(chan k8s.LogEvents, 100)
 
 	// Create a context with cancellation
 	streamCtx, cancel := context.WithCancel(ctx)
@@ -92,23 +92,10 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 				TeamID:        service.Edges.Environment.Edges.Project.Edges.Team.ID,
 			}, client, eventChan)
 			if err != nil {
-				// Send error as a log event
-				select {
-				case eventChan <- []k8s.LogEvent{
-					{
-						PodName: podName,
-						Message: fmt.Sprintf("Error streaming logs: %v", err),
-						Metadata: k8s.LogMetadata{
-							ServiceID:     service.ID,
-							EnvironmentID: service.Edges.Environment.ID,
-							ProjectID:     service.Edges.Environment.Edges.Project.ID,
-							TeamID:        service.Edges.Environment.Edges.Project.Edges.Team.ID,
-						},
-					},
-				}:
-				case <-streamCtx.Done():
-					return
-				}
+				send.Data(k8s.LogsError{
+					Code:    500,
+					Message: fmt.Sprintf("Error streaming logs: %v", err),
+				})
 			}
 		}(podName)
 	}

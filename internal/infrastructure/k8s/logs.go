@@ -37,6 +37,17 @@ type LogMetadata struct {
 	EnvironmentID uuid.UUID `json:"environment_id"`
 }
 
+type LogEvents struct {
+	// LogEvents is a slice of log events
+	Logs []LogEvent `json:"logs" nullable:"false"`
+}
+
+// SSE Error
+type LogsError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 // LogEvent represents a log line event sent via SSE
 type LogEvent struct {
 	PodName   string      `json:"pod_name"`
@@ -105,7 +116,7 @@ func (self *KubeClient) StreamPodLogs(
 	opts LogOptions,
 	meta LogMetadata,
 	client *kubernetes.Clientset,
-	eventChan chan<- []LogEvent,
+	eventChan chan<- LogEvents,
 ) error {
 	podLogOptions := &corev1.PodLogOptions{
 		Follow:     opts.Follow,
@@ -162,18 +173,23 @@ func (self *KubeClient) StreamPodLogs(
 
 	// Function to send the current batch to the channel
 	sendBatch := func() {
-		var events []LogEvent
+		var eventsResponse LogEvents
 		if len(batch) == 0 {
 			// Send empty array
-			events = []LogEvent{}
+			eventsResponse = LogEvents{
+				Logs: []LogEvent{},
+			}
 		} else {
 			// Make a copy so we don’t race with subsequent appends
 			events := make([]LogEvent, len(batch))
 			copy(events, batch)
+			eventsResponse = LogEvents{
+				Logs: events,
+			}
 		}
 
 		select {
-		case eventChan <- events:
+		case eventChan <- eventsResponse:
 			// Successfully sent
 		case <-ctx.Done():
 			// If context is canceled, just return

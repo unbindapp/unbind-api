@@ -31,8 +31,8 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		Description: "Stream logs for a team, project, environment, or service",
 	}, map[string]any{
 		// Mapping of event type name to Go struct for that event.
-		"message":      []k8s.LogEvent{},
-		"errorMessage": LogSSEError{},
+		"message":      k8s.LogEvents{},
+		"errorMessage": k8s.LogsError{},
 	},
 		handlers.GetLogsfunc,
 	)
@@ -41,7 +41,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	if errors.Is(err, errdefs.ErrInvalidInput) {
 		send.Data(
-			LogSSEError{
+			k8s.LogsError{
 				Code:    400,
 				Message: fmt.Sprintf("invalid input %v", err.Error()),
 			},
@@ -49,7 +49,7 @@ func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	}
 	if errors.Is(err, errdefs.ErrUnauthorized) {
 		send.Data(
-			LogSSEError{
+			k8s.LogsError{
 				Code:    403,
 				Message: fmt.Sprintf("unauthorized %v", err.Error()),
 			},
@@ -57,7 +57,7 @@ func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	}
 	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
 		send.Data(
-			LogSSEError{
+			k8s.LogsError{
 				Code:    404,
 				Message: fmt.Sprintf("entity not found %v", err.Error()),
 			},
@@ -65,7 +65,7 @@ func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	}
 	log.Error("Unknown error streaming logs", "err", err)
 	send.Data(
-		LogSSEError{
+		k8s.LogsError{
 			Code:    500,
 			Message: fmt.Sprintf("unknown error streaming logs"),
 		},
