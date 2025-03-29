@@ -175,10 +175,7 @@ func (self *KubeClient) StreamPodLogs(
 	sendBatch := func() {
 		var eventsResponse LogEvents
 		if len(batch) == 0 {
-			// Send empty array
-			eventsResponse = LogEvents{
-				Logs: []LogEvent{},
-			}
+			return
 		} else {
 			// Make a copy so we don’t race with subsequent appends
 			events := make([]LogEvent, len(batch))
