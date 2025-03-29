@@ -31,7 +31,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		Description: "Stream logs for a team, project, environment, or service",
 	}, map[string]any{
 		// Mapping of event type name to Go struct for that event.
-		"message":      k8s.LogEvent{},
+		"message":      []k8s.LogEvent{},
 		"errorMessage": LogSSEError{},
 	},
 		handlers.GetLogsfunc,
