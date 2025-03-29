@@ -15,8 +15,9 @@ type ListDeploymentsInput struct {
 }
 
 type ListDeploymentResponseData struct {
-	Deployments []*models.DeploymentResponse       `json:"deployments"`
-	Metadata    *models.PaginationResponseMetadata `json:"metadata"`
+	Deployments       []*models.DeploymentResponse       `json:"deployments"`
+	CurrentDeployment *models.DeploymentResponse         `json:"current_deployment"`
+	Metadata          *models.PaginationResponseMetadata `json:"metadata"`
 }
 
 type ListDeploymentsResponse struct {
@@ -33,7 +34,7 @@ func (self *HandlerGroup) ListDeployments(ctx context.Context, input *ListDeploy
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
-	response, metadata, err := self.srv.DeploymentService.GetDeploymentsForService(ctx, user.ID, &input.GetDeploymentsInput)
+	response, currentDeployment, metadata, err := self.srv.DeploymentService.GetDeploymentsForService(ctx, user.ID, &input.GetDeploymentsInput)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}
@@ -43,8 +44,9 @@ func (self *HandlerGroup) ListDeployments(ctx context.Context, input *ListDeploy
 			Data *ListDeploymentResponseData `json:"data"`
 		}{
 			Data: &ListDeploymentResponseData{
-				Deployments: response,
-				Metadata:    metadata,
+				Deployments:       response,
+				Metadata:          metadata,
+				CurrentDeployment: currentDeployment,
 			},
 		},
 	}, nil
