@@ -44,6 +44,8 @@ import (
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"github.com/valkey-io/valkey-go"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"golang.org/x/oauth2"
 )
 
@@ -345,9 +347,11 @@ func startAPI(cfg *config.Config) {
 	addr := ":8089"
 	log.Infof("Starting server on %s\n", addr)
 
+	h2s := &http2.Server{}
+
 	server := &http.Server{
 		Addr:    addr,
-		Handler: r,
+		Handler: h2c.NewHandler(r, h2s),
 	}
 
 	// Start deployment queue processeor
