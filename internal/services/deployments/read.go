@@ -10,7 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, requesterUserId uuid.UUID, input *models.GetDeploymentsInput) ([]*models.DeploymentResponse, *models.PaginationResponseMetadata, error) {
+func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, requesterUserId uuid.UUID, input *models.GetDeploymentsInput) ([]*models.DeploymentResponse, *models.DeploymentResponse, *models.PaginationResponseMetadata, error) {
 	// Check permissions
 	if err := self.repo.Permissions().Check(ctx, requesterUserId, []permissions_repo.PermissionCheck{
 		{
@@ -19,12 +19,12 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 			ResourceID:   input.ServiceID,
 		},
 	}); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	_, err := self.validateInputs(ctx, input)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Huma doesn't support pointers in query so we need to convert zero's to nil
@@ -35,11 +35,18 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 	// Get build jobs
 	deployments, nextCursor, err := self.repo.Deployment().GetByServiceIDPaginated(ctx, input.ServiceID, cursor, input.Statuses)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
+	}
+
+	service, err := self.repo.Service().GetByID(ctx, input.ServiceID)
+
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	// Transform response
 	resp := models.TransformDeploymentEntities(deployments)
+	currentDeployment := models.TransformDeploymentEntity(service.Edges.CurrentDeployment)
 
 	// Get pagination metadata
 	metadata := &models.PaginationResponseMetadata{
@@ -48,5 +55,5 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 		PreviousCursor: cursor,
 	}
 
-	return resp, metadata, nil
+	return resp, currentDeployment, metadata, nil
 }
