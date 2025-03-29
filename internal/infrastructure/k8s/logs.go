@@ -99,25 +99,21 @@ func (self *KubeClient) GetPodLogs(ctx context.Context, podName string, opts Log
 }
 
 // StreamPodLogs streams logs from a pod to the provided writer with filtering
-func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace string, opts LogOptions, meta LogMetadata, client *kubernetes.Clientset, eventChan chan<- LogEvent) error {
+func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace string, opts LogOptions, meta LogMetadata, client *kubernetes.Clientset, eventChan chan<- []LogEvent) error {
 	podLogOptions := &corev1.PodLogOptions{
 		Follow:     opts.Follow,
 		Previous:   opts.Previous,
 		Timestamps: opts.Timestamps,
 	}
-
 	if opts.Since > 0 {
 		podLogOptions.SinceSeconds = utils.ToPtr(int64(opts.Since.Seconds()))
 	}
-
 	if opts.SinceTime != nil {
 		podLogOptions.SinceTime = opts.SinceTime
 	}
-
 	if opts.Tail > 0 {
 		podLogOptions.TailLines = &opts.Tail
 	}
-
 	if opts.LimitBytes > 0 {
 		podLogOptions.LimitBytes = &opts.LimitBytes
 	}
@@ -130,14 +126,61 @@ func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace st
 	defer stream.Close()
 
 	reader := bufio.NewReader(stream)
+
+	// Batch logs
+	const (
+		batchSize = 100
+		// Send partial batches after th is time
+		maxBatchWait = 200 * time.Millisecond
+	)
+
+	batch := make([]LogEvent, 0, batchSize)
+	timer := time.NewTimer(maxBatchWait)
+
+	// Send current batch
+	sendBatch := func() {
+		if len(batch) == 0 {
+			return
+		}
+
+		// Create a copy of the batch to send
+		eventsCopy := make([]LogEvent, len(batch))
+		copy(eventsCopy, batch)
+
+		select {
+		case eventChan <- eventsCopy:
+			// Successfully sent the batch
+		case <-ctx.Done():
+			// Context canceled
+		}
+
+		// Reset the batch
+		batch = batch[:0]
+	}
+
+	// Reset the timer
+	if !timer.Stop() {
+		<-timer.C
+	}
+	timer.Reset(maxBatchWait)
+
 	for {
 		select {
 		case <-ctx.Done():
+			sendBatch()
 			return nil
+
+		case <-timer.C:
+			sendBatch()
+			timer.Reset(maxBatchWait)
+
 		default:
+			// Try to read more log lines
 			line, err := reader.ReadBytes('\n')
 			if err != nil {
 				if err == io.EOF {
+					// Send remaining batch before returning
+					sendBatch()
 					return nil
 				}
 				return fmt.Errorf("error reading from log stream: %v", err)
@@ -170,16 +213,21 @@ func (self *KubeClient) StreamPodLogs(ctx context.Context, podName, namespace st
 				message = lineStr
 			}
 
-			// Send the log event
-			select {
-			case eventChan <- LogEvent{
+			// Add to the current batch
+			batch = append(batch, LogEvent{
 				PodName:   podName,
 				Timestamp: timestamp,
 				Message:   message,
 				Metadata:  meta,
-			}:
-			case <-ctx.Done():
-				return nil
+			})
+
+			// If batch is full, send it and reset the timer
+			if len(batch) >= batchSize {
+				sendBatch()
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(maxBatchWait)
 			}
 		}
 	}
