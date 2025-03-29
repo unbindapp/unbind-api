@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,10 +31,10 @@ type LogOptions struct {
 
 type LogMetadata struct {
 	// Metadata to stick on
-	ServiceName     string // Service name
-	ProjectName     string // Project name
-	TeamName        string // Team name
-	EnvironmentName string // Environment name
+	ServiceID     uuid.UUID `json:"service_id"`
+	TeamID        uuid.UUID `json:"team_id"`
+	ProjectID     uuid.UUID `json:"project_id"`
+	EnvironmentID uuid.UUID `json:"environment_id"`
 }
 
 // LogEvent represents a log line event sent via SSE

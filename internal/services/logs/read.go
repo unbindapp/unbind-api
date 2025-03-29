@@ -79,16 +79,17 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 	// Start streaming logs from each pod
 	for _, pod := range pods.Items {
 		serviceName, _ := pod.Labels["unbind-service"]
-		environmentName, _ := pod.Labels["unbind-environment"]
-		projectName, _ := pod.Labels["unbind-project"]
-		teamName, _ := pod.Labels["unbind-team"]
+		service, err := self.repo.Service().GetByName(ctx, serviceName)
+		if err != nil {
+			return fmt.Errorf("error getting service: %w", err)
+		}
 		podName := pod.Name
 		go func(podName string) {
 			err := self.k8s.StreamPodLogs(streamCtx, podName, team.Namespace, logOptions, k8s.LogMetadata{
-				TeamName:        teamName,
-				ProjectName:     projectName,
-				EnvironmentName: environmentName,
-				ServiceName:     serviceName,
+				ServiceID:     service.ID,
+				EnvironmentID: service.Edges.Environment.ID,
+				ProjectID:     service.Edges.Environment.Edges.Project.ID,
+				TeamID:        service.Edges.Environment.Edges.Project.Edges.Team.ID,
 			}, client, eventChan)
 			if err != nil {
 				// Send error as a log event

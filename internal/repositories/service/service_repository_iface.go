@@ -26,6 +26,7 @@ type ServiceRepositoryInterface interface {
 	Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error
 	SetCurrentDeployment(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, deploymentID uuid.UUID) error
 	GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error)
+	GetByName(ctx context.Context, name string) (*ent.Service, error)
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
 	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error)
 	GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error)
