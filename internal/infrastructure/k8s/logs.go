@@ -162,15 +162,18 @@ func (self *KubeClient) StreamPodLogs(
 
 	// Function to send the current batch to the channel
 	sendBatch := func() {
+		var events []LogEvent
 		if len(batch) == 0 {
-			return
+			// Send empty array
+			events = []LogEvent{}
+		} else {
+			// Make a copy so we don’t race with subsequent appends
+			events := make([]LogEvent, len(batch))
+			copy(events, batch)
 		}
-		// Make a copy so we don’t race with subsequent appends
-		eventsCopy := make([]LogEvent, len(batch))
-		copy(eventsCopy, batch)
 
 		select {
-		case eventChan <- eventsCopy:
+		case eventChan <- events:
 			// Successfully sent
 		case <-ctx.Done():
 			// If context is canceled, just return
