@@ -16,6 +16,7 @@ import (
 	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
+	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"golang.org/x/oauth2"
 )
@@ -45,6 +46,7 @@ type Server struct {
 	EnvironmentService *environment_service.EnvironmentService
 	LogService         *logs_service.LogsService
 	DeploymentService  *deployments_service.DeploymentService
+	SystemService      *system_service.SystemService
 }
 
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {

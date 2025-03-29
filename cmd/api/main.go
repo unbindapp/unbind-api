@@ -32,6 +32,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd.go"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
@@ -42,6 +43,7 @@ import (
 	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
+	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/net/http2"
@@ -133,6 +135,18 @@ func startAPI(cfg *config.Config) {
 	// Create deployment controller
 	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient)
 
+	// Buildkit settings manager
+	buildkitSettings := buildkitd.NewBuildkitSettingsManager(repo, kubeClient)
+
+	// Bootstrap
+	bootstrapper := &Bootstrapper{
+		repos:                   repo,
+		buildkitSettingsManager: buildkitSettings,
+	}
+	if err := bootstrapper.Sync(ctx); err != nil {
+		log.Errorf("Failed to sync system settings: %v", err)
+	}
+
 	// Implementation
 	srvImpl := &server.Server{
 		KubeClient: kubeClient,
@@ -160,6 +174,7 @@ func startAPI(cfg *config.Config) {
 		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
 		LogService:           logs_service.NewLogsService(repo, kubeClient),
 		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient),
+		SystemService:        system_service.NewSystemService(cfg, repo, buildkitSettings),
 	}
 
 	// New chi router

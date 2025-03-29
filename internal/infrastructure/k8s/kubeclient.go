@@ -51,9 +51,14 @@ func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
 	}
 }
 
-func (k *KubeClient) CreateClientWithToken(token string) (*kubernetes.Clientset, error) {
+// This function is used to manage unbind-system resources
+func (self *KubeClient) GetInternalClient() *kubernetes.Clientset {
+	return self.clientset
+}
+
+func (self *KubeClient) CreateClientWithToken(token string) (*kubernetes.Clientset, error) {
 	config := &rest.Config{
-		Host:        k.config.GetKubeProxyURL(),
+		Host:        self.config.GetKubeProxyURL(),
 		BearerToken: token,
 		// Skip TLS verification for internal cluster communication
 		TLSClientConfig: rest.TLSClientConfig{

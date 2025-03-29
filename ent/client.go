@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/unbindapp/unbind-api/ent/buildkitsettings"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
@@ -39,6 +40,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// BuildkitSettings is the client for interacting with the BuildkitSettings builders.
+	BuildkitSettings *BuildkitSettingsClient
 	// Deployment is the client for interacting with the Deployment builders.
 	Deployment *DeploymentClient
 	// Environment is the client for interacting with the Environment builders.
@@ -78,6 +81,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.BuildkitSettings = NewBuildkitSettingsClient(c.config)
 	c.Deployment = NewDeploymentClient(c.config)
 	c.Environment = NewEnvironmentClient(c.config)
 	c.GithubApp = NewGithubAppClient(c.config)
@@ -184,6 +188,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		BuildkitSettings:   NewBuildkitSettingsClient(cfg),
 		Deployment:         NewDeploymentClient(cfg),
 		Environment:        NewEnvironmentClient(cfg),
 		GithubApp:          NewGithubAppClient(cfg),
@@ -217,6 +222,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		BuildkitSettings:   NewBuildkitSettingsClient(cfg),
 		Deployment:         NewDeploymentClient(cfg),
 		Environment:        NewEnvironmentClient(cfg),
 		GithubApp:          NewGithubAppClient(cfg),
@@ -237,7 +243,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Deployment.
+//		BuildkitSettings.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -260,9 +266,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation, c.Group,
-		c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project, c.Service,
-		c.ServiceConfig, c.Team, c.User,
+		c.BuildkitSettings, c.Deployment, c.Environment, c.GithubApp,
+		c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
+		c.Permission, c.Project, c.Service, c.ServiceConfig, c.Team, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -272,9 +278,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation, c.Group,
-		c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project, c.Service,
-		c.ServiceConfig, c.Team, c.User,
+		c.BuildkitSettings, c.Deployment, c.Environment, c.GithubApp,
+		c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
+		c.Permission, c.Project, c.Service, c.ServiceConfig, c.Team, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -283,6 +289,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *BuildkitSettingsMutation:
+		return c.BuildkitSettings.mutate(ctx, m)
 	case *DeploymentMutation:
 		return c.Deployment.mutate(ctx, m)
 	case *EnvironmentMutation:
@@ -313,6 +321,139 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// BuildkitSettingsClient is a client for the BuildkitSettings schema.
+type BuildkitSettingsClient struct {
+	config
+}
+
+// NewBuildkitSettingsClient returns a client for the BuildkitSettings from the given config.
+func NewBuildkitSettingsClient(c config) *BuildkitSettingsClient {
+	return &BuildkitSettingsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `buildkitsettings.Hooks(f(g(h())))`.
+func (c *BuildkitSettingsClient) Use(hooks ...Hook) {
+	c.hooks.BuildkitSettings = append(c.hooks.BuildkitSettings, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `buildkitsettings.Intercept(f(g(h())))`.
+func (c *BuildkitSettingsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BuildkitSettings = append(c.inters.BuildkitSettings, interceptors...)
+}
+
+// Create returns a builder for creating a BuildkitSettings entity.
+func (c *BuildkitSettingsClient) Create() *BuildkitSettingsCreate {
+	mutation := newBuildkitSettingsMutation(c.config, OpCreate)
+	return &BuildkitSettingsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BuildkitSettings entities.
+func (c *BuildkitSettingsClient) CreateBulk(builders ...*BuildkitSettingsCreate) *BuildkitSettingsCreateBulk {
+	return &BuildkitSettingsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BuildkitSettingsClient) MapCreateBulk(slice any, setFunc func(*BuildkitSettingsCreate, int)) *BuildkitSettingsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BuildkitSettingsCreateBulk{err: fmt.Errorf("calling to BuildkitSettingsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BuildkitSettingsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BuildkitSettingsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BuildkitSettings.
+func (c *BuildkitSettingsClient) Update() *BuildkitSettingsUpdate {
+	mutation := newBuildkitSettingsMutation(c.config, OpUpdate)
+	return &BuildkitSettingsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BuildkitSettingsClient) UpdateOne(bs *BuildkitSettings) *BuildkitSettingsUpdateOne {
+	mutation := newBuildkitSettingsMutation(c.config, OpUpdateOne, withBuildkitSettings(bs))
+	return &BuildkitSettingsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BuildkitSettingsClient) UpdateOneID(id uuid.UUID) *BuildkitSettingsUpdateOne {
+	mutation := newBuildkitSettingsMutation(c.config, OpUpdateOne, withBuildkitSettingsID(id))
+	return &BuildkitSettingsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BuildkitSettings.
+func (c *BuildkitSettingsClient) Delete() *BuildkitSettingsDelete {
+	mutation := newBuildkitSettingsMutation(c.config, OpDelete)
+	return &BuildkitSettingsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BuildkitSettingsClient) DeleteOne(bs *BuildkitSettings) *BuildkitSettingsDeleteOne {
+	return c.DeleteOneID(bs.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BuildkitSettingsClient) DeleteOneID(id uuid.UUID) *BuildkitSettingsDeleteOne {
+	builder := c.Delete().Where(buildkitsettings.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BuildkitSettingsDeleteOne{builder}
+}
+
+// Query returns a query builder for BuildkitSettings.
+func (c *BuildkitSettingsClient) Query() *BuildkitSettingsQuery {
+	return &BuildkitSettingsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBuildkitSettings},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BuildkitSettings entity by its id.
+func (c *BuildkitSettingsClient) Get(ctx context.Context, id uuid.UUID) (*BuildkitSettings, error) {
+	return c.Query().Where(buildkitsettings.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BuildkitSettingsClient) GetX(ctx context.Context, id uuid.UUID) *BuildkitSettings {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *BuildkitSettingsClient) Hooks() []Hook {
+	return c.hooks.BuildkitSettings
+}
+
+// Interceptors returns the client interceptors.
+func (c *BuildkitSettingsClient) Interceptors() []Interceptor {
+	return c.inters.BuildkitSettings
+}
+
+func (c *BuildkitSettingsClient) mutate(ctx context.Context, m *BuildkitSettingsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BuildkitSettingsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BuildkitSettingsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BuildkitSettingsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BuildkitSettingsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BuildkitSettings mutation op: %q", m.Op())
 	}
 }
 
@@ -2613,14 +2754,14 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Deployment, Environment, GithubApp, GithubInstallation, Group, JWTKey,
-		Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig, Team,
-		User []ent.Hook
+		BuildkitSettings, Deployment, Environment, GithubApp, GithubInstallation, Group,
+		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig,
+		Team, User []ent.Hook
 	}
 	inters struct {
-		Deployment, Environment, GithubApp, GithubInstallation, Group, JWTKey,
-		Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig, Team,
-		User []ent.Interceptor
+		BuildkitSettings, Deployment, Environment, GithubApp, GithubInstallation, Group,
+		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig,
+		Team, User []ent.Interceptor
 	}
 )
 

@@ -4,13 +4,12 @@
 
 The APIs for the Unbind platform.
 
-## Prerequisites
+## Prerequisites (to run locally)
 
 - Go 1.24 or higher
 - Docker Compose
 - [Dex IDP](https://dexidp.io) binary installed in $PATH
-
-## Pre-requisites
+- Currently, there must be an `unbind-system` namespace for unbind to operate in.
 
 1. Clone the repository
 2. Run `docker-compose up -d` to start dependencies (postgres, valkey, etc.)

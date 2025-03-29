@@ -15,6 +15,7 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	project_repo "github.com/unbindapp/unbind-api/internal/repositories/project"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
+	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
 	user_repo "github.com/unbindapp/unbind-api/internal/repositories/user"
 )
@@ -43,5 +44,7 @@ type RepositoriesInterface interface {
 	Service() service_repo.ServiceRepositoryInterface
 	// Deployment returns the Deployment repository
 	Deployment() deployment_repo.DeploymentRepositoryInterface
+	// System returns the System repository
+	System() system_repo.SystemRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

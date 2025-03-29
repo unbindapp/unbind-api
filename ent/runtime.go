@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/buildkitsettings"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
@@ -26,6 +27,39 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	buildkitsettingsMixin := schema.BuildkitSettings{}.Mixin()
+	buildkitsettingsMixinFields0 := buildkitsettingsMixin[0].Fields()
+	_ = buildkitsettingsMixinFields0
+	buildkitsettingsMixinFields1 := buildkitsettingsMixin[1].Fields()
+	_ = buildkitsettingsMixinFields1
+	buildkitsettingsFields := schema.BuildkitSettings{}.Fields()
+	_ = buildkitsettingsFields
+	// buildkitsettingsDescCreatedAt is the schema descriptor for created_at field.
+	buildkitsettingsDescCreatedAt := buildkitsettingsMixinFields1[0].Descriptor()
+	// buildkitsettings.DefaultCreatedAt holds the default value on creation for the created_at field.
+	buildkitsettings.DefaultCreatedAt = buildkitsettingsDescCreatedAt.Default.(func() time.Time)
+	// buildkitsettingsDescUpdatedAt is the schema descriptor for updated_at field.
+	buildkitsettingsDescUpdatedAt := buildkitsettingsMixinFields1[1].Descriptor()
+	// buildkitsettings.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	buildkitsettings.DefaultUpdatedAt = buildkitsettingsDescUpdatedAt.Default.(func() time.Time)
+	// buildkitsettings.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	buildkitsettings.UpdateDefaultUpdatedAt = buildkitsettingsDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// buildkitsettingsDescMaxParallelism is the schema descriptor for max_parallelism field.
+	buildkitsettingsDescMaxParallelism := buildkitsettingsFields[0].Descriptor()
+	// buildkitsettings.DefaultMaxParallelism holds the default value on creation for the max_parallelism field.
+	buildkitsettings.DefaultMaxParallelism = buildkitsettingsDescMaxParallelism.Default.(int)
+	// buildkitsettings.MaxParallelismValidator is a validator for the "max_parallelism" field. It is called by the builders before save.
+	buildkitsettings.MaxParallelismValidator = buildkitsettingsDescMaxParallelism.Validators[0].(func(int) error)
+	// buildkitsettingsDescReplicas is the schema descriptor for replicas field.
+	buildkitsettingsDescReplicas := buildkitsettingsFields[1].Descriptor()
+	// buildkitsettings.DefaultReplicas holds the default value on creation for the replicas field.
+	buildkitsettings.DefaultReplicas = buildkitsettingsDescReplicas.Default.(int)
+	// buildkitsettings.ReplicasValidator is a validator for the "replicas" field. It is called by the builders before save.
+	buildkitsettings.ReplicasValidator = buildkitsettingsDescReplicas.Validators[0].(func(int) error)
+	// buildkitsettingsDescID is the schema descriptor for id field.
+	buildkitsettingsDescID := buildkitsettingsMixinFields0[0].Descriptor()
+	// buildkitsettings.DefaultID holds the default value on creation for the id field.
+	buildkitsettings.DefaultID = buildkitsettingsDescID.Default.(func() uuid.UUID)
 	deploymentMixin := schema.Deployment{}.Mixin()
 	deploymentMixinFields0 := deploymentMixin[0].Fields()
 	_ = deploymentMixinFields0

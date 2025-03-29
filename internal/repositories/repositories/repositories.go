@@ -13,6 +13,7 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	project_repo "github.com/unbindapp/unbind-api/internal/repositories/project"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
+	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
 	user_repo "github.com/unbindapp/unbind-api/internal/repositories/user"
 )
@@ -33,6 +34,7 @@ type Repositories struct {
 	environment environment_repo.EnvironmentRepositoryInterface
 	service     service_repo.ServiceRepositoryInterface
 	deployment  deployment_repo.DeploymentRepositoryInterface
+	system      system_repo.SystemRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -48,6 +50,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	deploymentRepo := deployment_repo.NewDeploymentRepository(db)
 	permissionsRepo := permissions_repo.NewPermissionsRepository(db, userRepo, projectRepo, environmentRepo, serviceRepo, teamRepo)
 	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
+	systemRepo := system_repo.NewSystemRepository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -61,6 +64,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		environment: environmentRepo,
 		service:     serviceRepo,
 		deployment:  deploymentRepo,
+		system:      systemRepo,
 	}
 }
 
@@ -117,6 +121,11 @@ func (r *Repositories) Service() service_repo.ServiceRepositoryInterface {
 // Deployment returns the Deployment repository
 func (r *Repositories) Deployment() deployment_repo.DeploymentRepositoryInterface {
 	return r.deployment
+}
+
+// System returns the System repository
+func (r *Repositories) System() system_repo.SystemRepositoryInterface {
+	return r.system
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {
