@@ -44,9 +44,13 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 		return nil, nil, nil, err
 	}
 
+	var currentDeployment *models.DeploymentResponse
+	if service.Edges.CurrentDeployment != nil {
+		currentDeployment = models.TransformDeploymentEntity(service.Edges.CurrentDeployment)
+	}
+
 	// Transform response
 	resp := models.TransformDeploymentEntities(deployments)
-	currentDeployment := models.TransformDeploymentEntity(service.Edges.CurrentDeployment)
 
 	// Get pagination metadata
 	metadata := &models.PaginationResponseMetadata{
