@@ -36,6 +36,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
@@ -138,6 +139,12 @@ func startAPI(cfg *config.Config) {
 	// Buildkit settings manager
 	buildkitSettings := buildkitd.NewBuildkitSettingsManager(repo, kubeClient)
 
+	// Loki log querier
+	lokiQuerier, err := loki.NewLokiLogger(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create Loki log querier, invalid config: %v", err)
+	}
+
 	// Bootstrap
 	bootstrapper := &Bootstrapper{
 		repos:                   repo,
@@ -172,7 +179,7 @@ func startAPI(cfg *config.Config) {
 		ProjectService:       project_service.NewProjectService(repo, kubeClient),
 		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController),
 		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
-		LogService:           logs_service.NewLogsService(repo, kubeClient),
+		LogService:           logs_service.NewLogsService(repo, kubeClient, lokiQuerier),
 		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient),
 		SystemService:        system_service.NewSystemService(cfg, repo, buildkitSettings),
 	}

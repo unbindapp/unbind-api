@@ -12,6 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 )
 
 type HandlerGroup struct {
@@ -31,8 +32,8 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		Description: "Stream logs for a team, project, environment, or service",
 	}, map[string]any{
 		// Mapping of event type name to Go struct for that event.
-		"message":      k8s.LogEvents{},
-		"errorMessage": k8s.LogsError{},
+		"message":      loki.LogEvents{},
+		"errorMessage": loki.LogsError{},
 	},
 		handlers.GetLogsfunc,
 	)

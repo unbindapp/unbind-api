@@ -10,7 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -34,39 +34,13 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 		labels["unbind-service"] = service.Name
 	}
 
-	// Build log options
-	logOptions := k8s.LogOptions{}
-	logOptions.Namespace = team.Namespace
-	logOptions.Labels = labels
-	logOptions.Previous = input.Previous
-	logOptions.Tail = input.Tail
-	logOptions.Timestamps = input.Timestamps
-	logOptions.SearchPattern = input.SearchPattern
-	logOptions.Follow = true
-
-	// Parse 'since' duration
-	var since time.Duration
-	if input.Since != "" {
-		since, err = time.ParseDuration(input.Since)
-		if err != nil {
-			return fmt.Errorf("invalid since duration: %w", err)
-		}
-	}
-	logOptions.Since = since
-
 	// Create kubernetes client
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
 		return err
 	}
 
-	// Create a channel for log events
-	eventChan := make(chan k8s.LogEvents, 100)
-
-	// Create a context with cancellation
-	streamCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
+	// Get pods by labels first
 	pods, err := self.k8s.GetPodsByLabels(ctx, team.Namespace, labels, client)
 	if err != nil {
 		return fmt.Errorf("error getting pods: %w", err)
@@ -76,28 +50,60 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 		return fmt.Errorf("no pods found matching the specified criteria")
 	}
 
-	// Start streaming logs from each pod
+	// Parse 'since' duration
+	var since time.Duration
+	if input.Since != "" {
+		since, err = time.ParseDuration(input.Since)
+		if err != nil {
+			return fmt.Errorf("invalid since duration: %w", err)
+		}
+	}
+
+	// Create a channel for log events
+	eventChan := make(chan loki.LogEvents, 100*len(pods.Items))
+
+	// Create a context with cancellation
+	streamCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Start streaming logs from each pod using Loki
 	for _, pod := range pods.Items {
 		serviceName, _ := pod.Labels["unbind-service"]
 		service, err := self.repo.Service().GetByName(ctx, serviceName)
 		if err != nil {
 			return fmt.Errorf("error getting service: %w", err)
 		}
+
 		podName := pod.Name
-		go func(podName string) {
-			err := self.k8s.StreamPodLogs(streamCtx, podName, team.Namespace, logOptions, k8s.LogMetadata{
-				ServiceID:     service.ID,
-				EnvironmentID: service.Edges.Environment.ID,
-				ProjectID:     service.Edges.Environment.Edges.Project.ID,
-				TeamID:        service.Edges.Environment.Edges.Project.Edges.Team.ID,
-			}, client, eventChan)
+		podNamespace := team.Namespace
+
+		// Create metadata for this pod
+		meta := loki.LogMetadata{
+			ServiceID:     service.ID,
+			EnvironmentID: service.Edges.Environment.ID,
+			ProjectID:     service.Edges.Environment.Edges.Project.ID,
+			TeamID:        service.Edges.Environment.Edges.Project.Edges.Team.ID,
+		}
+
+		// Build log options for Loki specific to this pod
+		lokiOptions := loki.LokiLogOptions{
+			PodName:       podName,
+			PodNamespace:  podNamespace,
+			Limit:         int(input.Tail),
+			SearchPattern: input.SearchPattern,
+			Follow:        true,
+			Since:         since,
+		}
+
+		go func(podName, podNamespace string, options loki.LokiLogOptions, metadata loki.LogMetadata) {
+			err := self.lokiQuerier.StreamLokiLogs(streamCtx, options, metadata, eventChan)
 			if err != nil {
-				send.Data(k8s.LogsError{
+				send.Data(loki.LogsError{
 					Code:    500,
-					Message: fmt.Sprintf("Error streaming logs: %v", err),
+					Message: fmt.Sprintf("Error streaming logs for pod %s: %v", podName, err),
 				})
 			}
-		}(podName)
+		}(podName, podNamespace, lokiOptions, meta)
 	}
 
 	// Send events to the client

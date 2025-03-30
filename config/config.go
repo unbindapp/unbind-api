@@ -51,12 +51,14 @@ type Config struct {
 	// kube-oidc-proxy
 	KubeProxyURL string `env:"KUBE_PROXY_URL" envDefault:"https://kube-oidc-proxy.unbind-system.svc.cluster.local:443"`
 	// Builder
-	BuildImage       string `env:"BUILD_IMAGE" envDefault:"unbindapp/unbind-builder:master-14117462553"`
+	BuildImage       string `env:"BUILD_IMAGE" envDefault:"unbindapp/unbind-builder:master-14117576548"`
 	BuilderNamespace string `env:"BUILDER_NAMESPACE" envDefault:"unbind-system"` // The namespace build containers will be created in
 	// Registry specific
 	ContainerRegistryHost     string `env:"CONTAINER_REGISTRY_HOST,required" envDefault:"docker-registry.unbind-system:5000"`
 	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER,required" envDefault:"admin"`
 	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD,required"`
+	// Logging
+	LokiEndpoint string `env:"LOKI_ENDPOINT" envDefault:"http://loki-unbind.unbind-system.svc.cluster.local:3100"`
 	// ! TODO - remove me some day, for bypassing oauth
 	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
 }
