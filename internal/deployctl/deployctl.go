@@ -321,7 +321,7 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 		log.Warnf("Failed to cancel existing jobs: %v service: %s", err, req.ServiceID)
 	}
 	// Update the job status in the database
-	err := self.repo.Deployment().MarkCancelled(ctx, req.ServiceID)
+	err := self.repo.Deployment().MarkCancelledExcept(ctx, req.ServiceID, jobID)
 	if err != nil {
 		log.Warnf("Failed to mark job as cancelled: %v service: %s", err, req.ServiceID)
 	}

@@ -16,16 +16,16 @@ import (
 // DeploymentRepositoryInterface ...
 type DeploymentRepositoryInterface interface {
 	Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error)
-	MarkStarted(ctx context.Context, tx repository.TxInterface, buildJobID uuid.UUID, startedAt time.Time) (*ent.Deployment, error)
-	MarkFailed(ctx context.Context, tx repository.TxInterface, buildJobID uuid.UUID, message string, failedAt time.Time) (*ent.Deployment, error)
-	MarkSucceeded(ctx context.Context, tx repository.TxInterface, buildJobID uuid.UUID, completedAt time.Time) (*ent.Deployment, error)
+	MarkStarted(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, startedAt time.Time) (*ent.Deployment, error)
+	MarkFailed(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, message string, failedAt time.Time) (*ent.Deployment, error)
+	MarkSucceeded(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, completedAt time.Time) (*ent.Deployment, error)
 	// Cancels all jobs that are not in a finished state
-	MarkCancelled(ctx context.Context, serviceID uuid.UUID) error
+	MarkCancelledExcept(ctx context.Context, serviceID uuid.UUID, deploymentID uuid.UUID) error
 	// Mark cancelled by IDs
 	MarkAsCancelled(ctx context.Context, jobIDs []uuid.UUID) error
 	// Assigns the kubernetes "Job" name to the build job
-	AssignKubernetesJobName(ctx context.Context, buildJobID uuid.UUID, jobName string) (*ent.Deployment, error)
-	SetKubernetesJobStatus(ctx context.Context, buildJobID uuid.UUID, status string) (*ent.Deployment, error)
+	AssignKubernetesJobName(ctx context.Context, deploymentID uuid.UUID, jobName string) (*ent.Deployment, error)
+	SetKubernetesJobStatus(ctx context.Context, deploymentID uuid.UUID, status string) (*ent.Deployment, error)
 	AttachDeploymentMetadata(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, imageName string, resourceDefinition *v1.Service) (*ent.Deployment, error)
 	GetJobsByStatus(ctx context.Context, status schema.DeploymentStatus) ([]*ent.Deployment, error)
 	GetByServiceIDPaginated(ctx context.Context, serviceID uuid.UUID, cursor *time.Time, statusFilter []schema.DeploymentStatus) (jobs []*ent.Deployment, nextCursor *time.Time, err error)
