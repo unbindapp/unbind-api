@@ -28,7 +28,8 @@ type LogMetadata struct {
 
 type LogEvents struct {
 	// LogEvents is a slice of log events
-	Logs []LogEvent `json:"logs" nullable:"false"`
+	Logs        []LogEvent `json:"logs" nullable:"false"`
+	IsHeartbeat bool       `json:"is_heartbeat,omitempty"`
 }
 
 // Stream Error

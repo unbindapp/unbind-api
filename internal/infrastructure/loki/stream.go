@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -32,9 +33,8 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 
 	for namespace, podsMap := range podMetadataMap {
 		for podName := range podsMap {
-			// Escape special regex characters in the pod name and namespace
-			escapedNamespace := strings.ReplaceAll(namespace, ".", "\\.")
-			escapedPodName := strings.ReplaceAll(podName, ".", "\\.")
+			escapedNamespace := regexp.QuoteMeta(namespace)
+			escapedPodName := regexp.QuoteMeta(podName)
 			pattern := fmt.Sprintf("%s/%s:service", escapedNamespace, escapedPodName)
 			instancePatterns = append(instancePatterns, pattern)
 		}
@@ -50,7 +50,8 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 
 	// Add search pattern if specified
 	if opts.SearchPattern != "" {
-		queryStr = fmt.Sprintf("(%s) |= \"%s\"", queryStr, opts.SearchPattern)
+		// Case insensitive search
+		queryStr = fmt.Sprintf("(%s) |~ \"(?i)%s\"", queryStr, regexp.QuoteMeta(opts.SearchPattern))
 	}
 
 	// Build the request URL with parameters
@@ -89,10 +90,12 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 
 	reqURL.RawQuery = q.Encode()
 
-	log.Infof("Streaming logs with query: %s", queryStr)
+	log.Infof("Streaming logs with query: %s, URL: %s", queryStr, reqURL.String())
 
-	// Create websocket connection
+	// Create websocket connection with timeout
 	dialer := websocket.DefaultDialer
+	dialer.HandshakeTimeout = 15 * time.Second // Set a reasonable timeout
+
 	wsConn, resp, err := dialer.DialContext(ctx, reqURL.String(), nil)
 	if err != nil {
 		if resp != nil {
@@ -102,6 +105,14 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	}
 	defer wsConn.Close()
 
+	// Set ping handler to keep connection alive
+	wsConn.SetPingHandler(func(string) error {
+		return wsConn.WriteControl(websocket.PongMessage, []byte{}, time.Now().Add(10*time.Second))
+	})
+
+	// Set read deadline to detect stale connections
+	wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
+
 	// Setup context cancellation
 	go func() {
 		<-ctx.Done()
@@ -110,23 +121,16 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		wsConn.Close()
 	}()
 
-	// First message
-	sentFirstMessage := false
+	// Initialize a heartbeat timer to send empty messages periodically
+	heartbeatTicker := time.NewTicker(10 * time.Second)
+	defer heartbeatTicker.Stop()
 
-	// Helper function to extract namespace and pod name from instance label
-	extractNamespaceAndPod := func(instance string) (namespace, podName string) {
-		parts := strings.Split(instance, "/")
-		if len(parts) >= 2 {
-			namespace = parts[0]
-
-			// Format is "namespace/podname:service"
-			serviceParts := strings.Split(parts[1], ":")
-			if len(serviceParts) >= 1 {
-				podName = serviceParts[0]
-				return namespace, podName
-			}
-		}
-		return "", instance // Return empty namespace and original if parsing fails
+	// Confirm connection is successful by sending an initial empty message
+	select {
+	case eventChan <- LogEvents{Logs: []LogEvent{}}:
+		// Successfully sent initial empty message
+	case <-ctx.Done():
+		return nil
 	}
 
 	// Main loop for receiving WebSocket messages
@@ -135,15 +139,38 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		case <-ctx.Done():
 			return nil
 
+		case <-heartbeatTicker.C:
+			// Send heartbeat message to keep the client alive
+			select {
+			case eventChan <- LogEvents{Logs: []LogEvent{}, IsHeartbeat: true}:
+				// Heartbeat sent
+			case <-ctx.Done():
+				return nil
+			}
+
+			// Reset read deadline after heartbeat
+			wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
+
 		default:
-			// Read from WebSocket
+			// Read from WebSocket with timeout
 			_, message, err := wsConn.ReadMessage()
 			if err != nil {
 				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 					return nil
 				}
+
+				// Check if it's a timeout and we should continue
+				if strings.Contains(err.Error(), "deadline exceeded") {
+					log.Warn("WebSocket read timeout, resetting connection deadline")
+					wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
+					continue
+				}
+
 				return fmt.Errorf("websocket read error: %v", err)
 			}
+
+			// Reset read deadline after successful read
+			wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
 
 			// Parse the message
 			var streamResp LokiStreamResponse
@@ -163,8 +190,8 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 					continue
 				}
 
-				namespace, podName := extractNamespaceAndPod(instance)
-				if namespace == "" || podName == "" {
+				namespace, podName, ok := extractNamespaceAndPod(instance)
+				if !ok {
 					log.Warnf("Failed to parse namespace and pod name from instance: %s", instance)
 					continue
 				}
@@ -194,15 +221,16 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 					if ts, err := strconv.ParseInt(entry[0], 10, 64); err == nil {
 						// Loki timestamps are in nanoseconds
 						timestamp = time.Unix(0, ts)
+					} else {
+						log.Warnf("Failed to parse timestamp: %v", err)
+						// Use current time as fallback
+						timestamp = time.Now()
 					}
 
 					// Get the message
 					message := entry[1]
 
-					// Apply pattern filter if specified
-					if opts.SearchPattern != "" && !strings.Contains(message, opts.SearchPattern) {
-						continue
-					}
+					// Note: We no longer filter by search pattern here as it's handled by Loki query
 
 					// Create log event and add it to the collection
 					logEvent := LogEvent{
@@ -216,14 +244,8 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 				}
 			}
 
-			// Make a dummy message if no events
-			if len(allEvents) == 0 && !sentFirstMessage {
-				allEvents = []LogEvent{}
-			}
-
-			// Send events from this batch to the channel
-			if len(allEvents) > 0 || !sentFirstMessage {
-				sentFirstMessage = true
+			// Send events from this batch to the channel if there are any
+			if len(allEvents) > 0 {
 				select {
 				case eventChan <- LogEvents{Logs: allEvents}:
 					// Successfully sent
@@ -234,4 +256,26 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			}
 		}
 	}
+}
+
+func extractNamespaceAndPod(instance string) (namespace, podName string, ok bool) {
+	parts := strings.Split(instance, "/")
+	if len(parts) < 2 {
+		return "", "", false
+	}
+
+	namespace = parts[0]
+
+	// Format is "namespace/podname:service"
+	serviceParts := strings.Split(parts[1], ":")
+	if len(serviceParts) < 1 {
+		return "", "", false
+	}
+
+	podName = serviceParts[0]
+	if namespace == "" || podName == "" {
+		return "", "", false
+	}
+
+	return namespace, podName, true
 }
