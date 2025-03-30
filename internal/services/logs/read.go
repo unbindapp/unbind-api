@@ -10,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -60,13 +61,15 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 	}
 
 	// Create a channel for log events
-	eventChan := make(chan loki.LogEvents, 100*len(pods.Items))
+	eventChan := make(chan loki.LogEvents, 100)
 
 	// Create a context with cancellation
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Start streaming logs from each pod using Loki
+	// Build the pod metadata map: namespace -> podName -> metadata
+	podMetadataMap := make(map[string]map[string]loki.LogMetadata)
+
 	for _, pod := range pods.Items {
 		serviceName, _ := pod.Labels["unbind-service"]
 		service, err := self.repo.Service().GetByName(ctx, serviceName)
@@ -85,38 +88,45 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 			TeamID:        service.Edges.Environment.Edges.Project.Edges.Team.ID,
 		}
 
-		// Build log options for Loki specific to this pod
-		lokiOptions := loki.LokiLogOptions{
-			PodName:       podName,
-			PodNamespace:  podNamespace,
-			Limit:         int(input.Tail),
-			SearchPattern: input.SearchPattern,
-			Follow:        true,
-			Since:         since,
+		// Initialize namespace map if needed
+		if _, exists := podMetadataMap[podNamespace]; !exists {
+			podMetadataMap[podNamespace] = make(map[string]loki.LogMetadata)
 		}
 
-		go func(podName, podNamespace string, options loki.LokiLogOptions, metadata loki.LogMetadata) {
-			defer func() {
-				if r := recover(); r != nil {
-					fmt.Printf("Recovered from panic in log streaming goroutine: %v\n", r)
-				}
-			}()
-
-			err := self.lokiQuerier.StreamLokiLogs(streamCtx, options, metadata, eventChan)
-			if err != nil {
-				// Wrap the send in a select with context check to avoid sending on canceled contexts
-				select {
-				case <-streamCtx.Done():
-					return
-				default:
-					send.Data(loki.LogsError{
-						Code:    500,
-						Message: fmt.Sprintf("Error streaming logs for pod %s: %v", podName, err),
-					})
-				}
-			}
-		}(podName, podNamespace, lokiOptions, meta)
+		// Add pod metadata to the map
+		podMetadataMap[podNamespace][podName] = meta
 	}
+
+	// Create loki options
+	lokiLogOptions := loki.LokiLogOptions{
+		Limit:         int(input.Tail),
+		SearchPattern: input.SearchPattern,
+		Follow:        true,
+		Since:         since,
+	}
+
+	// Start a single stream for all pods
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Errorf("Recovered from panic in log streaming goroutine: %v", r)
+			}
+		}()
+
+		err := self.lokiQuerier.StreamLokiPodLogs(streamCtx, lokiLogOptions, podMetadataMap, eventChan)
+		if err != nil {
+			// Wrap the send in a select with context check to avoid sending on canceled contexts
+			select {
+			case <-streamCtx.Done():
+				return
+			default:
+				send.Data(loki.LogsError{
+					Code:    500,
+					Message: fmt.Sprintf("Error streaming logs: %v", err),
+				})
+			}
+		}
+	}()
 
 	// Send events to the client
 	for {

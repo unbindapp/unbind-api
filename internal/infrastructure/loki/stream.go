@@ -13,18 +13,36 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
-// StreamLokiLogs streams logs from Loki tail API using WebSocket.
-func (self *LokiLogQuerier) StreamLokiLogs(
+// StreamLokiPodLogs streams logs from Loki tail API using WebSocket for multiple pods using a single connection
+func (self *LokiLogQuerier) StreamLokiPodLogs(
 	ctx context.Context,
 	opts LokiLogOptions,
-	meta LogMetadata,
+	podMetadataMap map[string]map[string]LogMetadata, // Map of namespace -> podName -> metadata
 	eventChan chan<- LogEvents,
 ) error {
-	// Alloy sets the instance like instance="namespace/podname:service"
-	queryStr := fmt.Sprintf("{instance=\"%s/%s:service\"}", opts.PodNamespace, opts.PodName)
+	if len(podMetadataMap) == 0 {
+		return fmt.Errorf("no pods specified for log streaming")
+	}
 
+	// Build the OR query for multiple pods
+	var podQueries []string
+
+	// Iterate over each namespace
+	for namespace, podsInNamespace := range podMetadataMap {
+		// Iterate over each pod in this namespace
+		for podName := range podsInNamespace {
+			// Alloy sets the instance like instance="namespace/podname:service"
+			podQuery := fmt.Sprintf("{instance=\"%s/%s:service\"}", namespace, podName)
+			podQueries = append(podQueries, podQuery)
+		}
+	}
+
+	// Join the pod queries with OR operator
+	queryStr := strings.Join(podQueries, " or ")
+
+	// Add search pattern if specified
 	if opts.SearchPattern != "" {
-		queryStr = fmt.Sprintf("%s |= \"%s\"", queryStr, opts.SearchPattern)
+		queryStr = fmt.Sprintf("(%s) |= \"%s\"", queryStr, opts.SearchPattern)
 	}
 
 	// Build the request URL with parameters
@@ -56,7 +74,14 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 		q.Set("limit", strconv.Itoa(opts.Limit))
 	}
 
+	// Set follow mode
+	if opts.Follow {
+		q.Set("tail", "true")
+	}
+
 	reqURL.RawQuery = q.Encode()
+
+	log.Infof("Streaming logs with query: %s", queryStr)
 
 	// Create websocket connection
 	dialer := websocket.DefaultDialer
@@ -79,6 +104,22 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 
 	// First message
 	sentFirstMessage := false
+
+	// Helper function to extract namespace and pod name from instance label
+	extractNamespaceAndPod := func(instance string) (namespace, podName string) {
+		parts := strings.Split(instance, "/")
+		if len(parts) >= 2 {
+			namespace = parts[0]
+
+			// Format is "namespace/podname:service"
+			serviceParts := strings.Split(parts[1], ":")
+			if len(serviceParts) >= 1 {
+				podName = serviceParts[0]
+				return namespace, podName
+			}
+		}
+		return "", instance // Return empty namespace and original if parsing fails
+	}
 
 	// Main loop for receiving WebSocket messages
 	for {
@@ -107,8 +148,33 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 			var allEvents []LogEvent
 
 			for _, stream := range streamResp.Streams {
-				streamEvents := make([]LogEvent, len(stream.Values))
-				for i, entry := range stream.Values {
+				// Extract the instance label
+				instance, ok := stream.Stream["instance"]
+				if !ok {
+					log.Warn("Stream missing instance label", "labels", stream.Stream)
+					continue
+				}
+
+				namespace, podName := extractNamespaceAndPod(instance)
+				if namespace == "" || podName == "" {
+					log.Warnf("Failed to parse namespace and pod name from instance: %s", instance)
+					continue
+				}
+
+				// Get metadata for this pod
+				podsInNamespace, ok := podMetadataMap[namespace]
+				if !ok {
+					log.Warnf("No metadata found for namespace %s", namespace)
+					continue
+				}
+
+				metadata, ok := podsInNamespace[podName]
+				if !ok {
+					log.Warnf("No metadata found for pod %s in namespace %s", podName, namespace)
+					continue
+				}
+
+				for _, entry := range stream.Values {
 					// Entry format is [timestamp, log message]
 					if len(entry) != 2 {
 						log.Warnf("Unprocessable log entry format from loki %v", entry)
@@ -131,14 +197,15 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 					}
 
 					// Create log event and add it to the collection
-					streamEvents[i] = LogEvent{
-						PodName:   opts.PodName,
+					logEvent := LogEvent{
+						PodName:   podName,
 						Timestamp: timestamp,
 						Message:   message,
-						Metadata:  meta,
+						Metadata:  metadata,
 					}
+
+					allEvents = append(allEvents, logEvent)
 				}
-				allEvents = append(allEvents, streamEvents...)
 			}
 
 			// Make a dummy message if no events
