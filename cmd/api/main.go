@@ -186,6 +186,7 @@ func startAPI(cfg *config.Config) {
 		AllowedOrigins: []string{
 			"http://localhost:3000",
 			"https://app.unbind.app",
+			"*.unbind.app",
 		},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
