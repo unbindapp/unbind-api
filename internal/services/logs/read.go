@@ -101,7 +101,6 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 	lokiLogOptions := loki.LokiLogOptions{
 		Limit:         int(input.Tail),
 		SearchPattern: input.SearchPattern,
-		Follow:        true,
 		Since:         since,
 	}
 

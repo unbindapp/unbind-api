@@ -83,11 +83,6 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		q.Set("limit", strconv.Itoa(opts.Limit))
 	}
 
-	// Set follow mode
-	if opts.Follow {
-		q.Set("tail", "true")
-	}
-
 	reqURL.RawQuery = q.Encode()
 
 	log.Infof("Streaming logs with query: %s, URL: %s", queryStr, reqURL.String())
@@ -105,154 +100,200 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	}
 	defer wsConn.Close()
 
-	// Set ping handler to keep connection alive
-	wsConn.SetPingHandler(func(string) error {
-		return wsConn.WriteControl(websocket.PongMessage, []byte{}, time.Now().Add(10*time.Second))
+	// Set the ping handler to respond with pongs to keep the connection alive
+	wsConn.SetPingHandler(func(data string) error {
+		err := wsConn.WriteControl(websocket.PongMessage, []byte(data), time.Now().Add(5*time.Second))
+		if err != nil {
+			log.Warnf("Failed to send pong: %v", err)
+		}
+		return nil
 	})
 
-	// Set read deadline to detect stale connections
-	wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	// Set the pong handler to reset the read deadline when a pong is received
+	wsConn.SetPongHandler(func(string) error {
+		wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	// Initial read deadline - this will be extended by pongs and successful reads
+	wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
 	// Setup context cancellation
+	done := make(chan struct{})
 	go func() {
 		<-ctx.Done()
-		// Close the connection when context is done
-		wsConn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		log.Info("Context done, closing WebSocket connection")
+		// Close the connection gracefully when context is done
+		wsConn.WriteControl(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
+			time.Now().Add(5*time.Second))
 		wsConn.Close()
+		close(done)
 	}()
 
-	// Initialize a heartbeat timer to send empty messages periodically
+	// Initialize a ping ticker to send pings periodically
+	pingTicker := time.NewTicker(15 * time.Second)
+	defer pingTicker.Stop()
+
+	// Initialize a heartbeat ticker to send empty messages periodically to client
 	heartbeatTicker := time.NewTicker(10 * time.Second)
 	defer heartbeatTicker.Stop()
 
 	// Confirm connection is successful by sending an initial empty message
 	select {
 	case eventChan <- LogEvents{Logs: []LogEvent{}}:
-		// Successfully sent initial empty message
 	case <-ctx.Done():
 		return nil
 	}
 
-	// Main loop for receiving WebSocket messages
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-
-		case <-heartbeatTicker.C:
-			// Send heartbeat message to keep the client alive
+	// Main loop for handling the WebSocket connection
+	go func() {
+		for {
 			select {
-			case eventChan <- LogEvents{Logs: []LogEvent{}, IsHeartbeat: true}:
-				// Heartbeat sent
-			case <-ctx.Done():
+			case <-done:
+				return
+			case <-pingTicker.C:
+				// Send ping to server to keep connection alive
+				err := wsConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second))
+				if err != nil {
+					log.Warnf("Failed to send ping: %v", err)
+				}
+			case <-heartbeatTicker.C:
+				// Send heartbeat message to keep the client side alive
+				select {
+				case eventChan <- LogEvents{Logs: []LogEvent{}, IsHeartbeat: true}:
+				case <-done:
+					return
+				default:
+					log.Warn("Failed to send heartbeat to client (channel blocked)")
+				}
+			}
+		}
+	}()
+
+	// Main read loop
+	for {
+		// Check if context is done before attempting to read
+		select {
+		case <-done:
+			return nil
+		default:
+			// Continue with read
+		}
+
+		// Read from WebSocket
+		_, message, err := wsConn.ReadMessage()
+		if err != nil {
+			// Check for normal closure
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				log.Info("WebSocket closed normally")
 				return nil
 			}
 
-			// Reset read deadline after heartbeat
-			wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
+			// Check for timeout - we'll try to keep the connection alive
+			if strings.Contains(err.Error(), "i/o timeout") || strings.Contains(err.Error(), "deadline exceeded") {
+				log.Warn("WebSocket read timeout, attempting to keep connection alive")
 
-		default:
-			// Read from WebSocket with timeout
-			_, message, err := wsConn.ReadMessage()
-			if err != nil {
-				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					return nil
+				// Send a ping to check if connection is still alive
+				err := wsConn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second))
+				if err != nil {
+					log.Errorf("Failed to send ping after timeout, connection appears dead: %v", err)
+					return fmt.Errorf("websocket connection dead: %v", err)
 				}
 
-				// Check if it's a timeout and we should continue
-				if strings.Contains(err.Error(), "deadline exceeded") {
-					log.Warn("WebSocket read timeout, resetting connection deadline")
-					wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
-					continue
-				}
-
-				return fmt.Errorf("websocket read error: %v", err)
-			}
-
-			// Reset read deadline after successful read
-			wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
-
-			// Parse the message
-			var streamResp LokiStreamResponse
-			if err := json.Unmarshal(message, &streamResp); err != nil {
-				log.Error("Failed to unmarshal Loki stream response", "error", err)
+				// Reset the read deadline and continue
+				wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 				continue
 			}
 
-			// Process all logs from this response at once
-			var allEvents []LogEvent
+			// For any other error, return and let the caller handle reconnection if needed
+			log.Errorf("WebSocket read error: %v", err)
+			return fmt.Errorf("websocket read error: %v", err)
+		}
 
-			for _, stream := range streamResp.Streams {
-				// Extract the instance label
-				instance, ok := stream.Stream["instance"]
-				if !ok {
-					log.Warn("Stream missing instance label", "labels", stream.Stream)
-					continue
-				}
+		// Reset read deadline after successful read
+		wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
-				namespace, podName, ok := extractNamespaceAndPod(instance)
-				if !ok {
-					log.Warnf("Failed to parse namespace and pod name from instance: %s", instance)
-					continue
-				}
+		// Parse the message
+		var streamResp LokiStreamResponse
+		if err := json.Unmarshal(message, &streamResp); err != nil {
+			log.Warnf("Failed to unmarshal Loki stream response: %v", err)
+			continue
+		}
 
-				// Get metadata for this pod
-				podsInNamespace, ok := podMetadataMap[namespace]
-				if !ok {
-					log.Warnf("No metadata found for namespace %s", namespace)
-					continue
-				}
+		// Process all logs from this response at once
+		var allEvents []LogEvent
 
-				metadata, ok := podsInNamespace[podName]
-				if !ok {
-					log.Warnf("No metadata found for pod %s in namespace %s", podName, namespace)
-					continue
-				}
-
-				for _, entry := range stream.Values {
-					// Entry format is [timestamp, log message]
-					if len(entry) != 2 {
-						log.Warnf("Unprocessable log entry format from loki %v", entry)
-						continue
-					}
-
-					// Parse timestamp
-					var timestamp time.Time
-					if ts, err := strconv.ParseInt(entry[0], 10, 64); err == nil {
-						// Loki timestamps are in nanoseconds
-						timestamp = time.Unix(0, ts)
-					} else {
-						log.Warnf("Failed to parse timestamp: %v", err)
-						// Use current time as fallback
-						timestamp = time.Now()
-					}
-
-					// Get the message
-					message := entry[1]
-
-					// Note: We no longer filter by search pattern here as it's handled by Loki query
-
-					// Create log event and add it to the collection
-					logEvent := LogEvent{
-						PodName:   podName,
-						Timestamp: timestamp,
-						Message:   message,
-						Metadata:  metadata,
-					}
-
-					allEvents = append(allEvents, logEvent)
-				}
+		for _, stream := range streamResp.Streams {
+			// Extract the instance label
+			instance, ok := stream.Stream["instance"]
+			if !ok {
+				log.Warn("Stream missing instance label", "labels", stream.Stream)
+				continue
 			}
 
-			// Send events from this batch to the channel if there are any
-			if len(allEvents) > 0 {
-				select {
-				case eventChan <- LogEvents{Logs: allEvents}:
-					// Successfully sent
-				case <-ctx.Done():
-					// Context canceled
-					return nil
+			namespace, podName, ok := extractNamespaceAndPod(instance)
+			if !ok {
+				log.Warnf("Failed to parse namespace and pod name from instance: %s", instance)
+				continue
+			}
+
+			// Get metadata for this pod
+			podsInNamespace, ok := podMetadataMap[namespace]
+			if !ok {
+				log.Warnf("No metadata found for namespace %s", namespace)
+				continue
+			}
+
+			metadata, ok := podsInNamespace[podName]
+			if !ok {
+				log.Warnf("No metadata found for pod %s in namespace %s", podName, namespace)
+				continue
+			}
+
+			for _, entry := range stream.Values {
+				// Entry format is [timestamp, log message]
+				if len(entry) != 2 {
+					log.Warnf("Unprocessable log entry format from loki %v", entry)
+					continue
 				}
+
+				// Parse timestamp
+				var timestamp time.Time
+				if ts, err := strconv.ParseInt(entry[0], 10, 64); err == nil {
+					// Loki timestamps are in nanoseconds
+					timestamp = time.Unix(0, ts)
+				} else {
+					log.Warnf("Failed to parse timestamp: %v", err)
+					// Use current time as fallback
+					timestamp = time.Now()
+				}
+
+				// Get the message
+				message := entry[1]
+
+				// Create log event and add it to the collection
+				logEvent := LogEvent{
+					PodName:   podName,
+					Timestamp: timestamp,
+					Message:   message,
+					Metadata:  metadata,
+				}
+
+				allEvents = append(allEvents, logEvent)
+			}
+		}
+
+		// Send events from this batch to the channel if there are any
+		if len(allEvents) > 0 {
+			select {
+			case eventChan <- LogEvents{Logs: allEvents}:
+			case <-done:
+				// Context canceled
+				return nil
+			default:
+				// Channel is blocked, log a warning but continue
+				log.Warnf("Event channel blocked, couldn't send %d log events", len(allEvents))
 			}
 		}
 	}

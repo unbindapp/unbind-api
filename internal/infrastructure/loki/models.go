@@ -13,7 +13,6 @@ type LokiLogOptions struct {
 	Labels        map[string]string // Additional labels to filter by
 	Since         time.Duration     // Get logs from this time ago
 	Limit         int               // Number of log lines to get
-	Follow        bool              // Whether to stream logs (tail)
 	SinceTime     *time.Time        // Get logs from a specific time
 	SearchPattern string            // Optional text pattern to search for
 }
