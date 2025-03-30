@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
-// StreamLokiLogs streams logs from Loki to the provided channel using WebSocket
+// StreamLokiLogs streams logs from Loki tail API using WebSocket.
 func (self *LokiLogQuerier) StreamLokiLogs(
 	ctx context.Context,
 	opts LokiLogOptions,
@@ -76,79 +77,37 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 		wsConn.Close()
 	}()
 
-	// Constants for batching
-	const (
-		batchSize    = 100
-		maxBatchWait = 200 * time.Millisecond
-	)
-
-	// Batching logic
-	batch := make([]LogEvent, 0, batchSize)
-	timer := time.NewTimer(maxBatchWait)
-	defer timer.Stop()
-	sentFirstMessage := false
-
-	// Function to send the current batch
-	sendBatch := func() {
-		if len(batch) == 0 && sentFirstMessage {
-			return
-		}
-
-		sentFirstMessage = true
-		events := make([]LogEvent, len(batch))
-		copy(events, batch)
-
-		select {
-		case eventChan <- LogEvents{Logs: events}:
-			// Successfully sent
-		case <-ctx.Done():
-			// Context canceled
-		}
-
-		batch = batch[:0] // Clear the batch
-	}
-
-	// Reset timer
-	if !timer.Stop() {
-		<-timer.C
-	}
-	timer.Reset(maxBatchWait)
-
 	// Main loop for receiving WebSocket messages
 	for {
 		select {
 		case <-ctx.Done():
-			sendBatch()
 			return nil
-
-		case <-timer.C:
-			sendBatch()
-			timer.Reset(maxBatchWait)
 
 		default:
 			// Read from WebSocket
 			_, message, err := wsConn.ReadMessage()
 			if err != nil {
 				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					sendBatch()
 					return nil
 				}
-				sendBatch()
 				return fmt.Errorf("websocket read error: %v", err)
 			}
 
 			// Parse the message
 			var streamResp LokiStreamResponse
 			if err := json.Unmarshal(message, &streamResp); err != nil {
-				// Skip invalid JSON
+				log.Error("Failed to unmarshal Loki stream response", "error", err)
 				continue
 			}
 
-			// Process the logs
+			// Process all logs from this response at once
+			var allEvents []LogEvent
+
 			for _, stream := range streamResp.Streams {
 				for _, entry := range stream.Values {
 					// Entry format is [timestamp, log message]
 					if len(entry) != 2 {
+						log.Warnf("Unprocessable log entry format from loki %v", entry)
 						continue
 					}
 
@@ -167,22 +126,26 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 						continue
 					}
 
-					// Create and add log event
-					batch = append(batch, LogEvent{
-						PodName:   stream.Stream["instance"], // Use the instance label
+					// Create log event and add it to the collection
+					logEvent := LogEvent{
+						PodName:   opts.PodName,
 						Timestamp: timestamp,
 						Message:   message,
 						Metadata:  meta,
-					})
-
-					// Check batch size
-					if len(batch) >= batchSize {
-						sendBatch()
-						if !timer.Stop() {
-							<-timer.C
-						}
-						timer.Reset(maxBatchWait)
 					}
+
+					allEvents = append(allEvents, logEvent)
+				}
+			}
+
+			// Send events from this batch to the channel
+			if len(allEvents) > 0 {
+				select {
+				case eventChan <- LogEvents{Logs: allEvents}:
+					// Successfully sent
+				case <-ctx.Done():
+					// Context canceled
+					return nil
 				}
 			}
 		}
