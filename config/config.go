@@ -58,7 +58,7 @@ type Config struct {
 	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER,required" envDefault:"admin"`
 	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD,required"`
 	// Logging
-	LokiEndpoint string `env:"LOKI_ENDPOINT" envDefault:"http://loki-unbind.unbind-system.svc.cluster.local:3100"`
+	LokiEndpoint string `env:"LOKI_ENDPOINT" envDefault:"http://loki-unbind-gateway.unbind-system.svc.cluster.local"`
 	// ! TODO - remove me some day, for bypassing oauth
 	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
 }
