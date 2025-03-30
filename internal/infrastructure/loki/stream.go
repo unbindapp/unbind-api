@@ -25,29 +25,25 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	}
 
 	// Build the OR query for multiple pods
-	var podQueries []string
+	var queryStr string
 
-	// Iterate over each namespace
-	for namespace, podsInNamespace := range podMetadataMap {
-		// Iterate over each pod in this namespace
-		for podName := range podsInNamespace {
-			// Alloy sets the instance like instance="namespace/podname:service"
-			podQuery := fmt.Sprintf("{instance=\"%s/%s:service\"}", namespace, podName)
-			podQueries = append(podQueries, podQuery)
+	// Use the LogQL regex pattern format: {instance=~"(pattern1|pattern2)"}
+	var instancePatterns []string
+
+	for namespace, podsMap := range podMetadataMap {
+		for podName := range podsMap {
+			// Escape special regex characters in the pod name and namespace
+			escapedNamespace := strings.ReplaceAll(namespace, ".", "\\.")
+			escapedPodName := strings.ReplaceAll(podName, ".", "\\.")
+			pattern := fmt.Sprintf("%s/%s:service", escapedNamespace, escapedPodName)
+			instancePatterns = append(instancePatterns, pattern)
 		}
 	}
 
-	var queryStr string
-
-	if len(podMetadataMap) == 1 && len(podQueries) == 1 {
-		// If there's only one pod
-		queryStr = podQueries[0]
-	} else if len(podQueries) > 1 {
-		// Use OR to combine multiple pod queries
-		queryStr = fmt.Sprintf("%s", podQueries[0])
-		for i := 1; i < len(podQueries); i++ {
-			queryStr = fmt.Sprintf("%s | %s", queryStr, podQueries[i])
-		}
+	if len(instancePatterns) > 0 {
+		// Join patterns with | inside parentheses for proper regex OR syntax
+		regexPattern := fmt.Sprintf("(%s)", strings.Join(instancePatterns, "|"))
+		queryStr = fmt.Sprintf("{instance=~\"%s\"}", regexPattern)
 	} else {
 		return fmt.Errorf("no valid pod queries could be constructed")
 	}
