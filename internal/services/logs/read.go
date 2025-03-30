@@ -96,12 +96,24 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 		}
 
 		go func(podName, podNamespace string, options loki.LokiLogOptions, metadata loki.LogMetadata) {
+			defer func() {
+				if r := recover(); r != nil {
+					fmt.Printf("Recovered from panic in log streaming goroutine: %v\n", r)
+				}
+			}()
+
 			err := self.lokiQuerier.StreamLokiLogs(streamCtx, options, metadata, eventChan)
 			if err != nil {
-				send.Data(loki.LogsError{
-					Code:    500,
-					Message: fmt.Sprintf("Error streaming logs for pod %s: %v", podName, err),
-				})
+				// Wrap the send in a select with context check to avoid sending on canceled contexts
+				select {
+				case <-streamCtx.Done():
+					return
+				default:
+					send.Data(loki.LogsError{
+						Code:    500,
+						Message: fmt.Sprintf("Error streaming logs for pod %s: %v", podName, err),
+					})
+				}
 			}
 		}(podName, podNamespace, lokiOptions, meta)
 	}
