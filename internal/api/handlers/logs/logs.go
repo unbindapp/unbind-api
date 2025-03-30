@@ -11,7 +11,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 )
 
@@ -42,7 +41,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	if errors.Is(err, errdefs.ErrInvalidInput) {
 		send.Data(
-			k8s.LogsError{
+			loki.LogsError{
 				Code:    400,
 				Message: fmt.Sprintf("invalid input %v", err.Error()),
 			},
@@ -50,7 +49,7 @@ func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	}
 	if errors.Is(err, errdefs.ErrUnauthorized) {
 		send.Data(
-			k8s.LogsError{
+			loki.LogsError{
 				Code:    403,
 				Message: fmt.Sprintf("unauthorized %v", err.Error()),
 			},
@@ -58,7 +57,7 @@ func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	}
 	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
 		send.Data(
-			k8s.LogsError{
+			loki.LogsError{
 				Code:    404,
 				Message: fmt.Sprintf("entity not found %v", err.Error()),
 			},
@@ -66,7 +65,7 @@ func (self *HandlerGroup) handleErr(err error, send sse.Sender) {
 	}
 	log.Error("Unknown error streaming logs", "err", err)
 	send.Data(
-		k8s.LogsError{
+		loki.LogsError{
 			Code:    500,
 			Message: fmt.Sprintf("unknown error streaming logs"),
 		},

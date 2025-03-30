@@ -9,7 +9,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/sse"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
@@ -32,7 +32,7 @@ func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, s
 	if !found {
 		log.Error("Error getting user from context")
 		send.Data(
-			k8s.LogsError{
+			loki.LogsError{
 				Code:    http.StatusUnauthorized,
 				Message: "Unable to retrieve user",
 			},
