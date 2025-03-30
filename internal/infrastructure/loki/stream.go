@@ -37,8 +37,20 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		}
 	}
 
-	// Join the pod queries with OR operator
-	queryStr := strings.Join(podQueries, " or ")
+	var queryStr string
+
+	if len(podMetadataMap) == 1 && len(podQueries) == 1 {
+		// If there's only one pod
+		queryStr = podQueries[0]
+	} else if len(podQueries) > 1 {
+		// Use OR to combine multiple pod queries
+		queryStr = fmt.Sprintf("%s", podQueries[0])
+		for i := 1; i < len(podQueries); i++ {
+			queryStr = fmt.Sprintf("%s | %s", queryStr, podQueries[i])
+		}
+	} else {
+		return fmt.Errorf("no valid pod queries could be constructed")
+	}
 
 	// Add search pattern if specified
 	if opts.SearchPattern != "" {
