@@ -77,6 +77,9 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 		wsConn.Close()
 	}()
 
+	// First message
+	sentFirstMessage := false
+
 	// Main loop for receiving WebSocket messages
 	for {
 		select {
@@ -104,7 +107,8 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 			var allEvents []LogEvent
 
 			for _, stream := range streamResp.Streams {
-				for _, entry := range stream.Values {
+				streamEvents := make([]LogEvent, len(stream.Values))
+				for i, entry := range stream.Values {
 					// Entry format is [timestamp, log message]
 					if len(entry) != 2 {
 						log.Warnf("Unprocessable log entry format from loki %v", entry)
@@ -127,19 +131,24 @@ func (self *LokiLogQuerier) StreamLokiLogs(
 					}
 
 					// Create log event and add it to the collection
-					logEvent := LogEvent{
+					streamEvents[i] = LogEvent{
 						PodName:   opts.PodName,
 						Timestamp: timestamp,
 						Message:   message,
 						Metadata:  meta,
 					}
-
-					allEvents = append(allEvents, logEvent)
 				}
+				allEvents = append(allEvents, streamEvents...)
+			}
+
+			// Make a dummy message if no events
+			if len(allEvents) == 0 && !sentFirstMessage {
+				allEvents = []LogEvent{}
 			}
 
 			// Send events from this batch to the channel
-			if len(allEvents) > 0 {
+			if len(allEvents) > 0 || !sentFirstMessage {
+				sentFirstMessage = true
 				select {
 				case eventChan <- LogEvents{Logs: allEvents}:
 					// Successfully sent
