@@ -170,12 +170,18 @@ func (self *KubeClient) StreamPodLogs(
 
 	batch := make([]LogEvent, 0, batchSize)
 	timer := time.NewTimer(maxBatchWait)
+	// Initially send an empty meessage even if there's no logs
+	sentFirstMessage := false
 
 	// Function to send the current batch to the channel
 	sendBatch := func() {
 		if len(batch) == 0 {
-			return
+			if sentFirstMessage {
+				return
+			}
 		}
+
+		sentFirstMessage = true
 
 		events := make([]LogEvent, len(batch))
 		copy(events, batch)
