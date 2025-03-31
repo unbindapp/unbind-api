@@ -33,33 +33,31 @@ func (self *PrometheusClient) GetResourceMetrics(
 	// Build the label selector for kube_pod_labels
 	kubeLabelsSelector := buildLabelSelector(filter)
 
-	var cpuQuery, ramQuery, networkQuery, diskQuery string
-
 	// Queries with label filtering
-	cpuQuery = fmt.Sprintf(`sum by (namespace, pod) (
-			rate(container_cpu_usage_seconds_total{container!="POD", container!=""}[5m])
-			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
-			kube_pod_labels%s
-		)`, kubeLabelsSelector)
+	cpuQuery := fmt.Sprintf(`sum(
+		rate(container_cpu_usage_seconds_total{container!="POD", container!=""}[%ds])
+		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+		kube_pod_labels%s
+	)`, int(step.Seconds()), kubeLabelsSelector)
 
-	ramQuery = fmt.Sprintf(`sum by (namespace, pod) (
-			container_memory_working_set_bytes{container!="POD", container!=""}
-			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
-			kube_pod_labels%s
-		)`, kubeLabelsSelector)
+	ramQuery := fmt.Sprintf(`sum(
+		container_memory_working_set_bytes{container!="POD", container!=""}
+		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+		kube_pod_labels%s
+	)`, kubeLabelsSelector)
 
-	networkQuery = fmt.Sprintf(`sum by (namespace, pod) (
-			(increase(container_network_receive_bytes_total{pod!=""}[5m]) +
-			increase(container_network_transmit_bytes_total{pod!=""}[5m]))
-			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
-			kube_pod_labels%s
-		)`, kubeLabelsSelector)
+	networkQuery := fmt.Sprintf(`sum(
+		(increase(container_network_receive_bytes_total{pod!=""}[%ds]) +
+		increase(container_network_transmit_bytes_total{pod!=""}[%ds]))
+		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+		kube_pod_labels%s
+	)`, int(step.Seconds()), int(step.Seconds()), kubeLabelsSelector)
 
-	diskQuery = fmt.Sprintf(`sum by (namespace, pod) (
-			container_fs_usage_bytes{container!="POD", container!=""}
-			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
-			kube_pod_labels%s
-		)`, kubeLabelsSelector)
+	diskQuery := fmt.Sprintf(`sum(
+		container_fs_usage_bytes{container!="POD", container!=""}
+		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+		kube_pod_labels%s
+	)`, kubeLabelsSelector)
 
 	// Execute queries
 	cpuResult, _, err := self.api.QueryRange(ctx, cpuQuery, r)
