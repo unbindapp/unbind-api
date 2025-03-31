@@ -30,13 +30,36 @@ func (self *PrometheusClient) GetResourceMetrics(
 		Step:  step,
 	}
 
-	labelSelector := buildLabelSelector(filter)
+	// Build the label selector for kube_pod_labels
+	kubeLabelsSelector := buildLabelSelector(filter)
 
-	// Queries for different resource metrics
-	cpuQuery := "sum(rate(container_cpu_usage_seconds_total" + labelSelector + "[5m])) by (pod)"
-	ramQuery := "sum(container_memory_usage_bytes" + labelSelector + ") by (pod)"
-	networkQuery := "sum(rate(container_network_receive_bytes_total" + labelSelector + "[5m]) + rate(container_network_transmit_bytes_total" + labelSelector + "[5m])) by (pod)"
-	diskQuery := "sum(container_fs_usage_bytes" + labelSelector + ") by (pod)"
+	var cpuQuery, ramQuery, networkQuery, diskQuery string
+
+	// Queries with label filtering
+	cpuQuery = fmt.Sprintf(`sum by (namespace, pod) (
+			rate(container_cpu_usage_seconds_total{container!="POD", container!=""}[5m])
+			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+			kube_pod_labels%s
+		)`, kubeLabelsSelector)
+
+	ramQuery = fmt.Sprintf(`sum by (namespace, pod) (
+			container_memory_working_set_bytes{container!="POD", container!=""}
+			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+			kube_pod_labels%s
+		)`, kubeLabelsSelector)
+
+	networkQuery = fmt.Sprintf(`sum by (namespace, pod) (
+			(rate(container_network_receive_bytes_total{container!="POD", container!=""}[5m]) +
+			rate(container_network_transmit_bytes_total{container!="POD", container!=""}[5m]))
+			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+			kube_pod_labels%s
+		)`, kubeLabelsSelector)
+
+	diskQuery = fmt.Sprintf(`sum by (namespace, pod) (
+			container_fs_usage_bytes{container!="POD", container!=""}
+			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+			kube_pod_labels%s
+		)`, kubeLabelsSelector)
 
 	// Execute queries
 	cpuResult, _, err := self.api.QueryRange(ctx, cpuQuery, r)
@@ -62,33 +85,24 @@ func (self *PrometheusClient) GetResourceMetrics(
 	// Process results
 	metrics := &ResourceMetrics{}
 
-	// Extract CPU metrics
-	if cpuMatrix, ok := cpuResult.(model.Matrix); ok && len(cpuMatrix) > 0 {
-		for _, s := range cpuMatrix[0].Values {
-			metrics.CPU = append(metrics.CPU, s)
-		}
-	}
-
-	// Extract RAM metrics
-	if ramMatrix, ok := ramResult.(model.Matrix); ok && len(ramMatrix) > 0 {
-		for _, s := range ramMatrix[0].Values {
-			metrics.RAM = append(metrics.RAM, s)
-		}
-	}
-
-	// Extract Network metrics
-	if networkMatrix, ok := networkResult.(model.Matrix); ok && len(networkMatrix) > 0 {
-		for _, s := range networkMatrix[0].Values {
-			metrics.Network = append(metrics.Network, s)
-		}
-	}
-
-	// Extract Disk metrics
-	if diskMatrix, ok := diskResult.(model.Matrix); ok && len(diskMatrix) > 0 {
-		for _, s := range diskMatrix[0].Values {
-			metrics.Disk = append(metrics.Disk, s)
-		}
-	}
+	// Extract metrics from all series, not just the first one
+	metrics.CPU = extractMetrics(cpuResult)
+	metrics.RAM = extractMetrics(ramResult)
+	metrics.Network = extractMetrics(networkResult)
+	metrics.Disk = extractMetrics(diskResult)
 
 	return metrics, nil
+}
+
+func extractMetrics(result model.Value) []model.SamplePair {
+	var samples []model.SamplePair
+
+	// Handle matrix results (for range queries)
+	if matrix, ok := result.(model.Matrix); ok {
+		for _, series := range matrix {
+			samples = append(samples, series.Values...)
+		}
+	}
+
+	return samples
 }

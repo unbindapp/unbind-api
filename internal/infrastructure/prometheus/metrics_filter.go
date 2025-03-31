@@ -13,29 +13,43 @@ type MetricsFilter struct {
 	ServiceID     uuid.UUID
 }
 
-// buildLabelSelector constructs a Prometheus label selector string based on the provided MetricsFilter.
+// buildLabelSelector constructs the selector for kube_pod_labels
 func buildLabelSelector(filter *MetricsFilter) string {
-	selector := ""
+	if filter == nil {
+		return ""
+	}
+
+	var labelFilters []string
+
 	if filter.TeamID != uuid.Nil {
-		selector += fmt.Sprintf("unbind_team=\"%s\",", filter.TeamID.String())
+		labelFilters = append(labelFilters, fmt.Sprintf(`label_unbind_team="%s"`, filter.TeamID.String()))
 	}
+
 	if filter.ProjectID != uuid.Nil {
-		selector += fmt.Sprintf("unbind_project=\"%s\",", filter.ProjectID.String())
+		labelFilters = append(labelFilters, fmt.Sprintf(`label_unbind_project="%s"`, filter.ProjectID.String()))
 	}
+
 	if filter.EnvironmentID != uuid.Nil {
-		selector += fmt.Sprintf("unbind_environment=\"%s\",", filter.EnvironmentID.String())
+		labelFilters = append(labelFilters, fmt.Sprintf(`label_unbind_environment="%s"`, filter.EnvironmentID.String()))
 	}
+
 	if filter.ServiceID != uuid.Nil {
-		selector += fmt.Sprintf("unbind_service=\"%s\",", filter.ServiceID.String())
+		labelFilters = append(labelFilters, fmt.Sprintf(`label_unbind_service="%s"`, filter.ServiceID.String()))
 	}
 
-	// Remove trailing comma if present
-	if len(selector) > 0 && selector[len(selector)-1] == ',' {
-		selector = selector[:len(selector)-1]
+	if len(labelFilters) == 0 {
+		return ""
 	}
 
-	if selector != "" {
-		return "{" + selector + "}"
+	// Combine all filters with logical AND (comma in PromQL)
+	filterQuery := "{"
+	for i, labelFilter := range labelFilters {
+		if i > 0 {
+			filterQuery += ", "
+		}
+		filterQuery += labelFilter
 	}
-	return ""
+	filterQuery += "}"
+
+	return filterQuery
 }
