@@ -457,6 +457,8 @@ github.com/tonistiigi/vt100 v0.0.0-20240514184818-90bafcd6abab h1:H6aJ0yKQ0gF49Q
 github.com/tonistiigi/vt100 v0.0.0-20240514184818-90bafcd6abab/go.mod h1:ulncasL3N9uLrVann0m+CDlJKWsIAP34MPcOJF6VRvc=
 github.com/unbindapp/unbind-operator v0.0.0-20250326153659-f6ad53775e7b h1:fZUkEf1yF8ca9Cdy172/wN2fbLsP7DNnpSSJeNt65EM=
 github.com/unbindapp/unbind-operator v0.0.0-20250326153659-f6ad53775e7b/go.mod h1:UF+y6/WOfRM6KnLmbI9pKtVxH6WdN/Pyq3+t+yB+ywI=
+github.com/unbindapp/unbind-operator v0.0.0-20250331021033-49a319fb1b06 h1:f0jPL+koZZAoNKEB9gEcXuXRgZtBFxzD1jZfRcOiI7c=
+github.com/unbindapp/unbind-operator v0.0.0-20250331021033-49a319fb1b06/go.mod h1:UF+y6/WOfRM6KnLmbI9pKtVxH6WdN/Pyq3+t+yB+ywI=
 github.com/valkey-io/valkey-go v1.0.56 h1:7qp/9dqqPbYEEKeFZCnpX6nzM5XzO2MPp0iKh9+c9Wg=
 github.com/valkey-io/valkey-go v1.0.56/go.mod h1:sxpCChk8i3oTG+A/lUi9Lj8C/7WI+yhnQCvDJlPVKNM=
 github.com/valkey-io/valkey-go/mock v1.0.56 h1:ZJ1W5nBLPcYxqTHqlbLFZ+QTkP8csJAmTGiairz8cVo=

@@ -42,6 +42,11 @@ func main() {
 	cfg := config.NewConfig()
 	os.Setenv("BUILDKIT_HOST", cfg.BuildkitHost)
 
+	serviceId, err := uuid.Parse(cfg.ServiceRef)
+	if err != nil {
+		log.Fatalf("Failed to parse service ID, ref must be a valid uuidv4: %v", err)
+	}
+
 	// Setup database
 	// Load database
 	dbConnInfo, err := database.GetSqlDbConn(cfg, false)
@@ -142,8 +147,8 @@ func main() {
 		}
 
 		// Update active deployment
-		if err = repo.Service().SetCurrentDeployment(ctx, tx, cfg.ServiceID, cfg.ServiceDeploymentID); err != nil {
-			log.Error("Failed to set current deployment", "service_id", cfg.ServiceID, "deployment_id", cfg.ServiceDeploymentID, "err", err)
+		if err = repo.Service().SetCurrentDeployment(ctx, tx, serviceId, cfg.ServiceDeploymentID); err != nil {
+			log.Error("Failed to set current deployment", "service_id", serviceId, "deployment_id", cfg.ServiceDeploymentID, "err", err)
 		}
 
 		if err = markDeploymentSuccessful(ctx, tx, repo, cfg.ServiceDeploymentID); err != nil {

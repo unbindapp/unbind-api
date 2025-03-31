@@ -141,7 +141,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		"CONTAINER_REGISTRY_USER":     self.cfg.ContainerRegistryUser,
 		"CONTAINER_REGISTRY_PASSWORD": self.cfg.ContainerRegistryPassword,
 		"DEPLOYMENT_NAMESPACE":        namespace,
-		"SERVICE_ID":                  service.ID.String(),
+		"SERVICE_REF":                 service.ID.String(),
 		"SERVICE_NAME":                service.Name,
 		"SERVICE_PUBLIC":              strconv.FormatBool(service.Edges.ServiceConfig.Public),
 		"SERVICE_REPLICAS":            strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
@@ -150,11 +150,11 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	}
 
 	if service.Edges.Environment != nil {
-		env["SERVICE_ENVIRONMENT_REF"] = service.Edges.Environment.Name
+		env["SERVICE_ENVIRONMENT_REF"] = service.Edges.Environment.ID.String()
 		if service.Edges.Environment.Edges.Project != nil {
-			env["SERVICE_PROJECT_REF"] = service.Edges.Environment.Edges.Project.Name
+			env["SERVICE_PROJECT_REF"] = service.Edges.Environment.Edges.Project.ID.String()
 			if service.Edges.Environment.Edges.Project.Edges.Team != nil {
-				env["SERVICE_TEAM_REF"] = service.Edges.Environment.Edges.Project.Edges.Team.Name
+				env["SERVICE_TEAM_REF"] = service.Edges.Environment.Edges.Project.Edges.Team.ID.String()
 			}
 		}
 	}

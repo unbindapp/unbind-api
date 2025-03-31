@@ -40,7 +40,6 @@ type Config struct {
 	// Deployment namespace (kubernetes)
 	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
 	// Service specific
-	ServiceID             uuid.UUID             `env:"SERVICE_ID"`
 	ServiceDeploymentID   uuid.UUID             `env:"SERVICE_DEPLOYMENT_ID"`
 	ServiceName           string                `env:"SERVICE_NAME"`
 	ServiceProvider       string                `env:"SERVICE_PROVIDER"`
@@ -53,6 +52,7 @@ type Config struct {
 	ServiceTeamRef        string                `env:"SERVICE_TEAM_REF"`
 	ServiceProjectRef     string                `env:"SERVICE_PROJECT_REF"`
 	ServiceEnvironmentRef string                `env:"SERVICE_ENVIRONMENT_REF"`
+	ServiceRef            string                `env:"SERVICE_REF"`
 	ServiceDockerfilePath string                `env:"SERVICE_DOCKERFILE_PATH"` // Path to Dockerfile in the repo (optional)
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
