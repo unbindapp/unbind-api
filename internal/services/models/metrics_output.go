@@ -13,14 +13,16 @@ type MetricsPair struct {
 }
 
 type MetricsResult struct {
+	Step    time.Duration `json:"step"`
 	CPU     []MetricsPair `json:"cpu"`
 	RAM     []MetricsPair `json:"ram"`
 	Disk    []MetricsPair `json:"disk"`
 	Network []MetricsPair `json:"network"`
 }
 
-func TransformMetricsEntity(metrics *prometheus.ResourceMetrics) *MetricsResult {
+func TransformMetricsEntity(metrics *prometheus.ResourceMetrics, step time.Duration) *MetricsResult {
 	return &MetricsResult{
+		Step:    step,
 		CPU:     transformMetrics(metrics.CPU),
 		RAM:     transformMetrics(metrics.RAM),
 		Disk:    transformMetrics(metrics.Disk),

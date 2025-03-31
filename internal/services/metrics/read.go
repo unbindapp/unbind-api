@@ -77,5 +77,5 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	}
 
 	// Convert to our format
-	return models.TransformMetricsEntity(rawMetrics), nil
+	return models.TransformMetricsEntity(rawMetrics, step), nil
 }
