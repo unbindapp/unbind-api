@@ -58,11 +58,11 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 
 	// Create loki options
 	lokiLogOptions := loki.LokiLogOptions{
-		Label:         label,
-		LabelValue:    labelValue,
-		Limit:         int(input.Tail),
-		SearchPattern: input.SearchPattern,
-		Since:         since,
+		Label:      label,
+		LabelValue: labelValue,
+		Limit:      int(input.Tail),
+		RawFilter:  input.Filters,
+		Since:      since,
 	}
 
 	// Start a single stream for all pods

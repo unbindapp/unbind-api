@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -22,10 +21,9 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 ) error {
 	queryStr := fmt.Sprintf("{%s=\"%s\"}", opts.Label, opts.LabelValue)
 
-	// Add search pattern if specified
-	if opts.SearchPattern != "" {
-		// Case insensitive search
-		queryStr = fmt.Sprintf("(%s) |~ \"(?i)%s\"", queryStr, regexp.QuoteMeta(opts.SearchPattern))
+	// Add extra filters
+	if opts.RawFilter != "" {
+		queryStr = fmt.Sprintf("%s %s", queryStr, opts.RawFilter)
 	}
 
 	// Build the request URL with parameters

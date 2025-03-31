@@ -15,12 +15,12 @@ const (
 
 // LokiLogOptions represents options for filtering and streaming logs from Loki
 type LokiLogOptions struct {
-	Label         LokiLabelName // Label to filter logs by
-	LabelValue    string        // Value of the label to filter logs by
-	Since         time.Duration // Get logs from this time ago
-	Limit         int           // Number of log lines to get
-	SinceTime     *time.Time    // Get logs from a specific time
-	SearchPattern string        // Optional text pattern to search for
+	Label      LokiLabelName // Label to filter logs by
+	LabelValue string        // Value of the label to filter logs by
+	RawFilter  string        // Raw logql filter string
+	Since      time.Duration // Get logs from this time ago
+	Limit      int           // Number of log lines to get
+	SinceTime  *time.Time    // Get logs from a specific time
 }
 
 type LogMetadata struct {
