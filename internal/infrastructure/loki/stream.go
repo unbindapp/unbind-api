@@ -273,25 +273,3 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		}
 	}
 }
-
-func extractNamespaceAndPod(instance string) (namespace, podName string, ok bool) {
-	parts := strings.Split(instance, "/")
-	if len(parts) < 2 {
-		return "", "", false
-	}
-
-	namespace = parts[0]
-
-	// Format is "namespace/podname:service"
-	serviceParts := strings.Split(parts[1], ":")
-	if len(serviceParts) < 1 {
-		return "", "", false
-	}
-
-	podName = serviceParts[0]
-	if namespace == "" || podName == "" {
-		return "", "", false
-	}
-
-	return namespace, podName, true
-}

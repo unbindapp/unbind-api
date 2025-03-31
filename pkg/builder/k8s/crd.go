@@ -75,6 +75,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			TeamRef:          params.TeamRef,
 			ProjectRef:       params.ProjectRef,
 			EnvironmentRef:   params.EnvironmentRef,
+			ServiceRef:       params.ServiceRef,
 			KubernetesSecret: params.KubernetesSecret,
 			GitRepository:    gitRepository,
 		},
