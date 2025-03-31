@@ -31,15 +31,6 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 		metricsFilters.ServiceID = service.ID
 	}
 
-	// Parse 'step' duration
-	var step time.Duration
-	if input.Step != "" {
-		step, err = time.ParseDuration(input.Step)
-		if err != nil {
-			return nil, fmt.Errorf("invalid step duration: %w", err)
-		}
-	}
-
 	// Get start
 	var start time.Time
 	if input.Start.IsZero() {
@@ -56,6 +47,27 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 		end = time.Now()
 	} else {
 		end = input.End
+	}
+
+	// Calculate step
+	duration := end.Sub(start)
+	var step time.Duration
+	switch {
+	case duration <= 24*time.Hour:
+		// 5 minute step
+		step = 5 * time.Minute
+	case duration <= 3*24*time.Hour:
+		// 30 minute step
+		step = 30 * time.Minute
+	case duration <= 7*24*time.Hour:
+		// 1 hour step
+		step = 1 * time.Hour
+	case duration <= 30*24*time.Hour:
+		// 6 hour step
+		step = 6 * time.Hour
+	default:
+		// 1 day step
+		step = 24 * time.Hour
 	}
 
 	// Get metrics

@@ -45,7 +45,6 @@ type MetricsQueryInput struct {
 	ProjectID     uuid.UUID   `query:"project_id" required:"false"`
 	EnvironmentID uuid.UUID   `query:"environment_id" required:"false"`
 	ServiceID     uuid.UUID   `query:"service_id" required:"false"`
-	Step          string      `query:"step" default:"10m" doc:"Step duration for the query"`
 	Start         time.Time   `query:"start" required:"false" doc:"Start time for the query, defaults to 1 week ago"`
 	End           time.Time   `query:"end" required:"false" doc:"End time for the query, defaults to now"`
 }

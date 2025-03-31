@@ -46,7 +46,6 @@ type LogQueryInput struct {
 	ServiceID     uuid.UUID `query:"service_id" required:"false"`
 	Since         string    `query:"since" default:"10m" doc:"Duration to look back (e.g., '1h', '30m')"`
 	Tail          int64     `query:"tail" default:"100" doc:"Number of lines to get from the end"`
-	Previous      bool      `query:"previous" doc:"Get logs from previous instance"`
 	Timestamps    bool      `query:"timestamps" default:"true" doc:"Include timestamps in logs"`
 	Filters       string    `query:"filters" doc:"Optional logql filter string"`
 }
