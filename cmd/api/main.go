@@ -21,6 +21,7 @@ import (
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
+	metrics_handler "github.com/unbindapp/unbind-api/internal/api/handlers/metrics"
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
@@ -37,11 +38,13 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
 	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
+	metric_service "github.com/unbindapp/unbind-api/internal/services/metrics"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
@@ -145,6 +148,12 @@ func startAPI(cfg *config.Config) {
 		log.Fatalf("Failed to create Loki log querier, invalid config: %v", err)
 	}
 
+	// Prometheus client
+	promClient, err := prometheus.NewPrometheusClient(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create Prometheus client: %v", err)
+	}
+
 	// Bootstrap
 	bootstrapper := &Bootstrapper{
 		repos:                   repo,
@@ -182,6 +191,7 @@ func startAPI(cfg *config.Config) {
 		LogService:           logs_service.NewLogsService(repo, kubeClient, lokiQuerier),
 		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient),
 		SystemService:        system_service.NewSystemService(cfg, repo, buildkitSettings),
+		MetricsService:       metric_service.NewMetricService(promClient, repo),
 	}
 
 	// New chi router
@@ -365,6 +375,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	deployments_handler.RegisterHandlers(srvImpl, deploymentsGroup)
+
+	// /metrics group
+	metricsGroup := huma.NewGroup(api, "/metrics")
+	metricsGroup.UseMiddleware(mw.Authenticate)
+	metricsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Metrics"}
+		next(op)
+	})
+	metrics_handler.RegisterHandlers(srvImpl, metricsGroup)
 
 	// Start the server
 	addr := ":8089"
