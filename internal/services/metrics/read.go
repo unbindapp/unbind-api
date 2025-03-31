@@ -34,8 +34,8 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	// Get start
 	var start time.Time
 	if input.Start.IsZero() {
-		// Default to 7 days ago
-		start = time.Now().Add(-7 * 24 * time.Hour)
+		// Default to 24 hours ago
+		start = time.Now().Add(-1 * 24 * time.Hour)
 	} else {
 		start = input.Start
 	}
@@ -49,9 +49,9 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 		end = input.End
 	}
 
-	// Calculate step
+	// Calculate step size
+	step := 5 * time.Minute // Default
 	duration := end.Sub(start)
-	step := 1 * time.Hour // Default step
 	// Default step calculations
 	if !input.Start.IsZero() || !input.End.IsZero() {
 		switch {
