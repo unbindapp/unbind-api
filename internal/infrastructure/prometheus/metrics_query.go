@@ -49,8 +49,8 @@ func (self *PrometheusClient) GetResourceMetrics(
 		)`, kubeLabelsSelector)
 
 	networkQuery = fmt.Sprintf(`sum by (namespace, pod) (
-			(rate(container_network_receive_bytes_total{container!="POD", container!=""}[5m]) +
-			rate(container_network_transmit_bytes_total{container!="POD", container!=""}[5m]))
+			(rate(container_network_receive_bytes_total{pod!=""}[5m]) +
+			rate(container_network_transmit_bytes_total{pod!=""}[5m]))
 			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 			kube_pod_labels%s
 		)`, kubeLabelsSelector)
