@@ -2,27 +2,33 @@ package loki
 
 import (
 	"time"
+)
 
-	"github.com/google/uuid"
+type LokiLabelName string
+
+const (
+	LokiLabelTeam        LokiLabelName = "unbind_team"
+	LokiLabelProject     LokiLabelName = "unbind_project"
+	LokiLabelEnvironment LokiLabelName = "unbind_environment"
+	LokiLabelService     LokiLabelName = "unbind_service"
 )
 
 // LokiLogOptions represents options for filtering and streaming logs from Loki
 type LokiLogOptions struct {
-	PodNamespace  string            // Kubernetes namespace to query
-	PodName       string            // Pod name to query
-	Labels        map[string]string // Additional labels to filter by
-	Since         time.Duration     // Get logs from this time ago
-	Limit         int               // Number of log lines to get
-	SinceTime     *time.Time        // Get logs from a specific time
-	SearchPattern string            // Optional text pattern to search for
+	Label         LokiLabelName // Label to filter logs by
+	LabelValue    string        // Value of the label to filter logs by
+	Since         time.Duration // Get logs from this time ago
+	Limit         int           // Number of log lines to get
+	SinceTime     *time.Time    // Get logs from a specific time
+	SearchPattern string        // Optional text pattern to search for
 }
 
 type LogMetadata struct {
 	// Metadata to stick on
-	ServiceID     uuid.UUID `json:"service_id"`
-	TeamID        uuid.UUID `json:"team_id"`
-	ProjectID     uuid.UUID `json:"project_id"`
-	EnvironmentID uuid.UUID `json:"environment_id"`
+	ServiceID     string `json:"service_id"`
+	TeamID        string `json:"team_id"`
+	ProjectID     string `json:"project_id"`
+	EnvironmentID string `json:"environment_id"`
 }
 
 type LogEvents struct {

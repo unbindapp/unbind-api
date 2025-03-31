@@ -18,35 +18,9 @@ import (
 func (self *LokiLogQuerier) StreamLokiPodLogs(
 	ctx context.Context,
 	opts LokiLogOptions,
-	podMetadataMap map[string]map[string]LogMetadata, // Map of namespace -> podName -> metadata
 	eventChan chan<- LogEvents,
 ) error {
-	if len(podMetadataMap) == 0 {
-		return fmt.Errorf("no pods specified for log streaming")
-	}
-
-	// Build the OR query for multiple pods
-	var queryStr string
-
-	// Use the LogQL regex pattern format: {instance=~"(pattern1|pattern2)"}
-	var instancePatterns []string
-
-	for namespace, podsMap := range podMetadataMap {
-		for podName := range podsMap {
-			escapedNamespace := regexp.QuoteMeta(namespace)
-			escapedPodName := regexp.QuoteMeta(podName)
-			pattern := fmt.Sprintf("%s/%s:service", escapedNamespace, escapedPodName)
-			instancePatterns = append(instancePatterns, pattern)
-		}
-	}
-
-	if len(instancePatterns) > 0 {
-		// Join patterns with | inside parentheses for proper regex OR syntax
-		regexPattern := fmt.Sprintf("(%s)", strings.Join(instancePatterns, "|"))
-		queryStr = fmt.Sprintf("{instance=~\"%s\"}", regexPattern)
-	} else {
-		return fmt.Errorf("no valid pod queries could be constructed")
-	}
+	queryStr := fmt.Sprintf("{%s=\"%s\"}", opts.Label, opts.LabelValue)
 
 	// Add search pattern if specified
 	if opts.SearchPattern != "" {
@@ -225,30 +199,26 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		var allEvents []LogEvent
 
 		for _, stream := range streamResp.Streams {
-			// Extract the instance label
+			// Get metadata for this stream
 			instance, ok := stream.Stream["instance"]
 			if !ok {
-				log.Warn("Stream missing instance label", "labels", stream.Stream)
-				continue
+				log.Warnf("Stream missing instance label: %s", stream.Stream)
 			}
-
-			namespace, podName, ok := extractNamespaceAndPod(instance)
+			environmentID, ok := stream.Stream[string(LokiLabelEnvironment)]
 			if !ok {
-				log.Warnf("Failed to parse namespace and pod name from instance: %s", instance)
-				continue
+				log.Warnf("Stream missing environment label: %s", stream.Stream)
 			}
-
-			// Get metadata for this pod
-			podsInNamespace, ok := podMetadataMap[namespace]
+			teamID, ok := stream.Stream[string(LokiLabelTeam)]
 			if !ok {
-				log.Warnf("No metadata found for namespace %s", namespace)
-				continue
+				log.Warnf("Stream missing team label: %s", stream.Stream)
 			}
-
-			metadata, ok := podsInNamespace[podName]
+			projectID, ok := stream.Stream[string(LokiLabelProject)]
 			if !ok {
-				log.Warnf("No metadata found for pod %s in namespace %s", podName, namespace)
-				continue
+				log.Warnf("Stream missing project label: %s", stream.Stream)
+			}
+			serviceID, ok := stream.Stream[string(LokiLabelService)]
+			if !ok {
+				log.Warnf("Stream missing service label: %s", stream.Stream)
 			}
 
 			for _, entry := range stream.Values {
@@ -274,10 +244,15 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 
 				// Create log event and add it to the collection
 				logEvent := LogEvent{
-					PodName:   podName,
+					PodName:   instance,
 					Timestamp: timestamp,
 					Message:   message,
-					Metadata:  metadata,
+					Metadata: LogMetadata{
+						TeamID:        teamID,
+						ProjectID:     projectID,
+						EnvironmentID: environmentID,
+						ServiceID:     serviceID,
+					},
 				}
 
 				allEvents = append(allEvents, logEvent)

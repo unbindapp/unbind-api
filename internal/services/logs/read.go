@@ -23,32 +23,21 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 	}
 
 	// Build labels to select
-	labels := map[string]string{}
+	var label loki.LokiLabelName
+	var labelValue string
 	switch input.Type {
 	case models.LogTypeTeam:
-		labels["unbind-team"] = team.Name
+		label = loki.LokiLabelTeam
+		labelValue = team.ID.String()
 	case models.LogTypeProject:
-		labels["unbind-project"] = project.Name
+		label = loki.LokiLabelProject
+		labelValue = project.ID.String()
 	case models.LogTypeEnvironment:
-		labels["unbind-environment"] = environment.Name
+		label = loki.LokiLabelEnvironment
+		labelValue = environment.ID.String()
 	case models.LogTypeService:
-		labels["unbind-service"] = service.Name
-	}
-
-	// Create kubernetes client
-	client, err := self.k8s.CreateClientWithToken(bearerToken)
-	if err != nil {
-		return err
-	}
-
-	// Get pods by labels first
-	pods, err := self.k8s.GetPodsByLabels(ctx, team.Namespace, labels, client)
-	if err != nil {
-		return fmt.Errorf("error getting pods: %w", err)
-	}
-
-	if len(pods.Items) == 0 {
-		return fmt.Errorf("no pods found matching the specified criteria")
+		label = loki.LokiLabelService
+		labelValue = service.ID.String()
 	}
 
 	// Parse 'since' duration
@@ -67,38 +56,10 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Build the pod metadata map: namespace -> podName -> metadata
-	podMetadataMap := make(map[string]map[string]loki.LogMetadata)
-
-	for _, pod := range pods.Items {
-		serviceName, _ := pod.Labels["unbind-service"]
-		service, err := self.repo.Service().GetByName(ctx, serviceName)
-		if err != nil {
-			return fmt.Errorf("error getting service: %w", err)
-		}
-
-		podName := pod.Name
-		podNamespace := team.Namespace
-
-		// Create metadata for this pod
-		meta := loki.LogMetadata{
-			ServiceID:     service.ID,
-			EnvironmentID: service.Edges.Environment.ID,
-			ProjectID:     service.Edges.Environment.Edges.Project.ID,
-			TeamID:        service.Edges.Environment.Edges.Project.Edges.Team.ID,
-		}
-
-		// Initialize namespace map if needed
-		if _, exists := podMetadataMap[podNamespace]; !exists {
-			podMetadataMap[podNamespace] = make(map[string]loki.LogMetadata)
-		}
-
-		// Add pod metadata to the map
-		podMetadataMap[podNamespace][podName] = meta
-	}
-
 	// Create loki options
 	lokiLogOptions := loki.LokiLogOptions{
+		Label:         label,
+		LabelValue:    labelValue,
 		Limit:         int(input.Tail),
 		SearchPattern: input.SearchPattern,
 		Since:         since,
@@ -112,7 +73,7 @@ func (self *LogsService) GetLogs(ctx context.Context, requesterUserID uuid.UUID,
 			}
 		}()
 
-		err := self.lokiQuerier.StreamLokiPodLogs(streamCtx, lokiLogOptions, podMetadataMap, eventChan)
+		err := self.lokiQuerier.StreamLokiPodLogs(streamCtx, lokiLogOptions, eventChan)
 		if err != nil {
 			// Wrap the send in a select with context check to avoid sending on canceled contexts
 			select {
