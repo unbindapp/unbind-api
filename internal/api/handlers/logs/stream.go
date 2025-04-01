@@ -3,7 +3,6 @@ package logs_handler
 import (
 	"context"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/sse"
@@ -23,7 +22,7 @@ type LogEvent struct {
 // Parameters for querying logs
 type GetLogInput struct {
 	server.BaseAuthInput
-	models.LogQueryInput
+	models.LogStreamInput
 }
 
 func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, send sse.Sender) {
@@ -38,9 +37,8 @@ func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, s
 			},
 		)
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	if err := self.srv.LogService.GetLogs(ctx, user.ID, bearerToken, &input.LogQueryInput, send); err != nil {
-		self.handleErr(err, send)
+	if err := self.srv.LogService.StreamLogs(ctx, user.ID, &input.LogStreamInput, send); err != nil {
+		self.handleSSEErr(err, send)
 	}
 }

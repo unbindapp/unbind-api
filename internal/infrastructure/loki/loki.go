@@ -3,15 +3,16 @@ package loki
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 type LokiLogQuerier struct {
-	cfg      *config.Config
-	endpoint string
-	client   http.Client
+	cfg        *config.Config
+	endpoint   string
+	httpClient http.Client
 }
 
 func NewLokiLogger(cfg *config.Config) (*LokiLogQuerier, error) {
@@ -24,8 +25,8 @@ func NewLokiLogger(cfg *config.Config) (*LokiLogQuerier, error) {
 	return &LokiLogQuerier{
 		cfg:      cfg,
 		endpoint: reqURLStr,
-		client: http.Client{
-			Timeout: 0, // No timeout for streaming
+		httpClient: http.Client{
+			Timeout: 10 * time.Second,
 		},
 	}, nil
 }

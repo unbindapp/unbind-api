@@ -22,6 +22,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/joho/godotenv v1.5.1
 	github.com/moby/buildkit v0.20.1
+	github.com/prometheus/common v0.62.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tonistiigi/fsutil v0.0.0-20250113203817-b14e27f4135a
 	github.com/valkey-io/valkey-go v1.0.56
@@ -91,7 +92,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.62.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.4.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect

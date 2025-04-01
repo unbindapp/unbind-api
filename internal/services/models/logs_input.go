@@ -2,9 +2,11 @@ package models
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 )
 
 type LogType string
@@ -37,8 +39,8 @@ func (u LogType) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/LogType"}
 }
 
-// LogQueryInput defines the query parameters for log streaming
-type LogQueryInput struct {
+// LogStreamInput defines the query parameters for log streaming
+type LogStreamInput struct {
 	Type          LogType   `query:"type" required:"true"`
 	TeamID        uuid.UUID `query:"team_id" required:"true"`
 	ProjectID     uuid.UUID `query:"project_id" required:"false"`
@@ -48,4 +50,19 @@ type LogQueryInput struct {
 	Tail          int64     `query:"tail" default:"100" doc:"Number of lines to get from the end"`
 	Timestamps    bool      `query:"timestamps" default:"true" doc:"Include timestamps in logs"`
 	Filters       string    `query:"filters" doc:"Optional logql filter string"`
+}
+
+// LogQueryInput defines the query parameters for log fetching
+type LogQueryInput struct {
+	Type          LogType            `query:"type" required:"true"`
+	TeamID        uuid.UUID          `query:"team_id" required:"true"`
+	ProjectID     uuid.UUID          `query:"project_id" required:"false"`
+	EnvironmentID uuid.UUID          `query:"environment_id" required:"false"`
+	ServiceID     uuid.UUID          `query:"service_id" required:"false"`
+	Filters       string             `query:"filters" doc:"Optional logql filter string"`
+	Start         time.Time          `query:"start" doc:"Start time for the query"`
+	End           time.Time          `query:"end" doc:"End time for the query"`
+	Since         string             `query:"since" doc:"Duration to look back (e.g., '1h', '30m')"`
+	Limit         int                `query:"limit" doc:"Number of log lines to get"`
+	Direction     loki.LokiDirection `query:"direction" doc:"Direction of the logs (forward or backward)"`
 }

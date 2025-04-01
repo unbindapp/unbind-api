@@ -16,7 +16,7 @@ import (
 // StreamLokiPodLogs streams logs from Loki tail API using WebSocket for multiple pods using a single connection
 func (self *LokiLogQuerier) StreamLokiPodLogs(
 	ctx context.Context,
-	opts LokiLogOptions,
+	opts LokiLogStreamOptions,
 	eventChan chan<- LogEvents,
 ) error {
 	queryStr := fmt.Sprintf("{%s=\"%s\"}", opts.Label, opts.LabelValue)
