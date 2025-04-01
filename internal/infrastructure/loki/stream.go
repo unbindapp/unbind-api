@@ -253,13 +253,14 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			}
 		}
 
+		if len(allEvents) == 0 && !sentFirstMessage {
+			allEvents = []LogEvent{}
+		}
+
 		// Send events from this batch to the channel if there are any
 		if len(allEvents) > 0 || !sentFirstMessage {
 			// If this is the first message, we need to send it even if empty
 			sentFirstMessage = true
-			if len(allEvents) == 0 {
-				allEvents = []LogEvent{}
-			}
 			select {
 			case eventChan <- LogEvents{Logs: allEvents}:
 			case <-done:
