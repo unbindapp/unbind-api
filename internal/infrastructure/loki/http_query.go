@@ -107,7 +107,6 @@ func ParseLokiResponse(resp *http.Response) ([]LogEvent, error) {
 	// Read and parse the response
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Infof("Loki body %s", string(bodyBytes))
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
@@ -178,16 +177,14 @@ func parseStreamsResult(streams []Stream) []LogEvent {
 
 			// Parse timestamp
 			var timestamp time.Time
-			if ts, err := strconv.ParseFloat(entry[0], 64); err == nil {
-				// Loki HTTP API timestamps are in seconds with fractional part
-				nanos := int64(ts * 1e9)
-				timestamp = time.Unix(0, nanos)
+			if ts, err := strconv.ParseInt(entry[0], 10, 64); err == nil {
+				// Loki timestamps are in nanoseconds
+				timestamp = time.Unix(0, ts)
 			} else {
 				log.Warnf("Failed to parse timestamp: %v", err)
+				// Use current time as fallback
 				timestamp = time.Now()
 			}
-
-			// Get the message
 			message := entry[1]
 
 			// Create log event and add it to the collection
