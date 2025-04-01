@@ -23,7 +23,7 @@ func (self *PrometheusClient) GetResourceMetrics(
 	end time.Time,
 	step time.Duration,
 	filter *MetricsFilter,
-) (*ResourceMetrics, error) {
+) (map[string]*ResourceMetrics, error) {
 	r := v1.Range{
 		Start: start,
 		End:   end,
@@ -34,26 +34,26 @@ func (self *PrometheusClient) GetResourceMetrics(
 	kubeLabelsSelector := buildLabelSelector(filter)
 
 	// Queries with label filtering
-	cpuQuery := fmt.Sprintf(`sum(
+	cpuQuery := fmt.Sprintf(`sum by (label_unbind_service) (
 		node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{container!="POD", container!=""}
 		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 		kube_pod_labels%s
 	)`, kubeLabelsSelector)
 
-	ramQuery := fmt.Sprintf(`sum(
+	ramQuery := fmt.Sprintf(`sum by (label_unbind_service) (
 		container_memory_working_set_bytes{container!="POD", container!=""}
 		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 		kube_pod_labels%s
 	)`, kubeLabelsSelector)
 
-	networkQuery := fmt.Sprintf(`sum(
+	networkQuery := fmt.Sprintf(`sum by (label_unbind_service) (
 		(increase(container_network_receive_bytes_total{pod!=""}[%ds]) +
 		increase(container_network_transmit_bytes_total{pod!=""}[%ds]))
 		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 		kube_pod_labels%s
 	)`, int(step.Seconds()), int(step.Seconds()), kubeLabelsSelector)
 
-	diskQuery := fmt.Sprintf(`sum(
+	diskQuery := fmt.Sprintf(`sum by (label_unbind_service) (
 		container_fs_usage_bytes{container!="POD", container!=""}
 		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 		kube_pod_labels%s
@@ -81,26 +81,47 @@ func (self *PrometheusClient) GetResourceMetrics(
 	}
 
 	// Process results
-	metrics := &ResourceMetrics{}
+	metricsResult := make(map[string]*ResourceMetrics)
 
-	// Extract metrics from all series, not just the first one
-	metrics.CPU = extractMetrics(cpuResult)
-	metrics.RAM = extractMetrics(ramResult)
-	metrics.Network = extractMetrics(networkResult)
-	metrics.Disk = extractMetrics(diskResult)
+	extractGroupedMetrics(cpuResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+		metrics.CPU = samples
+	})
 
-	return metrics, nil
+	extractGroupedMetrics(ramResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+		metrics.RAM = samples
+	})
+
+	extractGroupedMetrics(networkResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+		metrics.Network = samples
+	})
+
+	extractGroupedMetrics(diskResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+		metrics.Disk = samples
+	})
+
+	return metricsResult, nil
 }
 
-func extractMetrics(result model.Value) []model.SamplePair {
-	var samples []model.SamplePair
-
-	// Handle matrix results (for range queries)
+func extractGroupedMetrics(
+	result model.Value,
+	groupedMetrics map[string]*ResourceMetrics,
+	assignFunc func(*ResourceMetrics, []model.SamplePair),
+) {
 	if matrix, ok := result.(model.Matrix); ok {
 		for _, series := range matrix {
-			samples = append(samples, series.Values...)
+			// Get service name from the metric labels
+			serviceName := string(series.Metric["label_unbind_service"])
+			if serviceName == "" {
+				serviceName = "unknown" // Default for metrics without service label
+			}
+
+			// Create service entry if it doesn't exist
+			if _, exists := groupedMetrics[serviceName]; !exists {
+				groupedMetrics[serviceName] = &ResourceMetrics{}
+			}
+
+			// Assign metrics using the provided function
+			assignFunc(groupedMetrics[serviceName], series.Values)
 		}
 	}
-
-	return samples
 }

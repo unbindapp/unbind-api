@@ -12,22 +12,32 @@ type MetricsPair struct {
 	Value float64   `json:"value"`
 }
 
-type MetricsResult struct {
-	Step    time.Duration `json:"step"`
+type MetricsMapEntry struct {
 	CPU     []MetricsPair `json:"cpu"`
 	RAM     []MetricsPair `json:"ram"`
 	Disk    []MetricsPair `json:"disk"`
 	Network []MetricsPair `json:"network"`
 }
 
-func TransformMetricsEntity(metrics *prometheus.ResourceMetrics, step time.Duration) *MetricsResult {
-	return &MetricsResult{
-		Step:    step,
-		CPU:     transformMetrics(metrics.CPU),
-		RAM:     transformMetrics(metrics.RAM),
-		Disk:    transformMetrics(metrics.Disk),
-		Network: transformMetrics(metrics.Network),
+type MetricsResult struct {
+	Step     time.Duration              `json:"step"`
+	Services map[string]MetricsMapEntry `json:"services"`
+}
+
+func TransformMetricsEntity(metrics map[string]*prometheus.ResourceMetrics, step time.Duration) *MetricsResult {
+	result := &MetricsResult{
+		Step:     step,
+		Services: make(map[string]MetricsMapEntry),
 	}
+	for serviceName, metric := range metrics {
+		result.Services[serviceName] = MetricsMapEntry{
+			CPU:     transformMetrics(metric.CPU),
+			RAM:     transformMetrics(metric.RAM),
+			Disk:    transformMetrics(metric.Disk),
+			Network: transformMetrics(metric.Network),
+		}
+	}
+	return result
 }
 
 func transformMetrics(metrics []model.SamplePair) []MetricsPair {
