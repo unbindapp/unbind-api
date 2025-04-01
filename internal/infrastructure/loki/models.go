@@ -86,7 +86,7 @@ type LogEvent struct {
 	PodName   string      `json:"pod_name"`
 	Timestamp time.Time   `json:"timestamp,omitempty"`
 	Message   string      `json:"message"`
-	Metadata  LogMetadata `json:"metadata,omitempty"`
+	Metadata  LogMetadata `json:"metadata"`
 }
 
 // LokiStreamResponse represents the format of a Loki log stream response

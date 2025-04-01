@@ -98,22 +98,6 @@ func (self *LokiLogQuerier) QueryLokiLogs(
 		return nil, fmt.Errorf("Loki query failed with status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	// Read and parse the response
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %v", err)
-	}
-
-	var queryResp LokiQueryResponse
-	if err := json.Unmarshal(bodyBytes, &queryResp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal Loki response: %v", err)
-	}
-
-	// Check response status
-	if queryResp.Status != "success" {
-		return nil, fmt.Errorf("Loki query returned error: %s", queryResp.ErrorType)
-	}
-
 	// Process the query result
 	return ParseLokiResponse(resp)
 }
@@ -123,6 +107,7 @@ func ParseLokiResponse(resp *http.Response) ([]LogEvent, error) {
 	// Read and parse the response
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Infof("Loki body %s", string(bodyBytes))
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
