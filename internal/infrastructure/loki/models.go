@@ -51,10 +51,30 @@ type LogMetadata struct {
 	EnvironmentID string `json:"environment_id"`
 }
 
+type LogEventsMessageType string
+
+const (
+	LogEventsMessageTypeLog       LogEventsMessageType = "log"
+	LogEventsMessageTypeHeartbeat LogEventsMessageType = "heartbeat"
+)
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u LogEventsMessageType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["LogEventsMessageType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "LogEventsMessageType")
+		schemaRef.Title = "LogEventsMessageType"
+		schemaRef.Enum = append(schemaRef.Enum, string(LogEventsMessageTypeLog))
+		schemaRef.Enum = append(schemaRef.Enum, string(LogEventsMessageTypeHeartbeat))
+		r.Map()["LogEventsMessageType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/LogEventsMessageType"}
+}
+
 type LogEvents struct {
+	MessageType LogEventsMessageType `json:"type"`
 	// LogEvents is a slice of log events
-	Logs        []LogEvent `json:"logs" nullable:"false"`
-	IsHeartbeat bool       `json:"is_heartbeat,omitempty"`
+	Logs []LogEvent `json:"logs,omitempty"`
 }
 
 // Stream Error

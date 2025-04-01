@@ -126,7 +126,7 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			case <-heartbeatTicker.C:
 				// Send heartbeat message to keep the client side alive
 				select {
-				case eventChan <- LogEvents{Logs: []LogEvent{}, IsHeartbeat: true}:
+				case eventChan <- LogEvents{MessageType: LogEventsMessageTypeHeartbeat}:
 				case <-done:
 					return
 				default:
@@ -135,9 +135,6 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			}
 		}
 	}()
-
-	// If first message is empty, send an empty message to the channel
-	sentFirstMessage := false
 
 	// Main read loop
 	for {
@@ -253,16 +250,10 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			}
 		}
 
-		if len(allEvents) == 0 && !sentFirstMessage {
-			allEvents = []LogEvent{}
-		}
-
 		// Send events from this batch to the channel if there are any
-		if len(allEvents) > 0 || !sentFirstMessage {
-			// If this is the first message, we need to send it even if empty
-			sentFirstMessage = true
+		if len(allEvents) > 0 {
 			select {
-			case eventChan <- LogEvents{Logs: allEvents}:
+			case eventChan <- LogEvents{MessageType: LogEventsMessageTypeLog, Logs: allEvents}:
 			case <-done:
 				// Context canceled
 				return nil
