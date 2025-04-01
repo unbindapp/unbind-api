@@ -43,8 +43,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		Description: "Stream logs for a team, project, environment, or service",
 	}, map[string]any{
 		// Mapping of event type name to Go struct for that event.
-		"message":      loki.LogEvents{},
-		"errorMessage": loki.LogsError{},
+		"message": loki.LogEvents{},
 	},
 		handlers.GetLogsfunc,
 	)
@@ -67,33 +66,33 @@ func (self *HandlerGroup) handleErr(err error) error {
 func (self *HandlerGroup) handleSSEErr(err error, send sse.Sender) {
 	if errors.Is(err, errdefs.ErrInvalidInput) {
 		send.Data(
-			loki.LogsError{
-				Code:    400,
-				Message: fmt.Sprintf("invalid input %v", err.Error()),
+			loki.LogEvents{
+				MessageType:  loki.LogEventsMessageTypeError,
+				ErrorMessage: fmt.Sprintf("invalid input %v", err.Error()),
 			},
 		)
 	}
 	if errors.Is(err, errdefs.ErrUnauthorized) {
 		send.Data(
-			loki.LogsError{
-				Code:    403,
-				Message: fmt.Sprintf("unauthorized %v", err.Error()),
+			loki.LogEvents{
+				MessageType:  loki.LogEventsMessageTypeError,
+				ErrorMessage: fmt.Sprintf("unauthorized %v", err.Error()),
 			},
 		)
 	}
 	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
 		send.Data(
-			loki.LogsError{
-				Code:    404,
-				Message: fmt.Sprintf("entity not found %v", err.Error()),
+			loki.LogEvents{
+				MessageType:  loki.LogEventsMessageTypeError,
+				ErrorMessage: fmt.Sprintf("entity not found %v", err.Error()),
 			},
 		)
 	}
 	log.Error("Unknown error streaming logs", "err", err)
 	send.Data(
-		loki.LogsError{
-			Code:    500,
-			Message: fmt.Sprintf("unknown error streaming logs"),
+		loki.LogEvents{
+			MessageType:  loki.LogEventsMessageTypeError,
+			ErrorMessage: "An unexpected error occurred",
 		},
 	)
 }

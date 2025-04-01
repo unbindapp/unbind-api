@@ -77,9 +77,9 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 			case <-streamCtx.Done():
 				return
 			default:
-				send.Data(loki.LogsError{
-					Code:    500,
-					Message: fmt.Sprintf("Error streaming logs: %v", err),
+				send.Data(loki.LogEvents{
+					MessageType:  loki.LogEventsMessageTypeError,
+					ErrorMessage: fmt.Sprintf("Error streaming logs: %v", err),
 				})
 			}
 		}

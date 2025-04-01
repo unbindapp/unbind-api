@@ -56,6 +56,7 @@ type LogEventsMessageType string
 const (
 	LogEventsMessageTypeLog       LogEventsMessageType = "log"
 	LogEventsMessageTypeHeartbeat LogEventsMessageType = "heartbeat"
+	LogEventsMessageTypeError     LogEventsMessageType = "error"
 )
 
 // Register enum in OpenAPI specification
@@ -66,6 +67,7 @@ func (u LogEventsMessageType) Schema(r huma.Registry) *huma.Schema {
 		schemaRef.Title = "LogEventsMessageType"
 		schemaRef.Enum = append(schemaRef.Enum, string(LogEventsMessageTypeLog))
 		schemaRef.Enum = append(schemaRef.Enum, string(LogEventsMessageTypeHeartbeat))
+		schemaRef.Enum = append(schemaRef.Enum, string(LogEventsMessageTypeError))
 		r.Map()["LogEventsMessageType"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/LogEventsMessageType"}
@@ -75,12 +77,8 @@ type LogEvents struct {
 	MessageType LogEventsMessageType `json:"type"`
 	// LogEvents is a slice of log events
 	Logs []LogEvent `json:"logs,omitempty"`
-}
-
-// Stream Error
-type LogsError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	// Error message
+	ErrorMessage string `json:"error_message,omitempty"`
 }
 
 // LogEvent represents a log line event sent via SSE

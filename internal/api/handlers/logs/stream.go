@@ -2,7 +2,7 @@ package logs_handler
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/sse"
@@ -31,9 +31,9 @@ func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, s
 	if !found {
 		log.Error("Error getting user from context")
 		send.Data(
-			loki.LogsError{
-				Code:    http.StatusUnauthorized,
-				Message: "Unable to retrieve user",
+			loki.LogEvents{
+				MessageType:  loki.LogEventsMessageTypeError,
+				ErrorMessage: fmt.Sprintf("unauthorized"),
 			},
 		)
 	}
