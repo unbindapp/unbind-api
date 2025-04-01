@@ -111,13 +111,6 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	heartbeatTicker := time.NewTicker(10 * time.Second)
 	defer heartbeatTicker.Stop()
 
-	// Confirm connection is successful by sending an initial empty message
-	select {
-	case eventChan <- LogEvents{Logs: []LogEvent{}}:
-	case <-ctx.Done():
-		return nil
-	}
-
 	// Main loop for handling the WebSocket connection
 	go func() {
 		for {
@@ -142,6 +135,9 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			}
 		}
 	}()
+
+	// If first message is empty, send an empty message to the channel
+	sentFirstMessage := false
 
 	// Main read loop
 	for {
@@ -258,7 +254,12 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		}
 
 		// Send events from this batch to the channel if there are any
-		if len(allEvents) > 0 {
+		if len(allEvents) > 0 || !sentFirstMessage {
+			// If this is the first message, we need to send it even if empty
+			sentFirstMessage = true
+			if len(allEvents) == 0 {
+				allEvents = []LogEvent{}
+			}
 			select {
 			case eventChan <- LogEvents{Logs: allEvents}:
 			case <-done:
