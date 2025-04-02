@@ -13,10 +13,10 @@ type MetricsPair struct {
 }
 
 type MetricsMapEntry struct {
-	CPU     []MetricsPair `json:"cpu"`
-	RAM     []MetricsPair `json:"ram"`
-	Disk    []MetricsPair `json:"disk"`
-	Network []MetricsPair `json:"network"`
+	CPU     []MetricsPair `json:"cpu" nullable:"false"`
+	RAM     []MetricsPair `json:"ram" nullable:"false"`
+	Disk    []MetricsPair `json:"disk" nullable:"false"`
+	Network []MetricsPair `json:"network" nullable:"false"`
 }
 
 type MetricsEntry struct {
@@ -26,13 +26,13 @@ type MetricsEntry struct {
 
 type MetricsResult struct {
 	Step    time.Duration  `json:"step"`
-	Metrics []MetricsEntry `json:"metrics"`
+	Metrics []MetricsEntry `json:"metrics" nullable:"false"`
 }
 
 func TransformMetricsEntity(metrics map[string]*prometheus.ResourceMetrics, step time.Duration) *MetricsResult {
 	result := &MetricsResult{
 		Step:    step,
-		Metrics: make([]MetricsEntry, len(metrics)),
+		Metrics: make([]MetricsEntry, 0, len(metrics)),
 	}
 	for serviceName, metric := range metrics {
 		result.Metrics = append(result.Metrics, MetricsEntry{
