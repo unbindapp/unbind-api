@@ -31,9 +31,18 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	case models.MetricsTypeEnvironment:
 		sumBy = prometheus.MetricsFilterSumByService
 		metricsFilters.EnvironmentID = environment.ID
+		// Get services in this environment
+		services, err := self.repo.Service().GetByEnvironmentID(ctx, environment.ID)
+		if err != nil {
+			return nil, err
+		}
+		metricsFilters.ServiceIDs = make([]uuid.UUID, len(services))
+		for i, s := range services {
+			metricsFilters.ServiceIDs[i] = s.ID
+		}
 	case models.MetricsTypeService:
 		sumBy = prometheus.MetricsFilterSumByService
-		metricsFilters.ServiceID = service.ID
+		metricsFilters.ServiceIDs = []uuid.UUID{service.ID}
 	}
 
 	// Get start
