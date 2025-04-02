@@ -17,7 +17,7 @@ type QueryLogsInput struct {
 
 type QueryLogsResponse struct {
 	Body struct {
-		Data []loki.LogEvent `json:"data"`
+		Data []loki.LogEvent `json:"data" required:"true"`
 	}
 }
 
