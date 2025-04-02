@@ -29,6 +29,8 @@ func ParseProvider(detectedProviders []string) Provider {
 		return Python
 	case "ruby":
 		return Ruby
+	case "rust":
+		return Rust
 	case "staticfile":
 		return Staticfile
 	default:
@@ -47,11 +49,12 @@ const (
 	PHP             Provider = "php"
 	Python          Provider = "python"
 	Ruby            Provider = "ruby"
+	Rust            Provider = "rust"
 	Staticfile      Provider = "staticfile"
 	UnknownProvider Provider = "unknown"
 )
 
-var allProviders = []Provider{Node, Deno, Go, Java, PHP, Python, Ruby, Staticfile, UnknownProvider}
+var allProviders = []Provider{Node, Deno, Go, Java, PHP, Python, Ruby, Rust, Staticfile, UnknownProvider}
 
 // Values provides list valid values for Enum.
 func (Provider) Values() (kinds []string) {

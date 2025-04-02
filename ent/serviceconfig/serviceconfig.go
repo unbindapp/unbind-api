@@ -134,7 +134,7 @@ func BuilderValidator(b schema.ServiceBuilder) error {
 // ProviderValidator is a validator for the "provider" field enum values. It is called by the builders before save.
 func ProviderValidator(pr enum.Provider) error {
 	switch pr {
-	case "node", "deno", "go", "java", "php", "python", "ruby", "staticfile", "unknown":
+	case "node", "deno", "go", "java", "php", "python", "ruby", "rust", "staticfile", "unknown":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for provider field: %q", pr)
@@ -144,7 +144,7 @@ func ProviderValidator(pr enum.Provider) error {
 // FrameworkValidator is a validator for the "framework" field enum values. It is called by the builders before save.
 func FrameworkValidator(f enum.Framework) error {
 	switch f {
-	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "unknown":
+	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "rocket", "unknown":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for framework field: %q", f)

@@ -79,6 +79,15 @@ func DetectFramework(provider Provider, plan *core.BuildResult) Framework {
 		if ok && railsFramework == "true" {
 			return Rails
 		}
+		// Rust frameworks
+	case Rust:
+		if plan.Plan != nil {
+			for _, variable := range plan.Plan.Deploy.Variables {
+				if strings.EqualFold(variable, "rocket_address") {
+					return Rocket
+				}
+			}
+		}
 	}
 
 	return UnknownFramework
@@ -111,6 +120,8 @@ const (
 	Laravel Framework = "laravel"
 	// * Ruby frameworks
 	Rails Framework = "rails"
+	// * Rust frameworks
+	Rocket Framework = "rocket"
 	// * not detected
 	UnknownFramework Framework = "unknown"
 )
@@ -122,6 +133,7 @@ var allFrameworks = []Framework{
 	SpringBoot,
 	Laravel,
 	Rails,
+	Rocket,
 	UnknownFramework,
 }
 
