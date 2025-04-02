@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 )
 
@@ -14,7 +15,7 @@ type MetricDetail struct {
 	// Aggregated value for the metric
 	Value float64 `json:"value" doc:"Aggregated value for the timestamp"`
 	// Map of IDs to their respective values
-	Breakdown map[string]float64 `json:"breakdown" doc:"Map of IDs to their respective values"`
+	Breakdown map[string]*float64 `json:"breakdown" doc:"Map of IDs to their respective values"`
 }
 
 // MetricsMapEntry contains arrays of metric details for each resource type
@@ -90,6 +91,16 @@ func aggregateMetricsByTime(metrics map[string]*prometheus.ResourceMetrics, metr
 			}
 		}
 	}
+
+	// Figure out all the unique IDs available
+	// This is used to build the breakdown map with nil values if necessary
+	keys := make([]string, len(metrics))
+	keyIndex := 0
+	for k := range metrics {
+		keys[keyIndex] = k
+		keyIndex++
+	}
+
 	for id, samples := range metrics {
 		var samplePair []model.SamplePair
 		switch metricType {
@@ -106,9 +117,13 @@ func aggregateMetricsByTime(metrics map[string]*prometheus.ResourceMetrics, metr
 		for _, sample := range samplePair {
 			metricDetail := timestampMetricMap[sample.Timestamp.Time()]
 			if metricDetail.Breakdown == nil {
-				metricDetail.Breakdown = make(map[string]float64)
+				metricDetail.Breakdown = make(map[string]*float64)
+				// Initialize breakdown map with nil values for all keys
+				for _, key := range keys {
+					metricDetail.Breakdown[key] = nil
+				}
 			}
-			metricDetail.Breakdown[id] = float64(sample.Value)
+			metricDetail.Breakdown[id] = utils.ToPtr(float64(sample.Value))
 			metricDetail.Timestamp = sample.Timestamp.Time()
 			metricDetail.Value += float64(sample.Value)
 			timestampMetricMap[sample.Timestamp.Time()] = metricDetail
