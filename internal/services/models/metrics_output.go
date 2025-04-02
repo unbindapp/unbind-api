@@ -43,18 +43,57 @@ func TransformMetricsEntity(metrics map[string]*prometheus.ResourceMetrics, step
 	case prometheus.MetricsFilterSumByService:
 		brokenDownBy = MetricsTypeService
 	}
+
+	// Collect all unique timestamps across all metrics and types
+	allTimestamps := collectAllTimestamps(metrics)
+
 	result := &MetricsResult{
 		Step:         step,
 		BrokenDownBy: brokenDownBy,
 		Metrics: MetricsMapEntry{
-			CPU:     aggregateMetricsByTime(metrics, MetricTypeCPU),
-			RAM:     aggregateMetricsByTime(metrics, MetricTypeRAM),
-			Disk:    aggregateMetricsByTime(metrics, MetricTypeDisk),
-			Network: aggregateMetricsByTime(metrics, MetricTypeNetwork),
+			CPU:     aggregateMetricsByTime(metrics, MetricTypeCPU, allTimestamps),
+			RAM:     aggregateMetricsByTime(metrics, MetricTypeRAM, allTimestamps),
+			Disk:    aggregateMetricsByTime(metrics, MetricTypeDisk, allTimestamps),
+			Network: aggregateMetricsByTime(metrics, MetricTypeNetwork, allTimestamps),
 		},
 	}
 
 	return result
+}
+
+// collectAllTimestamps gathers all unique timestamps across all metric types
+func collectAllTimestamps(metrics map[string]*prometheus.ResourceMetrics) []time.Time {
+	// Use a map to collect unique timestamps
+	timestampMap := make(map[time.Time]struct{})
+
+	for _, metric := range metrics {
+		for _, sample := range metric.CPU {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.RAM {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.Disk {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.Network {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+	}
+
+	// Convert map keys to a slice
+	timestamps := make([]time.Time, len(timestampMap))
+	i := 0
+	for ts := range timestampMap {
+		timestamps[i] = ts
+	}
+
+	// Sort timestamps chronologically
+	sort.Slice(timestamps, func(i, j int) bool {
+		return timestamps[i].Before(timestamps[j])
+	})
+
+	return timestamps
 }
 
 type MetricType int
@@ -66,41 +105,29 @@ const (
 	MetricTypeNetwork
 )
 
-func aggregateMetricsByTime(metrics map[string]*prometheus.ResourceMetrics, metricType MetricType) []MetricDetail {
-	// Gather all possible timestamps
-	timestampMetricMap := make(map[time.Time]MetricDetail)
+func aggregateMetricsByTime(metrics map[string]*prometheus.ResourceMetrics, metricType MetricType, allTimestamps []time.Time) []MetricDetail {
+	// Initialize result with all timestamps
+	result := make([]MetricDetail, len(allTimestamps))
+	for i, ts := range allTimestamps {
+		result[i] = MetricDetail{
+			Timestamp: ts,
+			Value:     0,
+			Breakdown: make(map[string]*float64),
+		}
 
-	// This will make our array allocations more efficient later
-	for _, metric := range metrics {
-		switch metricType {
-		case MetricTypeCPU:
-			for _, sample := range metric.CPU {
-				timestampMetricMap[sample.Timestamp.Time()] = MetricDetail{}
-			}
-		case MetricTypeRAM:
-			for _, sample := range metric.RAM {
-				timestampMetricMap[sample.Timestamp.Time()] = MetricDetail{}
-			}
-		case MetricTypeDisk:
-			for _, sample := range metric.Disk {
-				timestampMetricMap[sample.Timestamp.Time()] = MetricDetail{}
-			}
-		case MetricTypeNetwork:
-			for _, sample := range metric.Network {
-				timestampMetricMap[sample.Timestamp.Time()] = MetricDetail{}
-			}
+		// Initialize breakdown map with nil values for all keys
+		for id := range metrics {
+			result[i].Breakdown[id] = nil
 		}
 	}
 
-	// Figure out all the unique IDs available
-	// This is used to build the breakdown map with nil values if necessary
-	keys := make([]string, len(metrics))
-	keyIndex := 0
-	for k := range metrics {
-		keys[keyIndex] = k
-		keyIndex++
+	// Create a map for quick timestamp lookup
+	timestampIndexMap := make(map[time.Time]int)
+	for i, ts := range allTimestamps {
+		timestampIndexMap[ts] = i
 	}
 
+	// Fill in actual values
 	for id, samples := range metrics {
 		var samplePair []model.SamplePair
 		switch metricType {
@@ -115,31 +142,14 @@ func aggregateMetricsByTime(metrics map[string]*prometheus.ResourceMetrics, metr
 		}
 
 		for _, sample := range samplePair {
-			metricDetail := timestampMetricMap[sample.Timestamp.Time()]
-			if metricDetail.Breakdown == nil {
-				metricDetail.Breakdown = make(map[string]*float64)
-				// Initialize breakdown map with nil values for all keys
-				for _, key := range keys {
-					metricDetail.Breakdown[key] = nil
-				}
-			}
-			metricDetail.Breakdown[id] = utils.ToPtr(float64(sample.Value))
-			metricDetail.Timestamp = sample.Timestamp.Time()
-			metricDetail.Value += float64(sample.Value)
-			timestampMetricMap[sample.Timestamp.Time()] = metricDetail
+			ts := sample.Timestamp.Time()
+			idx := timestampIndexMap[ts]
+
+			value := float64(sample.Value)
+			result[idx].Breakdown[id] = utils.ToPtr(value)
+			result[idx].Value += value
 		}
 	}
 
-	// Convert map to slice
-	metricDetails := make([]MetricDetail, len(timestampMetricMap))
-	i := 0
-	for _, metricDetail := range timestampMetricMap {
-		metricDetails[i] = metricDetail
-		i++
-	}
-	// Sort by timestamp
-	sort.Slice(metricDetails, func(i, j int) bool {
-		return metricDetails[i].Timestamp.Before(metricDetails[j].Timestamp)
-	})
-	return metricDetails
+	return result
 }
