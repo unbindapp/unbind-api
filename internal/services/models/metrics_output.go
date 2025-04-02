@@ -86,6 +86,7 @@ func collectAllTimestamps(metrics map[string]*prometheus.ResourceMetrics) []time
 	i := 0
 	for ts := range timestampMap {
 		timestamps[i] = ts
+		i++
 	}
 
 	// Sort timestamps chronologically
