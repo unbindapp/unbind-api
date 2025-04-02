@@ -6,6 +6,30 @@ import (
 	"github.com/google/uuid"
 )
 
+type MetricsFilterSumBy string
+
+const (
+	MetricsFilterSumByTeam        MetricsFilterSumBy = "team"
+	MetricsFilterSumByProject     MetricsFilterSumBy = "project"
+	MetricsFilterSumByEnvironment MetricsFilterSumBy = "environment"
+	MetricsFilterSumByService     MetricsFilterSumBy = "service"
+)
+
+func (m MetricsFilterSumBy) Label() string {
+	switch m {
+	case MetricsFilterSumByTeam:
+		return "label_unbind_team"
+	case MetricsFilterSumByProject:
+		return "label_unbind_project"
+	case MetricsFilterSumByEnvironment:
+		return "label_unbind_environment"
+	case MetricsFilterSumByService:
+		return "label_unbind_service"
+	default:
+		return "label_unbind_service"
+	}
+}
+
 type MetricsFilter struct {
 	TeamID        uuid.UUID
 	ProjectID     uuid.UUID

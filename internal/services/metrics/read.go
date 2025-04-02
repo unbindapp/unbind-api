@@ -18,16 +18,21 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 
 	// Build options
 	metricsFilters := prometheus.MetricsFilter{}
+	sumBy := prometheus.MetricsFilterSumByService
 
 	// Build labels to select
 	switch input.Type {
 	case models.MetricsTypeTeam:
+		sumBy = prometheus.MetricsFilterSumByProject
 		metricsFilters.TeamID = team.ID
 	case models.MetricsTypeProject:
+		sumBy = prometheus.MetricsFilterSumByEnvironment
 		metricsFilters.ProjectID = project.ID
 	case models.MetricsTypeEnvironment:
+		sumBy = prometheus.MetricsFilterSumByService
 		metricsFilters.EnvironmentID = environment.ID
 	case models.MetricsTypeService:
+		sumBy = prometheus.MetricsFilterSumByService
 		metricsFilters.ServiceID = service.ID
 	}
 
@@ -77,11 +82,11 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	}
 
 	// Get metrics
-	rawMetrics, err := self.promClient.GetResourceMetrics(ctx, start, end, step, &metricsFilters)
+	rawMetrics, err := self.promClient.GetResourceMetrics(ctx, sumBy, start, end, step, &metricsFilters)
 	if err != nil {
 		return nil, fmt.Errorf("error getting metrics: %w", err)
 	}
 
 	// Convert to our format
-	return models.TransformMetricsEntity(rawMetrics, step), nil
+	return models.TransformMetricsEntity(rawMetrics, step, sumBy), nil
 }
