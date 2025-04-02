@@ -84,19 +84,19 @@ func (self *PrometheusClient) GetResourceMetrics(
 	// Process results
 	metricsResult := make(map[string]*ResourceMetrics)
 
-	extractGroupedMetrics(cpuResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+	extractGroupedMetrics(cpuResult, sumBy.Label(), metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
 		metrics.CPU = samples
 	})
 
-	extractGroupedMetrics(ramResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+	extractGroupedMetrics(ramResult, sumBy.Label(), metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
 		metrics.RAM = samples
 	})
 
-	extractGroupedMetrics(networkResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+	extractGroupedMetrics(networkResult, sumBy.Label(), metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
 		metrics.Network = samples
 	})
 
-	extractGroupedMetrics(diskResult, metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
+	extractGroupedMetrics(diskResult, sumBy.Label(), metricsResult, func(metrics *ResourceMetrics, samples []model.SamplePair) {
 		metrics.Disk = samples
 	})
 
@@ -105,13 +105,14 @@ func (self *PrometheusClient) GetResourceMetrics(
 
 func extractGroupedMetrics(
 	result model.Value,
+	sumByLabel string,
 	groupedMetrics map[string]*ResourceMetrics,
 	assignFunc func(*ResourceMetrics, []model.SamplePair),
 ) {
 	if matrix, ok := result.(model.Matrix); ok {
 		for _, series := range matrix {
 			// Get service name from the metric labels
-			serviceName := string(series.Metric["label_unbind_service"])
+			serviceName := string(series.Metric[model.LabelName(sumByLabel)])
 			if serviceName == "" {
 				serviceName = "unknown" // Default for metrics without service label
 			}

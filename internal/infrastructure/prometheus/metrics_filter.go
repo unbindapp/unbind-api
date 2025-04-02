@@ -9,7 +9,6 @@ import (
 type MetricsFilterSumBy string
 
 const (
-	MetricsFilterSumByTeam        MetricsFilterSumBy = "team"
 	MetricsFilterSumByProject     MetricsFilterSumBy = "project"
 	MetricsFilterSumByEnvironment MetricsFilterSumBy = "environment"
 	MetricsFilterSumByService     MetricsFilterSumBy = "service"
@@ -17,8 +16,6 @@ const (
 
 func (m MetricsFilterSumBy) Label() string {
 	switch m {
-	case MetricsFilterSumByTeam:
-		return "label_unbind_team"
 	case MetricsFilterSumByProject:
 		return "label_unbind_project"
 	case MetricsFilterSumByEnvironment:

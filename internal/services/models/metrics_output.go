@@ -35,12 +35,10 @@ type MetricsResult struct {
 func TransformMetricsEntity(metrics map[string]*prometheus.ResourceMetrics, step time.Duration, sumBy prometheus.MetricsFilterSumBy) *MetricsResult {
 	brokenDownBy := MetricsTypeService
 	switch sumBy {
-	case prometheus.MetricsFilterSumByTeam:
-		brokenDownBy = MetricsTypeProject
 	case prometheus.MetricsFilterSumByProject:
-		brokenDownBy = MetricsTypeEnvironment
+		brokenDownBy = MetricsTypeProject
 	case prometheus.MetricsFilterSumByEnvironment:
-		brokenDownBy = MetricsTypeService
+		brokenDownBy = MetricsTypeEnvironment
 	case prometheus.MetricsFilterSumByService:
 		brokenDownBy = MetricsTypeService
 	}
