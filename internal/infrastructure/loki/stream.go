@@ -52,6 +52,9 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 
 	// Set limit
 	if opts.Limit > 0 {
+		if opts.Limit > 1000 {
+			opts.Limit = 1000
+		}
 		q.Set("limit", strconv.Itoa(opts.Limit))
 	}
 
