@@ -121,7 +121,7 @@ func ParseLokiResponse(resp *http.Response) ([]LogEvent, error) {
 	}
 
 	// Process the query result based on result type
-	var allEvents []LogEvent
+	allEvents := []LogEvent{}
 
 	switch queryResp.Data.ResultType {
 	case "streams":
