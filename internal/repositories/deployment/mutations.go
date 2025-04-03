@@ -53,6 +53,9 @@ func (self *DeploymentRepository) MarkFailed(ctx context.Context, tx repository.
 	}
 
 	return db.Deployment.UpdateOneID(deploymentID).
+		Where(
+			deployment.StatusNotIn(schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
+		).
 		SetStatus(schema.DeploymentStatusFailed).
 		SetCompletedAt(failedAt).
 		SetError(message).
