@@ -36,10 +36,10 @@ func (self *PrometheusClient) GetResourceMetrics(
 
 	// Queries with label filtering
 	cpuQuery := fmt.Sprintf(`sum by (%s) (
-		node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{container!="POD", container!=""}
-		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
-		kube_pod_labels%s
-	)`, sumBy.Label(), kubeLabelsSelector)
+			rate(container_cpu_usage_seconds_total{container!="POD", container!=""}[%ds])
+			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+			kube_pod_labels%s
+	)`, sumBy.Label(), int(step.Seconds()), kubeLabelsSelector)
 
 	ramQuery := fmt.Sprintf(`sum by (%s) (
 		container_memory_working_set_bytes{container!="POD", container!=""}
