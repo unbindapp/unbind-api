@@ -316,15 +316,16 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 	jobID, _ := uuid.Parse(item.ID)
 	req := item.Data
 
-	// Cancel any existing jobs for this service
-	if err := self.k8s.CancelJobsByServiceID(ctx, req.ServiceID.String()); err != nil {
-		log.Warnf("Failed to cancel existing jobs: %v service: %s", err, req.ServiceID)
-	}
 	// Update the job status in the database
 	err := self.repo.Deployment().MarkCancelledExcept(ctx, req.ServiceID, jobID)
 	if err != nil {
 		log.Warnf("Failed to mark job as cancelled: %v service: %s", err, req.ServiceID)
 	}
+	// Cancel jobs in Kubernetes
+	if err := self.k8s.CancelJobsByServiceID(ctx, req.ServiceID.String()); err != nil {
+		log.Warnf("Failed to cancel existing jobs: %v service: %s", err, req.ServiceID)
+	}
+
 	// ! This is our time starting the job, not the actual time kubernetes started running it - maybe we should do soemthing different
 	_, err = self.repo.Deployment().MarkStarted(ctx, nil, jobID, time.Now())
 
