@@ -27,3 +27,5 @@ go.work.sum
 # Devcontainer data
 .data/*/**
 !.data/*/.gitkeep
+
+.DS_Store
