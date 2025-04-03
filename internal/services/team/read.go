@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -64,4 +66,34 @@ func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearer
 	// }
 
 	return models.TransformTeamEntities(dbTeams), nil
+}
+
+// GetTeamByID retrieves a team by ID
+func (self *TeamService) GetTeamByID(ctx context.Context, userID, teamID uuid.UUID) (*models.TeamResponse, error) {
+	permissionChecks := []permissions_repo.PermissionCheck{
+		// Has permission to read system resources
+		{
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   teamID,
+		},
+	}
+	if err := self.repo.Permissions().Check(
+		ctx,
+		userID,
+		permissionChecks,
+	); err != nil {
+		return nil, err
+	}
+
+	// Get team by ID
+	dbTeam, err := self.repo.Team().GetByID(ctx, teamID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
+		}
+		return nil, err
+	}
+
+	return models.TransformTeamEntity(dbTeam), nil
 }
