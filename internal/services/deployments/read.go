@@ -33,7 +33,7 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 		cursor = &input.Cursor
 	}
 	// Get build jobs
-	deployments, nextCursor, err := self.repo.Deployment().GetByServiceIDPaginated(ctx, input.ServiceID, cursor, input.Statuses)
+	deployments, nextCursor, err := self.repo.Deployment().GetByServiceIDPaginated(ctx, input.ServiceID, input.PerPage, cursor, input.Statuses)
 	if err != nil {
 		return nil, nil, nil, err
 	}

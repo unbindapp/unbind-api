@@ -17,9 +17,7 @@ func (self *DeploymentRepository) GetJobsByStatus(ctx context.Context, status sc
 		All(ctx)
 }
 
-func (self *DeploymentRepository) GetByServiceIDPaginated(ctx context.Context, serviceID uuid.UUID, cursor *time.Time, statusFilter []schema.DeploymentStatus) (jobs []*ent.Deployment, nextCursor *time.Time, err error) {
-	perPage := 10
-
+func (self *DeploymentRepository) GetByServiceIDPaginated(ctx context.Context, serviceID uuid.UUID, perPage int, cursor *time.Time, statusFilter []schema.DeploymentStatus) (jobs []*ent.Deployment, nextCursor *time.Time, err error) {
 	query := self.base.DB.Deployment.Query().
 		Where(deployment.ServiceIDEQ(serviceID))
 

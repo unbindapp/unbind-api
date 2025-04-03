@@ -3,7 +3,8 @@ package models
 import "time"
 
 type PaginationParams struct {
-	Cursor time.Time `query:"cursor" required:"false"`
+	Cursor  time.Time `query:"cursor" required:"false"`
+	PerPage int       `query:"per_page" required:"true" default:"50" minimum:"1" maximum:"100"`
 }
 
 type PaginationResponseMetadata struct {
