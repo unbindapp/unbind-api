@@ -54,6 +54,7 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 		Where(service.GitRepositoryEQ(repoName)).
 		WithServiceConfig().
 		WithCurrentDeployment().
+		Order(ent.Desc(service.FieldCreatedAt)).
 		All(ctx)
 }
 
@@ -62,6 +63,7 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 		Where(service.EnvironmentIDEQ(environmentID)).
 		WithServiceConfig().
 		WithCurrentDeployment().
+		Order(ent.Desc(service.FieldCreatedAt)).
 		All(ctx)
 
 	if err != nil {
