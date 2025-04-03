@@ -69,23 +69,29 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	// Default step calculations
 	if !input.Start.IsZero() || !input.End.IsZero() {
 		switch {
-		case duration <= 24*time.Hour:
-			// 5 minute step
+		case duration <= 5*time.Minute:
+			step = 10 * time.Second
+		case duration <= 15*time.Minute:
+			step = 30 * time.Second
+		case duration <= 30*time.Minute:
+			step = 1 * time.Minute
+		case duration <= 1*time.Hour:
+			step = 2 * time.Minute
+		case duration <= 4*time.Hour:
 			step = 5 * time.Minute
-		case duration <= 3*24*time.Hour:
-			// 30 minute step
+		case duration <= 12*time.Hour:
+			step = 15 * time.Minute
+		case duration <= 24*time.Hour:
 			step = 30 * time.Minute
-		case duration <= 7*24*time.Hour:
-			// 1 hour step
-			step = 1 * time.Hour
-		case duration <= 14*24*time.Hour:
-			// 2 hour step
+		case duration <= 3*24*time.Hour:
 			step = 2 * time.Hour
-		case duration <= 30*24*time.Hour:
-			// 4 hour step
+		case duration <= 7*24*time.Hour:
 			step = 4 * time.Hour
+		case duration <= 14*24*time.Hour:
+			step = 8 * time.Hour
+		case duration <= 30*24*time.Hour:
+			step = 24 * time.Hour
 		default:
-			// 1 day step
 			step = 24 * time.Hour
 		}
 	}
