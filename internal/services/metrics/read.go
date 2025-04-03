@@ -3,6 +3,7 @@ package metric_service
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,35 +65,19 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	}
 
 	// Calculate step size
-	step := 5 * time.Minute // Default
 	duration := end.Sub(start)
-	// Default step calculations
-	switch {
-	case duration <= 5*time.Minute:
-		step = 10 * time.Second
-	case duration <= 15*time.Minute:
-		step = 30 * time.Second
-	case duration <= 30*time.Minute:
-		step = 1 * time.Minute
-	case duration <= 1*time.Hour:
-		step = 2 * time.Minute
-	case duration <= 4*time.Hour:
-		step = 5 * time.Minute
-	case duration <= 12*time.Hour:
-		step = 15 * time.Minute
-	case duration <= 24*time.Hour:
-		step = 30 * time.Minute
-	case duration <= 3*24*time.Hour:
-		step = 2 * time.Hour
-	case duration <= 7*24*time.Hour:
-		step = 4 * time.Hour
-	case duration <= 14*24*time.Hour:
-		step = 8 * time.Hour
-	case duration <= 30*24*time.Hour:
-		step = 24 * time.Hour
-	default:
-		step = 24 * time.Hour
-	}
+	step := chooseStep(duration, 30, []time.Duration{
+		1 * time.Minute,
+		5 * time.Minute,
+		15 * time.Minute,
+		30 * time.Minute,
+		1 * time.Hour,
+		2 * time.Hour,
+		4 * time.Hour,
+		8 * time.Hour,
+		12 * time.Hour,
+		1 * 24 * time.Hour,
+	})
 
 	// Get metrics
 	rawMetrics, err := self.promClient.GetResourceMetrics(ctx, sumBy, start, end, step, &metricsFilters)
@@ -102,4 +87,23 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 
 	// Convert to our format
 	return models.TransformMetricsEntity(rawMetrics, step, sumBy), nil
+}
+
+func chooseStep(duration time.Duration, targetSteps int, steps []time.Duration) time.Duration {
+	if len(steps) == 0 {
+		return 1 * time.Hour
+	}
+
+	bestStep := steps[0]
+	bestDiff := math.MaxFloat64
+
+	for _, step := range steps {
+		count := float64(duration) / float64(step)
+		diff := math.Abs(count - float64(targetSteps))
+		if diff < bestDiff {
+			bestDiff = diff
+			bestStep = step
+		}
+	}
+	return bestStep
 }
