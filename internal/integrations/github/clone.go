@@ -23,7 +23,9 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 	}
 
 	_, err = git.PlainClone(tmpDir, false, &git.CloneOptions{
-		URL: repoURL,
+		URL:          repoURL,
+		Depth:        1,
+		SingleBranch: true,
 		Auth: &http.BasicAuth{
 			Username: "x-access-token",
 			Password: bearerToken,
