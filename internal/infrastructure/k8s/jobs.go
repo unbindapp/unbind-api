@@ -12,9 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, jobID string, env map[string]string) (jobName string, err error) {
+func (self *KubeClient) CreateDeployment(ctx context.Context, deploymentID string, env map[string]string) (jobName string, err error) {
 	// Build a unique job name
-	jobName = fmt.Sprintf("%s-deployment-%d", jobID, time.Now().Unix())
+	jobName = fmt.Sprintf("%s-deployment-%d", deploymentID, time.Now().Unix())
 
 	// Convert environment variables from map to slice
 	var envVars []corev1.EnvVar
@@ -35,8 +35,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 			Name: jobName,
 			Labels: map[string]string{
 				"unbind-deployment-job": "true",
-				"jobID":                 jobID,
-				"serviceID":             serviceID,
+				"unbind-deployment":     deploymentID,
 				"job-name":              jobName,
 			},
 			Annotations: annotations,
@@ -51,8 +50,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, serviceID string, 
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"unbind-deployment-job": "true",
-						"jobID":                 jobID,
-						"serviceID":             serviceID,
+						"unbind-deployment":     deploymentID,
 						"job-name":              jobName,
 					},
 				},

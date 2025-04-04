@@ -59,8 +59,12 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 					}
 				}
 			}
-			response.LastDeployment = TransformDeploymentEntity(lastDeployment)
-			response.LastSuccessfulDeployment = TransformDeploymentEntity(lastSuccessfulDeployment)
+			if lastDeployment != nil {
+				response.LastDeployment = TransformDeploymentEntity(lastDeployment)
+			}
+			if lastSuccessfulDeployment != nil {
+				response.LastSuccessfulDeployment = TransformDeploymentEntity(lastSuccessfulDeployment)
+			}
 		}
 	}
 	return response

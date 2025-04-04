@@ -334,7 +334,7 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 	}
 
 	// Start the actual Kubernetes job
-	k8sJobName, err := self.k8s.CreateDeployment(ctx, req.ServiceID.String(), jobID.String(), req.Environment)
+	k8sJobName, err := self.k8s.CreateDeployment(ctx, jobID.String(), req.Environment)
 	if err != nil {
 		log.Error("Failed to create Kubernetes job", "err", err)
 
