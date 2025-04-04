@@ -157,7 +157,7 @@ func ParseLokiResponse(resp *http.Response) ([]LogEvent, error) {
 
 // parseStreamsResult converts stream data to LogEvent objects
 func parseStreamsResult(streams []Stream) []LogEvent {
-	var allEvents []LogEvent
+	allEvents := []LogEvent{}
 
 	for _, stream := range streams {
 		// Extract metadata from stream labels
@@ -209,7 +209,7 @@ func parseStreamsResult(streams []Stream) []LogEvent {
 
 // parseMatrixResult converts matrix data to LogEvent objects
 func parseMatrixResult(matrixValues []MatrixValue) []LogEvent {
-	var allEvents []LogEvent
+	allEvents := []LogEvent{}
 
 	for _, series := range matrixValues {
 		// Extract metadata from metric labels
@@ -248,7 +248,7 @@ func parseMatrixResult(matrixValues []MatrixValue) []LogEvent {
 
 // parseVectorResult converts vector data to LogEvent objects
 func parseVectorResult(vectorValues []VectorValue) []LogEvent {
-	var allEvents []LogEvent
+	allEvents := []LogEvent{}
 
 	for _, sample := range vectorValues {
 		// Extract metadata from metric labels

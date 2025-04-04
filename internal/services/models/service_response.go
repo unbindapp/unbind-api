@@ -5,22 +5,24 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // ServiceResponse defines the response structure for service operations
 type ServiceResponse struct {
-	ID                   uuid.UUID              `json:"id"`
-	Name                 string                 `json:"name"`
-	DisplayName          string                 `json:"display_name"`
-	Description          string                 `json:"description"`
-	EnvironmentID        uuid.UUID              `json:"environment_id"`
-	GitHubInstallationID *int64                 `json:"github_installation_id,omitempty"`
-	GitRepository        *string                `json:"git_repository,omitempty"`
-	CreatedAt            time.Time              `json:"created_at"`
-	UpdatedAt            time.Time              `json:"updated_at"`
-	CurrentDeployment    *DeploymentResponse    `json:"current_deployment,omitempty"`
-	LastDeployment       *DeploymentResponse    `json:"last_deployment,omitempty"`
-	Config               *ServiceConfigResponse `json:"config"`
+	ID                       uuid.UUID              `json:"id"`
+	Name                     string                 `json:"name"`
+	DisplayName              string                 `json:"display_name"`
+	Description              string                 `json:"description"`
+	EnvironmentID            uuid.UUID              `json:"environment_id"`
+	GitHubInstallationID     *int64                 `json:"github_installation_id,omitempty"`
+	GitRepository            *string                `json:"git_repository,omitempty"`
+	CreatedAt                time.Time              `json:"created_at"`
+	UpdatedAt                time.Time              `json:"updated_at"`
+	CurrentDeployment        *DeploymentResponse    `json:"current_deployment,omitempty"`
+	LastDeployment           *DeploymentResponse    `json:"last_deployment,omitempty"`
+	LastSuccessfulDeployment *DeploymentResponse    `json:"last_successful_deployment,omitempty"`
+	Config                   *ServiceConfigResponse `json:"config"`
 }
 
 // TransformServiceEntity transforms an ent.Service entity into a ServiceResponse
@@ -45,7 +47,20 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 		}
 
 		if len(entity.Edges.Deployments) > 0 {
-			response.LastDeployment = TransformDeploymentEntity(entity.Edges.Deployments[0])
+			var lastDeployment *ent.Deployment
+			var lastSuccessfulDeployment *ent.Deployment
+			for _, deployment := range entity.Edges.Deployments {
+				if lastDeployment == nil || deployment.CreatedAt.After(lastDeployment.CreatedAt) {
+					lastDeployment = deployment
+				}
+				if deployment.Status == schema.DeploymentStatusSucceeded {
+					if lastSuccessfulDeployment == nil || deployment.CreatedAt.After(lastSuccessfulDeployment.CreatedAt) {
+						lastSuccessfulDeployment = deployment
+					}
+				}
+			}
+			response.LastDeployment = TransformDeploymentEntity(lastDeployment)
+			response.LastSuccessfulDeployment = TransformDeploymentEntity(lastSuccessfulDeployment)
 		}
 	}
 	return response

@@ -25,7 +25,7 @@ type ServiceRepositoryInterface interface {
 	UpdateConfig(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, serviceType *schema.ServiceType, builder *schema.ServiceBuilder, gitBranch *string, ports []v1.PortSpec, hosts []v1.HostSpec, replicas *int32, autoDeploy *bool, runCommand *string, public *bool, image *string, dockerfilePath *string) error
 	Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error
 	SetCurrentDeployment(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, deploymentID uuid.UUID) error
-	GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error)
+	GetByID(ctx context.Context, serviceID uuid.UUID) (svc *ent.Service, err error)
 	GetByName(ctx context.Context, name string) (*ent.Service, error)
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
 	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error)

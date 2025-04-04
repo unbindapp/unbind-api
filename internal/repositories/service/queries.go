@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
@@ -20,8 +21,8 @@ import (
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
-func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID) (*ent.Service, error) {
-	return self.base.DB.Service.Query().
+func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID) (svc *ent.Service, err error) {
+	svc, err = self.base.DB.Service.Query().
 		Where(service.IDEQ(serviceID)).
 		WithEnvironment(func(eq *ent.EnvironmentQuery) {
 			eq.WithProject(func(pq *ent.ProjectQuery) {
@@ -35,6 +36,21 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 		}).
 		WithCurrentDeployment().
 		Only(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	// Get the latest successful deployment for the service, if needed
+	if len(svc.Edges.Deployments) == 0 || svc.Edges.Deployments[0].Status != schema.DeploymentStatusSucceeded {
+		lastSuccessfulDeployment, err := self.deploymentRepo.GetLastSuccessfulDeployment(ctx, svc.ID)
+		if err != nil && !ent.IsNotFound(err) {
+			return nil, err
+		}
+		if !ent.IsNotFound(err) {
+			svc.Edges.Deployments = append(svc.Edges.Deployments, lastSuccessfulDeployment)
+		}
+	}
+	return svc, nil
 }
 
 func (self *ServiceRepository) GetByName(ctx context.Context, name string) (*ent.Service, error) {
@@ -84,6 +100,16 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 
 		if latestDeployment != nil {
 			svc.Edges.Deployments = []*ent.Deployment{latestDeployment}
+			if latestDeployment.Status != schema.DeploymentStatusSucceeded {
+				// Get last successful deployment if the latest one is not successful
+				lastSuccessfulDeployment, err := self.deploymentRepo.GetLastSuccessfulDeployment(ctx, svc.ID)
+				if err != nil && !ent.IsNotFound(err) {
+					return nil, err
+				}
+				if !ent.IsNotFound(err) {
+					svc.Edges.Deployments = append(svc.Edges.Deployments, lastSuccessfulDeployment)
+				}
+			}
 		}
 	}
 

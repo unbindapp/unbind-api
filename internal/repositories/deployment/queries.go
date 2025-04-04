@@ -11,6 +11,14 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
+func (self *DeploymentRepository) GetLastSuccessfulDeployment(ctx context.Context, serviceID uuid.UUID) (*ent.Deployment, error) {
+	return self.base.DB.Deployment.Query().
+		Where(deployment.ServiceIDEQ(serviceID)).
+		Where(deployment.StatusEQ(schema.DeploymentStatusSucceeded)).
+		Order(ent.Desc(deployment.FieldCreatedAt)).
+		First(ctx)
+}
+
 func (self *DeploymentRepository) GetJobsByStatus(ctx context.Context, status schema.DeploymentStatus) ([]*ent.Deployment, error) {
 	return self.base.DB.Deployment.Query().
 		Where(deployment.StatusEQ(status)).
