@@ -17,6 +17,7 @@ type ServiceResponse struct {
 	EnvironmentID            uuid.UUID              `json:"environment_id"`
 	GitHubInstallationID     *int64                 `json:"github_installation_id,omitempty"`
 	GitRepository            *string                `json:"git_repository,omitempty"`
+	GitRepositoryOwner       *string                `json:"git_repository_owner,omitempty"`
 	CreatedAt                time.Time              `json:"created_at"`
 	UpdatedAt                time.Time              `json:"updated_at"`
 	CurrentDeployment        *DeploymentResponse    `json:"current_deployment,omitempty"`
@@ -37,6 +38,7 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 			EnvironmentID:        entity.EnvironmentID,
 			GitHubInstallationID: entity.GithubInstallationID,
 			GitRepository:        entity.GitRepository,
+			GitRepositoryOwner:   entity.GitRepositoryOwner,
 			CreatedAt:            entity.CreatedAt,
 			UpdatedAt:            entity.UpdatedAt,
 			Config:               TransformServiceConfigEntity(entity.Edges.ServiceConfig),
