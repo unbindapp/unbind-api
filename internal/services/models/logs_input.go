@@ -16,6 +16,7 @@ const (
 	LogTypeProject     LogType = "project"
 	LogTypeEnvironment LogType = "environment"
 	LogTypeService     LogType = "service"
+	LogTypeDeployment  LogType = "deployment"
 )
 
 var LogTypeValues = []LogType{
@@ -23,6 +24,7 @@ var LogTypeValues = []LogType{
 	LogTypeProject,
 	LogTypeEnvironment,
 	LogTypeService,
+	LogTypeDeployment,
 }
 
 // Register enum in OpenAPI specification
@@ -46,6 +48,7 @@ type LogStreamInput struct {
 	ProjectID     uuid.UUID `query:"project_id" required:"false"`
 	EnvironmentID uuid.UUID `query:"environment_id" required:"false"`
 	ServiceID     uuid.UUID `query:"service_id" required:"false"`
+	DeploymentID  uuid.UUID `query:"deployment_id" required:"false"`
 	Since         string    `query:"since" default:"10m" doc:"Duration to look back (e.g., '1h', '30m')"`
 	Tail          int64     `query:"tail" default:"100" doc:"Number of lines to get from the end"`
 	Timestamps    bool      `query:"timestamps" default:"true" doc:"Include timestamps in logs"`
@@ -59,6 +62,7 @@ type LogQueryInput struct {
 	ProjectID     uuid.UUID          `query:"project_id" required:"false"`
 	EnvironmentID uuid.UUID          `query:"environment_id" required:"false"`
 	ServiceID     uuid.UUID          `query:"service_id" required:"false"`
+	DeploymentID  uuid.UUID          `query:"deployment_id" required:"false"`
 	Filters       string             `query:"filters" doc:"Optional logql filter string"`
 	Start         time.Time          `query:"start" doc:"Start time for the query"`
 	End           time.Time          `query:"end" doc:"End time for the query"`

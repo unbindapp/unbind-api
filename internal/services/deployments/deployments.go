@@ -6,6 +6,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -16,13 +17,15 @@ type DeploymentService struct {
 	repo                 repositories.RepositoriesInterface
 	deploymentController *deployctl.DeploymentController
 	githubClient         *github.GithubClient
+	lokiQuerier          *loki.LokiLogQuerier
 }
 
-func NewDeploymentService(repo repositories.RepositoriesInterface, deploymentController *deployctl.DeploymentController, githubClient *github.GithubClient) *DeploymentService {
+func NewDeploymentService(repo repositories.RepositoriesInterface, deploymentController *deployctl.DeploymentController, githubClient *github.GithubClient, lokiQuerier *loki.LokiLogQuerier) *DeploymentService {
 	return &DeploymentService{
 		repo:                 repo,
 		deploymentController: deploymentController,
 		githubClient:         githubClient,
+		lokiQuerier:          lokiQuerier,
 	}
 }
 

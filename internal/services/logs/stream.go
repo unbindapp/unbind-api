@@ -7,6 +7,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2/sse"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
@@ -35,6 +36,17 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 	case models.LogTypeService:
 		label = loki.LokiLabelService
 		labelValue = service.ID.String()
+	case models.LogTypeDeployment:
+		// get deployment
+		deployment, err := self.repo.Deployment().GetByID(ctx, input.DeploymentID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
+			}
+			return err
+		}
+		label = loki.LokiLabelDeployment
+		labelValue = deployment.ID.String()
 	}
 
 	// Parse 'since' duration

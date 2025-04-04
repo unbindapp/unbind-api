@@ -15,6 +15,7 @@ const (
 	LokiLabelProject     LokiLabelName = "unbind_project"
 	LokiLabelEnvironment LokiLabelName = "unbind_environment"
 	LokiLabelService     LokiLabelName = "unbind_service"
+	LokiLabelDeployment  LokiLabelName = "unbind_deployment"
 )
 
 // LokiLogStreamOptions represents options for filtering and streaming logs from Loki
@@ -49,6 +50,7 @@ type LogMetadata struct {
 	TeamID        string `json:"team_id"`
 	ProjectID     string `json:"project_id"`
 	EnvironmentID string `json:"environment_id"`
+	DeploymentID  string `json:"deployment_id"`
 }
 
 type LogEventsMessageType string

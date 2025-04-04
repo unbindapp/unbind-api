@@ -166,6 +166,7 @@ func parseStreamsResult(streams []Stream) []LogEvent {
 		teamID, _ := stream.Stream[string(LokiLabelTeam)]
 		projectID, _ := stream.Stream[string(LokiLabelProject)]
 		serviceID, _ := stream.Stream[string(LokiLabelService)]
+		deploymentID, _ := stream.Stream[string(LokiLabelDeployment)]
 
 		// Process each log entry
 		for _, entry := range stream.Values {
@@ -197,6 +198,7 @@ func parseStreamsResult(streams []Stream) []LogEvent {
 					ProjectID:     projectID,
 					EnvironmentID: environmentID,
 					ServiceID:     serviceID,
+					DeploymentID:  deploymentID,
 				},
 			}
 
@@ -218,6 +220,7 @@ func parseMatrixResult(matrixValues []MatrixValue) []LogEvent {
 		teamID, _ := series.Metric[string(LokiLabelTeam)]
 		projectID, _ := series.Metric[string(LokiLabelProject)]
 		serviceID, _ := series.Metric[string(LokiLabelService)]
+		deploymentID, _ := series.Metric[string(LokiLabelDeployment)]
 
 		// For each sample in the series, create a log event
 		for _, sample := range series.Values {
@@ -236,6 +239,7 @@ func parseMatrixResult(matrixValues []MatrixValue) []LogEvent {
 					ProjectID:     projectID,
 					EnvironmentID: environmentID,
 					ServiceID:     serviceID,
+					DeploymentID:  deploymentID,
 				},
 			}
 
@@ -257,6 +261,7 @@ func parseVectorResult(vectorValues []VectorValue) []LogEvent {
 		teamID, _ := sample.Metric[string(LokiLabelTeam)]
 		projectID, _ := sample.Metric[string(LokiLabelProject)]
 		serviceID, _ := sample.Metric[string(LokiLabelService)]
+		deploymentID, _ := sample.Metric[string(LokiLabelDeployment)]
 
 		// Create a timestamp from the sample
 		timestamp := time.Unix(0, sample.Value.Timestamp)
@@ -274,6 +279,7 @@ func parseVectorResult(vectorValues []VectorValue) []LogEvent {
 				ProjectID:     projectID,
 				EnvironmentID: environmentID,
 				ServiceID:     serviceID,
+				DeploymentID:  deploymentID,
 			},
 		}
 

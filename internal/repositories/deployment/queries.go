@@ -11,6 +11,12 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
+func (self *DeploymentRepository) GetByID(ctx context.Context, deploymentID uuid.UUID) (*ent.Deployment, error) {
+	return self.base.DB.Deployment.Query().
+		Where(deployment.IDEQ(deploymentID)).
+		Only(ctx)
+}
+
 func (self *DeploymentRepository) GetLastSuccessfulDeployment(ctx context.Context, serviceID uuid.UUID) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.Query().
 		Where(deployment.ServiceIDEQ(serviceID)).

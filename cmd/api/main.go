@@ -189,7 +189,7 @@ func startAPI(cfg *config.Config) {
 		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController),
 		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
 		LogService:           logs_service.NewLogsService(repo, kubeClient, lokiQuerier),
-		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient),
+		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier),
 		SystemService:        system_service.NewSystemService(cfg, repo, buildkitSettings),
 		MetricsService:       metric_service.NewMetricService(promClient, repo),
 	}

@@ -6,6 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -51,6 +54,27 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 
 	// Transform response
 	resp := models.TransformDeploymentEntities(deployments)
+
+	// Attach logs to any that are building
+	for _, deployment := range resp {
+		if deployment.Status == schema.DeploymentStatusBuilding {
+			label := loki.LokiLabelDeployment
+			labelValue := deployment.ID.String()
+			lokiLogOptions := loki.LokiLogHTTPOptions{
+				Label:      label,
+				LabelValue: labelValue,
+				Limit:      utils.ToPtr(5),
+			}
+			logs, err := self.lokiQuerier.QueryLokiLogs(ctx, lokiLogOptions)
+			if err != nil {
+				log.Warnf("failed to get logs for deployment %s: %v", deployment.ID, err)
+				continue
+			}
+			if len(logs) > 0 {
+				deployment.DeploymentLogs = logs
+			}
+		}
+	}
 
 	// Get pagination metadata
 	metadata := &models.PaginationResponseMetadata{

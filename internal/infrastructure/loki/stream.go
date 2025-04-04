@@ -198,22 +198,11 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			if !ok {
 				log.Warnf("Stream missing instance label: %s", stream.Stream)
 			}
-			environmentID, ok := stream.Stream[string(LokiLabelEnvironment)]
-			if !ok {
-				log.Warnf("Stream missing environment label: %s", stream.Stream)
-			}
-			teamID, ok := stream.Stream[string(LokiLabelTeam)]
-			if !ok {
-				log.Warnf("Stream missing team label: %s", stream.Stream)
-			}
-			projectID, ok := stream.Stream[string(LokiLabelProject)]
-			if !ok {
-				log.Warnf("Stream missing project label: %s", stream.Stream)
-			}
-			serviceID, ok := stream.Stream[string(LokiLabelService)]
-			if !ok {
-				log.Warnf("Stream missing service label: %s", stream.Stream)
-			}
+			environmentID, _ := stream.Stream[string(LokiLabelEnvironment)]
+			teamID, _ := stream.Stream[string(LokiLabelTeam)]
+			projectID, _ := stream.Stream[string(LokiLabelProject)]
+			serviceID, _ := stream.Stream[string(LokiLabelService)]
+			deploymentID, _ := stream.Stream[string(LokiLabelDeployment)]
 
 			for _, entry := range stream.Values {
 				// Entry format is [timestamp, log message]
@@ -246,6 +235,7 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 						ProjectID:     projectID,
 						EnvironmentID: environmentID,
 						ServiceID:     serviceID,
+						DeploymentID:  deploymentID,
 					},
 				}
 

@@ -6,22 +6,24 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 )
 
 type DeploymentResponse struct {
-	ID            uuid.UUID               `json:"id"`
-	ServiceID     uuid.UUID               `json:"service_id"`
-	Status        schema.DeploymentStatus `json:"status"`
-	Error         string                  `json:"error,omitempty"`
-	StartedAt     *time.Time              `json:"started_at,omitempty"`
-	CompletedAt   *time.Time              `json:"completed_at,omitempty"`
-	Attempts      int                     `json:"attempts"`
-	CommitSHA     *string                 `json:"commit_sha,omitempty" required:"false"`
-	CommitMessage *string                 `json:"commit_message,omitempty" required:"false"`
-	CommitAuthor  *schema.GitCommitter    `json:"commit_author,omitempty" required:"false"`
-	Image         *string                 `json:"image,omitempty" required:"false"`
-	CreatedAt     time.Time               `json:"created_at"`
-	UpdatedAt     time.Time               `json:"updated_at"`
+	ID             uuid.UUID               `json:"id"`
+	ServiceID      uuid.UUID               `json:"service_id"`
+	Status         schema.DeploymentStatus `json:"status"`
+	Error          string                  `json:"error,omitempty"`
+	StartedAt      *time.Time              `json:"started_at,omitempty"`
+	CompletedAt    *time.Time              `json:"completed_at,omitempty"`
+	Attempts       int                     `json:"attempts"`
+	CommitSHA      *string                 `json:"commit_sha,omitempty" required:"false"`
+	CommitMessage  *string                 `json:"commit_message,omitempty" required:"false"`
+	CommitAuthor   *schema.GitCommitter    `json:"commit_author,omitempty" required:"false"`
+	Image          *string                 `json:"image,omitempty" required:"false"`
+	CreatedAt      time.Time               `json:"created_at"`
+	UpdatedAt      time.Time               `json:"updated_at"`
+	DeploymentLogs []loki.LogEvent         `json:"deployment_logs,omitempty"`
 }
 
 // TransformDeploymentEntity transforms an ent.Deployment entity into a DeploymentResponse
