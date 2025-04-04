@@ -33,15 +33,8 @@ func (self *LokiLogQuerier) QueryLokiLogs(
 		return nil, fmt.Errorf("Unable to parse loki query URL: %v", err)
 	}
 
-	// Determine if this is a range query or instant query based on parameters
-	isRangeQuery := opts.Start != nil || opts.End != nil || opts.Since != nil
-
 	// Set the appropriate endpoint path
-	if isRangeQuery {
-		reqURL.Path = "/loki/api/v1/query_range"
-	} else {
-		reqURL.Path = "/loki/api/v1/query"
-	}
+	reqURL.Path = "/loki/api/v1/query_range"
 
 	// Add query parameters
 	q := reqURL.Query()
