@@ -54,6 +54,7 @@ type Config struct {
 	ServiceEnvironmentRef string                `env:"SERVICE_ENVIRONMENT_REF"`
 	ServiceRef            string                `env:"SERVICE_REF"`
 	ServiceDockerfilePath string                `env:"SERVICE_DOCKERFILE_PATH"` // Path to Dockerfile in the repo (optional)
+	ServiceImage          string                `env:"SERVICE_IMAGE"`           // Custom image if not building from git
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

@@ -54,21 +54,24 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
-	// ! TODO - support docka
-	if input.Type != schema.ServiceTypeGithub {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only github services supported")
-	}
-
-	if input.Builder != schema.ServiceBuilderRailpack && input.Builder != schema.ServiceBuilderDocker {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "only railpack and docker builder supported")
-	}
-
-	// Validate that if GitHub info is provided, all fields are set
-	if input.GitHubInstallationID != nil {
-		if input.RepositoryOwner == nil || input.RepositoryName == nil || input.GitBranch == nil {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
-				"GitHub repository owner, name, and branch must be provided together")
+	switch input.Type {
+	case schema.ServiceTypeGithub:
+		// Validate that if GitHub info is provided, all fields are set
+		if input.GitHubInstallationID != nil {
+			if input.RepositoryOwner == nil || input.RepositoryName == nil || input.GitBranch == nil {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
+					"GitHub repository owner, name, and branch must be provided together")
+			}
 		}
+	case schema.ServiceTypeDockerimage:
+		// Validate that if Docker image is provided, all fields are set
+		if input.Image == nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
+				"Docker image must be provided")
+		}
+		input.Builder = schema.ServiceBuilderDocker
+	default:
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("received unsupported service type %s", input.Type))
 	}
 
 	// Check permissions
@@ -96,7 +99,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 	// If GitHub integration is provided, verify repository access
 	var analysisResult *sourceanalyzer.AnalysisResult
-	if input.GitHubInstallationID != nil {
+	if input.Type == schema.ServiceTypeGithub {
 		// Get GitHub installation
 		installation, err := self.repo.Github().GetInstallationByID(ctx, *input.GitHubInstallationID)
 		if err != nil {

@@ -32,7 +32,6 @@ type UpdateServiceInput struct {
 
 	// Configuration
 	GitBranch      *string                `json:"git_branch,omitempty" required:"false"`
-	Type           *schema.ServiceType    `json:"type,omitempty" required:"false"`
 	Builder        *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
 	Hosts          []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
 	Ports          []v1.PortSpec          `json:"ports,omitempty" required:"false"`
@@ -79,6 +78,13 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 		return nil, err
 	}
+
+	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDockerimage {
+		if input.Builder != nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update builder for docker image service")
+		}
+	}
+
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Update the service
 		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.DisplayName, input.Description); err != nil {
@@ -111,7 +117,6 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		if err := self.repo.Service().UpdateConfig(ctx,
 			tx,
 			input.ServiceID,
-			input.Type,
 			input.Builder,
 			input.GitBranch,
 			input.Ports,

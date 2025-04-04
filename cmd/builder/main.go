@@ -63,58 +63,63 @@ func main() {
 	builder := builders.NewBuilder(cfg)
 	k8s := k8s.NewK8SClient(cfg, cfg)
 
-	// Parse secrets from env
-	serializableSecrets := make(map[string]string)
-	buildSecrets := make(map[string]string)
-	if cfg.ServiceBuildSecrets != "" {
-		if err := json.Unmarshal([]byte(cfg.ServiceBuildSecrets), &serializableSecrets); err != nil {
-			if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed to unmarshal secrets %v", err), cfg.ServiceDeploymentID); err != nil {
-				log.Errorf("Failed to mark deployment as failed: %v", err)
+	var dockerImg string
+
+	// We can bypass any build step if the image is already provided
+	if cfg.ServiceImage != "" {
+		dockerImg = cfg.ServiceImage
+	} else {
+		// Parse secrets from env
+		serializableSecrets := make(map[string]string)
+		buildSecrets := make(map[string]string)
+		if cfg.ServiceBuildSecrets != "" {
+			if err := json.Unmarshal([]byte(cfg.ServiceBuildSecrets), &serializableSecrets); err != nil {
+				if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed to unmarshal secrets %v", err), cfg.ServiceDeploymentID); err != nil {
+					log.Errorf("Failed to mark deployment as failed: %v", err)
+				}
+				log.Fatalf("Failed to parse secrets: %v", err)
 			}
-			log.Fatalf("Failed to parse secrets: %v", err)
+
+			// Convert back to map[string][]byte
+			for k, v := range serializableSecrets {
+				data, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					fmt.Printf("Error decoding secret %s: %v\n", k, err)
+					continue
+				}
+				buildSecrets[k] = string(data)
+			}
 		}
 
-		// Convert back to map[string][]byte
-		for k, v := range serializableSecrets {
-			data, err := base64.StdEncoding.DecodeString(v)
+		// Build with context
+		switch cfg.ServiceBuilder {
+		case schema.ServiceBuilderRailpack:
+			dockerImg, _, err = builder.BuildWithRailpack(ctx, buildSecrets)
 			if err != nil {
-				fmt.Printf("Error decoding secret %s: %v\n", k, err)
-				continue
+				if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed railpack build %v", err), cfg.ServiceDeploymentID); err != nil {
+					log.Errorf("Failed to mark deployment as failed: %v", err)
+				}
+				log.Fatalf("Failed to build with railpack: %v", err)
 			}
-			buildSecrets[k] = string(data)
-		}
-	}
-
-	// Build with context
-	var dockerImg, repoName string
-	switch cfg.ServiceBuilder {
-	case schema.ServiceBuilderRailpack:
-		dockerImg, repoName, err = builder.BuildWithRailpack(ctx, buildSecrets)
-		if err != nil {
-			if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed railpack build %v", err), cfg.ServiceDeploymentID); err != nil {
+		case schema.ServiceBuilderDocker:
+			dockerImg, _, err = builder.BuildDockerfile(ctx, buildSecrets)
+			if err != nil {
+				if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed docker build %v", err), cfg.ServiceDeploymentID); err != nil {
+					log.Errorf("Failed to mark deployment as failed: %v", err)
+				}
+				log.Fatalf("Failed to build with docker: %v", err)
+			}
+		default:
+			if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("received request with unknown builder: %s", cfg.ServiceBuilder), cfg.ServiceDeploymentID); err != nil {
 				log.Errorf("Failed to mark deployment as failed: %v", err)
 			}
-			log.Fatalf("Failed to build with railpack: %v", err)
+			log.Fatalf("Unknown builder: %s", cfg.ServiceBuilder)
 		}
-	case schema.ServiceBuilderDocker:
-		dockerImg, repoName, err = builder.BuildDockerfile(ctx, buildSecrets)
-		if err != nil {
-			if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("failed docker build %v", err), cfg.ServiceDeploymentID); err != nil {
-				log.Errorf("Failed to mark deployment as failed: %v", err)
-			}
-			log.Fatalf("Failed to build with docker: %v", err)
-		}
-	default:
-		if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("received request with unknown builder: %s", cfg.ServiceBuilder), cfg.ServiceDeploymentID); err != nil {
-			log.Errorf("Failed to mark deployment as failed: %v", err)
-		}
-		log.Fatalf("Unknown builder: %s", cfg.ServiceBuilder)
 	}
 
 	crdName := cfg.ServiceName
 	if crdName == "" {
-		log.Warn("Service name not provided, using repository name")
-		crdName = repoName
+		log.Fatal("Service name not provided, cannot deploy")
 	}
 
 	if dockerImg == "" {

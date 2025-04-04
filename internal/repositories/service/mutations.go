@@ -116,7 +116,6 @@ func (self *ServiceRepository) UpdateConfig(
 	ctx context.Context,
 	tx repository.TxInterface,
 	serviceID uuid.UUID,
-	serviceType *schema.ServiceType,
 	builder *schema.ServiceBuilder,
 	gitBranch *string,
 	ports []v1.PortSpec,
@@ -135,7 +134,6 @@ func (self *ServiceRepository) UpdateConfig(
 
 	upd := db.ServiceConfig.Update().
 		Where(serviceconfig.ServiceID(serviceID)).
-		SetNillableType(serviceType).
 		SetNillableBuilder(builder).
 		SetNillableGitBranch(gitBranch).
 		SetNillableReplicas(replicas).

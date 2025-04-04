@@ -159,6 +159,11 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
+	// Add docker image override
+	if service.Edges.ServiceConfig.Image != "" {
+		env["SERVICE_IMAGE"] = service.Edges.ServiceConfig.Image
+	}
+
 	// Add dockerfile override
 	if service.Edges.ServiceConfig.DockerfilePath != nil {
 		env["SERVICE_DOCKERFILE_PATH"] = *service.Edges.ServiceConfig.DockerfilePath
