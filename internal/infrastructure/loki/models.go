@@ -46,11 +46,11 @@ type LokiLogHTTPOptions struct {
 
 type LogMetadata struct {
 	// Metadata to stick on
-	ServiceID     string `json:"service_id"`
-	TeamID        string `json:"team_id"`
-	ProjectID     string `json:"project_id"`
-	EnvironmentID string `json:"environment_id"`
-	DeploymentID  string `json:"deployment_id"`
+	ServiceID     string `json:"service_id,omitempty"`
+	TeamID        string `json:"team_id,omitempty"`
+	ProjectID     string `json:"project_id,omitempty"`
+	EnvironmentID string `json:"environment_id,omitempty"`
+	DeploymentID  string `json:"deployment_id,omitempty"`
 }
 
 type LogEventsMessageType string

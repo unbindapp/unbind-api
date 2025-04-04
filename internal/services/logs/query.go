@@ -42,6 +42,9 @@ func (self *LogsService) QueryLogs(ctx context.Context, requesterUserID uuid.UUI
 			}
 			return nil, err
 		}
+		if deployment.ServiceID != service.ID {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
+		}
 		label = loki.LokiLabelDeployment
 		labelValue = deployment.ID.String()
 	}
