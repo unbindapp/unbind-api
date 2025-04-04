@@ -23,7 +23,7 @@ type DeploymentResponse struct {
 	Image          *string                 `json:"image,omitempty" required:"false"`
 	CreatedAt      time.Time               `json:"created_at"`
 	UpdatedAt      time.Time               `json:"updated_at"`
-	DeploymentLogs []loki.LogEvent         `json:"deployment_logs,omitempty"`
+	DeploymentLogs []loki.LogEvent         `json:"deployment_logs" nullable:"false"`
 }
 
 // TransformDeploymentEntity transforms an ent.Deployment entity into a DeploymentResponse
@@ -31,19 +31,20 @@ func TransformDeploymentEntity(entity *ent.Deployment) *DeploymentResponse {
 	response := &DeploymentResponse{}
 	if entity != nil {
 		response = &DeploymentResponse{
-			ID:            entity.ID,
-			ServiceID:     entity.ServiceID,
-			Status:        entity.Status,
-			Error:         entity.Error,
-			StartedAt:     entity.StartedAt,
-			CompletedAt:   entity.CompletedAt,
-			Attempts:      entity.Attempts,
-			CommitSHA:     entity.CommitSha,
-			CommitMessage: entity.CommitMessage,
-			CommitAuthor:  entity.CommitAuthor,
-			Image:         entity.Image,
-			CreatedAt:     entity.CreatedAt,
-			UpdatedAt:     entity.UpdatedAt,
+			ID:             entity.ID,
+			ServiceID:      entity.ServiceID,
+			Status:         entity.Status,
+			Error:          entity.Error,
+			StartedAt:      entity.StartedAt,
+			CompletedAt:    entity.CompletedAt,
+			Attempts:       entity.Attempts,
+			CommitSHA:      entity.CommitSha,
+			CommitMessage:  entity.CommitMessage,
+			CommitAuthor:   entity.CommitAuthor,
+			Image:          entity.Image,
+			CreatedAt:      entity.CreatedAt,
+			UpdatedAt:      entity.UpdatedAt,
+			DeploymentLogs: []loki.LogEvent{},
 		}
 	}
 	return response
