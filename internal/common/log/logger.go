@@ -12,14 +12,13 @@ var logger *log.Logger
 func getLogger() *log.Logger {
 	if logger == nil {
 		styles := log.DefaultStyles()
-		styles.Levels[log.FatalLevel] = lipgloss.NewStyle().SetString("☠️🟥☠️")
-		styles.Levels[log.ErrorLevel] = lipgloss.NewStyle().SetString("🟥")
-		styles.Levels[log.WarnLevel] = lipgloss.NewStyle().SetString("🟨")
-		styles.Levels[log.InfoLevel] = lipgloss.NewStyle().SetString("🟦")
+		styles.Levels[log.FatalLevel] = lipgloss.NewStyle().SetString("FATAL")
+		styles.Levels[log.ErrorLevel] = lipgloss.NewStyle().SetString("ERROR")
+		styles.Levels[log.WarnLevel] = lipgloss.NewStyle().SetString("WARN")
+		styles.Levels[log.InfoLevel] = lipgloss.NewStyle().SetString("INFO")
 		logger = log.New(os.Stderr)
 		logger.SetStyles(styles)
-		logger.SetReportTimestamp(true)
-		logger.SetTimeFormat("15:04:05 MST")
+		logger.SetReportTimestamp(false)
 	}
 	return logger
 }
