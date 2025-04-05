@@ -106,7 +106,9 @@ jobs:
           platforms: linux/arm64
           push: true
           file: ./Dockerfile.ci-builder
-          tags: unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
+          tags: |
+            unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
+            unbindapp/unbind-builder:latest
 
   deploy_prod:
     name: 🚀 Deploy Apps (PROD)
