@@ -42,15 +42,26 @@ func main() {
 
 	log.Infof("Starting build...")
 	log.Info("--------------")
-	log.Infof("Build Params")
-	log.Info("--------------")
-	log.Infof("Service name: %s", cfg.ServiceName)
+	log.Infof("Input Parameters:")
+	log.Infof(" - Service name: %s", cfg.ServiceName)
 	if cfg.ServiceImage != "" {
-		log.Infof("Using docker image: %s", cfg.ServiceImage)
+		log.Infof(" - Using docker image: %s", cfg.ServiceImage)
 	} else {
-		log.Infof("Builder Type: %s", cfg.ServiceBuilder)
+		log.Infof(" - Builder Type: %s", cfg.ServiceBuilder)
+		if cfg.ServiceBuilder == schema.ServiceBuilderDocker {
+			dockerfileDisplay := "Dockerfile"
+			if cfg.ServiceDockerfilePath != "" {
+				dockerfileDisplay = cfg.ServiceDockerfilePath
+			}
+			log.Infof(" - Dockerfile Path: %s", dockerfileDisplay)
+			ctxDisplay := "."
+			if cfg.ServiceDockerfileContext != "" {
+				ctxDisplay = cfg.ServiceDockerfileContext
+			}
+			log.Infof(" - Dockerfile Context: %s", ctxDisplay)
+		}
 	}
-	fmt.Print("\n")
+	fmt.Printf("\n")
 
 	serviceId, err := uuid.Parse(cfg.ServiceRef)
 	if err != nil {
