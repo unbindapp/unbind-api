@@ -35,9 +35,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := godotenv.Load(); err != nil {
-		log.Warnf("Failed to load .env file: %v", err)
-	}
+	godotenv.Load()
 
 	cfg := config.NewConfig()
 	os.Setenv("BUILDKIT_HOST", cfg.BuildkitHost)
