@@ -15,7 +15,6 @@ import (
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/moby/buildkit/util/appcontext"
-	"github.com/moby/buildkit/util/progress/progressui"
 	rpBuildkit "github.com/railwayapp/railpack/buildkit"
 	"github.com/railwayapp/railpack/core/plan"
 	"github.com/tonistiigi/fsutil"
@@ -81,26 +80,9 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 
 	progressDone := make(chan bool)
 	go func() {
-		displayCh := make(chan *client.SolveStatus)
-		go func() {
-			for s := range ch {
-				// Log the status updates to your custom logger
-				logBuildkitStatus(s)
-
-				displayCh <- s
-			}
-			close(displayCh)
-		}()
-
-		// You can keep or remove the default progress display
-		display, err := progressui.NewDisplay(os.Stdout, progressui.AutoMode)
-		if err != nil {
-			log.Error("failed to create progress display", "error", err)
-		}
-
-		_, err = display.UpdateFrom(ctx, displayCh)
-		if err != nil {
-			log.Error("failed to update progress display", "error", err)
+		// Process the status updates directly with your custom logger
+		for s := range ch {
+			logBuildkitStatus(s)
 		}
 		progressDone <- true
 	}()
