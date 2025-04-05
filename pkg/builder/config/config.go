@@ -40,21 +40,22 @@ type Config struct {
 	// Deployment namespace (kubernetes)
 	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
 	// Service specific
-	ServiceDeploymentID   uuid.UUID             `env:"SERVICE_DEPLOYMENT_ID"`
-	ServiceName           string                `env:"SERVICE_NAME"`
-	ServiceProvider       string                `env:"SERVICE_PROVIDER"`
-	ServiceFramework      string                `env:"SERVICE_FRAMEWORK"`
-	ServicePublic         *bool                 `env:"SERVICE_PUBLIC"`
-	ServiceReplicas       *int32                `env:"SERVICE_REPLICAS"`
-	ServiceSecretName     string                `env:"SERVICE_SECRET_NAME,required"`
-	ServiceBuildSecrets   string                `env:"SERVICE_BUILD_SECRETS"`
-	ServiceBuilder        schema.ServiceBuilder `env:"SERVICE_BUILDER"`
-	ServiceTeamRef        string                `env:"SERVICE_TEAM_REF"`
-	ServiceProjectRef     string                `env:"SERVICE_PROJECT_REF"`
-	ServiceEnvironmentRef string                `env:"SERVICE_ENVIRONMENT_REF"`
-	ServiceRef            string                `env:"SERVICE_REF"`
-	ServiceDockerfilePath string                `env:"SERVICE_DOCKERFILE_PATH"` // Path to Dockerfile in the repo (optional)
-	ServiceImage          string                `env:"SERVICE_IMAGE"`           // Custom image if not building from git
+	ServiceDeploymentID      uuid.UUID             `env:"SERVICE_DEPLOYMENT_ID"`
+	ServiceName              string                `env:"SERVICE_NAME"`
+	ServiceProvider          string                `env:"SERVICE_PROVIDER"`
+	ServiceFramework         string                `env:"SERVICE_FRAMEWORK"`
+	ServicePublic            *bool                 `env:"SERVICE_PUBLIC"`
+	ServiceReplicas          *int32                `env:"SERVICE_REPLICAS"`
+	ServiceSecretName        string                `env:"SERVICE_SECRET_NAME,required"`
+	ServiceBuildSecrets      string                `env:"SERVICE_BUILD_SECRETS"`
+	ServiceBuilder           schema.ServiceBuilder `env:"SERVICE_BUILDER"`
+	ServiceTeamRef           string                `env:"SERVICE_TEAM_REF"`
+	ServiceProjectRef        string                `env:"SERVICE_PROJECT_REF"`
+	ServiceEnvironmentRef    string                `env:"SERVICE_ENVIRONMENT_REF"`
+	ServiceRef               string                `env:"SERVICE_REF"`
+	ServiceDockerfilePath    string                `env:"SERVICE_DOCKERFILE_PATH"`    // Path to Dockerfile in the repo (optional)
+	ServiceDockerfileContext string                `env:"SERVICE_DOCKERFILE_CONTEXT"` // Path to Dockerfile context in the repo (optional)
+	ServiceImage             string                `env:"SERVICE_IMAGE"`              // Custom image if not building from git
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

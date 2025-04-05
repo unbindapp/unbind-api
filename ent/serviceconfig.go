@@ -36,6 +36,8 @@ type ServiceConfig struct {
 	Builder schema.ServiceBuilder `json:"builder,omitempty"`
 	// Path to Dockerfile if using docker builder
 	DockerfilePath *string `json:"dockerfile_path,omitempty"`
+	// Path to Dockerfile context if using docker builder
+	DockerfileContext *string `json:"dockerfile_context,omitempty"`
 	// Provider (e.g. Go, Python, Node, Deno)
 	Provider *enum.Provider `json:"provider,omitempty"`
 	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
@@ -93,7 +95,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDockerfilePath, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -156,6 +158,13 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.DockerfilePath = new(string)
 				*sc.DockerfilePath = value.String
+			}
+		case serviceconfig.FieldDockerfileContext:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field dockerfile_context", values[i])
+			} else if value.Valid {
+				sc.DockerfileContext = new(string)
+				*sc.DockerfileContext = value.String
 			}
 		case serviceconfig.FieldProvider:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -283,6 +292,11 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	if v := sc.DockerfilePath; v != nil {
 		builder.WriteString("dockerfile_path=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := sc.DockerfileContext; v != nil {
+		builder.WriteString("dockerfile_context=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

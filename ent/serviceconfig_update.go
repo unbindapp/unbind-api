@@ -103,6 +103,26 @@ func (scu *ServiceConfigUpdate) ClearDockerfilePath() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetDockerfileContext sets the "dockerfile_context" field.
+func (scu *ServiceConfigUpdate) SetDockerfileContext(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDockerfileContext(s)
+	return scu
+}
+
+// SetNillableDockerfileContext sets the "dockerfile_context" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDockerfileContext(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetDockerfileContext(*s)
+	}
+	return scu
+}
+
+// ClearDockerfileContext clears the value of the "dockerfile_context" field.
+func (scu *ServiceConfigUpdate) ClearDockerfileContext() *ServiceConfigUpdate {
+	scu.mutation.ClearDockerfileContext()
+	return scu
+}
+
 // SetProvider sets the "provider" field.
 func (scu *ServiceConfigUpdate) SetProvider(e enum.Provider) *ServiceConfigUpdate {
 	scu.mutation.SetProvider(e)
@@ -401,6 +421,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if scu.mutation.DockerfilePathCleared() {
 		_spec.ClearField(serviceconfig.FieldDockerfilePath, field.TypeString)
 	}
+	if value, ok := scu.mutation.DockerfileContext(); ok {
+		_spec.SetField(serviceconfig.FieldDockerfileContext, field.TypeString, value)
+	}
+	if scu.mutation.DockerfileContextCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerfileContext, field.TypeString)
+	}
 	if value, ok := scu.mutation.Provider(); ok {
 		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
 	}
@@ -581,6 +607,26 @@ func (scuo *ServiceConfigUpdateOne) SetNillableDockerfilePath(s *string) *Servic
 // ClearDockerfilePath clears the value of the "dockerfile_path" field.
 func (scuo *ServiceConfigUpdateOne) ClearDockerfilePath() *ServiceConfigUpdateOne {
 	scuo.mutation.ClearDockerfilePath()
+	return scuo
+}
+
+// SetDockerfileContext sets the "dockerfile_context" field.
+func (scuo *ServiceConfigUpdateOne) SetDockerfileContext(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDockerfileContext(s)
+	return scuo
+}
+
+// SetNillableDockerfileContext sets the "dockerfile_context" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDockerfileContext(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetDockerfileContext(*s)
+	}
+	return scuo
+}
+
+// ClearDockerfileContext clears the value of the "dockerfile_context" field.
+func (scuo *ServiceConfigUpdateOne) ClearDockerfileContext() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDockerfileContext()
 	return scuo
 }
 
@@ -911,6 +957,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.DockerfilePathCleared() {
 		_spec.ClearField(serviceconfig.FieldDockerfilePath, field.TypeString)
+	}
+	if value, ok := scuo.mutation.DockerfileContext(); ok {
+		_spec.SetField(serviceconfig.FieldDockerfileContext, field.TypeString, value)
+	}
+	if scuo.mutation.DockerfileContextCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerfileContext, field.TypeString)
 	}
 	if value, ok := scuo.mutation.Provider(); ok {
 		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)

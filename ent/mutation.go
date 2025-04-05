@@ -10416,33 +10416,34 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 // ServiceConfigMutation represents an operation that mutates the ServiceConfig nodes in the graph.
 type ServiceConfigMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	created_at      *time.Time
-	updated_at      *time.Time
-	_type           *schema.ServiceType
-	builder         *schema.ServiceBuilder
-	dockerfile_path *string
-	provider        *enum.Provider
-	framework       *enum.Framework
-	git_branch      *string
-	hosts           *[]v1.HostSpec
-	appendhosts     []v1.HostSpec
-	ports           *[]v1.PortSpec
-	appendports     []v1.PortSpec
-	replicas        *int32
-	addreplicas     *int32
-	auto_deploy     *bool
-	run_command     *string
-	public          *bool
-	image           *string
-	clearedFields   map[string]struct{}
-	service         *uuid.UUID
-	clearedservice  bool
-	done            bool
-	oldValue        func(context.Context) (*ServiceConfig, error)
-	predicates      []predicate.ServiceConfig
+	op                 Op
+	typ                string
+	id                 *uuid.UUID
+	created_at         *time.Time
+	updated_at         *time.Time
+	_type              *schema.ServiceType
+	builder            *schema.ServiceBuilder
+	dockerfile_path    *string
+	dockerfile_context *string
+	provider           *enum.Provider
+	framework          *enum.Framework
+	git_branch         *string
+	hosts              *[]v1.HostSpec
+	appendhosts        []v1.HostSpec
+	ports              *[]v1.PortSpec
+	appendports        []v1.PortSpec
+	replicas           *int32
+	addreplicas        *int32
+	auto_deploy        *bool
+	run_command        *string
+	public             *bool
+	image              *string
+	clearedFields      map[string]struct{}
+	service            *uuid.UUID
+	clearedservice     bool
+	done               bool
+	oldValue           func(context.Context) (*ServiceConfig, error)
+	predicates         []predicate.ServiceConfig
 }
 
 var _ ent.Mutation = (*ServiceConfigMutation)(nil)
@@ -10776,6 +10777,55 @@ func (m *ServiceConfigMutation) DockerfilePathCleared() bool {
 func (m *ServiceConfigMutation) ResetDockerfilePath() {
 	m.dockerfile_path = nil
 	delete(m.clearedFields, serviceconfig.FieldDockerfilePath)
+}
+
+// SetDockerfileContext sets the "dockerfile_context" field.
+func (m *ServiceConfigMutation) SetDockerfileContext(s string) {
+	m.dockerfile_context = &s
+}
+
+// DockerfileContext returns the value of the "dockerfile_context" field in the mutation.
+func (m *ServiceConfigMutation) DockerfileContext() (r string, exists bool) {
+	v := m.dockerfile_context
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDockerfileContext returns the old "dockerfile_context" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldDockerfileContext(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDockerfileContext is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDockerfileContext requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDockerfileContext: %w", err)
+	}
+	return oldValue.DockerfileContext, nil
+}
+
+// ClearDockerfileContext clears the value of the "dockerfile_context" field.
+func (m *ServiceConfigMutation) ClearDockerfileContext() {
+	m.dockerfile_context = nil
+	m.clearedFields[serviceconfig.FieldDockerfileContext] = struct{}{}
+}
+
+// DockerfileContextCleared returns if the "dockerfile_context" field was cleared in this mutation.
+func (m *ServiceConfigMutation) DockerfileContextCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldDockerfileContext]
+	return ok
+}
+
+// ResetDockerfileContext resets all changes to the "dockerfile_context" field.
+func (m *ServiceConfigMutation) ResetDockerfileContext() {
+	m.dockerfile_context = nil
+	delete(m.clearedFields, serviceconfig.FieldDockerfileContext)
 }
 
 // SetProvider sets the "provider" field.
@@ -11342,7 +11392,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -11360,6 +11410,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	}
 	if m.dockerfile_path != nil {
 		fields = append(fields, serviceconfig.FieldDockerfilePath)
+	}
+	if m.dockerfile_context != nil {
+		fields = append(fields, serviceconfig.FieldDockerfileContext)
 	}
 	if m.provider != nil {
 		fields = append(fields, serviceconfig.FieldProvider)
@@ -11411,6 +11464,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.Builder()
 	case serviceconfig.FieldDockerfilePath:
 		return m.DockerfilePath()
+	case serviceconfig.FieldDockerfileContext:
+		return m.DockerfileContext()
 	case serviceconfig.FieldProvider:
 		return m.Provider()
 	case serviceconfig.FieldFramework:
@@ -11452,6 +11507,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldBuilder(ctx)
 	case serviceconfig.FieldDockerfilePath:
 		return m.OldDockerfilePath(ctx)
+	case serviceconfig.FieldDockerfileContext:
+		return m.OldDockerfileContext(ctx)
 	case serviceconfig.FieldProvider:
 		return m.OldProvider(ctx)
 	case serviceconfig.FieldFramework:
@@ -11522,6 +11579,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDockerfilePath(v)
+		return nil
+	case serviceconfig.FieldDockerfileContext:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDockerfileContext(v)
 		return nil
 	case serviceconfig.FieldProvider:
 		v, ok := value.(enum.Provider)
@@ -11641,6 +11705,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldDockerfilePath) {
 		fields = append(fields, serviceconfig.FieldDockerfilePath)
 	}
+	if m.FieldCleared(serviceconfig.FieldDockerfileContext) {
+		fields = append(fields, serviceconfig.FieldDockerfileContext)
+	}
 	if m.FieldCleared(serviceconfig.FieldProvider) {
 		fields = append(fields, serviceconfig.FieldProvider)
 	}
@@ -11678,6 +11745,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 	switch name {
 	case serviceconfig.FieldDockerfilePath:
 		m.ClearDockerfilePath()
+		return nil
+	case serviceconfig.FieldDockerfileContext:
+		m.ClearDockerfileContext()
 		return nil
 	case serviceconfig.FieldProvider:
 		m.ClearProvider()
@@ -11725,6 +11795,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldDockerfilePath:
 		m.ResetDockerfilePath()
+		return nil
+	case serviceconfig.FieldDockerfileContext:
+		m.ResetDockerfileContext()
 		return nil
 	case serviceconfig.FieldProvider:
 		m.ResetProvider()

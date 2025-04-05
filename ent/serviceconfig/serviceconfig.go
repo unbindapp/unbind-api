@@ -30,6 +30,8 @@ const (
 	FieldBuilder = "builder"
 	// FieldDockerfilePath holds the string denoting the dockerfile_path field in the database.
 	FieldDockerfilePath = "dockerfile_path"
+	// FieldDockerfileContext holds the string denoting the dockerfile_context field in the database.
+	FieldDockerfileContext = "dockerfile_context"
 	// FieldProvider holds the string denoting the provider field in the database.
 	FieldProvider = "provider"
 	// FieldFramework holds the string denoting the framework field in the database.
@@ -72,6 +74,7 @@ var Columns = []string{
 	FieldType,
 	FieldBuilder,
 	FieldDockerfilePath,
+	FieldDockerfileContext,
 	FieldProvider,
 	FieldFramework,
 	FieldGitBranch,
@@ -187,6 +190,11 @@ func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
 // ByDockerfilePath orders the results by the dockerfile_path field.
 func ByDockerfilePath(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDockerfilePath, opts...).ToFunc()
+}
+
+// ByDockerfileContext orders the results by the dockerfile_context field.
+func ByDockerfileContext(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDockerfileContext, opts...).ToFunc()
 }
 
 // ByProvider orders the results by the provider field.

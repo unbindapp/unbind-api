@@ -61,6 +61,7 @@ func (self *ServiceRepository) CreateConfig(
 	public *bool,
 	image *string,
 	dockerfilePath *string,
+	dockerfileContext *string,
 ) (*ent.ServiceConfig, error) {
 	db := self.base.DB
 	if tx != nil {
@@ -79,7 +80,8 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableRunCommand(runCommand).
 		SetNillablePublic(public).
 		SetNillableImage(image).
-		SetNillableDockerfilePath(dockerfilePath)
+		SetNillableDockerfilePath(dockerfilePath).
+		SetNillableDockerfileContext(dockerfileContext)
 
 	if len(ports) > 0 {
 		c.SetPorts(ports)
@@ -126,6 +128,7 @@ func (self *ServiceRepository) UpdateConfig(
 	public *bool,
 	image *string,
 	dockerfilePath *string,
+	dockerfileContext *string,
 ) error {
 	db := self.base.DB
 	if tx != nil {
@@ -147,6 +150,14 @@ func (self *ServiceRepository) UpdateConfig(
 			upd.ClearDockerfilePath()
 		} else {
 			upd.SetDockerfilePath(*dockerfilePath)
+		}
+	}
+
+	if dockerfileContext != nil {
+		if *dockerfileContext == "" {
+			upd.ClearDockerfileContext()
+		} else {
+			upd.SetDockerfileContext(*dockerfileContext)
 		}
 	}
 

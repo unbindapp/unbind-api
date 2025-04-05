@@ -169,6 +169,10 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_DOCKERFILE_PATH"] = *service.Edges.ServiceConfig.DockerfilePath
 	}
 
+	if service.Edges.ServiceConfig.DockerfileContext != nil {
+		env["SERVICE_DOCKERFILE_CONTEXT"] = *service.Edges.ServiceConfig.DockerfileContext
+	}
+
 	// Add Github fields
 	if service.GithubInstallationID != nil {
 		if service.GitRepository == nil || service.Edges.ServiceConfig.GitBranch == nil {

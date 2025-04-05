@@ -30,6 +30,7 @@ type BuildWithBuildkitClientOptions struct {
 	Secrets           map[string]string
 	CacheKey          string
 	DockerfilePath    string
+	ContextPath       string
 }
 
 func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBuildkitClientOptions) error {
@@ -87,12 +88,26 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		progressDone <- true
 	}()
 
-	appFS, err := fsutil.NewFS(appDir)
+	// Determine the context path
+	contextPath := appDir
+	if opts.ContextPath != "" {
+		// If a custom context path is provided, use it
+		// If it's a relative path, resolve it relative to appDir
+		if !strings.HasPrefix(opts.ContextPath, "/") {
+			contextPath = fmt.Sprintf("%s/%s", appDir, opts.ContextPath)
+		} else {
+			contextPath = opts.ContextPath
+		}
+	}
+
+	// Create a filesystem for the context directory
+	contextFS, err := fsutil.NewFS(contextPath)
 	if err != nil {
-		return fmt.Errorf("error creating FS: %w", err)
+		return fmt.Errorf("error creating context FS: %w", err)
 	}
 
 	log.Infof("Building image for %s with BuildKit %s", buildPlatform.String(), info.BuildkitVersion.Version)
+	log.Infof("Using context path: %s", contextPath)
 
 	secretsMap := make(map[string][]byte)
 	for k, v := range opts.Secrets {
@@ -127,7 +142,7 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 
 	solveOpts := client.SolveOpt{
 		LocalMounts: map[string]fsutil.FS{
-			"context": appFS,
+			"context": contextFS,
 		},
 		Session: sessionAttachables,
 	}
@@ -145,13 +160,35 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		// Using Dockerfile frontend
 		log.Infof("Building image from Dockerfile: %s with BuildKit %s", opts.DockerfilePath, info.BuildkitVersion.Version)
 
-		// Set mount
-		solveOpts.LocalMounts["dockerfile"] = appFS
+		// If Dockerfile is outside the context, create a separate mount for it
+		dockerfilePath := opts.DockerfilePath
+		dockerfileDir := appDir
+		dockerfileBasename := dockerfilePath
+
+		// Handle path separators in the Dockerfile path
+		if strings.Contains(dockerfilePath, "/") {
+			lastSlash := strings.LastIndex(dockerfilePath, "/")
+
+			if lastSlash != -1 {
+				// Split into directory and filename
+				dockerfileDir = fmt.Sprintf("%s/%s", appDir, dockerfilePath[:lastSlash])
+				dockerfileBasename = dockerfilePath[lastSlash+1:]
+			}
+		}
+
+		// Create filesystem for the Dockerfile directory
+		dockerfileFS, err := fsutil.NewFS(dockerfileDir)
+		if err != nil {
+			return fmt.Errorf("error creating Dockerfile FS: %w", err)
+		}
+
+		// Always add the Dockerfile mount
+		solveOpts.LocalMounts["dockerfile"] = dockerfileFS
 
 		// Set the frontend to use Dockerfile
 		solveOpts.Frontend = "dockerfile.v0"
 		solveOpts.FrontendAttrs = map[string]string{
-			"filename": opts.DockerfilePath,
+			"filename": dockerfileBasename,
 		}
 
 		// Export attributes for Dockerfile build
