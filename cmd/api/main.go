@@ -119,6 +119,7 @@ func startAPI(cfg *config.Config) {
 	if err != nil {
 		log.Fatalf("Failed to get database connection info: %v", err)
 	}
+	log.Infof("Using PostgreSQL database %s@%s:%d", cfg.PostgresUser, cfg.PostgresHost, cfg.PostgresPort)
 	// Initialize ent client
 	db, err := database.NewEntClient(dbConnInfo)
 	if err != nil {

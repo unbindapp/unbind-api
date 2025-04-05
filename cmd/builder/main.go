@@ -40,13 +40,24 @@ func main() {
 	cfg := config.NewConfig()
 	os.Setenv("BUILDKIT_HOST", cfg.BuildkitHost)
 
+	log.Infof("Starting build...")
+	log.Info("--------------")
+	log.Infof("Build Params")
+	log.Info("--------------")
+	log.Infof("Service name: %s", cfg.ServiceName)
+	if cfg.ServiceImage != "" {
+		log.Infof("Using docker image: %s", cfg.ServiceImage)
+	} else {
+		log.Infof("Builder Type: %s", cfg.ServiceBuilder)
+	}
+	fmt.Print("\n")
+
 	serviceId, err := uuid.Parse(cfg.ServiceRef)
 	if err != nil {
 		log.Fatalf("Failed to parse service ID, ref must be a valid uuidv4: %v", err)
 	}
 
 	// Setup database
-	// Load database
 	dbConnInfo, err := database.GetSqlDbConn(cfg, false)
 	if err != nil {
 		log.Fatalf("Failed to get database connection info: %v", err)
