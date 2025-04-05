@@ -84,7 +84,7 @@ func main() {
 			for k, v := range serializableSecrets {
 				data, err := base64.StdEncoding.DecodeString(v)
 				if err != nil {
-					fmt.Printf("Error decoding secret %s: %v\n", k, err)
+					log.Warnf("Error decoding secret %s: %v\n", k, err)
 					continue
 				}
 				buildSecrets[k] = string(data)
