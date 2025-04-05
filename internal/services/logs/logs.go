@@ -72,7 +72,8 @@ func (self *LogsService) validatePermissionsAndParseInputs(ctx context.Context, 
 	var project *ent.Project
 	if logType == models.LogTypeProject ||
 		logType == models.LogTypeEnvironment ||
-		logType == models.LogTypeService {
+		logType == models.LogTypeService ||
+		logType == models.LogTypeDeployment {
 		// validate project ID
 		project, err = self.repo.Project().GetByID(ctx, projectID)
 		if err != nil {
@@ -89,7 +90,8 @@ func (self *LogsService) validatePermissionsAndParseInputs(ctx context.Context, 
 	// Get environment
 	var environment *ent.Environment
 	if logType == models.LogTypeEnvironment ||
-		logType == models.LogTypeService {
+		logType == models.LogTypeService ||
+		logType == models.LogTypeDeployment {
 		// validate environment ID
 		environment, err = self.repo.Environment().GetByID(ctx, environmentID)
 		if err != nil {
@@ -105,7 +107,7 @@ func (self *LogsService) validatePermissionsAndParseInputs(ctx context.Context, 
 
 	// Get service
 	var service *ent.Service
-	if logType == models.LogTypeService {
+	if logType == models.LogTypeService || logType == models.LogTypeDeployment {
 		service, err = self.repo.Service().GetByID(ctx, serviceID)
 		if err != nil {
 			if ent.IsNotFound(err) {
