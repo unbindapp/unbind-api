@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"time"
 
@@ -92,11 +93,11 @@ func (self *LokiLogQuerier) QueryLokiLogs(
 	}
 
 	// Process the query result
-	return ParseLokiResponse(resp)
+	return ParseLokiResponse(resp, opts)
 }
 
 // ParseLokiResponse parses a Loki HTTP API response and returns LogEvents
-func ParseLokiResponse(resp *http.Response) ([]LogEvent, error) {
+func ParseLokiResponse(resp *http.Response, opts LokiLogHTTPOptions) ([]LogEvent, error) {
 	// Read and parse the response
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -143,6 +144,18 @@ func ParseLokiResponse(resp *http.Response) ([]LogEvent, error) {
 
 	default:
 		return nil, fmt.Errorf("unsupported result type: %s", queryResp.Data.ResultType)
+	}
+
+	if opts.Direction != nil && *opts.Direction == LokiDirectionForward {
+		// Sort oldest first (ascending)
+		sort.Slice(allEvents, func(i, j int) bool {
+			return allEvents[i].Timestamp.Before(allEvents[j].Timestamp)
+		})
+	} else {
+		// Sort newest first (descending)
+		sort.Slice(allEvents, func(i, j int) bool {
+			return allEvents[i].Timestamp.After(allEvents[j].Timestamp)
+		})
 	}
 
 	return allEvents, nil

@@ -169,7 +169,8 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_DOCKERFILE_PATH"] = *service.Edges.ServiceConfig.DockerfilePath
 	}
 
-	if service.Edges.ServiceConfig.DockerfileContext != nil {
+	// Also don't set context if it's the default
+	if service.Edges.ServiceConfig.DockerfileContext != nil && *service.Edges.ServiceConfig.DockerfileContext != "." {
 		env["SERVICE_DOCKERFILE_CONTEXT"] = *service.Edges.ServiceConfig.DockerfileContext
 	}
 
