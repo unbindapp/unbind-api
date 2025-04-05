@@ -34,6 +34,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "get-deployment",
+			Summary:     "Get Deployment",
+			Description: "Get a specific deployment by ID",
+			Path:        "/get",
+			Method:      http.MethodGet,
+		},
+		handlers.GetDeploymentByID,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "trigger-deployment",
 			Summary:     "Trigger Deployment",
 			Description: "Trigger a new deployment for a service manually",

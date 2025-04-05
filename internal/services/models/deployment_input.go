@@ -12,28 +12,37 @@ type DeploymentInputRequirements interface {
 	GetEnvironmentID() uuid.UUID
 }
 
-type GetDeploymentsInput struct {
-	PaginationParams
-	Statuses      []schema.DeploymentStatus `query:"statuses" required:"false" doc:"Filter by status"`
-	TeamID        uuid.UUID                 `query:"team_id" required:"true" doc:"The ID of the team"`
-	ProjectID     uuid.UUID                 `query:"project_id" required:"true" doc:"The ID of the project"`
-	EnvironmentID uuid.UUID                 `query:"environment_id" required:"true" doc:"The ID of the environment"`
-	ServiceID     uuid.UUID                 `query:"service_id" required:"true" doc:"The ID of the service"`
+type GetDeploymentBaseInput struct {
+	TeamID        uuid.UUID `query:"team_id" required:"true" doc:"The ID of the team"`
+	ProjectID     uuid.UUID `query:"project_id" required:"true" doc:"The ID of the project"`
+	EnvironmentID uuid.UUID `query:"environment_id" required:"true" doc:"The ID of the environment"`
+	ServiceID     uuid.UUID `query:"service_id" required:"true" doc:"The ID of the service"`
 }
 
-func (self *GetDeploymentsInput) GetTeamID() uuid.UUID {
+type GetDeploymentsInput struct {
+	PaginationParams
+	GetDeploymentBaseInput
+	Statuses []schema.DeploymentStatus `query:"statuses" required:"false" doc:"Filter by status"`
+}
+
+type GetDeploymentByIDInput struct {
+	GetDeploymentBaseInput
+	DeploymentID uuid.UUID `query:"deployment_id" required:"true" doc:"The ID of the deployment"`
+}
+
+func (self *GetDeploymentBaseInput) GetTeamID() uuid.UUID {
 	return self.TeamID
 }
 
-func (self *GetDeploymentsInput) GetProjectID() uuid.UUID {
+func (self *GetDeploymentBaseInput) GetProjectID() uuid.UUID {
 	return self.ProjectID
 }
 
-func (self *GetDeploymentsInput) GetServiceID() uuid.UUID {
+func (self *GetDeploymentBaseInput) GetServiceID() uuid.UUID {
 	return self.ServiceID
 }
 
-func (self *GetDeploymentsInput) GetEnvironmentID() uuid.UUID {
+func (self *GetDeploymentBaseInput) GetEnvironmentID() uuid.UUID {
 	return self.EnvironmentID
 }
 
