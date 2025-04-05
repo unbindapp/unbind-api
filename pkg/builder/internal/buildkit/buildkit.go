@@ -84,11 +84,15 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		displayCh := make(chan *client.SolveStatus)
 		go func() {
 			for s := range ch {
+				// Log the status updates to your custom logger
+				logBuildkitStatus(s)
+
 				displayCh <- s
 			}
 			close(displayCh)
 		}()
 
+		// You can keep or remove the default progress display
 		display, err := progressui.NewDisplay(os.Stdout, progressui.AutoMode)
 		if err != nil {
 			log.Error("failed to create progress display", "error", err)
@@ -262,4 +266,27 @@ func getImageName(appDir string) string {
 		name = "railpack-app" // Fallback if path ends in separator
 	}
 	return name
+}
+
+func logBuildkitStatus(s *client.SolveStatus) {
+	for _, v := range s.Vertexes {
+		if v.Started != nil {
+			log.Infof("Buildkit: task %s started", v.Name)
+		}
+		if v.Completed != nil {
+			if v.Error != "" {
+				log.Errorf("Buildkit: task %s failed: %s", v.Name, v.Error)
+			} else {
+				log.Infof("Buildkit: task %s completed in %.2fs", v.Name, v.Completed.Sub(*v.Started).Seconds())
+			}
+		}
+	}
+
+	for _, s := range s.Statuses {
+		log.Infof("Buildkit: %s %s %d/%d", s.Vertex, s.ID, s.Current, s.Total)
+	}
+
+	for _, l := range s.Logs {
+		log.Infof("Buildkit log [%s]: %s", l.Vertex, string(l.Data))
+	}
 }

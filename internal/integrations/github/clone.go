@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 
+	charmLog "github.com/charmbracelet/log"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
 func (self *GithubClient) CloneRepository(ctx context.Context, appID, installationID int64, appPrivateKey string, repoURL string, refName string) (string, error) {
@@ -22,6 +24,11 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 		return "", err
 	}
 
+	// Set up the logger
+	logger := &loggerOutput{
+		logger: log.GetLogger(),
+	}
+
 	_, err = git.PlainClone(tmpDir, false, &git.CloneOptions{
 		URL:          repoURL,
 		Depth:        1,
@@ -30,6 +37,7 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 			Username: "x-access-token",
 			Password: bearerToken,
 		},
+		Progress:      logger,
 		ReferenceName: plumbing.ReferenceName(refName),
 	})
 
@@ -38,4 +46,13 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 	}
 
 	return tmpDir, nil
+}
+
+type loggerOutput struct {
+	logger *charmLog.Logger
+}
+
+func (l *loggerOutput) Write(p []byte) (n int, err error) {
+	l.logger.Infof("%s", p)
+	return len(p), nil
 }
