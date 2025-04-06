@@ -3,6 +3,7 @@ package logs_handler
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/sse"
@@ -28,6 +29,8 @@ type GetLogInput struct {
 func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, send sse.Sender) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+
 	if !found {
 		log.Error("Error getting user from context")
 		send.Data(
@@ -38,7 +41,7 @@ func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, s
 		)
 	}
 
-	if err := self.srv.LogService.StreamLogs(ctx, user.ID, &input.LogStreamInput, send); err != nil {
+	if err := self.srv.LogService.StreamLogs(ctx, user.ID, bearerToken, &input.LogStreamInput, send); err != nil {
 		self.handleSSEErr(err, send)
 	}
 }

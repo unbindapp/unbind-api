@@ -14,7 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UUID, input *models.LogStreamInput, send sse.Sender) error {
+func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.LogStreamInput, send sse.Sender) error {
 	team, project, environment, service, err := self.validatePermissionsAndParseInputs(ctx, requesterUserID, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
 	if err != nil {
 		return err
@@ -78,27 +78,60 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 	}
 
 	// Start a single stream for all pods
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Errorf("Recovered from panic in log streaming goroutine: %v", r)
+	if input.Type == models.LogTypeDeployment {
+		// Get k8s client
+		client, err := self.k8s.CreateClientWithToken(bearerToken)
+		if err != nil {
+			return err
+		}
+		// Stream from K8S directly
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Errorf("Recovered from panic in log streaming goroutine: %v", r)
+				}
+			}()
+
+			err := self.k8s.StreamPodLogs(streamCtx, team.Namespace, lokiLogOptions, loki.LogMetadata{
+				DeploymentID: input.DeploymentID.String(),
+			}, client, eventChan)
+			if err != nil {
+				// Wrap the send in a select with context check to avoid sending on canceled contexts
+				select {
+				case <-streamCtx.Done():
+					return
+				default:
+					send.Data(loki.LogEvents{
+						MessageType:  loki.LogEventsMessageTypeError,
+						ErrorMessage: fmt.Sprintf("Error streaming logs: %v", err),
+					})
+				}
 			}
 		}()
+	} else {
+		// Stream from Loki
+		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Errorf("Recovered from panic in log streaming goroutine: %v", r)
+				}
+			}()
 
-		err := self.lokiQuerier.StreamLokiPodLogs(streamCtx, lokiLogOptions, eventChan)
-		if err != nil {
-			// Wrap the send in a select with context check to avoid sending on canceled contexts
-			select {
-			case <-streamCtx.Done():
-				return
-			default:
-				send.Data(loki.LogEvents{
-					MessageType:  loki.LogEventsMessageTypeError,
-					ErrorMessage: fmt.Sprintf("Error streaming logs: %v", err),
-				})
+			err := self.lokiQuerier.StreamLokiPodLogs(streamCtx, lokiLogOptions, eventChan)
+			if err != nil {
+				// Wrap the send in a select with context check to avoid sending on canceled contexts
+				select {
+				case <-streamCtx.Done():
+					return
+				default:
+					send.Data(loki.LogEvents{
+						MessageType:  loki.LogEventsMessageTypeError,
+						ErrorMessage: fmt.Sprintf("Error streaming logs: %v", err),
+					})
+				}
 			}
-		}
-	}()
+		}()
+	}
 
 	// Send events to the client
 	for {
