@@ -13,17 +13,17 @@ import (
 )
 
 type Config struct {
-	GithubAppID int64 `env:"GITHUB_APP_ID,required"`
+	GithubAppID int64 `env:"GITHUB_APP_ID"`
 	// Installation ID of the app
-	GithubInstallationID int64 `env:"GITHUB_INSTALLATION_ID,required"`
+	GithubInstallationID int64 `env:"GITHUB_INSTALLATION_ID"`
 	// Repository to clone (github, https)
-	GitRepoURL string `env:"GITHUB_REPO_URL,required"`
+	GitRepoURL string `env:"GITHUB_REPO_URL"`
 	// Branch to checkout and build
-	GitRef string `env:"GIT_REF,required"`
+	GitRef string `env:"GIT_REF"`
 	// Github URL (if using github enterprise)
 	GithubURL string `env:"GITHUB_URL" envDefault:"https://github.com"`
 	// Github app private key
-	GithubAppPrivateKey string `env:"GITHUB_APP_PRIVATE_KEY,required"`
+	GithubAppPrivateKey string `env:"GITHUB_APP_PRIVATE_KEY"`
 	// Registry specific
 	ContainerRegistryHost     string `env:"CONTAINER_REGISTRY_HOST,required" envDefault:"docker-registry.unbind-system:5000"`
 	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER,required" envDefault:"admin"`

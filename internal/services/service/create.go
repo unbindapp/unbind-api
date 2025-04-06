@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -18,6 +20,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // CreateServiceInput defines the input for creating a new service
@@ -39,7 +42,7 @@ type CreateServiceInput struct {
 	GitBranch         *string               `json:"git_branch,omitempty"`
 	Hosts             []v1.HostSpec         `json:"hosts,omitempty"`
 	Ports             []v1.PortSpec         `json:"ports,omitempty"`
-	Replicas          *int32                `validate:"min=1,max=10" json:"replicas,omitempty"`
+	Replicas          *int32                `validate:"omitempty,min=0,max=10" json:"replicas,omitempty"`
 	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand        *string               `json:"run_command,omitempty"`
 	Public            *bool                 `json:"public,omitempty"`
@@ -139,6 +142,29 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return nil, err
 		}
 
+	} else if input.Type == schema.ServiceTypeDockerimage && len(input.Ports) == 0 {
+		// Detect ports from image
+		ports, _ := utils.GetExposedPortsFromRegistry(*input.Image)
+		for _, port := range ports {
+			// Split
+			portSplit := strings.Split(port, "/")
+			proto := corev1.ProtocolTCP
+			if len(portSplit) > 1 {
+				// Check if the protocol is UDP
+				if strings.EqualFold(portSplit[1], "udp") {
+					proto = corev1.ProtocolUDP
+				}
+			}
+			portInt, err := strconv.Atoi(portSplit[0])
+			if err != nil {
+				log.Errorf("Failed to parse port %s: %v", port, err)
+				continue
+			}
+			input.Ports = append(input.Ports, v1.PortSpec{
+				Port:     int32(portInt),
+				Protocol: utils.ToPtr(proto),
+			})
+		}
 	}
 
 	// Create kubernetes client
@@ -156,7 +182,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		var framework *enum.Framework
 		hosts := input.Hosts
 		ports := input.Ports
-		public := false
+		public := input.Public
 		if analysisResult != nil {
 			// Service core information
 			if analysisResult.Provider != enum.UnknownProvider {
@@ -171,16 +197,19 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				ports = append(ports, v1.PortSpec{
 					Port: int32(*analysisResult.Port),
 				})
-				public = true
 			}
 		}
 
-		if len(hosts) == 0 && public {
+		if len(ports) > 0 && input.Public == nil {
+			public = utils.ToPtr(true)
+		}
+
+		if len(hosts) == 0 && input.Public != nil && *public {
 			// Generate a subdomain
 			domain, err := utils.GenerateSubdomain(input.DisplayName, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
 				log.Warnf("Failed to generate subdomain: %v", err)
-				public = false
+				public = utils.ToPtr(false)
 			} else {
 				// Check for collisons of the domain
 				domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, domain)
@@ -193,7 +222,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s%d", input.DisplayName, domainCount), self.cfg.ExternalWildcardBaseURL)
 					if err != nil {
 						log.Warnf("Failed to generate subdomain: %v", err)
-						public = false
+						public = utils.ToPtr(false)
 						domain = ""
 					}
 				}
