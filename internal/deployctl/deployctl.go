@@ -179,7 +179,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 
 		env["SERVICE_DATABASE_NAME"] = *service.Edges.ServiceConfig.Database
 		env["SERVICE_DATABASE_USD_VERSION"] = *service.Edges.ServiceConfig.DefinitionVersion
-		env["SERVICE_TEMPLATE_CONFIG"] = string(marshalledConfig)
+		env["SERVICE_DATABASE_CONFIG"] = string(marshalledConfig)
 	}
 
 	// Add docker image override
