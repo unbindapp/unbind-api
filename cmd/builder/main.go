@@ -89,7 +89,7 @@ func main() {
 	var dockerImg string
 
 	// We can bypass any build step if the image is already provided
-	if cfg.ServiceImage != "" {
+	if cfg.ServiceImage != "" || cfg.ServiceType == schema.ServiceTypeDatabase {
 		dockerImg = cfg.ServiceImage
 	} else {
 		// Parse secrets from env
