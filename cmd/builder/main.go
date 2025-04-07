@@ -144,7 +144,7 @@ func main() {
 		log.Fatal("Service name not provided, cannot deploy")
 	}
 
-	if dockerImg == "" {
+	if dockerImg == "" && cfg.ServiceType != schema.ServiceTypeTemplate {
 		if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("no output image generated"), cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)
 		}
