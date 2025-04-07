@@ -9,7 +9,7 @@ import (
 )
 
 // FetchTemplate fetches a template from GitHub
-func (self *UnbindTemplateProvider) FetchTemplate(ctx context.Context, tagVersion, templateCategory, templateName string) (*Template, error) {
+func (self *UnbindTemplateProvider) FetchTemplate(ctx context.Context, tagVersion string, templateCategory TemplateCategoryName, templateName string) (*Template, error) {
 	// Base version URL
 	baseURL := fmt.Sprintf(BaseTemplateURL, tagVersion)
 	// Fetch template files
@@ -70,7 +70,6 @@ func (self *UnbindTemplateProvider) FetchTemplate(ctx context.Context, tagVersio
 		Description: metadata.Description,
 		Type:        metadata.Type,
 		Version:     metadata.Version,
-		Maintainer:  metadata.Maintainer,
 		Schema:      resolvedSchema,
 		Content:     string(templateBytes),
 	}

@@ -58,9 +58,10 @@ type RenderContext struct {
 
 	// Template info
 	Template struct {
-		Name    string
-		Version string
-		Type    string
+		Name     string
+		Category TemplateCategoryName
+		Version  string
+		Type     string
 	}
 
 	// Parameters from service
@@ -74,6 +75,7 @@ func (r *TemplateRenderer) Render(unbindTemplate *Template, context *RenderConte
 
 	// Set template info
 	context.Template.Name = unbindTemplate.Name
+	context.Template.Category = unbindTemplate.Category
 	context.Template.Version = unbindTemplate.Version
 	context.Template.Type = unbindTemplate.Type
 

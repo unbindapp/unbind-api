@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -34,18 +35,28 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.UUID("service_id", uuid.UUID{}),
 		field.Enum("type").GoType(ServiceType("")).Comment("Type of service"),
 		field.Enum("builder").GoType(ServiceBuilder("")),
+		// For builds from git using Dockerfile
 		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
 		field.String("dockerfile_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
+		// Provider and framework directly from railpack
 		field.Enum("provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
 		field.Enum("framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
+		// Branch to build from (git)
 		field.String("git_branch").Optional().Nillable().Comment("Branch to build from"),
+		// Generic CRD configuration
 		field.JSON("hosts", []v1.HostSpec{}).Optional().Comment("External domains and paths for the service"),
 		field.JSON("ports", []v1.PortSpec{}).Optional().Comment("Container ports to expose"),
 		field.Int32("replicas").Default(2).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
 		field.Bool("public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),
-		field.String("image").Optional().Comment("Custom Docker image if not building from git"),
+		field.String("image").Optional().Comment("Custom Docker image if not building from git"), // Only applies to type=docker-image
+		// Template configuration
+		field.Enum("template_category").GoType(templates.TemplateCategoryName("")).Optional().Nillable().Comment("Template category to use for the service"),
+		field.String("template").Optional().Nillable().Comment("Template to use for the service"),
+		field.String("template_release_version").Optional().Nillable().Comment("Version of the templates release"),
+		field.String("template_version").Optional().Nillable().Comment("Version of the template to use"),
+		field.JSON("template_config", map[string]interface{}{}).Optional().Comment("Template configuration for the service"),
 	}
 }
 

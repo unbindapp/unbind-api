@@ -15,6 +15,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -58,6 +59,16 @@ type ServiceConfig struct {
 	Public bool `json:"public,omitempty"`
 	// Custom Docker image if not building from git
 	Image string `json:"image,omitempty"`
+	// Template category to use for the service
+	TemplateCategory *templates.TemplateCategoryName `json:"template_category,omitempty"`
+	// Template to use for the service
+	Template *string `json:"template,omitempty"`
+	// Version of the templates release
+	TemplateReleaseVersion *string `json:"template_release_version,omitempty"`
+	// Version of the template to use
+	TemplateVersion *string `json:"template_version,omitempty"`
+	// Template configuration for the service
+	TemplateConfig map[string]interface{} `json:"template_config,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -89,13 +100,13 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case serviceconfig.FieldHosts, serviceconfig.FieldPorts:
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldTemplateConfig:
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldPublic:
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldTemplateCategory, serviceconfig.FieldTemplate, serviceconfig.FieldTemplateReleaseVersion, serviceconfig.FieldTemplateVersion:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -234,6 +245,42 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.Image = value.String
 			}
+		case serviceconfig.FieldTemplateCategory:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field template_category", values[i])
+			} else if value.Valid {
+				sc.TemplateCategory = new(templates.TemplateCategoryName)
+				*sc.TemplateCategory = templates.TemplateCategoryName(value.String)
+			}
+		case serviceconfig.FieldTemplate:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field template", values[i])
+			} else if value.Valid {
+				sc.Template = new(string)
+				*sc.Template = value.String
+			}
+		case serviceconfig.FieldTemplateReleaseVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field template_release_version", values[i])
+			} else if value.Valid {
+				sc.TemplateReleaseVersion = new(string)
+				*sc.TemplateReleaseVersion = value.String
+			}
+		case serviceconfig.FieldTemplateVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field template_version", values[i])
+			} else if value.Valid {
+				sc.TemplateVersion = new(string)
+				*sc.TemplateVersion = value.String
+			}
+		case serviceconfig.FieldTemplateConfig:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field template_config", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.TemplateConfig); err != nil {
+					return fmt.Errorf("unmarshal field template_config: %w", err)
+				}
+			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
 		}
@@ -337,6 +384,29 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("image=")
 	builder.WriteString(sc.Image)
+	builder.WriteString(", ")
+	if v := sc.TemplateCategory; v != nil {
+		builder.WriteString("template_category=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := sc.Template; v != nil {
+		builder.WriteString("template=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := sc.TemplateReleaseVersion; v != nil {
+		builder.WriteString("template_release_version=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := sc.TemplateVersion; v != nil {
+		builder.WriteString("template_version=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("template_config=")
+	builder.WriteString(fmt.Sprintf("%v", sc.TemplateConfig))
 	builder.WriteByte(')')
 	return builder.String()
 }

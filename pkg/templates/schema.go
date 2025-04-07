@@ -38,11 +38,11 @@ type ParameterProperty struct {
 
 // Template represents a fully resolved template
 type Template struct {
-	Name        string
-	Description string
-	Type        string
-	Version     string
-	Maintainer  string
-	Schema      TemplateParameterSchema
-	Content     string
+	Name        string                  `json:"name"`
+	Category    TemplateCategoryName    `json:"category"`
+	Description string                  `json:"description"`
+	Type        string                  `json:"type"`
+	Version     string                  `json:"version"`
+	Schema      TemplateParameterSchema `json:"schema"`
+	Content     string                  `json:"-"`
 }

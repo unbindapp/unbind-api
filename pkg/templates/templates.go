@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/go-oauth2/oauth2/v4/errors"
 )
 
 var (
 	BaseTemplateURL = "https://raw.githubusercontent.com/unbindapp/unbind-service-templates/refs/tags/%s"
+)
+
+var (
+	ErrTemplateNotFound = errors.New("template not found")
 )
 
 // UnbindTemplateProvider fetches templates from GitHub
@@ -36,6 +42,9 @@ func (self *UnbindTemplateProvider) fetchURL(ctx context.Context, url string) ([
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, ErrTemplateNotFound
+		}
 		return nil, fmt.Errorf("HTTP error: %s", resp.Status)
 	}
 

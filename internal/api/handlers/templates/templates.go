@@ -27,4 +27,15 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.ListTemplates,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-template",
+			Summary:     "Get Template",
+			Description: "Get a specific template with its schema",
+			Path:        "/get",
+			Method:      http.MethodGet,
+		},
+		handlers.GetTemplateMetadata,
+	)
 }

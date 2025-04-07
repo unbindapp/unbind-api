@@ -30,6 +30,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -10416,34 +10417,39 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 // ServiceConfigMutation represents an operation that mutates the ServiceConfig nodes in the graph.
 type ServiceConfigMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *uuid.UUID
-	created_at         *time.Time
-	updated_at         *time.Time
-	_type              *schema.ServiceType
-	builder            *schema.ServiceBuilder
-	dockerfile_path    *string
-	dockerfile_context *string
-	provider           *enum.Provider
-	framework          *enum.Framework
-	git_branch         *string
-	hosts              *[]v1.HostSpec
-	appendhosts        []v1.HostSpec
-	ports              *[]v1.PortSpec
-	appendports        []v1.PortSpec
-	replicas           *int32
-	addreplicas        *int32
-	auto_deploy        *bool
-	run_command        *string
-	public             *bool
-	image              *string
-	clearedFields      map[string]struct{}
-	service            *uuid.UUID
-	clearedservice     bool
-	done               bool
-	oldValue           func(context.Context) (*ServiceConfig, error)
-	predicates         []predicate.ServiceConfig
+	op                       Op
+	typ                      string
+	id                       *uuid.UUID
+	created_at               *time.Time
+	updated_at               *time.Time
+	_type                    *schema.ServiceType
+	builder                  *schema.ServiceBuilder
+	dockerfile_path          *string
+	dockerfile_context       *string
+	provider                 *enum.Provider
+	framework                *enum.Framework
+	git_branch               *string
+	hosts                    *[]v1.HostSpec
+	appendhosts              []v1.HostSpec
+	ports                    *[]v1.PortSpec
+	appendports              []v1.PortSpec
+	replicas                 *int32
+	addreplicas              *int32
+	auto_deploy              *bool
+	run_command              *string
+	public                   *bool
+	image                    *string
+	template_category        *templates.TemplateCategoryName
+	template                 *string
+	template_release_version *string
+	template_version         *string
+	template_config          *map[string]interface{}
+	clearedFields            map[string]struct{}
+	service                  *uuid.UUID
+	clearedservice           bool
+	done                     bool
+	oldValue                 func(context.Context) (*ServiceConfig, error)
+	predicates               []predicate.ServiceConfig
 }
 
 var _ ent.Mutation = (*ServiceConfigMutation)(nil)
@@ -11331,6 +11337,251 @@ func (m *ServiceConfigMutation) ResetImage() {
 	delete(m.clearedFields, serviceconfig.FieldImage)
 }
 
+// SetTemplateCategory sets the "template_category" field.
+func (m *ServiceConfigMutation) SetTemplateCategory(tcn templates.TemplateCategoryName) {
+	m.template_category = &tcn
+}
+
+// TemplateCategory returns the value of the "template_category" field in the mutation.
+func (m *ServiceConfigMutation) TemplateCategory() (r templates.TemplateCategoryName, exists bool) {
+	v := m.template_category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplateCategory returns the old "template_category" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldTemplateCategory(ctx context.Context) (v *templates.TemplateCategoryName, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplateCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplateCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplateCategory: %w", err)
+	}
+	return oldValue.TemplateCategory, nil
+}
+
+// ClearTemplateCategory clears the value of the "template_category" field.
+func (m *ServiceConfigMutation) ClearTemplateCategory() {
+	m.template_category = nil
+	m.clearedFields[serviceconfig.FieldTemplateCategory] = struct{}{}
+}
+
+// TemplateCategoryCleared returns if the "template_category" field was cleared in this mutation.
+func (m *ServiceConfigMutation) TemplateCategoryCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldTemplateCategory]
+	return ok
+}
+
+// ResetTemplateCategory resets all changes to the "template_category" field.
+func (m *ServiceConfigMutation) ResetTemplateCategory() {
+	m.template_category = nil
+	delete(m.clearedFields, serviceconfig.FieldTemplateCategory)
+}
+
+// SetTemplate sets the "template" field.
+func (m *ServiceConfigMutation) SetTemplate(s string) {
+	m.template = &s
+}
+
+// Template returns the value of the "template" field in the mutation.
+func (m *ServiceConfigMutation) Template() (r string, exists bool) {
+	v := m.template
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplate returns the old "template" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldTemplate(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplate: %w", err)
+	}
+	return oldValue.Template, nil
+}
+
+// ClearTemplate clears the value of the "template" field.
+func (m *ServiceConfigMutation) ClearTemplate() {
+	m.template = nil
+	m.clearedFields[serviceconfig.FieldTemplate] = struct{}{}
+}
+
+// TemplateCleared returns if the "template" field was cleared in this mutation.
+func (m *ServiceConfigMutation) TemplateCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldTemplate]
+	return ok
+}
+
+// ResetTemplate resets all changes to the "template" field.
+func (m *ServiceConfigMutation) ResetTemplate() {
+	m.template = nil
+	delete(m.clearedFields, serviceconfig.FieldTemplate)
+}
+
+// SetTemplateReleaseVersion sets the "template_release_version" field.
+func (m *ServiceConfigMutation) SetTemplateReleaseVersion(s string) {
+	m.template_release_version = &s
+}
+
+// TemplateReleaseVersion returns the value of the "template_release_version" field in the mutation.
+func (m *ServiceConfigMutation) TemplateReleaseVersion() (r string, exists bool) {
+	v := m.template_release_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplateReleaseVersion returns the old "template_release_version" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldTemplateReleaseVersion(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplateReleaseVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplateReleaseVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplateReleaseVersion: %w", err)
+	}
+	return oldValue.TemplateReleaseVersion, nil
+}
+
+// ClearTemplateReleaseVersion clears the value of the "template_release_version" field.
+func (m *ServiceConfigMutation) ClearTemplateReleaseVersion() {
+	m.template_release_version = nil
+	m.clearedFields[serviceconfig.FieldTemplateReleaseVersion] = struct{}{}
+}
+
+// TemplateReleaseVersionCleared returns if the "template_release_version" field was cleared in this mutation.
+func (m *ServiceConfigMutation) TemplateReleaseVersionCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldTemplateReleaseVersion]
+	return ok
+}
+
+// ResetTemplateReleaseVersion resets all changes to the "template_release_version" field.
+func (m *ServiceConfigMutation) ResetTemplateReleaseVersion() {
+	m.template_release_version = nil
+	delete(m.clearedFields, serviceconfig.FieldTemplateReleaseVersion)
+}
+
+// SetTemplateVersion sets the "template_version" field.
+func (m *ServiceConfigMutation) SetTemplateVersion(s string) {
+	m.template_version = &s
+}
+
+// TemplateVersion returns the value of the "template_version" field in the mutation.
+func (m *ServiceConfigMutation) TemplateVersion() (r string, exists bool) {
+	v := m.template_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplateVersion returns the old "template_version" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldTemplateVersion(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplateVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplateVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplateVersion: %w", err)
+	}
+	return oldValue.TemplateVersion, nil
+}
+
+// ClearTemplateVersion clears the value of the "template_version" field.
+func (m *ServiceConfigMutation) ClearTemplateVersion() {
+	m.template_version = nil
+	m.clearedFields[serviceconfig.FieldTemplateVersion] = struct{}{}
+}
+
+// TemplateVersionCleared returns if the "template_version" field was cleared in this mutation.
+func (m *ServiceConfigMutation) TemplateVersionCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldTemplateVersion]
+	return ok
+}
+
+// ResetTemplateVersion resets all changes to the "template_version" field.
+func (m *ServiceConfigMutation) ResetTemplateVersion() {
+	m.template_version = nil
+	delete(m.clearedFields, serviceconfig.FieldTemplateVersion)
+}
+
+// SetTemplateConfig sets the "template_config" field.
+func (m *ServiceConfigMutation) SetTemplateConfig(value map[string]interface{}) {
+	m.template_config = &value
+}
+
+// TemplateConfig returns the value of the "template_config" field in the mutation.
+func (m *ServiceConfigMutation) TemplateConfig() (r map[string]interface{}, exists bool) {
+	v := m.template_config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplateConfig returns the old "template_config" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldTemplateConfig(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplateConfig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplateConfig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplateConfig: %w", err)
+	}
+	return oldValue.TemplateConfig, nil
+}
+
+// ClearTemplateConfig clears the value of the "template_config" field.
+func (m *ServiceConfigMutation) ClearTemplateConfig() {
+	m.template_config = nil
+	m.clearedFields[serviceconfig.FieldTemplateConfig] = struct{}{}
+}
+
+// TemplateConfigCleared returns if the "template_config" field was cleared in this mutation.
+func (m *ServiceConfigMutation) TemplateConfigCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldTemplateConfig]
+	return ok
+}
+
+// ResetTemplateConfig resets all changes to the "template_config" field.
+func (m *ServiceConfigMutation) ResetTemplateConfig() {
+	m.template_config = nil
+	delete(m.clearedFields, serviceconfig.FieldTemplateConfig)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -11392,7 +11643,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 22)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -11444,6 +11695,21 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.image != nil {
 		fields = append(fields, serviceconfig.FieldImage)
 	}
+	if m.template_category != nil {
+		fields = append(fields, serviceconfig.FieldTemplateCategory)
+	}
+	if m.template != nil {
+		fields = append(fields, serviceconfig.FieldTemplate)
+	}
+	if m.template_release_version != nil {
+		fields = append(fields, serviceconfig.FieldTemplateReleaseVersion)
+	}
+	if m.template_version != nil {
+		fields = append(fields, serviceconfig.FieldTemplateVersion)
+	}
+	if m.template_config != nil {
+		fields = append(fields, serviceconfig.FieldTemplateConfig)
+	}
 	return fields
 }
 
@@ -11486,6 +11752,16 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.Public()
 	case serviceconfig.FieldImage:
 		return m.Image()
+	case serviceconfig.FieldTemplateCategory:
+		return m.TemplateCategory()
+	case serviceconfig.FieldTemplate:
+		return m.Template()
+	case serviceconfig.FieldTemplateReleaseVersion:
+		return m.TemplateReleaseVersion()
+	case serviceconfig.FieldTemplateVersion:
+		return m.TemplateVersion()
+	case serviceconfig.FieldTemplateConfig:
+		return m.TemplateConfig()
 	}
 	return nil, false
 }
@@ -11529,6 +11805,16 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldPublic(ctx)
 	case serviceconfig.FieldImage:
 		return m.OldImage(ctx)
+	case serviceconfig.FieldTemplateCategory:
+		return m.OldTemplateCategory(ctx)
+	case serviceconfig.FieldTemplate:
+		return m.OldTemplate(ctx)
+	case serviceconfig.FieldTemplateReleaseVersion:
+		return m.OldTemplateReleaseVersion(ctx)
+	case serviceconfig.FieldTemplateVersion:
+		return m.OldTemplateVersion(ctx)
+	case serviceconfig.FieldTemplateConfig:
+		return m.OldTemplateConfig(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -11657,6 +11943,41 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetImage(v)
 		return nil
+	case serviceconfig.FieldTemplateCategory:
+		v, ok := value.(templates.TemplateCategoryName)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplateCategory(v)
+		return nil
+	case serviceconfig.FieldTemplate:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplate(v)
+		return nil
+	case serviceconfig.FieldTemplateReleaseVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplateReleaseVersion(v)
+		return nil
+	case serviceconfig.FieldTemplateVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplateVersion(v)
+		return nil
+	case serviceconfig.FieldTemplateConfig:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplateConfig(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -11729,6 +12050,21 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldImage) {
 		fields = append(fields, serviceconfig.FieldImage)
 	}
+	if m.FieldCleared(serviceconfig.FieldTemplateCategory) {
+		fields = append(fields, serviceconfig.FieldTemplateCategory)
+	}
+	if m.FieldCleared(serviceconfig.FieldTemplate) {
+		fields = append(fields, serviceconfig.FieldTemplate)
+	}
+	if m.FieldCleared(serviceconfig.FieldTemplateReleaseVersion) {
+		fields = append(fields, serviceconfig.FieldTemplateReleaseVersion)
+	}
+	if m.FieldCleared(serviceconfig.FieldTemplateVersion) {
+		fields = append(fields, serviceconfig.FieldTemplateVersion)
+	}
+	if m.FieldCleared(serviceconfig.FieldTemplateConfig) {
+		fields = append(fields, serviceconfig.FieldTemplateConfig)
+	}
 	return fields
 }
 
@@ -11769,6 +12105,21 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldImage:
 		m.ClearImage()
+		return nil
+	case serviceconfig.FieldTemplateCategory:
+		m.ClearTemplateCategory()
+		return nil
+	case serviceconfig.FieldTemplate:
+		m.ClearTemplate()
+		return nil
+	case serviceconfig.FieldTemplateReleaseVersion:
+		m.ClearTemplateReleaseVersion()
+		return nil
+	case serviceconfig.FieldTemplateVersion:
+		m.ClearTemplateVersion()
+		return nil
+	case serviceconfig.FieldTemplateConfig:
+		m.ClearTemplateConfig()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig nullable field %s", name)
@@ -11828,6 +12179,21 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldImage:
 		m.ResetImage()
+		return nil
+	case serviceconfig.FieldTemplateCategory:
+		m.ResetTemplateCategory()
+		return nil
+	case serviceconfig.FieldTemplate:
+		m.ResetTemplate()
+		return nil
+	case serviceconfig.FieldTemplateReleaseVersion:
+		m.ResetTemplateReleaseVersion()
+		return nil
+	case serviceconfig.FieldTemplateVersion:
+		m.ResetTemplateVersion()
+		return nil
+	case serviceconfig.FieldTemplateConfig:
+		m.ResetTemplateConfig()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

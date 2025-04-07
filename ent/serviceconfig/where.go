@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 )
 
 // ID filters vertices based on their ID field.
@@ -111,6 +112,21 @@ func Public(v bool) predicate.ServiceConfig {
 // Image applies equality check predicate on the "image" field. It's identical to ImageEQ.
 func Image(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldImage, v))
+}
+
+// Template applies equality check predicate on the "template" field. It's identical to TemplateEQ.
+func Template(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldTemplate, v))
+}
+
+// TemplateReleaseVersion applies equality check predicate on the "template_release_version" field. It's identical to TemplateReleaseVersionEQ.
+func TemplateReleaseVersion(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateVersion applies equality check predicate on the "template_version" field. It's identical to TemplateVersionEQ.
+func TemplateVersion(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldTemplateVersion, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -806,6 +822,281 @@ func ImageEqualFold(v string) predicate.ServiceConfig {
 // ImageContainsFold applies the ContainsFold predicate on the "image" field.
 func ImageContainsFold(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldContainsFold(FieldImage, v))
+}
+
+// TemplateCategoryEQ applies the EQ predicate on the "template_category" field.
+func TemplateCategoryEQ(v templates.TemplateCategoryName) predicate.ServiceConfig {
+	vc := v
+	return predicate.ServiceConfig(sql.FieldEQ(FieldTemplateCategory, vc))
+}
+
+// TemplateCategoryNEQ applies the NEQ predicate on the "template_category" field.
+func TemplateCategoryNEQ(v templates.TemplateCategoryName) predicate.ServiceConfig {
+	vc := v
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldTemplateCategory, vc))
+}
+
+// TemplateCategoryIn applies the In predicate on the "template_category" field.
+func TemplateCategoryIn(vs ...templates.TemplateCategoryName) predicate.ServiceConfig {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ServiceConfig(sql.FieldIn(FieldTemplateCategory, v...))
+}
+
+// TemplateCategoryNotIn applies the NotIn predicate on the "template_category" field.
+func TemplateCategoryNotIn(vs ...templates.TemplateCategoryName) predicate.ServiceConfig {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldTemplateCategory, v...))
+}
+
+// TemplateCategoryIsNil applies the IsNil predicate on the "template_category" field.
+func TemplateCategoryIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldTemplateCategory))
+}
+
+// TemplateCategoryNotNil applies the NotNil predicate on the "template_category" field.
+func TemplateCategoryNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldTemplateCategory))
+}
+
+// TemplateEQ applies the EQ predicate on the "template" field.
+func TemplateEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldTemplate, v))
+}
+
+// TemplateNEQ applies the NEQ predicate on the "template" field.
+func TemplateNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldTemplate, v))
+}
+
+// TemplateIn applies the In predicate on the "template" field.
+func TemplateIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldTemplate, vs...))
+}
+
+// TemplateNotIn applies the NotIn predicate on the "template" field.
+func TemplateNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldTemplate, vs...))
+}
+
+// TemplateGT applies the GT predicate on the "template" field.
+func TemplateGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldTemplate, v))
+}
+
+// TemplateGTE applies the GTE predicate on the "template" field.
+func TemplateGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldTemplate, v))
+}
+
+// TemplateLT applies the LT predicate on the "template" field.
+func TemplateLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldTemplate, v))
+}
+
+// TemplateLTE applies the LTE predicate on the "template" field.
+func TemplateLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldTemplate, v))
+}
+
+// TemplateContains applies the Contains predicate on the "template" field.
+func TemplateContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldTemplate, v))
+}
+
+// TemplateHasPrefix applies the HasPrefix predicate on the "template" field.
+func TemplateHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldTemplate, v))
+}
+
+// TemplateHasSuffix applies the HasSuffix predicate on the "template" field.
+func TemplateHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldTemplate, v))
+}
+
+// TemplateIsNil applies the IsNil predicate on the "template" field.
+func TemplateIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldTemplate))
+}
+
+// TemplateNotNil applies the NotNil predicate on the "template" field.
+func TemplateNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldTemplate))
+}
+
+// TemplateEqualFold applies the EqualFold predicate on the "template" field.
+func TemplateEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldTemplate, v))
+}
+
+// TemplateContainsFold applies the ContainsFold predicate on the "template" field.
+func TemplateContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldTemplate, v))
+}
+
+// TemplateReleaseVersionEQ applies the EQ predicate on the "template_release_version" field.
+func TemplateReleaseVersionEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionNEQ applies the NEQ predicate on the "template_release_version" field.
+func TemplateReleaseVersionNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionIn applies the In predicate on the "template_release_version" field.
+func TemplateReleaseVersionIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldTemplateReleaseVersion, vs...))
+}
+
+// TemplateReleaseVersionNotIn applies the NotIn predicate on the "template_release_version" field.
+func TemplateReleaseVersionNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldTemplateReleaseVersion, vs...))
+}
+
+// TemplateReleaseVersionGT applies the GT predicate on the "template_release_version" field.
+func TemplateReleaseVersionGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionGTE applies the GTE predicate on the "template_release_version" field.
+func TemplateReleaseVersionGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionLT applies the LT predicate on the "template_release_version" field.
+func TemplateReleaseVersionLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionLTE applies the LTE predicate on the "template_release_version" field.
+func TemplateReleaseVersionLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionContains applies the Contains predicate on the "template_release_version" field.
+func TemplateReleaseVersionContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionHasPrefix applies the HasPrefix predicate on the "template_release_version" field.
+func TemplateReleaseVersionHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionHasSuffix applies the HasSuffix predicate on the "template_release_version" field.
+func TemplateReleaseVersionHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionIsNil applies the IsNil predicate on the "template_release_version" field.
+func TemplateReleaseVersionIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldTemplateReleaseVersion))
+}
+
+// TemplateReleaseVersionNotNil applies the NotNil predicate on the "template_release_version" field.
+func TemplateReleaseVersionNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldTemplateReleaseVersion))
+}
+
+// TemplateReleaseVersionEqualFold applies the EqualFold predicate on the "template_release_version" field.
+func TemplateReleaseVersionEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateReleaseVersionContainsFold applies the ContainsFold predicate on the "template_release_version" field.
+func TemplateReleaseVersionContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldTemplateReleaseVersion, v))
+}
+
+// TemplateVersionEQ applies the EQ predicate on the "template_version" field.
+func TemplateVersionEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldTemplateVersion, v))
+}
+
+// TemplateVersionNEQ applies the NEQ predicate on the "template_version" field.
+func TemplateVersionNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldTemplateVersion, v))
+}
+
+// TemplateVersionIn applies the In predicate on the "template_version" field.
+func TemplateVersionIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldTemplateVersion, vs...))
+}
+
+// TemplateVersionNotIn applies the NotIn predicate on the "template_version" field.
+func TemplateVersionNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldTemplateVersion, vs...))
+}
+
+// TemplateVersionGT applies the GT predicate on the "template_version" field.
+func TemplateVersionGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldTemplateVersion, v))
+}
+
+// TemplateVersionGTE applies the GTE predicate on the "template_version" field.
+func TemplateVersionGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldTemplateVersion, v))
+}
+
+// TemplateVersionLT applies the LT predicate on the "template_version" field.
+func TemplateVersionLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldTemplateVersion, v))
+}
+
+// TemplateVersionLTE applies the LTE predicate on the "template_version" field.
+func TemplateVersionLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldTemplateVersion, v))
+}
+
+// TemplateVersionContains applies the Contains predicate on the "template_version" field.
+func TemplateVersionContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldTemplateVersion, v))
+}
+
+// TemplateVersionHasPrefix applies the HasPrefix predicate on the "template_version" field.
+func TemplateVersionHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldTemplateVersion, v))
+}
+
+// TemplateVersionHasSuffix applies the HasSuffix predicate on the "template_version" field.
+func TemplateVersionHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldTemplateVersion, v))
+}
+
+// TemplateVersionIsNil applies the IsNil predicate on the "template_version" field.
+func TemplateVersionIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldTemplateVersion))
+}
+
+// TemplateVersionNotNil applies the NotNil predicate on the "template_version" field.
+func TemplateVersionNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldTemplateVersion))
+}
+
+// TemplateVersionEqualFold applies the EqualFold predicate on the "template_version" field.
+func TemplateVersionEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldTemplateVersion, v))
+}
+
+// TemplateVersionContainsFold applies the ContainsFold predicate on the "template_version" field.
+func TemplateVersionContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldTemplateVersion, v))
+}
+
+// TemplateConfigIsNil applies the IsNil predicate on the "template_config" field.
+func TemplateConfigIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldTemplateConfig))
+}
+
+// TemplateConfigNotNil applies the NotNil predicate on the "template_config" field.
+func TemplateConfigNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldTemplateConfig))
 }
 
 // HasService applies the HasEdge predicate on the "service" edge.

@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 )
 
 const (
@@ -52,6 +53,16 @@ const (
 	FieldPublic = "public"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldTemplateCategory holds the string denoting the template_category field in the database.
+	FieldTemplateCategory = "template_category"
+	// FieldTemplate holds the string denoting the template field in the database.
+	FieldTemplate = "template"
+	// FieldTemplateReleaseVersion holds the string denoting the template_release_version field in the database.
+	FieldTemplateReleaseVersion = "template_release_version"
+	// FieldTemplateVersion holds the string denoting the template_version field in the database.
+	FieldTemplateVersion = "template_version"
+	// FieldTemplateConfig holds the string denoting the template_config field in the database.
+	FieldTemplateConfig = "template_config"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// Table holds the table name of the serviceconfig in the database.
@@ -85,6 +96,11 @@ var Columns = []string{
 	FieldRunCommand,
 	FieldPublic,
 	FieldImage,
+	FieldTemplateCategory,
+	FieldTemplate,
+	FieldTemplateReleaseVersion,
+	FieldTemplateVersion,
+	FieldTemplateConfig,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -151,6 +167,16 @@ func FrameworkValidator(f enum.Framework) error {
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for framework field: %q", f)
+	}
+}
+
+// TemplateCategoryValidator is a validator for the "template_category" field enum values. It is called by the builders before save.
+func TemplateCategoryValidator(tc templates.TemplateCategoryName) error {
+	switch tc.String() {
+	case "databases":
+		return nil
+	default:
+		return fmt.Errorf("serviceconfig: invalid enum value for template_category field: %q", tc)
 	}
 }
 
@@ -235,6 +261,26 @@ func ByPublic(opts ...sql.OrderTermOption) OrderOption {
 // ByImage orders the results by the image field.
 func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
+}
+
+// ByTemplateCategory orders the results by the template_category field.
+func ByTemplateCategory(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplateCategory, opts...).ToFunc()
+}
+
+// ByTemplate orders the results by the template field.
+func ByTemplate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplate, opts...).ToFunc()
+}
+
+// ByTemplateReleaseVersion orders the results by the template_release_version field.
+func ByTemplateReleaseVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplateReleaseVersion, opts...).ToFunc()
+}
+
+// ByTemplateVersion orders the results by the template_version field.
+func ByTemplateVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplateVersion, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

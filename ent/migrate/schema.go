@@ -328,6 +328,11 @@ var (
 		{Name: "run_command", Type: field.TypeString, Nullable: true},
 		{Name: "public", Type: field.TypeBool, Default: false},
 		{Name: "image", Type: field.TypeString, Nullable: true},
+		{Name: "template_category", Type: field.TypeEnum, Nullable: true, Enums: []string{"databases"}},
+		{Name: "template", Type: field.TypeString, Nullable: true},
+		{Name: "template_release_version", Type: field.TypeString, Nullable: true},
+		{Name: "template_version", Type: field.TypeString, Nullable: true},
+		{Name: "template_config", Type: field.TypeJSON, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID, Unique: true},
 	}
 	// ServiceConfigsTable holds the schema information for the "service_configs" table.
@@ -338,7 +343,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[17]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[22]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

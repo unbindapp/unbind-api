@@ -11,6 +11,7 @@ func TestTemplateRendering(t *testing.T) {
 	// Create a sample template similar to the postgres one
 	template := &Template{
 		Name:        "PostgreSQL Database",
+		Category:    TemplateCategoryDatabases,
 		Description: "Standard PostgreSQL database using zalando postgres-operator",
 		Type:        "postgres-operator",
 		Version:     "1.0.0",
@@ -160,8 +161,6 @@ spec:
 		// Render the template
 		result, err := renderer.Render(template, ctx)
 		require.NoError(t, err)
-
-		panic(result)
 
 		// Verify the output contains the expected values
 		assert.Contains(t, result, "name: test-postgres")
