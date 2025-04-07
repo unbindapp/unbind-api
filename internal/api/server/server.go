@@ -19,6 +19,7 @@ import (
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 	"golang.org/x/oauth2"
 )
 
@@ -40,6 +41,7 @@ type Server struct {
 	StringCache          *cache.ValkeyCache[string]
 	HttpClient           *http.Client
 	DeploymentController *deployctl.DeploymentController
+	TemplateProvider     *templates.UnbindTemplateProvider
 	// Services
 	TeamService        *team_service.TeamService
 	ProjectService     *project_service.ProjectService

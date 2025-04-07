@@ -26,6 +26,7 @@ import (
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
+	templates_handler "github.com/unbindapp/unbind-api/internal/api/handlers/templates"
 	user_handler "github.com/unbindapp/unbind-api/internal/api/handlers/user"
 	variables_handler "github.com/unbindapp/unbind-api/internal/api/handlers/variables"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
@@ -49,6 +50,7 @@ import (
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -185,6 +187,7 @@ func startAPI(cfg *config.Config) {
 		StringCache:          cache.NewStringCache(valkeyClient, "unbind"),
 		HttpClient:           &http.Client{},
 		DeploymentController: deploymentController,
+		TemplateProvider:     templates.NewUnbindTemplateProvider(),
 		TeamService:          team_service.NewTeamService(repo, kubeClient),
 		ProjectService:       project_service.NewProjectService(repo, kubeClient),
 		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController),
@@ -385,6 +388,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	metrics_handler.RegisterHandlers(srvImpl, metricsGroup)
+
+	// /templates group
+	templatesGroup := huma.NewGroup(api, "/templates")
+	templatesGroup.UseMiddleware(mw.Authenticate)
+	templatesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Templates"}
+		next(op)
+	})
+	templates_handler.RegisterHandlers(srvImpl, templatesGroup)
 
 	// Start the server
 	addr := ":8089"
