@@ -200,13 +200,19 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 		}
 
+		// Generate unique name
+		name, err := utils.GenerateSlug(input.DisplayName)
+		if err != nil {
+			return err
+		}
+
 		if len(ports) > 0 && input.Public == nil {
 			public = utils.ToPtr(true)
 		}
 
 		if len(hosts) == 0 && input.Public != nil && *public {
 			// Generate a subdomain
-			domain, err := utils.GenerateSubdomain(input.DisplayName, self.cfg.ExternalWildcardBaseURL)
+			domain, err := utils.GenerateSubdomain(name, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
 				log.Warnf("Failed to generate subdomain: %v", err)
 				public = utils.ToPtr(false)
@@ -219,7 +225,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				}
 				if domainCount > 0 {
 					// Re-generate with numerical suffix
-					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s%d", input.DisplayName, domainCount), self.cfg.ExternalWildcardBaseURL)
+					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s-%d", name, domainCount), self.cfg.ExternalWildcardBaseURL)
 					if err != nil {
 						log.Warnf("Failed to generate subdomain: %v", err)
 						public = utils.ToPtr(false)
@@ -235,12 +241,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 					})
 				}
 			}
-		}
-
-		// Generate unique name
-		name, err := utils.GenerateSlug(input.DisplayName)
-		if err != nil {
-			return err
 		}
 
 		if project == nil {

@@ -63,7 +63,7 @@ func transformDomain(domain string) string {
 }
 
 // Generate a default subdomain
-func GenerateSubdomain(displayName, externalURL string) (string, error) {
+func GenerateSubdomain(name, externalURL string) (string, error) {
 	// Extract the domain from externalURL (without protocol)
 	u, err := url.Parse(externalURL)
 	if err != nil {
@@ -72,8 +72,8 @@ func GenerateSubdomain(displayName, externalURL string) (string, error) {
 
 	domain := u.Hostname()
 
-	// Sanitize displayName and environmentName
-	sanitizedDisplay := sanitizeForSubdomain(displayName)
+	// Sanitize name
+	sanitizedDisplay := sanitizeForSubdomain(name)
 
 	// Check if we have valid components
 	if sanitizedDisplay == "" {

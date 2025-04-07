@@ -93,7 +93,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 && input.Public != nil && *input.Public && len(input.Hosts) < 1 {
-			host, err := utils.GenerateSubdomain(service.DisplayName, self.cfg.ExternalWildcardBaseURL)
+			host, err := utils.GenerateSubdomain(service.Name, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
 				log.Warn("failed to generate subdomain", "error", err)
 			} else {
