@@ -57,12 +57,7 @@ type RenderContext struct {
 	ServiceID     string
 
 	// Template info
-	Template struct {
-		Name     string
-		Category TemplateCategoryName
-		Version  string
-		Type     string
-	}
+	Template Template
 
 	// Parameters from service
 	Parameters map[string]interface{}
@@ -244,15 +239,29 @@ func (r *TemplateRenderer) validateProperty(name string, value interface{}, prop
 			return fmt.Errorf("field %s must be an object", name)
 		}
 
-		// Validate nested properties
+		// Validate nested properties if defined
 		if prop.Properties != nil {
 			for propName, propValue := range objValue {
 				nestedProp, ok := prop.Properties[propName]
 				if !ok {
+					// If not in properties but we have additionalProperties, validate against that
+					if prop.AdditionalProperties != nil {
+						if err := r.validateProperty(fmt.Sprintf("%s.%s", name, propName), propValue, *prop.AdditionalProperties); err != nil {
+							return err
+						}
+						continue
+					}
 					return fmt.Errorf("unknown field: %s.%s", name, propName)
 				}
 
 				if err := r.validateProperty(fmt.Sprintf("%s.%s", name, propName), propValue, nestedProp); err != nil {
+					return err
+				}
+			}
+		} else if prop.AdditionalProperties != nil {
+			// If no properties but we have additionalProperties, validate all fields against additionalProperties
+			for propName, propValue := range objValue {
+				if err := r.validateProperty(fmt.Sprintf("%s.%s", name, propName), propValue, *prop.AdditionalProperties); err != nil {
 					return err
 				}
 			}

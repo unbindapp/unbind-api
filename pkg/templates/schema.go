@@ -25,14 +25,15 @@ type TemplateParameterSchema struct {
 
 // ParameterProperty defines a single parameter's schema
 type ParameterProperty struct {
-	Type        string                       `yaml:"type" json:"type"`
-	Description string                       `yaml:"description,omitempty" json:"description,omitempty"`
-	Default     interface{}                  `yaml:"default,omitempty" json:"default,omitempty"`
-	Enum        []string                     `yaml:"enum,omitempty" json:"enum,omitempty"`
-	Properties  map[string]ParameterProperty `yaml:"properties,omitempty" json:"properties,omitempty"`
-	Ref         string                       `yaml:"$ref,omitempty" json:"$ref,omitempty"`
-	Minimum     *float64                     `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum     *float64                     `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	Type                 string                       `yaml:"type" json:"type"`
+	Description          string                       `yaml:"description,omitempty" json:"description,omitempty"`
+	Default              interface{}                  `yaml:"default,omitempty" json:"default,omitempty"`
+	Enum                 []string                     `yaml:"enum,omitempty" json:"enum,omitempty"`
+	Properties           map[string]ParameterProperty `yaml:"properties,omitempty" json:"properties,omitempty"`
+	AdditionalProperties *ParameterProperty           `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	Ref                  string                       `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	Minimum              *float64                     `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum              *float64                     `yaml:"maximum,omitempty" json:"maximum,omitempty"`
 }
 
 // Template represents a fully resolved template

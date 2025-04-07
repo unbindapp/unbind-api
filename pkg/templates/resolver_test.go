@@ -74,6 +74,26 @@ func TestFetchTemplate(t *testing.T) {
 			t.Logf("WARNING: S3 property doesn't have subproperties")
 		}
 	}
+
+	// Check if labels exists
+	labelsProp, hasLabels := template.Schema.Properties["labels"]
+	assert.True(t, hasLabels, "Schema should have a 'labels' property")
+
+	// If labels exists, verify it was imported correctly
+	if hasLabels {
+		t.Logf("Labels property: %+v", labelsProp)
+		assert.Equal(t, "object", labelsProp.Type)
+		assert.Equal(t, "Custom labels to add to the PostgreSQL resource", labelsProp.Description)
+
+		// Check if labels has properties field defined
+		if labelsProp.Properties != nil {
+			// This would check if the labels schema has a nested 'properties' field
+			// which might not be the case for a simple additionalProperties: true schema
+			t.Logf("Labels properties: %+v", labelsProp.Properties)
+		} else {
+			t.Logf("WARNING: Labels property doesn't have subproperties defined")
+		}
+	}
 }
 
 func TestFetchTemplateErrors(t *testing.T) {
@@ -150,6 +170,11 @@ func TestResolveRelativePath(t *testing.T) {
 		},
 		{
 			basePath:     "templates/databases/postgres",
+			relativePath: "../common/labels.yaml",
+			expected:     "templates/databases/common/labels.yaml",
+		},
+		{
+			basePath:     "templates/databases/postgres",
 			relativePath: "./schema.yaml",
 			expected:     "templates/databases/postgres/schema.yaml",
 		},
@@ -188,8 +213,12 @@ version: "1.0.0"
 imports:
   - path: "../../common/s3-schema.yaml"
     as: s3Schema
+  - path: "../../common/labels.yaml"
+    as: labels
 schema:
   properties:
+    labels:
+      $ref: "#/imports/labels"
     version:
       type: "string"
       description: "PostgreSQL version"
@@ -217,6 +246,16 @@ kind: postgresql
 metadata:
   name: "{{ .name }}"
   namespace: "{{ .namespace }}"
+  labels:
+    # Zalando labels
+    team: "{{ .teamId }}"
+    # Template-specific labels
+    unbind/template-name: "{{ .template.name }}"
+    unbind/template-version: "{{ .template.version }}"
+    unbind/template-category: "databases"
+    {{- range $key, $value := .parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
 spec:
   teamId: "unbind"
   postgresql:
@@ -243,6 +282,15 @@ properties:
     description: "AWS access key"
 required:
   - bucketName`))
+
+		// This is the path after resolveRelativePath is applied to "../common/labels.yaml" from "templates/postgres"
+		case "/v0.1/templates/common/labels.yaml":
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`type: "object"
+description: "Custom labels to add to the PostgreSQL resource"
+additionalProperties:
+  type: "string"
+default: {}`))
 
 		default:
 			fmt.Printf("Mock server: Path not found: %s\n", r.URL.Path)
@@ -298,12 +346,16 @@ version: "1.0.0"
 imports:
   - path: "../common/missing-schema.yaml"
     as: missingSchema
+  - path: "../common/missing-labels.yaml"
+    as: labels
 schema:
   properties:
     test:
       type: "string"
     missing:
-      $ref: "#/imports/missingSchema"`))
+      $ref: "#/imports/missingSchema"
+    labels:
+      $ref: "#/imports/labels"`))
 
 		case "/v0.1/templates/databases/missing-import/template.yaml":
 			w.WriteHeader(http.StatusOK)
@@ -311,6 +363,10 @@ schema:
 
 		// This is where the import would be resolved to
 		case "/v0.1/templates/common/missing-schema.yaml":
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Not found"))
+
+		case "/v0.1/templates/common/missing-labels.yaml":
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Not found"))
 
@@ -324,18 +380,26 @@ version: "1.0.0"
 imports:
   - path: "../common/invalid-schema.yaml"
     as: invalidSchema
+  - path: "../common/invalid-labels.yaml"
+    as: labels
 schema:
   properties:
     test:
       type: "string"
     invalid:
-      $ref: "#/imports/invalidSchema"`))
+      $ref: "#/imports/invalidSchema"
+    labels:
+      $ref: "#/imports/labels"`))
 
 		case "/v0.1/templates/databases/invalid-import/template.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`template: "content"`))
 
 		case "/v0.1/templates/common/invalid-schema.yaml":
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`invalid-yaml: [this is not valid yaml`))
+
+		case "/v0.1/templates/common/invalid-labels.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`invalid-yaml: [this is not valid yaml`))
 
@@ -349,12 +413,16 @@ version: "1.0.0"
 imports:
   - path: "../common/valid-schema.yaml"
     as: validSchema
+  - path: "../common/valid-labels.yaml"
+    as: labels
 schema:
   properties:
     test:
       type: "string"
     invalid:
-      $ref: "invalid-reference"`))
+      $ref: "invalid-reference"
+    labels:
+      $ref: "invalid-labels-reference"`))
 
 		case "/v0.1/templates/databases/invalid-reference/template.yaml":
 			w.WriteHeader(http.StatusOK)
@@ -366,6 +434,13 @@ schema:
 properties:
   test:
     type: "string"`))
+
+		case "/v0.1/templates/common/valid-labels.yaml":
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`type: "object"
+description: "Custom labels"
+additionalProperties:
+  type: "string"`))
 
 		default:
 			fmt.Printf("Error mock server: Path not found: %s\n", r.URL.Path)

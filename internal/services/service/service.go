@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 )
 
 // Integrate service management with internal permissions and kubernetes RBAC
@@ -20,15 +21,17 @@ type ServiceService struct {
 	githubClient         *github.GithubClient
 	k8s                  *k8s.KubeClient
 	deploymentController *deployctl.DeploymentController
+	templateProvider     *templates.UnbindTemplateProvider
 }
 
-func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterface, githubClient *github.GithubClient, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController) *ServiceService {
+func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterface, githubClient *github.GithubClient, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController, templateProvider *templates.UnbindTemplateProvider) *ServiceService {
 	return &ServiceService{
 		cfg:                  cfg,
 		repo:                 repo,
 		githubClient:         githubClient,
 		k8s:                  k8s,
 		deploymentController: deploymentController,
+		templateProvider:     templateProvider,
 	}
 }
 

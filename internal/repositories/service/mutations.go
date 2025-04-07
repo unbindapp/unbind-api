@@ -2,6 +2,7 @@ package service_repo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -10,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -44,51 +46,72 @@ func (self *ServiceRepository) Create(
 }
 
 // Create the service config
+type MutateConfigInput struct {
+	ServiceID              uuid.UUID
+	ServiceType            schema.ServiceType
+	Builder                *schema.ServiceBuilder
+	Provider               *enum.Provider
+	Framework              *enum.Framework
+	GitBranch              *string
+	Ports                  []v1.PortSpec
+	Hosts                  []v1.HostSpec
+	Replicas               *int32
+	AutoDeploy             *bool
+	RunCommand             *string
+	Public                 *bool
+	Image                  *string
+	DockerfilePath         *string
+	DockerfileContext      *string
+	TemplateCategory       *templates.TemplateCategoryName
+	Template               *string
+	TemplateReleaseVersion *string
+	TemplateVersion        *string
+	TemplateConfig         *map[string]interface{}
+}
+
 func (self *ServiceRepository) CreateConfig(
 	ctx context.Context,
 	tx repository.TxInterface,
-	serviceID uuid.UUID,
-	serviceType schema.ServiceType,
-	builder schema.ServiceBuilder,
-	provider *enum.Provider,
-	framework *enum.Framework,
-	gitBranch *string,
-	ports []v1.PortSpec,
-	hosts []v1.HostSpec,
-	replicas *int32,
-	autoDeploy *bool,
-	runCommand *string,
-	public *bool,
-	image *string,
-	dockerfilePath *string,
-	dockerfileContext *string,
+	input *MutateConfigInput,
 ) (*ent.ServiceConfig, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
 	}
 
-	c := db.ServiceConfig.Create().
-		SetServiceID(serviceID).
-		SetType(serviceType).
-		SetBuilder(builder).
-		SetNillableProvider(provider).
-		SetNillableFramework(framework).
-		SetNillableGitBranch(gitBranch).
-		SetNillableReplicas(replicas).
-		SetNillableAutoDeploy(autoDeploy).
-		SetNillableRunCommand(runCommand).
-		SetNillablePublic(public).
-		SetNillableImage(image).
-		SetNillableDockerfilePath(dockerfilePath).
-		SetNillableDockerfileContext(dockerfileContext)
-
-	if len(ports) > 0 {
-		c.SetPorts(ports)
+	if input == nil || input.Builder == nil {
+		return nil, fmt.Errorf("builder is missing, but required")
 	}
 
-	if len(hosts) > 0 {
-		c.SetHosts(hosts)
+	c := db.ServiceConfig.Create().
+		SetServiceID(input.ServiceID).
+		SetType(input.ServiceType).
+		SetBuilder(*input.Builder).
+		SetNillableProvider(input.Provider).
+		SetNillableFramework(input.Framework).
+		SetNillableGitBranch(input.GitBranch).
+		SetNillableReplicas(input.Replicas).
+		SetNillableAutoDeploy(input.AutoDeploy).
+		SetNillableRunCommand(input.RunCommand).
+		SetNillablePublic(input.Public).
+		SetNillableImage(input.Image).
+		SetNillableDockerfilePath(input.DockerfilePath).
+		SetNillableDockerfileContext(input.DockerfileContext).
+		SetNillableTemplateCategory(input.TemplateCategory).
+		SetNillableTemplate(input.Template).
+		SetNillableTemplateReleaseVersion(input.TemplateReleaseVersion).
+		SetNillableTemplateVersion(input.TemplateVersion)
+
+	if input.TemplateConfig != nil {
+		c.SetTemplateConfig(*input.TemplateConfig)
+	}
+
+	if len(input.Ports) > 0 {
+		c.SetPorts(input.Ports)
+	}
+
+	if len(input.Hosts) > 0 {
+		c.SetHosts(input.Hosts)
 	}
 
 	return c.Save(ctx)
@@ -117,18 +140,7 @@ func (self *ServiceRepository) Update(
 func (self *ServiceRepository) UpdateConfig(
 	ctx context.Context,
 	tx repository.TxInterface,
-	serviceID uuid.UUID,
-	builder *schema.ServiceBuilder,
-	gitBranch *string,
-	ports []v1.PortSpec,
-	hosts []v1.HostSpec,
-	replicas *int32,
-	autoDeploy *bool,
-	runCommand *string,
-	public *bool,
-	image *string,
-	dockerfilePath *string,
-	dockerfileContext *string,
+	input *MutateConfigInput,
 ) error {
 	db := self.base.DB
 	if tx != nil {
@@ -136,36 +148,42 @@ func (self *ServiceRepository) UpdateConfig(
 	}
 
 	upd := db.ServiceConfig.Update().
-		Where(serviceconfig.ServiceID(serviceID)).
-		SetNillableBuilder(builder).
-		SetNillableGitBranch(gitBranch).
-		SetNillableReplicas(replicas).
-		SetNillableAutoDeploy(autoDeploy).
-		SetNillableRunCommand(runCommand).
-		SetNillablePublic(public).
-		SetNillableImage(image)
+		Where(serviceconfig.ServiceID(input.ServiceID)).
+		SetNillableBuilder(input.Builder).
+		SetNillableGitBranch(input.GitBranch).
+		SetNillableReplicas(input.Replicas).
+		SetNillableAutoDeploy(input.AutoDeploy).
+		SetNillableRunCommand(input.RunCommand).
+		SetNillablePublic(input.Public).
+		SetNillableImage(input.Image).
+		SetNillableTemplateReleaseVersion(input.TemplateReleaseVersion).
+		SetNillableTemplateVersion(input.TemplateVersion)
 
-	if dockerfilePath != nil {
-		if *dockerfilePath == "" {
+	if input.TemplateConfig != nil {
+		upd.SetTemplateConfig(*input.TemplateConfig)
+	}
+
+	if input.DockerfilePath != nil {
+		if *input.DockerfilePath == "" {
 			upd.ClearDockerfilePath()
 		} else {
-			upd.SetDockerfilePath(*dockerfilePath)
+			upd.SetDockerfilePath(*input.DockerfilePath)
 		}
 	}
 
-	if dockerfileContext != nil {
-		if *dockerfileContext == "" {
+	if input.DockerfileContext != nil {
+		if *input.DockerfileContext == "" {
 			upd.ClearDockerfileContext()
 		} else {
-			upd.SetDockerfileContext(*dockerfileContext)
+			upd.SetDockerfileContext(*input.DockerfileContext)
 		}
 	}
 
-	if len(ports) > 0 {
-		upd.SetPorts(ports)
+	if len(input.Ports) > 0 {
+		upd.SetPorts(input.Ports)
 	}
-	if len(hosts) > 0 {
-		upd.SetHosts(hosts)
+	if len(input.Hosts) > 0 {
+		upd.SetHosts(input.Hosts)
 	}
 
 	return upd.Exec(ctx)

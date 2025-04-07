@@ -2,6 +2,7 @@ package service_service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -16,9 +17,11 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -49,6 +52,11 @@ type CreateServiceInput struct {
 	Image             *string               `json:"image,omitempty"`
 	DockerfilePath    *string               `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder"`
 	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
+
+	// Templates (special case)
+	TemplateCategory *templates.TemplateCategoryName `json:"template_category,omitempty"`
+	Template         *string                         `json:"template,omitempty"`
+	TemplateConfig   *map[string]interface{}         `json:"template_config,omitempty"`
 }
 
 // CreateService creates a new service and its configuration
@@ -58,6 +66,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
+	var template *templates.Template
+	var err error
 	switch input.Type {
 	case schema.ServiceTypeGithub:
 		// Validate that if GitHub info is provided, all fields are set
@@ -74,6 +84,23 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				"Docker image must be provided")
 		}
 		input.Builder = schema.ServiceBuilderDocker
+	case schema.ServiceTypeTemplate:
+		// Validate that if template is provided, all fields are set
+		if input.TemplateCategory == nil || input.Template == nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
+				"Template category and name must be provided")
+		}
+		// Fetch the template
+		template, err = self.templateProvider.FetchTemplate(ctx, self.cfg.TemplateVersion, *input.TemplateCategory, *input.Template)
+		if err != nil {
+			if errors.Is(err, templates.ErrTemplateNotFound) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound,
+					fmt.Sprintf("Template %s not found", *input.Template))
+			}
+			return nil, err
+		}
+
+		input.Builder = schema.ServiceBuilderTemplate
 	default:
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("received unsupported service type %s", input.Type))
 	}
@@ -273,22 +300,33 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		service = createService
 
 		// Create the service config
-		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx,
-			service.ID,
-			input.Type,
-			input.Builder,
-			provider,
-			framework,
-			input.GitBranch,
-			ports,
-			hosts,
-			input.Replicas,
-			input.AutoDeploy,
-			input.RunCommand,
-			input.Public,
-			input.Image,
-			input.DockerfilePath,
-			input.DockerfileContext)
+		createInput := &service_repo.MutateConfigInput{
+			ServiceID:         service.ID,
+			ServiceType:       input.Type,
+			Builder:           utils.ToPtr(input.Builder),
+			Provider:          provider,
+			Framework:         framework,
+			GitBranch:         input.GitBranch,
+			Ports:             ports,
+			Hosts:             hosts,
+			Replicas:          input.Replicas,
+			AutoDeploy:        input.AutoDeploy,
+			RunCommand:        input.RunCommand,
+			Public:            public,
+			Image:             input.Image,
+			DockerfilePath:    input.DockerfilePath,
+			DockerfileContext: input.DockerfileContext,
+			TemplateCategory:  input.TemplateCategory,
+			Template:          input.Template,
+			TemplateVersion:   input.Template,
+			TemplateConfig:    input.TemplateConfig,
+		}
+
+		if template != nil {
+			createInput.TemplateVersion = utils.ToPtr(template.Version)
+		}
+
+		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)
 		if err != nil {
 			return fmt.Errorf("failed to create service config: %w", err)
 		}

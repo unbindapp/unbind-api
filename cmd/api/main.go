@@ -157,6 +157,9 @@ func startAPI(cfg *config.Config) {
 		log.Fatalf("Failed to create Prometheus client: %v", err)
 	}
 
+	// Template provider
+	templatesProvider := templates.NewUnbindTemplateProvider()
+
 	// Bootstrap
 	bootstrapper := &Bootstrapper{
 		repos:                   repo,
@@ -187,10 +190,10 @@ func startAPI(cfg *config.Config) {
 		StringCache:          cache.NewStringCache(valkeyClient, "unbind"),
 		HttpClient:           &http.Client{},
 		DeploymentController: deploymentController,
-		TemplateProvider:     templates.NewUnbindTemplateProvider(),
+		TemplateProvider:     templatesProvider,
 		TeamService:          team_service.NewTeamService(repo, kubeClient),
 		ProjectService:       project_service.NewProjectService(repo, kubeClient),
-		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController),
+		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController, templatesProvider),
 		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
 		LogService:           logs_service.NewLogsService(repo, kubeClient, lokiQuerier),
 		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier),

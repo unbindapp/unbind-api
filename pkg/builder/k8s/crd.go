@@ -21,6 +21,7 @@ type ServiceParams struct {
 	Namespace   string
 
 	// Service type configuration
+	Type             schema.ServiceType
 	Builder          schema.ServiceBuilder
 	Provider         string
 	Framework        string
@@ -68,7 +69,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			Name:             serviceName,
 			DisplayName:      params.DisplayName,
 			Description:      params.Description,
-			Type:             "git",
+			Type:             string(params.Type),
 			Builder:          string(params.Builder),
 			Provider:         params.Provider,
 			Framework:        params.Framework,
@@ -127,6 +128,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		DisplayName:      serviceName,
 		Description:      fmt.Sprintf("Auto-deployed service for %s", crdName),
 		Namespace:        self.builderConfig.DeploymentNamespace,
+		Type:             self.builderConfig.ServiceType,
 		Builder:          self.builderConfig.ServiceBuilder,
 		Provider:         self.builderConfig.ServiceProvider,
 		Framework:        self.builderConfig.ServiceFramework,

@@ -83,11 +83,13 @@ type ServiceType string
 const (
 	ServiceTypeGithub      ServiceType = "github"
 	ServiceTypeDockerimage ServiceType = "docker-image"
+	ServiceTypeTemplate    ServiceType = "template"
 )
 
 var allServiceTypes = []ServiceType{
 	ServiceTypeGithub,
 	ServiceTypeDockerimage,
+	ServiceTypeTemplate,
 }
 
 // Values provides list valid values for Enum.
@@ -118,11 +120,13 @@ type ServiceBuilder string
 const (
 	ServiceBuilderRailpack ServiceBuilder = "railpack"
 	ServiceBuilderDocker   ServiceBuilder = "docker"
+	ServiceBuilderTemplate ServiceBuilder = "template"
 )
 
 var allServiceBuilders = []ServiceBuilder{
 	ServiceBuilderRailpack,
 	ServiceBuilderDocker,
+	ServiceBuilderTemplate,
 }
 
 // Values provides list valid values for Enum.

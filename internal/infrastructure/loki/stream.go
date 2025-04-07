@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -245,6 +246,10 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 
 		// Send events from this batch to the channel if there are any
 		if len(allEvents) > 0 {
+			// Sort oldest first (ascending)
+			sort.Slice(allEvents, func(i, j int) bool {
+				return allEvents[i].Timestamp.Before(allEvents[j].Timestamp)
+			})
 			select {
 			case eventChan <- LogEvents{MessageType: LogEventsMessageTypeLog, Logs: allEvents}:
 			case <-done:

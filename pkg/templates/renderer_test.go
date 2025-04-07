@@ -90,6 +90,13 @@ func TestTemplateRendering(t *testing.T) {
 						},
 					},
 				},
+				"labels": {
+					Type:        "object",
+					Description: "Custom labels to add to the PostgreSQL resource",
+					AdditionalProperties: &ParameterProperty{
+						Type: "string",
+					},
+				},
 			},
 			Required: []string{"replicas"},
 		},
@@ -107,6 +114,9 @@ metadata:
     # Template-specific labels
     unbind/template-name: {{ .Template.Name }}
     unbind/template-version: {{ .Template.Version }}
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
 spec:
   teamId: {{ .TeamID | default "default" }}
   postgresql:
@@ -185,6 +195,100 @@ spec:
 		assert.Len(t, objects, 1) // Should have 1 Kubernetes object
 	})
 
+	t.Run("With Custom Labels", func(t *testing.T) {
+		// Create render context with custom labels
+		ctx := &RenderContext{
+			Name:          "test-postgres-labels",
+			Namespace:     "default",
+			TeamID:        "team1",
+			ProjectID:     "project1",
+			EnvironmentID: "env1",
+			ServiceID:     "svc1",
+			Parameters: map[string]interface{}{
+				"replicas": 2,
+				"labels": map[string]interface{}{
+					"environment": "production",
+					"app":         "my-app",
+					"tier":        "database",
+					"cost-center": "123456",
+				},
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify custom labels are included
+		assert.Contains(t, result, `environment: "production"`)
+		assert.Contains(t, result, `app: "my-app"`)
+		assert.Contains(t, result, `tier: "database"`)
+		assert.Contains(t, result, `cost-center: "123456"`)
+
+		// Make sure standard labels are still there
+		assert.Contains(t, result, "unbind-team: team1")
+		assert.Contains(t, result, "unbind-project: project1")
+		assert.Contains(t, result, "unbind-environment: env1")
+
+		// Ensure labels are properly quoted
+		assert.NotContains(t, result, "environment: production") // Should be quoted
+	})
+
+	t.Run("With Special Characters in Labels", func(t *testing.T) {
+		// Create render context with labels containing special characters
+		ctx := &RenderContext{
+			Name:          "test-postgres-special",
+			Namespace:     "default",
+			TeamID:        "team1",
+			ProjectID:     "project1",
+			EnvironmentID: "env1",
+			ServiceID:     "svc1",
+			Parameters: map[string]interface{}{
+				"replicas": 2,
+				"labels": map[string]interface{}{
+					"app.kubernetes.io/name":      "postgres",
+					"app.kubernetes.io/component": "database",
+					"special/label":               "value-with-hyphens",
+					"security-level":              "high",
+				},
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify custom labels with special characters are included and properly quoted
+		assert.Contains(t, result, `app.kubernetes.io/name: "postgres"`)
+		assert.Contains(t, result, `app.kubernetes.io/component: "database"`)
+		assert.Contains(t, result, `special/label: "value-with-hyphens"`)
+		assert.Contains(t, result, `security-level: "high"`)
+	})
+
+	t.Run("Empty Labels Map", func(t *testing.T) {
+		// Create render context with an empty labels map
+		ctx := &RenderContext{
+			Name:          "test-postgres-empty-labels",
+			Namespace:     "default",
+			TeamID:        "team1",
+			ProjectID:     "project1",
+			EnvironmentID: "env1",
+			ServiceID:     "svc1",
+			Parameters: map[string]interface{}{
+				"replicas": 2,
+				"labels":   map[string]interface{}{},
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify the template renders correctly with an empty labels map
+		assert.Contains(t, result, "unbind-team: team1")
+		assert.NotContains(t, result, "{{ $key }}: {{ $value | quote }}") // Template should not contain raw template syntax
+	})
+
 	t.Run("S3 Enabled", func(t *testing.T) {
 		// Create render context with S3 enabled
 		ctx := &RenderContext{
@@ -253,6 +357,49 @@ spec:
 		assert.Contains(t, result, "memory: 2Gi")
 	})
 
+	t.Run("Custom Values With Labels", func(t *testing.T) {
+		// Create render context with custom values and labels
+		ctx := &RenderContext{
+			Name:          "custom-postgres-labels",
+			Namespace:     "custom-ns",
+			TeamID:        "custom-team",
+			ProjectID:     "custom-project",
+			EnvironmentID: "custom-env",
+			ServiceID:     "custom-svc",
+			Parameters: map[string]interface{}{
+				"version":  "15",
+				"replicas": 5,
+				"storage":  "10Gi",
+				"labels": map[string]interface{}{
+					"environment": "production",
+					"app":         "custom-app",
+					"tier":        "database",
+				},
+				"resources": map[string]interface{}{
+					"requests": map[string]interface{}{
+						"cpu":    "500m",
+						"memory": "1Gi",
+					},
+					"limits": map[string]interface{}{
+						"cpu":    "1",
+						"memory": "2Gi",
+					},
+				},
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify both custom values and labels are included
+		assert.Contains(t, result, "version: 15")
+		assert.Contains(t, result, "numberOfInstances: 5")
+		assert.Contains(t, result, `environment: "production"`)
+		assert.Contains(t, result, `app: "custom-app"`)
+		assert.Contains(t, result, `tier: "database"`)
+	})
+
 	t.Run("Parameter Validation", func(t *testing.T) {
 		// Test validation of required fields
 		err := renderer.Validate(map[string]interface{}{}, template.Schema)
@@ -281,11 +428,42 @@ spec:
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "must be a number")
 
+		// Test validation with valid labels
+		err = renderer.Validate(map[string]interface{}{
+			"replicas": 3,
+			"labels": map[string]interface{}{
+				"app": "test",
+			},
+		}, template.Schema)
+		assert.NoError(t, err)
+
+		// Test validation with invalid labels type
+		err = renderer.Validate(map[string]interface{}{
+			"replicas": 3,
+			"labels":   "not-an-object", // Should be map/object
+		}, template.Schema)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "must be an object")
+
+		// Test validation with invalid label value type
+		err = renderer.Validate(map[string]interface{}{
+			"replicas": 3,
+			"labels": map[string]interface{}{
+				"app": 123, // Should be string
+			},
+		}, template.Schema)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "must be a string")
+
 		// Valid parameters should pass validation
 		err = renderer.Validate(map[string]interface{}{
 			"replicas": 3,
 			"version":  "16",
 			"storage":  "5Gi",
+			"labels": map[string]interface{}{
+				"app":         "postgres",
+				"environment": "staging",
+			},
 			"resources": map[string]interface{}{
 				"requests": map[string]interface{}{
 					"cpu": "200m",
@@ -332,6 +510,10 @@ spec:
 		require.True(t, ok)
 		assert.Equal(t, false, s3["enabled"])
 		assert.Equal(t, "https://s3.amazonaws.com", s3["endpoint"])
+
+		// Labels should not have defaults since it's additionalProperties
+		_, hasLabels := params["labels"]
+		assert.False(t, hasLabels, "Labels should not have defaults")
 	})
 }
 

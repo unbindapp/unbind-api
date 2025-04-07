@@ -48,6 +48,7 @@ type Config struct {
 	ServiceReplicas          *int32                `env:"SERVICE_REPLICAS"`
 	ServiceSecretName        string                `env:"SERVICE_SECRET_NAME,required"`
 	ServiceBuildSecrets      string                `env:"SERVICE_BUILD_SECRETS"`
+	ServiceType              schema.ServiceType    `env:"SERVICE_TYPE"`
 	ServiceBuilder           schema.ServiceBuilder `env:"SERVICE_BUILDER"`
 	ServiceTeamRef           string                `env:"SERVICE_TEAM_REF"`
 	ServiceProjectRef        string                `env:"SERVICE_PROJECT_REF"`
