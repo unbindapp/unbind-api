@@ -315,7 +315,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"github", "docker-image", "database"}},
-		{Name: "builder", Type: field.TypeEnum, Enums: []string{"railpack", "docker", "template"}},
+		{Name: "builder", Type: field.TypeEnum, Enums: []string{"railpack", "docker", "database"}},
 		{Name: "database", Type: field.TypeString, Nullable: true},
 		{Name: "definition_version", Type: field.TypeString, Nullable: true},
 		{Name: "database_config", Type: field.TypeJSON, Nullable: true},

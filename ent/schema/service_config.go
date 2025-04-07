@@ -116,13 +116,13 @@ type ServiceBuilder string
 const (
 	ServiceBuilderRailpack ServiceBuilder = "railpack"
 	ServiceBuilderDocker   ServiceBuilder = "docker"
-	ServiceBuilderTemplate ServiceBuilder = "template"
+	ServiceBuilderDatabase ServiceBuilder = "database"
 )
 
 var allServiceBuilders = []ServiceBuilder{
 	ServiceBuilderRailpack,
 	ServiceBuilderDocker,
-	ServiceBuilderTemplate,
+	ServiceBuilderDatabase,
 }
 
 // Values provides list valid values for Enum.

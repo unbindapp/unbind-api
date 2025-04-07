@@ -83,9 +83,9 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
-	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDockerimage {
+	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDockerimage || service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase {
 		if input.Builder != nil {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update builder for docker image service")
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update builder for docker image or database service")
 		}
 	}
 

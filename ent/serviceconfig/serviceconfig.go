@@ -136,7 +136,7 @@ func TypeValidator(_type schema.ServiceType) error {
 // BuilderValidator is a validator for the "builder" field enum values. It is called by the builders before save.
 func BuilderValidator(b schema.ServiceBuilder) error {
 	switch b {
-	case "railpack", "docker", "template":
+	case "railpack", "docker", "database":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for builder field: %q", b)

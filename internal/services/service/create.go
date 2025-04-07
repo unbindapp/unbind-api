@@ -98,7 +98,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return nil, err
 		}
 
-		input.Builder = schema.ServiceBuilderTemplate
+		input.Builder = schema.ServiceBuilderDatabase
 	default:
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("received unsupported service type %s", input.Type))
 	}
