@@ -9,13 +9,13 @@ import (
 )
 
 // FetchDatabaseDefinition fetches a db from GitHub
-func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVersion, dbName string) (*Definition, error) {
+func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVersion, dbType string) (*Definition, error) {
 	// Base version URL
 	baseURL := fmt.Sprintf(BaseDatabaseURL, tagVersion)
 	// Fetch files
-	metadataURL := fmt.Sprintf("%s/definitions/%s/%s/metadata.yaml", baseURL, DB_CATEGORY, dbName)
+	metadataURL := fmt.Sprintf("%s/definitions/%s/%s/metadata.yaml", baseURL, DB_CATEGORY, dbType)
 
-	defURL := fmt.Sprintf("%s/definitions/%s/%s/definition.yaml", baseURL, DB_CATEGORY, dbName)
+	defURL := fmt.Sprintf("%s/definitions/%s/%s/definition.yaml", baseURL, DB_CATEGORY, dbType)
 
 	metadataBytes, err := self.fetchURL(ctx, metadataURL)
 	if err != nil {
@@ -40,7 +40,7 @@ func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVe
 	for _, imp := range metadata.Imports {
 		// Handle relative paths for imports
 		// Determine the base directory of the current database
-		dbBasePath := fmt.Sprintf("definitions/%s/%s", DB_CATEGORY, dbName)
+		dbBasePath := fmt.Sprintf("definitions/%s/%s", DB_CATEGORY, dbType)
 
 		// Resolve the relative path
 		importPath := resolveRelativePath(dbBasePath, imp.Path)

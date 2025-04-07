@@ -44,8 +44,8 @@ func main() {
 	log.Info("--------------")
 	log.Infof("Input Parameters:")
 	log.Infof(" - Service name: %s", cfg.ServiceName)
-	if cfg.ServiceDatabaseName != "" {
-		log.Infof(" - Using database: %s", cfg.ServiceDatabaseName)
+	if cfg.ServiceDatabaseType != "" {
+		log.Infof(" - Using database type: %s", cfg.ServiceDatabaseType)
 		log.Infof(" - Resource definition version: %s", cfg.ServiceDatabaseDefinitionVersion)
 	} else if cfg.ServiceImage != "" {
 		log.Infof(" - Using docker image: %s", cfg.ServiceImage)

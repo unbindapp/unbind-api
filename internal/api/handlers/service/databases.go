@@ -36,7 +36,7 @@ func (self *HandlerGroup) ListDatabases(ctx context.Context, input *server.BaseA
 
 type GetDatabaseSpecInput struct {
 	server.BaseAuthInput
-	Name    string `query:"name" required:"true" description:"Name of the database resource (e.g. postgres)"`
+	Type    string `query:"type" required:"true" description:"Type of the database resource (e.g. postgres)"`
 	Version string `query:"version" required:"false" description:"Version of the custom services release"`
 }
 
@@ -56,7 +56,7 @@ func (self *HandlerGroup) GetDatabaseDefinition(ctx context.Context, input *GetD
 	template, err := self.srv.DatabaseProvider.FetchDatabaseDefinition(
 		ctx,
 		version,
-		input.Name,
+		input.Type,
 	)
 	if err != nil {
 		if errors.Is(err, databases.ErrDatabaseNotFound) {

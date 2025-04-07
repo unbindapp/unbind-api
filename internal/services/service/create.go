@@ -54,7 +54,7 @@ type CreateServiceInput struct {
 	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
 
 	// Databases (special case)
-	DatabaseName   *string                 `json:"database_name,omitempty"`
+	DatabaseType   *string                 `json:"database_type,omitempty"`
 	DatabaseConfig *map[string]interface{} `json:"database_config,omitempty"`
 }
 
@@ -84,16 +84,16 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		input.Builder = schema.ServiceBuilderDocker
 	case schema.ServiceTypeDatabase:
 		// Validate that if database is provided, name is set
-		if input.DatabaseName == nil {
+		if input.DatabaseType == nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
 				"Database name must be provided")
 		}
 		// Fetch the template
-		_, err = self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *input.DatabaseName)
+		_, err = self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *input.DatabaseType)
 		if err != nil {
 			if errors.Is(err, databases.ErrDatabaseNotFound) {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound,
-					fmt.Sprintf("Database %s not found", *input.DatabaseName))
+					fmt.Sprintf("Database %s not found", *input.DatabaseType))
 			}
 			return nil, err
 		}
@@ -314,7 +314,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Image:                   input.Image,
 			DockerfilePath:          input.DockerfilePath,
 			DockerfileContext:       input.DockerfileContext,
-			Database:                input.DatabaseName,
+			Database:                input.DatabaseType,
 			CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
 			DatabaseConfig:          input.DatabaseConfig,
 		}

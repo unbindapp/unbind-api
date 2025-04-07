@@ -46,7 +46,7 @@ type ServiceParams struct {
 	Replicas *int32
 
 	// Database
-	DatabaseName          string
+	DatabaseType          string
 	DatabaseUSDVersionRef string
 	DatabaseConfig        runtime.RawExtension
 }
@@ -124,7 +124,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 	// Set database configuration if provided
 	if params.Type == schema.ServiceTypeDatabase {
 		service.Spec.Config.Database = v1.DatabaseSpec{
-			Name:                params.DatabaseName,
+			Type:                params.DatabaseType,
 			DatabaseSpecVersion: params.DatabaseUSDVersionRef,
 			Config:              params.DatabaseConfig,
 		}
@@ -177,7 +177,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		Replicas:         self.builderConfig.ServiceReplicas,
 		// Template
 		DatabaseConfig:        dbConfig,
-		DatabaseName:          self.builderConfig.ServiceDatabaseName,
+		DatabaseType:          self.builderConfig.ServiceDatabaseType,
 		DatabaseUSDVersionRef: self.builderConfig.ServiceDatabaseDefinitionVersion,
 	}
 

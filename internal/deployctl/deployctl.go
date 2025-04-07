@@ -177,7 +177,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 			return nil, err
 		}
 
-		env["SERVICE_DATABASE_NAME"] = *service.Edges.ServiceConfig.Database
+		env["SERVICE_DATABASE_TYPE"] = *service.Edges.ServiceConfig.Database
 		env["SERVICE_DATABASE_USD_VERSION"] = *service.Edges.ServiceConfig.DefinitionVersion
 		env["SERVICE_DATABASE_CONFIG"] = string(marshalledConfig)
 	}
