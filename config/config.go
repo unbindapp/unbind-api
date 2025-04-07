@@ -29,7 +29,7 @@ type Config struct {
 	ExternalWildcardBaseURL string `env:"EXTERNAL_WILDCARD_BASE_URL" envDefault:"http://localhost:8089"`
 	ExternalOauth2URL       string `env:"EXTERNAL_OAUTH2_URL" envDefault:"http://localhost:8090"`
 	// For unbind custom service definitions
-	UnbindServiceDefVersion string `env:"UNBIND_SERVICE_DEF_VERSION" envDefault:"v0.1.8"`
+	UnbindServiceDefVersion string `env:"UNBIND_SERVICE_DEF_VERSION" envDefault:"v0.1.10"`
 	// Github Specific
 	GithubURL        string `env:"GITHUB_URL" envDefault:"https://github.com"` // Override for github enterprise
 	GithubWebhookURL string

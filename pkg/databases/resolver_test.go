@@ -250,8 +250,8 @@ metadata:
     # Zalando labels
     team: "{{ .teamId }}"
     # Database-specific labels
-    unbind/usd-name: "{{ .database.name }}"
-    unbind/usd-version: "{{ .database.version }}"
+    unbind/usd-name: "{{ .Definition.name }}"
+    unbind/usd-version: "{{ .Definition.version }}"
     unbind/usd-category: "databases"
     {{- range $key, $value := .parameters.labels }}
     {{ $key }}: {{ $value | quote }}
