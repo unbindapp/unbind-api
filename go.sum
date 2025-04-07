@@ -514,6 +514,8 @@ github.com/unbindapp/unbind-operator v0.0.0-20250331022722-b388c0af97bb h1:v7WWb
 github.com/unbindapp/unbind-operator v0.0.0-20250331022722-b388c0af97bb/go.mod h1:UF+y6/WOfRM6KnLmbI9pKtVxH6WdN/Pyq3+t+yB+ywI=
 github.com/unbindapp/unbind-operator v0.0.0-20250407184815-fce3565af3ea h1:Druy6kX5ATUJpimWoO0Sodp0ZX98B0I385frcsH9dJw=
 github.com/unbindapp/unbind-operator v0.0.0-20250407184815-fce3565af3ea/go.mod h1:HhYacbj5ZZ9A+BXu4RGtv3+bM2er1GkYsUIORfKpAc4=
+github.com/unbindapp/unbind-operator v0.0.0-20250407230842-322bfb69b025 h1:k5QHBUHkgRZ/MArwpv5wFyqalKfZ1JIEExO/BFjda0A=
+github.com/unbindapp/unbind-operator v0.0.0-20250407230842-322bfb69b025/go.mod h1:vIAwfW3VE1JkyAOZ668HxuLSRkeLi4iFqIHKn3C1Gc4=
 github.com/valkey-io/valkey-go v1.0.56 h1:7qp/9dqqPbYEEKeFZCnpX6nzM5XzO2MPp0iKh9+c9Wg=
 github.com/valkey-io/valkey-go v1.0.56/go.mod h1:sxpCChk8i3oTG+A/lUi9Lj8C/7WI+yhnQCvDJlPVKNM=
 github.com/valkey-io/valkey-go/mock v1.0.56 h1:ZJ1W5nBLPcYxqTHqlbLFZ+QTkP8csJAmTGiairz8cVo=

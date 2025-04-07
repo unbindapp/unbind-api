@@ -121,16 +121,14 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 		service.Spec.Config.Replicas = &replicas
 	}
 
-	// // Set database configuration if provided
-	// if params.Type == schema.ServiceTypeDatabase {
-	// 	service.Spec.Config.Template = v1.TemplateSpec{
-	// 		Name:       params.TemplateName,
-	// 		Version:    params.TemplateVersion,
-	// 		VersionRef: params.TemplateVersionRef,
-	// 		Category:   params.TemplateCategory,
-	// 		Config:     params.TemplateConfig,
-	// 	}
-	// }
+	// Set database configuration if provided
+	if params.Type == schema.ServiceTypeDatabase {
+		service.Spec.Config.Database = v1.DatabaseSpec{
+			Name:                params.DatabaseName,
+			DatabaseSpecVersion: params.DatabaseUSDVersionRef,
+			Config:              params.DatabaseConfig,
+		}
+	}
 
 	return service, nil
 }
