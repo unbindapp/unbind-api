@@ -11,7 +11,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -47,26 +46,24 @@ func (self *ServiceRepository) Create(
 
 // Create the service config
 type MutateConfigInput struct {
-	ServiceID              uuid.UUID
-	ServiceType            schema.ServiceType
-	Builder                *schema.ServiceBuilder
-	Provider               *enum.Provider
-	Framework              *enum.Framework
-	GitBranch              *string
-	Ports                  []v1.PortSpec
-	Hosts                  []v1.HostSpec
-	Replicas               *int32
-	AutoDeploy             *bool
-	RunCommand             *string
-	Public                 *bool
-	Image                  *string
-	DockerfilePath         *string
-	DockerfileContext      *string
-	TemplateCategory       *templates.TemplateCategoryName
-	Template               *string
-	TemplateReleaseVersion *string
-	TemplateVersion        *string
-	TemplateConfig         *map[string]interface{}
+	ServiceID               uuid.UUID
+	ServiceType             schema.ServiceType
+	Builder                 *schema.ServiceBuilder
+	Provider                *enum.Provider
+	Framework               *enum.Framework
+	GitBranch               *string
+	Ports                   []v1.PortSpec
+	Hosts                   []v1.HostSpec
+	Replicas                *int32
+	AutoDeploy              *bool
+	RunCommand              *string
+	Public                  *bool
+	Image                   *string
+	DockerfilePath          *string
+	DockerfileContext       *string
+	Database                *string
+	CustomDefinitionVersion *string
+	DatabaseConfig          *map[string]interface{}
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -97,13 +94,11 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableImage(input.Image).
 		SetNillableDockerfilePath(input.DockerfilePath).
 		SetNillableDockerfileContext(input.DockerfileContext).
-		SetNillableTemplateCategory(input.TemplateCategory).
-		SetNillableTemplate(input.Template).
-		SetNillableTemplateReleaseVersion(input.TemplateReleaseVersion).
-		SetNillableTemplateVersion(input.TemplateVersion)
+		SetNillableDatabase(input.Database).
+		SetNillableDefinitionVersion(input.CustomDefinitionVersion)
 
-	if input.TemplateConfig != nil {
-		c.SetTemplateConfig(*input.TemplateConfig)
+	if input.DatabaseConfig != nil {
+		c.SetDatabaseConfig(*input.DatabaseConfig)
 	}
 
 	if len(input.Ports) > 0 {
@@ -156,11 +151,10 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableRunCommand(input.RunCommand).
 		SetNillablePublic(input.Public).
 		SetNillableImage(input.Image).
-		SetNillableTemplateReleaseVersion(input.TemplateReleaseVersion).
-		SetNillableTemplateVersion(input.TemplateVersion)
+		SetNillableDefinitionVersion(input.CustomDefinitionVersion)
 
-	if input.TemplateConfig != nil {
-		upd.SetTemplateConfig(*input.TemplateConfig)
+	if input.DatabaseConfig != nil {
+		upd.SetDatabaseConfig(*input.DatabaseConfig)
 	}
 
 	if input.DockerfilePath != nil {

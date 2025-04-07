@@ -1,4 +1,4 @@
-package templates
+package databases
 
 import (
 	"testing"
@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTemplateRendering(t *testing.T) {
+func TestDefinitionRendering(t *testing.T) {
 	// Create a sample template similar to the postgres one
-	template := &Template{
+	template := &Definition{
 		Name:        "PostgreSQL Database",
-		Category:    TemplateCategoryDatabases,
+		Category:    DB_CATEGORY,
 		Description: "Standard PostgreSQL database using zalando postgres-operator",
 		Type:        "postgres-operator",
 		Version:     "1.0.0",
-		Schema: TemplateParameterSchema{
+		Schema: DefinitionParameterSchema{
 			Properties: map[string]ParameterProperty{
 				"version": {
 					Type:        "string",
@@ -111,9 +111,9 @@ metadata:
     unbind-project: {{ .ProjectID }}
     unbind-environment: {{ .EnvironmentID }}
     unbind-service: {{ .ServiceID }}
-    # Template-specific labels
-    unbind/template-name: {{ .Template.Name }}
-    unbind/template-version: {{ .Template.Version }}
+    # Definition-specific labels
+    unbind/template-name: {{ .Definition.Name }}
+    unbind/template-version: {{ .Definition.Version }}
     {{- range $key, $value := .Parameters.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
@@ -152,7 +152,7 @@ spec:
 	}
 
 	// Create a renderer
-	renderer := NewTemplateRenderer()
+	renderer := NewDatabaseRenderer()
 
 	t.Run("Basic Rendering", func(t *testing.T) {
 		// Create render context with minimal parameters
@@ -286,7 +286,7 @@ spec:
 
 		// Verify the template renders correctly with an empty labels map
 		assert.Contains(t, result, "unbind-team: team1")
-		assert.NotContains(t, result, "{{ $key }}: {{ $value | quote }}") // Template should not contain raw template syntax
+		assert.NotContains(t, result, "{{ $key }}: {{ $value | quote }}") // Definition should not contain raw template syntax
 	})
 
 	t.Run("S3 Enabled", func(t *testing.T) {

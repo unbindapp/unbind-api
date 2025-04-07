@@ -21,7 +21,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	"github.com/unbindapp/unbind-api/pkg/templates"
+	"github.com/unbindapp/unbind-api/pkg/databases"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -53,10 +53,9 @@ type CreateServiceInput struct {
 	DockerfilePath    *string               `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder"`
 	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
 
-	// Templates (special case)
-	TemplateCategory *templates.TemplateCategoryName `json:"template_category,omitempty"`
-	Template         *string                         `json:"template,omitempty"`
-	TemplateConfig   *map[string]interface{}         `json:"template_config,omitempty"`
+	// Databases (special case)
+	DatabaseName   *string                 `json:"database_name,omitempty"`
+	DatabaseConfig *map[string]interface{} `json:"database_config,omitempty"`
 }
 
 // CreateService creates a new service and its configuration
@@ -66,7 +65,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
-	var template *templates.Template
 	var err error
 	switch input.Type {
 	case schema.ServiceTypeGithub:
@@ -84,18 +82,18 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				"Docker image must be provided")
 		}
 		input.Builder = schema.ServiceBuilderDocker
-	case schema.ServiceTypeTemplate:
-		// Validate that if template is provided, all fields are set
-		if input.TemplateCategory == nil || input.Template == nil {
+	case schema.ServiceTypeDatabase:
+		// Validate that if database is provided, name is set
+		if input.DatabaseName == nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
-				"Template category and name must be provided")
+				"Database name must be provided")
 		}
 		// Fetch the template
-		template, err = self.templateProvider.FetchTemplate(ctx, self.cfg.TemplateVersion, *input.TemplateCategory, *input.Template)
+		_, err = self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *input.DatabaseName)
 		if err != nil {
-			if errors.Is(err, templates.ErrTemplateNotFound) {
+			if errors.Is(err, databases.ErrDatabaseNotFound) {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound,
-					fmt.Sprintf("Template %s not found", *input.Template))
+					fmt.Sprintf("Database %s not found", *input.DatabaseName))
 			}
 			return nil, err
 		}
@@ -301,30 +299,24 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		// Create the service config
 		createInput := &service_repo.MutateConfigInput{
-			ServiceID:              service.ID,
-			ServiceType:            input.Type,
-			Builder:                utils.ToPtr(input.Builder),
-			Provider:               provider,
-			Framework:              framework,
-			GitBranch:              input.GitBranch,
-			Ports:                  ports,
-			Hosts:                  hosts,
-			Replicas:               input.Replicas,
-			AutoDeploy:             input.AutoDeploy,
-			RunCommand:             input.RunCommand,
-			Public:                 public,
-			Image:                  input.Image,
-			DockerfilePath:         input.DockerfilePath,
-			DockerfileContext:      input.DockerfileContext,
-			TemplateCategory:       input.TemplateCategory,
-			Template:               input.Template,
-			TemplateVersion:        input.Template,
-			TemplateReleaseVersion: utils.ToPtr(self.cfg.TemplateVersion),
-			TemplateConfig:         input.TemplateConfig,
-		}
-
-		if template != nil {
-			createInput.TemplateVersion = utils.ToPtr(template.Version)
+			ServiceID:               service.ID,
+			ServiceType:             input.Type,
+			Builder:                 utils.ToPtr(input.Builder),
+			Provider:                provider,
+			Framework:               framework,
+			GitBranch:               input.GitBranch,
+			Ports:                   ports,
+			Hosts:                   hosts,
+			Replicas:                input.Replicas,
+			AutoDeploy:              input.AutoDeploy,
+			RunCommand:              input.RunCommand,
+			Public:                  public,
+			Image:                   input.Image,
+			DockerfilePath:          input.DockerfilePath,
+			DockerfileContext:       input.DockerfileContext,
+			Database:                input.DatabaseName,
+			CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
+			DatabaseConfig:          input.DatabaseConfig,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

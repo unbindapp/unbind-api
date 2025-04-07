@@ -1,4 +1,4 @@
-package templates
+package databases
 
 import (
 	"context"
@@ -11,54 +11,54 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFetchTemplate(t *testing.T) {
+func TestFetchDatabase(t *testing.T) {
 	// Setup mock server
 	server := setupMockServer()
 	defer server.Close()
 
 	// Override the base URL constant for testing
-	originalBaseURL := BaseTemplateURL
-	BaseTemplateURL = server.URL + "/%s"
+	originalBaseURL := BaseDatabaseURL
+	BaseDatabaseURL = server.URL + "/%s"
 	defer func() {
-		BaseTemplateURL = originalBaseURL
+		BaseDatabaseURL = originalBaseURL
 	}()
 
 	// Create provider
-	provider := NewUnbindTemplateProvider()
+	provider := NewDatabaseProvider()
 
-	// Test FetchTemplate
+	// Test FetchDatabase
 	ctx := context.Background()
-	template, err := provider.FetchTemplate(ctx, "v0.1", "databases", "postgres")
+	database, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "postgres")
 
 	// Log the result for debugging
-	t.Logf("Template result: %+v", template)
+	t.Logf("Database result: %+v", database)
 	if err != nil {
 		t.Logf("Error: %v", err)
 	}
 
 	// Assert
 	require.NoError(t, err)
-	assert.NotNil(t, template)
-	assert.Equal(t, "PostgreSQL Database", template.Name)
-	assert.Equal(t, "Standard PostgreSQL database using zalando postgres-operator", template.Description)
-	assert.Equal(t, "postgres-operator", template.Type)
-	assert.Equal(t, "1.0.0", template.Version)
+	assert.NotNil(t, database)
+	assert.Equal(t, "PostgreSQL Database", database.Name)
+	assert.Equal(t, "Standard PostgreSQL database using zalando postgres-operator", database.Description)
+	assert.Equal(t, "postgres-operator", database.Type)
+	assert.Equal(t, "1.0.0", database.Version)
 
 	// Verify schema was properly resolved - with more detailed logging
-	assert.NotNil(t, template.Schema)
+	assert.NotNil(t, database.Schema)
 
 	// Print the schema properties for debugging
-	t.Logf("Schema properties: %+v", template.Schema.Properties)
+	t.Logf("Schema properties: %+v", database.Schema.Properties)
 
 	// Check if version exists
-	versionProp, hasVersion := template.Schema.Properties["version"]
+	versionProp, hasVersion := database.Schema.Properties["version"]
 	assert.True(t, hasVersion, "Schema should have a 'version' property")
 	if hasVersion {
 		t.Logf("Version property: %+v", versionProp)
 	}
 
 	// Check if s3 exists
-	s3Prop, hasS3 := template.Schema.Properties["s3"]
+	s3Prop, hasS3 := database.Schema.Properties["s3"]
 	assert.True(t, hasS3, "Schema should have an 's3' property")
 
 	// If s3 exists, verify it was imported correctly
@@ -76,7 +76,7 @@ func TestFetchTemplate(t *testing.T) {
 	}
 
 	// Check if labels exists
-	labelsProp, hasLabels := template.Schema.Properties["labels"]
+	labelsProp, hasLabels := database.Schema.Properties["labels"]
 	assert.True(t, hasLabels, "Schema should have a 'labels' property")
 
 	// If labels exists, verify it was imported correctly
@@ -96,61 +96,61 @@ func TestFetchTemplate(t *testing.T) {
 	}
 }
 
-func TestFetchTemplateErrors(t *testing.T) {
+func TestFetchDatabaseErrors(t *testing.T) {
 	// Setup mock server with errors
 	server := setupErrorMockServer()
 	defer server.Close()
 
 	// Override the base URL constant for testing
-	originalBaseURL := BaseTemplateURL
-	BaseTemplateURL = server.URL + "/%s"
+	originalBaseURL := BaseDatabaseURL
+	BaseDatabaseURL = server.URL + "/%s"
 	defer func() {
-		BaseTemplateURL = originalBaseURL
+		BaseDatabaseURL = originalBaseURL
 	}()
 
 	// Create provider
-	provider := NewUnbindTemplateProvider()
+	provider := NewDatabaseProvider()
 	ctx := context.Background()
 
 	t.Run("Metadata not found", func(t *testing.T) {
-		_, err := provider.FetchTemplate(ctx, "v0.1", "databases", "not-found")
+		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "not-found")
 		t.Logf("Error: %v", err)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to fetch metadata")
 	})
 
 	t.Run("Invalid metadata", func(t *testing.T) {
-		_, err := provider.FetchTemplate(ctx, "v0.1", "databases", "invalid-metadata")
+		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "invalid-metadata")
 		t.Logf("Error: %v", err)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to parse metadata")
 	})
 
-	t.Run("Template not found", func(t *testing.T) {
-		_, err := provider.FetchTemplate(ctx, "v0.1", "databases", "missing-template")
+	t.Run("Database not found", func(t *testing.T) {
+		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "missing-database")
 		t.Logf("Error: %v", err)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to fetch template")
+		assert.Contains(t, err.Error(), "failed to fetch database")
 	})
 
 	// Since these next tests depend on how resolveRelativePath works in your code,
 	// we'll skip detailed assertions for now
 	t.Run("Import not found", func(t *testing.T) {
-		_, err := provider.FetchTemplate(ctx, "v0.1", "databases", "missing-import")
+		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "missing-import")
 		t.Logf("Import not found error: %v", err)
 		assert.Error(t, err)
 		// The error might contain different text depending on your implementation
 	})
 
 	t.Run("Invalid import", func(t *testing.T) {
-		_, err := provider.FetchTemplate(ctx, "v0.1", "databases", "invalid-import")
+		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "invalid-import")
 		t.Logf("Invalid import error: %v", err)
 		assert.Error(t, err)
 		// The error might contain different text depending on your implementation
 	})
 
 	t.Run("Invalid reference", func(t *testing.T) {
-		_, err := provider.FetchTemplate(ctx, "v0.1", "databases", "invalid-reference")
+		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "invalid-reference")
 		t.Logf("Invalid reference error: %v", err)
 		assert.Error(t, err)
 		// The error might contain different text depending on your implementation
@@ -164,29 +164,29 @@ func TestResolveRelativePath(t *testing.T) {
 		expected     string
 	}{
 		{
-			basePath:     "templates/databases/postgres",
+			basePath:     "definitions/databases/postgres",
 			relativePath: "../common/s3-schema.yaml",
-			expected:     "templates/databases/common/s3-schema.yaml",
+			expected:     "definitions/databases/common/s3-schema.yaml",
 		},
 		{
-			basePath:     "templates/databases/postgres",
+			basePath:     "definitions/databases/postgres",
 			relativePath: "../common/labels.yaml",
-			expected:     "templates/databases/common/labels.yaml",
+			expected:     "definitions/databases/common/labels.yaml",
 		},
 		{
-			basePath:     "templates/databases/postgres",
+			basePath:     "definitions/databases/postgres",
 			relativePath: "./schema.yaml",
-			expected:     "templates/databases/postgres/schema.yaml",
+			expected:     "definitions/databases/postgres/schema.yaml",
 		},
 		{
-			basePath:     "templates/databases/postgres",
+			basePath:     "definitions/databases/postgres",
 			relativePath: "schema.yaml",
 			expected:     "schema.yaml",
 		},
 		{
-			basePath:     "templates/databases/postgres/nested",
+			basePath:     "definitions/databases/postgres/nested",
 			relativePath: "../../../common/schema.yaml",
-			expected:     "templates/common/schema.yaml",
+			expected:     "definitions/common/schema.yaml",
 		},
 	}
 
@@ -204,7 +204,7 @@ func setupMockServer() *httptest.Server {
 		fmt.Printf("Mock server received request: %s\n", r.URL.Path)
 
 		switch r.URL.Path {
-		case "/v0.1/templates/databases/postgres/metadata.yaml":
+		case "/v0.1/definitions/databases/postgres/metadata.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`name: "PostgreSQL Database"
 description: "Standard PostgreSQL database using zalando postgres-operator"
@@ -239,7 +239,7 @@ schema:
   required:
     - replicas`))
 
-		case "/v0.1/templates/databases/postgres/template.yaml":
+		case "/v0.1/definitions/databases/postgres/definition.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`apiVersion: "acid.zalan.do/v1"
 kind: postgresql
@@ -249,10 +249,10 @@ metadata:
   labels:
     # Zalando labels
     team: "{{ .teamId }}"
-    # Template-specific labels
-    unbind/template-name: "{{ .template.name }}"
-    unbind/template-version: "{{ .template.version }}"
-    unbind/template-category: "databases"
+    # Database-specific labels
+    unbind/usd-name: "{{ .database.name }}"
+    unbind/usd-version: "{{ .database.version }}"
+    unbind/usd-category: "databases"
     {{- range $key, $value := .parameters.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
@@ -264,8 +264,8 @@ spec:
   volume:
     size: "{{ .parameters.storage }}"`))
 
-		// This is the path after resolveRelativePath is applied to "../common/s3-schema.yaml" from "templates/postgres"
-		case "/v0.1/templates/common/s3-schema.yaml":
+		// This is the path after resolveRelativePath is applied to "../common/s3-schema.yaml" from "definitions/postgres"
+		case "/v0.1/definitions/common/s3-schema.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 description: "S3 configuration"
@@ -283,8 +283,8 @@ properties:
 required:
   - bucketName`))
 
-		// This is the path after resolveRelativePath is applied to "../common/labels.yaml" from "templates/postgres"
-		case "/v0.1/templates/common/labels.yaml":
+		// This is the path after resolveRelativePath is applied to "../common/labels.yaml" from "definitions/postgres"
+		case "/v0.1/definitions/common/labels.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 description: "Custom labels to add to the PostgreSQL resource"
@@ -307,24 +307,24 @@ func setupErrorMockServer() *httptest.Server {
 
 		switch r.URL.Path {
 		// Test case 1: Not Found
-		case "/v0.1/templates/databases/not-found/metadata.yaml":
+		case "/v0.1/definitions/databases/not-found/metadata.yaml":
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Not found"))
 
 		// Test case 2: Invalid Metadata
-		case "/v0.1/templates/databases/invalid-metadata/metadata.yaml":
+		case "/v0.1/definitions/databases/invalid-metadata/metadata.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`invalid-yaml: [this is not valid yaml`))
 			// Test case 2: Invalid Metadata
-		case "/v0.1/templates/databases/invalid-metadata/template.yaml":
+		case "/v0.1/definitions/databases/invalid-metadata/definition.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`invalid-yaml: [this is not valid yaml`))
 
-		// Test case 3: Missing Template
-		case "/v0.1/templates/databases/missing-template/metadata.yaml":
+		// Test case 3: Missing Database
+		case "/v0.1/definitions/databases/missing-database/metadata.yaml":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`name: "Test Template"
-description: "Test template with missing template file"
+			w.Write([]byte(`name: "Test Database"
+description: "Test database with missing database file"
 type: "test"
 version: "1.0.0"
 schema:
@@ -332,15 +332,15 @@ schema:
     test:
       type: "string"`))
 
-		case "/v0.1/templates/databases/missing-template/template.yaml":
+		case "/v0.1/definitions/databases/missing-database/definition.yaml":
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Not found"))
 
 		// Test case 4: Missing Import
-		case "/v0.1/templates/databases/missing-import/metadata.yaml":
+		case "/v0.1/definitions/databases/missing-import/metadata.yaml":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`name: "Test Template"
-description: "Test template with missing import"
+			w.Write([]byte(`name: "Test Database"
+description: "Test database with missing import"
 type: "test"
 version: "1.0.0"
 imports:
@@ -357,24 +357,24 @@ schema:
     labels:
       $ref: "#/imports/labels"`))
 
-		case "/v0.1/templates/databases/missing-import/template.yaml":
+		case "/v0.1/definitions/databases/missing-import/definition.yaml":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`template: "content"`))
+			w.Write([]byte(`database: "content"`))
 
 		// This is where the import would be resolved to
-		case "/v0.1/templates/common/missing-schema.yaml":
+		case "/v0.1/definitions/common/missing-schema.yaml":
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Not found"))
 
-		case "/v0.1/templates/common/missing-labels.yaml":
+		case "/v0.1/definitions/common/missing-labels.yaml":
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Not found"))
 
 		// Test case 5: Invalid Import
-		case "/v0.1/templates/databases/invalid-import/metadata.yaml":
+		case "/v0.1/definitions/databases/invalid-import/metadata.yaml":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`name: "Test Template"
-description: "Test template with invalid import"
+			w.Write([]byte(`name: "Test Database"
+description: "Test database with invalid import"
 type: "test"
 version: "1.0.0"
 imports:
@@ -391,23 +391,23 @@ schema:
     labels:
       $ref: "#/imports/labels"`))
 
-		case "/v0.1/templates/databases/invalid-import/template.yaml":
+		case "/v0.1/definitions/databases/invalid-import/definition.yaml":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`template: "content"`))
+			w.Write([]byte(`database: "content"`))
 
-		case "/v0.1/templates/common/invalid-schema.yaml":
+		case "/v0.1/definitions/common/invalid-schema.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`invalid-yaml: [this is not valid yaml`))
 
-		case "/v0.1/templates/common/invalid-labels.yaml":
+		case "/v0.1/definitions/common/invalid-labels.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`invalid-yaml: [this is not valid yaml`))
 
 		// Test case 6: Invalid Reference
-		case "/v0.1/templates/databases/invalid-reference/metadata.yaml":
+		case "/v0.1/definitions/databases/invalid-reference/metadata.yaml":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`name: "Test Template"
-description: "Test template with invalid reference"
+			w.Write([]byte(`name: "Test Database"
+description: "Test database with invalid reference"
 type: "test"
 version: "1.0.0"
 imports:
@@ -424,18 +424,18 @@ schema:
     labels:
       $ref: "invalid-labels-reference"`))
 
-		case "/v0.1/templates/databases/invalid-reference/template.yaml":
+		case "/v0.1/definitions/databases/invalid-reference/definition.yaml":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`template: "content"`))
+			w.Write([]byte(`database: "content"`))
 
-		case "/v0.1/templates/common/valid-schema.yaml":
+		case "/v0.1/definitions/common/valid-schema.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 properties:
   test:
     type: "string"`))
 
-		case "/v0.1/templates/common/valid-labels.yaml":
+		case "/v0.1/definitions/common/valid-labels.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 description: "Custom labels"

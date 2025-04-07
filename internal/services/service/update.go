@@ -43,8 +43,8 @@ type UpdateServiceInput struct {
 	DockerfilePath    *string                `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder - set empty string to reset to default"`
 	DockerfileContext *string                `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder - set empty string to reset to default"`
 
-	// Templates
-	TemplateConfig *map[string]interface{} `json:"template_config,omitempty"`
+	// Databases
+	DatabaseConfig *map[string]interface{} `json:"database_config,omitempty"`
 }
 
 // UpdateService updates a service and its configuration
@@ -131,7 +131,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			Image:             input.Image,
 			DockerfilePath:    input.DockerfilePath,
 			DockerfileContext: input.DockerfileContext,
-			TemplateConfig:    input.TemplateConfig,
+			DatabaseConfig:    input.DatabaseConfig,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)

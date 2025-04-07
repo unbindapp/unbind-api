@@ -1,23 +1,23 @@
-package templates
+package databases
 
-// TemplateMetadata represents the metadata of a template
-type TemplateMetadata struct {
-	Name        string                  `yaml:"name" json:"name"`
-	Description string                  `yaml:"description" json:"description"`
-	Type        string                  `yaml:"type" json:"type"`
-	Version     string                  `yaml:"version" json:"version"`
-	Imports     []TemplateImport        `yaml:"imports,omitempty" json:"imports,omitempty"`
-	Schema      TemplateParameterSchema `yaml:"schema" json:"schema"`
+// DefinitionMetadata represents the metadata of a definition
+type DefinitionMetadata struct {
+	Name        string                    `yaml:"name" json:"name"`
+	Description string                    `yaml:"description" json:"description"`
+	Type        string                    `yaml:"type" json:"type"`
+	Version     string                    `yaml:"version" json:"version"`
+	Imports     []DefinitionImport        `yaml:"imports,omitempty" json:"imports,omitempty"`
+	Schema      DefinitionParameterSchema `yaml:"schema" json:"schema"`
 }
 
-// TemplateImport represents an import of an external schema
-type TemplateImport struct {
+// DefinitionImport represents an import of an external schema
+type DefinitionImport struct {
 	Path string `yaml:"path"`
 	As   string `yaml:"as"`
 }
 
-// TemplateParameterSchema defines the structure for allowed parameters
-type TemplateParameterSchema struct {
+// DefinitionParameterSchema defines the structure for allowed parameters
+type DefinitionParameterSchema struct {
 	Properties map[string]ParameterProperty `yaml:"properties" json:"properties"`
 	Required   []string                     `yaml:"required,omitempty" json:"required,omitempty"`
 	Imports    map[string]interface{}       `json:"-" yaml:"-"` // For resolved imports
@@ -36,13 +36,13 @@ type ParameterProperty struct {
 	Maximum              *float64                     `yaml:"maximum,omitempty" json:"maximum,omitempty"`
 }
 
-// Template represents a fully resolved template
-type Template struct {
-	Name        string                  `json:"name"`
-	Category    TemplateCategoryName    `json:"category"`
-	Description string                  `json:"description"`
-	Type        string                  `json:"type"`
-	Version     string                  `json:"version"`
-	Schema      TemplateParameterSchema `json:"schema"`
-	Content     string                  `json:"-"`
+// Definition represents a fully resolved definition
+type Definition struct {
+	Name        string                    `json:"name"`
+	Category    string                    `json:"category"`
+	Description string                    `json:"description"`
+	Type        string                    `json:"type"`
+	Version     string                    `json:"version"`
+	Schema      DefinitionParameterSchema `json:"schema"`
+	Content     string                    `json:"-"`
 }

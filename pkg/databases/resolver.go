@@ -1,4 +1,4 @@
-package templates
+package databases
 
 import (
 	"context"
@@ -8,27 +8,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// FetchTemplate fetches a template from GitHub
-func (self *UnbindTemplateProvider) FetchTemplate(ctx context.Context, tagVersion string, templateCategory TemplateCategoryName, templateName string) (*Template, error) {
+// FetchDatabaseDefinition fetches a db from GitHub
+func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVersion, dbName string) (*Definition, error) {
 	// Base version URL
-	baseURL := fmt.Sprintf(BaseTemplateURL, tagVersion)
-	// Fetch template files
-	metadataURL := fmt.Sprintf("%s/templates/%s/%s/metadata.yaml", baseURL, templateCategory, templateName)
+	baseURL := fmt.Sprintf(BaseDatabaseURL, tagVersion)
+	// Fetch files
+	metadataURL := fmt.Sprintf("%s/definitions/%s/%s/metadata.yaml", baseURL, DB_CATEGORY, dbName)
 
-	templateURL := fmt.Sprintf("%s/templates/%s/%s/template.yaml", baseURL, templateCategory, templateName)
+	defURL := fmt.Sprintf("%s/definitions/%s/%s/definition.yaml", baseURL, DB_CATEGORY, dbName)
 
 	metadataBytes, err := self.fetchURL(ctx, metadataURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch metadata: %w", err)
 	}
 
-	templateBytes, err := self.fetchURL(ctx, templateURL)
+	defBytes, err := self.fetchURL(ctx, defURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch template: %w", err)
+		return nil, fmt.Errorf("failed to fetch database definition: %w", err)
 	}
 
 	// Parse metadata
-	var metadata TemplateMetadata
+	var metadata DefinitionMetadata
 	if err := yaml.Unmarshal(metadataBytes, &metadata); err != nil {
 		return nil, fmt.Errorf("failed to parse metadata: %w", err)
 	}
@@ -39,11 +39,11 @@ func (self *UnbindTemplateProvider) FetchTemplate(ctx context.Context, tagVersio
 	// Process imports
 	for _, imp := range metadata.Imports {
 		// Handle relative paths for imports
-		// Determine the base directory of the current template
-		templateBasePath := fmt.Sprintf("templates/%s/%s", templateCategory, templateName)
+		// Determine the base directory of the current database
+		dbBasePath := fmt.Sprintf("definitions/%s/%s", DB_CATEGORY, dbName)
 
 		// Resolve the relative path
-		importPath := resolveRelativePath(templateBasePath, imp.Path)
+		importPath := resolveRelativePath(dbBasePath, imp.Path)
 		importURL := fmt.Sprintf("%s/%s", baseURL, importPath)
 
 		importBytes, err := self.fetchURL(ctx, importURL)
@@ -65,16 +65,16 @@ func (self *UnbindTemplateProvider) FetchTemplate(ctx context.Context, tagVersio
 		return nil, fmt.Errorf("failed to resolve references: %w", err)
 	}
 
-	template := &Template{
+	db := &Definition{
 		Name:        metadata.Name,
 		Description: metadata.Description,
 		Type:        metadata.Type,
 		Version:     metadata.Version,
 		Schema:      resolvedSchema,
-		Content:     string(templateBytes),
+		Content:     string(defBytes),
 	}
 
-	return template, nil
+	return db, nil
 }
 
 // resolveRelativePath resolves a relative path from a base path
@@ -111,7 +111,7 @@ func resolveRelativePath(basePath, relativePath string) string {
 }
 
 // resolveReferences resolves $ref references in the schema
-func (self *UnbindTemplateProvider) resolveReferences(schema TemplateParameterSchema) (TemplateParameterSchema, error) {
+func (self *DatabaseProvider) resolveReferences(schema DefinitionParameterSchema) (DefinitionParameterSchema, error) {
 	// Create a deep copy of the schema
 	resolvedSchema := schema
 

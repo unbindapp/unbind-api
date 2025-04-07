@@ -160,17 +160,15 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
-	if service.Edges.ServiceConfig.Type == schema.ServiceTypeTemplate {
-		if service.Edges.ServiceConfig.Template == nil ||
-			service.Edges.ServiceConfig.TemplateVersion == nil ||
-			service.Edges.ServiceConfig.TemplateReleaseVersion == nil ||
-			service.Edges.ServiceConfig.TemplateCategory == nil {
-			return nil, fmt.Errorf("Service template name is nil")
+	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase {
+		if service.Edges.ServiceConfig.Database == nil ||
+			service.Edges.ServiceConfig.DefinitionVersion == nil {
+			return nil, fmt.Errorf("Service database name pr defomotopm is nil")
 		}
 
 		config := make(map[string]interface{})
-		if service.Edges.ServiceConfig.TemplateConfig != nil {
-			config = service.Edges.ServiceConfig.TemplateConfig
+		if service.Edges.ServiceConfig.DatabaseConfig != nil {
+			config = service.Edges.ServiceConfig.DatabaseConfig
 		}
 
 		// Marshal as string
@@ -179,10 +177,8 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 			return nil, err
 		}
 
-		env["SERVICE_TEMPLATE_NAME"] = *service.Edges.ServiceConfig.Template
-		env["SERVICE_TEMPLATE_VERSION"] = *service.Edges.ServiceConfig.TemplateVersion
-		env["SERVICE_TEMPLATE_VERSION_REF"] = *service.Edges.ServiceConfig.TemplateReleaseVersion
-		env["SERVICE_TEMPLATE_CATEGORY"] = string(*service.Edges.ServiceConfig.TemplateCategory)
+		env["SERVICE_DATABASE_NAME"] = *service.Edges.ServiceConfig.Database
+		env["SERVICE_DATABASE_USD_VERSION"] = *service.Edges.ServiceConfig.DefinitionVersion
 		env["SERVICE_TEMPLATE_CONFIG"] = string(marshalledConfig)
 	}
 

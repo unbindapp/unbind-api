@@ -8,7 +8,6 @@ import (
 
 	// Import the operator API package
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -46,12 +45,10 @@ type ServiceParams struct {
 	Public   *bool
 	Replicas *int32
 
-	// Template
-	TemplateName       string
-	TemplateVersion    string
-	TemplateVersionRef string
-	TemplateCategory   templates.TemplateCategoryName
-	TemplateConfig     runtime.RawExtension
+	// Database
+	DatabaseName          string
+	DatabaseUSDVersionRef string
+	DatabaseConfig        runtime.RawExtension
 }
 
 // CreateServiceObject creates a new v1.Service object with the provided parameters
@@ -124,16 +121,16 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 		service.Spec.Config.Replicas = &replicas
 	}
 
-	// Set template configuration if provided
-	if params.Type == schema.ServiceTypeTemplate {
-		service.Spec.Config.Template = v1.TemplateSpec{
-			Name:       params.TemplateName,
-			Version:    params.TemplateVersion,
-			VersionRef: params.TemplateVersionRef,
-			Category:   params.TemplateCategory,
-			Config:     params.TemplateConfig,
-		}
-	}
+	// // Set database configuration if provided
+	// if params.Type == schema.ServiceTypeDatabase {
+	// 	service.Spec.Config.Template = v1.TemplateSpec{
+	// 		Name:       params.TemplateName,
+	// 		Version:    params.TemplateVersion,
+	// 		VersionRef: params.TemplateVersionRef,
+	// 		Category:   params.TemplateCategory,
+	// 		Config:     params.TemplateConfig,
+	// 	}
+	// }
 
 	return service, nil
 }
@@ -144,18 +141,18 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 	// Generate a sanitized service name from the repo name
 	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
 
-	templateConfig := runtime.RawExtension{
+	dbConfig := runtime.RawExtension{
 		Raw: []byte("{}"),
 	}
 
-	if self.builderConfig.ServiceTemplateConfig != "" {
+	if self.builderConfig.ServiceDatabaseConfig != "" {
 		// Parse it to validate the format
 		var parsed map[string]interface{}
-		if err := json.Unmarshal([]byte(self.builderConfig.ServiceTemplateConfig), &parsed); err != nil {
+		if err := json.Unmarshal([]byte(self.builderConfig.ServiceDatabaseConfig), &parsed); err != nil {
 			return nil, nil, fmt.Errorf("failed to parse template config: %v", err)
 		}
-		templateConfig = runtime.RawExtension{
-			Raw: []byte(self.builderConfig.ServiceTemplateConfig),
+		dbConfig = runtime.RawExtension{
+			Raw: []byte(self.builderConfig.ServiceDatabaseConfig),
 		}
 	}
 
@@ -181,11 +178,9 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		Public:           self.builderConfig.ServicePublic,
 		Replicas:         self.builderConfig.ServiceReplicas,
 		// Template
-		TemplateConfig:     templateConfig,
-		TemplateName:       self.builderConfig.ServiceTemplateName,
-		TemplateVersion:    self.builderConfig.ServiceTemplateVersion,
-		TemplateVersionRef: self.builderConfig.ServiceTemplateVersionRef,
-		TemplateCategory:   self.builderConfig.ServiceTemplateCategory,
+		DatabaseConfig:        dbConfig,
+		DatabaseName:          self.builderConfig.ServiceDatabaseName,
+		DatabaseUSDVersionRef: self.builderConfig.ServiceDatabaseDefinitionVersion,
 	}
 
 	// Set GitHub installation ID if provided

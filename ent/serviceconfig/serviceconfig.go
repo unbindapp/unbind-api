@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	"github.com/unbindapp/unbind-api/pkg/templates"
 )
 
 const (
@@ -29,6 +28,12 @@ const (
 	FieldType = "type"
 	// FieldBuilder holds the string denoting the builder field in the database.
 	FieldBuilder = "builder"
+	// FieldDatabase holds the string denoting the database field in the database.
+	FieldDatabase = "database"
+	// FieldDefinitionVersion holds the string denoting the definition_version field in the database.
+	FieldDefinitionVersion = "definition_version"
+	// FieldDatabaseConfig holds the string denoting the database_config field in the database.
+	FieldDatabaseConfig = "database_config"
 	// FieldDockerfilePath holds the string denoting the dockerfile_path field in the database.
 	FieldDockerfilePath = "dockerfile_path"
 	// FieldDockerfileContext holds the string denoting the dockerfile_context field in the database.
@@ -53,16 +58,6 @@ const (
 	FieldPublic = "public"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
-	// FieldTemplateCategory holds the string denoting the template_category field in the database.
-	FieldTemplateCategory = "template_category"
-	// FieldTemplate holds the string denoting the template field in the database.
-	FieldTemplate = "template"
-	// FieldTemplateReleaseVersion holds the string denoting the template_release_version field in the database.
-	FieldTemplateReleaseVersion = "template_release_version"
-	// FieldTemplateVersion holds the string denoting the template_version field in the database.
-	FieldTemplateVersion = "template_version"
-	// FieldTemplateConfig holds the string denoting the template_config field in the database.
-	FieldTemplateConfig = "template_config"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// Table holds the table name of the serviceconfig in the database.
@@ -84,6 +79,9 @@ var Columns = []string{
 	FieldServiceID,
 	FieldType,
 	FieldBuilder,
+	FieldDatabase,
+	FieldDefinitionVersion,
+	FieldDatabaseConfig,
 	FieldDockerfilePath,
 	FieldDockerfileContext,
 	FieldProvider,
@@ -96,11 +94,6 @@ var Columns = []string{
 	FieldRunCommand,
 	FieldPublic,
 	FieldImage,
-	FieldTemplateCategory,
-	FieldTemplate,
-	FieldTemplateReleaseVersion,
-	FieldTemplateVersion,
-	FieldTemplateConfig,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -133,7 +126,7 @@ var (
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type schema.ServiceType) error {
 	switch _type {
-	case "github", "docker-image", "template":
+	case "github", "docker-image", "database":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for type field: %q", _type)
@@ -170,16 +163,6 @@ func FrameworkValidator(f enum.Framework) error {
 	}
 }
 
-// TemplateCategoryValidator is a validator for the "template_category" field enum values. It is called by the builders before save.
-func TemplateCategoryValidator(tc templates.TemplateCategoryName) error {
-	switch tc.String() {
-	case "databases":
-		return nil
-	default:
-		return fmt.Errorf("serviceconfig: invalid enum value for template_category field: %q", tc)
-	}
-}
-
 // OrderOption defines the ordering options for the ServiceConfig queries.
 type OrderOption func(*sql.Selector)
 
@@ -211,6 +194,16 @@ func ByType(opts ...sql.OrderTermOption) OrderOption {
 // ByBuilder orders the results by the builder field.
 func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
+}
+
+// ByDatabase orders the results by the database field.
+func ByDatabase(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDatabase, opts...).ToFunc()
+}
+
+// ByDefinitionVersion orders the results by the definition_version field.
+func ByDefinitionVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDefinitionVersion, opts...).ToFunc()
 }
 
 // ByDockerfilePath orders the results by the dockerfile_path field.
@@ -261,26 +254,6 @@ func ByPublic(opts ...sql.OrderTermOption) OrderOption {
 // ByImage orders the results by the image field.
 func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
-}
-
-// ByTemplateCategory orders the results by the template_category field.
-func ByTemplateCategory(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTemplateCategory, opts...).ToFunc()
-}
-
-// ByTemplate orders the results by the template field.
-func ByTemplate(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTemplate, opts...).ToFunc()
-}
-
-// ByTemplateReleaseVersion orders the results by the template_release_version field.
-func ByTemplateReleaseVersion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTemplateReleaseVersion, opts...).ToFunc()
-}
-
-// ByTemplateVersion orders the results by the template_version field.
-func ByTemplateVersion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTemplateVersion, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

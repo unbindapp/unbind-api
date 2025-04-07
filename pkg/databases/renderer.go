@@ -1,4 +1,4 @@
-package templates
+package databases
 
 import (
 	"bytes"
@@ -17,13 +17,13 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
-// TemplateRenderer renders templates into Kubernetes resources
-type TemplateRenderer struct {
+// DatabaseRenderer renders a DB definition into Kubernetes resources
+type DatabaseRenderer struct {
 	// Use a custom scheme that can be extended with CRDs
 	scheme *runtime.Scheme
 }
 
-func NewTemplateRenderer() *TemplateRenderer {
+func NewDatabaseRenderer() *DatabaseRenderer {
 	// Create a new scheme that includes the core Kubernetes types
 	s := runtime.NewScheme()
 	scheme.AddToScheme(s)
@@ -31,7 +31,7 @@ func NewTemplateRenderer() *TemplateRenderer {
 	// Add CRD types to the scheme
 	apiextensionsv1.AddToScheme(s)
 
-	r := &TemplateRenderer{
+	r := &DatabaseRenderer{
 		scheme: s,
 	}
 
@@ -46,7 +46,7 @@ func NewTemplateRenderer() *TemplateRenderer {
 	return r
 }
 
-// RenderContext holds the data for template rendering
+// RenderContext holds the data for definition rendering
 type RenderContext struct {
 	// Service info
 	Name          string
@@ -56,40 +56,40 @@ type RenderContext struct {
 	EnvironmentID string
 	ServiceID     string
 
-	// Template info
-	Template Template
+	// Definition info
+	Definition Definition
 
 	// Parameters from service
 	Parameters map[string]interface{}
 }
 
-// Render renders a template to YAML string that can be applied to Kubernetes
-func (r *TemplateRenderer) Render(unbindTemplate *Template, context *RenderContext) (string, error) {
+// Render renders a definition to YAML string that can be applied to Kubernetes
+func (r *DatabaseRenderer) Render(unbindDefinition *Definition, context *RenderContext) (string, error) {
 	// Apply defaults to parameters
-	context.Parameters = r.applyDefaults(context.Parameters, unbindTemplate.Schema)
+	context.Parameters = r.applyDefaults(context.Parameters, unbindDefinition.Schema)
 
-	// Set template info
-	context.Template.Name = unbindTemplate.Name
-	context.Template.Category = unbindTemplate.Category
-	context.Template.Version = unbindTemplate.Version
-	context.Template.Type = unbindTemplate.Type
+	// Set definition info
+	context.Definition.Name = unbindDefinition.Name
+	context.Definition.Category = unbindDefinition.Category
+	context.Definition.Version = unbindDefinition.Version
+	context.Definition.Type = unbindDefinition.Type
 
-	// Process template
+	// Process definition
 	var buf bytes.Buffer
-	tmpl, err := template.New("template").Funcs(sprig.FuncMap()).Parse(unbindTemplate.Content)
+	tmpl, err := template.New("definition").Funcs(sprig.FuncMap()).Parse(unbindDefinition.Content)
 	if err != nil {
-		return "", fmt.Errorf("template parsing error: %w", err)
+		return "", fmt.Errorf("definition parsing error: %w", err)
 	}
 
 	if err := tmpl.Execute(&buf, context); err != nil {
-		return "", fmt.Errorf("template execution error: %w", err)
+		return "", fmt.Errorf("definition execution error: %w", err)
 	}
 
 	return buf.String(), nil
 }
 
 // RenderToObjects parses the rendered YAML into Kubernetes objects
-func (r *TemplateRenderer) RenderToObjects(renderedYAML string) ([]runtime.Object, error) {
+func (r *DatabaseRenderer) RenderToObjects(renderedYAML string) ([]runtime.Object, error) {
 	var resources []runtime.Object
 	decoder := serializer.NewCodecFactory(r.scheme).UniversalDeserializer()
 
@@ -122,7 +122,7 @@ func (r *TemplateRenderer) RenderToObjects(renderedYAML string) ([]runtime.Objec
 }
 
 // decodeToUnstructured decodes a YAML document to an unstructured.Unstructured object
-func (r *TemplateRenderer) decodeToUnstructured(doc string) (*unstructured.Unstructured, error) {
+func (r *DatabaseRenderer) decodeToUnstructured(doc string) (*unstructured.Unstructured, error) {
 	obj := &unstructured.Unstructured{}
 
 	reader := strings.NewReader(doc)
@@ -142,7 +142,7 @@ func (r *TemplateRenderer) decodeToUnstructured(doc string) (*unstructured.Unstr
 
 // RegisterCRD registers a custom resource definition with the renderer
 // For custom CRDs it enabled better validation
-func (r *TemplateRenderer) RegisterCRD(gvk schema.GroupVersionKind, obj runtime.Object) {
+func (r *DatabaseRenderer) RegisterCRD(gvk schema.GroupVersionKind, obj runtime.Object) {
 	// Add the type to the scheme
 	r.scheme.AddKnownTypeWithName(gvk, obj)
 
@@ -153,7 +153,7 @@ func (r *TemplateRenderer) RegisterCRD(gvk schema.GroupVersionKind, obj runtime.
 }
 
 // Validate validates parameters against the schema
-func (r *TemplateRenderer) Validate(params map[string]interface{}, schema TemplateParameterSchema) error {
+func (r *DatabaseRenderer) Validate(params map[string]interface{}, schema DefinitionParameterSchema) error {
 	// Check required fields
 	for _, required := range schema.Required {
 		if _, ok := params[required]; !ok {
@@ -177,7 +177,7 @@ func (r *TemplateRenderer) Validate(params map[string]interface{}, schema Templa
 }
 
 // validateProperty validates a property against its schema
-func (r *TemplateRenderer) validateProperty(name string, value interface{}, prop ParameterProperty) error {
+func (r *DatabaseRenderer) validateProperty(name string, value interface{}, prop ParameterProperty) error {
 	// Skip validation if value is nil
 	if value == nil {
 		return nil
@@ -272,7 +272,7 @@ func (r *TemplateRenderer) validateProperty(name string, value interface{}, prop
 }
 
 // applyDefaults applies default values from the schema
-func (r *TemplateRenderer) applyDefaults(params map[string]interface{}, schema TemplateParameterSchema) map[string]interface{} {
+func (r *DatabaseRenderer) applyDefaults(params map[string]interface{}, schema DefinitionParameterSchema) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	// Copy all provided parameters
@@ -287,7 +287,7 @@ func (r *TemplateRenderer) applyDefaults(params map[string]interface{}, schema T
 }
 
 // applyDefaultsRecursive applies defaults recursively
-func (r *TemplateRenderer) applyDefaultsRecursive(params map[string]interface{}, properties map[string]ParameterProperty, prefix string) {
+func (r *DatabaseRenderer) applyDefaultsRecursive(params map[string]interface{}, properties map[string]ParameterProperty, prefix string) {
 	for name, prop := range properties {
 		fullName := name
 		if prefix != "" {

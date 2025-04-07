@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -58,12 +57,10 @@ type Config struct {
 	ServiceDockerfilePath    string                `env:"SERVICE_DOCKERFILE_PATH"`    // Path to Dockerfile in the repo (optional)
 	ServiceDockerfileContext string                `env:"SERVICE_DOCKERFILE_CONTEXT"` // Path to Dockerfile context in the repo (optional)
 	ServiceImage             string                `env:"SERVICE_IMAGE"`              // Custom image if not building from git
-	// Template data
-	ServiceTemplateName       string                         `env:"SERVICE_TEMPLATE_NAME"`
-	ServiceTemplateVersion    string                         `env:"SERVICE_TEMPLATE_VERSION"`
-	ServiceTemplateVersionRef string                         `env:"SERVICE_TEMPLATE_VERSION_REF"`
-	ServiceTemplateCategory   templates.TemplateCategoryName `env:"SERVICE_TEMPLATE_CATEGORY"`
-	ServiceTemplateConfig     string                         `env:"SERVICE_TEMPLATE_CONFIG"`
+	// Database data
+	ServiceDatabaseName              string `env:"SERVICE_DATABASE_NAME"`
+	ServiceDatabaseDefinitionVersion string `env:"SERVICE_DATABASE_USD_VERSION"`
+	ServiceDatabaseConfig            string `env:"SERVICE_DATABASE_CONFIG"`
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

@@ -17,7 +17,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -72,6 +71,40 @@ func (scc *ServiceConfigCreate) SetType(st schema.ServiceType) *ServiceConfigCre
 // SetBuilder sets the "builder" field.
 func (scc *ServiceConfigCreate) SetBuilder(sb schema.ServiceBuilder) *ServiceConfigCreate {
 	scc.mutation.SetBuilder(sb)
+	return scc
+}
+
+// SetDatabase sets the "database" field.
+func (scc *ServiceConfigCreate) SetDatabase(s string) *ServiceConfigCreate {
+	scc.mutation.SetDatabase(s)
+	return scc
+}
+
+// SetNillableDatabase sets the "database" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDatabase(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetDatabase(*s)
+	}
+	return scc
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (scc *ServiceConfigCreate) SetDefinitionVersion(s string) *ServiceConfigCreate {
+	scc.mutation.SetDefinitionVersion(s)
+	return scc
+}
+
+// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDefinitionVersion(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetDefinitionVersion(*s)
+	}
+	return scc
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (scc *ServiceConfigCreate) SetDatabaseConfig(m map[string]interface{}) *ServiceConfigCreate {
+	scc.mutation.SetDatabaseConfig(m)
 	return scc
 }
 
@@ -227,68 +260,6 @@ func (scc *ServiceConfigCreate) SetNillableImage(s *string) *ServiceConfigCreate
 	return scc
 }
 
-// SetTemplateCategory sets the "template_category" field.
-func (scc *ServiceConfigCreate) SetTemplateCategory(tcn templates.TemplateCategoryName) *ServiceConfigCreate {
-	scc.mutation.SetTemplateCategory(tcn)
-	return scc
-}
-
-// SetNillableTemplateCategory sets the "template_category" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableTemplateCategory(tcn *templates.TemplateCategoryName) *ServiceConfigCreate {
-	if tcn != nil {
-		scc.SetTemplateCategory(*tcn)
-	}
-	return scc
-}
-
-// SetTemplate sets the "template" field.
-func (scc *ServiceConfigCreate) SetTemplate(s string) *ServiceConfigCreate {
-	scc.mutation.SetTemplate(s)
-	return scc
-}
-
-// SetNillableTemplate sets the "template" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableTemplate(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetTemplate(*s)
-	}
-	return scc
-}
-
-// SetTemplateReleaseVersion sets the "template_release_version" field.
-func (scc *ServiceConfigCreate) SetTemplateReleaseVersion(s string) *ServiceConfigCreate {
-	scc.mutation.SetTemplateReleaseVersion(s)
-	return scc
-}
-
-// SetNillableTemplateReleaseVersion sets the "template_release_version" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableTemplateReleaseVersion(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetTemplateReleaseVersion(*s)
-	}
-	return scc
-}
-
-// SetTemplateVersion sets the "template_version" field.
-func (scc *ServiceConfigCreate) SetTemplateVersion(s string) *ServiceConfigCreate {
-	scc.mutation.SetTemplateVersion(s)
-	return scc
-}
-
-// SetNillableTemplateVersion sets the "template_version" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableTemplateVersion(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetTemplateVersion(*s)
-	}
-	return scc
-}
-
-// SetTemplateConfig sets the "template_config" field.
-func (scc *ServiceConfigCreate) SetTemplateConfig(m map[string]interface{}) *ServiceConfigCreate {
-	scc.mutation.SetTemplateConfig(m)
-	return scc
-}
-
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -415,11 +386,6 @@ func (scc *ServiceConfigCreate) check() error {
 	if _, ok := scc.mutation.Public(); !ok {
 		return &ValidationError{Name: "public", err: errors.New(`ent: missing required field "ServiceConfig.public"`)}
 	}
-	if v, ok := scc.mutation.TemplateCategory(); ok {
-		if err := serviceconfig.TemplateCategoryValidator(v); err != nil {
-			return &ValidationError{Name: "template_category", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.template_category": %w`, err)}
-		}
-	}
 	if len(scc.mutation.ServiceIDs()) == 0 {
 		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "ServiceConfig.service"`)}
 	}
@@ -475,6 +441,18 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 		_node.Builder = value
 	}
+	if value, ok := scc.mutation.Database(); ok {
+		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
+		_node.Database = &value
+	}
+	if value, ok := scc.mutation.DefinitionVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
+		_node.DefinitionVersion = &value
+	}
+	if value, ok := scc.mutation.DatabaseConfig(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
+		_node.DatabaseConfig = value
+	}
 	if value, ok := scc.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
 		_node.DockerfilePath = &value
@@ -522,26 +500,6 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.Image(); ok {
 		_spec.SetField(serviceconfig.FieldImage, field.TypeString, value)
 		_node.Image = value
-	}
-	if value, ok := scc.mutation.TemplateCategory(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateCategory, field.TypeEnum, value)
-		_node.TemplateCategory = &value
-	}
-	if value, ok := scc.mutation.Template(); ok {
-		_spec.SetField(serviceconfig.FieldTemplate, field.TypeString, value)
-		_node.Template = &value
-	}
-	if value, ok := scc.mutation.TemplateReleaseVersion(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateReleaseVersion, field.TypeString, value)
-		_node.TemplateReleaseVersion = &value
-	}
-	if value, ok := scc.mutation.TemplateVersion(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateVersion, field.TypeString, value)
-		_node.TemplateVersion = &value
-	}
-	if value, ok := scc.mutation.TemplateConfig(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateConfig, field.TypeJSON, value)
-		_node.TemplateConfig = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -657,6 +615,60 @@ func (u *ServiceConfigUpsert) SetBuilder(v schema.ServiceBuilder) *ServiceConfig
 // UpdateBuilder sets the "builder" field to the value that was provided on create.
 func (u *ServiceConfigUpsert) UpdateBuilder() *ServiceConfigUpsert {
 	u.SetExcluded(serviceconfig.FieldBuilder)
+	return u
+}
+
+// SetDatabase sets the "database" field.
+func (u *ServiceConfigUpsert) SetDatabase(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDatabase, v)
+	return u
+}
+
+// UpdateDatabase sets the "database" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDatabase() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDatabase)
+	return u
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (u *ServiceConfigUpsert) ClearDatabase() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDatabase)
+	return u
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (u *ServiceConfigUpsert) SetDefinitionVersion(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDefinitionVersion, v)
+	return u
+}
+
+// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDefinitionVersion() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDefinitionVersion)
+	return u
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (u *ServiceConfigUpsert) ClearDefinitionVersion() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDefinitionVersion)
+	return u
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (u *ServiceConfigUpsert) SetDatabaseConfig(v map[string]interface{}) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDatabaseConfig, v)
+	return u
+}
+
+// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDatabaseConfig() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDatabaseConfig)
+	return u
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (u *ServiceConfigUpsert) ClearDatabaseConfig() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDatabaseConfig)
 	return u
 }
 
@@ -864,96 +876,6 @@ func (u *ServiceConfigUpsert) ClearImage() *ServiceConfigUpsert {
 	return u
 }
 
-// SetTemplateCategory sets the "template_category" field.
-func (u *ServiceConfigUpsert) SetTemplateCategory(v templates.TemplateCategoryName) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldTemplateCategory, v)
-	return u
-}
-
-// UpdateTemplateCategory sets the "template_category" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateTemplateCategory() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldTemplateCategory)
-	return u
-}
-
-// ClearTemplateCategory clears the value of the "template_category" field.
-func (u *ServiceConfigUpsert) ClearTemplateCategory() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldTemplateCategory)
-	return u
-}
-
-// SetTemplate sets the "template" field.
-func (u *ServiceConfigUpsert) SetTemplate(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldTemplate, v)
-	return u
-}
-
-// UpdateTemplate sets the "template" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateTemplate() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldTemplate)
-	return u
-}
-
-// ClearTemplate clears the value of the "template" field.
-func (u *ServiceConfigUpsert) ClearTemplate() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldTemplate)
-	return u
-}
-
-// SetTemplateReleaseVersion sets the "template_release_version" field.
-func (u *ServiceConfigUpsert) SetTemplateReleaseVersion(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldTemplateReleaseVersion, v)
-	return u
-}
-
-// UpdateTemplateReleaseVersion sets the "template_release_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateTemplateReleaseVersion() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldTemplateReleaseVersion)
-	return u
-}
-
-// ClearTemplateReleaseVersion clears the value of the "template_release_version" field.
-func (u *ServiceConfigUpsert) ClearTemplateReleaseVersion() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldTemplateReleaseVersion)
-	return u
-}
-
-// SetTemplateVersion sets the "template_version" field.
-func (u *ServiceConfigUpsert) SetTemplateVersion(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldTemplateVersion, v)
-	return u
-}
-
-// UpdateTemplateVersion sets the "template_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateTemplateVersion() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldTemplateVersion)
-	return u
-}
-
-// ClearTemplateVersion clears the value of the "template_version" field.
-func (u *ServiceConfigUpsert) ClearTemplateVersion() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldTemplateVersion)
-	return u
-}
-
-// SetTemplateConfig sets the "template_config" field.
-func (u *ServiceConfigUpsert) SetTemplateConfig(v map[string]interface{}) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldTemplateConfig, v)
-	return u
-}
-
-// UpdateTemplateConfig sets the "template_config" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateTemplateConfig() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldTemplateConfig)
-	return u
-}
-
-// ClearTemplateConfig clears the value of the "template_config" field.
-func (u *ServiceConfigUpsert) ClearTemplateConfig() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldTemplateConfig)
-	return u
-}
-
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1058,6 +980,69 @@ func (u *ServiceConfigUpsertOne) SetBuilder(v schema.ServiceBuilder) *ServiceCon
 func (u *ServiceConfigUpsertOne) UpdateBuilder() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateBuilder()
+	})
+}
+
+// SetDatabase sets the "database" field.
+func (u *ServiceConfigUpsertOne) SetDatabase(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabase(v)
+	})
+}
+
+// UpdateDatabase sets the "database" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDatabase() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabase()
+	})
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (u *ServiceConfigUpsertOne) ClearDatabase() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabase()
+	})
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (u *ServiceConfigUpsertOne) SetDefinitionVersion(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDefinitionVersion(v)
+	})
+}
+
+// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDefinitionVersion() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDefinitionVersion()
+	})
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (u *ServiceConfigUpsertOne) ClearDefinitionVersion() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDefinitionVersion()
+	})
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (u *ServiceConfigUpsertOne) SetDatabaseConfig(v map[string]interface{}) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabaseConfig(v)
+	})
+}
+
+// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDatabaseConfig() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabaseConfig()
+	})
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (u *ServiceConfigUpsertOne) ClearDatabaseConfig() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabaseConfig()
 	})
 }
 
@@ -1296,111 +1281,6 @@ func (u *ServiceConfigUpsertOne) UpdateImage() *ServiceConfigUpsertOne {
 func (u *ServiceConfigUpsertOne) ClearImage() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearImage()
-	})
-}
-
-// SetTemplateCategory sets the "template_category" field.
-func (u *ServiceConfigUpsertOne) SetTemplateCategory(v templates.TemplateCategoryName) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateCategory(v)
-	})
-}
-
-// UpdateTemplateCategory sets the "template_category" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateTemplateCategory() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateCategory()
-	})
-}
-
-// ClearTemplateCategory clears the value of the "template_category" field.
-func (u *ServiceConfigUpsertOne) ClearTemplateCategory() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateCategory()
-	})
-}
-
-// SetTemplate sets the "template" field.
-func (u *ServiceConfigUpsertOne) SetTemplate(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplate(v)
-	})
-}
-
-// UpdateTemplate sets the "template" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateTemplate() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplate()
-	})
-}
-
-// ClearTemplate clears the value of the "template" field.
-func (u *ServiceConfigUpsertOne) ClearTemplate() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplate()
-	})
-}
-
-// SetTemplateReleaseVersion sets the "template_release_version" field.
-func (u *ServiceConfigUpsertOne) SetTemplateReleaseVersion(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateReleaseVersion(v)
-	})
-}
-
-// UpdateTemplateReleaseVersion sets the "template_release_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateTemplateReleaseVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateReleaseVersion()
-	})
-}
-
-// ClearTemplateReleaseVersion clears the value of the "template_release_version" field.
-func (u *ServiceConfigUpsertOne) ClearTemplateReleaseVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateReleaseVersion()
-	})
-}
-
-// SetTemplateVersion sets the "template_version" field.
-func (u *ServiceConfigUpsertOne) SetTemplateVersion(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateVersion(v)
-	})
-}
-
-// UpdateTemplateVersion sets the "template_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateTemplateVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateVersion()
-	})
-}
-
-// ClearTemplateVersion clears the value of the "template_version" field.
-func (u *ServiceConfigUpsertOne) ClearTemplateVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateVersion()
-	})
-}
-
-// SetTemplateConfig sets the "template_config" field.
-func (u *ServiceConfigUpsertOne) SetTemplateConfig(v map[string]interface{}) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateConfig(v)
-	})
-}
-
-// UpdateTemplateConfig sets the "template_config" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateTemplateConfig() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateConfig()
-	})
-}
-
-// ClearTemplateConfig clears the value of the "template_config" field.
-func (u *ServiceConfigUpsertOne) ClearTemplateConfig() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateConfig()
 	})
 }
 
@@ -1678,6 +1558,69 @@ func (u *ServiceConfigUpsertBulk) UpdateBuilder() *ServiceConfigUpsertBulk {
 	})
 }
 
+// SetDatabase sets the "database" field.
+func (u *ServiceConfigUpsertBulk) SetDatabase(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabase(v)
+	})
+}
+
+// UpdateDatabase sets the "database" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDatabase() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabase()
+	})
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (u *ServiceConfigUpsertBulk) ClearDatabase() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabase()
+	})
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (u *ServiceConfigUpsertBulk) SetDefinitionVersion(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDefinitionVersion(v)
+	})
+}
+
+// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDefinitionVersion() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDefinitionVersion()
+	})
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (u *ServiceConfigUpsertBulk) ClearDefinitionVersion() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDefinitionVersion()
+	})
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (u *ServiceConfigUpsertBulk) SetDatabaseConfig(v map[string]interface{}) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabaseConfig(v)
+	})
+}
+
+// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDatabaseConfig() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabaseConfig()
+	})
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (u *ServiceConfigUpsertBulk) ClearDatabaseConfig() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabaseConfig()
+	})
+}
+
 // SetDockerfilePath sets the "dockerfile_path" field.
 func (u *ServiceConfigUpsertBulk) SetDockerfilePath(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
@@ -1913,111 +1856,6 @@ func (u *ServiceConfigUpsertBulk) UpdateImage() *ServiceConfigUpsertBulk {
 func (u *ServiceConfigUpsertBulk) ClearImage() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearImage()
-	})
-}
-
-// SetTemplateCategory sets the "template_category" field.
-func (u *ServiceConfigUpsertBulk) SetTemplateCategory(v templates.TemplateCategoryName) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateCategory(v)
-	})
-}
-
-// UpdateTemplateCategory sets the "template_category" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateTemplateCategory() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateCategory()
-	})
-}
-
-// ClearTemplateCategory clears the value of the "template_category" field.
-func (u *ServiceConfigUpsertBulk) ClearTemplateCategory() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateCategory()
-	})
-}
-
-// SetTemplate sets the "template" field.
-func (u *ServiceConfigUpsertBulk) SetTemplate(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplate(v)
-	})
-}
-
-// UpdateTemplate sets the "template" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateTemplate() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplate()
-	})
-}
-
-// ClearTemplate clears the value of the "template" field.
-func (u *ServiceConfigUpsertBulk) ClearTemplate() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplate()
-	})
-}
-
-// SetTemplateReleaseVersion sets the "template_release_version" field.
-func (u *ServiceConfigUpsertBulk) SetTemplateReleaseVersion(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateReleaseVersion(v)
-	})
-}
-
-// UpdateTemplateReleaseVersion sets the "template_release_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateTemplateReleaseVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateReleaseVersion()
-	})
-}
-
-// ClearTemplateReleaseVersion clears the value of the "template_release_version" field.
-func (u *ServiceConfigUpsertBulk) ClearTemplateReleaseVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateReleaseVersion()
-	})
-}
-
-// SetTemplateVersion sets the "template_version" field.
-func (u *ServiceConfigUpsertBulk) SetTemplateVersion(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateVersion(v)
-	})
-}
-
-// UpdateTemplateVersion sets the "template_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateTemplateVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateVersion()
-	})
-}
-
-// ClearTemplateVersion clears the value of the "template_version" field.
-func (u *ServiceConfigUpsertBulk) ClearTemplateVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateVersion()
-	})
-}
-
-// SetTemplateConfig sets the "template_config" field.
-func (u *ServiceConfigUpsertBulk) SetTemplateConfig(v map[string]interface{}) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetTemplateConfig(v)
-	})
-}
-
-// UpdateTemplateConfig sets the "template_config" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateTemplateConfig() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateTemplateConfig()
-	})
-}
-
-// ClearTemplateConfig clears the value of the "template_config" field.
-func (u *ServiceConfigUpsertBulk) ClearTemplateConfig() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearTemplateConfig()
 	})
 }
 

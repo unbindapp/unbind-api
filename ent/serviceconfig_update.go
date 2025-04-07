@@ -18,7 +18,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -81,6 +80,58 @@ func (scu *ServiceConfigUpdate) SetNillableBuilder(sb *schema.ServiceBuilder) *S
 	if sb != nil {
 		scu.SetBuilder(*sb)
 	}
+	return scu
+}
+
+// SetDatabase sets the "database" field.
+func (scu *ServiceConfigUpdate) SetDatabase(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDatabase(s)
+	return scu
+}
+
+// SetNillableDatabase sets the "database" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDatabase(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetDatabase(*s)
+	}
+	return scu
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (scu *ServiceConfigUpdate) ClearDatabase() *ServiceConfigUpdate {
+	scu.mutation.ClearDatabase()
+	return scu
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (scu *ServiceConfigUpdate) SetDefinitionVersion(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDefinitionVersion(s)
+	return scu
+}
+
+// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDefinitionVersion(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetDefinitionVersion(*s)
+	}
+	return scu
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (scu *ServiceConfigUpdate) ClearDefinitionVersion() *ServiceConfigUpdate {
+	scu.mutation.ClearDefinitionVersion()
+	return scu
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (scu *ServiceConfigUpdate) SetDatabaseConfig(m map[string]interface{}) *ServiceConfigUpdate {
+	scu.mutation.SetDatabaseConfig(m)
+	return scu
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (scu *ServiceConfigUpdate) ClearDatabaseConfig() *ServiceConfigUpdate {
+	scu.mutation.ClearDatabaseConfig()
 	return scu
 }
 
@@ -309,98 +360,6 @@ func (scu *ServiceConfigUpdate) ClearImage() *ServiceConfigUpdate {
 	return scu
 }
 
-// SetTemplateCategory sets the "template_category" field.
-func (scu *ServiceConfigUpdate) SetTemplateCategory(tcn templates.TemplateCategoryName) *ServiceConfigUpdate {
-	scu.mutation.SetTemplateCategory(tcn)
-	return scu
-}
-
-// SetNillableTemplateCategory sets the "template_category" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableTemplateCategory(tcn *templates.TemplateCategoryName) *ServiceConfigUpdate {
-	if tcn != nil {
-		scu.SetTemplateCategory(*tcn)
-	}
-	return scu
-}
-
-// ClearTemplateCategory clears the value of the "template_category" field.
-func (scu *ServiceConfigUpdate) ClearTemplateCategory() *ServiceConfigUpdate {
-	scu.mutation.ClearTemplateCategory()
-	return scu
-}
-
-// SetTemplate sets the "template" field.
-func (scu *ServiceConfigUpdate) SetTemplate(s string) *ServiceConfigUpdate {
-	scu.mutation.SetTemplate(s)
-	return scu
-}
-
-// SetNillableTemplate sets the "template" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableTemplate(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetTemplate(*s)
-	}
-	return scu
-}
-
-// ClearTemplate clears the value of the "template" field.
-func (scu *ServiceConfigUpdate) ClearTemplate() *ServiceConfigUpdate {
-	scu.mutation.ClearTemplate()
-	return scu
-}
-
-// SetTemplateReleaseVersion sets the "template_release_version" field.
-func (scu *ServiceConfigUpdate) SetTemplateReleaseVersion(s string) *ServiceConfigUpdate {
-	scu.mutation.SetTemplateReleaseVersion(s)
-	return scu
-}
-
-// SetNillableTemplateReleaseVersion sets the "template_release_version" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableTemplateReleaseVersion(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetTemplateReleaseVersion(*s)
-	}
-	return scu
-}
-
-// ClearTemplateReleaseVersion clears the value of the "template_release_version" field.
-func (scu *ServiceConfigUpdate) ClearTemplateReleaseVersion() *ServiceConfigUpdate {
-	scu.mutation.ClearTemplateReleaseVersion()
-	return scu
-}
-
-// SetTemplateVersion sets the "template_version" field.
-func (scu *ServiceConfigUpdate) SetTemplateVersion(s string) *ServiceConfigUpdate {
-	scu.mutation.SetTemplateVersion(s)
-	return scu
-}
-
-// SetNillableTemplateVersion sets the "template_version" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableTemplateVersion(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetTemplateVersion(*s)
-	}
-	return scu
-}
-
-// ClearTemplateVersion clears the value of the "template_version" field.
-func (scu *ServiceConfigUpdate) ClearTemplateVersion() *ServiceConfigUpdate {
-	scu.mutation.ClearTemplateVersion()
-	return scu
-}
-
-// SetTemplateConfig sets the "template_config" field.
-func (scu *ServiceConfigUpdate) SetTemplateConfig(m map[string]interface{}) *ServiceConfigUpdate {
-	scu.mutation.SetTemplateConfig(m)
-	return scu
-}
-
-// ClearTemplateConfig clears the value of the "template_config" field.
-func (scu *ServiceConfigUpdate) ClearTemplateConfig() *ServiceConfigUpdate {
-	scu.mutation.ClearTemplateConfig()
-	return scu
-}
-
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -475,11 +434,6 @@ func (scu *ServiceConfigUpdate) check() error {
 			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
 		}
 	}
-	if v, ok := scu.mutation.TemplateCategory(); ok {
-		if err := serviceconfig.TemplateCategoryValidator(v); err != nil {
-			return &ValidationError{Name: "template_category", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.template_category": %w`, err)}
-		}
-	}
 	if scu.mutation.ServiceCleared() && len(scu.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ServiceConfig.service"`)
 	}
@@ -512,6 +466,24 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := scu.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := scu.mutation.Database(); ok {
+		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
+	}
+	if scu.mutation.DatabaseCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabase, field.TypeString)
+	}
+	if value, ok := scu.mutation.DefinitionVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
+	}
+	if scu.mutation.DefinitionVersionCleared() {
+		_spec.ClearField(serviceconfig.FieldDefinitionVersion, field.TypeString)
+	}
+	if value, ok := scu.mutation.DatabaseConfig(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
+	}
+	if scu.mutation.DatabaseConfigCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
 	}
 	if value, ok := scu.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
@@ -588,36 +560,6 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.ImageCleared() {
 		_spec.ClearField(serviceconfig.FieldImage, field.TypeString)
-	}
-	if value, ok := scu.mutation.TemplateCategory(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateCategory, field.TypeEnum, value)
-	}
-	if scu.mutation.TemplateCategoryCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateCategory, field.TypeEnum)
-	}
-	if value, ok := scu.mutation.Template(); ok {
-		_spec.SetField(serviceconfig.FieldTemplate, field.TypeString, value)
-	}
-	if scu.mutation.TemplateCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplate, field.TypeString)
-	}
-	if value, ok := scu.mutation.TemplateReleaseVersion(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateReleaseVersion, field.TypeString, value)
-	}
-	if scu.mutation.TemplateReleaseVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateReleaseVersion, field.TypeString)
-	}
-	if value, ok := scu.mutation.TemplateVersion(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateVersion, field.TypeString, value)
-	}
-	if scu.mutation.TemplateVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateVersion, field.TypeString)
-	}
-	if value, ok := scu.mutation.TemplateConfig(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateConfig, field.TypeJSON, value)
-	}
-	if scu.mutation.TemplateConfigCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateConfig, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -715,6 +657,58 @@ func (scuo *ServiceConfigUpdateOne) SetNillableBuilder(sb *schema.ServiceBuilder
 	if sb != nil {
 		scuo.SetBuilder(*sb)
 	}
+	return scuo
+}
+
+// SetDatabase sets the "database" field.
+func (scuo *ServiceConfigUpdateOne) SetDatabase(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDatabase(s)
+	return scuo
+}
+
+// SetNillableDatabase sets the "database" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDatabase(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetDatabase(*s)
+	}
+	return scuo
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (scuo *ServiceConfigUpdateOne) ClearDatabase() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDatabase()
+	return scuo
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (scuo *ServiceConfigUpdateOne) SetDefinitionVersion(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDefinitionVersion(s)
+	return scuo
+}
+
+// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDefinitionVersion(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetDefinitionVersion(*s)
+	}
+	return scuo
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (scuo *ServiceConfigUpdateOne) ClearDefinitionVersion() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDefinitionVersion()
+	return scuo
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (scuo *ServiceConfigUpdateOne) SetDatabaseConfig(m map[string]interface{}) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDatabaseConfig(m)
+	return scuo
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (scuo *ServiceConfigUpdateOne) ClearDatabaseConfig() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDatabaseConfig()
 	return scuo
 }
 
@@ -943,98 +937,6 @@ func (scuo *ServiceConfigUpdateOne) ClearImage() *ServiceConfigUpdateOne {
 	return scuo
 }
 
-// SetTemplateCategory sets the "template_category" field.
-func (scuo *ServiceConfigUpdateOne) SetTemplateCategory(tcn templates.TemplateCategoryName) *ServiceConfigUpdateOne {
-	scuo.mutation.SetTemplateCategory(tcn)
-	return scuo
-}
-
-// SetNillableTemplateCategory sets the "template_category" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableTemplateCategory(tcn *templates.TemplateCategoryName) *ServiceConfigUpdateOne {
-	if tcn != nil {
-		scuo.SetTemplateCategory(*tcn)
-	}
-	return scuo
-}
-
-// ClearTemplateCategory clears the value of the "template_category" field.
-func (scuo *ServiceConfigUpdateOne) ClearTemplateCategory() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearTemplateCategory()
-	return scuo
-}
-
-// SetTemplate sets the "template" field.
-func (scuo *ServiceConfigUpdateOne) SetTemplate(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetTemplate(s)
-	return scuo
-}
-
-// SetNillableTemplate sets the "template" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableTemplate(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetTemplate(*s)
-	}
-	return scuo
-}
-
-// ClearTemplate clears the value of the "template" field.
-func (scuo *ServiceConfigUpdateOne) ClearTemplate() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearTemplate()
-	return scuo
-}
-
-// SetTemplateReleaseVersion sets the "template_release_version" field.
-func (scuo *ServiceConfigUpdateOne) SetTemplateReleaseVersion(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetTemplateReleaseVersion(s)
-	return scuo
-}
-
-// SetNillableTemplateReleaseVersion sets the "template_release_version" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableTemplateReleaseVersion(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetTemplateReleaseVersion(*s)
-	}
-	return scuo
-}
-
-// ClearTemplateReleaseVersion clears the value of the "template_release_version" field.
-func (scuo *ServiceConfigUpdateOne) ClearTemplateReleaseVersion() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearTemplateReleaseVersion()
-	return scuo
-}
-
-// SetTemplateVersion sets the "template_version" field.
-func (scuo *ServiceConfigUpdateOne) SetTemplateVersion(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetTemplateVersion(s)
-	return scuo
-}
-
-// SetNillableTemplateVersion sets the "template_version" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableTemplateVersion(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetTemplateVersion(*s)
-	}
-	return scuo
-}
-
-// ClearTemplateVersion clears the value of the "template_version" field.
-func (scuo *ServiceConfigUpdateOne) ClearTemplateVersion() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearTemplateVersion()
-	return scuo
-}
-
-// SetTemplateConfig sets the "template_config" field.
-func (scuo *ServiceConfigUpdateOne) SetTemplateConfig(m map[string]interface{}) *ServiceConfigUpdateOne {
-	scuo.mutation.SetTemplateConfig(m)
-	return scuo
-}
-
-// ClearTemplateConfig clears the value of the "template_config" field.
-func (scuo *ServiceConfigUpdateOne) ClearTemplateConfig() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearTemplateConfig()
-	return scuo
-}
-
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1122,11 +1024,6 @@ func (scuo *ServiceConfigUpdateOne) check() error {
 			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
 		}
 	}
-	if v, ok := scuo.mutation.TemplateCategory(); ok {
-		if err := serviceconfig.TemplateCategoryValidator(v); err != nil {
-			return &ValidationError{Name: "template_category", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.template_category": %w`, err)}
-		}
-	}
 	if scuo.mutation.ServiceCleared() && len(scuo.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ServiceConfig.service"`)
 	}
@@ -1176,6 +1073,24 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if value, ok := scuo.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := scuo.mutation.Database(); ok {
+		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
+	}
+	if scuo.mutation.DatabaseCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabase, field.TypeString)
+	}
+	if value, ok := scuo.mutation.DefinitionVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
+	}
+	if scuo.mutation.DefinitionVersionCleared() {
+		_spec.ClearField(serviceconfig.FieldDefinitionVersion, field.TypeString)
+	}
+	if value, ok := scuo.mutation.DatabaseConfig(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
+	}
+	if scuo.mutation.DatabaseConfigCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
 	}
 	if value, ok := scuo.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
@@ -1252,36 +1167,6 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.ImageCleared() {
 		_spec.ClearField(serviceconfig.FieldImage, field.TypeString)
-	}
-	if value, ok := scuo.mutation.TemplateCategory(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateCategory, field.TypeEnum, value)
-	}
-	if scuo.mutation.TemplateCategoryCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateCategory, field.TypeEnum)
-	}
-	if value, ok := scuo.mutation.Template(); ok {
-		_spec.SetField(serviceconfig.FieldTemplate, field.TypeString, value)
-	}
-	if scuo.mutation.TemplateCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplate, field.TypeString)
-	}
-	if value, ok := scuo.mutation.TemplateReleaseVersion(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateReleaseVersion, field.TypeString, value)
-	}
-	if scuo.mutation.TemplateReleaseVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateReleaseVersion, field.TypeString)
-	}
-	if value, ok := scuo.mutation.TemplateVersion(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateVersion, field.TypeString, value)
-	}
-	if scuo.mutation.TemplateVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateVersion, field.TypeString)
-	}
-	if value, ok := scuo.mutation.TemplateConfig(); ok {
-		_spec.SetField(serviceconfig.FieldTemplateConfig, field.TypeJSON, value)
-	}
-	if scuo.mutation.TemplateConfigCleared() {
-		_spec.ClearField(serviceconfig.FieldTemplateConfig, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

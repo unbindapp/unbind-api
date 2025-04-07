@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -35,6 +34,9 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.UUID("service_id", uuid.UUID{}),
 		field.Enum("type").GoType(ServiceType("")).Comment("Type of service"),
 		field.Enum("builder").GoType(ServiceBuilder("")),
+		field.String("database").Optional().Nillable().Comment("Database to use for the service"),
+		field.String("definition_version").Optional().Nillable().Comment("Version of the database custom resource definition"),
+		field.JSON("database_config", map[string]interface{}{}).Optional().Comment("Database configuration for the service"),
 		// For builds from git using Dockerfile
 		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
 		field.String("dockerfile_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
@@ -51,12 +53,6 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
 		field.Bool("public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),
 		field.String("image").Optional().Comment("Custom Docker image if not building from git"), // Only applies to type=docker-image
-		// Template configuration
-		field.Enum("template_category").GoType(templates.TemplateCategoryName("")).Optional().Nillable().Comment("Template category to use for the service"),
-		field.String("template").Optional().Nillable().Comment("Template to use for the service"),
-		field.String("template_release_version").Optional().Nillable().Comment("Version of the templates release"),
-		field.String("template_version").Optional().Nillable().Comment("Version of the template to use"),
-		field.JSON("template_config", map[string]interface{}{}).Optional().Comment("Template configuration for the service"),
 	}
 }
 
@@ -83,13 +79,13 @@ type ServiceType string
 const (
 	ServiceTypeGithub      ServiceType = "github"
 	ServiceTypeDockerimage ServiceType = "docker-image"
-	ServiceTypeTemplate    ServiceType = "template"
+	ServiceTypeDatabase    ServiceType = "database"
 )
 
 var allServiceTypes = []ServiceType{
 	ServiceTypeGithub,
 	ServiceTypeDockerimage,
-	ServiceTypeTemplate,
+	ServiceTypeDatabase,
 }
 
 // Values provides list valid values for Enum.

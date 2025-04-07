@@ -75,6 +75,28 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.DeleteService,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "list-available-databases",
+			Summary:     "List Available Databases",
+			Description: "List the possible databases that can be created",
+			Path:        "/databases/installable/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListDatabases,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-database-definition",
+			Summary:     "Get Database Definition",
+			Description: "Get the definition of a database, full schema for configuration",
+			Path:        "/databases/installable/get",
+			Method:      http.MethodGet,
+		},
+		handlers.GetDatabaseDefinition,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

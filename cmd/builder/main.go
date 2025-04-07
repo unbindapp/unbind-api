@@ -44,8 +44,9 @@ func main() {
 	log.Info("--------------")
 	log.Infof("Input Parameters:")
 	log.Infof(" - Service name: %s", cfg.ServiceName)
-	if cfg.ServiceTemplateName != "" {
-		log.Infof(" - Using template: %s", cfg.ServiceTemplateName)
+	if cfg.ServiceDatabaseName != "" {
+		log.Infof(" - Using database: %s", cfg.ServiceDatabaseName)
+		log.Infof(" - Resource definition version: %s", cfg.ServiceDatabaseDefinitionVersion)
 	} else if cfg.ServiceImage != "" {
 		log.Infof(" - Using docker image: %s", cfg.ServiceImage)
 	} else {
@@ -87,8 +88,8 @@ func main() {
 
 	var dockerImg string
 
-	// We can bypass any build step if the image is already provided, or we're using a template
-	if cfg.ServiceImage != "" || cfg.ServiceType == schema.ServiceTypeTemplate {
+	// We can bypass any build step if the image is already provided
+	if cfg.ServiceImage != "" {
 		dockerImg = cfg.ServiceImage
 	} else {
 		// Parse secrets from env
@@ -144,7 +145,8 @@ func main() {
 		log.Fatal("Service name not provided, cannot deploy")
 	}
 
-	if dockerImg == "" && cfg.ServiceType != schema.ServiceTypeTemplate {
+	// Database doesn't need a build, so bypass
+	if dockerImg == "" && cfg.ServiceType != schema.ServiceTypeDatabase {
 		if err := markDeploymentFailed(ctx, repo, fmt.Sprintf("no output image generated"), cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)
 		}

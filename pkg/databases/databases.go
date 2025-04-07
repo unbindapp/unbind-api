@@ -1,4 +1,4 @@
-package templates
+package databases
 
 import (
 	"context"
@@ -10,26 +10,26 @@ import (
 )
 
 var (
-	BaseTemplateURL = "https://raw.githubusercontent.com/unbindapp/unbind-service-templates/refs/tags/%s"
+	BaseDatabaseURL = "https://raw.githubusercontent.com/unbindapp/unbind-custom-service-definitions/refs/tags/%s"
 )
 
 var (
-	ErrTemplateNotFound = errors.New("template not found")
+	ErrDatabaseNotFound = errors.New("database not found")
 )
 
-// UnbindTemplateProvider fetches templates from GitHub
-type UnbindTemplateProvider struct {
+// DatabaseProvider fetches database definitions from GitHub
+type DatabaseProvider struct {
 	client *http.Client
 }
 
-func NewUnbindTemplateProvider() *UnbindTemplateProvider {
-	return &UnbindTemplateProvider{
+func NewDatabaseProvider() *DatabaseProvider {
+	return &DatabaseProvider{
 		client: http.DefaultClient,
 	}
 }
 
 // fetchURL fetches a URL
-func (self *UnbindTemplateProvider) fetchURL(ctx context.Context, url string) ([]byte, error) {
+func (self *DatabaseProvider) fetchURL(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (self *UnbindTemplateProvider) fetchURL(ctx context.Context, url string) ([
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusNotFound {
-			return nil, ErrTemplateNotFound
+			return nil, ErrDatabaseNotFound
 		}
 		return nil, fmt.Errorf("HTTP error: %s", resp.Status)
 	}
