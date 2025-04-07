@@ -217,7 +217,6 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		crdToDeploy.Spec.Config.Hosts = service.Edges.ServiceConfig.Hosts
 		crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
 		crdToDeploy.Spec.Config.Ports = service.Edges.ServiceConfig.Ports
-		crdToDeploy.Spec.Config.AutoDeploy = service.Edges.ServiceConfig.AutoDeploy
 		crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
 		crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.Public
 

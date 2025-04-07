@@ -160,6 +160,32 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
+	if service.Edges.ServiceConfig.Type == schema.ServiceTypeTemplate {
+		if service.Edges.ServiceConfig.Template == nil ||
+			service.Edges.ServiceConfig.TemplateVersion == nil ||
+			service.Edges.ServiceConfig.TemplateReleaseVersion == nil ||
+			service.Edges.ServiceConfig.TemplateCategory == nil {
+			return nil, fmt.Errorf("Service template name is nil")
+		}
+
+		config := make(map[string]interface{})
+		if service.Edges.ServiceConfig.TemplateConfig != nil {
+			config = service.Edges.ServiceConfig.TemplateConfig
+		}
+
+		// Marshal as string
+		marshalledConfig, err := json.Marshal(config)
+		if err != nil {
+			return nil, err
+		}
+
+		env["SERVICE_TEMPLATE_NAME"] = *service.Edges.ServiceConfig.Template
+		env["SERVICE_TEMPLATE_VERSION"] = *service.Edges.ServiceConfig.TemplateVersion
+		env["SERVICE_TEMPLATE_VERSION_REF"] = *service.Edges.ServiceConfig.TemplateReleaseVersion
+		env["SERVICE_TEMPLATE_CATEGORY"] = string(*service.Edges.ServiceConfig.TemplateCategory)
+		env["SERVICE_TEMPLATE_CONFIG"] = string(marshalledConfig)
+	}
+
 	// Add docker image override
 	if service.Edges.ServiceConfig.Image != "" {
 		env["SERVICE_IMAGE"] = service.Edges.ServiceConfig.Image

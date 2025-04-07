@@ -44,7 +44,9 @@ func main() {
 	log.Info("--------------")
 	log.Infof("Input Parameters:")
 	log.Infof(" - Service name: %s", cfg.ServiceName)
-	if cfg.ServiceImage != "" {
+	if cfg.ServiceTemplateName != "" {
+		log.Infof(" - Using template: %s", cfg.ServiceTemplateName)
+	} else if cfg.ServiceImage != "" {
 		log.Infof(" - Using docker image: %s", cfg.ServiceImage)
 	} else {
 		log.Infof(" - Builder Type: %s", cfg.ServiceBuilder)
@@ -85,8 +87,8 @@ func main() {
 
 	var dockerImg string
 
-	// We can bypass any build step if the image is already provided
-	if cfg.ServiceImage != "" {
+	// We can bypass any build step if the image is already provided, or we're using a template
+	if cfg.ServiceImage != "" || cfg.ServiceType == schema.ServiceTypeTemplate {
 		dockerImg = cfg.ServiceImage
 	} else {
 		// Parse secrets from env
