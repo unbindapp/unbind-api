@@ -215,8 +215,12 @@ imports:
     as: s3Schema
   - path: "../../common/labels.yaml"
     as: labels
+  - path: "../../common/base.yaml"
+    as: base
 schema:
   properties:
+    common:
+      $ref: "#/imports/base"
     labels:
       $ref: "#/imports/labels"
     version:
@@ -224,20 +228,8 @@ schema:
       description: "PostgreSQL version"
       default: "17"
       enum: ["14", "15", "16", "17"]
-    replicas:
-      type: "integer"
-      description: "Number of replicas"
-      default: 1
-      minimum: 1
-      maximum: 5
-    storage:
-      type: "string"
-      description: "Storage size"
-      default: "1Gi"
     s3:
-      $ref: "#/imports/s3Schema"
-  required:
-    - replicas`))
+      $ref: "#/imports/s3Schema"`))
 
 		case "/v0.1/definitions/databases/postgres/definition.yaml":
 			w.WriteHeader(http.StatusOK)
@@ -263,6 +255,50 @@ spec:
   numberOfInstances: {{ .parameters.replicas }}
   volume:
     size: "{{ .parameters.storage }}"`))
+
+		// This is the path after resolveRelativePath is applied to "../../common/base.yaml" from "definitions/postgres"
+		case "/v0.1/definitions/common/base.yaml":
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`type: "object"
+type: "object"
+description: "Common base configuration for databases"
+properties:
+  replicas:
+    type: "integer"
+    description: "Number of replicas"
+    default: 1
+    minimum: 1
+    maximum: 5
+  storage:
+    type: "string"
+    description: "Storage size"
+    default: "1Gi"
+  resources:
+    type: "object"
+    description: "Resource requirements"
+    properties:
+      requests:
+        type: "object"
+        properties:
+          cpu:
+            type: "string"
+            description: "CPU request"
+            default: "100m"
+          memory:
+            type: "string"
+            description: "Memory request"
+            default: "128Mi"
+      limits:
+        type: "object"
+        properties:
+          cpu:
+            type: "string"
+            description: "CPU limit"
+            default: "200m"
+          memory:
+            type: "string"
+            description: "Memory limit"
+            default: "256Mi"`))
 
 		// This is the path after resolveRelativePath is applied to "../common/s3-schema.yaml" from "definitions/postgres"
 		case "/v0.1/definitions/common/s3-schema.yaml":
