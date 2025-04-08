@@ -24,7 +24,7 @@ func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, prov
 			environment.ServiceCount = count
 		}
 		if providerSummary, ok := providerSummaries[environment.ID]; ok {
-			environment.ProviderSummary = providerSummary
+			environment.ServiceSummary = providerSummary
 		}
 	}
 }
