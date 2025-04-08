@@ -1,7 +1,6 @@
 package databases
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,6 +18,11 @@ func TestDefinitionRendering(t *testing.T) {
 		Version:     "1.0.0",
 		Schema: DefinitionParameterSchema{
 			Properties: map[string]ParameterProperty{
+				"enableMasterLoadBalancer": {
+					Type:        "boolean",
+					Description: "Enable master load balancer",
+					Default:     false,
+				},
 				"common": {
 					Type: "object",
 					Properties: map[string]ParameterProperty{
@@ -149,6 +153,7 @@ metadata:
     {{- end }}
 spec:
   teamId: {{ .TeamID }}
+  enableMasterLoadBalancer: {{ .Parameters.enableMasterLoadBalancer | default false }}
   dockerImage: {{ .Parameters.dockerImage | default "unbindapp/spilo:17" }}
   postgresql:
     version: {{ .Parameters.version | default "17" | quote }}
@@ -238,29 +243,7 @@ spec:
       value: {{ .Parameters.s3.bucket }}
     - name: WALG_DISABLE_S3_SSE
       value: "true"
-    {{- end }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ .Name }}-nodeport
-  namespace: {{ .Namespace }}
-  labels:
-    # usd-specific labels
-    unbind/usd-type: {{ .Definition.Type }}
-    unbind/usd-version: {{ .Definition.Version }}
-    unbind/usd-category: databases
-    {{- range $key, $value := .Parameters.labels }}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
-spec:
-  type: NodePort
-  ports:
-  - port: 5432
-    targetPort: 5432
-    protocol: TCP
-  selector:
-    app: {{ .Name }}`,
+    {{- end }}`,
 	}
 
 	// Create a renderer
@@ -294,9 +277,10 @@ spec:
 		assert.Contains(t, result, "name: test-postgres")
 		assert.Contains(t, result, "namespace: default")
 		assert.Contains(t, result, "team: team1")
-		assert.Contains(t, result, "version: \"17\"")      // Default value
-		assert.Contains(t, result, "numberOfInstances: 3") // Provided value
-		assert.Contains(t, result, "size: 1Gi")            // Default value
+		assert.Contains(t, result, "version: \"17\"")                 // Default value
+		assert.Contains(t, result, "numberOfInstances: 3")            // Provided value
+		assert.Contains(t, result, "size: 1Gi")                       // Default value
+		assert.Contains(t, result, "enableMasterLoadBalancer: false") // Default value
 
 		// Check for Patroni configuration
 		assert.Contains(t, result, "patroni:")
@@ -312,23 +296,10 @@ spec:
 		assert.Contains(t, result, "cpu: 200m")
 		assert.Contains(t, result, "memory: 256Mi")
 
-		// Verify NodePort service is included
-		assert.Contains(t, result, "name: test-postgres-nodeport")
-		assert.Contains(t, result, "type: NodePort")
-		assert.Contains(t, result, "port: 5432")
-		assert.Contains(t, result, "targetPort: 5432")
-		assert.Contains(t, result, "selector:")
-		assert.Contains(t, result, "app: test-postgres")
-
-		// NodePort service should have the correct labels
-		assert.Contains(t, result, "unbind/usd-type: postgres-operator")
-		assert.Contains(t, result, "unbind/usd-version: 1.0.0")
-		assert.Contains(t, result, "unbind/usd-category: databases")
-
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
-		assert.Len(t, objects, 2)
+		assert.Len(t, objects, 1)
 	})
 
 	t.Run("With Custom Labels", func(t *testing.T) {
@@ -374,14 +345,6 @@ spec:
 
 		// Ensure labels are properly quoted
 		assert.NotContains(t, result, "environment: production") // Should be quoted
-
-		// Verify custom labels are also included in NodePort service
-		assert.Contains(t, result, `name: test-postgres-labels-nodeport`)
-
-		// Check for labels in the NodePort service
-		// The indentation will be different for the service, so check for the presence without requiring specific formatting
-		labelCount := countOccurrences(result, `environment: "production"`)
-		assert.Equal(t, 2, labelCount, "Custom label should appear in both PostgreSQL and NodePort resources")
 	})
 
 	t.Run("S3 Enabled", func(t *testing.T) {
@@ -418,32 +381,14 @@ spec:
 		assert.Contains(t, result, "value: https://s3.amazonaws.com") // Default endpoint
 		assert.Contains(t, result, "value: us-east-1")                // Default region
 
-		// Verify NodePort service is still generated
-		assert.Contains(t, result, "name: test-postgres-s3-nodeport")
-		assert.Contains(t, result, "type: NodePort")
-
 		// Parse to objects to ensure we have 2 resources
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
-		assert.Len(t, objects, 2) // PostgreSQL and NodePort service
+		assert.Len(t, objects, 1) // PostgreSQL and NodePort service
 	})
 }
 
 // Helper function to create a float pointer
 func floatPtr(f float64) *float64 {
 	return &f
-}
-
-// Helper function to count occurrences of a substring in a string
-func countOccurrences(s, substr string) int {
-	count := 0
-	for i := 0; i < len(s); {
-		j := strings.Index(s[i:], substr)
-		if j < 0 {
-			break
-		}
-		count++
-		i += j + len(substr)
-	}
-	return count
 }

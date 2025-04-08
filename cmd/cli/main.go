@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	_ "go.uber.org/automaxprocs"
 )
 
 const (

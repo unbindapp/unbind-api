@@ -24,6 +24,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/oauth2server"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/valkey-io/valkey-go"
+	_ "go.uber.org/automaxprocs"
 )
 
 const ACCESS_TOKEN_EXP = 2 * time.Minute

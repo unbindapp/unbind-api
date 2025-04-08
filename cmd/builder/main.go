@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/pkg/builder/builders"
 	"github.com/unbindapp/unbind-api/pkg/builder/config"
 	"github.com/unbindapp/unbind-api/pkg/builder/k8s"
+	_ "go.uber.org/automaxprocs"
 	"gopkg.in/yaml.v2"
 )
 

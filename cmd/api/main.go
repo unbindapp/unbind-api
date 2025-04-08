@@ -51,6 +51,7 @@ import (
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/valkey-io/valkey-go"
+	_ "go.uber.org/automaxprocs"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"golang.org/x/oauth2"
