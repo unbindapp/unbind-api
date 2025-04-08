@@ -9,7 +9,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
@@ -81,21 +80,23 @@ func (self *ServiceRepository) CreateConfig(
 		return nil, fmt.Errorf("builder is missing, but required")
 	}
 
-	// Get high level provider
-	var provider *string
+	// Get high level icon
+	var icon string
 	if input.Database != nil {
-		provider = input.Database
+		icon = *input.Database
 	} else if input.Framework != nil {
-		provider = utils.ToPtr(string(*input.Framework))
+		icon = string(*input.Framework)
 	} else if input.Provider != nil {
-		provider = utils.ToPtr(string(*input.Provider))
+		icon = string(*input.Provider)
+	} else {
+		icon = string(input.ServiceType)
 	}
 
 	c := db.ServiceConfig.Create().
 		SetServiceID(input.ServiceID).
 		SetType(input.ServiceType).
 		SetBuilder(*input.Builder).
-		SetNillableProvider(provider).
+		SetIcon(icon).
 		SetNillableRailpackProvider(input.Provider).
 		SetNillableRailpackFramework(input.Framework).
 		SetNillableGitBranch(input.GitBranch).

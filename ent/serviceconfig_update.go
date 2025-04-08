@@ -83,6 +83,20 @@ func (scu *ServiceConfigUpdate) SetNillableBuilder(sb *schema.ServiceBuilder) *S
 	return scu
 }
 
+// SetIcon sets the "icon" field.
+func (scu *ServiceConfigUpdate) SetIcon(s string) *ServiceConfigUpdate {
+	scu.mutation.SetIcon(s)
+	return scu
+}
+
+// SetNillableIcon sets the "icon" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableIcon(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetIcon(*s)
+	}
+	return scu
+}
+
 // SetDatabase sets the "database" field.
 func (scu *ServiceConfigUpdate) SetDatabase(s string) *ServiceConfigUpdate {
 	scu.mutation.SetDatabase(s)
@@ -172,26 +186,6 @@ func (scu *ServiceConfigUpdate) SetNillableDockerfileContext(s *string) *Service
 // ClearDockerfileContext clears the value of the "dockerfile_context" field.
 func (scu *ServiceConfigUpdate) ClearDockerfileContext() *ServiceConfigUpdate {
 	scu.mutation.ClearDockerfileContext()
-	return scu
-}
-
-// SetProvider sets the "provider" field.
-func (scu *ServiceConfigUpdate) SetProvider(s string) *ServiceConfigUpdate {
-	scu.mutation.SetProvider(s)
-	return scu
-}
-
-// SetNillableProvider sets the "provider" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableProvider(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetProvider(*s)
-	}
-	return scu
-}
-
-// ClearProvider clears the value of the "provider" field.
-func (scu *ServiceConfigUpdate) ClearProvider() *ServiceConfigUpdate {
-	scu.mutation.ClearProvider()
 	return scu
 }
 
@@ -487,6 +481,9 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 	}
+	if value, ok := scu.mutation.Icon(); ok {
+		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
+	}
 	if value, ok := scu.mutation.Database(); ok {
 		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
 	}
@@ -516,12 +513,6 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.DockerfileContextCleared() {
 		_spec.ClearField(serviceconfig.FieldDockerfileContext, field.TypeString)
-	}
-	if value, ok := scu.mutation.Provider(); ok {
-		_spec.SetField(serviceconfig.FieldProvider, field.TypeString, value)
-	}
-	if scu.mutation.ProviderCleared() {
-		_spec.ClearField(serviceconfig.FieldProvider, field.TypeString)
 	}
 	if value, ok := scu.mutation.RailpackProvider(); ok {
 		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
@@ -686,6 +677,20 @@ func (scuo *ServiceConfigUpdateOne) SetNillableBuilder(sb *schema.ServiceBuilder
 	return scuo
 }
 
+// SetIcon sets the "icon" field.
+func (scuo *ServiceConfigUpdateOne) SetIcon(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetIcon(s)
+	return scuo
+}
+
+// SetNillableIcon sets the "icon" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableIcon(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetIcon(*s)
+	}
+	return scuo
+}
+
 // SetDatabase sets the "database" field.
 func (scuo *ServiceConfigUpdateOne) SetDatabase(s string) *ServiceConfigUpdateOne {
 	scuo.mutation.SetDatabase(s)
@@ -775,26 +780,6 @@ func (scuo *ServiceConfigUpdateOne) SetNillableDockerfileContext(s *string) *Ser
 // ClearDockerfileContext clears the value of the "dockerfile_context" field.
 func (scuo *ServiceConfigUpdateOne) ClearDockerfileContext() *ServiceConfigUpdateOne {
 	scuo.mutation.ClearDockerfileContext()
-	return scuo
-}
-
-// SetProvider sets the "provider" field.
-func (scuo *ServiceConfigUpdateOne) SetProvider(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetProvider(s)
-	return scuo
-}
-
-// SetNillableProvider sets the "provider" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableProvider(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetProvider(*s)
-	}
-	return scuo
-}
-
-// ClearProvider clears the value of the "provider" field.
-func (scuo *ServiceConfigUpdateOne) ClearProvider() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearProvider()
 	return scuo
 }
 
@@ -1120,6 +1105,9 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	if value, ok := scuo.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 	}
+	if value, ok := scuo.mutation.Icon(); ok {
+		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
+	}
 	if value, ok := scuo.mutation.Database(); ok {
 		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
 	}
@@ -1149,12 +1137,6 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.DockerfileContextCleared() {
 		_spec.ClearField(serviceconfig.FieldDockerfileContext, field.TypeString)
-	}
-	if value, ok := scuo.mutation.Provider(); ok {
-		_spec.SetField(serviceconfig.FieldProvider, field.TypeString, value)
-	}
-	if scuo.mutation.ProviderCleared() {
-		_spec.ClearField(serviceconfig.FieldProvider, field.TypeString)
 	}
 	if value, ok := scuo.mutation.RailpackProvider(); ok {
 		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)

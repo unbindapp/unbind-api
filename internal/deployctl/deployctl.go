@@ -242,8 +242,12 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["GIT_REF"] = ref
 	}
 
-	if service.Edges.ServiceConfig.Provider != nil {
-		env["SERVICE_PROVIDER"] = string(*service.Edges.ServiceConfig.Provider)
+	if service.Edges.ServiceConfig.RailpackProvider != nil {
+		env["SERVICE_PROVIDER"] = string(*service.Edges.ServiceConfig.RailpackProvider)
+	}
+
+	if service.Edges.ServiceConfig.RailpackFramework != nil {
+		env["SERVICE_FRAMEWORK"] = string(*service.Edges.ServiceConfig.RailpackFramework)
 	}
 
 	if service.Edges.ServiceConfig.Builder != schema.ServiceBuilder("") {

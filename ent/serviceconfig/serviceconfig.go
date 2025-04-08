@@ -28,6 +28,8 @@ const (
 	FieldType = "type"
 	// FieldBuilder holds the string denoting the builder field in the database.
 	FieldBuilder = "builder"
+	// FieldIcon holds the string denoting the icon field in the database.
+	FieldIcon = "icon"
 	// FieldDatabase holds the string denoting the database field in the database.
 	FieldDatabase = "database"
 	// FieldDefinitionVersion holds the string denoting the definition_version field in the database.
@@ -38,8 +40,6 @@ const (
 	FieldDockerfilePath = "dockerfile_path"
 	// FieldDockerfileContext holds the string denoting the dockerfile_context field in the database.
 	FieldDockerfileContext = "dockerfile_context"
-	// FieldProvider holds the string denoting the provider field in the database.
-	FieldProvider = "provider"
 	// FieldRailpackProvider holds the string denoting the railpack_provider field in the database.
 	FieldRailpackProvider = "railpack_provider"
 	// FieldRailpackFramework holds the string denoting the railpack_framework field in the database.
@@ -81,12 +81,12 @@ var Columns = []string{
 	FieldServiceID,
 	FieldType,
 	FieldBuilder,
+	FieldIcon,
 	FieldDatabase,
 	FieldDefinitionVersion,
 	FieldDatabaseConfig,
 	FieldDockerfilePath,
 	FieldDockerfileContext,
-	FieldProvider,
 	FieldRailpackProvider,
 	FieldRailpackFramework,
 	FieldGitBranch,
@@ -199,6 +199,11 @@ func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
 }
 
+// ByIcon orders the results by the icon field.
+func ByIcon(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIcon, opts...).ToFunc()
+}
+
 // ByDatabase orders the results by the database field.
 func ByDatabase(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDatabase, opts...).ToFunc()
@@ -217,11 +222,6 @@ func ByDockerfilePath(opts ...sql.OrderTermOption) OrderOption {
 // ByDockerfileContext orders the results by the dockerfile_context field.
 func ByDockerfileContext(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDockerfileContext, opts...).ToFunc()
-}
-
-// ByProvider orders the results by the provider field.
-func ByProvider(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldProvider, opts...).ToFunc()
 }
 
 // ByRailpackProvider orders the results by the railpack_provider field.

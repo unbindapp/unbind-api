@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -245,9 +246,11 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 		for provider := range providerSet {
 			providers[envID] = append(providers[envID], provider)
 		}
+		// Sort providers
+		slices.Sort(providers[envID])
 	}
 
-	return
+	return counts, providers, nil
 }
 
 // See if a service needs a new deployment

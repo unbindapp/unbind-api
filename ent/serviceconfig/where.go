@@ -73,6 +73,11 @@ func ServiceID(v uuid.UUID) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldServiceID, v))
 }
 
+// Icon applies equality check predicate on the "icon" field. It's identical to IconEQ.
+func Icon(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldIcon, v))
+}
+
 // Database applies equality check predicate on the "database" field. It's identical to DatabaseEQ.
 func Database(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldDatabase, v))
@@ -91,11 +96,6 @@ func DockerfilePath(v string) predicate.ServiceConfig {
 // DockerfileContext applies equality check predicate on the "dockerfile_context" field. It's identical to DockerfileContextEQ.
 func DockerfileContext(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerfileContext, v))
-}
-
-// Provider applies equality check predicate on the "provider" field. It's identical to ProviderEQ.
-func Provider(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldProvider, v))
 }
 
 // GitBranch applies equality check predicate on the "git_branch" field. It's identical to GitBranchEQ.
@@ -286,6 +286,71 @@ func BuilderNotIn(vs ...schema.ServiceBuilder) predicate.ServiceConfig {
 		v[i] = vs[i]
 	}
 	return predicate.ServiceConfig(sql.FieldNotIn(FieldBuilder, v...))
+}
+
+// IconEQ applies the EQ predicate on the "icon" field.
+func IconEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldIcon, v))
+}
+
+// IconNEQ applies the NEQ predicate on the "icon" field.
+func IconNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldIcon, v))
+}
+
+// IconIn applies the In predicate on the "icon" field.
+func IconIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldIcon, vs...))
+}
+
+// IconNotIn applies the NotIn predicate on the "icon" field.
+func IconNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldIcon, vs...))
+}
+
+// IconGT applies the GT predicate on the "icon" field.
+func IconGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldIcon, v))
+}
+
+// IconGTE applies the GTE predicate on the "icon" field.
+func IconGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldIcon, v))
+}
+
+// IconLT applies the LT predicate on the "icon" field.
+func IconLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldIcon, v))
+}
+
+// IconLTE applies the LTE predicate on the "icon" field.
+func IconLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldIcon, v))
+}
+
+// IconContains applies the Contains predicate on the "icon" field.
+func IconContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldIcon, v))
+}
+
+// IconHasPrefix applies the HasPrefix predicate on the "icon" field.
+func IconHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldIcon, v))
+}
+
+// IconHasSuffix applies the HasSuffix predicate on the "icon" field.
+func IconHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldIcon, v))
+}
+
+// IconEqualFold applies the EqualFold predicate on the "icon" field.
+func IconEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldIcon, v))
+}
+
+// IconContainsFold applies the ContainsFold predicate on the "icon" field.
+func IconContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldIcon, v))
 }
 
 // DatabaseEQ applies the EQ predicate on the "database" field.
@@ -596,81 +661,6 @@ func DockerfileContextEqualFold(v string) predicate.ServiceConfig {
 // DockerfileContextContainsFold applies the ContainsFold predicate on the "dockerfile_context" field.
 func DockerfileContextContainsFold(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldContainsFold(FieldDockerfileContext, v))
-}
-
-// ProviderEQ applies the EQ predicate on the "provider" field.
-func ProviderEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldProvider, v))
-}
-
-// ProviderNEQ applies the NEQ predicate on the "provider" field.
-func ProviderNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldProvider, v))
-}
-
-// ProviderIn applies the In predicate on the "provider" field.
-func ProviderIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldProvider, vs...))
-}
-
-// ProviderNotIn applies the NotIn predicate on the "provider" field.
-func ProviderNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldProvider, vs...))
-}
-
-// ProviderGT applies the GT predicate on the "provider" field.
-func ProviderGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldProvider, v))
-}
-
-// ProviderGTE applies the GTE predicate on the "provider" field.
-func ProviderGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldProvider, v))
-}
-
-// ProviderLT applies the LT predicate on the "provider" field.
-func ProviderLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldProvider, v))
-}
-
-// ProviderLTE applies the LTE predicate on the "provider" field.
-func ProviderLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldProvider, v))
-}
-
-// ProviderContains applies the Contains predicate on the "provider" field.
-func ProviderContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldProvider, v))
-}
-
-// ProviderHasPrefix applies the HasPrefix predicate on the "provider" field.
-func ProviderHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldProvider, v))
-}
-
-// ProviderHasSuffix applies the HasSuffix predicate on the "provider" field.
-func ProviderHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldProvider, v))
-}
-
-// ProviderIsNil applies the IsNil predicate on the "provider" field.
-func ProviderIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldProvider))
-}
-
-// ProviderNotNil applies the NotNil predicate on the "provider" field.
-func ProviderNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldProvider))
-}
-
-// ProviderEqualFold applies the EqualFold predicate on the "provider" field.
-func ProviderEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldProvider, v))
-}
-
-// ProviderContainsFold applies the ContainsFold predicate on the "provider" field.
-func ProviderContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldProvider, v))
 }
 
 // RailpackProviderEQ applies the EQ predicate on the "railpack_provider" field.

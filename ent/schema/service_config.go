@@ -34,6 +34,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.UUID("service_id", uuid.UUID{}),
 		field.Enum("type").GoType(ServiceType("")).Comment("Type of service"),
 		field.Enum("builder").GoType(ServiceBuilder("")),
+		field.String("icon").Comment("Icon metadata, unique of framework, provider, database"),
+		// Database
 		field.String("database").Optional().Nillable().Comment("Database to use for the service"),
 		field.String("definition_version").Optional().Nillable().Comment("Version of the database custom resource definition"),
 		field.JSON("database_config", map[string]interface{}{}).Optional().Comment("Database configuration for the service"),
@@ -41,7 +43,6 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
 		field.String("dockerfile_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
 		// Provider and framework directly from railpack
-		field.String("provider").Optional().Nillable().Comment("High level provider"),
 		field.Enum("railpack_provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
 		field.Enum("railpack_framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
 		// Branch to build from (git)

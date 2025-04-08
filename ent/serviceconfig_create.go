@@ -74,6 +74,12 @@ func (scc *ServiceConfigCreate) SetBuilder(sb schema.ServiceBuilder) *ServiceCon
 	return scc
 }
 
+// SetIcon sets the "icon" field.
+func (scc *ServiceConfigCreate) SetIcon(s string) *ServiceConfigCreate {
+	scc.mutation.SetIcon(s)
+	return scc
+}
+
 // SetDatabase sets the "database" field.
 func (scc *ServiceConfigCreate) SetDatabase(s string) *ServiceConfigCreate {
 	scc.mutation.SetDatabase(s)
@@ -132,20 +138,6 @@ func (scc *ServiceConfigCreate) SetDockerfileContext(s string) *ServiceConfigCre
 func (scc *ServiceConfigCreate) SetNillableDockerfileContext(s *string) *ServiceConfigCreate {
 	if s != nil {
 		scc.SetDockerfileContext(*s)
-	}
-	return scc
-}
-
-// SetProvider sets the "provider" field.
-func (scc *ServiceConfigCreate) SetProvider(s string) *ServiceConfigCreate {
-	scc.mutation.SetProvider(s)
-	return scc
-}
-
-// SetNillableProvider sets the "provider" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableProvider(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetProvider(*s)
 	}
 	return scc
 }
@@ -381,6 +373,9 @@ func (scc *ServiceConfigCreate) check() error {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
 		}
 	}
+	if _, ok := scc.mutation.Icon(); !ok {
+		return &ValidationError{Name: "icon", err: errors.New(`ent: missing required field "ServiceConfig.icon"`)}
+	}
 	if v, ok := scc.mutation.RailpackProvider(); ok {
 		if err := serviceconfig.RailpackProviderValidator(v); err != nil {
 			return &ValidationError{Name: "railpack_provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_provider": %w`, err)}
@@ -455,6 +450,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 		_node.Builder = value
 	}
+	if value, ok := scc.mutation.Icon(); ok {
+		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
+		_node.Icon = value
+	}
 	if value, ok := scc.mutation.Database(); ok {
 		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
 		_node.Database = &value
@@ -474,10 +473,6 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.DockerfileContext(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfileContext, field.TypeString, value)
 		_node.DockerfileContext = &value
-	}
-	if value, ok := scc.mutation.Provider(); ok {
-		_spec.SetField(serviceconfig.FieldProvider, field.TypeString, value)
-		_node.Provider = &value
 	}
 	if value, ok := scc.mutation.RailpackProvider(); ok {
 		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
@@ -636,6 +631,18 @@ func (u *ServiceConfigUpsert) UpdateBuilder() *ServiceConfigUpsert {
 	return u
 }
 
+// SetIcon sets the "icon" field.
+func (u *ServiceConfigUpsert) SetIcon(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldIcon, v)
+	return u
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateIcon() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldIcon)
+	return u
+}
+
 // SetDatabase sets the "database" field.
 func (u *ServiceConfigUpsert) SetDatabase(v string) *ServiceConfigUpsert {
 	u.Set(serviceconfig.FieldDatabase, v)
@@ -723,24 +730,6 @@ func (u *ServiceConfigUpsert) UpdateDockerfileContext() *ServiceConfigUpsert {
 // ClearDockerfileContext clears the value of the "dockerfile_context" field.
 func (u *ServiceConfigUpsert) ClearDockerfileContext() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldDockerfileContext)
-	return u
-}
-
-// SetProvider sets the "provider" field.
-func (u *ServiceConfigUpsert) SetProvider(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldProvider, v)
-	return u
-}
-
-// UpdateProvider sets the "provider" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateProvider() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldProvider)
-	return u
-}
-
-// ClearProvider clears the value of the "provider" field.
-func (u *ServiceConfigUpsert) ClearProvider() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldProvider)
 	return u
 }
 
@@ -1019,6 +1008,20 @@ func (u *ServiceConfigUpsertOne) UpdateBuilder() *ServiceConfigUpsertOne {
 	})
 }
 
+// SetIcon sets the "icon" field.
+func (u *ServiceConfigUpsertOne) SetIcon(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetIcon(v)
+	})
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateIcon() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateIcon()
+	})
+}
+
 // SetDatabase sets the "database" field.
 func (u *ServiceConfigUpsertOne) SetDatabase(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
@@ -1121,27 +1124,6 @@ func (u *ServiceConfigUpsertOne) UpdateDockerfileContext() *ServiceConfigUpsertO
 func (u *ServiceConfigUpsertOne) ClearDockerfileContext() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearDockerfileContext()
-	})
-}
-
-// SetProvider sets the "provider" field.
-func (u *ServiceConfigUpsertOne) SetProvider(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetProvider(v)
-	})
-}
-
-// UpdateProvider sets the "provider" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateProvider() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateProvider()
-	})
-}
-
-// ClearProvider clears the value of the "provider" field.
-func (u *ServiceConfigUpsertOne) ClearProvider() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearProvider()
 	})
 }
 
@@ -1615,6 +1597,20 @@ func (u *ServiceConfigUpsertBulk) UpdateBuilder() *ServiceConfigUpsertBulk {
 	})
 }
 
+// SetIcon sets the "icon" field.
+func (u *ServiceConfigUpsertBulk) SetIcon(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetIcon(v)
+	})
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateIcon() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateIcon()
+	})
+}
+
 // SetDatabase sets the "database" field.
 func (u *ServiceConfigUpsertBulk) SetDatabase(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
@@ -1717,27 +1713,6 @@ func (u *ServiceConfigUpsertBulk) UpdateDockerfileContext() *ServiceConfigUpsert
 func (u *ServiceConfigUpsertBulk) ClearDockerfileContext() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearDockerfileContext()
-	})
-}
-
-// SetProvider sets the "provider" field.
-func (u *ServiceConfigUpsertBulk) SetProvider(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetProvider(v)
-	})
-}
-
-// UpdateProvider sets the "provider" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateProvider() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateProvider()
-	})
-}
-
-// ClearProvider clears the value of the "provider" field.
-func (u *ServiceConfigUpsertBulk) ClearProvider() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearProvider()
 	})
 }
 

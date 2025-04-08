@@ -34,6 +34,8 @@ type ServiceConfig struct {
 	Type schema.ServiceType `json:"type,omitempty"`
 	// Builder holds the value of the "builder" field.
 	Builder schema.ServiceBuilder `json:"builder,omitempty"`
+	// Icon metadata, unique of framework, provider, database
+	Icon string `json:"icon,omitempty"`
 	// Database to use for the service
 	Database *string `json:"database,omitempty"`
 	// Version of the database custom resource definition
@@ -44,8 +46,6 @@ type ServiceConfig struct {
 	DockerfilePath *string `json:"dockerfile_path,omitempty"`
 	// Path to Dockerfile context if using docker builder
 	DockerfileContext *string `json:"dockerfile_context,omitempty"`
-	// High level provider
-	Provider *string `json:"provider,omitempty"`
 	// Provider (e.g. Go, Python, Node, Deno)
 	RailpackProvider *enum.Provider `json:"railpack_provider,omitempty"`
 	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
@@ -103,7 +103,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDatabase, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldProvider, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDatabase, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -160,6 +160,12 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.Builder = schema.ServiceBuilder(value.String)
 			}
+		case serviceconfig.FieldIcon:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field icon", values[i])
+			} else if value.Valid {
+				sc.Icon = value.String
+			}
 		case serviceconfig.FieldDatabase:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field database", values[i])
@@ -195,13 +201,6 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.DockerfileContext = new(string)
 				*sc.DockerfileContext = value.String
-			}
-		case serviceconfig.FieldProvider:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field provider", values[i])
-			} else if value.Valid {
-				sc.Provider = new(string)
-				*sc.Provider = value.String
 			}
 		case serviceconfig.FieldRailpackProvider:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -327,6 +326,9 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString("builder=")
 	builder.WriteString(fmt.Sprintf("%v", sc.Builder))
 	builder.WriteString(", ")
+	builder.WriteString("icon=")
+	builder.WriteString(sc.Icon)
+	builder.WriteString(", ")
 	if v := sc.Database; v != nil {
 		builder.WriteString("database=")
 		builder.WriteString(*v)
@@ -347,11 +349,6 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	if v := sc.DockerfileContext; v != nil {
 		builder.WriteString("dockerfile_context=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := sc.Provider; v != nil {
-		builder.WriteString("provider=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

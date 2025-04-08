@@ -10423,12 +10423,12 @@ type ServiceConfigMutation struct {
 	updated_at         *time.Time
 	_type              *schema.ServiceType
 	builder            *schema.ServiceBuilder
+	icon               *string
 	database           *string
 	definition_version *string
 	database_config    *map[string]interface{}
 	dockerfile_path    *string
 	dockerfile_context *string
-	provider           *string
 	railpack_provider  *enum.Provider
 	railpack_framework *enum.Framework
 	git_branch         *string
@@ -10734,6 +10734,42 @@ func (m *ServiceConfigMutation) ResetBuilder() {
 	m.builder = nil
 }
 
+// SetIcon sets the "icon" field.
+func (m *ServiceConfigMutation) SetIcon(s string) {
+	m.icon = &s
+}
+
+// Icon returns the value of the "icon" field in the mutation.
+func (m *ServiceConfigMutation) Icon() (r string, exists bool) {
+	v := m.icon
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIcon returns the old "icon" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldIcon(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIcon is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIcon requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIcon: %w", err)
+	}
+	return oldValue.Icon, nil
+}
+
+// ResetIcon resets all changes to the "icon" field.
+func (m *ServiceConfigMutation) ResetIcon() {
+	m.icon = nil
+}
+
 // SetDatabase sets the "database" field.
 func (m *ServiceConfigMutation) SetDatabase(s string) {
 	m.database = &s
@@ -10977,55 +11013,6 @@ func (m *ServiceConfigMutation) DockerfileContextCleared() bool {
 func (m *ServiceConfigMutation) ResetDockerfileContext() {
 	m.dockerfile_context = nil
 	delete(m.clearedFields, serviceconfig.FieldDockerfileContext)
-}
-
-// SetProvider sets the "provider" field.
-func (m *ServiceConfigMutation) SetProvider(s string) {
-	m.provider = &s
-}
-
-// Provider returns the value of the "provider" field in the mutation.
-func (m *ServiceConfigMutation) Provider() (r string, exists bool) {
-	v := m.provider
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldProvider returns the old "provider" field's value of the ServiceConfig entity.
-// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldProvider(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProvider requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProvider: %w", err)
-	}
-	return oldValue.Provider, nil
-}
-
-// ClearProvider clears the value of the "provider" field.
-func (m *ServiceConfigMutation) ClearProvider() {
-	m.provider = nil
-	m.clearedFields[serviceconfig.FieldProvider] = struct{}{}
-}
-
-// ProviderCleared returns if the "provider" field was cleared in this mutation.
-func (m *ServiceConfigMutation) ProviderCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldProvider]
-	return ok
-}
-
-// ResetProvider resets all changes to the "provider" field.
-func (m *ServiceConfigMutation) ResetProvider() {
-	m.provider = nil
-	delete(m.clearedFields, serviceconfig.FieldProvider)
 }
 
 // SetRailpackProvider sets the "railpack_provider" field.
@@ -11608,6 +11595,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.builder != nil {
 		fields = append(fields, serviceconfig.FieldBuilder)
 	}
+	if m.icon != nil {
+		fields = append(fields, serviceconfig.FieldIcon)
+	}
 	if m.database != nil {
 		fields = append(fields, serviceconfig.FieldDatabase)
 	}
@@ -11622,9 +11612,6 @@ func (m *ServiceConfigMutation) Fields() []string {
 	}
 	if m.dockerfile_context != nil {
 		fields = append(fields, serviceconfig.FieldDockerfileContext)
-	}
-	if m.provider != nil {
-		fields = append(fields, serviceconfig.FieldProvider)
 	}
 	if m.railpack_provider != nil {
 		fields = append(fields, serviceconfig.FieldRailpackProvider)
@@ -11674,6 +11661,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.GetType()
 	case serviceconfig.FieldBuilder:
 		return m.Builder()
+	case serviceconfig.FieldIcon:
+		return m.Icon()
 	case serviceconfig.FieldDatabase:
 		return m.Database()
 	case serviceconfig.FieldDefinitionVersion:
@@ -11684,8 +11673,6 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.DockerfilePath()
 	case serviceconfig.FieldDockerfileContext:
 		return m.DockerfileContext()
-	case serviceconfig.FieldProvider:
-		return m.Provider()
 	case serviceconfig.FieldRailpackProvider:
 		return m.RailpackProvider()
 	case serviceconfig.FieldRailpackFramework:
@@ -11725,6 +11712,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldType(ctx)
 	case serviceconfig.FieldBuilder:
 		return m.OldBuilder(ctx)
+	case serviceconfig.FieldIcon:
+		return m.OldIcon(ctx)
 	case serviceconfig.FieldDatabase:
 		return m.OldDatabase(ctx)
 	case serviceconfig.FieldDefinitionVersion:
@@ -11735,8 +11724,6 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldDockerfilePath(ctx)
 	case serviceconfig.FieldDockerfileContext:
 		return m.OldDockerfileContext(ctx)
-	case serviceconfig.FieldProvider:
-		return m.OldProvider(ctx)
 	case serviceconfig.FieldRailpackProvider:
 		return m.OldRailpackProvider(ctx)
 	case serviceconfig.FieldRailpackFramework:
@@ -11801,6 +11788,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetBuilder(v)
 		return nil
+	case serviceconfig.FieldIcon:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIcon(v)
+		return nil
 	case serviceconfig.FieldDatabase:
 		v, ok := value.(string)
 		if !ok {
@@ -11835,13 +11829,6 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDockerfileContext(v)
-		return nil
-	case serviceconfig.FieldProvider:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetProvider(v)
 		return nil
 	case serviceconfig.FieldRailpackProvider:
 		v, ok := value.(enum.Provider)
@@ -11973,9 +11960,6 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldDockerfileContext) {
 		fields = append(fields, serviceconfig.FieldDockerfileContext)
 	}
-	if m.FieldCleared(serviceconfig.FieldProvider) {
-		fields = append(fields, serviceconfig.FieldProvider)
-	}
 	if m.FieldCleared(serviceconfig.FieldRailpackProvider) {
 		fields = append(fields, serviceconfig.FieldRailpackProvider)
 	}
@@ -12026,9 +12010,6 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 	case serviceconfig.FieldDockerfileContext:
 		m.ClearDockerfileContext()
 		return nil
-	case serviceconfig.FieldProvider:
-		m.ClearProvider()
-		return nil
 	case serviceconfig.FieldRailpackProvider:
 		m.ClearRailpackProvider()
 		return nil
@@ -12073,6 +12054,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 	case serviceconfig.FieldBuilder:
 		m.ResetBuilder()
 		return nil
+	case serviceconfig.FieldIcon:
+		m.ResetIcon()
+		return nil
 	case serviceconfig.FieldDatabase:
 		m.ResetDatabase()
 		return nil
@@ -12087,9 +12071,6 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldDockerfileContext:
 		m.ResetDockerfileContext()
-		return nil
-	case serviceconfig.FieldProvider:
-		m.ResetProvider()
 		return nil
 	case serviceconfig.FieldRailpackProvider:
 		m.ResetRailpackProvider()

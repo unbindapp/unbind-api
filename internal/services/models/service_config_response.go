@@ -11,7 +11,7 @@ type ServiceConfigResponse struct {
 	GitBranch  *string               `json:"git_branch,omitempty"`
 	Type       schema.ServiceType    `json:"type"`
 	Builder    schema.ServiceBuilder `json:"builder"`
-	Provider   *string               `json:"provider,omitempty"`
+	Icon       string                `json:"icon"`
 	Host       []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
 	Port       []v1.PortSpec         `json:"ports,omitempty" nullable:"false"`
 	Replicas   int32                 `json:"replicas"`
@@ -29,7 +29,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			GitBranch:  entity.GitBranch,
 			Type:       entity.Type,
 			Builder:    entity.Builder,
-			Provider:   entity.Provider,
+			Icon:       entity.Icon,
 			Host:       entity.Hosts,
 			Port:       entity.Ports,
 			Replicas:   entity.Replicas,

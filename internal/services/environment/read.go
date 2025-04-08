@@ -39,7 +39,7 @@ func (self *EnvironmentService) GetEnvironmentByID(ctx context.Context, requeste
 		return nil, err
 	}
 	resp.ServiceCount, _ = counts[environmentID]
-	resp.ServiceSummary, _ = providerSummaries[environmentID]
+	resp.ServiceIcons, _ = providerSummaries[environmentID]
 
 	return resp, nil
 }
