@@ -41,8 +41,9 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
 		field.String("dockerfile_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
 		// Provider and framework directly from railpack
-		field.Enum("provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
-		field.Enum("framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
+		field.String("provider").Optional().Nillable().Comment("High level provider"),
+		field.Enum("railpack_provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
+		field.Enum("railpack_framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
 		// Branch to build from (git)
 		field.String("git_branch").Optional().Nillable().Comment("Branch to build from"),
 		// Generic CRD configuration

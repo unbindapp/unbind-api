@@ -10428,8 +10428,9 @@ type ServiceConfigMutation struct {
 	database_config    *map[string]interface{}
 	dockerfile_path    *string
 	dockerfile_context *string
-	provider           *enum.Provider
-	framework          *enum.Framework
+	provider           *string
+	railpack_provider  *enum.Provider
+	railpack_framework *enum.Framework
 	git_branch         *string
 	hosts              *[]v1.HostSpec
 	appendhosts        []v1.HostSpec
@@ -10979,12 +10980,12 @@ func (m *ServiceConfigMutation) ResetDockerfileContext() {
 }
 
 // SetProvider sets the "provider" field.
-func (m *ServiceConfigMutation) SetProvider(e enum.Provider) {
-	m.provider = &e
+func (m *ServiceConfigMutation) SetProvider(s string) {
+	m.provider = &s
 }
 
 // Provider returns the value of the "provider" field in the mutation.
-func (m *ServiceConfigMutation) Provider() (r enum.Provider, exists bool) {
+func (m *ServiceConfigMutation) Provider() (r string, exists bool) {
 	v := m.provider
 	if v == nil {
 		return
@@ -10995,7 +10996,7 @@ func (m *ServiceConfigMutation) Provider() (r enum.Provider, exists bool) {
 // OldProvider returns the old "provider" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldProvider(ctx context.Context) (v *enum.Provider, err error) {
+func (m *ServiceConfigMutation) OldProvider(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
 	}
@@ -11027,53 +11028,102 @@ func (m *ServiceConfigMutation) ResetProvider() {
 	delete(m.clearedFields, serviceconfig.FieldProvider)
 }
 
-// SetFramework sets the "framework" field.
-func (m *ServiceConfigMutation) SetFramework(e enum.Framework) {
-	m.framework = &e
+// SetRailpackProvider sets the "railpack_provider" field.
+func (m *ServiceConfigMutation) SetRailpackProvider(e enum.Provider) {
+	m.railpack_provider = &e
 }
 
-// Framework returns the value of the "framework" field in the mutation.
-func (m *ServiceConfigMutation) Framework() (r enum.Framework, exists bool) {
-	v := m.framework
+// RailpackProvider returns the value of the "railpack_provider" field in the mutation.
+func (m *ServiceConfigMutation) RailpackProvider() (r enum.Provider, exists bool) {
+	v := m.railpack_provider
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldFramework returns the old "framework" field's value of the ServiceConfig entity.
+// OldRailpackProvider returns the old "railpack_provider" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldFramework(ctx context.Context) (v *enum.Framework, err error) {
+func (m *ServiceConfigMutation) OldRailpackProvider(ctx context.Context) (v *enum.Provider, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFramework is only allowed on UpdateOne operations")
+		return v, errors.New("OldRailpackProvider is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFramework requires an ID field in the mutation")
+		return v, errors.New("OldRailpackProvider requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFramework: %w", err)
+		return v, fmt.Errorf("querying old value for OldRailpackProvider: %w", err)
 	}
-	return oldValue.Framework, nil
+	return oldValue.RailpackProvider, nil
 }
 
-// ClearFramework clears the value of the "framework" field.
-func (m *ServiceConfigMutation) ClearFramework() {
-	m.framework = nil
-	m.clearedFields[serviceconfig.FieldFramework] = struct{}{}
+// ClearRailpackProvider clears the value of the "railpack_provider" field.
+func (m *ServiceConfigMutation) ClearRailpackProvider() {
+	m.railpack_provider = nil
+	m.clearedFields[serviceconfig.FieldRailpackProvider] = struct{}{}
 }
 
-// FrameworkCleared returns if the "framework" field was cleared in this mutation.
-func (m *ServiceConfigMutation) FrameworkCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldFramework]
+// RailpackProviderCleared returns if the "railpack_provider" field was cleared in this mutation.
+func (m *ServiceConfigMutation) RailpackProviderCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldRailpackProvider]
 	return ok
 }
 
-// ResetFramework resets all changes to the "framework" field.
-func (m *ServiceConfigMutation) ResetFramework() {
-	m.framework = nil
-	delete(m.clearedFields, serviceconfig.FieldFramework)
+// ResetRailpackProvider resets all changes to the "railpack_provider" field.
+func (m *ServiceConfigMutation) ResetRailpackProvider() {
+	m.railpack_provider = nil
+	delete(m.clearedFields, serviceconfig.FieldRailpackProvider)
+}
+
+// SetRailpackFramework sets the "railpack_framework" field.
+func (m *ServiceConfigMutation) SetRailpackFramework(e enum.Framework) {
+	m.railpack_framework = &e
+}
+
+// RailpackFramework returns the value of the "railpack_framework" field in the mutation.
+func (m *ServiceConfigMutation) RailpackFramework() (r enum.Framework, exists bool) {
+	v := m.railpack_framework
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRailpackFramework returns the old "railpack_framework" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldRailpackFramework(ctx context.Context) (v *enum.Framework, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRailpackFramework is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRailpackFramework requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRailpackFramework: %w", err)
+	}
+	return oldValue.RailpackFramework, nil
+}
+
+// ClearRailpackFramework clears the value of the "railpack_framework" field.
+func (m *ServiceConfigMutation) ClearRailpackFramework() {
+	m.railpack_framework = nil
+	m.clearedFields[serviceconfig.FieldRailpackFramework] = struct{}{}
+}
+
+// RailpackFrameworkCleared returns if the "railpack_framework" field was cleared in this mutation.
+func (m *ServiceConfigMutation) RailpackFrameworkCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldRailpackFramework]
+	return ok
+}
+
+// ResetRailpackFramework resets all changes to the "railpack_framework" field.
+func (m *ServiceConfigMutation) ResetRailpackFramework() {
+	m.railpack_framework = nil
+	delete(m.clearedFields, serviceconfig.FieldRailpackFramework)
 }
 
 // SetGitBranch sets the "git_branch" field.
@@ -11542,7 +11592,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 20)
+	fields := make([]string, 0, 21)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -11576,8 +11626,11 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.provider != nil {
 		fields = append(fields, serviceconfig.FieldProvider)
 	}
-	if m.framework != nil {
-		fields = append(fields, serviceconfig.FieldFramework)
+	if m.railpack_provider != nil {
+		fields = append(fields, serviceconfig.FieldRailpackProvider)
+	}
+	if m.railpack_framework != nil {
+		fields = append(fields, serviceconfig.FieldRailpackFramework)
 	}
 	if m.git_branch != nil {
 		fields = append(fields, serviceconfig.FieldGitBranch)
@@ -11633,8 +11686,10 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.DockerfileContext()
 	case serviceconfig.FieldProvider:
 		return m.Provider()
-	case serviceconfig.FieldFramework:
-		return m.Framework()
+	case serviceconfig.FieldRailpackProvider:
+		return m.RailpackProvider()
+	case serviceconfig.FieldRailpackFramework:
+		return m.RailpackFramework()
 	case serviceconfig.FieldGitBranch:
 		return m.GitBranch()
 	case serviceconfig.FieldHosts:
@@ -11682,8 +11737,10 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldDockerfileContext(ctx)
 	case serviceconfig.FieldProvider:
 		return m.OldProvider(ctx)
-	case serviceconfig.FieldFramework:
-		return m.OldFramework(ctx)
+	case serviceconfig.FieldRailpackProvider:
+		return m.OldRailpackProvider(ctx)
+	case serviceconfig.FieldRailpackFramework:
+		return m.OldRailpackFramework(ctx)
 	case serviceconfig.FieldGitBranch:
 		return m.OldGitBranch(ctx)
 	case serviceconfig.FieldHosts:
@@ -11780,18 +11837,25 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		m.SetDockerfileContext(v)
 		return nil
 	case serviceconfig.FieldProvider:
-		v, ok := value.(enum.Provider)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetProvider(v)
 		return nil
-	case serviceconfig.FieldFramework:
+	case serviceconfig.FieldRailpackProvider:
+		v, ok := value.(enum.Provider)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRailpackProvider(v)
+		return nil
+	case serviceconfig.FieldRailpackFramework:
 		v, ok := value.(enum.Framework)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetFramework(v)
+		m.SetRailpackFramework(v)
 		return nil
 	case serviceconfig.FieldGitBranch:
 		v, ok := value.(string)
@@ -11912,8 +11976,11 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldProvider) {
 		fields = append(fields, serviceconfig.FieldProvider)
 	}
-	if m.FieldCleared(serviceconfig.FieldFramework) {
-		fields = append(fields, serviceconfig.FieldFramework)
+	if m.FieldCleared(serviceconfig.FieldRailpackProvider) {
+		fields = append(fields, serviceconfig.FieldRailpackProvider)
+	}
+	if m.FieldCleared(serviceconfig.FieldRailpackFramework) {
+		fields = append(fields, serviceconfig.FieldRailpackFramework)
 	}
 	if m.FieldCleared(serviceconfig.FieldGitBranch) {
 		fields = append(fields, serviceconfig.FieldGitBranch)
@@ -11962,8 +12029,11 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 	case serviceconfig.FieldProvider:
 		m.ClearProvider()
 		return nil
-	case serviceconfig.FieldFramework:
-		m.ClearFramework()
+	case serviceconfig.FieldRailpackProvider:
+		m.ClearRailpackProvider()
+		return nil
+	case serviceconfig.FieldRailpackFramework:
+		m.ClearRailpackFramework()
 		return nil
 	case serviceconfig.FieldGitBranch:
 		m.ClearGitBranch()
@@ -12021,8 +12091,11 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 	case serviceconfig.FieldProvider:
 		m.ResetProvider()
 		return nil
-	case serviceconfig.FieldFramework:
-		m.ResetFramework()
+	case serviceconfig.FieldRailpackProvider:
+		m.ResetRailpackProvider()
+		return nil
+	case serviceconfig.FieldRailpackFramework:
+		m.ResetRailpackFramework()
 		return nil
 	case serviceconfig.FieldGitBranch:
 		m.ResetGitBranch()

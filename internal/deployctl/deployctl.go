@@ -246,10 +246,6 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_PROVIDER"] = string(*service.Edges.ServiceConfig.Provider)
 	}
 
-	if service.Edges.ServiceConfig.Framework != nil {
-		env["SERVICE_FRAMEWORK"] = string(*service.Edges.ServiceConfig.Framework)
-	}
-
 	if service.Edges.ServiceConfig.Builder != schema.ServiceBuilder("") {
 		env["SERVICE_BUILDER"] = string(service.Edges.ServiceConfig.Builder)
 	}

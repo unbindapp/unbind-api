@@ -44,10 +44,12 @@ type ServiceConfig struct {
 	DockerfilePath *string `json:"dockerfile_path,omitempty"`
 	// Path to Dockerfile context if using docker builder
 	DockerfileContext *string `json:"dockerfile_context,omitempty"`
+	// High level provider
+	Provider *string `json:"provider,omitempty"`
 	// Provider (e.g. Go, Python, Node, Deno)
-	Provider *enum.Provider `json:"provider,omitempty"`
+	RailpackProvider *enum.Provider `json:"railpack_provider,omitempty"`
 	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
-	Framework *enum.Framework `json:"framework,omitempty"`
+	RailpackFramework *enum.Framework `json:"railpack_framework,omitempty"`
 	// Branch to build from
 	GitBranch *string `json:"git_branch,omitempty"`
 	// External domains and paths for the service
@@ -101,7 +103,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDatabase, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldProvider, serviceconfig.FieldFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldDatabase, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldProvider, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -198,15 +200,22 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field provider", values[i])
 			} else if value.Valid {
-				sc.Provider = new(enum.Provider)
-				*sc.Provider = enum.Provider(value.String)
+				sc.Provider = new(string)
+				*sc.Provider = value.String
 			}
-		case serviceconfig.FieldFramework:
+		case serviceconfig.FieldRailpackProvider:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field framework", values[i])
+				return fmt.Errorf("unexpected type %T for field railpack_provider", values[i])
 			} else if value.Valid {
-				sc.Framework = new(enum.Framework)
-				*sc.Framework = enum.Framework(value.String)
+				sc.RailpackProvider = new(enum.Provider)
+				*sc.RailpackProvider = enum.Provider(value.String)
+			}
+		case serviceconfig.FieldRailpackFramework:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field railpack_framework", values[i])
+			} else if value.Valid {
+				sc.RailpackFramework = new(enum.Framework)
+				*sc.RailpackFramework = enum.Framework(value.String)
 			}
 		case serviceconfig.FieldGitBranch:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -343,11 +352,16 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	if v := sc.Provider; v != nil {
 		builder.WriteString("provider=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := sc.RailpackProvider; v != nil {
+		builder.WriteString("railpack_provider=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
-	if v := sc.Framework; v != nil {
-		builder.WriteString("framework=")
+	if v := sc.RailpackFramework; v != nil {
+		builder.WriteString("railpack_framework=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")

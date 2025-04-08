@@ -137,29 +137,43 @@ func (scc *ServiceConfigCreate) SetNillableDockerfileContext(s *string) *Service
 }
 
 // SetProvider sets the "provider" field.
-func (scc *ServiceConfigCreate) SetProvider(e enum.Provider) *ServiceConfigCreate {
-	scc.mutation.SetProvider(e)
+func (scc *ServiceConfigCreate) SetProvider(s string) *ServiceConfigCreate {
+	scc.mutation.SetProvider(s)
 	return scc
 }
 
 // SetNillableProvider sets the "provider" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableProvider(e *enum.Provider) *ServiceConfigCreate {
-	if e != nil {
-		scc.SetProvider(*e)
+func (scc *ServiceConfigCreate) SetNillableProvider(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetProvider(*s)
 	}
 	return scc
 }
 
-// SetFramework sets the "framework" field.
-func (scc *ServiceConfigCreate) SetFramework(e enum.Framework) *ServiceConfigCreate {
-	scc.mutation.SetFramework(e)
+// SetRailpackProvider sets the "railpack_provider" field.
+func (scc *ServiceConfigCreate) SetRailpackProvider(e enum.Provider) *ServiceConfigCreate {
+	scc.mutation.SetRailpackProvider(e)
 	return scc
 }
 
-// SetNillableFramework sets the "framework" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableFramework(e *enum.Framework) *ServiceConfigCreate {
+// SetNillableRailpackProvider sets the "railpack_provider" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableRailpackProvider(e *enum.Provider) *ServiceConfigCreate {
 	if e != nil {
-		scc.SetFramework(*e)
+		scc.SetRailpackProvider(*e)
+	}
+	return scc
+}
+
+// SetRailpackFramework sets the "railpack_framework" field.
+func (scc *ServiceConfigCreate) SetRailpackFramework(e enum.Framework) *ServiceConfigCreate {
+	scc.mutation.SetRailpackFramework(e)
+	return scc
+}
+
+// SetNillableRailpackFramework sets the "railpack_framework" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableRailpackFramework(e *enum.Framework) *ServiceConfigCreate {
+	if e != nil {
+		scc.SetRailpackFramework(*e)
 	}
 	return scc
 }
@@ -367,14 +381,14 @@ func (scc *ServiceConfigCreate) check() error {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
 		}
 	}
-	if v, ok := scc.mutation.Provider(); ok {
-		if err := serviceconfig.ProviderValidator(v); err != nil {
-			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.provider": %w`, err)}
+	if v, ok := scc.mutation.RailpackProvider(); ok {
+		if err := serviceconfig.RailpackProviderValidator(v); err != nil {
+			return &ValidationError{Name: "railpack_provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_provider": %w`, err)}
 		}
 	}
-	if v, ok := scc.mutation.Framework(); ok {
-		if err := serviceconfig.FrameworkValidator(v); err != nil {
-			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
+	if v, ok := scc.mutation.RailpackFramework(); ok {
+		if err := serviceconfig.RailpackFrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "railpack_framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_framework": %w`, err)}
 		}
 	}
 	if _, ok := scc.mutation.Replicas(); !ok {
@@ -462,12 +476,16 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_node.DockerfileContext = &value
 	}
 	if value, ok := scc.mutation.Provider(); ok {
-		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
+		_spec.SetField(serviceconfig.FieldProvider, field.TypeString, value)
 		_node.Provider = &value
 	}
-	if value, ok := scc.mutation.Framework(); ok {
-		_spec.SetField(serviceconfig.FieldFramework, field.TypeEnum, value)
-		_node.Framework = &value
+	if value, ok := scc.mutation.RailpackProvider(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
+		_node.RailpackProvider = &value
+	}
+	if value, ok := scc.mutation.RailpackFramework(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackFramework, field.TypeEnum, value)
+		_node.RailpackFramework = &value
 	}
 	if value, ok := scc.mutation.GitBranch(); ok {
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
@@ -709,7 +727,7 @@ func (u *ServiceConfigUpsert) ClearDockerfileContext() *ServiceConfigUpsert {
 }
 
 // SetProvider sets the "provider" field.
-func (u *ServiceConfigUpsert) SetProvider(v enum.Provider) *ServiceConfigUpsert {
+func (u *ServiceConfigUpsert) SetProvider(v string) *ServiceConfigUpsert {
 	u.Set(serviceconfig.FieldProvider, v)
 	return u
 }
@@ -726,21 +744,39 @@ func (u *ServiceConfigUpsert) ClearProvider() *ServiceConfigUpsert {
 	return u
 }
 
-// SetFramework sets the "framework" field.
-func (u *ServiceConfigUpsert) SetFramework(v enum.Framework) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldFramework, v)
+// SetRailpackProvider sets the "railpack_provider" field.
+func (u *ServiceConfigUpsert) SetRailpackProvider(v enum.Provider) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldRailpackProvider, v)
 	return u
 }
 
-// UpdateFramework sets the "framework" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateFramework() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldFramework)
+// UpdateRailpackProvider sets the "railpack_provider" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateRailpackProvider() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldRailpackProvider)
 	return u
 }
 
-// ClearFramework clears the value of the "framework" field.
-func (u *ServiceConfigUpsert) ClearFramework() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldFramework)
+// ClearRailpackProvider clears the value of the "railpack_provider" field.
+func (u *ServiceConfigUpsert) ClearRailpackProvider() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldRailpackProvider)
+	return u
+}
+
+// SetRailpackFramework sets the "railpack_framework" field.
+func (u *ServiceConfigUpsert) SetRailpackFramework(v enum.Framework) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldRailpackFramework, v)
+	return u
+}
+
+// UpdateRailpackFramework sets the "railpack_framework" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateRailpackFramework() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldRailpackFramework)
+	return u
+}
+
+// ClearRailpackFramework clears the value of the "railpack_framework" field.
+func (u *ServiceConfigUpsert) ClearRailpackFramework() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldRailpackFramework)
 	return u
 }
 
@@ -1089,7 +1125,7 @@ func (u *ServiceConfigUpsertOne) ClearDockerfileContext() *ServiceConfigUpsertOn
 }
 
 // SetProvider sets the "provider" field.
-func (u *ServiceConfigUpsertOne) SetProvider(v enum.Provider) *ServiceConfigUpsertOne {
+func (u *ServiceConfigUpsertOne) SetProvider(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetProvider(v)
 	})
@@ -1109,24 +1145,45 @@ func (u *ServiceConfigUpsertOne) ClearProvider() *ServiceConfigUpsertOne {
 	})
 }
 
-// SetFramework sets the "framework" field.
-func (u *ServiceConfigUpsertOne) SetFramework(v enum.Framework) *ServiceConfigUpsertOne {
+// SetRailpackProvider sets the "railpack_provider" field.
+func (u *ServiceConfigUpsertOne) SetRailpackProvider(v enum.Provider) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetFramework(v)
+		s.SetRailpackProvider(v)
 	})
 }
 
-// UpdateFramework sets the "framework" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateFramework() *ServiceConfigUpsertOne {
+// UpdateRailpackProvider sets the "railpack_provider" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateRailpackProvider() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateFramework()
+		s.UpdateRailpackProvider()
 	})
 }
 
-// ClearFramework clears the value of the "framework" field.
-func (u *ServiceConfigUpsertOne) ClearFramework() *ServiceConfigUpsertOne {
+// ClearRailpackProvider clears the value of the "railpack_provider" field.
+func (u *ServiceConfigUpsertOne) ClearRailpackProvider() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearFramework()
+		s.ClearRailpackProvider()
+	})
+}
+
+// SetRailpackFramework sets the "railpack_framework" field.
+func (u *ServiceConfigUpsertOne) SetRailpackFramework(v enum.Framework) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetRailpackFramework(v)
+	})
+}
+
+// UpdateRailpackFramework sets the "railpack_framework" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateRailpackFramework() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateRailpackFramework()
+	})
+}
+
+// ClearRailpackFramework clears the value of the "railpack_framework" field.
+func (u *ServiceConfigUpsertOne) ClearRailpackFramework() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearRailpackFramework()
 	})
 }
 
@@ -1664,7 +1721,7 @@ func (u *ServiceConfigUpsertBulk) ClearDockerfileContext() *ServiceConfigUpsertB
 }
 
 // SetProvider sets the "provider" field.
-func (u *ServiceConfigUpsertBulk) SetProvider(v enum.Provider) *ServiceConfigUpsertBulk {
+func (u *ServiceConfigUpsertBulk) SetProvider(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetProvider(v)
 	})
@@ -1684,24 +1741,45 @@ func (u *ServiceConfigUpsertBulk) ClearProvider() *ServiceConfigUpsertBulk {
 	})
 }
 
-// SetFramework sets the "framework" field.
-func (u *ServiceConfigUpsertBulk) SetFramework(v enum.Framework) *ServiceConfigUpsertBulk {
+// SetRailpackProvider sets the "railpack_provider" field.
+func (u *ServiceConfigUpsertBulk) SetRailpackProvider(v enum.Provider) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetFramework(v)
+		s.SetRailpackProvider(v)
 	})
 }
 
-// UpdateFramework sets the "framework" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateFramework() *ServiceConfigUpsertBulk {
+// UpdateRailpackProvider sets the "railpack_provider" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateRailpackProvider() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateFramework()
+		s.UpdateRailpackProvider()
 	})
 }
 
-// ClearFramework clears the value of the "framework" field.
-func (u *ServiceConfigUpsertBulk) ClearFramework() *ServiceConfigUpsertBulk {
+// ClearRailpackProvider clears the value of the "railpack_provider" field.
+func (u *ServiceConfigUpsertBulk) ClearRailpackProvider() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearFramework()
+		s.ClearRailpackProvider()
+	})
+}
+
+// SetRailpackFramework sets the "railpack_framework" field.
+func (u *ServiceConfigUpsertBulk) SetRailpackFramework(v enum.Framework) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetRailpackFramework(v)
+	})
+}
+
+// UpdateRailpackFramework sets the "railpack_framework" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateRailpackFramework() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateRailpackFramework()
+	})
+}
+
+// ClearRailpackFramework clears the value of the "railpack_framework" field.
+func (u *ServiceConfigUpsertBulk) ClearRailpackFramework() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearRailpackFramework()
 	})
 }
 

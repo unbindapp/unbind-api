@@ -17,7 +17,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
-	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -194,17 +193,15 @@ func (self *ServiceRepository) GetDeploymentNamespace(ctx context.Context, servi
 }
 
 // Summarize services in environment
-func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]enum.Provider, frameworks map[uuid.UUID][]enum.Framework, err error) {
+func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]string, err error) {
 	counts = make(map[uuid.UUID]int)
 
-	// Maps to not duplicate providers and frameworks
-	providerSets := make(map[uuid.UUID]map[enum.Provider]struct{})
-	frameworkSets := make(map[uuid.UUID]map[enum.Framework]struct{})
+	// Maps to not duplicate providers
+	providerSets := make(map[uuid.UUID]map[string]struct{})
 
 	// Initialize sets for each environment ID
 	for _, envID := range environmentIDs {
-		providerSets[envID] = make(map[enum.Provider]struct{})
-		frameworkSets[envID] = make(map[enum.Framework]struct{})
+		providerSets[envID] = make(map[string]struct{})
 	}
 
 	services, err := self.base.DB.Service.Query().
@@ -223,28 +220,27 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 			continue
 		}
 
-		if svc.Edges.ServiceConfig.Provider != nil {
-			providerSets[svc.EnvironmentID][*svc.Edges.ServiceConfig.Provider] = struct{}{}
+		if svc.Edges.ServiceConfig.Database != nil {
+			providerSets[svc.EnvironmentID][string(*svc.Edges.ServiceConfig.Database)] = struct{}{}
+			continue
 		}
 
-		if svc.Edges.ServiceConfig.Framework != nil {
-			frameworkSets[svc.EnvironmentID][*svc.Edges.ServiceConfig.Framework] = struct{}{}
+		if svc.Edges.ServiceConfig.RailpackFramework != nil {
+			providerSets[svc.EnvironmentID][string(*svc.Edges.ServiceConfig.RailpackFramework)] = struct{}{}
+			continue
+		}
+
+		if svc.Edges.ServiceConfig.RailpackProvider != nil {
+			providerSets[svc.EnvironmentID][string(*svc.Edges.ServiceConfig.RailpackProvider)] = struct{}{}
 		}
 	}
 
 	// Convert to slices
-	providers = make(map[uuid.UUID][]enum.Provider)
-	frameworks = make(map[uuid.UUID][]enum.Framework)
+	providers = make(map[uuid.UUID][]string)
 
 	for envID, providerSet := range providerSets {
 		for provider := range providerSet {
 			providers[envID] = append(providers[envID], provider)
-		}
-	}
-
-	for envID, frameworkSet := range frameworkSets {
-		for framework := range frameworkSet {
-			frameworks[envID] = append(frameworks[envID], framework)
 		}
 	}
 

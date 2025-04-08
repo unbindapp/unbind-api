@@ -40,8 +40,10 @@ const (
 	FieldDockerfileContext = "dockerfile_context"
 	// FieldProvider holds the string denoting the provider field in the database.
 	FieldProvider = "provider"
-	// FieldFramework holds the string denoting the framework field in the database.
-	FieldFramework = "framework"
+	// FieldRailpackProvider holds the string denoting the railpack_provider field in the database.
+	FieldRailpackProvider = "railpack_provider"
+	// FieldRailpackFramework holds the string denoting the railpack_framework field in the database.
+	FieldRailpackFramework = "railpack_framework"
 	// FieldGitBranch holds the string denoting the git_branch field in the database.
 	FieldGitBranch = "git_branch"
 	// FieldHosts holds the string denoting the hosts field in the database.
@@ -85,7 +87,8 @@ var Columns = []string{
 	FieldDockerfilePath,
 	FieldDockerfileContext,
 	FieldProvider,
-	FieldFramework,
+	FieldRailpackProvider,
+	FieldRailpackFramework,
 	FieldGitBranch,
 	FieldHosts,
 	FieldPorts,
@@ -143,23 +146,23 @@ func BuilderValidator(b schema.ServiceBuilder) error {
 	}
 }
 
-// ProviderValidator is a validator for the "provider" field enum values. It is called by the builders before save.
-func ProviderValidator(pr enum.Provider) error {
-	switch pr {
+// RailpackProviderValidator is a validator for the "railpack_provider" field enum values. It is called by the builders before save.
+func RailpackProviderValidator(rp enum.Provider) error {
+	switch rp {
 	case "node", "deno", "go", "java", "php", "python", "ruby", "rust", "staticfile", "unknown":
 		return nil
 	default:
-		return fmt.Errorf("serviceconfig: invalid enum value for provider field: %q", pr)
+		return fmt.Errorf("serviceconfig: invalid enum value for railpack_provider field: %q", rp)
 	}
 }
 
-// FrameworkValidator is a validator for the "framework" field enum values. It is called by the builders before save.
-func FrameworkValidator(f enum.Framework) error {
-	switch f {
+// RailpackFrameworkValidator is a validator for the "railpack_framework" field enum values. It is called by the builders before save.
+func RailpackFrameworkValidator(rf enum.Framework) error {
+	switch rf {
 	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "rocket", "unknown":
 		return nil
 	default:
-		return fmt.Errorf("serviceconfig: invalid enum value for framework field: %q", f)
+		return fmt.Errorf("serviceconfig: invalid enum value for railpack_framework field: %q", rf)
 	}
 }
 
@@ -221,9 +224,14 @@ func ByProvider(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldProvider, opts...).ToFunc()
 }
 
-// ByFramework orders the results by the framework field.
-func ByFramework(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFramework, opts...).ToFunc()
+// ByRailpackProvider orders the results by the railpack_provider field.
+func ByRailpackProvider(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRailpackProvider, opts...).ToFunc()
+}
+
+// ByRailpackFramework orders the results by the railpack_framework field.
+func ByRailpackFramework(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRailpackFramework, opts...).ToFunc()
 }
 
 // ByGitBranch orders the results by the git_branch field.

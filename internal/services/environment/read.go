@@ -34,12 +34,11 @@ func (self *EnvironmentService) GetEnvironmentByID(ctx context.Context, requeste
 	resp := models.TransformEnvironmentEntity(environment)
 
 	// Summarizes services
-	counts, providerSummaries, frameworkSummaries, err := self.repo.Service().SummarizeServices(ctx, []uuid.UUID{environmentID})
+	counts, providerSummaries, err := self.repo.Service().SummarizeServices(ctx, []uuid.UUID{environmentID})
 	if err != nil {
 		return nil, err
 	}
 	resp.ServiceCount, _ = counts[environmentID]
-	resp.FrameworkSummary, _ = frameworkSummaries[environmentID]
 	resp.ProviderSummary, _ = providerSummaries[environmentID]
 
 	return resp, nil

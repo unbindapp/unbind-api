@@ -3,7 +3,6 @@ package models
 import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -12,8 +11,7 @@ type ServiceConfigResponse struct {
 	GitBranch  *string               `json:"git_branch,omitempty"`
 	Type       schema.ServiceType    `json:"type"`
 	Builder    schema.ServiceBuilder `json:"builder"`
-	Provider   *enum.Provider        `json:"provider,omitempty"`
-	Framework  *enum.Framework       `json:"framework,omitempty"`
+	Provider   *string               `json:"provider,omitempty"`
 	Host       []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
 	Port       []v1.PortSpec         `json:"ports,omitempty" nullable:"false"`
 	Replicas   int32                 `json:"replicas"`
@@ -32,7 +30,6 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			Type:       entity.Type,
 			Builder:    entity.Builder,
 			Provider:   entity.Provider,
-			Framework:  entity.Framework,
 			Host:       entity.Hosts,
 			Port:       entity.Ports,
 			Replicas:   entity.Replicas,

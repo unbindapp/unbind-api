@@ -93,6 +93,11 @@ func DockerfileContext(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerfileContext, v))
 }
 
+// Provider applies equality check predicate on the "provider" field. It's identical to ProviderEQ.
+func Provider(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldProvider, v))
+}
+
 // GitBranch applies equality check predicate on the "git_branch" field. It's identical to GitBranchEQ.
 func GitBranch(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldGitBranch, v))
@@ -594,33 +599,58 @@ func DockerfileContextContainsFold(v string) predicate.ServiceConfig {
 }
 
 // ProviderEQ applies the EQ predicate on the "provider" field.
-func ProviderEQ(v enum.Provider) predicate.ServiceConfig {
-	vc := v
-	return predicate.ServiceConfig(sql.FieldEQ(FieldProvider, vc))
+func ProviderEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldProvider, v))
 }
 
 // ProviderNEQ applies the NEQ predicate on the "provider" field.
-func ProviderNEQ(v enum.Provider) predicate.ServiceConfig {
-	vc := v
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldProvider, vc))
+func ProviderNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldProvider, v))
 }
 
 // ProviderIn applies the In predicate on the "provider" field.
-func ProviderIn(vs ...enum.Provider) predicate.ServiceConfig {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.ServiceConfig(sql.FieldIn(FieldProvider, v...))
+func ProviderIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldProvider, vs...))
 }
 
 // ProviderNotIn applies the NotIn predicate on the "provider" field.
-func ProviderNotIn(vs ...enum.Provider) predicate.ServiceConfig {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldProvider, v...))
+func ProviderNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldProvider, vs...))
+}
+
+// ProviderGT applies the GT predicate on the "provider" field.
+func ProviderGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldProvider, v))
+}
+
+// ProviderGTE applies the GTE predicate on the "provider" field.
+func ProviderGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldProvider, v))
+}
+
+// ProviderLT applies the LT predicate on the "provider" field.
+func ProviderLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldProvider, v))
+}
+
+// ProviderLTE applies the LTE predicate on the "provider" field.
+func ProviderLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldProvider, v))
+}
+
+// ProviderContains applies the Contains predicate on the "provider" field.
+func ProviderContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldProvider, v))
+}
+
+// ProviderHasPrefix applies the HasPrefix predicate on the "provider" field.
+func ProviderHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldProvider, v))
+}
+
+// ProviderHasSuffix applies the HasSuffix predicate on the "provider" field.
+func ProviderHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldProvider, v))
 }
 
 // ProviderIsNil applies the IsNil predicate on the "provider" field.
@@ -633,44 +663,94 @@ func ProviderNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldProvider))
 }
 
-// FrameworkEQ applies the EQ predicate on the "framework" field.
-func FrameworkEQ(v enum.Framework) predicate.ServiceConfig {
-	vc := v
-	return predicate.ServiceConfig(sql.FieldEQ(FieldFramework, vc))
+// ProviderEqualFold applies the EqualFold predicate on the "provider" field.
+func ProviderEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldProvider, v))
 }
 
-// FrameworkNEQ applies the NEQ predicate on the "framework" field.
-func FrameworkNEQ(v enum.Framework) predicate.ServiceConfig {
-	vc := v
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldFramework, vc))
+// ProviderContainsFold applies the ContainsFold predicate on the "provider" field.
+func ProviderContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldProvider, v))
 }
 
-// FrameworkIn applies the In predicate on the "framework" field.
-func FrameworkIn(vs ...enum.Framework) predicate.ServiceConfig {
+// RailpackProviderEQ applies the EQ predicate on the "railpack_provider" field.
+func RailpackProviderEQ(v enum.Provider) predicate.ServiceConfig {
+	vc := v
+	return predicate.ServiceConfig(sql.FieldEQ(FieldRailpackProvider, vc))
+}
+
+// RailpackProviderNEQ applies the NEQ predicate on the "railpack_provider" field.
+func RailpackProviderNEQ(v enum.Provider) predicate.ServiceConfig {
+	vc := v
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldRailpackProvider, vc))
+}
+
+// RailpackProviderIn applies the In predicate on the "railpack_provider" field.
+func RailpackProviderIn(vs ...enum.Provider) predicate.ServiceConfig {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
-	return predicate.ServiceConfig(sql.FieldIn(FieldFramework, v...))
+	return predicate.ServiceConfig(sql.FieldIn(FieldRailpackProvider, v...))
 }
 
-// FrameworkNotIn applies the NotIn predicate on the "framework" field.
-func FrameworkNotIn(vs ...enum.Framework) predicate.ServiceConfig {
+// RailpackProviderNotIn applies the NotIn predicate on the "railpack_provider" field.
+func RailpackProviderNotIn(vs ...enum.Provider) predicate.ServiceConfig {
 	v := make([]any, len(vs))
 	for i := range v {
 		v[i] = vs[i]
 	}
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldFramework, v...))
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldRailpackProvider, v...))
 }
 
-// FrameworkIsNil applies the IsNil predicate on the "framework" field.
-func FrameworkIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldFramework))
+// RailpackProviderIsNil applies the IsNil predicate on the "railpack_provider" field.
+func RailpackProviderIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldRailpackProvider))
 }
 
-// FrameworkNotNil applies the NotNil predicate on the "framework" field.
-func FrameworkNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldFramework))
+// RailpackProviderNotNil applies the NotNil predicate on the "railpack_provider" field.
+func RailpackProviderNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldRailpackProvider))
+}
+
+// RailpackFrameworkEQ applies the EQ predicate on the "railpack_framework" field.
+func RailpackFrameworkEQ(v enum.Framework) predicate.ServiceConfig {
+	vc := v
+	return predicate.ServiceConfig(sql.FieldEQ(FieldRailpackFramework, vc))
+}
+
+// RailpackFrameworkNEQ applies the NEQ predicate on the "railpack_framework" field.
+func RailpackFrameworkNEQ(v enum.Framework) predicate.ServiceConfig {
+	vc := v
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldRailpackFramework, vc))
+}
+
+// RailpackFrameworkIn applies the In predicate on the "railpack_framework" field.
+func RailpackFrameworkIn(vs ...enum.Framework) predicate.ServiceConfig {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ServiceConfig(sql.FieldIn(FieldRailpackFramework, v...))
+}
+
+// RailpackFrameworkNotIn applies the NotIn predicate on the "railpack_framework" field.
+func RailpackFrameworkNotIn(vs ...enum.Framework) predicate.ServiceConfig {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldRailpackFramework, v...))
+}
+
+// RailpackFrameworkIsNil applies the IsNil predicate on the "railpack_framework" field.
+func RailpackFrameworkIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldRailpackFramework))
+}
+
+// RailpackFrameworkNotNil applies the NotNil predicate on the "railpack_framework" field.
+func RailpackFrameworkNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldRailpackFramework))
 }
 
 // GitBranchEQ applies the EQ predicate on the "git_branch" field.

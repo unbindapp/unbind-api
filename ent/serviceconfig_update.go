@@ -176,15 +176,15 @@ func (scu *ServiceConfigUpdate) ClearDockerfileContext() *ServiceConfigUpdate {
 }
 
 // SetProvider sets the "provider" field.
-func (scu *ServiceConfigUpdate) SetProvider(e enum.Provider) *ServiceConfigUpdate {
-	scu.mutation.SetProvider(e)
+func (scu *ServiceConfigUpdate) SetProvider(s string) *ServiceConfigUpdate {
+	scu.mutation.SetProvider(s)
 	return scu
 }
 
 // SetNillableProvider sets the "provider" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableProvider(e *enum.Provider) *ServiceConfigUpdate {
-	if e != nil {
-		scu.SetProvider(*e)
+func (scu *ServiceConfigUpdate) SetNillableProvider(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetProvider(*s)
 	}
 	return scu
 }
@@ -195,23 +195,43 @@ func (scu *ServiceConfigUpdate) ClearProvider() *ServiceConfigUpdate {
 	return scu
 }
 
-// SetFramework sets the "framework" field.
-func (scu *ServiceConfigUpdate) SetFramework(e enum.Framework) *ServiceConfigUpdate {
-	scu.mutation.SetFramework(e)
+// SetRailpackProvider sets the "railpack_provider" field.
+func (scu *ServiceConfigUpdate) SetRailpackProvider(e enum.Provider) *ServiceConfigUpdate {
+	scu.mutation.SetRailpackProvider(e)
 	return scu
 }
 
-// SetNillableFramework sets the "framework" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableFramework(e *enum.Framework) *ServiceConfigUpdate {
+// SetNillableRailpackProvider sets the "railpack_provider" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableRailpackProvider(e *enum.Provider) *ServiceConfigUpdate {
 	if e != nil {
-		scu.SetFramework(*e)
+		scu.SetRailpackProvider(*e)
 	}
 	return scu
 }
 
-// ClearFramework clears the value of the "framework" field.
-func (scu *ServiceConfigUpdate) ClearFramework() *ServiceConfigUpdate {
-	scu.mutation.ClearFramework()
+// ClearRailpackProvider clears the value of the "railpack_provider" field.
+func (scu *ServiceConfigUpdate) ClearRailpackProvider() *ServiceConfigUpdate {
+	scu.mutation.ClearRailpackProvider()
+	return scu
+}
+
+// SetRailpackFramework sets the "railpack_framework" field.
+func (scu *ServiceConfigUpdate) SetRailpackFramework(e enum.Framework) *ServiceConfigUpdate {
+	scu.mutation.SetRailpackFramework(e)
+	return scu
+}
+
+// SetNillableRailpackFramework sets the "railpack_framework" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableRailpackFramework(e *enum.Framework) *ServiceConfigUpdate {
+	if e != nil {
+		scu.SetRailpackFramework(*e)
+	}
+	return scu
+}
+
+// ClearRailpackFramework clears the value of the "railpack_framework" field.
+func (scu *ServiceConfigUpdate) ClearRailpackFramework() *ServiceConfigUpdate {
+	scu.mutation.ClearRailpackFramework()
 	return scu
 }
 
@@ -424,14 +444,14 @@ func (scu *ServiceConfigUpdate) check() error {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
 		}
 	}
-	if v, ok := scu.mutation.Provider(); ok {
-		if err := serviceconfig.ProviderValidator(v); err != nil {
-			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.provider": %w`, err)}
+	if v, ok := scu.mutation.RailpackProvider(); ok {
+		if err := serviceconfig.RailpackProviderValidator(v); err != nil {
+			return &ValidationError{Name: "railpack_provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_provider": %w`, err)}
 		}
 	}
-	if v, ok := scu.mutation.Framework(); ok {
-		if err := serviceconfig.FrameworkValidator(v); err != nil {
-			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
+	if v, ok := scu.mutation.RailpackFramework(); ok {
+		if err := serviceconfig.RailpackFrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "railpack_framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_framework": %w`, err)}
 		}
 	}
 	if scu.mutation.ServiceCleared() && len(scu.mutation.ServiceIDs()) > 0 {
@@ -498,16 +518,22 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		_spec.ClearField(serviceconfig.FieldDockerfileContext, field.TypeString)
 	}
 	if value, ok := scu.mutation.Provider(); ok {
-		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
+		_spec.SetField(serviceconfig.FieldProvider, field.TypeString, value)
 	}
 	if scu.mutation.ProviderCleared() {
-		_spec.ClearField(serviceconfig.FieldProvider, field.TypeEnum)
+		_spec.ClearField(serviceconfig.FieldProvider, field.TypeString)
 	}
-	if value, ok := scu.mutation.Framework(); ok {
-		_spec.SetField(serviceconfig.FieldFramework, field.TypeEnum, value)
+	if value, ok := scu.mutation.RailpackProvider(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
 	}
-	if scu.mutation.FrameworkCleared() {
-		_spec.ClearField(serviceconfig.FieldFramework, field.TypeEnum)
+	if scu.mutation.RailpackProviderCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackProvider, field.TypeEnum)
+	}
+	if value, ok := scu.mutation.RailpackFramework(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackFramework, field.TypeEnum, value)
+	}
+	if scu.mutation.RailpackFrameworkCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackFramework, field.TypeEnum)
 	}
 	if value, ok := scu.mutation.GitBranch(); ok {
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
@@ -753,15 +779,15 @@ func (scuo *ServiceConfigUpdateOne) ClearDockerfileContext() *ServiceConfigUpdat
 }
 
 // SetProvider sets the "provider" field.
-func (scuo *ServiceConfigUpdateOne) SetProvider(e enum.Provider) *ServiceConfigUpdateOne {
-	scuo.mutation.SetProvider(e)
+func (scuo *ServiceConfigUpdateOne) SetProvider(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetProvider(s)
 	return scuo
 }
 
 // SetNillableProvider sets the "provider" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableProvider(e *enum.Provider) *ServiceConfigUpdateOne {
-	if e != nil {
-		scuo.SetProvider(*e)
+func (scuo *ServiceConfigUpdateOne) SetNillableProvider(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetProvider(*s)
 	}
 	return scuo
 }
@@ -772,23 +798,43 @@ func (scuo *ServiceConfigUpdateOne) ClearProvider() *ServiceConfigUpdateOne {
 	return scuo
 }
 
-// SetFramework sets the "framework" field.
-func (scuo *ServiceConfigUpdateOne) SetFramework(e enum.Framework) *ServiceConfigUpdateOne {
-	scuo.mutation.SetFramework(e)
+// SetRailpackProvider sets the "railpack_provider" field.
+func (scuo *ServiceConfigUpdateOne) SetRailpackProvider(e enum.Provider) *ServiceConfigUpdateOne {
+	scuo.mutation.SetRailpackProvider(e)
 	return scuo
 }
 
-// SetNillableFramework sets the "framework" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableFramework(e *enum.Framework) *ServiceConfigUpdateOne {
+// SetNillableRailpackProvider sets the "railpack_provider" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableRailpackProvider(e *enum.Provider) *ServiceConfigUpdateOne {
 	if e != nil {
-		scuo.SetFramework(*e)
+		scuo.SetRailpackProvider(*e)
 	}
 	return scuo
 }
 
-// ClearFramework clears the value of the "framework" field.
-func (scuo *ServiceConfigUpdateOne) ClearFramework() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearFramework()
+// ClearRailpackProvider clears the value of the "railpack_provider" field.
+func (scuo *ServiceConfigUpdateOne) ClearRailpackProvider() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearRailpackProvider()
+	return scuo
+}
+
+// SetRailpackFramework sets the "railpack_framework" field.
+func (scuo *ServiceConfigUpdateOne) SetRailpackFramework(e enum.Framework) *ServiceConfigUpdateOne {
+	scuo.mutation.SetRailpackFramework(e)
+	return scuo
+}
+
+// SetNillableRailpackFramework sets the "railpack_framework" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableRailpackFramework(e *enum.Framework) *ServiceConfigUpdateOne {
+	if e != nil {
+		scuo.SetRailpackFramework(*e)
+	}
+	return scuo
+}
+
+// ClearRailpackFramework clears the value of the "railpack_framework" field.
+func (scuo *ServiceConfigUpdateOne) ClearRailpackFramework() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearRailpackFramework()
 	return scuo
 }
 
@@ -1014,14 +1060,14 @@ func (scuo *ServiceConfigUpdateOne) check() error {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
 		}
 	}
-	if v, ok := scuo.mutation.Provider(); ok {
-		if err := serviceconfig.ProviderValidator(v); err != nil {
-			return &ValidationError{Name: "provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.provider": %w`, err)}
+	if v, ok := scuo.mutation.RailpackProvider(); ok {
+		if err := serviceconfig.RailpackProviderValidator(v); err != nil {
+			return &ValidationError{Name: "railpack_provider", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_provider": %w`, err)}
 		}
 	}
-	if v, ok := scuo.mutation.Framework(); ok {
-		if err := serviceconfig.FrameworkValidator(v); err != nil {
-			return &ValidationError{Name: "framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.framework": %w`, err)}
+	if v, ok := scuo.mutation.RailpackFramework(); ok {
+		if err := serviceconfig.RailpackFrameworkValidator(v); err != nil {
+			return &ValidationError{Name: "railpack_framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_framework": %w`, err)}
 		}
 	}
 	if scuo.mutation.ServiceCleared() && len(scuo.mutation.ServiceIDs()) > 0 {
@@ -1105,16 +1151,22 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 		_spec.ClearField(serviceconfig.FieldDockerfileContext, field.TypeString)
 	}
 	if value, ok := scuo.mutation.Provider(); ok {
-		_spec.SetField(serviceconfig.FieldProvider, field.TypeEnum, value)
+		_spec.SetField(serviceconfig.FieldProvider, field.TypeString, value)
 	}
 	if scuo.mutation.ProviderCleared() {
-		_spec.ClearField(serviceconfig.FieldProvider, field.TypeEnum)
+		_spec.ClearField(serviceconfig.FieldProvider, field.TypeString)
 	}
-	if value, ok := scuo.mutation.Framework(); ok {
-		_spec.SetField(serviceconfig.FieldFramework, field.TypeEnum, value)
+	if value, ok := scuo.mutation.RailpackProvider(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
 	}
-	if scuo.mutation.FrameworkCleared() {
-		_spec.ClearField(serviceconfig.FieldFramework, field.TypeEnum)
+	if scuo.mutation.RailpackProviderCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackProvider, field.TypeEnum)
+	}
+	if value, ok := scuo.mutation.RailpackFramework(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackFramework, field.TypeEnum, value)
+	}
+	if scuo.mutation.RailpackFrameworkCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackFramework, field.TypeEnum)
 	}
 	if value, ok := scuo.mutation.GitBranch(); ok {
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
