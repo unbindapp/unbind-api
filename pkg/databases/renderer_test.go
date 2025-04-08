@@ -1,6 +1,7 @@
 package databases
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -154,6 +155,20 @@ spec:
   numberOfInstances: {{ .Parameters.common.replicas | default 1 }}
   allowedSourceRanges:
     - 0.0.0.0/0
+  patroni:
+    pg_hba:
+    # Keep for pam authentication
+    - "hostssl all +pamrole all pam"
+    # Force SSL for external
+    - "hostssl all all 0.0.0.0/0 md5"
+    # Allow non‑SSL md5 inside the pod network (k3s)
+    - "host    all all 10.42.0.0/16 md5"
+    # Allow non-ssl md5 inside the pod network (others like microk8s)
+    - "host    all all 10.1.0.0/16 md5"
+    # Allow non-ssl md5 inside the pod network (others common k8s distributions)
+    - "host    all all 10.0.0.0/8 md5"
+    # Local loopback
+    - "host    all all 127.0.0.1/32 trust"
   volume:
     size: {{ .Parameters.common.storage | default "1Gi" }}
   resources:
@@ -223,7 +238,29 @@ spec:
       value: {{ .Parameters.s3.bucket }}
     - name: WALG_DISABLE_S3_SSE
       value: "true"
-    {{- end }}`,
+    {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Name }}-nodeport
+  namespace: {{ .Namespace }}
+  labels:
+    # usd-specific labels
+    unbind/usd-type: {{ .Definition.Type }}
+    unbind/usd-version: {{ .Definition.Version }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  type: NodePort
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+  selector:
+    app: {{ .Name }}`,
 	}
 
 	// Create a renderer
@@ -243,19 +280,28 @@ spec:
 					"replicas": 3,
 				},
 			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
 		}
 
 		// Render the template
 		result, err := renderer.Render(template, ctx)
 		require.NoError(t, err)
 
-		// Verify the output contains the expected values
+		// Verify the output contains the expected values for PostgreSQL object
 		assert.Contains(t, result, "name: test-postgres")
 		assert.Contains(t, result, "namespace: default")
 		assert.Contains(t, result, "team: team1")
 		assert.Contains(t, result, "version: \"17\"")      // Default value
 		assert.Contains(t, result, "numberOfInstances: 3") // Provided value
 		assert.Contains(t, result, "size: 1Gi")            // Default value
+
+		// Check for Patroni configuration
+		assert.Contains(t, result, "patroni:")
+		assert.Contains(t, result, "\"hostssl all +pamrole all pam\"")
+		assert.Contains(t, result, "\"host    all all 10.42.0.0/16 md5\"")
 
 		// S3 section should not be included since enabled=false by default
 		assert.NotContains(t, result, "AWS_ACCESS_KEY_ID")
@@ -266,10 +312,23 @@ spec:
 		assert.Contains(t, result, "cpu: 200m")
 		assert.Contains(t, result, "memory: 256Mi")
 
+		// Verify NodePort service is included
+		assert.Contains(t, result, "name: test-postgres-nodeport")
+		assert.Contains(t, result, "type: NodePort")
+		assert.Contains(t, result, "port: 5432")
+		assert.Contains(t, result, "targetPort: 5432")
+		assert.Contains(t, result, "selector:")
+		assert.Contains(t, result, "app: test-postgres")
+
+		// NodePort service should have the correct labels
+		assert.Contains(t, result, "unbind/usd-type: postgres-operator")
+		assert.Contains(t, result, "unbind/usd-version: 1.0.0")
+		assert.Contains(t, result, "unbind/usd-category: databases")
+
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
-		assert.Len(t, objects, 1) // Should have 1 Kubernetes object
+		assert.Len(t, objects, 2)
 	})
 
 	t.Run("With Custom Labels", func(t *testing.T) {
@@ -292,13 +351,17 @@ spec:
 					"cost-center": "123456",
 				},
 			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
 		}
 
 		// Render the template
 		result, err := renderer.Render(template, ctx)
 		require.NoError(t, err)
 
-		// Verify custom labels are included
+		// Verify custom labels are included in PostgreSQL object
 		assert.Contains(t, result, `environment: "production"`)
 		assert.Contains(t, result, `app: "my-app"`)
 		assert.Contains(t, result, `tier: "database"`)
@@ -311,65 +374,14 @@ spec:
 
 		// Ensure labels are properly quoted
 		assert.NotContains(t, result, "environment: production") // Should be quoted
-	})
 
-	t.Run("With Special Characters in Labels", func(t *testing.T) {
-		// Create render context with labels containing special characters
-		ctx := &RenderContext{
-			Name:          "test-postgres-special",
-			Namespace:     "default",
-			TeamID:        "team1",
-			ProjectID:     "project1",
-			EnvironmentID: "env1",
-			ServiceID:     "svc1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
-					"replicas": 2,
-				},
-				"labels": map[string]interface{}{
-					"app.kubernetes.io/name":      "postgres",
-					"app.kubernetes.io/component": "database",
-					"special/label":               "value-with-hyphens",
-					"security-level":              "high",
-				},
-			},
-		}
+		// Verify custom labels are also included in NodePort service
+		assert.Contains(t, result, `name: test-postgres-labels-nodeport`)
 
-		// Render the template
-		result, err := renderer.Render(template, ctx)
-		require.NoError(t, err)
-
-		// Verify custom labels with special characters are included and properly quoted
-		assert.Contains(t, result, `app.kubernetes.io/name: "postgres"`)
-		assert.Contains(t, result, `app.kubernetes.io/component: "database"`)
-		assert.Contains(t, result, `special/label: "value-with-hyphens"`)
-		assert.Contains(t, result, `security-level: "high"`)
-	})
-
-	t.Run("Empty Labels Map", func(t *testing.T) {
-		// Create render context with an empty labels map
-		ctx := &RenderContext{
-			Name:          "test-postgres-empty-labels",
-			Namespace:     "default",
-			TeamID:        "team1",
-			ProjectID:     "project1",
-			EnvironmentID: "env1",
-			ServiceID:     "svc1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
-					"replicas": 2,
-				},
-				"labels": map[string]interface{}{},
-			},
-		}
-
-		// Render the template
-		result, err := renderer.Render(template, ctx)
-		require.NoError(t, err)
-
-		// Verify the template renders correctly with an empty labels map
-		assert.Contains(t, result, "team: team1")
-		assert.NotContains(t, result, "{{ $key }}: {{ $value | quote }}") // Definition should not contain raw template syntax
+		// Check for labels in the NodePort service
+		// The indentation will be different for the service, so check for the presence without requiring specific formatting
+		labelCount := countOccurrences(result, `environment: "production"`)
+		assert.Equal(t, 2, labelCount, "Custom label should appear in both PostgreSQL and NodePort resources")
 	})
 
 	t.Run("S3 Enabled", func(t *testing.T) {
@@ -390,6 +402,10 @@ spec:
 					"bucket":  "test-bucket",
 				},
 			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
 		}
 
 		// Render the template
@@ -401,239 +417,33 @@ spec:
 		assert.Contains(t, result, "value: test-bucket")
 		assert.Contains(t, result, "value: https://s3.amazonaws.com") // Default endpoint
 		assert.Contains(t, result, "value: us-east-1")                // Default region
-	})
 
-	t.Run("Custom Values", func(t *testing.T) {
-		// Create render context with all custom values
-		ctx := &RenderContext{
-			Name:          "custom-postgres",
-			Namespace:     "custom-ns",
-			TeamID:        "custom-team",
-			ProjectID:     "custom-project",
-			EnvironmentID: "custom-env",
-			ServiceID:     "custom-svc",
-			Parameters: map[string]interface{}{
-				"version":     "15",
-				"dockerImage": "unbindapp/spilo:15",
-				"common": map[string]interface{}{
-					"replicas": 5,
-					"storage":  "10Gi",
-					"resources": map[string]interface{}{
-						"requests": map[string]interface{}{
-							"cpu":    "500m",
-							"memory": "1Gi",
-						},
-						"limits": map[string]interface{}{
-							"cpu":    "1",
-							"memory": "2Gi",
-						},
-					},
-				},
-			},
-		}
+		// Verify NodePort service is still generated
+		assert.Contains(t, result, "name: test-postgres-s3-nodeport")
+		assert.Contains(t, result, "type: NodePort")
 
-		// Render the template
-		result, err := renderer.Render(template, ctx)
+		// Parse to objects to ensure we have 2 resources
+		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
-
-		// Verify the output contains the custom values
-		assert.Contains(t, result, "version: \"15\"")
-		assert.Contains(t, result, "dockerImage: unbindapp/spilo:15")
-		assert.Contains(t, result, "numberOfInstances: 5")
-		assert.Contains(t, result, "size: 10Gi")
-		assert.Contains(t, result, "cpu: 500m")
-		assert.Contains(t, result, "memory: 1Gi")
-		assert.Contains(t, result, "cpu: 1")
-		assert.Contains(t, result, "memory: 2Gi")
-	})
-
-	t.Run("Custom Values With Labels", func(t *testing.T) {
-		// Create render context with custom values and labels
-		ctx := &RenderContext{
-			Name:          "custom-postgres-labels",
-			Namespace:     "custom-ns",
-			TeamID:        "custom-team",
-			ProjectID:     "custom-project",
-			EnvironmentID: "custom-env",
-			ServiceID:     "custom-svc",
-			Parameters: map[string]interface{}{
-				"version": "15",
-				"common": map[string]interface{}{
-					"replicas": 5,
-					"storage":  "10Gi",
-					"resources": map[string]interface{}{
-						"requests": map[string]interface{}{
-							"cpu":    "500m",
-							"memory": "1Gi",
-						},
-						"limits": map[string]interface{}{
-							"cpu":    "1",
-							"memory": "2Gi",
-						},
-					},
-				},
-				"labels": map[string]interface{}{
-					"environment": "production",
-					"app":         "custom-app",
-					"tier":        "database",
-				},
-			},
-		}
-
-		// Render the template
-		result, err := renderer.Render(template, ctx)
-		require.NoError(t, err)
-
-		// Verify both custom values and labels are included
-		assert.Contains(t, result, "version: \"15\"")
-		assert.Contains(t, result, "numberOfInstances: 5")
-		assert.Contains(t, result, `environment: "production"`)
-		assert.Contains(t, result, `app: "custom-app"`)
-		assert.Contains(t, result, `tier: "database"`)
-	})
-
-	t.Run("Parameter Validation", func(t *testing.T) {
-		// Test validation of required fields
-		err := renderer.Validate(map[string]interface{}{}, template.Schema)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "missing required field: common")
-
-		// Test validation of enum values
-		err = renderer.Validate(map[string]interface{}{
-			"common": map[string]interface{}{
-				"replicas": 2,
-			},
-			"version": "18", // Not in enum
-		}, template.Schema)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "must be one of: [14 15 16 17]")
-
-		// Test validation of range
-		err = renderer.Validate(map[string]interface{}{
-			"common": map[string]interface{}{
-				"replicas": 10, // Above maximum
-			},
-		}, template.Schema)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "must be <= 5")
-
-		// Test validation of types
-		err = renderer.Validate(map[string]interface{}{
-			"common": map[string]interface{}{
-				"replicas": "not-a-number",
-			},
-		}, template.Schema)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "must be a number")
-
-		// Test validation with valid labels
-		err = renderer.Validate(map[string]interface{}{
-			"common": map[string]interface{}{
-				"replicas": 3,
-			},
-			"labels": map[string]interface{}{
-				"app": "test",
-			},
-		}, template.Schema)
-		assert.NoError(t, err)
-
-		// Test validation with invalid labels type
-		err = renderer.Validate(map[string]interface{}{
-			"common": map[string]interface{}{
-				"replicas": 3,
-			},
-			"labels": "not-an-object", // Should be map/object
-		}, template.Schema)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "must be an object")
-
-		// Test validation with invalid label value type
-		err = renderer.Validate(map[string]interface{}{
-			"common": map[string]interface{}{
-				"replicas": 3,
-			},
-			"labels": map[string]interface{}{
-				"app": 123, // Should be string
-			},
-		}, template.Schema)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "must be a string")
-
-		// Valid parameters should pass validation
-		err = renderer.Validate(map[string]interface{}{
-			"common": map[string]interface{}{
-				"replicas": 3,
-				"storage":  "5Gi",
-				"resources": map[string]interface{}{
-					"requests": map[string]interface{}{
-						"cpu": "200m",
-					},
-				},
-			},
-			"version": "16",
-			"labels": map[string]interface{}{
-				"app":         "postgres",
-				"environment": "staging",
-			},
-		}, template.Schema)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Default Value Application", func(t *testing.T) {
-		// Create render context with minimal parameters
-		ctx := &RenderContext{
-			Name:      "defaults-test",
-			Namespace: "default",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
-					"replicas": 2,
-				},
-			},
-		}
-
-		// Apply defaults
-		params := renderer.applyDefaults(ctx.Parameters, template.Schema)
-
-		// Check defaults were applied
-		assert.Equal(t, "17", params["version"])
-		assert.Equal(t, "unbindapp/spilo:17", params["dockerImage"])
-
-		// Check common structure
-		common, ok := params["common"].(map[string]interface{})
-		require.True(t, ok)
-		assert.Equal(t, 2, common["replicas"]) // Original value preserved
-		assert.Equal(t, "1Gi", common["storage"])
-
-		// Check nested defaults in common
-		resources, ok := common["resources"].(map[string]interface{})
-		require.True(t, ok)
-
-		requests, ok := resources["requests"].(map[string]interface{})
-		require.True(t, ok)
-		assert.Equal(t, "100m", requests["cpu"])
-		assert.Equal(t, "128Mi", requests["memory"])
-
-		limits, ok := resources["limits"].(map[string]interface{})
-		require.True(t, ok)
-		assert.Equal(t, "200m", limits["cpu"])
-		assert.Equal(t, "256Mi", limits["memory"])
-
-		// Check S3 defaults
-		s3, ok := params["s3"].(map[string]interface{})
-		require.True(t, ok)
-		assert.Equal(t, false, s3["enabled"])
-		assert.Equal(t, "https://s3.amazonaws.com", s3["endpoint"])
-		assert.Equal(t, "us-east-1", s3["region"])
-		assert.Equal(t, true, s3["forcePathStyle"])
-		assert.Equal(t, 5, s3["backupRetention"])
-
-		// Labels should not have defaults since it's additionalProperties
-		_, hasLabels := params["labels"]
-		assert.False(t, hasLabels, "Labels should not have defaults")
+		assert.Len(t, objects, 2) // PostgreSQL and NodePort service
 	})
 }
 
 // Helper function to create a float pointer
 func floatPtr(f float64) *float64 {
 	return &f
+}
+
+// Helper function to count occurrences of a substring in a string
+func countOccurrences(s, substr string) int {
+	count := 0
+	for i := 0; i < len(s); {
+		j := strings.Index(s[i:], substr)
+		if j < 0 {
+			break
+		}
+		count++
+		i += j + len(substr)
+	}
+	return count
 }

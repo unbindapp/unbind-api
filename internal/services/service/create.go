@@ -243,7 +243,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			public = utils.ToPtr(true)
 		}
 
-		if len(hosts) == 0 && input.Public != nil && *public {
+		if len(hosts) == 0 && input.Public != nil && *public && input.Type != schema.ServiceTypeDatabase {
 			// Generate a subdomain
 			domain, err := utils.GenerateSubdomain(name, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
