@@ -232,7 +232,10 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 
 		if svc.Edges.ServiceConfig.RailpackProvider != nil {
 			providerSets[svc.EnvironmentID][string(*svc.Edges.ServiceConfig.RailpackProvider)] = struct{}{}
+			continue
 		}
+
+		providerSets[svc.EnvironmentID][string(svc.Edges.ServiceConfig.Type)] = struct{}{}
 	}
 
 	// Convert to slices
