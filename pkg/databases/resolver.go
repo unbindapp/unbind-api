@@ -68,6 +68,7 @@ func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVe
 	db := &Definition{
 		Name:        metadata.Name,
 		Description: metadata.Description,
+		Port:        metadata.Port,
 		Type:        metadata.Type,
 		Version:     metadata.Version,
 		Schema:      resolvedSchema,

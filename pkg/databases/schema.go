@@ -3,6 +3,7 @@ package databases
 // DefinitionMetadata represents the metadata of a definition
 type DefinitionMetadata struct {
 	Name        string                    `yaml:"name" json:"name"`
+	Port        int                       `yaml:"port" json:"port"`
 	Description string                    `yaml:"description" json:"description"`
 	Type        string                    `yaml:"type" json:"type"`
 	Version     string                    `yaml:"version" json:"version"`
@@ -39,6 +40,7 @@ type ParameterProperty struct {
 // Definition represents a fully resolved definition
 type Definition struct {
 	Name        string                    `json:"name"`
+	Port        int                       `json:"port"`
 	Category    string                    `json:"category"`
 	Description string                    `json:"description"`
 	Type        string                    `json:"type"`

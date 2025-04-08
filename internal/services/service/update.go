@@ -89,6 +89,11 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 	}
 
+	// For database we don't want to set ports
+	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase {
+		input.Ports = nil
+	}
+
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Update the service
 		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.DisplayName, input.Description); err != nil {

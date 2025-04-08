@@ -73,6 +73,7 @@ func (r *DatabaseRenderer) Render(unbindDefinition *Definition, context *RenderC
 	context.Definition.Category = unbindDefinition.Category
 	context.Definition.Version = unbindDefinition.Version
 	context.Definition.Type = unbindDefinition.Type
+	context.Definition.Port = unbindDefinition.Port
 
 	// Process definition
 	var buf bytes.Buffer

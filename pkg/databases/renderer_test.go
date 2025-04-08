@@ -12,6 +12,7 @@ func TestDefinitionRendering(t *testing.T) {
 	template := &Definition{
 		Name:        "PostgreSQL Database",
 		Category:    DB_CATEGORY,
+		Port:        5432,
 		Description: "Standard PostgreSQL database using zalando postgres-operator",
 		Type:        "postgres-operator",
 		Version:     "1.0.0",

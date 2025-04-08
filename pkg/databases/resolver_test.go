@@ -43,6 +43,7 @@ func TestFetchDatabase(t *testing.T) {
 	assert.Equal(t, "Standard PostgreSQL database using zalando postgres-operator", database.Description)
 	assert.Equal(t, "postgres-operator", database.Type)
 	assert.Equal(t, "1.0.0", database.Version)
+	assert.Equal(t, 5432, database.Port)
 
 	// Verify schema was properly resolved - with more detailed logging
 	assert.NotNil(t, database.Schema)
@@ -210,6 +211,7 @@ func setupMockServer() *httptest.Server {
 description: "Standard PostgreSQL database using zalando postgres-operator"
 type: "postgres-operator"
 version: "1.0.0"
+port: 5432
 imports:
   - path: "../../common/s3-schema.yaml"
     as: s3Schema

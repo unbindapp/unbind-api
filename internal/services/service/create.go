@@ -89,13 +89,21 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				"Database name must be provided")
 		}
 		// Fetch the template
-		_, err = self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *input.DatabaseType)
+		template, err := self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *input.DatabaseType)
 		if err != nil {
 			if errors.Is(err, databases.ErrDatabaseNotFound) {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound,
 					fmt.Sprintf("Database %s not found", *input.DatabaseType))
 			}
 			return nil, err
+		}
+
+		// Nuke whatever they tell us for ports
+		input.Ports = []v1.PortSpec{
+			{
+				Port:     int32(template.Port),
+				Protocol: utils.ToPtr(corev1.ProtocolTCP),
+			},
 		}
 
 		input.Builder = schema.ServiceBuilderDatabase
