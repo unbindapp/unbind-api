@@ -5,15 +5,15 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
-	core "github.com/railwayapp/railpack/core"
+	"github.com/railwayapp/railpack/core/generate"
 )
 
 // Detect framework based on provider and plan
-func DetectFramework(provider Provider, plan *core.BuildResult) Framework {
+func DetectFramework(provider Provider, ctx *generate.GenerateContext) Framework {
 	switch provider {
 	// Node frameworks
 	case Node:
-		framework, ok := plan.Metadata["nodeRuntime"]
+		framework, ok := ctx.Metadata.Properties["nodeRuntime"]
 		if ok {
 			switch framework {
 			case "next":
@@ -36,7 +36,7 @@ func DetectFramework(provider Provider, plan *core.BuildResult) Framework {
 		}
 	// Python frameworks
 	case Python:
-		framework, ok := plan.Metadata["pythonRuntime"]
+		framework, ok := ctx.Metadata.Properties["pythonRuntime"]
 		if ok {
 			switch framework {
 			case "python":
@@ -53,13 +53,13 @@ func DetectFramework(provider Provider, plan *core.BuildResult) Framework {
 		}
 	// Go frameworks
 	case Go:
-		gin, ok := plan.Metadata["goGin"]
+		gin, ok := ctx.Metadata.Properties["goGin"]
 		if ok && gin == "true" {
 			return Gin
 		}
 	// Java frameworks
 	case Java:
-		javaFramework, ok := plan.Metadata["javaFramework"]
+		javaFramework, ok := ctx.Metadata.Properties["javaFramework"]
 		if ok {
 			switch javaFramework {
 			case "spring-boot":
@@ -68,21 +68,21 @@ func DetectFramework(provider Provider, plan *core.BuildResult) Framework {
 		}
 	// PHP frameworks
 	case PHP:
-		for _, log := range plan.Logs {
+		for _, log := range ctx.Logger.Logs {
 			if strings.Contains(strings.ToLower(log.Msg), "laravel") {
 				return Laravel
 			}
 		}
 	// Ruby frameworks
 	case Ruby:
-		railsFramework, ok := plan.Metadata["rubyRails"]
+		railsFramework, ok := ctx.Metadata.Properties["rubyRails"]
 		if ok && railsFramework == "true" {
 			return Rails
 		}
 		// Rust frameworks
 	case Rust:
-		if plan.Plan != nil {
-			for _, variable := range plan.Plan.Deploy.Variables {
+		if ctx.Deploy != nil {
+			for _, variable := range ctx.Deploy.Variables {
 				if strings.EqualFold(variable, "rocket_address") {
 					return Rocket
 				}

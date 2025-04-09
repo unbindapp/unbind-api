@@ -1,10 +1,14 @@
 package sourceanalyzer
 
 import (
-	"encoding/json"
+	"strings"
 
 	core "github.com/railwayapp/railpack/core"
 	a "github.com/railwayapp/railpack/core/app"
+	c "github.com/railwayapp/railpack/core/config"
+	"github.com/railwayapp/railpack/core/generate"
+	"github.com/railwayapp/railpack/core/logger"
+	"github.com/railwayapp/railpack/core/providers"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
@@ -22,18 +26,34 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 		return nil, err
 	}
 
-	// Generate railpack plan
-	plan := core.GenerateBuildPlan(app, &a.Environment{}, &core.GenerateBuildPlanOptions{
-		RailpackVersion: "unbind",
-	})
+	// Get railpack config
+	// Get the full user config based on file config, env config, and options
+	logger := logger.NewLogger()
+	config, err := core.GetConfig(app, &a.Environment{}, &core.GenerateBuildPlanOptions{}, logger)
+	if err != nil {
+		log.Errorf("Error getting config: %s", err.Error())
+		return nil, err
+	}
 
-	//Serialize to debug
-	marshalled, _ := json.Marshal(plan)
+	ctx, err := generate.NewGenerateContext(app, &a.Environment{}, config, logger)
+	if err != nil {
+		log.Errorf("Error creating generate context: %s", err.Error())
+		return nil, err
+	}
 
-	log.Infof("Plan data: %v", string(marshalled))
+	providerToUse, detectedProviderName := getProviders(ctx, config)
+	ctx.Metadata.Set("providers", detectedProviderName)
 
-	detectedProvider := enum.ParseProvider(plan.DetectedProviders)
-	detectedFramework := enum.DetectFramework(detectedProvider, plan)
+	if providerToUse != nil {
+		err = providerToUse.Plan(ctx)
+		if err != nil {
+			log.Errorf("Error running provider plan: %s", err.Error())
+			return nil, err
+		}
+	}
+
+	detectedProvider := enum.ParseProvider([]string{strings.ToLower(detectedProviderName)})
+	detectedFramework := enum.DetectFramework(detectedProvider, ctx)
 	detectedPort := inferPortFromFramework(detectedFramework)
 
 	// Railpack only returns gin, so see if this is a web API or not
@@ -58,4 +78,67 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 		Framework: detectedFramework,
 		Port:      detectedPort,
 	}, nil
+}
+
+func getProviders(ctx *generate.GenerateContext, config *c.Config) (providers.Provider, string) {
+	allProviders := providers.GetLanguageProviders()
+
+	var providerToUse providers.Provider
+	var detectedProvider string
+
+	// Even if there are providers manually specified, we want to detect to see what type of app this is
+	for _, provider := range allProviders {
+		matched, err := provider.Detect(ctx)
+		if err != nil {
+			log.Warnf("Failed to detect provider `%s`: %s", provider.Name(), err.Error())
+			continue
+		}
+
+		if matched {
+			detectedProvider = provider.Name()
+
+			// If there are no providers manually specified in the config,
+			if config.Provider == nil {
+				if err := provider.Initialize(ctx); err != nil {
+					ctx.Logger.LogWarn("Failed to initialize provider `%s`: %s", provider.Name(), err.Error())
+					continue
+				}
+
+				ctx.Logger.LogInfo("Detected %s", CapitalizeFirst(provider.Name()))
+
+				providerToUse = provider
+			}
+
+			break
+		}
+	}
+
+	if config.Provider != nil {
+		provider := providers.GetProvider(*config.Provider)
+
+		if provider == nil {
+			ctx.Logger.LogWarn("Provider `%s` not found", *config.Provider)
+			return providerToUse, detectedProvider
+		}
+
+		if err := provider.Initialize(ctx); err != nil {
+			ctx.Logger.LogWarn("Failed to initialize provider `%s`: %s", *config.Provider, err.Error())
+			return providerToUse, detectedProvider
+		}
+
+		ctx.Logger.LogInfo("Using provider %s from config", CapitalizeFirst(*config.Provider))
+		providerToUse = provider
+	}
+
+	return providerToUse, detectedProvider
+}
+
+func CapitalizeFirst(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	runes := []rune(s)
+	runes[0] = []rune(strings.ToUpper(string(runes[0])))[0]
+	return string(runes)
 }
