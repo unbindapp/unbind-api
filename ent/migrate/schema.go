@@ -320,6 +320,7 @@ var (
 		{Name: "database", Type: field.TypeString, Nullable: true},
 		{Name: "definition_version", Type: field.TypeString, Nullable: true},
 		{Name: "database_config", Type: field.TypeJSON, Nullable: true},
+		{Name: "database_version", Type: field.TypeString, Nullable: true},
 		{Name: "dockerfile_path", Type: field.TypeString, Nullable: true},
 		{Name: "dockerfile_context", Type: field.TypeString, Nullable: true},
 		{Name: "railpack_provider", Type: field.TypeEnum, Nullable: true, Enums: []string{"node", "deno", "go", "java", "php", "python", "ruby", "rust", "staticfile", "unknown"}},
@@ -342,7 +343,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[21]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[22]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

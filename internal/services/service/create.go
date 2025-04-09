@@ -66,6 +66,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	var err error
+	var dbDefinition *databases.Definition
+	var dbVersion *string
 	switch input.Type {
 	case schema.ServiceTypeGithub:
 		// Validate that if GitHub info is provided, all fields are set
@@ -89,7 +91,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				"Database name must be provided")
 		}
 		// Fetch the template
-		template, err := self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *input.DatabaseType)
+		dbDefinition, err = self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *input.DatabaseType)
 		if err != nil {
 			if errors.Is(err, databases.ErrDatabaseNotFound) {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound,
@@ -101,9 +103,33 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		// Nuke whatever they tell us for ports
 		input.Ports = []v1.PortSpec{
 			{
-				Port:     int32(template.Port),
+				Port:     int32(dbDefinition.Port),
 				Protocol: utils.ToPtr(corev1.ProtocolTCP),
 			},
+		}
+
+		if input.DatabaseConfig != nil {
+			// check version
+			if version, ok := (*input.DatabaseConfig)["version"]; ok {
+				if versionStr, ok := version.(string); ok {
+					dbVersion = utils.ToPtr(versionStr)
+				}
+			} else {
+				versionProperty, ok := dbDefinition.Schema.Properties["version"]
+				if ok {
+					dbVersionDefault, _ := versionProperty.Default.(string)
+					if dbVersionDefault != "" {
+						dbVersion = utils.ToPtr(dbVersionDefault)
+					}
+				}
+			}
+		}
+
+		imageProperty, ok := dbDefinition.Schema.Properties["dockerImage"]
+		if ok {
+			if image, ok := imageProperty.Default.(string); ok {
+				input.Image = utils.ToPtr(image)
+			}
 		}
 
 		input.Builder = schema.ServiceBuilderDatabase
@@ -325,6 +351,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Database:                input.DatabaseType,
 			CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
 			DatabaseConfig:          input.DatabaseConfig,
+			DatabaseVersion:         dbVersion,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

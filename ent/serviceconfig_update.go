@@ -149,6 +149,26 @@ func (scu *ServiceConfigUpdate) ClearDatabaseConfig() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetDatabaseVersion sets the "database_version" field.
+func (scu *ServiceConfigUpdate) SetDatabaseVersion(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDatabaseVersion(s)
+	return scu
+}
+
+// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDatabaseVersion(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetDatabaseVersion(*s)
+	}
+	return scu
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (scu *ServiceConfigUpdate) ClearDatabaseVersion() *ServiceConfigUpdate {
+	scu.mutation.ClearDatabaseVersion()
+	return scu
+}
+
 // SetDockerfilePath sets the "dockerfile_path" field.
 func (scu *ServiceConfigUpdate) SetDockerfilePath(s string) *ServiceConfigUpdate {
 	scu.mutation.SetDockerfilePath(s)
@@ -502,6 +522,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if scu.mutation.DatabaseConfigCleared() {
 		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
 	}
+	if value, ok := scu.mutation.DatabaseVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseVersion, field.TypeString, value)
+	}
+	if scu.mutation.DatabaseVersionCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabaseVersion, field.TypeString)
+	}
 	if value, ok := scu.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
 	}
@@ -740,6 +766,26 @@ func (scuo *ServiceConfigUpdateOne) SetDatabaseConfig(m map[string]interface{}) 
 // ClearDatabaseConfig clears the value of the "database_config" field.
 func (scuo *ServiceConfigUpdateOne) ClearDatabaseConfig() *ServiceConfigUpdateOne {
 	scuo.mutation.ClearDatabaseConfig()
+	return scuo
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (scuo *ServiceConfigUpdateOne) SetDatabaseVersion(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDatabaseVersion(s)
+	return scuo
+}
+
+// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDatabaseVersion(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetDatabaseVersion(*s)
+	}
+	return scuo
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (scuo *ServiceConfigUpdateOne) ClearDatabaseVersion() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDatabaseVersion()
 	return scuo
 }
 
@@ -1125,6 +1171,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.DatabaseConfigCleared() {
 		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
+	}
+	if value, ok := scuo.mutation.DatabaseVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseVersion, field.TypeString, value)
+	}
+	if scuo.mutation.DatabaseVersionCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabaseVersion, field.TypeString)
 	}
 	if value, ok := scuo.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)

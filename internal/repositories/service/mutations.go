@@ -64,6 +64,7 @@ type MutateConfigInput struct {
 	Database                *string
 	CustomDefinitionVersion *string
 	DatabaseConfig          *map[string]interface{}
+	DatabaseVersion         *string
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -108,7 +109,8 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableDockerfilePath(input.DockerfilePath).
 		SetNillableDockerfileContext(input.DockerfileContext).
 		SetNillableDatabase(input.Database).
-		SetNillableDefinitionVersion(input.CustomDefinitionVersion)
+		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
+		SetNillableDatabaseVersion(input.DatabaseVersion)
 
 	if input.DatabaseConfig != nil {
 		c.SetDatabaseConfig(*input.DatabaseConfig)

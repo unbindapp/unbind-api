@@ -42,6 +42,8 @@ type ServiceConfig struct {
 	DefinitionVersion *string `json:"definition_version,omitempty"`
 	// Database configuration for the service
 	DatabaseConfig map[string]interface{} `json:"database_config,omitempty"`
+	// Version of the database
+	DatabaseVersion *string `json:"database_version,omitempty"`
 	// Path to Dockerfile if using docker builder
 	DockerfilePath *string `json:"dockerfile_path,omitempty"`
 	// Path to Dockerfile context if using docker builder
@@ -103,7 +105,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDatabase, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDatabase, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldDatabaseVersion, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -187,6 +189,13 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &sc.DatabaseConfig); err != nil {
 					return fmt.Errorf("unmarshal field database_config: %w", err)
 				}
+			}
+		case serviceconfig.FieldDatabaseVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field database_version", values[i])
+			} else if value.Valid {
+				sc.DatabaseVersion = new(string)
+				*sc.DatabaseVersion = value.String
 			}
 		case serviceconfig.FieldDockerfilePath:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -341,6 +350,11 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("database_config=")
 	builder.WriteString(fmt.Sprintf("%v", sc.DatabaseConfig))
+	builder.WriteString(", ")
+	if v := sc.DatabaseVersion; v != nil {
+		builder.WriteString("database_version=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := sc.DockerfilePath; v != nil {
 		builder.WriteString("dockerfile_path=")

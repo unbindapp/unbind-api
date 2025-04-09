@@ -10427,6 +10427,7 @@ type ServiceConfigMutation struct {
 	database           *string
 	definition_version *string
 	database_config    *map[string]interface{}
+	database_version   *string
 	dockerfile_path    *string
 	dockerfile_context *string
 	railpack_provider  *enum.Provider
@@ -10915,6 +10916,55 @@ func (m *ServiceConfigMutation) DatabaseConfigCleared() bool {
 func (m *ServiceConfigMutation) ResetDatabaseConfig() {
 	m.database_config = nil
 	delete(m.clearedFields, serviceconfig.FieldDatabaseConfig)
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (m *ServiceConfigMutation) SetDatabaseVersion(s string) {
+	m.database_version = &s
+}
+
+// DatabaseVersion returns the value of the "database_version" field in the mutation.
+func (m *ServiceConfigMutation) DatabaseVersion() (r string, exists bool) {
+	v := m.database_version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDatabaseVersion returns the old "database_version" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldDatabaseVersion(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDatabaseVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDatabaseVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDatabaseVersion: %w", err)
+	}
+	return oldValue.DatabaseVersion, nil
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (m *ServiceConfigMutation) ClearDatabaseVersion() {
+	m.database_version = nil
+	m.clearedFields[serviceconfig.FieldDatabaseVersion] = struct{}{}
+}
+
+// DatabaseVersionCleared returns if the "database_version" field was cleared in this mutation.
+func (m *ServiceConfigMutation) DatabaseVersionCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldDatabaseVersion]
+	return ok
+}
+
+// ResetDatabaseVersion resets all changes to the "database_version" field.
+func (m *ServiceConfigMutation) ResetDatabaseVersion() {
+	m.database_version = nil
+	delete(m.clearedFields, serviceconfig.FieldDatabaseVersion)
 }
 
 // SetDockerfilePath sets the "dockerfile_path" field.
@@ -11579,7 +11629,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 22)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -11606,6 +11656,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	}
 	if m.database_config != nil {
 		fields = append(fields, serviceconfig.FieldDatabaseConfig)
+	}
+	if m.database_version != nil {
+		fields = append(fields, serviceconfig.FieldDatabaseVersion)
 	}
 	if m.dockerfile_path != nil {
 		fields = append(fields, serviceconfig.FieldDockerfilePath)
@@ -11669,6 +11722,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.DefinitionVersion()
 	case serviceconfig.FieldDatabaseConfig:
 		return m.DatabaseConfig()
+	case serviceconfig.FieldDatabaseVersion:
+		return m.DatabaseVersion()
 	case serviceconfig.FieldDockerfilePath:
 		return m.DockerfilePath()
 	case serviceconfig.FieldDockerfileContext:
@@ -11720,6 +11775,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldDefinitionVersion(ctx)
 	case serviceconfig.FieldDatabaseConfig:
 		return m.OldDatabaseConfig(ctx)
+	case serviceconfig.FieldDatabaseVersion:
+		return m.OldDatabaseVersion(ctx)
 	case serviceconfig.FieldDockerfilePath:
 		return m.OldDockerfilePath(ctx)
 	case serviceconfig.FieldDockerfileContext:
@@ -11815,6 +11872,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDatabaseConfig(v)
+		return nil
+	case serviceconfig.FieldDatabaseVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDatabaseVersion(v)
 		return nil
 	case serviceconfig.FieldDockerfilePath:
 		v, ok := value.(string)
@@ -11954,6 +12018,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldDatabaseConfig) {
 		fields = append(fields, serviceconfig.FieldDatabaseConfig)
 	}
+	if m.FieldCleared(serviceconfig.FieldDatabaseVersion) {
+		fields = append(fields, serviceconfig.FieldDatabaseVersion)
+	}
 	if m.FieldCleared(serviceconfig.FieldDockerfilePath) {
 		fields = append(fields, serviceconfig.FieldDockerfilePath)
 	}
@@ -12003,6 +12070,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldDatabaseConfig:
 		m.ClearDatabaseConfig()
+		return nil
+	case serviceconfig.FieldDatabaseVersion:
+		m.ClearDatabaseVersion()
 		return nil
 	case serviceconfig.FieldDockerfilePath:
 		m.ClearDockerfilePath()
@@ -12065,6 +12135,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldDatabaseConfig:
 		m.ResetDatabaseConfig()
+		return nil
+	case serviceconfig.FieldDatabaseVersion:
+		m.ResetDatabaseVersion()
 		return nil
 	case serviceconfig.FieldDockerfilePath:
 		m.ResetDockerfilePath()

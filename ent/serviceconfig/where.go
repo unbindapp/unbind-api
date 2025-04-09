@@ -88,6 +88,11 @@ func DefinitionVersion(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldDefinitionVersion, v))
 }
 
+// DatabaseVersion applies equality check predicate on the "database_version" field. It's identical to DatabaseVersionEQ.
+func DatabaseVersion(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDatabaseVersion, v))
+}
+
 // DockerfilePath applies equality check predicate on the "dockerfile_path" field. It's identical to DockerfilePathEQ.
 func DockerfilePath(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerfilePath, v))
@@ -511,6 +516,81 @@ func DatabaseConfigIsNil() predicate.ServiceConfig {
 // DatabaseConfigNotNil applies the NotNil predicate on the "database_config" field.
 func DatabaseConfigNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldDatabaseConfig))
+}
+
+// DatabaseVersionEQ applies the EQ predicate on the "database_version" field.
+func DatabaseVersionEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionNEQ applies the NEQ predicate on the "database_version" field.
+func DatabaseVersionNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionIn applies the In predicate on the "database_version" field.
+func DatabaseVersionIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldDatabaseVersion, vs...))
+}
+
+// DatabaseVersionNotIn applies the NotIn predicate on the "database_version" field.
+func DatabaseVersionNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldDatabaseVersion, vs...))
+}
+
+// DatabaseVersionGT applies the GT predicate on the "database_version" field.
+func DatabaseVersionGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionGTE applies the GTE predicate on the "database_version" field.
+func DatabaseVersionGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionLT applies the LT predicate on the "database_version" field.
+func DatabaseVersionLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionLTE applies the LTE predicate on the "database_version" field.
+func DatabaseVersionLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionContains applies the Contains predicate on the "database_version" field.
+func DatabaseVersionContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionHasPrefix applies the HasPrefix predicate on the "database_version" field.
+func DatabaseVersionHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionHasSuffix applies the HasSuffix predicate on the "database_version" field.
+func DatabaseVersionHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionIsNil applies the IsNil predicate on the "database_version" field.
+func DatabaseVersionIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldDatabaseVersion))
+}
+
+// DatabaseVersionNotNil applies the NotNil predicate on the "database_version" field.
+func DatabaseVersionNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldDatabaseVersion))
+}
+
+// DatabaseVersionEqualFold applies the EqualFold predicate on the "database_version" field.
+func DatabaseVersionEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionContainsFold applies the ContainsFold predicate on the "database_version" field.
+func DatabaseVersionContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldDatabaseVersion, v))
 }
 
 // DockerfilePathEQ applies the EQ predicate on the "dockerfile_path" field.

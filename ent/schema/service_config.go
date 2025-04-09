@@ -39,6 +39,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("database").Optional().Nillable().Comment("Database to use for the service"),
 		field.String("definition_version").Optional().Nillable().Comment("Version of the database custom resource definition"),
 		field.JSON("database_config", map[string]interface{}{}).Optional().Comment("Database configuration for the service"),
+		field.String("database_version").Optional().Nillable().Comment("Version of the database"),
 		// For builds from git using Dockerfile
 		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
 		field.String("dockerfile_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),

@@ -114,6 +114,20 @@ func (scc *ServiceConfigCreate) SetDatabaseConfig(m map[string]interface{}) *Ser
 	return scc
 }
 
+// SetDatabaseVersion sets the "database_version" field.
+func (scc *ServiceConfigCreate) SetDatabaseVersion(s string) *ServiceConfigCreate {
+	scc.mutation.SetDatabaseVersion(s)
+	return scc
+}
+
+// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDatabaseVersion(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetDatabaseVersion(*s)
+	}
+	return scc
+}
+
 // SetDockerfilePath sets the "dockerfile_path" field.
 func (scc *ServiceConfigCreate) SetDockerfilePath(s string) *ServiceConfigCreate {
 	scc.mutation.SetDockerfilePath(s)
@@ -466,6 +480,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
 		_node.DatabaseConfig = value
 	}
+	if value, ok := scc.mutation.DatabaseVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseVersion, field.TypeString, value)
+		_node.DatabaseVersion = &value
+	}
 	if value, ok := scc.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
 		_node.DockerfilePath = &value
@@ -694,6 +712,24 @@ func (u *ServiceConfigUpsert) UpdateDatabaseConfig() *ServiceConfigUpsert {
 // ClearDatabaseConfig clears the value of the "database_config" field.
 func (u *ServiceConfigUpsert) ClearDatabaseConfig() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldDatabaseConfig)
+	return u
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (u *ServiceConfigUpsert) SetDatabaseVersion(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDatabaseVersion, v)
+	return u
+}
+
+// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDatabaseVersion() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDatabaseVersion)
+	return u
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (u *ServiceConfigUpsert) ClearDatabaseVersion() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDatabaseVersion)
 	return u
 }
 
@@ -1082,6 +1118,27 @@ func (u *ServiceConfigUpsertOne) UpdateDatabaseConfig() *ServiceConfigUpsertOne 
 func (u *ServiceConfigUpsertOne) ClearDatabaseConfig() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearDatabaseConfig()
+	})
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (u *ServiceConfigUpsertOne) SetDatabaseVersion(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabaseVersion(v)
+	})
+}
+
+// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDatabaseVersion() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabaseVersion()
+	})
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (u *ServiceConfigUpsertOne) ClearDatabaseVersion() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabaseVersion()
 	})
 }
 
@@ -1671,6 +1728,27 @@ func (u *ServiceConfigUpsertBulk) UpdateDatabaseConfig() *ServiceConfigUpsertBul
 func (u *ServiceConfigUpsertBulk) ClearDatabaseConfig() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearDatabaseConfig()
+	})
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (u *ServiceConfigUpsertBulk) SetDatabaseVersion(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabaseVersion(v)
+	})
+}
+
+// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDatabaseVersion() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabaseVersion()
+	})
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (u *ServiceConfigUpsertBulk) ClearDatabaseVersion() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabaseVersion()
 	})
 }
 

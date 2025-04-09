@@ -36,6 +36,8 @@ const (
 	FieldDefinitionVersion = "definition_version"
 	// FieldDatabaseConfig holds the string denoting the database_config field in the database.
 	FieldDatabaseConfig = "database_config"
+	// FieldDatabaseVersion holds the string denoting the database_version field in the database.
+	FieldDatabaseVersion = "database_version"
 	// FieldDockerfilePath holds the string denoting the dockerfile_path field in the database.
 	FieldDockerfilePath = "dockerfile_path"
 	// FieldDockerfileContext holds the string denoting the dockerfile_context field in the database.
@@ -85,6 +87,7 @@ var Columns = []string{
 	FieldDatabase,
 	FieldDefinitionVersion,
 	FieldDatabaseConfig,
+	FieldDatabaseVersion,
 	FieldDockerfilePath,
 	FieldDockerfileContext,
 	FieldRailpackProvider,
@@ -212,6 +215,11 @@ func ByDatabase(opts ...sql.OrderTermOption) OrderOption {
 // ByDefinitionVersion orders the results by the definition_version field.
 func ByDefinitionVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDefinitionVersion, opts...).ToFunc()
+}
+
+// ByDatabaseVersion orders the results by the database_version field.
+func ByDatabaseVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDatabaseVersion, opts...).ToFunc()
 }
 
 // ByDockerfilePath orders the results by the dockerfile_path field.

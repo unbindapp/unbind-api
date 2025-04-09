@@ -321,6 +321,7 @@ spec:
 					"tier":        "database",
 					"cost-center": "123456",
 				},
+				"storage": "10Gi",
 			},
 			Definition: Definition{
 				Type:    "postgres-operator",
@@ -337,6 +338,7 @@ spec:
 		assert.Contains(t, result, `app: "my-app"`)
 		assert.Contains(t, result, `tier: "database"`)
 		assert.Contains(t, result, `cost-center: "123456"`)
+		assert.Contains(t, result, `size: 10Gi`) // Custom storage size
 
 		// Make sure standard labels are still there
 		assert.Contains(t, result, "team: team1")
