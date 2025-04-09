@@ -3,6 +3,7 @@ package service_handler
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -35,10 +36,13 @@ func (self *HandlerGroup) CreateService(ctx context.Context, input *CreateServic
 		return nil, huma.Error400BadRequest("Missing body")
 	}
 
+	start := time.Now()
 	createdService, err := self.srv.ServiceService.CreateService(ctx, user.ID, input.Body, bearerToken)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}
+	end := time.Now()
+	log.Info("Create service took", "duration", end.Sub(start).String())
 
 	resp := &CreateServiceResponse{}
 	resp.Body.Data = createdService
