@@ -172,6 +172,10 @@ func (self *ServiceRepository) UpdateConfig(
 		upd.SetDatabaseConfig(*input.DatabaseConfig)
 	}
 
+	if input.DatabaseVersion != nil {
+		upd.SetDatabaseVersion(*input.DatabaseVersion)
+	}
+
 	if input.DockerfilePath != nil {
 		if *input.DockerfilePath == "" {
 			upd.ClearDockerfilePath()

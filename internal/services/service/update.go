@@ -94,6 +94,21 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		input.Ports = nil
 	}
 
+	// For database we can't set version if deployed
+	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase && input.DatabaseConfig != nil && service.Edges.ServiceConfig.DatabaseVersion != nil {
+		hasDeployment := len(service.Edges.Deployments) > 0
+		if hasDeployment {
+			// See if theyre updating version
+			version, ok := (*input.DatabaseConfig)["version"]
+			if ok {
+				versionStr, _ := version.(string)
+				if versionStr != *service.Edges.ServiceConfig.DatabaseVersion {
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update version for database service with existing deployment")
+				}
+			}
+		}
+	}
+
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Update the service
 		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.DisplayName, input.Description); err != nil {
