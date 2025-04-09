@@ -20,6 +20,7 @@ type ServiceConfigResponse struct {
 	Public          bool                  `json:"public"`
 	Image           string                `json:"image,omitempty"`
 	DatabaseVersion *string               `json:"database_version,omitempty"`
+	DatabaseType    *string               `json:"database_type,omitempty"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -39,6 +40,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			Public:          entity.Public,
 			Image:           entity.Image,
 			DatabaseVersion: entity.DatabaseVersion,
+			DatabaseType:    entity.Database,
 		}
 	}
 	return response
