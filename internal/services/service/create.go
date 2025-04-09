@@ -43,7 +43,6 @@ type CreateServiceInput struct {
 	// Configuration
 	Type              schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
 	Builder           schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
-	GitBranch         *string               `json:"git_branch,omitempty"`
 	Hosts             []v1.HostSpec         `json:"hosts,omitempty"`
 	Ports             []v1.PortSpec         `json:"ports,omitempty"`
 	Replicas          *int32                `validate:"omitempty,min=0,max=10" json:"replicas,omitempty"`
@@ -74,9 +73,9 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	case schema.ServiceTypeGithub:
 		// Validate that if GitHub info is provided, all fields are set
 		if input.GitHubInstallationID != nil {
-			if input.RepositoryOwner == nil || input.RepositoryName == nil || input.GitBranch == nil {
+			if input.RepositoryOwner == nil || input.RepositoryName == nil {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
-					"GitHub repository owner, name, and branch must be provided together")
+					"GitHub repository owner, name must be provided together")
 			}
 		}
 	case schema.ServiceTypeDockerimage:
@@ -172,6 +171,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 	// If GitHub integration is provided, verify repository access
 	var analysisResult *sourceanalyzer.AnalysisResult
+	var gitBranch *string
 	if input.Type == schema.ServiceTypeGithub {
 		// Get GitHub installation
 		installation, err := self.repo.Github().GetInstallationByID(ctx, *input.GitHubInstallationID)
@@ -186,11 +186,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		// Verify repository access
 		start = time.Now()
-		canAccess, cloneUrl, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, *input.RepositoryOwner, *input.RepositoryName)
+		canAccess, cloneUrl, defaultBranch, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, *input.RepositoryOwner, *input.RepositoryName)
 		if err != nil {
 			log.Error("Error verifying repository access", "err", err)
 			return nil, err
 		}
+		gitBranch = utils.ToPtr(defaultBranch)
 		end = time.Now()
 		log.Infof("Service creation GitHub access verification took %s", end.Sub(start).String())
 
@@ -201,7 +202,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		// Clone repository to infer information
 		start = time.Now()
-		tmpDir, err := self.githubClient.CloneRepository(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey, cloneUrl, fmt.Sprintf("refs/heads/%s", *input.GitBranch))
+		tmpDir, err := self.githubClient.CloneRepository(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey, cloneUrl, fmt.Sprintf("refs/heads/%s", defaultBranch))
 		if err != nil {
 			log.Error("Error cloning repository", "err", err)
 			return nil, err
@@ -367,7 +368,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Builder:                 utils.ToPtr(input.Builder),
 			Provider:                provider,
 			Framework:               framework,
-			GitBranch:               input.GitBranch,
+			GitBranch:               gitBranch,
 			Ports:                   ports,
 			Hosts:                   hosts,
 			Replicas:                input.Replicas,

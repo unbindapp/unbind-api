@@ -474,9 +474,9 @@ func (self *GithubClient) getRepositoryTags(ctx context.Context, client *github.
 }
 
 // VerifyRepositoryAccess with resource cleanup
-func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (canAccess bool, repoUrl string, err error) {
+func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installation *ent.GithubInstallation, owner, repo string) (canAccess bool, repoUrl, defaultBranch string, err error) {
 	if installation == nil || installation.Edges.GithubApp == nil {
-		return false, "", fmt.Errorf("invalid installation: missing app edge or nil")
+		return false, "", "", fmt.Errorf("invalid installation: missing app edge or nil")
 	}
 
 	// Use a short timeout for this simple verification
@@ -486,7 +486,7 @@ func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installati
 	// Get authenticated client
 	authenticatedClient, err := self.GetAuthenticatedClient(timeoutCtx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
 	if err != nil {
-		return false, "", fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
+		return false, "", "", fmt.Errorf("error getting authenticated client for %s: %v", installation.AccountLogin, err)
 	}
 	defer authenticatedClient.Client().CloseIdleConnections()
 
@@ -494,16 +494,16 @@ func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installati
 	repoResult, resp, err := authenticatedClient.Repositories.Get(ctx, owner, repo)
 	if err == nil {
 		// Repository found and accessible
-		return true, repoResult.GetCloneURL(), nil
+		return true, repoResult.GetCloneURL(), repoResult.GetDefaultBranch(), nil
 	}
 
 	if resp != nil && resp.StatusCode == 404 {
 		// Repository either doesn't exist or installation doesn't have access
-		return false, "", nil
+		return false, "", "", nil
 	}
 
 	log.Errorf("Error verifying repository access: %v", err)
-	return false, "", nil
+	return false, "", "", nil
 }
 
 // Get branch head summary - sha, message, author

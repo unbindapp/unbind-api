@@ -223,7 +223,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["GITHUB_APP_ID"] = strconv.Itoa(int(installation.GithubAppID))
 
 		// Verify repository access
-		canAccess, cloneUrl, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, installation.AccountLogin, *service.GitRepository)
+		canAccess, cloneUrl, _, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, installation.AccountLogin, *service.GitRepository)
 		if err != nil {
 			log.Error("Error verifying repository access", "err", err)
 			return nil, err
