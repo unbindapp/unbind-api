@@ -115,7 +115,9 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("failed to update service: %w", err)
 		}
 
-		if len(service.Edges.ServiceConfig.Hosts) < 1 && input.Public != nil && *input.Public && len(input.Hosts) < 1 && service.Edges.ServiceConfig.Type != schema.ServiceTypeDatabase {
+		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
+			input.Public != nil && *input.Public && len(input.Hosts) < 1 && service.Edges.ServiceConfig.Type != schema.ServiceTypeDatabase &&
+			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
 			host, err := utils.GenerateSubdomain(service.Name, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
 				log.Warn("failed to generate subdomain", "error", err)
