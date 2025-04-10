@@ -112,10 +112,11 @@ jobs:
           tags: unbindapp/unbind-api:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-${{ matrix.arch }}
 
       - name: Build and push builder image
-        if: matrix.arch == 'arm64'
+        if: success()
         uses: docker/build-push-action@v5
         with:
           context: .
+          provenance: false
           platforms: ${{ matrix.platform }}
           push: true
           file: ./Dockerfile.ci-builder
