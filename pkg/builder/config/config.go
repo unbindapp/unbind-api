@@ -34,9 +34,8 @@ type Config struct {
 	PostgresUser     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	PostgresPassword string `env:"POSTGRES_PASSWORD" envDefault:"postgres"`
 	PostgresDB       string `env:"POSTGRES_DB" envDefault:"unbind"`
-	// Docker host because nixpacks ignores the variable https://github.com/railwayapp/nixpacks/issues/1194
-	DockerHost   string `env:"DOCKER_HOST" envDefault:"unix:///var/run/docker.sock"`
-	BuildkitHost string `env:"BUILDKIT_HOST" envDefault:"docker-container://buildkit"`
+	// Buildkitd host
+	BuildkitHost string `env:"BUILDKIT_HOST" envDefault:"tcp://buildkitd.unbind-system:1234"`
 	// Deployment namespace (kubernetes)
 	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
 	// Service specific
@@ -106,6 +105,10 @@ func (self *Config) GetBuilderNamespace() string {
 
 func (self *Config) GetKubeProxyURL() string {
 	return ""
+}
+
+func (self *Config) GetBuildkitHost() string {
+	return self.BuildkitHost
 }
 
 // Parse environment variables into a Config struct

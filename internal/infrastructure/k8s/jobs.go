@@ -64,19 +64,19 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, deploymentID strin
 							Command: []string{
 								"sh",
 								"-c",
-								`# Check if buildkitd is ready, fail if not
-if ! buildctl --addr tcp://buildkitd.unbind-system:1234 debug workers >/dev/null 2>&1; then
-	echo "Error: Cannot connect to BuildKit daemon at buildkitd.unbind-system:1234"
+								fmt.Sprintf(`# Check if buildkitd is ready, fail if not
+if ! buildctl --addr %s debug workers >/dev/null 2>&1; then
+	echo "Error: Cannot connect to BuildKit daemon at %s"
 	exit 1
 fi
 
 # Run the builder with BuildKit
-exec /app/builder`,
+exec /app/builder`, self.config.GetBuildkitHost(), self.config.GetBuildkitHost()),
 							},
 							Env: append(envVars, []corev1.EnvVar{
 								{
 									Name:  "BUILDKIT_HOST",
-									Value: "tcp://buildkitd.unbind-system:1234",
+									Value: self.config.GetBuildkitHost(),
 								},
 								{
 									Name:  "POSTGRES_HOST",
