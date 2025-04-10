@@ -92,6 +92,6 @@ func TestActualImgproxy(t *testing.T) {
 	ports, err := GetExposedPortsFromRegistry("darthsim/imgproxy:latest")
 
 	if assert.NoError(t, err) {
-		assert.Contains(t, ports, "8080", "darthsim/imgproxy should expose port 8080")
+		assert.Contains(t, ports, "8080/tcp", "darthsim/imgproxy should expose port 8080")
 	}
 }

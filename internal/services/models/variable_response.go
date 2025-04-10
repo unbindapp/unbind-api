@@ -7,6 +7,26 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
+type VariableUpdateBehavior string
+
+const (
+	VariableUpdateBehaviorUpsert    VariableUpdateBehavior = "upsert"
+	VariableUpdateBehaviorOverwrite VariableUpdateBehavior = "overwrite"
+)
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u VariableUpdateBehavior) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["VariableUpdateBehavior"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "VariableUpdateBehavior")
+		schemaRef.Title = "VariableUpdateBehavior"
+		schemaRef.Enum = append(schemaRef.Enum, string(VariableUpdateBehaviorUpsert))
+		schemaRef.Enum = append(schemaRef.Enum, string(VariableUpdateBehaviorOverwrite))
+		r.Map()["VariableUpdateBehavior"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/VariableUpdateBehavior"}
+}
+
 type VariableType string
 
 const (

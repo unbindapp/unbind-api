@@ -187,3 +187,22 @@ func (self *KubeClient) UpsertSecretValues(ctx context.Context, name, namespace 
 
 	return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
 }
+
+// OverwriteSecretValues overwrites all values in a secret with new values
+func (self *KubeClient) OverwriteSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error) {
+	// Get the current secret
+	secret, err := self.GetSecret(ctx, name, namespace, client)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reset values
+	secret.Data = make(map[string][]byte)
+
+	// Set the values
+	for k, v := range values {
+		secret.Data[k] = v
+	}
+
+	return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+}

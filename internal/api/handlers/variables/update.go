@@ -22,7 +22,7 @@ type UpsertVariablesInput struct {
 	}
 }
 
-func (self *HandlerGroup) UpsertVariables(ctx context.Context, input *UpsertVariablesInput) (*VariablesResponse, error) {
+func (self *HandlerGroup) UpdateVariables(ctx context.Context, input *UpsertVariablesInput) (*VariablesResponse, error) {
 	// Validate input
 	if err := ValidateVariablesDependencies(input.Body.Type, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID); err != nil {
 		return nil, huma.Error400BadRequest("invalid input", err)
@@ -46,13 +46,13 @@ func (self *HandlerGroup) UpsertVariables(ctx context.Context, input *UpsertVari
 	var err error
 	switch input.Body.Type {
 	case models.TeamVariable:
-		variables, err = self.srv.TeamService.UpsertVariables(ctx, user.ID, bearerToken, input.Body.TeamID, variablesUpdateMap)
+		variables, err = self.srv.TeamService.UpdateVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.Behavior, variablesUpdateMap)
 	case models.ProjectVariable:
-		variables, err = self.srv.ProjectService.UpsertVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, variablesUpdateMap)
+		variables, err = self.srv.ProjectService.UpdateVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.Behavior, variablesUpdateMap)
 	case models.EnvironmentVariable:
-		variables, err = self.srv.EnvironmentService.UpsertVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, variablesUpdateMap)
+		variables, err = self.srv.EnvironmentService.UpdateVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.Behavior, variablesUpdateMap)
 	case models.ServiceVariable:
-		variables, err = self.srv.ServiceService.UpsertVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, variablesUpdateMap)
+		variables, err = self.srv.ServiceService.UpdateVariables(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID, input.Body.Behavior, variablesUpdateMap)
 	}
 
 	if err != nil {

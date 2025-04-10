@@ -65,7 +65,7 @@ func (self *TeamService) GetVariables(ctx context.Context, userID uuid.UUID, bea
 }
 
 // Create variables in bulk
-func (self *TeamService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
+func (self *TeamService) UpdateVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID uuid.UUID, behavior models.VariableUpdateBehavior, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		{
 			Action:       schema.ActionEditor,
@@ -97,10 +97,18 @@ func (self *TeamService) UpsertVariables(ctx context.Context, userID uuid.UUID, 
 		return nil, err
 	}
 
-	// make variables
-	_, err = self.k8s.UpsertSecretValues(ctx, team.KubernetesSecret, team.Namespace, newVariables, client)
-	if err != nil {
-		return nil, err
+	if behavior == models.VariableUpdateBehaviorOverwrite {
+		// make secrets
+		_, err = self.k8s.OverwriteSecretValues(ctx, team.KubernetesSecret, team.Namespace, newVariables, client)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// make secrets
+		_, err = self.k8s.UpsertSecretValues(ctx, team.KubernetesSecret, team.Namespace, newVariables, client)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Get variables

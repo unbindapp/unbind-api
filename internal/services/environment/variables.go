@@ -82,7 +82,7 @@ func (self *EnvironmentService) GetVariables(ctx context.Context, userID uuid.UU
 }
 
 // Create secrets in bulk
-func (self *EnvironmentService) UpsertVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
+func (self *EnvironmentService) UpdateVariables(ctx context.Context, userID uuid.UUID, bearerToken string, teamID, projectID, environmentID uuid.UUID, behavior models.VariableUpdateBehavior, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		{
 			Action:       schema.ActionEditor,
@@ -131,10 +131,18 @@ func (self *EnvironmentService) UpsertVariables(ctx context.Context, userID uuid
 		return nil, err
 	}
 
-	// make secrets
-	_, err = self.k8s.UpsertSecretValues(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, newVariables, client)
-	if err != nil {
-		return nil, err
+	if behavior == models.VariableUpdateBehaviorOverwrite {
+		// make secrets
+		_, err = self.k8s.OverwriteSecretValues(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, newVariables, client)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// make secrets
+		_, err = self.k8s.UpsertSecretValues(ctx, environment.KubernetesSecret, project.Edges.Team.Namespace, newVariables, client)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Get secrets
