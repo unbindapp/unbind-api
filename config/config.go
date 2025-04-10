@@ -66,6 +66,8 @@ type Config struct {
 	LokiEndpoint string `env:"LOKI_ENDPOINT" envDefault:"http://loki-unbind-gateway.unbind-system.svc.cluster.local"`
 	// Metrics
 	PrometheusEndpoint string `env:"PROMETHEUS_ENDPOINT" envDefault:"http://kube-prometheus-stack-prometheus.monitoring:9090"`
+	// Oauth
+	DexConnectorSecret string `env:"DEX_CONNECTOR_SECRET" envDefault:"dex-secret"`
 	// ! TODO - remove me some day, for bypassing oauth
 	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
 }

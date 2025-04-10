@@ -45,10 +45,6 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 	if err != nil {
 		log.Fatalf("Failed to create ent client: %v", err)
 	}
-	log.Info("🦋 Running migrations...")
-	if err := db.Schema.Create(ctx); err != nil {
-		log.Fatal("Failed to run migrations", "err", err)
-	}
 	repo := repositories.NewRepositories(db)
 
 	// Load private key
@@ -76,7 +72,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 	dexCallbackUrl, _ := utils.JoinURLPaths(cfg.DexIssuerUrlExternal, "/callback")
 	clientStore.Set("dex-client", &models.Client{
 		ID:     "dex-client",
-		Secret: "dex-secret",
+		Secret: cfg.DexConnectorSecret,
 		Domain: dexCallbackUrl,
 	})
 
