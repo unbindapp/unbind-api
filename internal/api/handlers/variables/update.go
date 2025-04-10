@@ -15,6 +15,7 @@ type UpsertVariablesInput struct {
 	server.BaseAuthInput
 	Body struct {
 		BaseVariablesJSONInput
+		Behavior  models.VariableUpdateBehavior `json:"behavior" default:"upsert" required:"true" doc:"The behavior of the update - upsert or overwrite"`
 		Variables []*struct {
 			Name  string `json:"name" required:"true"`
 			Value string `json:"value" required:"true"`

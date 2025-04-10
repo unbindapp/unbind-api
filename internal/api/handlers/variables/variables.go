@@ -77,12 +77,11 @@ type BaseVariablesInput struct {
 }
 
 type BaseVariablesJSONInput struct {
-	Type          models.VariableType           `json:"type" required:"true" doc:"The type of variable"`
-	Behavior      models.VariableUpdateBehavior `json:"behavior" default:"upsert" required:"true" doc:"The behavior of the update - upsert or overwrite"`
-	TeamID        uuid.UUID                     `json:"team_id" required:"true"`
-	ProjectID     uuid.UUID                     `json:"project_id" required:"false" doc:"If present without environment_id, mutate team variables"`
-	EnvironmentID uuid.UUID                     `json:"environment_id" required:"false" doc:"If present without service_id, mutate environment variables - requires project_id"`
-	ServiceID     uuid.UUID                     `json:"service_id" required:"false" doc:"If present, mutate service variables - requires project_id and environment_id"`
+	Type          models.VariableType `json:"type" required:"true" doc:"The type of variable"`
+	TeamID        uuid.UUID           `json:"team_id" required:"true"`
+	ProjectID     uuid.UUID           `json:"project_id" required:"false" doc:"If present without environment_id, mutate team variables"`
+	EnvironmentID uuid.UUID           `json:"environment_id" required:"false" doc:"If present without service_id, mutate environment variables - requires project_id"`
+	ServiceID     uuid.UUID           `json:"service_id" required:"false" doc:"If present, mutate service variables - requires project_id and environment_id"`
 }
 
 func ValidateVariablesDependencies(variableType models.VariableType, teamID, projectID, environmentID, serviceID uuid.UUID) error {
