@@ -25,6 +25,15 @@ func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInter
 		Save(ctx)
 }
 
+// ClearDefaultEnvironment is intended for cases where we delete the last environment in a project
+func (self *ProjectRepository) ClearDefaultEnvironment(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	return db.Project.UpdateOneID(projectID).ClearDefaultEnvironment().Exec(ctx)
+}
+
 func (self *ProjectRepository) Update(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID, defaultEnvironmentID *uuid.UUID, displayName string, description *string) (*ent.Project, error) {
 	db := self.base.DB
 	if tx != nil {

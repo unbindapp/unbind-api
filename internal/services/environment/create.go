@@ -7,6 +7,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
@@ -74,6 +75,15 @@ func (self *EnvironmentService) CreateEnvironment(ctx context.Context, requester
 		environment, err = self.repo.Environment().Create(ctx, tx, name, input.DisplayName, secret.Name, input.Description, project.ID)
 		if err != nil {
 			return err
+		}
+
+		// See if the project has an environment already
+		if project.DefaultEnvironmentID == nil {
+			// Set this environment as the default
+			_, err = self.repo.Project().Update(ctx, tx, project.ID, &environment.ID, "", nil)
+			if err != nil {
+				log.Warnf("Failed to set default environment for project %s: %s", project.ID, err)
+			}
 		}
 
 		return nil

@@ -74,7 +74,7 @@ func (self *EnvironmentService) GetEnvironmentsByProjectID(ctx context.Context, 
 	}
 
 	// Query environmetns
-	envs, err := self.repo.Environment().GetForProject(ctx, projectID)
+	envs, err := self.repo.Environment().GetForProject(ctx, nil, projectID)
 	if err != nil {
 		return nil, err
 	}

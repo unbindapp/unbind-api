@@ -17,5 +17,5 @@ type EnvironmentRepositoryInterface interface {
 	Update(ctx context.Context, environmentID uuid.UUID, displayName *string, description *string) (*ent.Environment, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.Environment, error)
 	// Return all environments for a project with service edge populated
-	GetForProject(ctx context.Context, projectID uuid.UUID) ([]*ent.Environment, error)
+	GetForProject(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID) ([]*ent.Environment, error)
 }

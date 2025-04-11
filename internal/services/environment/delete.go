@@ -30,6 +30,8 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 		return err
 	}
 
+	// Make sure this isn't the only environment in the team
+
 	// Get services in this environment
 	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID)
 	if err != nil {
@@ -70,6 +72,25 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 
 		if err := self.repo.Environment().Delete(ctx, tx, environmentID); err != nil {
 			return err
+		}
+
+		// Re-fetch environments to update project default
+		envs, err := self.repo.Environment().GetForProject(ctx, tx, projectID)
+		if err != nil {
+			log.Warnf("Error fetching environments for project %s: %v", projectID, err)
+		}
+
+		if len(envs) > 0 {
+			_, err := self.repo.Project().Update(ctx, tx, projectID, &envs[0].ID, "", nil)
+			if err != nil {
+				log.Warnf("Error updating project %s default environment: %v", projectID, err)
+			}
+		} else {
+			// Clear default environment
+			err = self.repo.Project().ClearDefaultEnvironment(ctx, tx, projectID)
+			if err != nil {
+				log.Warnf("Error clearing default environment for project %s: %v", projectID, err)
+			}
 		}
 
 		return nil

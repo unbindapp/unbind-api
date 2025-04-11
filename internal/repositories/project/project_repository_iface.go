@@ -14,6 +14,7 @@ import (
 // ProjectRepositoryInterface ...
 type ProjectRepositoryInterface interface {
 	Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, displayName string, description *string, kubernetesSecret string) (*ent.Project, error)
+	ClearDefaultEnvironment(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID) error
 	Update(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID, defaultEnvironmentID *uuid.UUID, displayName string, description *string) (*ent.Project, error)
 	Delete(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.Project, error)
