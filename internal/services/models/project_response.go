@@ -16,6 +16,8 @@ type ProjectResponse struct {
 	TeamID               uuid.UUID              `json:"team_id"`
 	CreatedAt            time.Time              `json:"created_at"`
 	DefaultEnvironmentID *uuid.UUID             `json:"default_environment_id,omitempty"`
+	ServiceCount         int                    `json:"service_count,omitempty"`
+	ServiceIcons         []string               `json:"service_icons,omitempty" nullable:"false"`
 	Environments         []*EnvironmentResponse `json:"environments" nullable:"false"`
 	EnvironmentCount     int                    `json:"environment_count"`
 }
@@ -24,9 +26,25 @@ func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, prov
 	for _, environment := range self.Environments {
 		if count, ok := counts[environment.ID]; ok {
 			environment.ServiceCount = count
+			// Project-level
+			self.ServiceCount += count
 		}
 		if providerSummary, ok := providerSummaries[environment.ID]; ok {
 			environment.ServiceIcons = providerSummary
+			// Project-level
+			self.ServiceIcons = append(self.ServiceIcons, providerSummary...)
+
+			// De-duplicate
+			uniqueIcons := make(map[string]struct{})
+			for _, icon := range self.ServiceIcons {
+				uniqueIcons[icon] = struct{}{}
+			}
+			self.ServiceIcons = make([]string, len(uniqueIcons))
+			i := 0
+			for icon := range uniqueIcons {
+				self.ServiceIcons[i] = icon
+				i++
+			}
 		}
 	}
 }
