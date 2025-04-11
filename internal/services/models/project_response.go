@@ -23,23 +23,10 @@ type ProjectResponse struct {
 func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, providerSummaries map[uuid.UUID][]string) {
 	for _, environment := range self.Environments {
 		if count, ok := counts[environment.ID]; ok {
-			environment.ServiceCount += count
+			environment.ServiceCount = count
 		}
 		if providerSummary, ok := providerSummaries[environment.ID]; ok {
-			environment.ServiceIcons = append(environment.ServiceIcons, providerSummary...)
-
-			// De-duplicate the array
-			seen := make(map[string]bool)
-			var uniqueIcons []string
-
-			for _, icon := range environment.ServiceIcons {
-				if !seen[icon] {
-					seen[icon] = true
-					uniqueIcons = append(uniqueIcons, icon)
-				}
-			}
-
-			environment.ServiceIcons = uniqueIcons
+			environment.ServiceIcons = providerSummary
 		}
 	}
 }
@@ -49,16 +36,15 @@ func TransformProjectEntity(entity *ent.Project) *ProjectResponse {
 	response := &ProjectResponse{}
 	if entity != nil {
 		response = &ProjectResponse{
-			ID:                   entity.ID,
-			Name:                 entity.Name,
-			DisplayName:          entity.DisplayName,
-			Description:          entity.Description,
-			Status:               entity.Status,
-			TeamID:               entity.TeamID,
-			CreatedAt:            entity.CreatedAt,
-			DefaultEnvironmentID: entity.DefaultEnvironmentID,
-			Environments:         TransformEnvironmentEntitities(entity.Edges.Environments),
-			EnvironmentCount:     len(entity.Edges.Environments),
+			ID:               entity.ID,
+			Name:             entity.Name,
+			DisplayName:      entity.DisplayName,
+			Description:      entity.Description,
+			Status:           entity.Status,
+			TeamID:           entity.TeamID,
+			CreatedAt:        entity.CreatedAt,
+			Environments:     TransformEnvironmentEntitities(entity.Edges.Environments),
+			EnvironmentCount: len(entity.Edges.Environments),
 		}
 	}
 	return response
