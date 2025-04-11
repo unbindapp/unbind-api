@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 func TestDefinitionRendering(t *testing.T) {
@@ -30,8 +31,8 @@ func TestDefinitionRendering(t *testing.T) {
 							Type:        "integer",
 							Description: "Number of replicas",
 							Default:     1,
-							Minimum:     floatPtr(1),
-							Maximum:     floatPtr(5),
+							Minimum:     utils.ToPtr[float64](1),
+							Maximum:     utils.ToPtr[float64](5),
 						},
 						"storage": {
 							Type:        "string",
@@ -75,11 +76,6 @@ func TestDefinitionRendering(t *testing.T) {
 							},
 						},
 					},
-				},
-				"dockerImage": {
-					Type:        "string",
-					Description: "Spilo image version",
-					Default:     "unbindapp/spilo:17",
 				},
 				"version": {
 					Type:        "string",
@@ -154,7 +150,7 @@ metadata:
 spec:
   teamId: {{ .TeamID }}
   enableMasterLoadBalancer: {{ .Parameters.enableMasterLoadBalancer | default false }}
-  dockerImage: {{ .Parameters.dockerImage | default "unbindapp/spilo:17" }}
+  dockerImage: {{ if .Parameters.dockerImage }}{{ .Parameters.dockerImage }}{{ else }}{{ printf "unbindapp/spilo:%s-latest" (.Parameters.version | default "17") }}{{ end }}
   postgresql:
     version: {{ .Parameters.version | default "17" | quote }}
   numberOfInstances: {{ .Parameters.common.replicas | default 1 }}
@@ -279,6 +275,9 @@ spec:
 		assert.Contains(t, result, "size: 1Gi")                       // Default value
 		assert.Contains(t, result, "enableMasterLoadBalancer: false") // Default value
 
+		// Test the new dockerImage format with version-latest
+		assert.Contains(t, result, "dockerImage: unbindapp/spilo:17-latest") // Should use default version with -latest
+
 		// Check for Patroni configuration
 		assert.Contains(t, result, "patroni:")
 		assert.Contains(t, result, "\"hostssl all +pamrole all pam\"")
@@ -292,6 +291,76 @@ spec:
 		assert.Contains(t, result, "memory: 128Mi")
 		assert.Contains(t, result, "cpu: 200m")
 		assert.Contains(t, result, "memory: 256Mi")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("Custom Version", func(t *testing.T) {
+		// Create render context with custom version
+		ctx := &RenderContext{
+			Name:      "test-postgres-version",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 2,
+				},
+				"version": "16", // Using a different PostgreSQL version
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify the output contains the expected values
+		assert.Contains(t, result, "version: \"16\"") // Custom version
+
+		// Test the new dockerImage format with custom version-latest
+		assert.Contains(t, result, "dockerImage: unbindapp/spilo:16-latest") // Should use provided version with -latest
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("Custom Docker Image", func(t *testing.T) {
+		// Create render context with custom docker image
+		ctx := &RenderContext{
+			Name:      "test-postgres-docker",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 2,
+				},
+				"version":     "15",                     // Using a different PostgreSQL version
+				"dockerImage": "custom/postgres:latest", // Custom docker image
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify the output contains the expected values
+		assert.Contains(t, result, "version: \"15\"") // Custom version
+
+		// Test that the custom docker image overrides the formatted version pattern
+		assert.Contains(t, result, "dockerImage: custom/postgres:latest") // Should use the exact provided image
+		assert.NotContains(t, result, "dockerImage: unbindapp/spilo")     // Should not use the default image format
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
@@ -340,6 +409,9 @@ spec:
 
 		// Ensure labels are properly quoted
 		assert.NotContains(t, result, "environment: production") // Should be quoted
+
+		// Check docker image format
+		assert.Contains(t, result, "dockerImage: unbindapp/spilo:17-latest") // Should use default version with -latest
 	})
 
 	t.Run("S3 Enabled", func(t *testing.T) {
@@ -373,14 +445,12 @@ spec:
 		assert.Contains(t, result, "value: https://s3.amazonaws.com") // Default endpoint
 		assert.Contains(t, result, "value: us-east-1")                // Default region
 
-		// Parse to objects to ensure we have 2 resources
+		// Check docker image format
+		assert.Contains(t, result, "dockerImage: unbindapp/spilo:17-latest") // Should use default version with -latest
+
+		// Parse to objects to ensure we have correct resources
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
-		assert.Len(t, objects, 1) // PostgreSQL and NodePort service
+		assert.Len(t, objects, 1) // PostgreSQL object
 	})
-}
-
-// Helper function to create a float pointer
-func floatPtr(f float64) *float64 {
-	return &f
 }
