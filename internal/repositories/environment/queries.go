@@ -23,5 +23,7 @@ func (self *EnvironmentRepository) GetForProject(ctx context.Context, tx reposit
 	}
 
 	return db.Environment.Query().Where(environment.ProjectIDEQ(projectID)).
-		WithServices().All(ctx)
+		WithServices().Order(
+		ent.Asc(environment.FieldCreatedAt),
+	).All(ctx)
 }
