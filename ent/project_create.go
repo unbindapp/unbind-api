@@ -100,6 +100,20 @@ func (pc *ProjectCreate) SetTeamID(u uuid.UUID) *ProjectCreate {
 	return pc
 }
 
+// SetDefaultEnvironmentID sets the "default_environment_id" field.
+func (pc *ProjectCreate) SetDefaultEnvironmentID(u uuid.UUID) *ProjectCreate {
+	pc.mutation.SetDefaultEnvironmentID(u)
+	return pc
+}
+
+// SetNillableDefaultEnvironmentID sets the "default_environment_id" field if the given value is not nil.
+func (pc *ProjectCreate) SetNillableDefaultEnvironmentID(u *uuid.UUID) *ProjectCreate {
+	if u != nil {
+		pc.SetDefaultEnvironmentID(*u)
+	}
+	return pc
+}
+
 // SetKubernetesSecret sets the "kubernetes_secret" field.
 func (pc *ProjectCreate) SetKubernetesSecret(s string) *ProjectCreate {
 	pc.mutation.SetKubernetesSecret(s)
@@ -138,6 +152,11 @@ func (pc *ProjectCreate) AddEnvironments(e ...*Environment) *ProjectCreate {
 		ids[i] = e[i].ID
 	}
 	return pc.AddEnvironmentIDs(ids...)
+}
+
+// SetDefaultEnvironment sets the "default_environment" edge to the Environment entity.
+func (pc *ProjectCreate) SetDefaultEnvironment(e *Environment) *ProjectCreate {
+	return pc.SetDefaultEnvironmentID(e.ID)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -321,6 +340,23 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := pc.mutation.DefaultEnvironmentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   project.DefaultEnvironmentTable,
+			Columns: []string{project.DefaultEnvironmentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.DefaultEnvironmentID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -448,6 +484,24 @@ func (u *ProjectUpsert) SetTeamID(v uuid.UUID) *ProjectUpsert {
 // UpdateTeamID sets the "team_id" field to the value that was provided on create.
 func (u *ProjectUpsert) UpdateTeamID() *ProjectUpsert {
 	u.SetExcluded(project.FieldTeamID)
+	return u
+}
+
+// SetDefaultEnvironmentID sets the "default_environment_id" field.
+func (u *ProjectUpsert) SetDefaultEnvironmentID(v uuid.UUID) *ProjectUpsert {
+	u.Set(project.FieldDefaultEnvironmentID, v)
+	return u
+}
+
+// UpdateDefaultEnvironmentID sets the "default_environment_id" field to the value that was provided on create.
+func (u *ProjectUpsert) UpdateDefaultEnvironmentID() *ProjectUpsert {
+	u.SetExcluded(project.FieldDefaultEnvironmentID)
+	return u
+}
+
+// ClearDefaultEnvironmentID clears the value of the "default_environment_id" field.
+func (u *ProjectUpsert) ClearDefaultEnvironmentID() *ProjectUpsert {
+	u.SetNull(project.FieldDefaultEnvironmentID)
 	return u
 }
 
@@ -602,6 +656,27 @@ func (u *ProjectUpsertOne) SetTeamID(v uuid.UUID) *ProjectUpsertOne {
 func (u *ProjectUpsertOne) UpdateTeamID() *ProjectUpsertOne {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateTeamID()
+	})
+}
+
+// SetDefaultEnvironmentID sets the "default_environment_id" field.
+func (u *ProjectUpsertOne) SetDefaultEnvironmentID(v uuid.UUID) *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetDefaultEnvironmentID(v)
+	})
+}
+
+// UpdateDefaultEnvironmentID sets the "default_environment_id" field to the value that was provided on create.
+func (u *ProjectUpsertOne) UpdateDefaultEnvironmentID() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateDefaultEnvironmentID()
+	})
+}
+
+// ClearDefaultEnvironmentID clears the value of the "default_environment_id" field.
+func (u *ProjectUpsertOne) ClearDefaultEnvironmentID() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.ClearDefaultEnvironmentID()
 	})
 }
 
@@ -925,6 +1000,27 @@ func (u *ProjectUpsertBulk) SetTeamID(v uuid.UUID) *ProjectUpsertBulk {
 func (u *ProjectUpsertBulk) UpdateTeamID() *ProjectUpsertBulk {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateTeamID()
+	})
+}
+
+// SetDefaultEnvironmentID sets the "default_environment_id" field.
+func (u *ProjectUpsertBulk) SetDefaultEnvironmentID(v uuid.UUID) *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetDefaultEnvironmentID(v)
+	})
+}
+
+// UpdateDefaultEnvironmentID sets the "default_environment_id" field to the value that was provided on create.
+func (u *ProjectUpsertBulk) UpdateDefaultEnvironmentID() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateDefaultEnvironmentID()
+	})
+}
+
+// ClearDefaultEnvironmentID clears the value of the "default_environment_id" field.
+func (u *ProjectUpsertBulk) ClearDefaultEnvironmentID() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.ClearDefaultEnvironmentID()
 	})
 }
 

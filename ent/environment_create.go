@@ -72,6 +72,14 @@ func (ec *EnvironmentCreate) SetDescription(s string) *EnvironmentCreate {
 	return ec
 }
 
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (ec *EnvironmentCreate) SetNillableDescription(s *string) *EnvironmentCreate {
+	if s != nil {
+		ec.SetDescription(*s)
+	}
+	return ec
+}
+
 // SetActive sets the "active" field.
 func (ec *EnvironmentCreate) SetActive(b bool) *EnvironmentCreate {
 	ec.mutation.SetActive(b)
@@ -130,6 +138,21 @@ func (ec *EnvironmentCreate) AddServices(s ...*Service) *EnvironmentCreate {
 		ids[i] = s[i].ID
 	}
 	return ec.AddServiceIDs(ids...)
+}
+
+// AddProjectDefaultIDs adds the "project_default" edge to the Project entity by IDs.
+func (ec *EnvironmentCreate) AddProjectDefaultIDs(ids ...uuid.UUID) *EnvironmentCreate {
+	ec.mutation.AddProjectDefaultIDs(ids...)
+	return ec
+}
+
+// AddProjectDefault adds the "project_default" edges to the Project entity.
+func (ec *EnvironmentCreate) AddProjectDefault(p ...*Project) *EnvironmentCreate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ec.AddProjectDefaultIDs(ids...)
 }
 
 // Mutation returns the EnvironmentMutation object of the builder.
@@ -204,9 +227,6 @@ func (ec *EnvironmentCreate) check() error {
 	if _, ok := ec.mutation.DisplayName(); !ok {
 		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Environment.display_name"`)}
 	}
-	if _, ok := ec.mutation.Description(); !ok {
-		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Environment.description"`)}
-	}
 	if _, ok := ec.mutation.Active(); !ok {
 		return &ValidationError{Name: "active", err: errors.New(`ent: missing required field "Environment.active"`)}
 	}
@@ -273,7 +293,7 @@ func (ec *EnvironmentCreate) createSpec() (*Environment, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := ec.mutation.Description(); ok {
 		_spec.SetField(environment.FieldDescription, field.TypeString, value)
-		_node.Description = value
+		_node.Description = &value
 	}
 	if value, ok := ec.mutation.Active(); ok {
 		_spec.SetField(environment.FieldActive, field.TypeBool, value)
@@ -309,6 +329,22 @@ func (ec *EnvironmentCreate) createSpec() (*Environment, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.mutation.ProjectDefaultIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ProjectDefaultTable,
+			Columns: []string{environment.ProjectDefaultColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -413,6 +449,12 @@ func (u *EnvironmentUpsert) SetDescription(v string) *EnvironmentUpsert {
 // UpdateDescription sets the "description" field to the value that was provided on create.
 func (u *EnvironmentUpsert) UpdateDescription() *EnvironmentUpsert {
 	u.SetExcluded(environment.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *EnvironmentUpsert) ClearDescription() *EnvironmentUpsert {
+	u.SetNull(environment.FieldDescription)
 	return u
 }
 
@@ -556,6 +598,13 @@ func (u *EnvironmentUpsertOne) SetDescription(v string) *EnvironmentUpsertOne {
 func (u *EnvironmentUpsertOne) UpdateDescription() *EnvironmentUpsertOne {
 	return u.Update(func(s *EnvironmentUpsert) {
 		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *EnvironmentUpsertOne) ClearDescription() *EnvironmentUpsertOne {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.ClearDescription()
 	})
 }
 
@@ -872,6 +921,13 @@ func (u *EnvironmentUpsertBulk) SetDescription(v string) *EnvironmentUpsertBulk 
 func (u *EnvironmentUpsertBulk) UpdateDescription() *EnvironmentUpsertBulk {
 	return u.Update(func(s *EnvironmentUpsert) {
 		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *EnvironmentUpsertBulk) ClearDescription() *EnvironmentUpsertBulk {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.ClearDescription()
 	})
 }
 

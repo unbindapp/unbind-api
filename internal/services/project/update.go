@@ -13,10 +13,11 @@ import (
 )
 
 type UpdateProjectInput struct {
-	TeamID      uuid.UUID `validate:"required,uuid4"`
-	ProjectID   uuid.UUID `validate:"required,uuid4"`
-	DisplayName string
-	Description *string
+	TeamID               uuid.UUID  `validate:"required,uuid4"`
+	ProjectID            uuid.UUID  `validate:"required,uuid4"`
+	DefaultEnvironmentID *uuid.UUID `validate:"omitempty,uuid4"`
+	DisplayName          string
+	Description          *string
 }
 
 func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID uuid.UUID, input *UpdateProjectInput) (*models.ProjectResponse, error) {
@@ -64,7 +65,7 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 	}
 
 	// Update the project
-	project, err = self.repo.Project().Update(ctx, input.ProjectID, input.DisplayName, input.Description)
+	project, err = self.repo.Project().Update(ctx, nil, input.ProjectID, input.DefaultEnvironmentID, input.DisplayName, input.Description)
 	if err != nil {
 		return nil, err
 	}

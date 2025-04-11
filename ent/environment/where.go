@@ -361,6 +361,16 @@ func DescriptionHasSuffix(v string) predicate.Environment {
 	return predicate.Environment(sql.FieldHasSuffix(FieldDescription, v))
 }
 
+// DescriptionIsNil applies the IsNil predicate on the "description" field.
+func DescriptionIsNil() predicate.Environment {
+	return predicate.Environment(sql.FieldIsNull(FieldDescription))
+}
+
+// DescriptionNotNil applies the NotNil predicate on the "description" field.
+func DescriptionNotNil() predicate.Environment {
+	return predicate.Environment(sql.FieldNotNull(FieldDescription))
+}
+
 // DescriptionEqualFold applies the EqualFold predicate on the "description" field.
 func DescriptionEqualFold(v string) predicate.Environment {
 	return predicate.Environment(sql.FieldEqualFold(FieldDescription, v))
@@ -504,6 +514,29 @@ func HasServices() predicate.Environment {
 func HasServicesWith(preds ...predicate.Service) predicate.Environment {
 	return predicate.Environment(func(s *sql.Selector) {
 		step := newServicesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasProjectDefault applies the HasEdge predicate on the "project_default" edge.
+func HasProjectDefault() predicate.Environment {
+	return predicate.Environment(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ProjectDefaultTable, ProjectDefaultColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProjectDefaultWith applies the HasEdge predicate on the "project_default" edge with a given conditions (other predicates).
+func HasProjectDefaultWith(preds ...predicate.Project) predicate.Environment {
+	return predicate.Environment(func(s *sql.Selector) {
+		step := newProjectDefaultStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

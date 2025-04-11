@@ -22,13 +22,14 @@ import (
 // ProjectQuery is the builder for querying Project entities.
 type ProjectQuery struct {
 	config
-	ctx              *QueryContext
-	order            []project.OrderOption
-	inters           []Interceptor
-	predicates       []predicate.Project
-	withTeam         *TeamQuery
-	withEnvironments *EnvironmentQuery
-	modifiers        []func(*sql.Selector)
+	ctx                    *QueryContext
+	order                  []project.OrderOption
+	inters                 []Interceptor
+	predicates             []predicate.Project
+	withTeam               *TeamQuery
+	withEnvironments       *EnvironmentQuery
+	withDefaultEnvironment *EnvironmentQuery
+	modifiers              []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -102,6 +103,28 @@ func (pq *ProjectQuery) QueryEnvironments() *EnvironmentQuery {
 			sqlgraph.From(project.Table, project.FieldID, selector),
 			sqlgraph.To(environment.Table, environment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, project.EnvironmentsTable, project.EnvironmentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDefaultEnvironment chains the current query on the "default_environment" edge.
+func (pq *ProjectQuery) QueryDefaultEnvironment() *EnvironmentQuery {
+	query := (&EnvironmentClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(environment.Table, environment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, project.DefaultEnvironmentTable, project.DefaultEnvironmentColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -296,13 +319,14 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		return nil
 	}
 	return &ProjectQuery{
-		config:           pq.config,
-		ctx:              pq.ctx.Clone(),
-		order:            append([]project.OrderOption{}, pq.order...),
-		inters:           append([]Interceptor{}, pq.inters...),
-		predicates:       append([]predicate.Project{}, pq.predicates...),
-		withTeam:         pq.withTeam.Clone(),
-		withEnvironments: pq.withEnvironments.Clone(),
+		config:                 pq.config,
+		ctx:                    pq.ctx.Clone(),
+		order:                  append([]project.OrderOption{}, pq.order...),
+		inters:                 append([]Interceptor{}, pq.inters...),
+		predicates:             append([]predicate.Project{}, pq.predicates...),
+		withTeam:               pq.withTeam.Clone(),
+		withEnvironments:       pq.withEnvironments.Clone(),
+		withDefaultEnvironment: pq.withDefaultEnvironment.Clone(),
 		// clone intermediate query.
 		sql:       pq.sql.Clone(),
 		path:      pq.path,
@@ -329,6 +353,17 @@ func (pq *ProjectQuery) WithEnvironments(opts ...func(*EnvironmentQuery)) *Proje
 		opt(query)
 	}
 	pq.withEnvironments = query
+	return pq
+}
+
+// WithDefaultEnvironment tells the query-builder to eager-load the nodes that are connected to
+// the "default_environment" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithDefaultEnvironment(opts ...func(*EnvironmentQuery)) *ProjectQuery {
+	query := (&EnvironmentClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withDefaultEnvironment = query
 	return pq
 }
 
@@ -410,9 +445,10 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	var (
 		nodes       = []*Project{}
 		_spec       = pq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			pq.withTeam != nil,
 			pq.withEnvironments != nil,
+			pq.withDefaultEnvironment != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -446,6 +482,12 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		if err := pq.loadEnvironments(ctx, query, nodes,
 			func(n *Project) { n.Edges.Environments = []*Environment{} },
 			func(n *Project, e *Environment) { n.Edges.Environments = append(n.Edges.Environments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withDefaultEnvironment; query != nil {
+		if err := pq.loadDefaultEnvironment(ctx, query, nodes, nil,
+			func(n *Project, e *Environment) { n.Edges.DefaultEnvironment = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -511,6 +553,38 @@ func (pq *ProjectQuery) loadEnvironments(ctx context.Context, query *Environment
 	}
 	return nil
 }
+func (pq *ProjectQuery) loadDefaultEnvironment(ctx context.Context, query *EnvironmentQuery, nodes []*Project, init func(*Project), assign func(*Project, *Environment)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Project)
+	for i := range nodes {
+		if nodes[i].DefaultEnvironmentID == nil {
+			continue
+		}
+		fk := *nodes[i].DefaultEnvironmentID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(environment.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "default_environment_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (pq *ProjectQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := pq.querySpec()
@@ -542,6 +616,9 @@ func (pq *ProjectQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if pq.withTeam != nil {
 			_spec.Node.AddColumnOnce(project.FieldTeamID)
+		}
+		if pq.withDefaultEnvironment != nil {
+			_spec.Node.AddColumnOnce(project.FieldDefaultEnvironmentID)
 		}
 	}
 	if ps := pq.predicates; len(ps) > 0 {

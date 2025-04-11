@@ -31,6 +31,7 @@ func (Project) Fields() []ent.Field {
 		field.String("description").Optional().Nillable(),
 		field.String("status").Default("active"),
 		field.UUID("team_id", uuid.UUID{}),
+		field.UUID("default_environment_id", uuid.UUID{}).Optional().Nillable(),
 		field.String("kubernetes_secret").Comment("Kubernetes secret for this project"),
 	}
 }
@@ -44,6 +45,11 @@ func (Project) Edges() []ent.Edge {
 				OnDelete: entsql.Cascade,
 			},
 		),
+		// O2O
+		edge.From("default_environment", Environment.Type).
+			Ref("project_default").
+			Field("default_environment_id").
+			Unique(),
 	}
 }
 

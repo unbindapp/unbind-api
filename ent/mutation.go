@@ -2050,25 +2050,28 @@ func (m *DeploymentMutation) ResetEdge(name string) error {
 // EnvironmentMutation represents an operation that mutates the Environment nodes in the graph.
 type EnvironmentMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *uuid.UUID
-	created_at        *time.Time
-	updated_at        *time.Time
-	name              *string
-	display_name      *string
-	description       *string
-	active            *bool
-	kubernetes_secret *string
-	clearedFields     map[string]struct{}
-	project           *uuid.UUID
-	clearedproject    bool
-	services          map[uuid.UUID]struct{}
-	removedservices   map[uuid.UUID]struct{}
-	clearedservices   bool
-	done              bool
-	oldValue          func(context.Context) (*Environment, error)
-	predicates        []predicate.Environment
+	op                     Op
+	typ                    string
+	id                     *uuid.UUID
+	created_at             *time.Time
+	updated_at             *time.Time
+	name                   *string
+	display_name           *string
+	description            *string
+	active                 *bool
+	kubernetes_secret      *string
+	clearedFields          map[string]struct{}
+	project                *uuid.UUID
+	clearedproject         bool
+	services               map[uuid.UUID]struct{}
+	removedservices        map[uuid.UUID]struct{}
+	clearedservices        bool
+	project_default        map[uuid.UUID]struct{}
+	removedproject_default map[uuid.UUID]struct{}
+	clearedproject_default bool
+	done                   bool
+	oldValue               func(context.Context) (*Environment, error)
+	predicates             []predicate.Environment
 }
 
 var _ ent.Mutation = (*EnvironmentMutation)(nil)
@@ -2336,7 +2339,7 @@ func (m *EnvironmentMutation) Description() (r string, exists bool) {
 // OldDescription returns the old "description" field's value of the Environment entity.
 // If the Environment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EnvironmentMutation) OldDescription(ctx context.Context) (v string, err error) {
+func (m *EnvironmentMutation) OldDescription(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
 	}
@@ -2350,9 +2353,22 @@ func (m *EnvironmentMutation) OldDescription(ctx context.Context) (v string, err
 	return oldValue.Description, nil
 }
 
+// ClearDescription clears the value of the "description" field.
+func (m *EnvironmentMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[environment.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *EnvironmentMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[environment.FieldDescription]
+	return ok
+}
+
 // ResetDescription resets all changes to the "description" field.
 func (m *EnvironmentMutation) ResetDescription() {
 	m.description = nil
+	delete(m.clearedFields, environment.FieldDescription)
 }
 
 // SetActive sets the "active" field.
@@ -2542,6 +2558,60 @@ func (m *EnvironmentMutation) ResetServices() {
 	m.services = nil
 	m.clearedservices = false
 	m.removedservices = nil
+}
+
+// AddProjectDefaultIDs adds the "project_default" edge to the Project entity by ids.
+func (m *EnvironmentMutation) AddProjectDefaultIDs(ids ...uuid.UUID) {
+	if m.project_default == nil {
+		m.project_default = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.project_default[ids[i]] = struct{}{}
+	}
+}
+
+// ClearProjectDefault clears the "project_default" edge to the Project entity.
+func (m *EnvironmentMutation) ClearProjectDefault() {
+	m.clearedproject_default = true
+}
+
+// ProjectDefaultCleared reports if the "project_default" edge to the Project entity was cleared.
+func (m *EnvironmentMutation) ProjectDefaultCleared() bool {
+	return m.clearedproject_default
+}
+
+// RemoveProjectDefaultIDs removes the "project_default" edge to the Project entity by IDs.
+func (m *EnvironmentMutation) RemoveProjectDefaultIDs(ids ...uuid.UUID) {
+	if m.removedproject_default == nil {
+		m.removedproject_default = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.project_default, ids[i])
+		m.removedproject_default[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedProjectDefault returns the removed IDs of the "project_default" edge to the Project entity.
+func (m *EnvironmentMutation) RemovedProjectDefaultIDs() (ids []uuid.UUID) {
+	for id := range m.removedproject_default {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ProjectDefaultIDs returns the "project_default" edge IDs in the mutation.
+func (m *EnvironmentMutation) ProjectDefaultIDs() (ids []uuid.UUID) {
+	for id := range m.project_default {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetProjectDefault resets all changes to the "project_default" edge.
+func (m *EnvironmentMutation) ResetProjectDefault() {
+	m.project_default = nil
+	m.clearedproject_default = false
+	m.removedproject_default = nil
 }
 
 // Where appends a list predicates to the EnvironmentMutation builder.
@@ -2746,7 +2816,11 @@ func (m *EnvironmentMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *EnvironmentMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(environment.FieldDescription) {
+		fields = append(fields, environment.FieldDescription)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -2759,6 +2833,11 @@ func (m *EnvironmentMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *EnvironmentMutation) ClearField(name string) error {
+	switch name {
+	case environment.FieldDescription:
+		m.ClearDescription()
+		return nil
+	}
 	return fmt.Errorf("unknown Environment nullable field %s", name)
 }
 
@@ -2796,12 +2875,15 @@ func (m *EnvironmentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *EnvironmentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.project != nil {
 		edges = append(edges, environment.EdgeProject)
 	}
 	if m.services != nil {
 		edges = append(edges, environment.EdgeServices)
+	}
+	if m.project_default != nil {
+		edges = append(edges, environment.EdgeProjectDefault)
 	}
 	return edges
 }
@@ -2820,15 +2902,24 @@ func (m *EnvironmentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeProjectDefault:
+		ids := make([]ent.Value, 0, len(m.project_default))
+		for id := range m.project_default {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *EnvironmentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedservices != nil {
 		edges = append(edges, environment.EdgeServices)
+	}
+	if m.removedproject_default != nil {
+		edges = append(edges, environment.EdgeProjectDefault)
 	}
 	return edges
 }
@@ -2843,18 +2934,27 @@ func (m *EnvironmentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeProjectDefault:
+		ids := make([]ent.Value, 0, len(m.removedproject_default))
+		for id := range m.removedproject_default {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *EnvironmentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedproject {
 		edges = append(edges, environment.EdgeProject)
 	}
 	if m.clearedservices {
 		edges = append(edges, environment.EdgeServices)
+	}
+	if m.clearedproject_default {
+		edges = append(edges, environment.EdgeProjectDefault)
 	}
 	return edges
 }
@@ -2867,6 +2967,8 @@ func (m *EnvironmentMutation) EdgeCleared(name string) bool {
 		return m.clearedproject
 	case environment.EdgeServices:
 		return m.clearedservices
+	case environment.EdgeProjectDefault:
+		return m.clearedproject_default
 	}
 	return false
 }
@@ -2891,6 +2993,9 @@ func (m *EnvironmentMutation) ResetEdge(name string) error {
 		return nil
 	case environment.EdgeServices:
 		m.ResetServices()
+		return nil
+	case environment.EdgeProjectDefault:
+		m.ResetProjectDefault()
 		return nil
 	}
 	return fmt.Errorf("unknown Environment edge %s", name)
@@ -8282,25 +8387,27 @@ func (m *PermissionMutation) ResetEdge(name string) error {
 // ProjectMutation represents an operation that mutates the Project nodes in the graph.
 type ProjectMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *uuid.UUID
-	created_at          *time.Time
-	updated_at          *time.Time
-	name                *string
-	display_name        *string
-	description         *string
-	status              *string
-	kubernetes_secret   *string
-	clearedFields       map[string]struct{}
-	team                *uuid.UUID
-	clearedteam         bool
-	environments        map[uuid.UUID]struct{}
-	removedenvironments map[uuid.UUID]struct{}
-	clearedenvironments bool
-	done                bool
-	oldValue            func(context.Context) (*Project, error)
-	predicates          []predicate.Project
+	op                         Op
+	typ                        string
+	id                         *uuid.UUID
+	created_at                 *time.Time
+	updated_at                 *time.Time
+	name                       *string
+	display_name               *string
+	description                *string
+	status                     *string
+	kubernetes_secret          *string
+	clearedFields              map[string]struct{}
+	team                       *uuid.UUID
+	clearedteam                bool
+	environments               map[uuid.UUID]struct{}
+	removedenvironments        map[uuid.UUID]struct{}
+	clearedenvironments        bool
+	default_environment        *uuid.UUID
+	cleareddefault_environment bool
+	done                       bool
+	oldValue                   func(context.Context) (*Project, error)
+	predicates                 []predicate.Project
 }
 
 var _ ent.Mutation = (*ProjectMutation)(nil)
@@ -8672,6 +8779,55 @@ func (m *ProjectMutation) ResetTeamID() {
 	m.team = nil
 }
 
+// SetDefaultEnvironmentID sets the "default_environment_id" field.
+func (m *ProjectMutation) SetDefaultEnvironmentID(u uuid.UUID) {
+	m.default_environment = &u
+}
+
+// DefaultEnvironmentID returns the value of the "default_environment_id" field in the mutation.
+func (m *ProjectMutation) DefaultEnvironmentID() (r uuid.UUID, exists bool) {
+	v := m.default_environment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDefaultEnvironmentID returns the old "default_environment_id" field's value of the Project entity.
+// If the Project object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProjectMutation) OldDefaultEnvironmentID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDefaultEnvironmentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDefaultEnvironmentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDefaultEnvironmentID: %w", err)
+	}
+	return oldValue.DefaultEnvironmentID, nil
+}
+
+// ClearDefaultEnvironmentID clears the value of the "default_environment_id" field.
+func (m *ProjectMutation) ClearDefaultEnvironmentID() {
+	m.default_environment = nil
+	m.clearedFields[project.FieldDefaultEnvironmentID] = struct{}{}
+}
+
+// DefaultEnvironmentIDCleared returns if the "default_environment_id" field was cleared in this mutation.
+func (m *ProjectMutation) DefaultEnvironmentIDCleared() bool {
+	_, ok := m.clearedFields[project.FieldDefaultEnvironmentID]
+	return ok
+}
+
+// ResetDefaultEnvironmentID resets all changes to the "default_environment_id" field.
+func (m *ProjectMutation) ResetDefaultEnvironmentID() {
+	m.default_environment = nil
+	delete(m.clearedFields, project.FieldDefaultEnvironmentID)
+}
+
 // SetKubernetesSecret sets the "kubernetes_secret" field.
 func (m *ProjectMutation) SetKubernetesSecret(s string) {
 	m.kubernetes_secret = &s
@@ -8789,6 +8945,33 @@ func (m *ProjectMutation) ResetEnvironments() {
 	m.removedenvironments = nil
 }
 
+// ClearDefaultEnvironment clears the "default_environment" edge to the Environment entity.
+func (m *ProjectMutation) ClearDefaultEnvironment() {
+	m.cleareddefault_environment = true
+	m.clearedFields[project.FieldDefaultEnvironmentID] = struct{}{}
+}
+
+// DefaultEnvironmentCleared reports if the "default_environment" edge to the Environment entity was cleared.
+func (m *ProjectMutation) DefaultEnvironmentCleared() bool {
+	return m.DefaultEnvironmentIDCleared() || m.cleareddefault_environment
+}
+
+// DefaultEnvironmentIDs returns the "default_environment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// DefaultEnvironmentID instead. It exists only for internal usage by the builders.
+func (m *ProjectMutation) DefaultEnvironmentIDs() (ids []uuid.UUID) {
+	if id := m.default_environment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetDefaultEnvironment resets all changes to the "default_environment" edge.
+func (m *ProjectMutation) ResetDefaultEnvironment() {
+	m.default_environment = nil
+	m.cleareddefault_environment = false
+}
+
 // Where appends a list predicates to the ProjectMutation builder.
 func (m *ProjectMutation) Where(ps ...predicate.Project) {
 	m.predicates = append(m.predicates, ps...)
@@ -8823,7 +9006,7 @@ func (m *ProjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProjectMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, project.FieldCreatedAt)
 	}
@@ -8844,6 +9027,9 @@ func (m *ProjectMutation) Fields() []string {
 	}
 	if m.team != nil {
 		fields = append(fields, project.FieldTeamID)
+	}
+	if m.default_environment != nil {
+		fields = append(fields, project.FieldDefaultEnvironmentID)
 	}
 	if m.kubernetes_secret != nil {
 		fields = append(fields, project.FieldKubernetesSecret)
@@ -8870,6 +9056,8 @@ func (m *ProjectMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case project.FieldTeamID:
 		return m.TeamID()
+	case project.FieldDefaultEnvironmentID:
+		return m.DefaultEnvironmentID()
 	case project.FieldKubernetesSecret:
 		return m.KubernetesSecret()
 	}
@@ -8895,6 +9083,8 @@ func (m *ProjectMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldStatus(ctx)
 	case project.FieldTeamID:
 		return m.OldTeamID(ctx)
+	case project.FieldDefaultEnvironmentID:
+		return m.OldDefaultEnvironmentID(ctx)
 	case project.FieldKubernetesSecret:
 		return m.OldKubernetesSecret(ctx)
 	}
@@ -8955,6 +9145,13 @@ func (m *ProjectMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTeamID(v)
 		return nil
+	case project.FieldDefaultEnvironmentID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDefaultEnvironmentID(v)
+		return nil
 	case project.FieldKubernetesSecret:
 		v, ok := value.(string)
 		if !ok {
@@ -8995,6 +9192,9 @@ func (m *ProjectMutation) ClearedFields() []string {
 	if m.FieldCleared(project.FieldDescription) {
 		fields = append(fields, project.FieldDescription)
 	}
+	if m.FieldCleared(project.FieldDefaultEnvironmentID) {
+		fields = append(fields, project.FieldDefaultEnvironmentID)
+	}
 	return fields
 }
 
@@ -9011,6 +9211,9 @@ func (m *ProjectMutation) ClearField(name string) error {
 	switch name {
 	case project.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case project.FieldDefaultEnvironmentID:
+		m.ClearDefaultEnvironmentID()
 		return nil
 	}
 	return fmt.Errorf("unknown Project nullable field %s", name)
@@ -9041,6 +9244,9 @@ func (m *ProjectMutation) ResetField(name string) error {
 	case project.FieldTeamID:
 		m.ResetTeamID()
 		return nil
+	case project.FieldDefaultEnvironmentID:
+		m.ResetDefaultEnvironmentID()
+		return nil
 	case project.FieldKubernetesSecret:
 		m.ResetKubernetesSecret()
 		return nil
@@ -9050,12 +9256,15 @@ func (m *ProjectMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ProjectMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.team != nil {
 		edges = append(edges, project.EdgeTeam)
 	}
 	if m.environments != nil {
 		edges = append(edges, project.EdgeEnvironments)
+	}
+	if m.default_environment != nil {
+		edges = append(edges, project.EdgeDefaultEnvironment)
 	}
 	return edges
 }
@@ -9074,13 +9283,17 @@ func (m *ProjectMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case project.EdgeDefaultEnvironment:
+		if id := m.default_environment; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProjectMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedenvironments != nil {
 		edges = append(edges, project.EdgeEnvironments)
 	}
@@ -9103,12 +9316,15 @@ func (m *ProjectMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ProjectMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedteam {
 		edges = append(edges, project.EdgeTeam)
 	}
 	if m.clearedenvironments {
 		edges = append(edges, project.EdgeEnvironments)
+	}
+	if m.cleareddefault_environment {
+		edges = append(edges, project.EdgeDefaultEnvironment)
 	}
 	return edges
 }
@@ -9121,6 +9337,8 @@ func (m *ProjectMutation) EdgeCleared(name string) bool {
 		return m.clearedteam
 	case project.EdgeEnvironments:
 		return m.clearedenvironments
+	case project.EdgeDefaultEnvironment:
+		return m.cleareddefault_environment
 	}
 	return false
 }
@@ -9131,6 +9349,9 @@ func (m *ProjectMutation) ClearEdge(name string) error {
 	switch name {
 	case project.EdgeTeam:
 		m.ClearTeam()
+		return nil
+	case project.EdgeDefaultEnvironment:
+		m.ClearDefaultEnvironment()
 		return nil
 	}
 	return fmt.Errorf("unknown Project unique edge %s", name)
@@ -9145,6 +9366,9 @@ func (m *ProjectMutation) ResetEdge(name string) error {
 		return nil
 	case project.EdgeEnvironments:
 		m.ResetEnvironments()
+		return nil
+	case project.EdgeDefaultEnvironment:
+		m.ResetDefaultEnvironment()
 		return nil
 	}
 	return fmt.Errorf("unknown Project edge %s", name)

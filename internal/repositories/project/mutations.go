@@ -5,6 +5,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/environment"
+	"github.com/unbindapp/unbind-api/ent/project"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
@@ -23,8 +25,13 @@ func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInter
 		Save(ctx)
 }
 
-func (self *ProjectRepository) Update(ctx context.Context, projectID uuid.UUID, displayName string, description *string) (*ent.Project, error) {
-	m := self.base.DB.Project.UpdateOneID(projectID)
+func (self *ProjectRepository) Update(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID, defaultEnvironmentID *uuid.UUID, displayName string, description *string) (*ent.Project, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	m := db.Project.UpdateOneID(projectID)
 	if displayName != "" {
 		m.SetDisplayName(displayName)
 	}
@@ -35,6 +42,25 @@ func (self *ProjectRepository) Update(ctx context.Context, projectID uuid.UUID, 
 		} else {
 			m.SetDescription(*description)
 		}
+	}
+	if defaultEnvironmentID != nil {
+		// Make sure it belongs to the project
+		envs, err := db.Project.Query().Where(project.ID(projectID)).QueryEnvironments().Select(environment.FieldID).All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		found := false
+		for _, env := range envs {
+			if env.ID == *defaultEnvironmentID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, &ent.NotFoundError{}
+		}
+		// Set the default environment
+		m.SetDefaultEnvironmentID(*defaultEnvironmentID)
 	}
 	return m.Save(ctx)
 }

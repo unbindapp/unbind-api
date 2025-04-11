@@ -34,6 +34,39 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "list-environments",
+			Summary:     "List Environments",
+			Description: "List all environments in a project",
+			Path:        "/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListEnvironments,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "create-environment",
+			Summary:     "Create Environment",
+			Description: "Create a new environment",
+			Path:        "/create",
+			Method:      http.MethodPost,
+		},
+		handlers.CreateEnvironment,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "update-environment",
+			Summary:     "Update Environment",
+			Description: "Update an existing environment",
+			Path:        "/update",
+			Method:      http.MethodPut,
+		},
+		handlers.UpdateEnvironment,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "delete-environment",
 			Summary:     "Delete Environment",
 			Description: "Delete an environment by ID",

@@ -22,11 +22,15 @@ type EnvironmentResponse struct {
 func TransformEnvironmentEntity(entity *ent.Environment) *EnvironmentResponse {
 	response := &EnvironmentResponse{}
 	if entity != nil {
+		description := ""
+		if entity.Description != nil {
+			description = *entity.Description
+		}
 		response = &EnvironmentResponse{
 			ID:           entity.ID,
 			Name:         entity.Name,
 			DisplayName:  entity.DisplayName,
-			Description:  entity.Description,
+			Description:  description,
 			Active:       entity.Active,
 			CreatedAt:    entity.CreatedAt,
 			ServiceIcons: []string{},

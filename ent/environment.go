@@ -29,7 +29,7 @@ type Environment struct {
 	// DisplayName holds the value of the "display_name" field.
 	DisplayName string `json:"display_name,omitempty"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
 	// Active holds the value of the "active" field.
 	Active bool `json:"active,omitempty"`
 	// ProjectID holds the value of the "project_id" field.
@@ -48,9 +48,11 @@ type EnvironmentEdges struct {
 	Project *Project `json:"project,omitempty"`
 	// Services holds the value of the services edge.
 	Services []*Service `json:"services,omitempty"`
+	// ProjectDefault holds the value of the project_default edge.
+	ProjectDefault []*Project `json:"project_default,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // ProjectOrErr returns the Project value or an error if the edge
@@ -71,6 +73,15 @@ func (e EnvironmentEdges) ServicesOrErr() ([]*Service, error) {
 		return e.Services, nil
 	}
 	return nil, &NotLoadedError{edge: "services"}
+}
+
+// ProjectDefaultOrErr returns the ProjectDefault value or an error if the edge
+// was not loaded in eager-loading.
+func (e EnvironmentEdges) ProjectDefaultOrErr() ([]*Project, error) {
+	if e.loadedTypes[2] {
+		return e.ProjectDefault, nil
+	}
+	return nil, &NotLoadedError{edge: "project_default"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -135,7 +146,8 @@ func (e *Environment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				e.Description = value.String
+				e.Description = new(string)
+				*e.Description = value.String
 			}
 		case environment.FieldActive:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -178,6 +190,11 @@ func (e *Environment) QueryServices() *ServiceQuery {
 	return NewEnvironmentClient(e.config).QueryServices(e)
 }
 
+// QueryProjectDefault queries the "project_default" edge of the Environment entity.
+func (e *Environment) QueryProjectDefault() *ProjectQuery {
+	return NewEnvironmentClient(e.config).QueryProjectDefault(e)
+}
+
 // Update returns a builder for updating this Environment.
 // Note that you need to call Environment.Unwrap() before calling this method if this Environment
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -213,8 +230,10 @@ func (e *Environment) String() string {
 	builder.WriteString("display_name=")
 	builder.WriteString(e.DisplayName)
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(e.Description)
+	if v := e.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("active=")
 	builder.WriteString(fmt.Sprintf("%v", e.Active))

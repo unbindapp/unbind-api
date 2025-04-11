@@ -35,6 +35,8 @@ const (
 	EdgeProject = "project"
 	// EdgeServices holds the string denoting the services edge name in mutations.
 	EdgeServices = "services"
+	// EdgeProjectDefault holds the string denoting the project_default edge name in mutations.
+	EdgeProjectDefault = "project_default"
 	// Table holds the table name of the environment in the database.
 	Table = "environments"
 	// ProjectTable is the table that holds the project relation/edge.
@@ -51,6 +53,13 @@ const (
 	ServicesInverseTable = "services"
 	// ServicesColumn is the table column denoting the services relation/edge.
 	ServicesColumn = "environment_id"
+	// ProjectDefaultTable is the table that holds the project_default relation/edge.
+	ProjectDefaultTable = "projects"
+	// ProjectDefaultInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectDefaultInverseTable = "projects"
+	// ProjectDefaultColumn is the table column denoting the project_default relation/edge.
+	ProjectDefaultColumn = "default_environment_id"
 )
 
 // Columns holds all SQL columns for environment fields.
@@ -159,6 +168,20 @@ func ByServices(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newServicesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByProjectDefaultCount orders the results by project_default count.
+func ByProjectDefaultCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newProjectDefaultStep(), opts...)
+	}
+}
+
+// ByProjectDefault orders the results by project_default terms.
+func ByProjectDefault(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProjectDefaultStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newProjectStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -171,5 +194,12 @@ func newServicesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ServicesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ServicesTable, ServicesColumn),
+	)
+}
+func newProjectDefaultStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProjectDefaultInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ProjectDefaultTable, ProjectDefaultColumn),
 	)
 }

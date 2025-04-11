@@ -17,10 +17,11 @@ import (
 type UpdateProjectInput struct {
 	server.BaseAuthInput
 	Body struct {
-		TeamID      uuid.UUID `json:"team_id" required:"true"`
-		ProjectID   uuid.UUID `json:"project_id" required:"true"`
-		DisplayName string    `json:"display_name" required:"false"`
-		Description *string   `json:"description" required:"false"`
+		TeamID               uuid.UUID  `json:"team_id" required:"true"`
+		ProjectID            uuid.UUID  `json:"project_id" required:"true"`
+		DisplayName          string     `json:"display_name" required:"false"`
+		Description          *string    `json:"description" required:"false"`
+		DefaultEnvironmentID *uuid.UUID `json:"default_environment_id" required:"false"`
 	}
 }
 
@@ -43,10 +44,11 @@ func (self *HandlerGroup) UpdateProject(ctx context.Context, input *UpdateProjec
 	}
 
 	updatedProject, err := self.srv.ProjectService.UpdateProject(ctx, user.ID, &project_service.UpdateProjectInput{
-		TeamID:      input.Body.TeamID,
-		ProjectID:   input.Body.ProjectID,
-		DisplayName: input.Body.DisplayName,
-		Description: input.Body.Description,
+		TeamID:               input.Body.TeamID,
+		ProjectID:            input.Body.ProjectID,
+		DisplayName:          input.Body.DisplayName,
+		Description:          input.Body.Description,
+		DefaultEnvironmentID: input.Body.DefaultEnvironmentID,
 	})
 	if err != nil {
 		if errors.Is(err, errdefs.ErrInvalidInput) {

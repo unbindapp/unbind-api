@@ -29,12 +29,16 @@ const (
 	FieldStatus = "status"
 	// FieldTeamID holds the string denoting the team_id field in the database.
 	FieldTeamID = "team_id"
+	// FieldDefaultEnvironmentID holds the string denoting the default_environment_id field in the database.
+	FieldDefaultEnvironmentID = "default_environment_id"
 	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
 	FieldKubernetesSecret = "kubernetes_secret"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
 	// EdgeEnvironments holds the string denoting the environments edge name in mutations.
 	EdgeEnvironments = "environments"
+	// EdgeDefaultEnvironment holds the string denoting the default_environment edge name in mutations.
+	EdgeDefaultEnvironment = "default_environment"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
 	// TeamTable is the table that holds the team relation/edge.
@@ -51,6 +55,13 @@ const (
 	EnvironmentsInverseTable = "environments"
 	// EnvironmentsColumn is the table column denoting the environments relation/edge.
 	EnvironmentsColumn = "project_id"
+	// DefaultEnvironmentTable is the table that holds the default_environment relation/edge.
+	DefaultEnvironmentTable = "projects"
+	// DefaultEnvironmentInverseTable is the table name for the Environment entity.
+	// It exists in this package in order to avoid circular dependency with the "environment" package.
+	DefaultEnvironmentInverseTable = "environments"
+	// DefaultEnvironmentColumn is the table column denoting the default_environment relation/edge.
+	DefaultEnvironmentColumn = "default_environment_id"
 )
 
 // Columns holds all SQL columns for project fields.
@@ -63,6 +74,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldStatus,
 	FieldTeamID,
+	FieldDefaultEnvironmentID,
 	FieldKubernetesSecret,
 }
 
@@ -134,6 +146,11 @@ func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
 }
 
+// ByDefaultEnvironmentID orders the results by the default_environment_id field.
+func ByDefaultEnvironmentID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDefaultEnvironmentID, opts...).ToFunc()
+}
+
 // ByKubernetesSecret orders the results by the kubernetes_secret field.
 func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
@@ -159,6 +176,13 @@ func ByEnvironments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEnvironmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByDefaultEnvironmentField orders the results by default_environment field.
+func ByDefaultEnvironmentField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDefaultEnvironmentStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newTeamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -171,5 +195,12 @@ func newEnvironmentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EnvironmentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EnvironmentsTable, EnvironmentsColumn),
+	)
+}
+func newDefaultEnvironmentStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DefaultEnvironmentInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, DefaultEnvironmentTable, DefaultEnvironmentColumn),
 	)
 }

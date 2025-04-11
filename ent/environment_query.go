@@ -22,13 +22,14 @@ import (
 // EnvironmentQuery is the builder for querying Environment entities.
 type EnvironmentQuery struct {
 	config
-	ctx          *QueryContext
-	order        []environment.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.Environment
-	withProject  *ProjectQuery
-	withServices *ServiceQuery
-	modifiers    []func(*sql.Selector)
+	ctx                *QueryContext
+	order              []environment.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.Environment
+	withProject        *ProjectQuery
+	withServices       *ServiceQuery
+	withProjectDefault *ProjectQuery
+	modifiers          []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -102,6 +103,28 @@ func (eq *EnvironmentQuery) QueryServices() *ServiceQuery {
 			sqlgraph.From(environment.Table, environment.FieldID, selector),
 			sqlgraph.To(service.Table, service.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, environment.ServicesTable, environment.ServicesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProjectDefault chains the current query on the "project_default" edge.
+func (eq *EnvironmentQuery) QueryProjectDefault() *ProjectQuery {
+	query := (&ProjectClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(environment.Table, environment.FieldID, selector),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, environment.ProjectDefaultTable, environment.ProjectDefaultColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
 		return fromU, nil
@@ -296,13 +319,14 @@ func (eq *EnvironmentQuery) Clone() *EnvironmentQuery {
 		return nil
 	}
 	return &EnvironmentQuery{
-		config:       eq.config,
-		ctx:          eq.ctx.Clone(),
-		order:        append([]environment.OrderOption{}, eq.order...),
-		inters:       append([]Interceptor{}, eq.inters...),
-		predicates:   append([]predicate.Environment{}, eq.predicates...),
-		withProject:  eq.withProject.Clone(),
-		withServices: eq.withServices.Clone(),
+		config:             eq.config,
+		ctx:                eq.ctx.Clone(),
+		order:              append([]environment.OrderOption{}, eq.order...),
+		inters:             append([]Interceptor{}, eq.inters...),
+		predicates:         append([]predicate.Environment{}, eq.predicates...),
+		withProject:        eq.withProject.Clone(),
+		withServices:       eq.withServices.Clone(),
+		withProjectDefault: eq.withProjectDefault.Clone(),
 		// clone intermediate query.
 		sql:       eq.sql.Clone(),
 		path:      eq.path,
@@ -329,6 +353,17 @@ func (eq *EnvironmentQuery) WithServices(opts ...func(*ServiceQuery)) *Environme
 		opt(query)
 	}
 	eq.withServices = query
+	return eq
+}
+
+// WithProjectDefault tells the query-builder to eager-load the nodes that are connected to
+// the "project_default" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EnvironmentQuery) WithProjectDefault(opts ...func(*ProjectQuery)) *EnvironmentQuery {
+	query := (&ProjectClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withProjectDefault = query
 	return eq
 }
 
@@ -410,9 +445,10 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	var (
 		nodes       = []*Environment{}
 		_spec       = eq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			eq.withProject != nil,
 			eq.withServices != nil,
+			eq.withProjectDefault != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -446,6 +482,13 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		if err := eq.loadServices(ctx, query, nodes,
 			func(n *Environment) { n.Edges.Services = []*Service{} },
 			func(n *Environment, e *Service) { n.Edges.Services = append(n.Edges.Services, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withProjectDefault; query != nil {
+		if err := eq.loadProjectDefault(ctx, query, nodes,
+			func(n *Environment) { n.Edges.ProjectDefault = []*Project{} },
+			func(n *Environment, e *Project) { n.Edges.ProjectDefault = append(n.Edges.ProjectDefault, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -506,6 +549,39 @@ func (eq *EnvironmentQuery) loadServices(ctx context.Context, query *ServiceQuer
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "environment_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (eq *EnvironmentQuery) loadProjectDefault(ctx context.Context, query *ProjectQuery, nodes []*Environment, init func(*Environment), assign func(*Environment, *Project)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Environment)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(project.FieldDefaultEnvironmentID)
+	}
+	query.Where(predicate.Project(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(environment.ProjectDefaultColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.DefaultEnvironmentID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "default_environment_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "default_environment_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

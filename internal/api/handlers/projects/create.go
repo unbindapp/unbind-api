@@ -17,7 +17,7 @@ type CreateProjectInput struct {
 	server.BaseAuthInput
 	Body struct {
 		TeamID      uuid.UUID `json:"team_id" required:"true"`
-		DisplayName string    `json:"display_name" required:"true"`
+		DisplayName string    `json:"name" required:"true"`
 		Description *string   `json:"description" required:"false"`
 	}
 }

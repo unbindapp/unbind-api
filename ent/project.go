@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
 )
@@ -34,6 +35,8 @@ type Project struct {
 	Status string `json:"status,omitempty"`
 	// TeamID holds the value of the "team_id" field.
 	TeamID uuid.UUID `json:"team_id,omitempty"`
+	// DefaultEnvironmentID holds the value of the "default_environment_id" field.
+	DefaultEnvironmentID *uuid.UUID `json:"default_environment_id,omitempty"`
 	// Kubernetes secret for this project
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -48,9 +51,11 @@ type ProjectEdges struct {
 	Team *Team `json:"team,omitempty"`
 	// Environments holds the value of the environments edge.
 	Environments []*Environment `json:"environments,omitempty"`
+	// DefaultEnvironment holds the value of the default_environment edge.
+	DefaultEnvironment *Environment `json:"default_environment,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // TeamOrErr returns the Team value or an error if the edge
@@ -73,11 +78,24 @@ func (e ProjectEdges) EnvironmentsOrErr() ([]*Environment, error) {
 	return nil, &NotLoadedError{edge: "environments"}
 }
 
+// DefaultEnvironmentOrErr returns the DefaultEnvironment value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ProjectEdges) DefaultEnvironmentOrErr() (*Environment, error) {
+	if e.DefaultEnvironment != nil {
+		return e.DefaultEnvironment, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: environment.Label}
+	}
+	return nil, &NotLoadedError{edge: "default_environment"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Project) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case project.FieldDefaultEnvironmentID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case project.FieldName, project.FieldDisplayName, project.FieldDescription, project.FieldStatus, project.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case project.FieldCreatedAt, project.FieldUpdatedAt:
@@ -148,6 +166,13 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				pr.TeamID = *value
 			}
+		case project.FieldDefaultEnvironmentID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field default_environment_id", values[i])
+			} else if value.Valid {
+				pr.DefaultEnvironmentID = new(uuid.UUID)
+				*pr.DefaultEnvironmentID = *value.S.(*uuid.UUID)
+			}
 		case project.FieldKubernetesSecret:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field kubernetes_secret", values[i])
@@ -175,6 +200,11 @@ func (pr *Project) QueryTeam() *TeamQuery {
 // QueryEnvironments queries the "environments" edge of the Project entity.
 func (pr *Project) QueryEnvironments() *EnvironmentQuery {
 	return NewProjectClient(pr.config).QueryEnvironments(pr)
+}
+
+// QueryDefaultEnvironment queries the "default_environment" edge of the Project entity.
+func (pr *Project) QueryDefaultEnvironment() *EnvironmentQuery {
+	return NewProjectClient(pr.config).QueryDefaultEnvironment(pr)
 }
 
 // Update returns a builder for updating this Project.
@@ -222,6 +252,11 @@ func (pr *Project) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("team_id=")
 	builder.WriteString(fmt.Sprintf("%v", pr.TeamID))
+	builder.WriteString(", ")
+	if v := pr.DefaultEnvironmentID; v != nil {
+		builder.WriteString("default_environment_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("kubernetes_secret=")
 	builder.WriteString(pr.KubernetesSecret)

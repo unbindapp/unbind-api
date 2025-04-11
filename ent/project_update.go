@@ -114,6 +114,26 @@ func (pu *ProjectUpdate) SetNillableTeamID(u *uuid.UUID) *ProjectUpdate {
 	return pu
 }
 
+// SetDefaultEnvironmentID sets the "default_environment_id" field.
+func (pu *ProjectUpdate) SetDefaultEnvironmentID(u uuid.UUID) *ProjectUpdate {
+	pu.mutation.SetDefaultEnvironmentID(u)
+	return pu
+}
+
+// SetNillableDefaultEnvironmentID sets the "default_environment_id" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableDefaultEnvironmentID(u *uuid.UUID) *ProjectUpdate {
+	if u != nil {
+		pu.SetDefaultEnvironmentID(*u)
+	}
+	return pu
+}
+
+// ClearDefaultEnvironmentID clears the value of the "default_environment_id" field.
+func (pu *ProjectUpdate) ClearDefaultEnvironmentID() *ProjectUpdate {
+	pu.mutation.ClearDefaultEnvironmentID()
+	return pu
+}
+
 // SetKubernetesSecret sets the "kubernetes_secret" field.
 func (pu *ProjectUpdate) SetKubernetesSecret(s string) *ProjectUpdate {
 	pu.mutation.SetKubernetesSecret(s)
@@ -148,6 +168,11 @@ func (pu *ProjectUpdate) AddEnvironments(e ...*Environment) *ProjectUpdate {
 	return pu.AddEnvironmentIDs(ids...)
 }
 
+// SetDefaultEnvironment sets the "default_environment" edge to the Environment entity.
+func (pu *ProjectUpdate) SetDefaultEnvironment(e *Environment) *ProjectUpdate {
+	return pu.SetDefaultEnvironmentID(e.ID)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (pu *ProjectUpdate) Mutation() *ProjectMutation {
 	return pu.mutation
@@ -178,6 +203,12 @@ func (pu *ProjectUpdate) RemoveEnvironments(e ...*Environment) *ProjectUpdate {
 		ids[i] = e[i].ID
 	}
 	return pu.RemoveEnvironmentIDs(ids...)
+}
+
+// ClearDefaultEnvironment clears the "default_environment" edge to the Environment entity.
+func (pu *ProjectUpdate) ClearDefaultEnvironment() *ProjectUpdate {
+	pu.mutation.ClearDefaultEnvironment()
+	return pu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -342,6 +373,35 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if pu.mutation.DefaultEnvironmentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   project.DefaultEnvironmentTable,
+			Columns: []string{project.DefaultEnvironmentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.DefaultEnvironmentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   project.DefaultEnvironmentTable,
+			Columns: []string{project.DefaultEnvironmentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(pu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -446,6 +506,26 @@ func (puo *ProjectUpdateOne) SetNillableTeamID(u *uuid.UUID) *ProjectUpdateOne {
 	return puo
 }
 
+// SetDefaultEnvironmentID sets the "default_environment_id" field.
+func (puo *ProjectUpdateOne) SetDefaultEnvironmentID(u uuid.UUID) *ProjectUpdateOne {
+	puo.mutation.SetDefaultEnvironmentID(u)
+	return puo
+}
+
+// SetNillableDefaultEnvironmentID sets the "default_environment_id" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableDefaultEnvironmentID(u *uuid.UUID) *ProjectUpdateOne {
+	if u != nil {
+		puo.SetDefaultEnvironmentID(*u)
+	}
+	return puo
+}
+
+// ClearDefaultEnvironmentID clears the value of the "default_environment_id" field.
+func (puo *ProjectUpdateOne) ClearDefaultEnvironmentID() *ProjectUpdateOne {
+	puo.mutation.ClearDefaultEnvironmentID()
+	return puo
+}
+
 // SetKubernetesSecret sets the "kubernetes_secret" field.
 func (puo *ProjectUpdateOne) SetKubernetesSecret(s string) *ProjectUpdateOne {
 	puo.mutation.SetKubernetesSecret(s)
@@ -480,6 +560,11 @@ func (puo *ProjectUpdateOne) AddEnvironments(e ...*Environment) *ProjectUpdateOn
 	return puo.AddEnvironmentIDs(ids...)
 }
 
+// SetDefaultEnvironment sets the "default_environment" edge to the Environment entity.
+func (puo *ProjectUpdateOne) SetDefaultEnvironment(e *Environment) *ProjectUpdateOne {
+	return puo.SetDefaultEnvironmentID(e.ID)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (puo *ProjectUpdateOne) Mutation() *ProjectMutation {
 	return puo.mutation
@@ -510,6 +595,12 @@ func (puo *ProjectUpdateOne) RemoveEnvironments(e ...*Environment) *ProjectUpdat
 		ids[i] = e[i].ID
 	}
 	return puo.RemoveEnvironmentIDs(ids...)
+}
+
+// ClearDefaultEnvironment clears the "default_environment" edge to the Environment entity.
+func (puo *ProjectUpdateOne) ClearDefaultEnvironment() *ProjectUpdateOne {
+	puo.mutation.ClearDefaultEnvironment()
+	return puo
 }
 
 // Where appends a list predicates to the ProjectUpdate builder.
@@ -694,6 +785,35 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Inverse: false,
 			Table:   project.EnvironmentsTable,
 			Columns: []string{project.EnvironmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.DefaultEnvironmentCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   project.DefaultEnvironmentTable,
+			Columns: []string{project.DefaultEnvironmentColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.DefaultEnvironmentIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   project.DefaultEnvironmentTable,
+			Columns: []string{project.DefaultEnvironmentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),

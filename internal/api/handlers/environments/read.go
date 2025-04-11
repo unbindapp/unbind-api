@@ -41,3 +41,35 @@ func (self *HandlerGroup) GetEnvironment(ctx context.Context, input *GetEnvironm
 	resp.Body.Data = environment
 	return resp, nil
 }
+
+// Get all in a project
+type ListEnvironmentInput struct {
+	server.BaseAuthInput
+	TeamID    uuid.UUID `query:"team_id" required:"true"`
+	ProjectID uuid.UUID `query:"project_id" required:"true"`
+}
+
+type ListEnvironmentsOutput struct {
+	Body struct {
+		Data []*models.EnvironmentResponse `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) ListEnvironments(ctx context.Context, input *ListEnvironmentInput) (*ListEnvironmentsOutput, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
+	// Get environments
+	environments, err := self.srv.EnvironmentService.GetEnvironmentsByProjectID(ctx, user.ID, input.TeamID, input.ProjectID)
+	if err != nil {
+		return nil, self.handleErr(err)
+	}
+
+	resp := &ListEnvironmentsOutput{}
+	resp.Body.Data = environments
+	return resp, nil
+}

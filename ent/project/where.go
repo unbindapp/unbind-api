@@ -91,6 +91,11 @@ func TeamID(v uuid.UUID) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldTeamID, v))
 }
 
+// DefaultEnvironmentID applies equality check predicate on the "default_environment_id" field. It's identical to DefaultEnvironmentIDEQ.
+func DefaultEnvironmentID(v uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldDefaultEnvironmentID, v))
+}
+
 // KubernetesSecret applies equality check predicate on the "kubernetes_secret" field. It's identical to KubernetesSecretEQ.
 func KubernetesSecret(v string) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldKubernetesSecret, v))
@@ -466,6 +471,36 @@ func TeamIDNotIn(vs ...uuid.UUID) predicate.Project {
 	return predicate.Project(sql.FieldNotIn(FieldTeamID, vs...))
 }
 
+// DefaultEnvironmentIDEQ applies the EQ predicate on the "default_environment_id" field.
+func DefaultEnvironmentIDEQ(v uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldEQ(FieldDefaultEnvironmentID, v))
+}
+
+// DefaultEnvironmentIDNEQ applies the NEQ predicate on the "default_environment_id" field.
+func DefaultEnvironmentIDNEQ(v uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldNEQ(FieldDefaultEnvironmentID, v))
+}
+
+// DefaultEnvironmentIDIn applies the In predicate on the "default_environment_id" field.
+func DefaultEnvironmentIDIn(vs ...uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldIn(FieldDefaultEnvironmentID, vs...))
+}
+
+// DefaultEnvironmentIDNotIn applies the NotIn predicate on the "default_environment_id" field.
+func DefaultEnvironmentIDNotIn(vs ...uuid.UUID) predicate.Project {
+	return predicate.Project(sql.FieldNotIn(FieldDefaultEnvironmentID, vs...))
+}
+
+// DefaultEnvironmentIDIsNil applies the IsNil predicate on the "default_environment_id" field.
+func DefaultEnvironmentIDIsNil() predicate.Project {
+	return predicate.Project(sql.FieldIsNull(FieldDefaultEnvironmentID))
+}
+
+// DefaultEnvironmentIDNotNil applies the NotNil predicate on the "default_environment_id" field.
+func DefaultEnvironmentIDNotNil() predicate.Project {
+	return predicate.Project(sql.FieldNotNull(FieldDefaultEnvironmentID))
+}
+
 // KubernetesSecretEQ applies the EQ predicate on the "kubernetes_secret" field.
 func KubernetesSecretEQ(v string) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldKubernetesSecret, v))
@@ -569,6 +604,29 @@ func HasEnvironments() predicate.Project {
 func HasEnvironmentsWith(preds ...predicate.Environment) predicate.Project {
 	return predicate.Project(func(s *sql.Selector) {
 		step := newEnvironmentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDefaultEnvironment applies the HasEdge predicate on the "default_environment" edge.
+func HasDefaultEnvironment() predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, DefaultEnvironmentTable, DefaultEnvironmentColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDefaultEnvironmentWith applies the HasEdge predicate on the "default_environment" edge with a given conditions (other predicates).
+func HasDefaultEnvironmentWith(preds ...predicate.Environment) predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := newDefaultEnvironmentStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

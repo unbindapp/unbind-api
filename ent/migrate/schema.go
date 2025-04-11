@@ -64,7 +64,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
 		{Name: "display_name", Type: field.TypeString},
-		{Name: "description", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "active", Type: field.TypeBool, Default: true},
 		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "project_id", Type: field.TypeUUID},
@@ -252,6 +252,7 @@ var (
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "status", Type: field.TypeString, Default: "active"},
 		{Name: "kubernetes_secret", Type: field.TypeString},
+		{Name: "default_environment_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "team_id", Type: field.TypeUUID},
 	}
 	// ProjectsTable holds the schema information for the "projects" table.
@@ -261,8 +262,14 @@ var (
 		PrimaryKey: []*schema.Column{ProjectsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "projects_teams_projects",
+				Symbol:     "projects_environments_project_default",
 				Columns:    []*schema.Column{ProjectsColumns[8]},
+				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "projects_teams_projects",
+				Columns:    []*schema.Column{ProjectsColumns[9]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -515,7 +522,8 @@ func init() {
 	PermissionsTable.Annotation = &entsql.Annotation{
 		Table: "permissions",
 	}
-	ProjectsTable.ForeignKeys[0].RefTable = TeamsTable
+	ProjectsTable.ForeignKeys[0].RefTable = EnvironmentsTable
+	ProjectsTable.ForeignKeys[1].RefTable = TeamsTable
 	ProjectsTable.Annotation = &entsql.Annotation{
 		Table: "projects",
 	}

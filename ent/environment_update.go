@@ -80,6 +80,12 @@ func (eu *EnvironmentUpdate) SetNillableDescription(s *string) *EnvironmentUpdat
 	return eu
 }
 
+// ClearDescription clears the value of the "description" field.
+func (eu *EnvironmentUpdate) ClearDescription() *EnvironmentUpdate {
+	eu.mutation.ClearDescription()
+	return eu
+}
+
 // SetActive sets the "active" field.
 func (eu *EnvironmentUpdate) SetActive(b bool) *EnvironmentUpdate {
 	eu.mutation.SetActive(b)
@@ -142,6 +148,21 @@ func (eu *EnvironmentUpdate) AddServices(s ...*Service) *EnvironmentUpdate {
 	return eu.AddServiceIDs(ids...)
 }
 
+// AddProjectDefaultIDs adds the "project_default" edge to the Project entity by IDs.
+func (eu *EnvironmentUpdate) AddProjectDefaultIDs(ids ...uuid.UUID) *EnvironmentUpdate {
+	eu.mutation.AddProjectDefaultIDs(ids...)
+	return eu
+}
+
+// AddProjectDefault adds the "project_default" edges to the Project entity.
+func (eu *EnvironmentUpdate) AddProjectDefault(p ...*Project) *EnvironmentUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return eu.AddProjectDefaultIDs(ids...)
+}
+
 // Mutation returns the EnvironmentMutation object of the builder.
 func (eu *EnvironmentUpdate) Mutation() *EnvironmentMutation {
 	return eu.mutation
@@ -172,6 +193,27 @@ func (eu *EnvironmentUpdate) RemoveServices(s ...*Service) *EnvironmentUpdate {
 		ids[i] = s[i].ID
 	}
 	return eu.RemoveServiceIDs(ids...)
+}
+
+// ClearProjectDefault clears all "project_default" edges to the Project entity.
+func (eu *EnvironmentUpdate) ClearProjectDefault() *EnvironmentUpdate {
+	eu.mutation.ClearProjectDefault()
+	return eu
+}
+
+// RemoveProjectDefaultIDs removes the "project_default" edge to Project entities by IDs.
+func (eu *EnvironmentUpdate) RemoveProjectDefaultIDs(ids ...uuid.UUID) *EnvironmentUpdate {
+	eu.mutation.RemoveProjectDefaultIDs(ids...)
+	return eu
+}
+
+// RemoveProjectDefault removes "project_default" edges to Project entities.
+func (eu *EnvironmentUpdate) RemoveProjectDefault(p ...*Project) *EnvironmentUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return eu.RemoveProjectDefaultIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -253,6 +295,9 @@ func (eu *EnvironmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := eu.mutation.Description(); ok {
 		_spec.SetField(environment.FieldDescription, field.TypeString, value)
 	}
+	if eu.mutation.DescriptionCleared() {
+		_spec.ClearField(environment.FieldDescription, field.TypeString)
+	}
 	if value, ok := eu.mutation.Active(); ok {
 		_spec.SetField(environment.FieldActive, field.TypeBool, value)
 	}
@@ -333,6 +378,51 @@ func (eu *EnvironmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if eu.mutation.ProjectDefaultCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ProjectDefaultTable,
+			Columns: []string{environment.ProjectDefaultColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedProjectDefaultIDs(); len(nodes) > 0 && !eu.mutation.ProjectDefaultCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ProjectDefaultTable,
+			Columns: []string{environment.ProjectDefaultColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.ProjectDefaultIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ProjectDefaultTable,
+			Columns: []string{environment.ProjectDefaultColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(eu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -403,6 +493,12 @@ func (euo *EnvironmentUpdateOne) SetNillableDescription(s *string) *EnvironmentU
 	return euo
 }
 
+// ClearDescription clears the value of the "description" field.
+func (euo *EnvironmentUpdateOne) ClearDescription() *EnvironmentUpdateOne {
+	euo.mutation.ClearDescription()
+	return euo
+}
+
 // SetActive sets the "active" field.
 func (euo *EnvironmentUpdateOne) SetActive(b bool) *EnvironmentUpdateOne {
 	euo.mutation.SetActive(b)
@@ -465,6 +561,21 @@ func (euo *EnvironmentUpdateOne) AddServices(s ...*Service) *EnvironmentUpdateOn
 	return euo.AddServiceIDs(ids...)
 }
 
+// AddProjectDefaultIDs adds the "project_default" edge to the Project entity by IDs.
+func (euo *EnvironmentUpdateOne) AddProjectDefaultIDs(ids ...uuid.UUID) *EnvironmentUpdateOne {
+	euo.mutation.AddProjectDefaultIDs(ids...)
+	return euo
+}
+
+// AddProjectDefault adds the "project_default" edges to the Project entity.
+func (euo *EnvironmentUpdateOne) AddProjectDefault(p ...*Project) *EnvironmentUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return euo.AddProjectDefaultIDs(ids...)
+}
+
 // Mutation returns the EnvironmentMutation object of the builder.
 func (euo *EnvironmentUpdateOne) Mutation() *EnvironmentMutation {
 	return euo.mutation
@@ -495,6 +606,27 @@ func (euo *EnvironmentUpdateOne) RemoveServices(s ...*Service) *EnvironmentUpdat
 		ids[i] = s[i].ID
 	}
 	return euo.RemoveServiceIDs(ids...)
+}
+
+// ClearProjectDefault clears all "project_default" edges to the Project entity.
+func (euo *EnvironmentUpdateOne) ClearProjectDefault() *EnvironmentUpdateOne {
+	euo.mutation.ClearProjectDefault()
+	return euo
+}
+
+// RemoveProjectDefaultIDs removes the "project_default" edge to Project entities by IDs.
+func (euo *EnvironmentUpdateOne) RemoveProjectDefaultIDs(ids ...uuid.UUID) *EnvironmentUpdateOne {
+	euo.mutation.RemoveProjectDefaultIDs(ids...)
+	return euo
+}
+
+// RemoveProjectDefault removes "project_default" edges to Project entities.
+func (euo *EnvironmentUpdateOne) RemoveProjectDefault(p ...*Project) *EnvironmentUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return euo.RemoveProjectDefaultIDs(ids...)
 }
 
 // Where appends a list predicates to the EnvironmentUpdate builder.
@@ -606,6 +738,9 @@ func (euo *EnvironmentUpdateOne) sqlSave(ctx context.Context) (_node *Environmen
 	if value, ok := euo.mutation.Description(); ok {
 		_spec.SetField(environment.FieldDescription, field.TypeString, value)
 	}
+	if euo.mutation.DescriptionCleared() {
+		_spec.ClearField(environment.FieldDescription, field.TypeString)
+	}
 	if value, ok := euo.mutation.Active(); ok {
 		_spec.SetField(environment.FieldActive, field.TypeBool, value)
 	}
@@ -679,6 +814,51 @@ func (euo *EnvironmentUpdateOne) sqlSave(ctx context.Context) (_node *Environmen
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(service.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if euo.mutation.ProjectDefaultCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ProjectDefaultTable,
+			Columns: []string{environment.ProjectDefaultColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedProjectDefaultIDs(); len(nodes) > 0 && !euo.mutation.ProjectDefaultCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ProjectDefaultTable,
+			Columns: []string{environment.ProjectDefaultColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.ProjectDefaultIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ProjectDefaultTable,
+			Columns: []string{environment.ProjectDefaultColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

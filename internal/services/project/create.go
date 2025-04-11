@@ -84,7 +84,13 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 			return err
 		}
 
-		environment, err = self.repo.Environment().Create(ctx, tx, name, defaultEnvName, defaultEnvDescription, secret.Name, project.ID)
+		environment, err = self.repo.Environment().Create(ctx, tx, name, defaultEnvName, secret.Name, &defaultEnvDescription, project.ID)
+		if err != nil {
+			return err
+		}
+
+		// Set as default
+		project, err = self.repo.Project().Update(ctx, tx, project.ID, utils.ToPtr(environment.ID), input.DisplayName, nil)
 		if err != nil {
 			return err
 		}
