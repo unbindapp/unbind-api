@@ -17,15 +17,29 @@ type ProjectResponse struct {
 	CreatedAt            time.Time              `json:"created_at"`
 	DefaultEnvironmentID *uuid.UUID             `json:"default_environment_id,omitempty"`
 	Environments         []*EnvironmentResponse `json:"environments" nullable:"false"`
+	EnvironmentCount     int                    `json:"environment_count"`
 }
 
 func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, providerSummaries map[uuid.UUID][]string) {
 	for _, environment := range self.Environments {
 		if count, ok := counts[environment.ID]; ok {
-			environment.ServiceCount = count
+			environment.ServiceCount += count
 		}
 		if providerSummary, ok := providerSummaries[environment.ID]; ok {
-			environment.ServiceIcons = providerSummary
+			environment.ServiceIcons = append(environment.ServiceIcons, providerSummary...)
+
+			// De-duplicate the array
+			seen := make(map[string]bool)
+			var uniqueIcons []string
+
+			for _, icon := range environment.ServiceIcons {
+				if !seen[icon] {
+					seen[icon] = true
+					uniqueIcons = append(uniqueIcons, icon)
+				}
+			}
+
+			environment.ServiceIcons = uniqueIcons
 		}
 	}
 }
@@ -44,6 +58,7 @@ func TransformProjectEntity(entity *ent.Project) *ProjectResponse {
 			CreatedAt:            entity.CreatedAt,
 			DefaultEnvironmentID: entity.DefaultEnvironmentID,
 			Environments:         TransformEnvironmentEntitities(entity.Edges.Environments),
+			EnvironmentCount:     len(entity.Edges.Environments),
 		}
 	}
 	return response
