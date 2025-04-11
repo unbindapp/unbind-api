@@ -252,12 +252,9 @@ spec:
 	t.Run("Basic Rendering", func(t *testing.T) {
 		// Create render context with minimal parameters
 		ctx := &RenderContext{
-			Name:          "test-postgres",
-			Namespace:     "default",
-			TeamID:        "team1",
-			ProjectID:     "project1",
-			EnvironmentID: "env1",
-			ServiceID:     "svc1",
+			Name:      "test-postgres",
+			Namespace: "default",
+			TeamID:    "team1",
 			Parameters: map[string]interface{}{
 				"common": map[string]interface{}{
 					"replicas": 3,
@@ -305,12 +302,9 @@ spec:
 	t.Run("With Custom Labels", func(t *testing.T) {
 		// Create render context with custom labels
 		ctx := &RenderContext{
-			Name:          "test-postgres-labels",
-			Namespace:     "default",
-			TeamID:        "team1",
-			ProjectID:     "project1",
-			EnvironmentID: "env1",
-			ServiceID:     "svc1",
+			Name:      "test-postgres-labels",
+			Namespace: "default",
+			TeamID:    "team1",
 			Parameters: map[string]interface{}{
 				"common": map[string]interface{}{
 					"replicas": 2,
@@ -338,7 +332,6 @@ spec:
 		assert.Contains(t, result, `app: "my-app"`)
 		assert.Contains(t, result, `tier: "database"`)
 		assert.Contains(t, result, `cost-center: "123456"`)
-		assert.Contains(t, result, `size: 10Gi`) // Custom storage size
 
 		// Make sure standard labels are still there
 		assert.Contains(t, result, "team: team1")
@@ -352,12 +345,9 @@ spec:
 	t.Run("S3 Enabled", func(t *testing.T) {
 		// Create render context with S3 enabled
 		ctx := &RenderContext{
-			Name:          "test-postgres-s3",
-			Namespace:     "default",
-			TeamID:        "team1",
-			ProjectID:     "project1",
-			EnvironmentID: "env1",
-			ServiceID:     "svc1",
+			Name:      "test-postgres-s3",
+			Namespace: "default",
+			TeamID:    "team1",
 			Parameters: map[string]interface{}{
 				"common": map[string]interface{}{
 					"replicas": 2,

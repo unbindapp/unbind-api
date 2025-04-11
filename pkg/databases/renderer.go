@@ -49,12 +49,9 @@ func NewDatabaseRenderer() *DatabaseRenderer {
 // RenderContext holds the data for definition rendering
 type RenderContext struct {
 	// Service info
-	Name          string
-	Namespace     string
-	TeamID        string
-	ProjectID     string
-	EnvironmentID string
-	ServiceID     string
+	Name      string
+	Namespace string
+	TeamID    string
 
 	// Definition info
 	Definition Definition

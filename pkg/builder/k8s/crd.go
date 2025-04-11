@@ -27,6 +27,7 @@ type ServiceParams struct {
 	Builder          schema.ServiceBuilder
 	Provider         string
 	Framework        string
+	DeploymentRef    string
 	ServiceRef       string
 	TeamRef          string
 	ProjectRef       string
@@ -84,6 +85,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			ProjectRef:       params.ProjectRef,
 			EnvironmentRef:   params.EnvironmentRef,
 			ServiceRef:       params.ServiceRef,
+			DeploymentRef:    params.DeploymentRef,
 			KubernetesSecret: params.KubernetesSecret,
 			GitRepository:    gitRepository,
 		},
@@ -167,6 +169,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		ProjectRef:       self.builderConfig.ServiceProjectRef,
 		EnvironmentRef:   self.builderConfig.ServiceEnvironmentRef,
 		ServiceRef:       self.builderConfig.ServiceRef,
+		DeploymentRef:    self.builderConfig.ServiceDeploymentID.String(),
 		KubernetesSecret: self.builderConfig.ServiceSecretName,
 		GitRepoURL:       self.builderConfig.GitRepoURL,
 		GitRef:           self.builderConfig.GitRef,

@@ -3,8 +3,8 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/charmbracelet/log"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,12 +24,12 @@ func (k *KubeClient) DeleteUnbindService(ctx context.Context, namespace, name st
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Resource doesn't exist, which is fine
-			log.Printf("Service %s in namespace %s not found, might already be deleted", name, namespace)
+			log.Infof("Service %s in namespace %s not found, might already be deleted", name, namespace)
 			return nil
 		}
 		return fmt.Errorf("failed to delete service %s in namespace %s: %w", name, namespace, err)
 	}
 
-	log.Printf("Successfully deleted service %s in namespace %s", name, namespace)
+	log.Infof("Successfully deleted service %s in namespace %s", name, namespace)
 	return nil
 }

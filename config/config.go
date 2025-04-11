@@ -59,7 +59,7 @@ type Config struct {
 	// Registry specific
 	ContainerRegistryHost     string `env:"CONTAINER_REGISTRY_HOST,required" envDefault:"docker-registry.unbind-system:5000"`
 	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER,required" envDefault:"admin"`
-	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD,required"`
+	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD"`
 	// Buildkit
 	BuildkitHost string `env:"BUILDKIT_HOST" envDefault:"tcp://buildkitd.unbind-system:1234"`
 	// Logging
