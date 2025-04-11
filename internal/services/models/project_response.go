@@ -8,14 +8,15 @@ import (
 )
 
 type ProjectResponse struct {
-	ID           uuid.UUID              `json:"id"`
-	Name         string                 `json:"name"`
-	DisplayName  string                 `json:"display_name"`
-	Description  *string                `json:"description"`
-	Status       string                 `json:"status"`
-	TeamID       uuid.UUID              `json:"team_id"`
-	CreatedAt    time.Time              `json:"created_at"`
-	Environments []*EnvironmentResponse `json:"environments" nullable:"false"`
+	ID                   uuid.UUID              `json:"id"`
+	Name                 string                 `json:"name"`
+	DisplayName          string                 `json:"display_name"`
+	Description          *string                `json:"description"`
+	Status               string                 `json:"status"`
+	TeamID               uuid.UUID              `json:"team_id"`
+	CreatedAt            time.Time              `json:"created_at"`
+	DefaultEnvironmentID *uuid.UUID             `json:"default_environment_id,omitempty"`
+	Environments         []*EnvironmentResponse `json:"environments" nullable:"false"`
 }
 
 func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, providerSummaries map[uuid.UUID][]string) {
@@ -34,14 +35,15 @@ func TransformProjectEntity(entity *ent.Project) *ProjectResponse {
 	response := &ProjectResponse{}
 	if entity != nil {
 		response = &ProjectResponse{
-			ID:           entity.ID,
-			Name:         entity.Name,
-			DisplayName:  entity.DisplayName,
-			Description:  entity.Description,
-			Status:       entity.Status,
-			TeamID:       entity.TeamID,
-			CreatedAt:    entity.CreatedAt,
-			Environments: TransformEnvironmentEntitities(entity.Edges.Environments),
+			ID:                   entity.ID,
+			Name:                 entity.Name,
+			DisplayName:          entity.DisplayName,
+			Description:          entity.Description,
+			Status:               entity.Status,
+			TeamID:               entity.TeamID,
+			CreatedAt:            entity.CreatedAt,
+			DefaultEnvironmentID: entity.DefaultEnvironmentID,
+			Environments:         TransformEnvironmentEntitities(entity.Edges.Environments),
 		}
 	}
 	return response
