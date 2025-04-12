@@ -28,22 +28,6 @@ func NewMetricService(promClient *prometheus.PrometheusClient, repo repositories
 
 func (self *MetricsService) validatePermissionsAndParseInputs(ctx context.Context, requesterUserID uuid.UUID, input *models.MetricsQueryInput) (*ent.Team, *ent.Project, *ent.Environment, *ent.Service, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
-		//Can read team, project, environmnent, or service depending on inputs
-		{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeTeam,
-			ResourceID:   input.TeamID,
-		},
-		{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeProject,
-			ResourceID:   input.ProjectID,
-		},
-		{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeEnvironment,
-			ResourceID:   input.EnvironmentID,
-		},
 		{
 			Action:       schema.ActionViewer,
 			ResourceType: schema.ResourceTypeService,

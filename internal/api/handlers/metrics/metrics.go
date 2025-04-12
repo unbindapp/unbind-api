@@ -31,6 +31,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.GetMetrics,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-syste,-metrics",
+			Summary:     "Get System Metrics",
+			Description: "Get system level metrics - e.g. Node, Cluster, Region",
+			Path:        "/get-system",
+			Method:      http.MethodGet,
+		},
+		handlers.GetNodeMetrics,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {
