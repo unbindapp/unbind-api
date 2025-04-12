@@ -143,6 +143,14 @@ const (
 func aggregateNodeMetricsByTime(metrics map[string]*prometheus.NodeMetrics, metricType NodeMetricType, allTimestamps []time.Time) []MetricDetail {
 	// Initialize result with all timestamps
 	result := make([]MetricDetail, len(allTimestamps))
+
+	// Get all node IDs for the breakdown
+	nodeIDs := make([]string, 0, len(metrics))
+	for id := range metrics {
+		nodeIDs = append(nodeIDs, id)
+	}
+
+	// Initialize result entries
 	for i, ts := range allTimestamps {
 		result[i] = MetricDetail{
 			Timestamp: ts,
@@ -150,8 +158,8 @@ func aggregateNodeMetricsByTime(metrics map[string]*prometheus.NodeMetrics, metr
 			Breakdown: make(map[string]*float64),
 		}
 
-		// Initialize breakdown map with nil values for all keys
-		for id := range metrics {
+		// Initialize breakdown map with nil values for all nodes
+		for _, id := range nodeIDs {
 			result[i].Breakdown[id] = nil
 		}
 	}
@@ -182,11 +190,13 @@ func aggregateNodeMetricsByTime(metrics map[string]*prometheus.NodeMetrics, metr
 
 		for _, sample := range samplePair {
 			ts := sample.Timestamp.Time()
-			idx := timestampIndexMap[ts]
+			if idx, ok := timestampIndexMap[ts]; ok {
+				value := float64(sample.Value)
+				result[idx].Breakdown[id] = utils.ToPtr(value)
 
-			value := float64(sample.Value)
-			result[idx].Breakdown[id] = utils.ToPtr(value)
-			result[idx].Value += value
+				// Update the aggregated value
+				result[idx].Value += value
+			}
 		}
 	}
 
