@@ -1,15 +1,15 @@
 package models
 
 import (
-	"math"
-	"reflect"
+	"sort"
 	"time"
 
-	"github.com/danielgtaylor/huma/v2"
+	"github.com/prometheus/common/model"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 )
 
-// Add this to your existing models package:
+// NodeMetricsType defines the grouping level for node metrics
 type NodeMetricsType string
 
 const (
@@ -26,19 +26,6 @@ var NodeMetricsTypeValues = []NodeMetricsType{
 	NodeMetricsTypeCluster,
 }
 
-// Register enum in OpenAPI specification
-func (u NodeMetricsType) Schema(r huma.Registry) *huma.Schema {
-	if r.Map()["NodeMetricsType"] == nil {
-		schemaRef := r.Schema(reflect.TypeOf(""), true, "NodeMetricsType")
-		schemaRef.Title = "NodeMetricsType"
-		for _, v := range NodeMetricsTypeValues {
-			schemaRef.Enum = append(schemaRef.Enum, string(v))
-		}
-		r.Map()["NodeMetricsType"] = schemaRef
-	}
-	return &huma.Schema{Ref: "#/components/schemas/NodeMetricsType"}
-}
-
 // NodeMetricsQueryInput defines the query parameters for node prometheus metrics
 type NodeMetricsQueryInput struct {
 	Type        NodeMetricsType `query:"type" required:"true"`
@@ -50,109 +37,157 @@ type NodeMetricsQueryInput struct {
 	End         time.Time       `query:"end" required:"false" doc:"End time for the query, defaults to now"`
 }
 
-// NodeMetricsResult holds the transformed metrics data for nodes
+// NodeMetricsMapEntry contains arrays of metric details for each node resource type
+type NodeMetricsMapEntry struct {
+	CPU        []MetricDetail `json:"cpu" nullable:"false"`
+	RAM        []MetricDetail `json:"ram" nullable:"false"`
+	Disk       []MetricDetail `json:"disk" nullable:"false"`
+	Network    []MetricDetail `json:"network" nullable:"false"`
+	FileSystem []MetricDetail `json:"filesystem" nullable:"false"`
+	Load       []MetricDetail `json:"load" nullable:"false"`
+}
+
+// NodeMetricsResult is the top-level structure containing the sampling interval and metrics
 type NodeMetricsResult struct {
-	Labels  []string                    `json:"labels"`
-	Step    time.Duration               `json:"step"`
-	Metrics map[string]*NodeMetricsData `json:"metrics"`
+	Step         time.Duration       `json:"step"`
+	BrokenDownBy NodeMetricsType     `json:"broken_down_by" doc:"The type of node metric that is broken down, e.g. node, zone"`
+	Metrics      NodeMetricsMapEntry `json:"metrics" nullable:"false"`
 }
 
-// NodeMetricsData contains the time series data for a specific node metric
-type NodeMetricsData struct {
-	CPU        []float64 `json:"cpu"`        // CPU usage in cores
-	RAM        []float64 `json:"ram"`        // RAM usage in bytes
-	Network    []float64 `json:"network"`    // Network I/O in bytes/sec
-	Disk       []float64 `json:"disk"`       // Disk I/O in bytes/sec
-	FileSystem []float64 `json:"filesystem"` // Filesystem usage in bytes
-	Load       []float64 `json:"load"`       // Load average (1min)
-}
+func TransformNodeMetricsEntity(metrics map[string]*prometheus.NodeMetrics, step time.Duration, sumBy prometheus.NodeMetricsFilterSumBy) *NodeMetricsResult {
+	brokenDownBy := NodeMetricsTypeNode
+	switch sumBy {
+	case prometheus.NodeSumByZone:
+		brokenDownBy = NodeMetricsTypeZone
+	case prometheus.NodeSumByRegion:
+		brokenDownBy = NodeMetricsTypeRegion
+	case prometheus.NodeSumByCluster:
+		brokenDownBy = NodeMetricsTypeCluster
+	case prometheus.NodeSumByName:
+		brokenDownBy = NodeMetricsTypeNode
+	}
 
-// TransformNodeMetricsEntity converts raw prometheus metrics to our API response format
-func TransformNodeMetricsEntity(
-	rawMetrics map[string]*prometheus.NodeMetrics,
-	step time.Duration,
-	sumBy prometheus.NodeMetricsFilterSumBy,
-) *NodeMetricsResult {
+	// Collect all unique timestamps across all metrics and types
+	allTimestamps := collectAllNodeTimestamps(metrics)
+
 	result := &NodeMetricsResult{
-		Labels:  make([]string, 0),
-		Step:    step,
-		Metrics: make(map[string]*NodeMetricsData),
+		Step:         step,
+		BrokenDownBy: brokenDownBy,
+		Metrics: NodeMetricsMapEntry{
+			CPU:        aggregateNodeMetricsByTime(metrics, NodeMetricTypeCPU, allTimestamps),
+			RAM:        aggregateNodeMetricsByTime(metrics, NodeMetricTypeRAM, allTimestamps),
+			Disk:       aggregateNodeMetricsByTime(metrics, NodeMetricTypeDisk, allTimestamps),
+			Network:    aggregateNodeMetricsByTime(metrics, NodeMetricTypeNetwork, allTimestamps),
+			FileSystem: aggregateNodeMetricsByTime(metrics, NodeMetricTypeFileSystem, allTimestamps),
+			Load:       aggregateNodeMetricsByTime(metrics, NodeMetricTypeLoad, allTimestamps),
+		},
 	}
 
-	// Process time labels (use the first series if available)
-	for _, metrics := range rawMetrics {
-		if len(metrics.CPU) > 0 {
-			for _, pair := range metrics.CPU {
-				result.Labels = append(result.Labels, pair.Timestamp.Time().Format(time.RFC3339))
-			}
-			break
+	return result
+}
+
+// collectAllNodeTimestamps gathers all unique timestamps across all node metric types
+func collectAllNodeTimestamps(metrics map[string]*prometheus.NodeMetrics) []time.Time {
+	// Use a map to collect unique timestamps
+	timestampMap := make(map[time.Time]struct{})
+
+	for _, metric := range metrics {
+		// Check each metric type
+		for _, sample := range metric.CPU {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.RAM {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.Disk {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.Network {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.FileSystem {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
+		}
+		for _, sample := range metric.Load {
+			timestampMap[sample.Timestamp.Time()] = struct{}{}
 		}
 	}
 
-	// Process metrics
-	for nodeID, metrics := range rawMetrics {
-		nodeData := &NodeMetricsData{
-			CPU:        make([]float64, len(result.Labels)),
-			RAM:        make([]float64, len(result.Labels)),
-			Network:    make([]float64, len(result.Labels)),
-			Disk:       make([]float64, len(result.Labels)),
-			FileSystem: make([]float64, len(result.Labels)),
-			Load:       make([]float64, len(result.Labels)),
+	// Convert map keys to a slice
+	timestamps := make([]time.Time, len(timestampMap))
+	i := 0
+	for ts := range timestampMap {
+		timestamps[i] = ts
+		i++
+	}
+
+	// Sort timestamps chronologically
+	sort.Slice(timestamps, func(i, j int) bool {
+		return timestamps[i].Before(timestamps[j])
+	})
+
+	return timestamps
+}
+
+type NodeMetricType int
+
+const (
+	NodeMetricTypeCPU NodeMetricType = iota
+	NodeMetricTypeRAM
+	NodeMetricTypeDisk
+	NodeMetricTypeNetwork
+	NodeMetricTypeFileSystem
+	NodeMetricTypeLoad
+)
+
+func aggregateNodeMetricsByTime(metrics map[string]*prometheus.NodeMetrics, metricType NodeMetricType, allTimestamps []time.Time) []MetricDetail {
+	// Initialize result with all timestamps
+	result := make([]MetricDetail, len(allTimestamps))
+	for i, ts := range allTimestamps {
+		result[i] = MetricDetail{
+			Timestamp: ts,
+			Value:     0,
+			Breakdown: make(map[string]*float64),
 		}
 
-		// Initialize with NaN to indicate missing data
-		for i := range nodeData.CPU {
-			nodeData.CPU[i] = math.NaN()
-			nodeData.RAM[i] = math.NaN()
-			nodeData.Network[i] = math.NaN()
-			nodeData.Disk[i] = math.NaN()
-			nodeData.FileSystem[i] = math.NaN()
-			nodeData.Load[i] = math.NaN()
+		// Initialize breakdown map with nil values for all keys
+		for id := range metrics {
+			result[i].Breakdown[id] = nil
+		}
+	}
+
+	// Create a map for quick timestamp lookup
+	timestampIndexMap := make(map[time.Time]int)
+	for i, ts := range allTimestamps {
+		timestampIndexMap[ts] = i
+	}
+
+	// Fill in actual values
+	for id, samples := range metrics {
+		var samplePair []model.SamplePair
+		switch metricType {
+		case NodeMetricTypeCPU:
+			samplePair = samples.CPU
+		case NodeMetricTypeRAM:
+			samplePair = samples.RAM
+		case NodeMetricTypeDisk:
+			samplePair = samples.Disk
+		case NodeMetricTypeNetwork:
+			samplePair = samples.Network
+		case NodeMetricTypeFileSystem:
+			samplePair = samples.FileSystem
+		case NodeMetricTypeLoad:
+			samplePair = samples.Load
 		}
 
-		// Fill in CPU values
-		for i, pair := range metrics.CPU {
-			if i < len(nodeData.CPU) {
-				nodeData.CPU[i] = float64(pair.Value)
-			}
-		}
+		for _, sample := range samplePair {
+			ts := sample.Timestamp.Time()
+			idx := timestampIndexMap[ts]
 
-		// Fill in RAM values
-		for i, pair := range metrics.RAM {
-			if i < len(nodeData.RAM) {
-				nodeData.RAM[i] = float64(pair.Value)
-			}
+			value := float64(sample.Value)
+			result[idx].Breakdown[id] = utils.ToPtr(value)
+			result[idx].Value += value
 		}
-
-		// Fill in Network values
-		for i, pair := range metrics.Network {
-			if i < len(nodeData.Network) {
-				nodeData.Network[i] = float64(pair.Value)
-			}
-		}
-
-		// Fill in Disk values
-		for i, pair := range metrics.Disk {
-			if i < len(nodeData.Disk) {
-				nodeData.Disk[i] = float64(pair.Value)
-			}
-		}
-
-		// Fill in FileSystem values
-		for i, pair := range metrics.FileSystem {
-			if i < len(nodeData.FileSystem) {
-				nodeData.FileSystem[i] = float64(pair.Value)
-			}
-		}
-
-		// Fill in Load values
-		for i, pair := range metrics.Load {
-			if i < len(nodeData.Load) {
-				nodeData.Load[i] = float64(pair.Value)
-			}
-		}
-
-		result.Metrics[nodeID] = nodeData
 	}
 
 	return result
