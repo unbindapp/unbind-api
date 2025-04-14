@@ -34,9 +34,9 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, deploymentID strin
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jobName,
 			Labels: map[string]string{
-				"unbind-deployment-job": "true",
-				"unbind-deployment":     deploymentID,
-				"job-name":              jobName,
+				"unbind-deployment-job":   "true",
+				"unbind-deployment-build": deploymentID,
+				"job-name":                jobName,
 			},
 			Annotations: annotations,
 		},
@@ -49,9 +49,9 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, deploymentID strin
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"unbind-deployment-job": "true",
-						"unbind-deployment":     deploymentID,
-						"job-name":              jobName,
+						"unbind-deployment-job":   "true",
+						"unbind-deployment-build": deploymentID,
+						"job-name":                jobName,
 					},
 				},
 				Spec: corev1.PodSpec{

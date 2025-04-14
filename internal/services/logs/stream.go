@@ -78,38 +78,6 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 		Start:      input.Start,
 	}
 
-	// // Start a single stream for all pods
-	// if input.Type == models.LogTypeDeployment {
-	// 	// Get k8s client
-	// 	client, err := self.k8s.CreateClientWithToken(bearerToken)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// Stream from K8S directly
-	// 	go func() {
-	// 		defer func() {
-	// 			if r := recover(); r != nil {
-	// 				log.Errorf("Recovered from panic in log streaming goroutine: %v", r)
-	// 			}
-	// 		}()
-
-	// 		err := self.k8s.StreamPodLogs(streamCtx, team.Namespace, lokiLogOptions, loki.LogMetadata{
-	// 			DeploymentID: input.DeploymentID.String(),
-	// 		}, client, eventChan)
-	// 		if err != nil {
-	// 			// Wrap the send in a select with context check to avoid sending on canceled contexts
-	// 			select {
-	// 			case <-streamCtx.Done():
-	// 				return
-	// 			default:
-	// 				send.Data(loki.LogEvents{
-	// 					MessageType:  loki.LogEventsMessageTypeError,
-	// 					ErrorMessage: fmt.Sprintf("Error streaming logs: %v", err),
-	// 				})
-	// 			}
-	// 		}
-	// 	}()
-	// } else {
 	// Stream from Loki
 	go func() {
 		defer func() {
