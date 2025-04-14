@@ -40,7 +40,7 @@ func (Webhook) Fields() []ent.Field {
 			return nil
 		}),
 		field.Enum("type").GoType(WebhookType("")),
-		field.JSON("events", []WebhookEvent{}),
+		field.JSON("events", []string{}),
 		field.UUID("team_id", uuid.UUID{}),
 		field.UUID("project_id", uuid.UUID{}).Optional().Nillable(),
 	}
