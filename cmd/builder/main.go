@@ -29,7 +29,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 
 	// Trigger webhook
 	go func() {
-		event := schema.WebhookProjectEventDeploymentSucceeded
+		event := schema.WebhookEventDeploymentSucceeded
 		level := webhooks_service.WebhookLevelInfo
 
 		// Get service with edges
@@ -74,7 +74,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 	_, err := repo.Deployment().MarkFailed(ctx, nil, deploymentID, reason, time.Now())
 	// Trigger webhook
 	go func() {
-		event := schema.WebhookProjectEventDeploymentFailed
+		event := schema.WebhookEventDeploymentFailed
 		level := webhooks_service.WebhookLevelError
 
 		// Get service with edges
@@ -173,7 +173,7 @@ func main() {
 
 	// Trigger webhook
 	go func() {
-		event := schema.WebhookProjectEventDeploymentBuilding
+		event := schema.WebhookEventDeploymentBuilding
 		level := webhooks_service.WebhookLevelInfo
 
 		// Get service with edges
