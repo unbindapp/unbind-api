@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -13,6 +15,7 @@ type WebhookResponse struct {
 	Events    []schema.WebhookEvent `json:"events" nullable:"false"`
 	TeamID    uuid.UUID             `json:"team_id"`
 	ProjectID *uuid.UUID            `json:"project_id,omitempty" required:"false"`
+	CreatedAt time.Time             `json:"created_at"`
 }
 
 // TransformWebhookEntity transforms an ent.Webhook entity into a WebhookResponse
@@ -26,6 +29,7 @@ func TransformWebhookEntity(entity *ent.Webhook) *WebhookResponse {
 			Events:    entity.Events,
 			TeamID:    entity.TeamID,
 			ProjectID: entity.ProjectID,
+			CreatedAt: entity.CreatedAt,
 		}
 	}
 	return response

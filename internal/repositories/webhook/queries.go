@@ -15,18 +15,27 @@ func (self *WebhookRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.
 	return self.base.DB.Webhook.
 		Query().
 		Where(webhook.ID(id)).
+		Order(
+			ent.Desc(webhook.FieldCreatedAt),
+		).
 		Only(ctx)
 }
 
 func (self *WebhookRepository) GetByTeam(ctx context.Context, teamID uuid.UUID) ([]*ent.Webhook, error) {
 	return self.base.DB.Webhook.Query().
 		Where(webhook.TeamID(teamID)).
+		Order(
+			ent.Desc(webhook.FieldCreatedAt),
+		).
 		All(ctx)
 }
 
 func (self *WebhookRepository) GetByProject(ctx context.Context, projectID uuid.UUID) ([]*ent.Webhook, error) {
 	return self.base.DB.Webhook.Query().
 		Where(webhook.ProjectID(projectID)).
+		Order(
+			ent.Desc(webhook.FieldCreatedAt),
+		).
 		All(ctx)
 }
 
@@ -35,5 +44,8 @@ func (self *WebhookRepository) GetWebhooksForEvent(ctx context.Context, event sc
 		Where(func(s *sql.Selector) {
 			s.Where(sqljson.ValueContains(s.C(webhook.FieldEvents), event))
 		}).
+		Order(
+			ent.Desc(webhook.FieldCreatedAt),
+		).
 		All(ctx)
 }
