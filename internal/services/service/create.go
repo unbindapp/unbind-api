@@ -404,7 +404,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		level := webhooks_service.WebhookLevelInfo
 
 		// Get service with edges
-		service, err := self.repo.Service().GetByID(ctx, service.ID)
+		service, err := self.repo.Service().GetByID(context.Background(), service.ID)
 		if err != nil {
 			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
 			return
@@ -413,7 +413,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		// Construct URL
 		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String(), "project", project.ID.String(), "?environment="+input.EnvironmentID.String(), "&service="+service.ID.String())
 		// Get user
-		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		user, err := self.repo.User().GetByID(context.Background(), requesterUserID)
 		if err != nil {
 			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
 			return
@@ -450,7 +450,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			})
 		}
 
-		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+		if err := self.webhookService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
 	}()

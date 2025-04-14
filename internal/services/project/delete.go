@@ -135,7 +135,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		// Construct URL
 		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String())
 		// Get user
-		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		user, err := self.repo.User().GetByID(context.Background(), requesterUserID)
 		if err != nil {
 			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
 			return
@@ -160,7 +160,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 			})
 		}
 
-		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+		if err := self.webhookService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
 	}()

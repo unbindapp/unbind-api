@@ -318,7 +318,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		level := webhooks_service.WebhookLevelInfo
 
 		// Get service with edges
-		service, err := self.repo.Service().GetByID(ctx, req.ServiceID)
+		service, err := self.repo.Service().GetByID(context.Background(), req.ServiceID)
 		if err != nil {
 			log.Errorf("Failed to get service %s: %v", req.ServiceID.String(), err)
 			return
@@ -346,7 +346,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 			},
 		}
 
-		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+		if err := self.webhookService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
 	}()
@@ -393,9 +393,9 @@ func (self *DeploymentController) cancelExistingJobs(ctx context.Context, servic
 			level := webhooks_service.WebhookLevelWarning
 
 			// Get service with edges
-			service, err := self.repo.Service().GetByID(ctx, serviceID)
+			service, err := self.repo.Service().GetByID(context.Background(), serviceID)
 			if err != nil {
-				log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
+				log.Errorf("Failed to get service %s: %v", serviceID.String(), err)
 				return
 			}
 
@@ -421,7 +421,7 @@ func (self *DeploymentController) cancelExistingJobs(ctx context.Context, servic
 				},
 			}
 
-			if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			if err := self.webhookService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 				log.Errorf("Failed to trigger webhook %s: %v", event, err)
 			}
 		}()

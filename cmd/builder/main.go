@@ -34,7 +34,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 
 		// Get service with edges
 		serviceID, _ := uuid.Parse(cfg.ServiceRef)
-		service, err := repo.Service().GetByID(ctx, serviceID)
+		service, err := repo.Service().GetByID(context.Background(), serviceID)
 		if err != nil {
 			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
 			return
@@ -62,7 +62,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 			},
 		}
 
-		if err := webhooksService.TriggerWebhooks(ctx, level, event, data); err != nil {
+		if err := webhooksService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
 	}()
@@ -79,7 +79,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 
 		// Get service with edges
 		serviceID, _ := uuid.Parse(cfg.ServiceRef)
-		service, err := repo.Service().GetByID(ctx, serviceID)
+		service, err := repo.Service().GetByID(context.Background(), serviceID)
 		if err != nil {
 			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
 			return
@@ -111,7 +111,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 			},
 		}
 
-		if err := webhooksService.TriggerWebhooks(ctx, level, event, data); err != nil {
+		if err := webhooksService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
 	}()
@@ -178,7 +178,7 @@ func main() {
 
 		// Get service with edges
 		serviceID, _ := uuid.Parse(cfg.ServiceRef)
-		service, err := repo.Service().GetByID(ctx, serviceID)
+		service, err := repo.Service().GetByID(context.Background(), serviceID)
 		if err != nil {
 			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
 			return
@@ -206,7 +206,7 @@ func main() {
 			},
 		}
 
-		if err := webhooksService.TriggerWebhooks(ctx, level, event, data); err != nil {
+		if err := webhooksService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
 	}()

@@ -110,12 +110,12 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 		level := webhooks_service.WebhookLevelInfo
 
 		// Get project with edges
-		project, err := self.repo.Project().GetByID(ctx, project.ID)
+		project, err := self.repo.Project().GetByID(context.Background(), project.ID)
 
 		// Construct URL
 		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String(), "project", project.ID.String())
 		// Get user
-		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		user, err := self.repo.User().GetByID(context.Background(), requesterUserID)
 		if err != nil {
 			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
 			return
@@ -133,7 +133,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 			},
 		}
 
-		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+		if err := self.webhookService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
 	}()
