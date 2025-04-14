@@ -141,9 +141,6 @@ func startAPI(cfg *config.Config) {
 	// Create github client
 	githubClient := github.NewGithubClient(cfg.GithubURL, cfg)
 
-	// Create deployment controller
-	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient)
-
 	// Buildkit settings manager
 	buildkitSettings := buildkitd.NewBuildkitSettingsManager(repo, kubeClient)
 
@@ -171,37 +168,56 @@ func startAPI(cfg *config.Config) {
 		log.Errorf("Failed to sync system settings: %v", err)
 	}
 
+	// Create webhook service
+	webhooksService := webhooks_service.NewWebhooksService(repo)
+
+	// Create deployment controller
+	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient, webhooksService)
+
+	// Create services
+	teamService := team_service.NewTeamService(repo, kubeClient)
+	projectService := project_service.NewProjectService(cfg, repo, kubeClient, webhooksService)
+	serviceService := service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController, dbProvider, webhooksService)
+	environmentService := environment_service.NewEnvironmentService(repo, kubeClient)
+	logService := logs_service.NewLogsService(repo, kubeClient, lokiQuerier)
+	deploymentService := deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier)
+	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
+	metricsService := metric_service.NewMetricService(promClient, repo)
+	stringCache := cache.NewStringCache(valkeyClient, "unbind")
+
+	// Create OAuth2 config
+	oauthConfig := &oauth2.Config{
+		ClientID:     cfg.DexClientID,
+		ClientSecret: cfg.DexClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  cfg.DexIssuerUrlExternal + "/auth",
+			TokenURL: cfg.DexIssuerURL + "/token",
+		},
+		// ! TODO - adjust redirect when necessary
+		RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalAPIURL),
+		Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
+	}
+
 	// Implementation
 	srvImpl := &server.Server{
-		KubeClient: kubeClient,
-		Cfg:        cfg,
-		Repository: repo,
-		// Create an OAuth2 configuration using the Dex
-		OauthConfig: &oauth2.Config{
-			ClientID:     cfg.DexClientID,
-			ClientSecret: cfg.DexClientSecret,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  cfg.DexIssuerUrlExternal + "/auth",
-				TokenURL: cfg.DexIssuerURL + "/token",
-			},
-			// ! TODO - adjust redirect when necessary
-			RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalAPIURL),
-			Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
-		},
+		KubeClient:           kubeClient,
+		Cfg:                  cfg,
+		Repository:           repo,
+		OauthConfig:          oauthConfig,
 		GithubClient:         githubClient,
-		StringCache:          cache.NewStringCache(valkeyClient, "unbind"),
+		StringCache:          stringCache,
 		HttpClient:           &http.Client{},
 		DeploymentController: deploymentController,
 		DatabaseProvider:     dbProvider,
-		TeamService:          team_service.NewTeamService(repo, kubeClient),
-		ProjectService:       project_service.NewProjectService(repo, kubeClient),
-		ServiceService:       service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController, dbProvider),
-		EnvironmentService:   environment_service.NewEnvironmentService(repo, kubeClient),
-		LogService:           logs_service.NewLogsService(repo, kubeClient, lokiQuerier),
-		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier),
-		SystemService:        system_service.NewSystemService(cfg, repo, buildkitSettings),
-		MetricsService:       metric_service.NewMetricService(promClient, repo),
-		WebhooksService:      webhooks_service.NewWebhooksService(repo),
+		TeamService:          teamService,
+		ProjectService:       projectService,
+		ServiceService:       serviceService,
+		EnvironmentService:   environmentService,
+		LogService:           logService,
+		DeploymentService:    deploymentService,
+		SystemService:        systemService,
+		MetricsService:       metricsService,
+		WebhooksService:      webhooksService,
 	}
 
 	// New chi router

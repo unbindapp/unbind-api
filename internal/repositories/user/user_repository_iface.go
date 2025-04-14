@@ -11,6 +11,7 @@ import (
 
 // UserRepositoryInterface ...
 type UserRepositoryInterface interface {
+	GetByID(ctx context.Context, id uuid.UUID) (*ent.User, error)
 	GetOrCreate(ctx context.Context, email string) (*ent.User, error)
 	GetByEmail(ctx context.Context, email string) (*ent.User, error)
 	// Authenticate verifies a user's credentials and returns the user if successful

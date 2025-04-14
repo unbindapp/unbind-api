@@ -10,7 +10,11 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
-func (self *WebhooksService) DeleteWebhook(ctx context.Context, requesterUserID, id, teamID uuid.UUID, projectID *uuid.UUID) error {
+func (self *WebhooksService) DeleteWebhook(ctx context.Context, requesterUserID uuid.UUID, webhookType schema.WebhookType, id, teamID uuid.UUID, projectID *uuid.UUID) error {
+	if webhookType == schema.WebhookTypeProject && projectID == nil {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project ID is required for project webhooks")
+	}
+
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Team editor can create projects
 		{

@@ -18,6 +18,7 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
@@ -325,6 +326,133 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			newDeployment,
 		}
 	}
+
+	// Trigger webhook
+	go func() {
+		event := schema.WebhookEventServiceUpdated
+		level := webhooks_service.WebhookLevelInfo
+
+		// Get service with edges
+		service, err := self.repo.Service().GetByID(ctx, service.ID)
+		if err != nil {
+			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
+			return
+		}
+
+		// Construct URL
+		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, input.TeamID.String(), "project", input.ProjectID.String(), "?environment="+input.EnvironmentID.String(), "&service="+service.ID.String())
+		// Get user
+		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		if err != nil {
+			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
+			return
+		}
+		data := webhooks_service.WebookData{
+			Title:       "Service Updated",
+			Url:         url,
+			Description: fmt.Sprintf("A service has been updated in project %s", service.Edges.Environment.Edges.Project.DisplayName),
+			Username:    user.Email,
+			Fields: []webhooks_service.WebhookDataField{
+				{
+					Name:  "Service Name",
+					Value: service.DisplayName,
+				},
+				{
+					Name:  "Environment",
+					Value: service.Edges.Environment.Name,
+				},
+			},
+		}
+
+		if input.DisplayName != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Display Name",
+				Value: *input.DisplayName,
+			})
+		}
+
+		if input.Description != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Description",
+				Value: *input.Description,
+			})
+		}
+
+		if input.GitBranch != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Git Branch",
+				Value: *input.GitBranch,
+			})
+		}
+
+		if input.Image != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Image",
+				Value: *input.Image,
+			})
+		}
+
+		if input.Replicas != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Replicas",
+				Value: fmt.Sprintf("%d", *input.Replicas),
+			})
+		}
+
+		if input.AutoDeploy != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Auto Deploy",
+				Value: fmt.Sprintf("%t", *input.AutoDeploy),
+			})
+		}
+
+		if input.RunCommand != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Run Command",
+				Value: *input.RunCommand,
+			})
+		}
+
+		if input.Public != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Public",
+				Value: fmt.Sprintf("%t", *input.Public),
+			})
+		}
+
+		if input.DockerfilePath != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Dockerfile Path",
+				Value: *input.DockerfilePath,
+			})
+		}
+
+		if input.DockerfileContext != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Dockerfile Context",
+				Value: *input.DockerfileContext,
+			})
+		}
+
+		if len(service.Edges.ServiceConfig.Hosts) > 0 {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Service Host",
+				Value: fmt.Sprintf("https://%s", service.Edges.ServiceConfig.Hosts[0].Host),
+			})
+		}
+
+		if newDeployment != nil {
+			deploymentUrl, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, input.TeamID.String(), "project", input.ProjectID.String(), "?environment="+input.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+newDeployment.ID.String())
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Deployment",
+				Value: deploymentUrl,
+			})
+		}
+
+		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			log.Errorf("Failed to trigger webhook %s: %v", event, err)
+		}
+	}()
 
 	return models.TransformServiceEntity(service), nil
 }

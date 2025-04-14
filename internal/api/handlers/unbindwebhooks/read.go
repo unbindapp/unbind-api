@@ -16,7 +16,7 @@ type ListWebhooksInput struct {
 
 type ListWebhooksResponse struct {
 	Body struct {
-		Data []*models.WebhookResponse `json:"data"`
+		Data []*models.WebhookResponse `json:"data" nullable:"false"`
 	}
 }
 

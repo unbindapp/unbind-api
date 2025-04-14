@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 )
@@ -12,8 +13,9 @@ import (
 type DeleteWebhookInput struct {
 	server.BaseAuthInput
 	Body struct {
-		ID     uuid.UUID `json:"id" required:"true"`
-		TeamID uuid.UUID `json:"team_id" required:"true"`
+		ID     uuid.UUID          `json:"id" required:"true"`
+		Type   schema.WebhookType `json:"type" required:"true"`
+		TeamID uuid.UUID          `json:"team_id" required:"true"`
 		// ProjectID is optional, but required if the webhook type is project
 		ProjectID *uuid.UUID `json:"project_id" required:"false"`
 	}
@@ -36,7 +38,7 @@ func (self *HandlerGroup) DeleteWebhook(ctx context.Context, input *DeleteWebhoo
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
-	err := self.srv.WebhooksService.DeleteWebhook(ctx, user.ID, input.Body.ID, input.Body.TeamID, input.Body.ProjectID)
+	err := self.srv.WebhooksService.DeleteWebhook(ctx, user.ID, input.Body.Type, input.Body.ID, input.Body.TeamID, input.Body.ProjectID)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}

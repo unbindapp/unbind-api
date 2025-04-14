@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
@@ -18,4 +19,5 @@ type WebhookRepositoryInterface interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.Webhook, error)
 	GetByTeam(ctx context.Context, teamID uuid.UUID) ([]*ent.Webhook, error)
 	GetByProject(ctx context.Context, projectID uuid.UUID) ([]*ent.Webhook, error)
+	GetWebhooksForEvent(ctx context.Context, event schema.WebhookEvent) ([]*ent.Webhook, error)
 }

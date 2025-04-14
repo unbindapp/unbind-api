@@ -11,6 +11,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func (self *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.User, error) {
+	return self.base.DB.User.Get(ctx, id)
+}
+
 func (self *UserRepository) GetOrCreate(ctx context.Context, email string) (*ent.User, error) {
 	// Try to find existing user
 	user, err := self.base.DB.User.

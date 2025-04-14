@@ -92,7 +92,7 @@ const (
 	WebhookEventDeploymentBuilding  WebhookEvent = "deployment.building"
 	WebhookEventDeploymentSucceeded WebhookEvent = "deployment.succeeded"
 	WebhookEventDeploymentFailed    WebhookEvent = "deployment.failed"
-	WebhookEventDeploymentCanceled  WebhookEvent = "deployment.canceled"
+	WebhookEventDeploymentCancelled WebhookEvent = "deployment.cancelled"
 )
 
 var allWebhookEvents = []WebhookEvent{
@@ -106,7 +106,7 @@ var allWebhookEvents = []WebhookEvent{
 	WebhookEventDeploymentBuilding,
 	WebhookEventDeploymentSucceeded,
 	WebhookEventDeploymentFailed,
-	WebhookEventDeploymentCanceled,
+	WebhookEventDeploymentCancelled,
 }
 
 // Values provides list valid values for Enum.

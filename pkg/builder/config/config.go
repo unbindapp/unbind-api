@@ -13,7 +13,8 @@ import (
 )
 
 type Config struct {
-	GithubAppID int64 `env:"GITHUB_APP_ID"`
+	ExternalUIUrl string `env:"EXTERNAL_UI_URL" envDefault:"http://localhost:3000"`
+	GithubAppID   int64  `env:"GITHUB_APP_ID"`
 	// Installation ID of the app
 	GithubInstallationID int64 `env:"GITHUB_INSTALLATION_ID"`
 	// Repository to clone (github, https)

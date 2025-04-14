@@ -2,14 +2,17 @@ package service_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
 func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) error {
@@ -69,6 +72,57 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 	}); err != nil {
 		return err
 	}
+
+	// Trigger webhook
+	go func() {
+		event := schema.WebhookEventServiceDeleted
+		level := webhooks_service.WebhookLevelError
+
+		// Construct URL
+		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String(), "project", project.ID.String())
+		// Get user
+		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		if err != nil {
+			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
+			return
+		}
+		data := webhooks_service.WebookData{
+			Title:       "Service Deleted",
+			Url:         url,
+			Description: fmt.Sprintf("A service has been deleted in project %s", project.DisplayName),
+			Username:    user.Email,
+			Fields: []webhooks_service.WebhookDataField{
+				{
+					Name:  "Service",
+					Value: service.Name,
+				},
+				{
+					Name:  "Environment",
+					Value: service.Edges.Environment.Name,
+				},
+			},
+		}
+
+		if service.Description != "" {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Description",
+				Value: service.Description,
+			})
+		}
+
+		data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+			Name:  "Type",
+			Value: string(service.Edges.ServiceConfig.Type),
+		})
+		data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+			Name:  "Subtype",
+			Value: service.Edges.ServiceConfig.Icon,
+		})
+
+		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			log.Errorf("Failed to trigger webhook %s: %v", event, err)
+		}
+	}()
 
 	return nil
 }

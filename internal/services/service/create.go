@@ -20,6 +20,7 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	"github.com/unbindapp/unbind-api/pkg/databases"
@@ -396,6 +397,63 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}); err != nil {
 		return nil, err
 	}
+
+	// Trigger webhook
+	go func() {
+		event := schema.WebhookEventServiceCreated
+		level := webhooks_service.WebhookLevelInfo
+
+		// Get service with edges
+		service, err := self.repo.Service().GetByID(ctx, service.ID)
+		if err != nil {
+			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
+			return
+		}
+
+		// Construct URL
+		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String(), "project", project.ID.String(), "?environment="+input.EnvironmentID.String(), "&service="+service.ID.String())
+		// Get user
+		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		if err != nil {
+			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
+			return
+		}
+		data := webhooks_service.WebookData{
+			Title:       "Service Created",
+			Url:         url,
+			Description: fmt.Sprintf("A new service has been created in project %s", service.Edges.Environment.Edges.Project.DisplayName),
+			Username:    user.Email,
+			Fields: []webhooks_service.WebhookDataField{
+				{
+					Name:  "Service Name",
+					Value: service.DisplayName,
+				},
+				{
+					Name:  "Environment",
+					Value: service.Edges.Environment.Name,
+				},
+				{
+					Name:  "Service Type",
+					Value: string(service.Edges.ServiceConfig.Type),
+				},
+				{
+					Name:  "Service Subtype",
+					Value: string(service.Edges.ServiceConfig.Icon),
+				},
+			},
+		}
+
+		if len(service.Edges.ServiceConfig.Hosts) > 0 {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Service Host",
+				Value: fmt.Sprintf("https://%s", service.Edges.ServiceConfig.Hosts[0].Host),
+			})
+		}
+
+		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			log.Errorf("Failed to trigger webhook %s: %v", event, err)
+		}
+	}()
 
 	return models.TransformServiceEntity(service), nil
 }

@@ -25,6 +25,7 @@ type ConfigInterface interface {
 
 type Config struct {
 	// Root
+	ExternalUIUrl  string `env:"EXTERNAL_UI_URL" envDefault:"http://localhost:3000"`
 	ExternalAPIURL string `env:"EXTERNAL_API_URL" envDefault:"http://localhost:8089"`
 	// This is for generating subdomains
 	ExternalWildcardBaseURL string `env:"EXTERNAL_WILDCARD_BASE_URL" envDefault:"http://localhost:8089"`

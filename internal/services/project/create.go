@@ -2,16 +2,19 @@ package project_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
 type CreateProjectInput struct {
@@ -100,6 +103,40 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	}); err != nil {
 		return nil, err
 	}
+
+	// Trigger webhook
+	go func() {
+		event := schema.WebhookEventProjectCreated
+		level := webhooks_service.WebhookLevelInfo
+
+		// Get project with edges
+		project, err := self.repo.Project().GetByID(ctx, project.ID)
+
+		// Construct URL
+		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String(), "project", project.ID.String())
+		// Get user
+		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		if err != nil {
+			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
+			return
+		}
+		data := webhooks_service.WebookData{
+			Title:       "Project Created",
+			Url:         url,
+			Description: fmt.Sprintf("A new project has been created in team %s", project.Edges.Team.DisplayName),
+			Username:    user.Email,
+			Fields: []webhooks_service.WebhookDataField{
+				{
+					Name:  "Project Name",
+					Value: project.DisplayName,
+				},
+			},
+		}
+
+		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			log.Errorf("Failed to trigger webhook %s: %v", event, err)
+		}
+	}()
 
 	return models.TransformProjectEntity(project), nil
 }

@@ -16,10 +16,12 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/queue"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/valkey-io/valkey-go"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -40,26 +42,28 @@ type DeploymentJobRequest struct {
 
 // Handles triggering builds for services
 type DeploymentController struct {
-	cfg          *config.Config
-	k8s          *k8s.KubeClient
-	jobQueue     *queue.Queue[DeploymentJobRequest]
-	ctx          context.Context
-	cancelFunc   context.CancelFunc
-	repo         *repositories.Repositories
-	githubClient *github.GithubClient
+	cfg            *config.Config
+	k8s            *k8s.KubeClient
+	jobQueue       *queue.Queue[DeploymentJobRequest]
+	ctx            context.Context
+	cancelFunc     context.CancelFunc
+	repo           *repositories.Repositories
+	githubClient   *github.GithubClient
+	webhookService *webhooks_service.WebhooksService
 }
 
-func NewDeploymentController(ctx context.Context, cancel context.CancelFunc, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient) *DeploymentController {
+func NewDeploymentController(ctx context.Context, cancel context.CancelFunc, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient, webeehookService *webhooks_service.WebhooksService) *DeploymentController {
 	jobQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
 
 	return &DeploymentController{
-		cfg:          cfg,
-		k8s:          k8s,
-		jobQueue:     jobQueue,
-		ctx:          ctx,
-		cancelFunc:   cancel,
-		repo:         repositories,
-		githubClient: githubClient,
+		cfg:            cfg,
+		k8s:            k8s,
+		jobQueue:       jobQueue,
+		ctx:            ctx,
+		cancelFunc:     cancel,
+		repo:           repositories,
+		githubClient:   githubClient,
+		webhookService: webeehookService,
 	}
 }
 
@@ -137,6 +141,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 
 	// Populate environment
 	env := map[string]string{
+		"EXTERNAL_UI_URL":             self.cfg.ExternalUIUrl,
 		"CONTAINER_REGISTRY_HOST":     self.cfg.ContainerRegistryHost,
 		"CONTAINER_REGISTRY_USER":     self.cfg.ContainerRegistryUser,
 		"CONTAINER_REGISTRY_PASSWORD": self.cfg.ContainerRegistryPassword,
@@ -307,6 +312,45 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		return nil, fmt.Errorf("failed to enqueue job: %w", err)
 	}
 
+	// Trigger webhook
+	go func() {
+		event := schema.WebhookEventDeploymentQueued
+		level := webhooks_service.WebhookLevelInfo
+
+		// Get service with edges
+		service, err := self.repo.Service().GetByID(ctx, req.ServiceID)
+		if err != nil {
+			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
+			return
+		}
+
+		// Construct URL
+		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+job.ID.String())
+		data := webhooks_service.WebookData{
+			Title:       "Deployment Queued",
+			Url:         url,
+			Description: fmt.Sprintf("A new deployment has been queued for %s", service.DisplayName),
+			Fields: []webhooks_service.WebhookDataField{
+				{
+					Name:  "Service Type",
+					Value: string(service.Edges.ServiceConfig.Type),
+				},
+				{
+					Name:  "Environment",
+					Value: service.Edges.Environment.Name,
+				},
+				{
+					Name:  "Builder",
+					Value: string(service.Edges.ServiceConfig.Builder),
+				},
+			},
+		}
+
+		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			log.Errorf("Failed to trigger webhook %s: %v", event, err)
+		}
+	}()
+
 	return job, nil
 }
 
@@ -341,6 +385,48 @@ func (self *DeploymentController) cancelExistingJobs(ctx context.Context, servic
 		}
 	}
 
+	// Trigger webhooks
+	for _, jobID := range jobIDsToCancel {
+		// Trigger webhook
+		go func() {
+			event := schema.WebhookEventDeploymentCancelled
+			level := webhooks_service.WebhookLevelWarning
+
+			// Get service with edges
+			service, err := self.repo.Service().GetByID(ctx, serviceID)
+			if err != nil {
+				log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
+				return
+			}
+
+			// Construct URL
+			url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+jobID.String())
+			data := webhooks_service.WebookData{
+				Title:       "Deployment Cancelled",
+				Url:         url,
+				Description: fmt.Sprintf("A deployment has been cancelled for %s", service.DisplayName),
+				Fields: []webhooks_service.WebhookDataField{
+					{
+						Name:  "Service Type",
+						Value: string(service.Edges.ServiceConfig.Type),
+					},
+					{
+						Name:  "Environment",
+						Value: service.Edges.Environment.Name,
+					},
+					{
+						Name:  "Builder",
+						Value: string(service.Edges.ServiceConfig.Builder),
+					},
+				},
+			}
+
+			if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+				log.Errorf("Failed to trigger webhook %s: %v", event, err)
+			}
+		}()
+	}
+
 	return nil
 }
 
@@ -354,6 +440,7 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 	if err != nil {
 		log.Warnf("Failed to mark job as cancelled: %v service: %s", err, req.ServiceID)
 	}
+	// ! TODO - webhook for cancel
 	// Cancel jobs in Kubernetes
 	if err := self.k8s.CancelJobsByServiceID(ctx, req.ServiceID.String()); err != nil {
 		log.Warnf("Failed to cancel existing jobs: %v service: %s", err, req.ServiceID)

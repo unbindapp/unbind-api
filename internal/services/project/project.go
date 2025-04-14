@@ -1,19 +1,25 @@
 package project_service
 
 import (
+	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
 // Integrate project management with internal permissions and kubernetes RBAC
 type ProjectService struct {
-	repo repositories.RepositoriesInterface
-	k8s  *k8s.KubeClient
+	cfg            *config.Config
+	repo           repositories.RepositoriesInterface
+	k8s            *k8s.KubeClient
+	webhookService *webhooks_service.WebhooksService
 }
 
-func NewProjectService(repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient) *ProjectService {
+func NewProjectService(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient, webhookService *webhooks_service.WebhooksService) *ProjectService {
 	return &ProjectService{
-		repo: repo,
-		k8s:  k8sClient,
+		cfg:            cfg,
+		repo:           repo,
+		k8s:            k8sClient,
+		webhookService: webhookService,
 	}
 }

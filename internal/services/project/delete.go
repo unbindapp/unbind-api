@@ -2,15 +2,18 @@ package project_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
 type DeleteProjectInput struct {
@@ -65,7 +68,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		return err
 	}
 
-	environmnets, err := self.repo.Environment().GetForProject(ctx, nil, input.ProjectID)
+	Environments, err := self.repo.Environment().GetForProject(ctx, nil, input.ProjectID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +82,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 	// Delete the project in cascading fashion
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Delete environments
-		for _, environment := range environmnets {
+		for _, environment := range Environments {
 			// Delete services
 			for _, service := range environment.Edges.Services {
 				if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.Name); err != nil {
@@ -123,5 +126,44 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 	}); err != nil {
 		return err
 	}
+
+	// Trigger webhook
+	go func() {
+		event := schema.WebhookEventProjectDeleted
+		level := webhooks_service.WebhookLevelError
+
+		// Construct URL
+		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String())
+		// Get user
+		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		if err != nil {
+			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
+			return
+		}
+		data := webhooks_service.WebookData{
+			Title:       "Project Deleted",
+			Url:         url,
+			Description: fmt.Sprintf("A project has been deleted in team %s", team.DisplayName),
+			Username:    user.Email,
+			Fields: []webhooks_service.WebhookDataField{
+				{
+					Name:  "Project",
+					Value: project.Name,
+				},
+			},
+		}
+
+		if project.Description != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Description",
+				Value: *project.Description,
+			})
+		}
+
+		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			log.Errorf("Failed to trigger webhook %s: %v", event, err)
+		}
+	}()
+
 	return nil
 }

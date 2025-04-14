@@ -2,14 +2,18 @@ package project_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
 type UpdateProjectInput struct {
@@ -69,6 +73,62 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 	if err != nil {
 		return nil, err
 	}
+
+	// Trigger webhook
+	go func() {
+		event := schema.WebhookEventProjectUpdated
+		level := webhooks_service.WebhookLevelInfo
+
+		// Get project with edges
+		project, err := self.repo.Project().GetByID(ctx, project.ID)
+
+		// Construct URL
+		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String(), "project", project.ID.String())
+		// Get user
+		user, err := self.repo.User().GetByID(ctx, requesterUserID)
+		if err != nil {
+			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
+			return
+		}
+		data := webhooks_service.WebookData{
+			Title:       "Project Updated",
+			Url:         url,
+			Description: fmt.Sprintf("A project has been updated in team %s", project.Edges.Team.DisplayName),
+			Username:    user.Email,
+			Fields:      []webhooks_service.WebhookDataField{},
+		}
+
+		if input.DefaultEnvironmentID != nil {
+			// Get the environment name
+			env, err := self.repo.Environment().GetByID(ctx, *input.DefaultEnvironmentID)
+			if err != nil {
+				log.Warnf("Failed to get environment %s: %v", input.DefaultEnvironmentID.String(), err)
+			} else {
+				data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+					Name:  "Default Environment",
+					Value: env.Name,
+				})
+			}
+		}
+
+		if input.DisplayName != "" {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Name",
+				Value: input.DisplayName,
+			})
+		}
+
+		if input.Description != nil {
+			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
+				Name:  "Description",
+				Value: *input.Description,
+			})
+		}
+
+		if err := self.webhookService.TriggerWebhooks(ctx, level, event, data); err != nil {
+			log.Errorf("Failed to trigger webhook %s: %v", event, err)
+		}
+	}()
 
 	// Convert to response
 	return models.TransformProjectEntity(project), nil
