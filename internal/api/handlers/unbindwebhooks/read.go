@@ -11,7 +11,7 @@ import (
 
 type ListWebhooksInput struct {
 	server.BaseAuthInput
-	*models.WebhookListInput
+	models.WebhookListInput
 }
 
 type ListWebhooksResponse struct {
@@ -32,7 +32,7 @@ func (self *HandlerGroup) ListWebhooks(ctx context.Context, input *ListWebhooksI
 	webhooks, err := self.srv.WebhooksService.ListWebhooks(
 		ctx,
 		user.ID,
-		input.WebhookListInput,
+		&input.WebhookListInput,
 	)
 	if err != nil {
 		return nil, self.handleErr(err)
@@ -46,7 +46,7 @@ func (self *HandlerGroup) ListWebhooks(ctx context.Context, input *ListWebhooksI
 // Get a single webhook by ID
 type GetWebhookInput struct {
 	server.BaseAuthInput
-	*models.WebhookGetInput
+	models.WebhookGetInput
 }
 
 type GetWebhookResponse struct {
@@ -67,7 +67,7 @@ func (self *HandlerGroup) GetWebhook(ctx context.Context, input *GetWebhookInput
 	webhook, err := self.srv.WebhooksService.GetWebhookByID(
 		ctx,
 		user.ID,
-		input.WebhookGetInput,
+		&input.WebhookGetInput,
 	)
 	if err != nil {
 		return nil, self.handleErr(err)
