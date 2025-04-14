@@ -3,12 +3,14 @@ package utils
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/base64"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +31,7 @@ func TestGenerateGithubJWT(t *testing.T) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		// Validate the algorithm
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, jwt.NewValidationError("unexpected signing method", jwt.ValidationErrorSignatureInvalid)
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return &privateKey.PublicKey, nil
 	})
@@ -38,21 +40,32 @@ func TestGenerateGithubJWT(t *testing.T) {
 	assert.True(t, parsedToken.Valid, "Token should be valid")
 
 	// Extract claims
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	assert.True(t, ok, "Claims should be of type jwt.MapClaims")
+	_, ok := parsedToken.Claims.(jwt.Claims)
+	assert.True(t, ok, "Should be able to extract claims")
+
+	// Extract the claims properly
+	_, err = parsedToken.Claims.GetIssuedAt()
+	assert.NoError(t, err, "Should be able to extract issued at time")
+
+	// Parse as a map to check the claims directly
+	_, ok = parsedToken.Claims.(jwt.MapClaims)
+	assert.True(t, ok, "Claims should be convertible to jwt.MapClaims")
 
 	// Verify issuer
-	assert.Equal(t, strconv.FormatInt(appID, 10), claims["iss"], "Issuer claim should match app ID")
+	issuer, err := parsedToken.Claims.GetIssuer()
+	assert.NoError(t, err, "Should be able to extract issuer")
+	assert.Equal(t, strconv.FormatInt(appID, 10), issuer, "Issuer claim should match app ID")
 
 	// Verify expiration (10 minutes from issuance)
-	issuedAt, ok := claims["iat"].(float64)
-	assert.True(t, ok, "IssuedAt claim should be present")
+	issuedAtTime, err := parsedToken.Claims.GetIssuedAt()
+	assert.NoError(t, err, "Should be able to extract issued at time")
 
-	expiresAt, ok := claims["exp"].(float64)
-	assert.True(t, ok, "ExpiresAt claim should be present")
+	expiresAtTime, err := parsedToken.Claims.GetExpirationTime()
+	assert.NoError(t, err, "Should be able to extract expiration time")
 
 	// Verify expiration is 10 minutes (600 seconds) after issuance
-	assert.Equal(t, int64(issuedAt)+600, int64(expiresAt), "Token should expire 10 minutes after issuance")
+	expectedExpiration := issuedAtTime.Add(10 * time.Minute)
+	assert.Equal(t, expectedExpiration.Unix(), expiresAtTime.Unix(), "Token should expire 10 minutes after issuance")
 }
 
 func TestGenerateGithubJWT_VerifyAlgorithm(t *testing.T) {
@@ -70,9 +83,23 @@ func TestGenerateGithubJWT_VerifyAlgorithm(t *testing.T) {
 	parts := strings.Split(token, ".")
 	assert.Equal(t, 3, len(parts), "JWT should have three parts")
 
-	header, err := jwt.DecodeSegment(parts[0])
+	// Decode header manually using base64
+	headerB64 := parts[0]
+	// JWT uses base64url encoding without padding
+	// Convert base64url to standard base64 by replacing characters and adding padding if needed
+	headerB64 = strings.ReplaceAll(headerB64, "-", "+")
+	headerB64 = strings.ReplaceAll(headerB64, "_", "/")
+	// Add padding if needed
+	switch len(headerB64) % 4 {
+	case 2:
+		headerB64 += "=="
+	case 3:
+		headerB64 += "="
+	}
+
+	headerBytes, err := base64.StdEncoding.DecodeString(headerB64)
 	assert.NoError(t, err, "Should be able to decode header")
-	assert.Contains(t, string(header), "RS256", "Header should specify RS256 algorithm")
+	assert.Contains(t, string(headerBytes), "RS256", "Header should specify RS256 algorithm")
 }
 
 func TestGenerateGithubJWT_ErrorOnNilKey(t *testing.T) {
@@ -92,14 +119,14 @@ func TestGenerateGithubJWT_TimeConsistency(t *testing.T) {
 	appID := int64(12345)
 
 	// Get current time for reference
-	beforeTokenTime := time.Now().Unix()
+	beforeTokenTime := time.Now()
 
 	// Call the function under test
 	token, err := GenerateGithubJWT(appID, privateKey)
 	assert.NoError(t, err, "GenerateGithubJWT should not return an error")
 
 	// Get time after token generation
-	afterTokenTime := time.Now().Unix()
+	afterTokenTime := time.Now()
 
 	// Parse token to extract issuedAt claim
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
@@ -107,13 +134,10 @@ func TestGenerateGithubJWT_TimeConsistency(t *testing.T) {
 	})
 	assert.NoError(t, err, "Token should be parsable")
 
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	assert.True(t, ok, "Claims should be of type jwt.MapClaims")
-
-	issuedAt, ok := claims["iat"].(float64)
-	assert.True(t, ok, "IssuedAt claim should be present")
+	issuedAt, err := parsedToken.Claims.GetIssuedAt()
+	assert.NoError(t, err, "Should be able to extract issued at time")
 
 	// Verify that issuedAt is within the time window when the function was called
-	assert.GreaterOrEqual(t, int64(issuedAt), beforeTokenTime, "IssuedAt should not be before test started")
-	assert.LessOrEqual(t, int64(issuedAt), afterTokenTime, "IssuedAt should not be after test ended")
+	assert.GreaterOrEqual(t, issuedAt.Unix(), beforeTokenTime.Unix(), "IssuedAt should not be before test started")
+	assert.LessOrEqual(t, issuedAt.Unix(), afterTokenTime.Unix(), "IssuedAt should not be after test ended")
 }
