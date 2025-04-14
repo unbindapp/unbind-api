@@ -172,7 +172,10 @@ func parseStreamsResult(streams []Stream) []LogEvent {
 		teamID, _ := stream.Stream[string(LokiLabelTeam)]
 		projectID, _ := stream.Stream[string(LokiLabelProject)]
 		serviceID, _ := stream.Stream[string(LokiLabelService)]
-		deploymentID, _ := stream.Stream[string(LokiLabelDeployment)]
+		deploymentID, ok := stream.Stream[string(LokiLabelDeployment)]
+		if !ok {
+			deploymentID, _ = stream.Stream[string(LokiLabelBuild)]
+		}
 
 		// Process each log entry
 		for _, entry := range stream.Values {

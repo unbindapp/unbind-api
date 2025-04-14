@@ -16,6 +16,7 @@ const (
 	LogTypeProject     LogType = "project"
 	LogTypeEnvironment LogType = "environment"
 	LogTypeService     LogType = "service"
+	LogTypeBuild       LogType = "build"
 	LogTypeDeployment  LogType = "deployment"
 )
 

@@ -16,6 +16,7 @@ const (
 	LokiLabelEnvironment LokiLabelName = "unbind_environment"
 	LokiLabelService     LokiLabelName = "unbind_service"
 	LokiLabelDeployment  LokiLabelName = "unbind_deployment"
+	LokiLabelBuild       LokiLabelName = "unbind_deployment_build"
 )
 
 // LokiLogStreamOptions represents options for filtering and streaming logs from Loki

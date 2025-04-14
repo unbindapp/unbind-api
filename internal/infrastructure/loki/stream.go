@@ -233,7 +233,10 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			teamID, _ := stream.Stream[string(LokiLabelTeam)]
 			projectID, _ := stream.Stream[string(LokiLabelProject)]
 			serviceID, _ := stream.Stream[string(LokiLabelService)]
-			deploymentID, _ := stream.Stream[string(LokiLabelDeployment)]
+			deploymentID, ok := stream.Stream[string(LokiLabelDeployment)]
+			if !ok {
+				deploymentID, _ = stream.Stream[string(LokiLabelBuild)]
+			}
 
 			for _, entry := range stream.Values {
 				// Entry format is [timestamp, log message]

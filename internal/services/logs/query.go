@@ -33,7 +33,7 @@ func (self *LogsService) QueryLogs(ctx context.Context, requesterUserID uuid.UUI
 	case models.LogTypeService:
 		label = loki.LokiLabelService
 		labelValue = service.ID.String()
-	case models.LogTypeDeployment:
+	case models.LogTypeDeployment, models.LogTypeBuild:
 		// get deployment
 		deployment, err := self.repo.Deployment().GetByID(ctx, input.DeploymentID)
 		if err != nil {
@@ -45,7 +45,11 @@ func (self *LogsService) QueryLogs(ctx context.Context, requesterUserID uuid.UUI
 		if deployment.ServiceID != service.ID {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
 		}
-		label = loki.LokiLabelDeployment
+		if input.Type == models.LogTypeBuild {
+			label = loki.LokiLabelBuild
+		} else {
+			label = loki.LokiLabelDeployment
+		}
 		labelValue = deployment.ID.String()
 	}
 

@@ -36,7 +36,7 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 	case models.LogTypeService:
 		label = loki.LokiLabelService
 		labelValue = service.ID.String()
-	case models.LogTypeDeployment:
+	case models.LogTypeDeployment, models.LogTypeBuild:
 		// get deployment
 		deployment, err := self.repo.Deployment().GetByID(ctx, input.DeploymentID)
 		if err != nil {
@@ -48,7 +48,11 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 		if deployment.ServiceID != service.ID {
 			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
 		}
-		label = loki.LokiLabelDeployment
+		if input.Type == models.LogTypeBuild {
+			label = loki.LokiLabelBuild
+		} else {
+			label = loki.LokiLabelDeployment
+		}
 		labelValue = deployment.ID.String()
 	}
 
