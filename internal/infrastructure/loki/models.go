@@ -78,7 +78,7 @@ func (u LogEventsMessageType) Schema(r huma.Registry) *huma.Schema {
 type LogEvents struct {
 	MessageType LogEventsMessageType `json:"type"`
 	// LogEvents is a slice of log events
-	Logs []LogEvent `json:"logs,omitempty"`
+	Logs []LogEvent `json:"logs"`
 	// Error message
 	ErrorMessage string `json:"error_message,omitempty"`
 }
