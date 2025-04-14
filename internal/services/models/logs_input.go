@@ -26,6 +26,7 @@ var LogTypeValues = []LogType{
 	LogTypeEnvironment,
 	LogTypeService,
 	LogTypeDeployment,
+	LogTypeBuild,
 }
 
 // Register enum in OpenAPI specification
