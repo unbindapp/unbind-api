@@ -320,7 +320,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		// Get service with edges
 		service, err := self.repo.Service().GetByID(ctx, req.ServiceID)
 		if err != nil {
-			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
+			log.Errorf("Failed to get service %s: %v", req.ServiceID.String(), err)
 			return
 		}
 
