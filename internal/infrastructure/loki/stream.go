@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 // StreamLokiPodLogs streams logs from Loki tail API using WebSocket for multiple pods using a single connection
@@ -62,6 +63,35 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	reqURL.RawQuery = q.Encode()
 
 	log.Infof("Streaming logs with query: %s, URL: %s", queryStr, reqURL.String())
+
+	// First do no logs check
+	// First, check if there are any logs by performing a quick HTTP query
+	httpOpts := LokiLogHTTPOptions{
+		Label:      opts.Label,
+		LabelValue: opts.LabelValue,
+		RawFilter:  opts.RawFilter,
+		Limit:      utils.ToPtr(1),
+	}
+	if !opts.Start.IsZero() {
+		httpOpts.Start = &opts.Start
+	} else if opts.Since > 0 {
+		httpOpts.Since = &opts.Since
+	}
+
+	// If we get nothing then we can send NoLogs message immediately
+	logs, err := self.QueryLokiLogs(ctx, httpOpts)
+	if err != nil {
+		log.Warnf("Failed to check for logs existence: %v", err)
+		// Continue anyway - we'll just use WebSocket
+	} else if len(logs) == 0 {
+		// No logs found, send NoLogs message immediately
+		log.Info("No logs found for query, sending NoLogs message")
+		select {
+		case eventChan <- LogEvents{MessageType: LogEventsMessageTypeLog, Logs: []LogEvent{}}:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 
 	// Create websocket connection with timeout
 	dialer := websocket.DefaultDialer
