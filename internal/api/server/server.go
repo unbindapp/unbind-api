@@ -19,6 +19,7 @@ import (
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"golang.org/x/oauth2"
 )
@@ -51,6 +52,7 @@ type Server struct {
 	DeploymentService  *deployments_service.DeploymentService
 	SystemService      *system_service.SystemService
 	MetricsService     *metric_service.MetricsService
+	WebhooksService    *webhooks_service.WebhooksService
 }
 
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {

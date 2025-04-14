@@ -33,6 +33,8 @@ const (
 	EdgeProjects = "projects"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
 	EdgeMembers = "members"
+	// EdgeTeamWebhooks holds the string denoting the team_webhooks edge name in mutations.
+	EdgeTeamWebhooks = "team_webhooks"
 	// Table holds the table name of the team in the database.
 	Table = "teams"
 	// ProjectsTable is the table that holds the projects relation/edge.
@@ -47,6 +49,13 @@ const (
 	// MembersInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	MembersInverseTable = "users"
+	// TeamWebhooksTable is the table that holds the team_webhooks relation/edge.
+	TeamWebhooksTable = "webhooks"
+	// TeamWebhooksInverseTable is the table name for the Webhook entity.
+	// It exists in this package in order to avoid circular dependency with the "webhook" package.
+	TeamWebhooksInverseTable = "webhooks"
+	// TeamWebhooksColumn is the table column denoting the team_webhooks relation/edge.
+	TeamWebhooksColumn = "team_id"
 )
 
 // Columns holds all SQL columns for team fields.
@@ -160,6 +169,20 @@ func ByMembers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newMembersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTeamWebhooksCount orders the results by team_webhooks count.
+func ByTeamWebhooksCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTeamWebhooksStep(), opts...)
+	}
+}
+
+// ByTeamWebhooks orders the results by team_webhooks terms.
+func ByTeamWebhooks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTeamWebhooksStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newProjectsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -172,5 +195,12 @@ func newMembersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MembersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, MembersTable, MembersPrimaryKey...),
+	)
+}
+func newTeamWebhooksStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TeamWebhooksInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TeamWebhooksTable, TeamWebhooksColumn),
 	)
 }

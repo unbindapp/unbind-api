@@ -26,6 +26,7 @@ import (
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
+	unbindwebhooks_handler "github.com/unbindapp/unbind-api/internal/api/handlers/unbindwebhooks"
 	user_handler "github.com/unbindapp/unbind-api/internal/api/handlers/user"
 	variables_handler "github.com/unbindapp/unbind-api/internal/api/handlers/variables"
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
@@ -49,6 +50,7 @@ import (
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/valkey-io/valkey-go"
 	_ "go.uber.org/automaxprocs"
@@ -199,6 +201,7 @@ func startAPI(cfg *config.Config) {
 		DeploymentService:    deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier),
 		SystemService:        system_service.NewSystemService(cfg, repo, buildkitSettings),
 		MetricsService:       metric_service.NewMetricService(promClient, repo),
+		WebhooksService:      webhooks_service.NewWebhooksService(repo),
 	}
 
 	// New chi router
@@ -391,6 +394,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	metrics_handler.RegisterHandlers(srvImpl, metricsGroup)
+
+	// /unbindwebhooks group
+	unbindwebhooksGroup := huma.NewGroup(api, "/unbindwebhooks")
+	unbindwebhooksGroup.UseMiddleware(mw.Authenticate)
+	unbindwebhooksGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Unbind Webhooks"}
+		next(op)
+	})
+	unbindwebhooks_handler.RegisterHandlers(srvImpl, unbindwebhooksGroup)
 
 	// Start the server
 	addr := ":8089"

@@ -45,9 +45,12 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 			}
 			return err
 		}
-		if deployment.ServiceID != service.ID {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
+
+		// Validate that the deployment belongs to the level requested
+		if err := self.validateDeploymentInput(ctx, deployment.ID, service, environment, project, team); err != nil {
+			return err
 		}
+
 		if input.Type == models.LogTypeBuild {
 			label = loki.LokiLabelBuild
 		} else {

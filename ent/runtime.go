@@ -21,6 +21,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -401,4 +402,29 @@ func init() {
 	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
+	webhookMixin := schema.Webhook{}.Mixin()
+	webhookMixinFields0 := webhookMixin[0].Fields()
+	_ = webhookMixinFields0
+	webhookMixinFields1 := webhookMixin[1].Fields()
+	_ = webhookMixinFields1
+	webhookFields := schema.Webhook{}.Fields()
+	_ = webhookFields
+	// webhookDescCreatedAt is the schema descriptor for created_at field.
+	webhookDescCreatedAt := webhookMixinFields1[0].Descriptor()
+	// webhook.DefaultCreatedAt holds the default value on creation for the created_at field.
+	webhook.DefaultCreatedAt = webhookDescCreatedAt.Default.(func() time.Time)
+	// webhookDescUpdatedAt is the schema descriptor for updated_at field.
+	webhookDescUpdatedAt := webhookMixinFields1[1].Descriptor()
+	// webhook.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	webhook.DefaultUpdatedAt = webhookDescUpdatedAt.Default.(func() time.Time)
+	// webhook.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	webhook.UpdateDefaultUpdatedAt = webhookDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// webhookDescURL is the schema descriptor for url field.
+	webhookDescURL := webhookFields[0].Descriptor()
+	// webhook.URLValidator is a validator for the "url" field. It is called by the builders before save.
+	webhook.URLValidator = webhookDescURL.Validators[0].(func(string) error)
+	// webhookDescID is the schema descriptor for id field.
+	webhookDescID := webhookMixinFields0[0].Descriptor()
+	// webhook.DefaultID holds the default value on creation for the id field.
+	webhook.DefaultID = webhookDescID.Default.(func() uuid.UUID)
 }

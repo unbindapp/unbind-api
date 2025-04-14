@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // TeamUpdate is the builder for updating Team entities.
@@ -144,6 +145,21 @@ func (tu *TeamUpdate) AddMembers(u ...*User) *TeamUpdate {
 	return tu.AddMemberIDs(ids...)
 }
 
+// AddTeamWebhookIDs adds the "team_webhooks" edge to the Webhook entity by IDs.
+func (tu *TeamUpdate) AddTeamWebhookIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.AddTeamWebhookIDs(ids...)
+	return tu
+}
+
+// AddTeamWebhooks adds the "team_webhooks" edges to the Webhook entity.
+func (tu *TeamUpdate) AddTeamWebhooks(w ...*Webhook) *TeamUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return tu.AddTeamWebhookIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tu *TeamUpdate) Mutation() *TeamMutation {
 	return tu.mutation
@@ -189,6 +205,27 @@ func (tu *TeamUpdate) RemoveMembers(u ...*User) *TeamUpdate {
 		ids[i] = u[i].ID
 	}
 	return tu.RemoveMemberIDs(ids...)
+}
+
+// ClearTeamWebhooks clears all "team_webhooks" edges to the Webhook entity.
+func (tu *TeamUpdate) ClearTeamWebhooks() *TeamUpdate {
+	tu.mutation.ClearTeamWebhooks()
+	return tu
+}
+
+// RemoveTeamWebhookIDs removes the "team_webhooks" edge to Webhook entities by IDs.
+func (tu *TeamUpdate) RemoveTeamWebhookIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.RemoveTeamWebhookIDs(ids...)
+	return tu
+}
+
+// RemoveTeamWebhooks removes "team_webhooks" edges to Webhook entities.
+func (tu *TeamUpdate) RemoveTeamWebhooks(w ...*Webhook) *TeamUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return tu.RemoveTeamWebhookIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -366,6 +403,51 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if tu.mutation.TeamWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.TeamWebhooksTable,
+			Columns: []string{team.TeamWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedTeamWebhooksIDs(); len(nodes) > 0 && !tu.mutation.TeamWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.TeamWebhooksTable,
+			Columns: []string{team.TeamWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.TeamWebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.TeamWebhooksTable,
+			Columns: []string{team.TeamWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(tu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -500,6 +582,21 @@ func (tuo *TeamUpdateOne) AddMembers(u ...*User) *TeamUpdateOne {
 	return tuo.AddMemberIDs(ids...)
 }
 
+// AddTeamWebhookIDs adds the "team_webhooks" edge to the Webhook entity by IDs.
+func (tuo *TeamUpdateOne) AddTeamWebhookIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.AddTeamWebhookIDs(ids...)
+	return tuo
+}
+
+// AddTeamWebhooks adds the "team_webhooks" edges to the Webhook entity.
+func (tuo *TeamUpdateOne) AddTeamWebhooks(w ...*Webhook) *TeamUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return tuo.AddTeamWebhookIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tuo *TeamUpdateOne) Mutation() *TeamMutation {
 	return tuo.mutation
@@ -545,6 +642,27 @@ func (tuo *TeamUpdateOne) RemoveMembers(u ...*User) *TeamUpdateOne {
 		ids[i] = u[i].ID
 	}
 	return tuo.RemoveMemberIDs(ids...)
+}
+
+// ClearTeamWebhooks clears all "team_webhooks" edges to the Webhook entity.
+func (tuo *TeamUpdateOne) ClearTeamWebhooks() *TeamUpdateOne {
+	tuo.mutation.ClearTeamWebhooks()
+	return tuo
+}
+
+// RemoveTeamWebhookIDs removes the "team_webhooks" edge to Webhook entities by IDs.
+func (tuo *TeamUpdateOne) RemoveTeamWebhookIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.RemoveTeamWebhookIDs(ids...)
+	return tuo
+}
+
+// RemoveTeamWebhooks removes "team_webhooks" edges to Webhook entities.
+func (tuo *TeamUpdateOne) RemoveTeamWebhooks(w ...*Webhook) *TeamUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return tuo.RemoveTeamWebhookIDs(ids...)
 }
 
 // Where appends a list predicates to the TeamUpdate builder.
@@ -745,6 +863,51 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.TeamWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.TeamWebhooksTable,
+			Columns: []string{team.TeamWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedTeamWebhooksIDs(); len(nodes) > 0 && !tuo.mutation.TeamWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.TeamWebhooksTable,
+			Columns: []string{team.TeamWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.TeamWebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.TeamWebhooksTable,
+			Columns: []string{team.TeamWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

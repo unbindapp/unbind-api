@@ -45,9 +45,11 @@ type TeamEdges struct {
 	Projects []*Project `json:"projects,omitempty"`
 	// Members holds the value of the members edge.
 	Members []*User `json:"members,omitempty"`
+	// TeamWebhooks holds the value of the team_webhooks edge.
+	TeamWebhooks []*Webhook `json:"team_webhooks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // ProjectsOrErr returns the Projects value or an error if the edge
@@ -66,6 +68,15 @@ func (e TeamEdges) MembersOrErr() ([]*User, error) {
 		return e.Members, nil
 	}
 	return nil, &NotLoadedError{edge: "members"}
+}
+
+// TeamWebhooksOrErr returns the TeamWebhooks value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) TeamWebhooksOrErr() ([]*Webhook, error) {
+	if e.loadedTypes[2] {
+		return e.TeamWebhooks, nil
+	}
+	return nil, &NotLoadedError{edge: "team_webhooks"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -164,6 +175,11 @@ func (t *Team) QueryProjects() *ProjectQuery {
 // QueryMembers queries the "members" edge of the Team entity.
 func (t *Team) QueryMembers() *UserQuery {
 	return NewTeamClient(t.config).QueryMembers(t)
+}
+
+// QueryTeamWebhooks queries the "team_webhooks" edge of the Team entity.
+func (t *Team) QueryTeamWebhooks() *WebhookQuery {
+	return NewTeamClient(t.config).QueryTeamWebhooks(t)
 }
 
 // Update returns a builder for updating this Team.

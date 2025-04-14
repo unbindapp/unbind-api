@@ -29,6 +29,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
@@ -57,6 +58,7 @@ const (
 	TypeServiceConfig      = "ServiceConfig"
 	TypeTeam               = "Team"
 	TypeUser               = "User"
+	TypeWebhook            = "Webhook"
 )
 
 // BuildkitSettingsMutation represents an operation that mutates the BuildkitSettings nodes in the graph.
@@ -8405,6 +8407,9 @@ type ProjectMutation struct {
 	clearedenvironments        bool
 	default_environment        *uuid.UUID
 	cleareddefault_environment bool
+	project_webhooks           map[uuid.UUID]struct{}
+	removedproject_webhooks    map[uuid.UUID]struct{}
+	clearedproject_webhooks    bool
 	done                       bool
 	oldValue                   func(context.Context) (*Project, error)
 	predicates                 []predicate.Project
@@ -8972,6 +8977,60 @@ func (m *ProjectMutation) ResetDefaultEnvironment() {
 	m.cleareddefault_environment = false
 }
 
+// AddProjectWebhookIDs adds the "project_webhooks" edge to the Webhook entity by ids.
+func (m *ProjectMutation) AddProjectWebhookIDs(ids ...uuid.UUID) {
+	if m.project_webhooks == nil {
+		m.project_webhooks = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.project_webhooks[ids[i]] = struct{}{}
+	}
+}
+
+// ClearProjectWebhooks clears the "project_webhooks" edge to the Webhook entity.
+func (m *ProjectMutation) ClearProjectWebhooks() {
+	m.clearedproject_webhooks = true
+}
+
+// ProjectWebhooksCleared reports if the "project_webhooks" edge to the Webhook entity was cleared.
+func (m *ProjectMutation) ProjectWebhooksCleared() bool {
+	return m.clearedproject_webhooks
+}
+
+// RemoveProjectWebhookIDs removes the "project_webhooks" edge to the Webhook entity by IDs.
+func (m *ProjectMutation) RemoveProjectWebhookIDs(ids ...uuid.UUID) {
+	if m.removedproject_webhooks == nil {
+		m.removedproject_webhooks = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.project_webhooks, ids[i])
+		m.removedproject_webhooks[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedProjectWebhooks returns the removed IDs of the "project_webhooks" edge to the Webhook entity.
+func (m *ProjectMutation) RemovedProjectWebhooksIDs() (ids []uuid.UUID) {
+	for id := range m.removedproject_webhooks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ProjectWebhooksIDs returns the "project_webhooks" edge IDs in the mutation.
+func (m *ProjectMutation) ProjectWebhooksIDs() (ids []uuid.UUID) {
+	for id := range m.project_webhooks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetProjectWebhooks resets all changes to the "project_webhooks" edge.
+func (m *ProjectMutation) ResetProjectWebhooks() {
+	m.project_webhooks = nil
+	m.clearedproject_webhooks = false
+	m.removedproject_webhooks = nil
+}
+
 // Where appends a list predicates to the ProjectMutation builder.
 func (m *ProjectMutation) Where(ps ...predicate.Project) {
 	m.predicates = append(m.predicates, ps...)
@@ -9256,7 +9315,7 @@ func (m *ProjectMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ProjectMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.team != nil {
 		edges = append(edges, project.EdgeTeam)
 	}
@@ -9265,6 +9324,9 @@ func (m *ProjectMutation) AddedEdges() []string {
 	}
 	if m.default_environment != nil {
 		edges = append(edges, project.EdgeDefaultEnvironment)
+	}
+	if m.project_webhooks != nil {
+		edges = append(edges, project.EdgeProjectWebhooks)
 	}
 	return edges
 }
@@ -9287,15 +9349,24 @@ func (m *ProjectMutation) AddedIDs(name string) []ent.Value {
 		if id := m.default_environment; id != nil {
 			return []ent.Value{*id}
 		}
+	case project.EdgeProjectWebhooks:
+		ids := make([]ent.Value, 0, len(m.project_webhooks))
+		for id := range m.project_webhooks {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProjectMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedenvironments != nil {
 		edges = append(edges, project.EdgeEnvironments)
+	}
+	if m.removedproject_webhooks != nil {
+		edges = append(edges, project.EdgeProjectWebhooks)
 	}
 	return edges
 }
@@ -9310,13 +9381,19 @@ func (m *ProjectMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case project.EdgeProjectWebhooks:
+		ids := make([]ent.Value, 0, len(m.removedproject_webhooks))
+		for id := range m.removedproject_webhooks {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ProjectMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedteam {
 		edges = append(edges, project.EdgeTeam)
 	}
@@ -9325,6 +9402,9 @@ func (m *ProjectMutation) ClearedEdges() []string {
 	}
 	if m.cleareddefault_environment {
 		edges = append(edges, project.EdgeDefaultEnvironment)
+	}
+	if m.clearedproject_webhooks {
+		edges = append(edges, project.EdgeProjectWebhooks)
 	}
 	return edges
 }
@@ -9339,6 +9419,8 @@ func (m *ProjectMutation) EdgeCleared(name string) bool {
 		return m.clearedenvironments
 	case project.EdgeDefaultEnvironment:
 		return m.cleareddefault_environment
+	case project.EdgeProjectWebhooks:
+		return m.clearedproject_webhooks
 	}
 	return false
 }
@@ -9369,6 +9451,9 @@ func (m *ProjectMutation) ResetEdge(name string) error {
 		return nil
 	case project.EdgeDefaultEnvironment:
 		m.ResetDefaultEnvironment()
+		return nil
+	case project.EdgeProjectWebhooks:
+		m.ResetProjectWebhooks()
 		return nil
 	}
 	return fmt.Errorf("unknown Project edge %s", name)
@@ -12480,26 +12565,29 @@ func (m *ServiceConfigMutation) ResetEdge(name string) error {
 // TeamMutation represents an operation that mutates the Team nodes in the graph.
 type TeamMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *uuid.UUID
-	created_at        *time.Time
-	updated_at        *time.Time
-	name              *string
-	display_name      *string
-	namespace         *string
-	kubernetes_secret *string
-	description       *string
-	clearedFields     map[string]struct{}
-	projects          map[uuid.UUID]struct{}
-	removedprojects   map[uuid.UUID]struct{}
-	clearedprojects   bool
-	members           map[uuid.UUID]struct{}
-	removedmembers    map[uuid.UUID]struct{}
-	clearedmembers    bool
-	done              bool
-	oldValue          func(context.Context) (*Team, error)
-	predicates        []predicate.Team
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	created_at           *time.Time
+	updated_at           *time.Time
+	name                 *string
+	display_name         *string
+	namespace            *string
+	kubernetes_secret    *string
+	description          *string
+	clearedFields        map[string]struct{}
+	projects             map[uuid.UUID]struct{}
+	removedprojects      map[uuid.UUID]struct{}
+	clearedprojects      bool
+	members              map[uuid.UUID]struct{}
+	removedmembers       map[uuid.UUID]struct{}
+	clearedmembers       bool
+	team_webhooks        map[uuid.UUID]struct{}
+	removedteam_webhooks map[uuid.UUID]struct{}
+	clearedteam_webhooks bool
+	done                 bool
+	oldValue             func(context.Context) (*Team, error)
+	predicates           []predicate.Team
 }
 
 var _ ent.Mutation = (*TeamMutation)(nil)
@@ -12979,6 +13067,60 @@ func (m *TeamMutation) ResetMembers() {
 	m.removedmembers = nil
 }
 
+// AddTeamWebhookIDs adds the "team_webhooks" edge to the Webhook entity by ids.
+func (m *TeamMutation) AddTeamWebhookIDs(ids ...uuid.UUID) {
+	if m.team_webhooks == nil {
+		m.team_webhooks = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.team_webhooks[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTeamWebhooks clears the "team_webhooks" edge to the Webhook entity.
+func (m *TeamMutation) ClearTeamWebhooks() {
+	m.clearedteam_webhooks = true
+}
+
+// TeamWebhooksCleared reports if the "team_webhooks" edge to the Webhook entity was cleared.
+func (m *TeamMutation) TeamWebhooksCleared() bool {
+	return m.clearedteam_webhooks
+}
+
+// RemoveTeamWebhookIDs removes the "team_webhooks" edge to the Webhook entity by IDs.
+func (m *TeamMutation) RemoveTeamWebhookIDs(ids ...uuid.UUID) {
+	if m.removedteam_webhooks == nil {
+		m.removedteam_webhooks = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.team_webhooks, ids[i])
+		m.removedteam_webhooks[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTeamWebhooks returns the removed IDs of the "team_webhooks" edge to the Webhook entity.
+func (m *TeamMutation) RemovedTeamWebhooksIDs() (ids []uuid.UUID) {
+	for id := range m.removedteam_webhooks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TeamWebhooksIDs returns the "team_webhooks" edge IDs in the mutation.
+func (m *TeamMutation) TeamWebhooksIDs() (ids []uuid.UUID) {
+	for id := range m.team_webhooks {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTeamWebhooks resets all changes to the "team_webhooks" edge.
+func (m *TeamMutation) ResetTeamWebhooks() {
+	m.team_webhooks = nil
+	m.clearedteam_webhooks = false
+	m.removedteam_webhooks = nil
+}
+
 // Where appends a list predicates to the TeamMutation builder.
 func (m *TeamMutation) Where(ps ...predicate.Team) {
 	m.predicates = append(m.predicates, ps...)
@@ -13223,12 +13365,15 @@ func (m *TeamMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TeamMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.projects != nil {
 		edges = append(edges, team.EdgeProjects)
 	}
 	if m.members != nil {
 		edges = append(edges, team.EdgeMembers)
+	}
+	if m.team_webhooks != nil {
+		edges = append(edges, team.EdgeTeamWebhooks)
 	}
 	return edges
 }
@@ -13249,18 +13394,27 @@ func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case team.EdgeTeamWebhooks:
+		ids := make([]ent.Value, 0, len(m.team_webhooks))
+		for id := range m.team_webhooks {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TeamMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedprojects != nil {
 		edges = append(edges, team.EdgeProjects)
 	}
 	if m.removedmembers != nil {
 		edges = append(edges, team.EdgeMembers)
+	}
+	if m.removedteam_webhooks != nil {
+		edges = append(edges, team.EdgeTeamWebhooks)
 	}
 	return edges
 }
@@ -13281,18 +13435,27 @@ func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case team.EdgeTeamWebhooks:
+		ids := make([]ent.Value, 0, len(m.removedteam_webhooks))
+		for id := range m.removedteam_webhooks {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TeamMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedprojects {
 		edges = append(edges, team.EdgeProjects)
 	}
 	if m.clearedmembers {
 		edges = append(edges, team.EdgeMembers)
+	}
+	if m.clearedteam_webhooks {
+		edges = append(edges, team.EdgeTeamWebhooks)
 	}
 	return edges
 }
@@ -13305,6 +13468,8 @@ func (m *TeamMutation) EdgeCleared(name string) bool {
 		return m.clearedprojects
 	case team.EdgeMembers:
 		return m.clearedmembers
+	case team.EdgeTeamWebhooks:
+		return m.clearedteam_webhooks
 	}
 	return false
 }
@@ -13326,6 +13491,9 @@ func (m *TeamMutation) ResetEdge(name string) error {
 		return nil
 	case team.EdgeMembers:
 		m.ResetMembers()
+		return nil
+	case team.EdgeTeamWebhooks:
+		m.ResetTeamWebhooks()
 		return nil
 	}
 	return fmt.Errorf("unknown Team edge %s", name)
@@ -14248,4 +14416,798 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// WebhookMutation represents an operation that mutates the Webhook nodes in the graph.
+type WebhookMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	created_at     *time.Time
+	updated_at     *time.Time
+	url            *string
+	_type          *schema.WebhookType
+	events         *[]schema.WebhookEvent
+	appendevents   []schema.WebhookEvent
+	clearedFields  map[string]struct{}
+	team           *uuid.UUID
+	clearedteam    bool
+	project        *uuid.UUID
+	clearedproject bool
+	done           bool
+	oldValue       func(context.Context) (*Webhook, error)
+	predicates     []predicate.Webhook
+}
+
+var _ ent.Mutation = (*WebhookMutation)(nil)
+
+// webhookOption allows management of the mutation configuration using functional options.
+type webhookOption func(*WebhookMutation)
+
+// newWebhookMutation creates new mutation for the Webhook entity.
+func newWebhookMutation(c config, op Op, opts ...webhookOption) *WebhookMutation {
+	m := &WebhookMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWebhook,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWebhookID sets the ID field of the mutation.
+func withWebhookID(id uuid.UUID) webhookOption {
+	return func(m *WebhookMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Webhook
+		)
+		m.oldValue = func(ctx context.Context) (*Webhook, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Webhook.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWebhook sets the old Webhook of the mutation.
+func withWebhook(node *Webhook) webhookOption {
+	return func(m *WebhookMutation) {
+		m.oldValue = func(context.Context) (*Webhook, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WebhookMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WebhookMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Webhook entities.
+func (m *WebhookMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WebhookMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WebhookMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Webhook.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WebhookMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WebhookMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Webhook entity.
+// If the Webhook object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WebhookMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WebhookMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WebhookMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WebhookMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Webhook entity.
+// If the Webhook object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WebhookMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WebhookMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetURL sets the "url" field.
+func (m *WebhookMutation) SetURL(s string) {
+	m.url = &s
+}
+
+// URL returns the value of the "url" field in the mutation.
+func (m *WebhookMutation) URL() (r string, exists bool) {
+	v := m.url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURL returns the old "url" field's value of the Webhook entity.
+// If the Webhook object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WebhookMutation) OldURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURL: %w", err)
+	}
+	return oldValue.URL, nil
+}
+
+// ResetURL resets all changes to the "url" field.
+func (m *WebhookMutation) ResetURL() {
+	m.url = nil
+}
+
+// SetType sets the "type" field.
+func (m *WebhookMutation) SetType(st schema.WebhookType) {
+	m._type = &st
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *WebhookMutation) GetType() (r schema.WebhookType, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the Webhook entity.
+// If the Webhook object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WebhookMutation) OldType(ctx context.Context) (v schema.WebhookType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *WebhookMutation) ResetType() {
+	m._type = nil
+}
+
+// SetEvents sets the "events" field.
+func (m *WebhookMutation) SetEvents(se []schema.WebhookEvent) {
+	m.events = &se
+	m.appendevents = nil
+}
+
+// Events returns the value of the "events" field in the mutation.
+func (m *WebhookMutation) Events() (r []schema.WebhookEvent, exists bool) {
+	v := m.events
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEvents returns the old "events" field's value of the Webhook entity.
+// If the Webhook object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WebhookMutation) OldEvents(ctx context.Context) (v []schema.WebhookEvent, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEvents is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEvents requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEvents: %w", err)
+	}
+	return oldValue.Events, nil
+}
+
+// AppendEvents adds se to the "events" field.
+func (m *WebhookMutation) AppendEvents(se []schema.WebhookEvent) {
+	m.appendevents = append(m.appendevents, se...)
+}
+
+// AppendedEvents returns the list of values that were appended to the "events" field in this mutation.
+func (m *WebhookMutation) AppendedEvents() ([]schema.WebhookEvent, bool) {
+	if len(m.appendevents) == 0 {
+		return nil, false
+	}
+	return m.appendevents, true
+}
+
+// ResetEvents resets all changes to the "events" field.
+func (m *WebhookMutation) ResetEvents() {
+	m.events = nil
+	m.appendevents = nil
+}
+
+// SetTeamID sets the "team_id" field.
+func (m *WebhookMutation) SetTeamID(u uuid.UUID) {
+	m.team = &u
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *WebhookMutation) TeamID() (r uuid.UUID, exists bool) {
+	v := m.team
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the Webhook entity.
+// If the Webhook object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WebhookMutation) OldTeamID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *WebhookMutation) ResetTeamID() {
+	m.team = nil
+}
+
+// SetProjectID sets the "project_id" field.
+func (m *WebhookMutation) SetProjectID(u uuid.UUID) {
+	m.project = &u
+}
+
+// ProjectID returns the value of the "project_id" field in the mutation.
+func (m *WebhookMutation) ProjectID() (r uuid.UUID, exists bool) {
+	v := m.project
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProjectID returns the old "project_id" field's value of the Webhook entity.
+// If the Webhook object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WebhookMutation) OldProjectID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProjectID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProjectID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProjectID: %w", err)
+	}
+	return oldValue.ProjectID, nil
+}
+
+// ClearProjectID clears the value of the "project_id" field.
+func (m *WebhookMutation) ClearProjectID() {
+	m.project = nil
+	m.clearedFields[webhook.FieldProjectID] = struct{}{}
+}
+
+// ProjectIDCleared returns if the "project_id" field was cleared in this mutation.
+func (m *WebhookMutation) ProjectIDCleared() bool {
+	_, ok := m.clearedFields[webhook.FieldProjectID]
+	return ok
+}
+
+// ResetProjectID resets all changes to the "project_id" field.
+func (m *WebhookMutation) ResetProjectID() {
+	m.project = nil
+	delete(m.clearedFields, webhook.FieldProjectID)
+}
+
+// ClearTeam clears the "team" edge to the Team entity.
+func (m *WebhookMutation) ClearTeam() {
+	m.clearedteam = true
+	m.clearedFields[webhook.FieldTeamID] = struct{}{}
+}
+
+// TeamCleared reports if the "team" edge to the Team entity was cleared.
+func (m *WebhookMutation) TeamCleared() bool {
+	return m.clearedteam
+}
+
+// TeamIDs returns the "team" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TeamID instead. It exists only for internal usage by the builders.
+func (m *WebhookMutation) TeamIDs() (ids []uuid.UUID) {
+	if id := m.team; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTeam resets all changes to the "team" edge.
+func (m *WebhookMutation) ResetTeam() {
+	m.team = nil
+	m.clearedteam = false
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (m *WebhookMutation) ClearProject() {
+	m.clearedproject = true
+	m.clearedFields[webhook.FieldProjectID] = struct{}{}
+}
+
+// ProjectCleared reports if the "project" edge to the Project entity was cleared.
+func (m *WebhookMutation) ProjectCleared() bool {
+	return m.ProjectIDCleared() || m.clearedproject
+}
+
+// ProjectIDs returns the "project" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ProjectID instead. It exists only for internal usage by the builders.
+func (m *WebhookMutation) ProjectIDs() (ids []uuid.UUID) {
+	if id := m.project; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetProject resets all changes to the "project" edge.
+func (m *WebhookMutation) ResetProject() {
+	m.project = nil
+	m.clearedproject = false
+}
+
+// Where appends a list predicates to the WebhookMutation builder.
+func (m *WebhookMutation) Where(ps ...predicate.Webhook) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WebhookMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WebhookMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Webhook, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WebhookMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WebhookMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Webhook).
+func (m *WebhookMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WebhookMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.created_at != nil {
+		fields = append(fields, webhook.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, webhook.FieldUpdatedAt)
+	}
+	if m.url != nil {
+		fields = append(fields, webhook.FieldURL)
+	}
+	if m._type != nil {
+		fields = append(fields, webhook.FieldType)
+	}
+	if m.events != nil {
+		fields = append(fields, webhook.FieldEvents)
+	}
+	if m.team != nil {
+		fields = append(fields, webhook.FieldTeamID)
+	}
+	if m.project != nil {
+		fields = append(fields, webhook.FieldProjectID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WebhookMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case webhook.FieldCreatedAt:
+		return m.CreatedAt()
+	case webhook.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case webhook.FieldURL:
+		return m.URL()
+	case webhook.FieldType:
+		return m.GetType()
+	case webhook.FieldEvents:
+		return m.Events()
+	case webhook.FieldTeamID:
+		return m.TeamID()
+	case webhook.FieldProjectID:
+		return m.ProjectID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WebhookMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case webhook.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case webhook.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case webhook.FieldURL:
+		return m.OldURL(ctx)
+	case webhook.FieldType:
+		return m.OldType(ctx)
+	case webhook.FieldEvents:
+		return m.OldEvents(ctx)
+	case webhook.FieldTeamID:
+		return m.OldTeamID(ctx)
+	case webhook.FieldProjectID:
+		return m.OldProjectID(ctx)
+	}
+	return nil, fmt.Errorf("unknown Webhook field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WebhookMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case webhook.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case webhook.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case webhook.FieldURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURL(v)
+		return nil
+	case webhook.FieldType:
+		v, ok := value.(schema.WebhookType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case webhook.FieldEvents:
+		v, ok := value.([]schema.WebhookEvent)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEvents(v)
+		return nil
+	case webhook.FieldTeamID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
+	case webhook.FieldProjectID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProjectID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Webhook field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WebhookMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WebhookMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WebhookMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Webhook numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WebhookMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(webhook.FieldProjectID) {
+		fields = append(fields, webhook.FieldProjectID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WebhookMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WebhookMutation) ClearField(name string) error {
+	switch name {
+	case webhook.FieldProjectID:
+		m.ClearProjectID()
+		return nil
+	}
+	return fmt.Errorf("unknown Webhook nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WebhookMutation) ResetField(name string) error {
+	switch name {
+	case webhook.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case webhook.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case webhook.FieldURL:
+		m.ResetURL()
+		return nil
+	case webhook.FieldType:
+		m.ResetType()
+		return nil
+	case webhook.FieldEvents:
+		m.ResetEvents()
+		return nil
+	case webhook.FieldTeamID:
+		m.ResetTeamID()
+		return nil
+	case webhook.FieldProjectID:
+		m.ResetProjectID()
+		return nil
+	}
+	return fmt.Errorf("unknown Webhook field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WebhookMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.team != nil {
+		edges = append(edges, webhook.EdgeTeam)
+	}
+	if m.project != nil {
+		edges = append(edges, webhook.EdgeProject)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WebhookMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case webhook.EdgeTeam:
+		if id := m.team; id != nil {
+			return []ent.Value{*id}
+		}
+	case webhook.EdgeProject:
+		if id := m.project; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WebhookMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WebhookMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WebhookMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedteam {
+		edges = append(edges, webhook.EdgeTeam)
+	}
+	if m.clearedproject {
+		edges = append(edges, webhook.EdgeProject)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WebhookMutation) EdgeCleared(name string) bool {
+	switch name {
+	case webhook.EdgeTeam:
+		return m.clearedteam
+	case webhook.EdgeProject:
+		return m.clearedproject
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WebhookMutation) ClearEdge(name string) error {
+	switch name {
+	case webhook.EdgeTeam:
+		m.ClearTeam()
+		return nil
+	case webhook.EdgeProject:
+		m.ClearProject()
+		return nil
+	}
+	return fmt.Errorf("unknown Webhook unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WebhookMutation) ResetEdge(name string) error {
+	switch name {
+	case webhook.EdgeTeam:
+		m.ResetTeam()
+		return nil
+	case webhook.EdgeProject:
+		m.ResetProject()
+		return nil
+	}
+	return fmt.Errorf("unknown Webhook edge %s", name)
 }

@@ -17,18 +17,20 @@ import (
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // TeamQuery is the builder for querying Team entities.
 type TeamQuery struct {
 	config
-	ctx          *QueryContext
-	order        []team.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.Team
-	withProjects *ProjectQuery
-	withMembers  *UserQuery
-	modifiers    []func(*sql.Selector)
+	ctx              *QueryContext
+	order            []team.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Team
+	withProjects     *ProjectQuery
+	withMembers      *UserQuery
+	withTeamWebhooks *WebhookQuery
+	modifiers        []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -102,6 +104,28 @@ func (tq *TeamQuery) QueryMembers() *UserQuery {
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, team.MembersTable, team.MembersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTeamWebhooks chains the current query on the "team_webhooks" edge.
+func (tq *TeamQuery) QueryTeamWebhooks() *WebhookQuery {
+	query := (&WebhookClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, selector),
+			sqlgraph.To(webhook.Table, webhook.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.TeamWebhooksTable, team.TeamWebhooksColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -296,13 +320,14 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 		return nil
 	}
 	return &TeamQuery{
-		config:       tq.config,
-		ctx:          tq.ctx.Clone(),
-		order:        append([]team.OrderOption{}, tq.order...),
-		inters:       append([]Interceptor{}, tq.inters...),
-		predicates:   append([]predicate.Team{}, tq.predicates...),
-		withProjects: tq.withProjects.Clone(),
-		withMembers:  tq.withMembers.Clone(),
+		config:           tq.config,
+		ctx:              tq.ctx.Clone(),
+		order:            append([]team.OrderOption{}, tq.order...),
+		inters:           append([]Interceptor{}, tq.inters...),
+		predicates:       append([]predicate.Team{}, tq.predicates...),
+		withProjects:     tq.withProjects.Clone(),
+		withMembers:      tq.withMembers.Clone(),
+		withTeamWebhooks: tq.withTeamWebhooks.Clone(),
 		// clone intermediate query.
 		sql:       tq.sql.Clone(),
 		path:      tq.path,
@@ -329,6 +354,17 @@ func (tq *TeamQuery) WithMembers(opts ...func(*UserQuery)) *TeamQuery {
 		opt(query)
 	}
 	tq.withMembers = query
+	return tq
+}
+
+// WithTeamWebhooks tells the query-builder to eager-load the nodes that are connected to
+// the "team_webhooks" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithTeamWebhooks(opts ...func(*WebhookQuery)) *TeamQuery {
+	query := (&WebhookClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withTeamWebhooks = query
 	return tq
 }
 
@@ -410,9 +446,10 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 	var (
 		nodes       = []*Team{}
 		_spec       = tq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			tq.withProjects != nil,
 			tq.withMembers != nil,
+			tq.withTeamWebhooks != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -447,6 +484,13 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 		if err := tq.loadMembers(ctx, query, nodes,
 			func(n *Team) { n.Edges.Members = []*User{} },
 			func(n *Team, e *User) { n.Edges.Members = append(n.Edges.Members, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withTeamWebhooks; query != nil {
+		if err := tq.loadTeamWebhooks(ctx, query, nodes,
+			func(n *Team) { n.Edges.TeamWebhooks = []*Webhook{} },
+			func(n *Team, e *Webhook) { n.Edges.TeamWebhooks = append(n.Edges.TeamWebhooks, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -541,6 +585,36 @@ func (tq *TeamQuery) loadMembers(ctx context.Context, query *UserQuery, nodes []
 		for kn := range nodes {
 			assign(kn, n)
 		}
+	}
+	return nil
+}
+func (tq *TeamQuery) loadTeamWebhooks(ctx context.Context, query *WebhookQuery, nodes []*Team, init func(*Team), assign func(*Team, *Webhook)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Team)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(webhook.FieldTeamID)
+	}
+	query.Where(predicate.Webhook(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(team.TeamWebhooksColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TeamID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

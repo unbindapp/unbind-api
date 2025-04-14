@@ -44,6 +44,8 @@ type Tx struct {
 	Team *TeamClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Webhook is the client for interacting with the Webhook builders.
+	Webhook *WebhookClient
 
 	// lazily loaded.
 	client     *Client
@@ -190,6 +192,7 @@ func (tx *Tx) init() {
 	tx.ServiceConfig = NewServiceConfigClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.Webhook = NewWebhookClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

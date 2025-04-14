@@ -53,9 +53,11 @@ type ProjectEdges struct {
 	Environments []*Environment `json:"environments,omitempty"`
 	// DefaultEnvironment holds the value of the default_environment edge.
 	DefaultEnvironment *Environment `json:"default_environment,omitempty"`
+	// ProjectWebhooks holds the value of the project_webhooks edge.
+	ProjectWebhooks []*Webhook `json:"project_webhooks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // TeamOrErr returns the Team value or an error if the edge
@@ -87,6 +89,15 @@ func (e ProjectEdges) DefaultEnvironmentOrErr() (*Environment, error) {
 		return nil, &NotFoundError{label: environment.Label}
 	}
 	return nil, &NotLoadedError{edge: "default_environment"}
+}
+
+// ProjectWebhooksOrErr returns the ProjectWebhooks value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProjectEdges) ProjectWebhooksOrErr() ([]*Webhook, error) {
+	if e.loadedTypes[3] {
+		return e.ProjectWebhooks, nil
+	}
+	return nil, &NotLoadedError{edge: "project_webhooks"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -205,6 +216,11 @@ func (pr *Project) QueryEnvironments() *EnvironmentQuery {
 // QueryDefaultEnvironment queries the "default_environment" edge of the Project entity.
 func (pr *Project) QueryDefaultEnvironment() *EnvironmentQuery {
 	return NewProjectClient(pr.config).QueryDefaultEnvironment(pr)
+}
+
+// QueryProjectWebhooks queries the "project_webhooks" edge of the Project entity.
+func (pr *Project) QueryProjectWebhooks() *WebhookQuery {
+	return NewProjectClient(pr.config).QueryProjectWebhooks(pr)
 }
 
 // Update returns a builder for updating this Project.

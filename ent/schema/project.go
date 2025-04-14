@@ -50,6 +50,10 @@ func (Project) Edges() []ent.Edge {
 			Ref("project_default").
 			Field("default_environment_id").
 			Unique(),
+		// O2M edge for webhooks
+		edge.To("project_webhooks", Webhook.Type).Annotations(
+			entsql.Annotation{OnDelete: entsql.Cascade},
+		),
 	}
 }
 

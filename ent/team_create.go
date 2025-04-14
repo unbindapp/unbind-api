@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // TeamCreate is the builder for creating a Team entity.
@@ -134,6 +135,21 @@ func (tc *TeamCreate) AddMembers(u ...*User) *TeamCreate {
 		ids[i] = u[i].ID
 	}
 	return tc.AddMemberIDs(ids...)
+}
+
+// AddTeamWebhookIDs adds the "team_webhooks" edge to the Webhook entity by IDs.
+func (tc *TeamCreate) AddTeamWebhookIDs(ids ...uuid.UUID) *TeamCreate {
+	tc.mutation.AddTeamWebhookIDs(ids...)
+	return tc
+}
+
+// AddTeamWebhooks adds the "team_webhooks" edges to the Webhook entity.
+func (tc *TeamCreate) AddTeamWebhooks(w ...*Webhook) *TeamCreate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return tc.AddTeamWebhookIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -299,6 +315,22 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.TeamWebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.TeamWebhooksTable,
+			Columns: []string{team.TeamWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

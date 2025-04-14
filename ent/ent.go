@@ -27,6 +27,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -102,6 +103,7 @@ func checkColumn(table, column string) error {
 			serviceconfig.Table:      serviceconfig.ValidColumn,
 			team.Table:               team.ValidColumn,
 			user.Table:               user.ValidColumn,
+			webhook.Table:            webhook.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

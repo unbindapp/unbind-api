@@ -17,6 +17,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // ProjectQuery is the builder for querying Project entities.
@@ -29,6 +30,7 @@ type ProjectQuery struct {
 	withTeam               *TeamQuery
 	withEnvironments       *EnvironmentQuery
 	withDefaultEnvironment *EnvironmentQuery
+	withProjectWebhooks    *WebhookQuery
 	modifiers              []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -125,6 +127,28 @@ func (pq *ProjectQuery) QueryDefaultEnvironment() *EnvironmentQuery {
 			sqlgraph.From(project.Table, project.FieldID, selector),
 			sqlgraph.To(environment.Table, environment.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, project.DefaultEnvironmentTable, project.DefaultEnvironmentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProjectWebhooks chains the current query on the "project_webhooks" edge.
+func (pq *ProjectQuery) QueryProjectWebhooks() *WebhookQuery {
+	query := (&WebhookClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(webhook.Table, webhook.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.ProjectWebhooksTable, project.ProjectWebhooksColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -327,6 +351,7 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		withTeam:               pq.withTeam.Clone(),
 		withEnvironments:       pq.withEnvironments.Clone(),
 		withDefaultEnvironment: pq.withDefaultEnvironment.Clone(),
+		withProjectWebhooks:    pq.withProjectWebhooks.Clone(),
 		// clone intermediate query.
 		sql:       pq.sql.Clone(),
 		path:      pq.path,
@@ -364,6 +389,17 @@ func (pq *ProjectQuery) WithDefaultEnvironment(opts ...func(*EnvironmentQuery)) 
 		opt(query)
 	}
 	pq.withDefaultEnvironment = query
+	return pq
+}
+
+// WithProjectWebhooks tells the query-builder to eager-load the nodes that are connected to
+// the "project_webhooks" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithProjectWebhooks(opts ...func(*WebhookQuery)) *ProjectQuery {
+	query := (&WebhookClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withProjectWebhooks = query
 	return pq
 }
 
@@ -445,10 +481,11 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	var (
 		nodes       = []*Project{}
 		_spec       = pq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			pq.withTeam != nil,
 			pq.withEnvironments != nil,
 			pq.withDefaultEnvironment != nil,
+			pq.withProjectWebhooks != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -488,6 +525,13 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	if query := pq.withDefaultEnvironment; query != nil {
 		if err := pq.loadDefaultEnvironment(ctx, query, nodes, nil,
 			func(n *Project, e *Environment) { n.Edges.DefaultEnvironment = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withProjectWebhooks; query != nil {
+		if err := pq.loadProjectWebhooks(ctx, query, nodes,
+			func(n *Project) { n.Edges.ProjectWebhooks = []*Webhook{} },
+			func(n *Project, e *Webhook) { n.Edges.ProjectWebhooks = append(n.Edges.ProjectWebhooks, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -582,6 +626,39 @@ func (pq *ProjectQuery) loadDefaultEnvironment(ctx context.Context, query *Envir
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (pq *ProjectQuery) loadProjectWebhooks(ctx context.Context, query *WebhookQuery, nodes []*Project, init func(*Project), assign func(*Project, *Webhook)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Project)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(webhook.FieldProjectID)
+	}
+	query.Where(predicate.Webhook(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(project.ProjectWebhooksColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ProjectID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "project_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "project_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

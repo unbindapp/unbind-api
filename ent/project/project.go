@@ -39,6 +39,8 @@ const (
 	EdgeEnvironments = "environments"
 	// EdgeDefaultEnvironment holds the string denoting the default_environment edge name in mutations.
 	EdgeDefaultEnvironment = "default_environment"
+	// EdgeProjectWebhooks holds the string denoting the project_webhooks edge name in mutations.
+	EdgeProjectWebhooks = "project_webhooks"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
 	// TeamTable is the table that holds the team relation/edge.
@@ -62,6 +64,13 @@ const (
 	DefaultEnvironmentInverseTable = "environments"
 	// DefaultEnvironmentColumn is the table column denoting the default_environment relation/edge.
 	DefaultEnvironmentColumn = "default_environment_id"
+	// ProjectWebhooksTable is the table that holds the project_webhooks relation/edge.
+	ProjectWebhooksTable = "webhooks"
+	// ProjectWebhooksInverseTable is the table name for the Webhook entity.
+	// It exists in this package in order to avoid circular dependency with the "webhook" package.
+	ProjectWebhooksInverseTable = "webhooks"
+	// ProjectWebhooksColumn is the table column denoting the project_webhooks relation/edge.
+	ProjectWebhooksColumn = "project_id"
 )
 
 // Columns holds all SQL columns for project fields.
@@ -183,6 +192,20 @@ func ByDefaultEnvironmentField(field string, opts ...sql.OrderTermOption) OrderO
 		sqlgraph.OrderByNeighborTerms(s, newDefaultEnvironmentStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByProjectWebhooksCount orders the results by project_webhooks count.
+func ByProjectWebhooksCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newProjectWebhooksStep(), opts...)
+	}
+}
+
+// ByProjectWebhooks orders the results by project_webhooks terms.
+func ByProjectWebhooks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProjectWebhooksStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTeamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -202,5 +225,12 @@ func newDefaultEnvironmentStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DefaultEnvironmentInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, DefaultEnvironmentTable, DefaultEnvironmentColumn),
+	)
+}
+func newProjectWebhooksStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProjectWebhooksInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ProjectWebhooksTable, ProjectWebhooksColumn),
 	)
 }

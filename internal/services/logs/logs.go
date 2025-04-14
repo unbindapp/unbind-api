@@ -122,3 +122,30 @@ func (self *LogsService) validatePermissionsAndParseInputs(ctx context.Context, 
 
 	return team, project, environment, service, nil
 }
+
+func (self *LogsService) validateDeploymentInput(ctx context.Context, deploymentID uuid.UUID, service *ent.Service, environment *ent.Environment, project *ent.Project, team *ent.Team) error {
+	// Validation
+	validDeployment := false
+	var err error
+	if service != nil {
+		if deploymentID != service.ID {
+			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
+		}
+		validDeployment = true
+	} else if environment != nil {
+		validDeployment, err = self.repo.Deployment().ExistsInEnvironment(ctx, deploymentID, environment.ID)
+	} else if project != nil {
+		validDeployment, err = self.repo.Deployment().ExistsInProject(ctx, deploymentID, project.ID)
+	} else if team != nil {
+		validDeployment, err = self.repo.Deployment().ExistsInTeam(ctx, deploymentID, team.ID)
+	}
+
+	if err != nil || !validDeployment {
+		if ent.IsNotFound(err) || !validDeployment {
+			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
+		}
+		return err
+	}
+
+	return nil
+}

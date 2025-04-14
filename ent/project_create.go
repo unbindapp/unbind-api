@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // ProjectCreate is the builder for creating a Project entity.
@@ -157,6 +158,21 @@ func (pc *ProjectCreate) AddEnvironments(e ...*Environment) *ProjectCreate {
 // SetDefaultEnvironment sets the "default_environment" edge to the Environment entity.
 func (pc *ProjectCreate) SetDefaultEnvironment(e *Environment) *ProjectCreate {
 	return pc.SetDefaultEnvironmentID(e.ID)
+}
+
+// AddProjectWebhookIDs adds the "project_webhooks" edge to the Webhook entity by IDs.
+func (pc *ProjectCreate) AddProjectWebhookIDs(ids ...uuid.UUID) *ProjectCreate {
+	pc.mutation.AddProjectWebhookIDs(ids...)
+	return pc
+}
+
+// AddProjectWebhooks adds the "project_webhooks" edges to the Webhook entity.
+func (pc *ProjectCreate) AddProjectWebhooks(w ...*Webhook) *ProjectCreate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return pc.AddProjectWebhookIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -355,6 +371,22 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.DefaultEnvironmentID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.ProjectWebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ProjectWebhooksTable,
+			Columns: []string{project.ProjectWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

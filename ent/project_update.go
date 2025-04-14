@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/team"
+	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
 // ProjectUpdate is the builder for updating Project entities.
@@ -173,6 +174,21 @@ func (pu *ProjectUpdate) SetDefaultEnvironment(e *Environment) *ProjectUpdate {
 	return pu.SetDefaultEnvironmentID(e.ID)
 }
 
+// AddProjectWebhookIDs adds the "project_webhooks" edge to the Webhook entity by IDs.
+func (pu *ProjectUpdate) AddProjectWebhookIDs(ids ...uuid.UUID) *ProjectUpdate {
+	pu.mutation.AddProjectWebhookIDs(ids...)
+	return pu
+}
+
+// AddProjectWebhooks adds the "project_webhooks" edges to the Webhook entity.
+func (pu *ProjectUpdate) AddProjectWebhooks(w ...*Webhook) *ProjectUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return pu.AddProjectWebhookIDs(ids...)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (pu *ProjectUpdate) Mutation() *ProjectMutation {
 	return pu.mutation
@@ -209,6 +225,27 @@ func (pu *ProjectUpdate) RemoveEnvironments(e ...*Environment) *ProjectUpdate {
 func (pu *ProjectUpdate) ClearDefaultEnvironment() *ProjectUpdate {
 	pu.mutation.ClearDefaultEnvironment()
 	return pu
+}
+
+// ClearProjectWebhooks clears all "project_webhooks" edges to the Webhook entity.
+func (pu *ProjectUpdate) ClearProjectWebhooks() *ProjectUpdate {
+	pu.mutation.ClearProjectWebhooks()
+	return pu
+}
+
+// RemoveProjectWebhookIDs removes the "project_webhooks" edge to Webhook entities by IDs.
+func (pu *ProjectUpdate) RemoveProjectWebhookIDs(ids ...uuid.UUID) *ProjectUpdate {
+	pu.mutation.RemoveProjectWebhookIDs(ids...)
+	return pu
+}
+
+// RemoveProjectWebhooks removes "project_webhooks" edges to Webhook entities.
+func (pu *ProjectUpdate) RemoveProjectWebhooks(w ...*Webhook) *ProjectUpdate {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return pu.RemoveProjectWebhookIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -402,6 +439,51 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if pu.mutation.ProjectWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ProjectWebhooksTable,
+			Columns: []string{project.ProjectWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedProjectWebhooksIDs(); len(nodes) > 0 && !pu.mutation.ProjectWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ProjectWebhooksTable,
+			Columns: []string{project.ProjectWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.ProjectWebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ProjectWebhooksTable,
+			Columns: []string{project.ProjectWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(pu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -565,6 +647,21 @@ func (puo *ProjectUpdateOne) SetDefaultEnvironment(e *Environment) *ProjectUpdat
 	return puo.SetDefaultEnvironmentID(e.ID)
 }
 
+// AddProjectWebhookIDs adds the "project_webhooks" edge to the Webhook entity by IDs.
+func (puo *ProjectUpdateOne) AddProjectWebhookIDs(ids ...uuid.UUID) *ProjectUpdateOne {
+	puo.mutation.AddProjectWebhookIDs(ids...)
+	return puo
+}
+
+// AddProjectWebhooks adds the "project_webhooks" edges to the Webhook entity.
+func (puo *ProjectUpdateOne) AddProjectWebhooks(w ...*Webhook) *ProjectUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return puo.AddProjectWebhookIDs(ids...)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (puo *ProjectUpdateOne) Mutation() *ProjectMutation {
 	return puo.mutation
@@ -601,6 +698,27 @@ func (puo *ProjectUpdateOne) RemoveEnvironments(e ...*Environment) *ProjectUpdat
 func (puo *ProjectUpdateOne) ClearDefaultEnvironment() *ProjectUpdateOne {
 	puo.mutation.ClearDefaultEnvironment()
 	return puo
+}
+
+// ClearProjectWebhooks clears all "project_webhooks" edges to the Webhook entity.
+func (puo *ProjectUpdateOne) ClearProjectWebhooks() *ProjectUpdateOne {
+	puo.mutation.ClearProjectWebhooks()
+	return puo
+}
+
+// RemoveProjectWebhookIDs removes the "project_webhooks" edge to Webhook entities by IDs.
+func (puo *ProjectUpdateOne) RemoveProjectWebhookIDs(ids ...uuid.UUID) *ProjectUpdateOne {
+	puo.mutation.RemoveProjectWebhookIDs(ids...)
+	return puo
+}
+
+// RemoveProjectWebhooks removes "project_webhooks" edges to Webhook entities.
+func (puo *ProjectUpdateOne) RemoveProjectWebhooks(w ...*Webhook) *ProjectUpdateOne {
+	ids := make([]uuid.UUID, len(w))
+	for i := range w {
+		ids[i] = w[i].ID
+	}
+	return puo.RemoveProjectWebhookIDs(ids...)
 }
 
 // Where appends a list predicates to the ProjectUpdate builder.
@@ -817,6 +935,51 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(environment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.ProjectWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ProjectWebhooksTable,
+			Columns: []string{project.ProjectWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedProjectWebhooksIDs(); len(nodes) > 0 && !puo.mutation.ProjectWebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ProjectWebhooksTable,
+			Columns: []string{project.ProjectWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.ProjectWebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.ProjectWebhooksTable,
+			Columns: []string{project.ProjectWebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

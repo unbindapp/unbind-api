@@ -387,6 +387,37 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// WebhooksColumns holds the columns for the "webhooks" table.
+	WebhooksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "url", Type: field.TypeString},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"team", "project"}},
+		{Name: "events", Type: field.TypeJSON},
+		{Name: "project_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "team_id", Type: field.TypeUUID},
+	}
+	// WebhooksTable holds the schema information for the "webhooks" table.
+	WebhooksTable = &schema.Table{
+		Name:       "webhooks",
+		Columns:    WebhooksColumns,
+		PrimaryKey: []*schema.Column{WebhooksColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "webhooks_projects_project_webhooks",
+				Columns:    []*schema.Column{WebhooksColumns[6]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "webhooks_teams_team_webhooks",
+				Columns:    []*schema.Column{WebhooksColumns[7]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// GroupPermissionsColumns holds the columns for the "group_permissions" table.
 	GroupPermissionsColumns = []*schema.Column{
 		{Name: "group_id", Type: field.TypeUUID},
@@ -479,6 +510,7 @@ var (
 		ServiceConfigsTable,
 		TeamsTable,
 		UsersTable,
+		WebhooksTable,
 		GroupPermissionsTable,
 		UserGroupsTable,
 		UserTeamsTable,
@@ -542,6 +574,11 @@ func init() {
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
+	}
+	WebhooksTable.ForeignKeys[0].RefTable = ProjectsTable
+	WebhooksTable.ForeignKeys[1].RefTable = TeamsTable
+	WebhooksTable.Annotation = &entsql.Annotation{
+		Table: "webhooks",
 	}
 	GroupPermissionsTable.ForeignKeys[0].RefTable = GroupsTable
 	GroupPermissionsTable.ForeignKeys[1].RefTable = PermissionsTable

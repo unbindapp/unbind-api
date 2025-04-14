@@ -38,6 +38,10 @@ func (Team) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("projects", Project.Type),
 		edge.From("members", User.Type).Ref("teams"),
+		// O2M edge for webhooks
+		edge.To("team_webhooks", Webhook.Type).Annotations(
+			entsql.Annotation{OnDelete: entsql.Cascade},
+		),
 	}
 }
 

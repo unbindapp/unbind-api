@@ -18,6 +18,7 @@ import (
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
 	user_repo "github.com/unbindapp/unbind-api/internal/repositories/user"
+	webhook_repo "github.com/unbindapp/unbind-api/internal/repositories/webhook"
 )
 
 // RepositoriesInterface ...
@@ -46,5 +47,7 @@ type RepositoriesInterface interface {
 	Deployment() deployment_repo.DeploymentRepositoryInterface
 	// System returns the System repository
 	System() system_repo.SystemRepositoryInterface
+	// Webhooks returns the Webhook repository
+	Webhooks() webhook_repo.WebhookRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }
