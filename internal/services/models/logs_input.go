@@ -49,8 +49,9 @@ type LogStreamInput struct {
 	EnvironmentID uuid.UUID `query:"environment_id" required:"false"`
 	ServiceID     uuid.UUID `query:"service_id" required:"false"`
 	DeploymentID  uuid.UUID `query:"deployment_id" required:"false"`
+	Start         time.Time `query:"start"`
 	Since         string    `query:"since" default:"10m" doc:"Duration to look back (e.g., '1h', '30m')"`
-	Tail          int64     `query:"tail" default:"100" doc:"Number of lines to get from the end"`
+	Limit         int64     `query:"limit" default:"100" doc:"Number of lines to get from the end"`
 	Timestamps    bool      `query:"timestamps" default:"true" doc:"Include timestamps in logs"`
 	Filters       string    `query:"filters" doc:"Optional logql filter string"`
 }

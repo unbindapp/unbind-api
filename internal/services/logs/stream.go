@@ -72,9 +72,10 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 	lokiLogOptions := loki.LokiLogStreamOptions{
 		Label:      label,
 		LabelValue: labelValue,
-		Limit:      int(input.Tail),
+		Limit:      int(input.Limit),
 		RawFilter:  input.Filters,
 		Since:      since,
+		Start:      input.Start,
 	}
 
 	// // Start a single stream for all pods

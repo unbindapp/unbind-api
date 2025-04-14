@@ -44,8 +44,8 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	q.Set("query", queryStr)
 
 	// Set time range
-	if opts.SinceTime != nil {
-		q.Set("start", strconv.FormatInt(opts.SinceTime.UnixNano(), 10))
+	if !opts.Start.IsZero() {
+		q.Set("start", strconv.FormatInt(opts.Start.UnixNano(), 10))
 	} else if opts.Since > 0 {
 		startTime := time.Now().Add(-opts.Since)
 		q.Set("start", strconv.FormatInt(startTime.UnixNano(), 10))

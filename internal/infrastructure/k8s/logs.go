@@ -41,9 +41,9 @@ func (self *KubeClient) StreamPodLogs(
 	if opts.Since > 0 {
 		podLogOptions.SinceSeconds = utils.ToPtr(int64(opts.Since.Seconds()))
 	}
-	if opts.SinceTime != nil {
+	if !opts.Start.IsZero() {
 		podLogOptions.SinceTime = &metav1.Time{
-			Time: *opts.SinceTime,
+			Time: opts.Start,
 		}
 	}
 	if opts.Limit > 0 {

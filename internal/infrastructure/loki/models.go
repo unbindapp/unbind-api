@@ -25,7 +25,7 @@ type LokiLogStreamOptions struct {
 	RawFilter  string        // Raw logql filter string
 	Since      time.Duration // Get logs from this time ago
 	Limit      int           // Number of log lines to get
-	SinceTime  *time.Time    // Get logs from a specific time
+	Start      time.Time     // Get logs from a specific time
 }
 
 // LokiLogOptions represents options for querying logs from Loki query and query_range APIs
