@@ -1,8 +1,9 @@
 package schema
 
 import (
-	"github.com/danielgtaylor/huma/v2"
 	"reflect"
+
+	"github.com/danielgtaylor/huma/v2"
 )
 
 // Enums
@@ -29,6 +30,7 @@ func (s WebhookTarget) Values() (kinds []string) {
 }
 
 // Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
 func (u WebhookTarget) Schema(r huma.Registry) *huma.Schema {
 	if r.Map()["WebhookTarget"] == nil {
 		schemaRef := r.Schema(reflect.TypeOf(""), true, "WebhookTarget")
@@ -63,6 +65,7 @@ func (s WebhookType) Values() (kinds []string) {
 }
 
 // Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
 func (u WebhookType) Schema(r huma.Registry) *huma.Schema {
 	if r.Map()["WebhookType"] == nil {
 		schemaRef := r.Schema(reflect.TypeOf(""), true, "WebhookType")
@@ -75,121 +78,55 @@ func (u WebhookType) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/WebhookType"}
 }
 
-// Project webhook events
-type WebhookProjectEvent string
+// Webhook events
+type WebhookEvent string
 
 const (
-	WebhookProjectEventServiceCreated      WebhookProjectEvent = "service.created"
-	WebhookProjectEventServiceUpdated      WebhookProjectEvent = "service.updated"
-	WebhookProjectEventServiceDeleted      WebhookProjectEvent = "service.deleted"
-	WebhookProjectEventDeploymentQueued    WebhookProjectEvent = "deployment.queued"
-	WebhookProjectEventDeploymentBuilding  WebhookProjectEvent = "deployment.building"
-	WebhookProjectEventDeploymentSucceeded WebhookProjectEvent = "deployment.succeeded"
-	WebhookProjectEventDeploymentFailed    WebhookProjectEvent = "deployment.failed"
-	WebhookProjectEventDeploymentCancelled WebhookProjectEvent = "deployment.cancelled"
+	WebhookEventProjectCreated      WebhookEvent = "project.created"
+	WebhookEventProjectUpdated      WebhookEvent = "project.updated"
+	WebhookEventProjectDeleted      WebhookEvent = "project.deleted"
+	WebhookEventServiceCreated      WebhookEvent = "service.created"
+	WebhookEventServiceUpdated      WebhookEvent = "service.updated"
+	WebhookEventServiceDeleted      WebhookEvent = "service.deleted"
+	WebhookEventDeploymentQueued    WebhookEvent = "deployment.queued"
+	WebhookEventDeploymentBuilding  WebhookEvent = "deployment.building"
+	WebhookEventDeploymentSucceeded WebhookEvent = "deployment.succeeded"
+	WebhookEventDeploymentFailed    WebhookEvent = "deployment.failed"
+	WebhookEventDeploymentCancelled WebhookEvent = "deployment.cancelled"
 )
 
-var allWebhookProjectEvents = []WebhookProjectEvent{
-	WebhookProjectEventServiceCreated,
-	WebhookProjectEventServiceUpdated,
-	WebhookProjectEventServiceDeleted,
-	WebhookProjectEventDeploymentQueued,
-	WebhookProjectEventDeploymentBuilding,
-	WebhookProjectEventDeploymentSucceeded,
-	WebhookProjectEventDeploymentFailed,
-	WebhookProjectEventDeploymentCancelled,
+var allWebhookEvents = []WebhookEvent{
+	WebhookEventProjectCreated,
+	WebhookEventProjectUpdated,
+	WebhookEventProjectDeleted,
+	WebhookEventServiceCreated,
+	WebhookEventServiceUpdated,
+	WebhookEventServiceDeleted,
+	WebhookEventDeploymentQueued,
+	WebhookEventDeploymentBuilding,
+	WebhookEventDeploymentSucceeded,
+	WebhookEventDeploymentFailed,
+	WebhookEventDeploymentCancelled,
 }
 
 // Values provides list valid values for Enum.
-func (s WebhookProjectEvent) Values() (kinds []string) {
-	for _, s := range allWebhookProjectEvents {
+func (s WebhookEvent) Values() (kinds []string) {
+	for _, s := range allWebhookEvents {
 		kinds = append(kinds, string(s))
 	}
 	return
 }
 
 // Register enum in OpenAPI specification
-func (u WebhookProjectEvent) Schema(r huma.Registry) *huma.Schema {
-	if r.Map()["WebhookProjectEvent"] == nil {
-		schemaRef := r.Schema(reflect.TypeOf(""), true, "WebhookProjectEvent")
-		schemaRef.Title = "WebhookProjectEvent"
-		for _, v := range allWebhookProjectEvents {
+// https://github.com/danielgtaylor/huma/issues/621
+func (u WebhookEvent) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["WebhookEvent"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "WebhookEvent")
+		schemaRef.Title = "WebhookEvent"
+		for _, v := range allWebhookEvents {
 			schemaRef.Enum = append(schemaRef.Enum, string(v))
 		}
-		r.Map()["WebhookProjectEvent"] = schemaRef
+		r.Map()["WebhookEvent"] = schemaRef
 	}
-	return &huma.Schema{Ref: "#/components/schemas/WebhookProjectEvent"}
-}
-
-// Team webhook events
-type WebhookTeamEvent string
-
-const (
-	WebhookTeamEventProjectCreated WebhookTeamEvent = "project.created"
-	WebhookTeamEventProjectUpdated WebhookTeamEvent = "project.updated"
-	WebhookTeamEventProjectDeleted WebhookTeamEvent = "project.deleted"
-)
-
-var allWebhookTeamEvents = []WebhookTeamEvent{
-	WebhookTeamEventProjectCreated,
-	WebhookTeamEventProjectUpdated,
-	WebhookTeamEventProjectDeleted,
-}
-
-// Values provides list valid values for Enum.
-func (s WebhookTeamEvent) Values() (kinds []string) {
-	for _, s := range allWebhookTeamEvents {
-		kinds = append(kinds, string(s))
-	}
-	return
-}
-
-// Register enum in OpenAPI specification
-func (u WebhookTeamEvent) Schema(r huma.Registry) *huma.Schema {
-	if r.Map()["WebhookTeamEvent"] == nil {
-		schemaRef := r.Schema(reflect.TypeOf(""), true, "WebhookTeamEvent")
-		schemaRef.Title = "WebhookTeamEvent"
-		for _, v := range allWebhookTeamEvents {
-			schemaRef.Enum = append(schemaRef.Enum, string(v))
-		}
-		r.Map()["WebhookTeamEvent"] = schemaRef
-	}
-	return &huma.Schema{Ref: "#/components/schemas/WebhookTeamEvent"}
-}
-
-// WebhookEventsOneOf represents either project events or team events
-type WebhookEventsOneOf struct {
-	// This field is just a placeholder for Go's type system
-	// The actual schema will be defined in the Schema method
-	Events []string `json:"events"`
-}
-
-// Schema creates a oneOf schema for webhook events
-func (w WebhookEventsOneOf) Schema(r huma.Registry) *huma.Schema {
-	projectEventArraySchema := &huma.Schema{
-		Type: "array",
-		Items: &huma.Schema{
-			Ref: "#/components/schemas/WebhookProjectEvent",
-		},
-	}
-
-	teamEventArraySchema := &huma.Schema{
-		Type: "array",
-		Items: &huma.Schema{
-			Ref: "#/components/schemas/WebhookTeamEvent",
-		},
-	}
-
-	return &huma.Schema{
-		Type: "object",
-		Properties: map[string]*huma.Schema{
-			"events": {
-				OneOf: []*huma.Schema{
-					projectEventArraySchema,
-					teamEventArraySchema,
-				},
-			},
-		},
-		Required: []string{"events"},
-	}
+	return &huma.Schema{Ref: "#/components/schemas/WebhookEvent"}
 }
