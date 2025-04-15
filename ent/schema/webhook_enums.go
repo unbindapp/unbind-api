@@ -10,14 +10,16 @@ import (
 type WebhookTarget string
 
 const (
-	WebhookTargetDiscord WebhookTarget = "discord"
-	WebhookTargetSlack   WebhookTarget = "slack"
-	WebhookTargetOther   WebhookTarget = "other"
+	WebhookTargetDiscord  WebhookTarget = "discord"
+	WebhookTargetSlack    WebhookTarget = "slack"
+	WebhookTargetTelegram WebhookTarget = "telegram"
+	WebhookTargetOther    WebhookTarget = "other"
 )
 
 var allWebhookTargets = []WebhookTarget{
 	WebhookTargetDiscord,
 	WebhookTargetSlack,
+	WebhookTargetTelegram,
 	WebhookTargetOther,
 }
 

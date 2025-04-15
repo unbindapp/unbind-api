@@ -16,27 +16,27 @@ import (
 
 func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema.WebhookEvent, data WebookData, url string) error {
 	// Convert to discord format
-	fields := make([]Field, len(data.Fields))
-	embed := Embed{
+	fields := make([]DiscordField, len(data.Fields))
+	embed := DiscordEmbed{
 		Title:       &data.Title,
 		Url:         &data.Url,
 		Description: &data.Description,
-		Color:       level.DiscordColor(),
-		Footer: &Footer{
+		Color:       level.DecimalColor(),
+		DiscordFooter: &DiscordFooter{
 			Text: utils.ToPtr(fmt.Sprintf("%s: %s", event, time.Now().Format(time.RFC1123))),
 		},
 	}
 	for i, entry := range data.Fields {
-		fields[i] = Field{
+		fields[i] = DiscordField{
 			Name:  &entry.Name,
 			Value: &entry.Value,
 		}
 	}
-	embed.Fields = &fields
+	embed.DiscordFields = &fields
 
 	// Execute
-	msg := Message{
-		Embeds: &[]Embed{
+	msg := DiscordMessage{
+		DiscordEmbeds: &[]DiscordEmbed{
 			embed,
 		},
 	}
@@ -80,47 +80,47 @@ func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema
 	return nil
 }
 
-type Message struct {
+type DiscordMessage struct {
 	Username        *string          `json:"username,omitempty"`
 	AvatarUrl       *string          `json:"avatar_url,omitempty"`
 	Content         *string          `json:"content,omitempty"`
-	Embeds          *[]Embed         `json:"embeds,omitempty"`
+	DiscordEmbeds   *[]DiscordEmbed  `json:"embeds,omitempty"`
 	AllowedMentions *AllowedMentions `json:"allowed_mentions,omitempty"`
 }
 
-type Embed struct {
-	Title       *string    `json:"title,omitempty"`
-	Url         *string    `json:"url,omitempty"`
-	Description *string    `json:"description,omitempty"`
-	Color       *string    `json:"color,omitempty"`
-	Author      *Author    `json:"author,omitempty"`
-	Fields      *[]Field   `json:"fields,omitempty"`
-	Thumbnail   *Thumbnail `json:"thumbnail,omitempty"`
-	Image       *Image     `json:"image,omitempty"`
-	Footer      *Footer    `json:"footer,omitempty"`
+type DiscordEmbed struct {
+	Title            *string           `json:"title,omitempty"`
+	Url              *string           `json:"url,omitempty"`
+	Description      *string           `json:"description,omitempty"`
+	Color            *string           `json:"color,omitempty"`
+	DiscordAuthor    *DiscordAuthor    `json:"author,omitempty"`
+	DiscordFields    *[]DiscordField   `json:"fields,omitempty"`
+	DiscordThumbnail *DiscordThumbnail `json:"thumbnail,omitempty"`
+	DiscordImage     *DiscordImage     `json:"image,omitempty"`
+	DiscordFooter    *DiscordFooter    `json:"footer,omitempty"`
 }
 
-type Author struct {
+type DiscordAuthor struct {
 	Name    *string `json:"name,omitempty"`
 	Url     *string `json:"url,omitempty"`
 	IconUrl *string `json:"icon_url,omitempty"`
 }
 
-type Field struct {
+type DiscordField struct {
 	Name   *string `json:"name,omitempty"`
 	Value  *string `json:"value,omitempty"`
 	Inline *bool   `json:"inline,omitempty"`
 }
 
-type Thumbnail struct {
+type DiscordThumbnail struct {
 	Url *string `json:"url,omitempty"`
 }
 
-type Image struct {
+type DiscordImage struct {
 	Url *string `json:"url,omitempty"`
 }
 
-type Footer struct {
+type DiscordFooter struct {
 	Text    *string `json:"text,omitempty"`
 	IconUrl *string `json:"icon_url,omitempty"`
 }
