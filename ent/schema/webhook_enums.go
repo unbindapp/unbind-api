@@ -119,7 +119,7 @@ func (s WebhookEvent) Values() (kinds []string) {
 
 // Schema registers the WebhookEvent schema in the OpenAPI specification
 func (u WebhookEvent) Schema(r huma.Registry) *huma.Schema {
-	// Register the base WebhookEvent enum type first
+	// First register the base WebhookEvent enum type
 	if r.Map()["WebhookEvent"] == nil {
 		schemaRef := r.Schema(reflect.TypeOf(""), true, "WebhookEvent")
 		schemaRef.Title = "WebhookEvent"
@@ -129,7 +129,7 @@ func (u WebhookEvent) Schema(r huma.Registry) *huma.Schema {
 		r.Map()["WebhookEvent"] = schemaRef
 	}
 
-	// Register WebhookTeamEvent schema for a single team event
+	// Register WebhookTeamEvent schema with just team events
 	if r.Map()["WebhookTeamEvent"] == nil {
 		teamSchema := &huma.Schema{
 			Title: "WebhookTeamEvent",
@@ -143,7 +143,7 @@ func (u WebhookEvent) Schema(r huma.Registry) *huma.Schema {
 		r.Map()["WebhookTeamEvent"] = teamSchema
 	}
 
-	// Register WebhookProjectEvent schema for a single project event
+	// Register WebhookProjectEvent schema with just project events
 	if r.Map()["WebhookProjectEvent"] == nil {
 		projectEvents := []interface{}{
 			string(WebhookEventServiceCreated),
@@ -164,30 +164,11 @@ func (u WebhookEvent) Schema(r huma.Registry) *huma.Schema {
 		r.Map()["WebhookProjectEvent"] = projectSchema
 	}
 
-	// Register a single WebhookEventItem as a oneOf schema
-	if r.Map()["WebhookEventItem"] == nil {
-		webhookEventItemSchema := &huma.Schema{
-			Title: "WebhookEventItem",
-			OneOf: []*huma.Schema{
-				{Ref: "#/components/schemas/WebhookTeamEvent"},
-				{Ref: "#/components/schemas/WebhookProjectEvent"},
-			},
-		}
-		r.Map()["WebhookEventItem"] = webhookEventItemSchema
+	// Return a oneOf reference directly without creating an array
+	return &huma.Schema{
+		OneOf: []*huma.Schema{
+			{Ref: "#/components/schemas/WebhookTeamEvent"},
+			{Ref: "#/components/schemas/WebhookProjectEvent"},
+		},
 	}
-
-	// Register WebhookEvents as an array of WebhookEventItem
-	if r.Map()["WebhookEvents"] == nil {
-		webhookEventsSchema := &huma.Schema{
-			Title: "WebhookEvents",
-			Type:  "array",
-			Items: &huma.Schema{
-				Ref: "#/components/schemas/WebhookEventItem",
-			},
-		}
-		r.Map()["WebhookEvents"] = webhookEventsSchema
-	}
-
-	// Return reference to WebhookEvents schema (array of oneOf items)
-	return &huma.Schema{Ref: "#/components/schemas/WebhookEvents"}
 }
