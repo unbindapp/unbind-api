@@ -26,96 +26,100 @@ import (
 
 func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksService *webhooks_service.WebhooksService, tx repository.TxInterface, repo *repositories.Repositories, deploymentID uuid.UUID) error {
 	_, err := repo.Deployment().MarkSucceeded(ctx, tx, deploymentID, time.Now())
+	if err != nil {
+		return err
+	}
 
 	// Trigger webhook
-	go func() {
-		event := schema.WebhookEventDeploymentSucceeded
-		level := webhooks_service.WebhookLevelInfo
+	event := schema.WebhookEventDeploymentSucceeded
+	level := webhooks_service.WebhookLevelInfo
 
-		// Get service with edges
-		serviceID, _ := uuid.Parse(cfg.ServiceRef)
-		service, err := repo.Service().GetByID(context.Background(), serviceID)
-		if err != nil {
-			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
-			return
-		}
+	// Get service with edges
+	serviceID, _ := uuid.Parse(cfg.ServiceRef)
+	service, err := repo.Service().GetByID(context.Background(), serviceID)
+	if err != nil {
+		log.Warnf("Failed to get service for success webhook %s: %v", service.ID.String(), err)
+		return nil
+	}
 
-		// Construct URL
-		url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
-		data := webhooks_service.WebookData{
-			Title:       "Deployment Succeeded",
-			Url:         url,
-			Description: fmt.Sprintf("A deployment has succeeded for %s", service.DisplayName),
-			Fields: []webhooks_service.WebhookDataField{
-				{
-					Name:  "Service Type",
-					Value: string(service.Edges.ServiceConfig.Type),
-				},
-				{
-					Name:  "Environment",
-					Value: service.Edges.Environment.DisplayName,
-				},
-				{
-					Name:  "Builder",
-					Value: string(service.Edges.ServiceConfig.Builder),
-				},
+	// Construct URL
+	url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
+	data := webhooks_service.WebookData{
+		Title:       "Deployment Succeeded",
+		Url:         url,
+		Description: fmt.Sprintf("A deployment has succeeded for %s", service.DisplayName),
+		Fields: []webhooks_service.WebhookDataField{
+			{
+				Name:  "Service Type",
+				Value: string(service.Edges.ServiceConfig.Type),
 			},
-		}
+			{
+				Name:  "Environment",
+				Value: service.Edges.Environment.DisplayName,
+			},
+			{
+				Name:  "Builder",
+				Value: string(service.Edges.ServiceConfig.Builder),
+			},
+		},
+	}
 
-		if err := webhooksService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
-			log.Errorf("Failed to trigger webhook %s: %v", event, err)
-		}
-	}()
+	if err := webhooksService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
+		log.Warnf("Failed to trigger webhook %s: %v", event, err)
+	}
 
-	return err
+	return nil
 }
 
 func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksService *webhooks_service.WebhooksService, repo *repositories.Repositories, reason string, deploymentID uuid.UUID) error {
 	_, err := repo.Deployment().MarkFailed(ctx, nil, deploymentID, reason, time.Now())
+	if err != nil {
+		return err
+	}
+
 	// Trigger webhook
-	go func() {
-		event := schema.WebhookEventDeploymentFailed
-		level := webhooks_service.WebhookLevelError
+	event := schema.WebhookEventDeploymentFailed
+	level := webhooks_service.WebhookLevelError
 
-		// Get service with edges
-		serviceID, _ := uuid.Parse(cfg.ServiceRef)
-		service, err := repo.Service().GetByID(context.Background(), serviceID)
-		if err != nil {
-			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
-			return
-		}
+	// Get service with edges
+	serviceID, _ := uuid.Parse(cfg.ServiceRef)
+	service, err := repo.Service().GetByID(context.Background(), serviceID)
+	if err != nil {
+		log.Warnf("Failed to get service %s: %v", service.ID.String(), err)
+		return nil
+	}
 
-		// Construct URL
-		url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
-		data := webhooks_service.WebookData{
-			Title:       "Deployment Failed",
-			Url:         url,
-			Description: fmt.Sprintf("A build has failed for %s", service.DisplayName),
-			Fields: []webhooks_service.WebhookDataField{
-				{
-					Name:  "Service Type",
-					Value: string(service.Edges.ServiceConfig.Type),
-				},
-				{
-					Name:  "Environment",
-					Value: service.Edges.Environment.DisplayName,
-				},
-				{
-					Name:  "Builder",
-					Value: string(service.Edges.ServiceConfig.Builder),
-				},
-				{
-					Name:  "Error message",
-					Value: reason,
-				},
+	// Construct URL
+	url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
+	data := webhooks_service.WebookData{
+		Title:       "Deployment Failed",
+		Url:         url,
+		Description: fmt.Sprintf("A build has failed for %s", service.DisplayName),
+		Fields: []webhooks_service.WebhookDataField{
+			{
+				Name:  "Service Type",
+				Value: string(service.Edges.ServiceConfig.Type),
 			},
-		}
+			{
+				Name:  "Environment",
+				Value: service.Edges.Environment.DisplayName,
+			},
+			{
+				Name:  "Builder",
+				Value: string(service.Edges.ServiceConfig.Builder),
+			},
+			{
+				Name:  "Error message",
+				Value: reason,
+			},
+		},
+	}
 
-		if err := webhooksService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
-			log.Errorf("Failed to trigger webhook %s: %v", event, err)
-		}
-	}()
-	return err
+	if err := webhooksService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
+		log.Warnf("Failed to trigger webhook %s: %v", event, err)
+	}
+
+	return nil
 }
 
 func main() {
