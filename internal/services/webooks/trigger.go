@@ -55,7 +55,7 @@ func (self *WebhooksService) TriggerWebhooks(ctx context.Context, level WebhookL
 
 		switch target {
 		case schema.WebhookTargetDiscord:
-			return self.sendDiscordWebhook(level, event, message)
+			return self.sendDiscordWebhook(level, event, message, webhook.URL)
 		}
 	}
 

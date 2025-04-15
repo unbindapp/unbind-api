@@ -13,7 +13,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema.WebhookEvent, data WebookData) error {
+func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema.WebhookEvent, data WebookData, url string) error {
 	// Convert to discord format
 	fields := make([]Field, len(data.Fields))
 	embed := Embed{
@@ -48,7 +48,7 @@ func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, data.Url, payload)
+	req, err := http.NewRequest(http.MethodPost, url, payload)
 	if err != nil {
 		log.Errorf("Failed to create discord webhook request: %v", err)
 	}
