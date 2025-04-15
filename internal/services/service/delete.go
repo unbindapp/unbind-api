@@ -93,7 +93,7 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service",
-					Value: service.Name,
+					Value: service.DisplayName,
 				},
 				{
 					Name:  "Environment",
