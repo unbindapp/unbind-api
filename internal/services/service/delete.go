@@ -97,7 +97,7 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Value: service.Edges.Environment.DisplayName,
 				},
 			},
 		}

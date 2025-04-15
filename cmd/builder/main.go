@@ -53,7 +53,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Value: service.Edges.Environment.DisplayName,
 				},
 				{
 					Name:  "Builder",
@@ -98,7 +98,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Value: service.Edges.Environment.DisplayName,
 				},
 				{
 					Name:  "Builder",
@@ -197,7 +197,7 @@ func main() {
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Value: service.Edges.Environment.DisplayName,
 				},
 				{
 					Name:  "Builder",

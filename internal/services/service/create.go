@@ -429,7 +429,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Value: service.Edges.Environment.DisplayName,
 				},
 				{
 					Name:  "Service Type",

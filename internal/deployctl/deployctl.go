@@ -337,7 +337,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Value: service.Edges.Environment.DisplayName,
 				},
 				{
 					Name:  "Builder",
@@ -412,7 +412,7 @@ func (self *DeploymentController) cancelExistingJobs(ctx context.Context, servic
 					},
 					{
 						Name:  "Environment",
-						Value: service.Edges.Environment.Name,
+						Value: service.Edges.Environment.DisplayName,
 					},
 					{
 						Name:  "Builder",
