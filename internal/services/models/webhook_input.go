@@ -10,7 +10,7 @@ type WebhookCreateInput struct {
 	TeamID    uuid.UUID             `json:"team_id" validate:"required,uuid4" required:"true"`
 	ProjectID *uuid.UUID            `json:"project_id,omitempty" validate:"omitempty,uuid4" required:"false" doc:"required if type is project"`
 	URL       string                `json:"url" validate:"required,url" required:"true"`
-	Events    []schema.WebhookEvent `json:"events" validate:"required" required:"true"`
+	Events    []schema.WebhookEvent `json:"events" validate:"required" required:"true" nullable:"false"`
 }
 
 type WebhookUpdateInput struct {
