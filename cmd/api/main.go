@@ -19,6 +19,7 @@ import (
 	deployments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/deployments"
 	environments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/environments"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
+	instances_handler "github.com/unbindapp/unbind-api/internal/api/handlers/instances"
 	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
 	metrics_handler "github.com/unbindapp/unbind-api/internal/api/handlers/metrics"
@@ -44,6 +45,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
+	instance_service "github.com/unbindapp/unbind-api/internal/services/instances"
 	logs_service "github.com/unbindapp/unbind-api/internal/services/logs"
 	metric_service "github.com/unbindapp/unbind-api/internal/services/metrics"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
@@ -183,6 +185,8 @@ func startAPI(cfg *config.Config) {
 	deploymentService := deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier)
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
 	metricsService := metric_service.NewMetricService(promClient, repo)
+	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
+
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 
 	// Create OAuth2 config
@@ -218,6 +222,7 @@ func startAPI(cfg *config.Config) {
 		SystemService:        systemService,
 		MetricsService:       metricsService,
 		WebhooksService:      webhooksService,
+		InstanceService:      instanceService,
 	}
 
 	// New chi router
@@ -419,6 +424,15 @@ func startAPI(cfg *config.Config) {
 		next(op)
 	})
 	unbindwebhooks_handler.RegisterHandlers(srvImpl, unbindwebhooksGroup)
+
+	// /instances group
+	instancesGroup := huma.NewGroup(api, "/instances")
+	instancesGroup.UseMiddleware(mw.Authenticate)
+	instancesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+		op.Tags = []string{"Instances"}
+		next(op)
+	})
+	instances_handler.RegisterHandlers(srvImpl, instancesGroup)
 
 	// Start the server
 	addr := ":8089"

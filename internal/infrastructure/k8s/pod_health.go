@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -24,6 +25,11 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 
 	// Extract container status information for each pod
 	for _, pod := range pods.Items {
+		serviceID, _ := uuid.Parse(pod.Labels["unbind-service"])
+		environmentID, _ := uuid.Parse(pod.Labels["unbind-environment"])
+		projectID, _ := uuid.Parse(pod.Labels["unbind-project"])
+		teamID, _ := uuid.Parse(pod.Labels["unbind-team"])
+
 		podStatus := PodContainerStatus{
 			Name:           pod.Name,
 			Namespace:      pod.Namespace,
@@ -31,6 +37,10 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 			PodIP:          pod.Status.PodIP,
 			Containers:     make([]ContainerStatus, 0, len(pod.Status.ContainerStatuses)),
 			InitContainers: make([]ContainerStatus, 0, len(pod.Status.InitContainerStatuses)),
+			TeamID:         teamID,
+			ProjectID:      projectID,
+			EnvironmentID:  environmentID,
+			ServiceID:      serviceID,
 		}
 
 		if pod.Status.StartTime != nil {
@@ -150,6 +160,10 @@ type PodContainerStatus struct {
 	HasCrashingContainers bool              `json:"hasCrashingContainers"`
 	Containers            []ContainerStatus `json:"containers" nullable:"false"`
 	InitContainers        []ContainerStatus `json:"initContainers" nullable:"false"`
+	TeamID                uuid.UUID         `json:"team_id"`
+	ProjectID             uuid.UUID         `json:"project_id"`
+	EnvironmentID         uuid.UUID         `json:"environment_id"`
+	ServiceID             uuid.UUID         `json:"service_id"`
 }
 
 // * Enums

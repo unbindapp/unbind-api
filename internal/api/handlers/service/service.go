@@ -97,17 +97,6 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.GetDatabaseDefinition,
 	)
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "get-containers",
-			Summary:     "Get Containers",
-			Description: "Get all containers for a service",
-			Path:        "/containers",
-			Method:      http.MethodGet,
-		},
-		handlers.GetContainers,
-	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {
