@@ -325,7 +325,15 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		}
 
 		// Construct URL
-		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+job.ID.String())
+		basePath, _ := utils.JoinURLPaths(
+			self.cfg.ExternalUIUrl,
+			service.Edges.Environment.Edges.Project.Edges.Team.ID.String(),
+			"project",
+			service.Edges.Environment.Edges.Project.ID.String(),
+		)
+		url := basePath + "?environment=" + service.EnvironmentID.String() +
+			"&service=" + service.ID.String() +
+			"&deployment=" + job.ID.String()
 		data := webhooks_service.WebookData{
 			Title:       "Deployment Queued",
 			Url:         url,

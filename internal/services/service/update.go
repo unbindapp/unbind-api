@@ -340,7 +340,14 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		// Construct URL
-		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, input.TeamID.String(), "project", input.ProjectID.String(), "?environment="+input.EnvironmentID.String(), "&service="+service.ID.String())
+		basePath, _ := utils.JoinURLPaths(
+			self.cfg.ExternalUIUrl,
+			input.TeamID.String(),
+			"project",
+			input.ProjectID.String(),
+		)
+		url := basePath + "?environment=" + input.EnvironmentID.String() +
+			"&service=" + service.ID.String()
 		// Get user
 		user, err := self.repo.User().GetByID(context.Background(), requesterUserID)
 		if err != nil {

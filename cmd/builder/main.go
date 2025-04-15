@@ -43,7 +43,16 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 	}
 
 	// Construct URL
-	url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
+	basePath, _ := utils.JoinURLPaths(
+		cfg.ExternalUIUrl,
+		service.Edges.Environment.Edges.Project.Edges.Team.ID.String(),
+		"project",
+		service.Edges.Environment.Edges.Project.ID.String(),
+	)
+	url := basePath + "?environment=" + service.EnvironmentID.String() +
+		"&service=" + service.ID.String() +
+		"&deployment=" + cfg.ServiceDeploymentID.String()
+
 	data := webhooks_service.WebookData{
 		Title:       "Deployment Succeeded",
 		Url:         url,
@@ -90,7 +99,15 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 	}
 
 	// Construct URL
-	url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
+	basePath, _ := utils.JoinURLPaths(
+		cfg.ExternalUIUrl,
+		service.Edges.Environment.Edges.Project.Edges.Team.ID.String(),
+		"project",
+		service.Edges.Environment.Edges.Project.ID.String(),
+	)
+	url := basePath + "?environment=" + service.EnvironmentID.String() +
+		"&service=" + service.ID.String() +
+		"&deployment=" + cfg.ServiceDeploymentID.String()
 	data := webhooks_service.WebookData{
 		Title:       "Deployment Failed",
 		Url:         url,
