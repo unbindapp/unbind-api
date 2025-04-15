@@ -93,8 +93,7 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Project Updated",
 			Url:         url,
-			Description: fmt.Sprintf("A project has been updated in team %s", project.Edges.Team.DisplayName),
-			Username:    user.Email,
+			Description: fmt.Sprintf("A project has been updated in team %s by %s", project.Edges.Team.DisplayName, user.Email),
 			Fields:      []webhooks_service.WebhookDataField{},
 		}
 

@@ -421,8 +421,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Service Created",
 			Url:         url,
-			Description: fmt.Sprintf("A new service has been created in project %s", service.Edges.Environment.Edges.Project.DisplayName),
-			Username:    user.Email,
+			Description: fmt.Sprintf("A new service has been created in project %s by %s", service.Edges.Environment.Edges.Project.DisplayName, user.Email),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Name",

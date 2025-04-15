@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"time"
@@ -35,7 +36,6 @@ func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema
 
 	// Execute
 	msg := Message{
-		Username: &data.Username,
 		Embeds: &[]Embed{
 			embed,
 		},
@@ -51,6 +51,7 @@ func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema
 	req, err := http.NewRequest(http.MethodPost, url, payload)
 	if err != nil {
 		log.Errorf("Failed to create discord webhook request: %v", err)
+		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -63,7 +64,17 @@ func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema
 
 	if !slices.Contains([]int{http.StatusOK, http.StatusNoContent}, resp.StatusCode) {
 		log.Errorf("Failed to send discord webhook: %v", resp.Status)
-		return fmt.Errorf("failed to send discord webhook: %s", resp.Status)
+		bodyBytes, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			log.Errorf("Failed to send discord webhook: status=%d, error reading body: %v",
+				resp.StatusCode, readErr)
+			return fmt.Errorf("failed to send discord webhook: %s, couldn't read response", resp.Status)
+		}
+
+		// Log both status code and response body
+		bodyString := string(bodyBytes)
+		log.Errorf("Failed to send discord webhook: status=%d, body=%s",
+			resp.StatusCode, bodyString)
 	}
 
 	return nil

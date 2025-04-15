@@ -12,7 +12,6 @@ type WebookData struct {
 	Title       string             `json:"title"`
 	Url         string             `json:"url"`
 	Description string             `json:"description"`
-	Username    string             `json:"username"`
 	Fields      []WebhookDataField `json:"fields"`
 }
 

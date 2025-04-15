@@ -143,8 +143,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Project Deleted",
 			Url:         url,
-			Description: fmt.Sprintf("A project has been deleted in team %s", team.DisplayName),
-			Username:    user.Email,
+			Description: fmt.Sprintf("A project has been deleted in team %s by %s", team.DisplayName, user.Email),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Project",
