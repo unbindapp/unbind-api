@@ -61,11 +61,11 @@ func (level WebhookLevel) Emoji() string {
 	var levelBar string
 	switch level {
 	case WebhookLevelError:
-		levelBar = "🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴"
+		levelBar = "🔴"
 	case WebhookLevelWarning:
-		levelBar = "🟠🟠🟠🟠🟠🟠🟠🟠🟠🟠"
+		levelBar = "🟠"
 	default:
-		levelBar = "🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢"
+		levelBar = "🟢"
 	}
 	return levelBar
 }

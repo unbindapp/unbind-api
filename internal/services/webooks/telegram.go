@@ -33,7 +33,7 @@ func (self *WebhooksService) sendTelegramWebhook(level WebhookLevel, event schem
 	botURL = parsedURL.String()
 
 	// Header
-	messageText := fmt.Sprintf("%s\n<b>%s: %s</b>\n%s\n\n", level.Emoji(), string(level), event, level.Emoji())
+	messageText := fmt.Sprintf("%s <b>%s: %s</b>\n\n", level.Emoji(), string(level), event)
 
 	// Wrap in card
 	cardContent := ""
