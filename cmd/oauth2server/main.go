@@ -213,6 +213,12 @@ func StartOauth2Server(cfg *config.Config) {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 
+	// Health check
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
 	// OAuth2/OIDC endpoints
 	r.Post("/token", oauth2Srv.HandleToken)
 	r.Get("/authorize", oauth2Srv.HandleAuthorize)
