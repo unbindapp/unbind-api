@@ -16,6 +16,7 @@ import (
 // LoginPageData holds the data to be passed to the login template
 type LoginPageData struct {
 	ClientID     string
+	LoginURI     string
 	RedirectURI  string
 	ResponseType string
 	State        string
@@ -36,10 +37,17 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 	errorParam := r.URL.Query().Get("error")
 	// Unique key specific to the rendered form
 	pageKey := uuid.NewString()
+	loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{})
+	if err != nil {
+		log.Errorf("Error building login URL: %v\n", err)
+		http.Error(w, fmt.Sprintf("Error building login URL: %v", err), http.StatusInternalServerError)
+		return
+	}
 
 	// Create page data
 	data := LoginPageData{
 		ClientID:     clientID,
+		LoginURI:     loginURL,
 		RedirectURI:  redirectURI,
 		ResponseType: responseType,
 		State:        state,
