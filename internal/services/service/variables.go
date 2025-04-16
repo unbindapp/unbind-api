@@ -149,9 +149,9 @@ func (self *ServiceService) UpdateVariables(ctx context.Context, userID uuid.UUI
 	}
 
 	// Perform a restart of pods...
-	err = self.k8s.RollingRestartPodsByLabel(ctx, project.Edges.Team.Namespace, "unbind-service", service.Name, client)
+	err = self.k8s.RollingRestartPodsByLabel(ctx, project.Edges.Team.Namespace, "unbind-service", service.ID.String(), client)
 	if err != nil {
-		log.Error("Failed to restart pods", "err", err, "service", service.Name)
+		log.Error("Failed to restart pods", "err", err, "service", service.ID.String())
 		return nil, err
 	}
 
@@ -230,9 +230,9 @@ func (self *ServiceService) DeleteVariablesByKey(ctx context.Context, userID uui
 	}
 
 	// Perform a restart of pods...
-	err = self.k8s.RollingRestartPodsByLabel(ctx, project.Edges.Team.Namespace, "unbind-service", service.Name, client)
+	err = self.k8s.RollingRestartPodsByLabel(ctx, project.Edges.Team.Namespace, "unbind-service", service.ID.String(), client)
 	if err != nil {
-		log.Error("Failed to restart pods", "err", err, "service", service.Name)
+		log.Error("Failed to restart pods", "err", err, "service", service.ID.String())
 		return nil, err
 	}
 
