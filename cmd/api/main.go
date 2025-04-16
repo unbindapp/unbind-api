@@ -275,10 +275,7 @@ func startAPI(cfg *config.Config) {
 	})
 
 	// Create middleware
-	mw, err := middleware.NewMiddleware(cfg, repo, api)
-	if err != nil {
-		log.Warnf("Failed to create middleware: %v", err)
-	}
+	mw := middleware.NewMiddleware(cfg, repo, api)
 
 	type HealthResponse struct {
 		Body struct {
