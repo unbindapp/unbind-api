@@ -235,6 +235,7 @@ func startAPI(cfg *config.Config) {
 			"http://localhost:3000",
 			"https://app.unbind.app",
 			"*.unbind.app",
+			cfg.ExternalUIUrl,
 		},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
