@@ -194,15 +194,15 @@ func (self *ServiceRepository) GetDeploymentNamespace(ctx context.Context, servi
 }
 
 // Summarize services in environment
-func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]string, err error) {
+func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, icons map[uuid.UUID][]string, err error) {
 	counts = make(map[uuid.UUID]int)
 
-	// Maps to not duplicate providers
-	providerSets := make(map[uuid.UUID]map[string]struct{})
+	// Maps to not duplicate icons
+	iconSets := make(map[uuid.UUID]map[string]struct{})
 
 	// Initialize sets for each environment ID
 	for _, envID := range environmentIDs {
-		providerSets[envID] = make(map[string]struct{})
+		iconSets[envID] = make(map[string]struct{})
 	}
 
 	services, err := self.base.DB.Service.Query().
@@ -221,36 +221,24 @@ func (self *ServiceRepository) SummarizeServices(ctx context.Context, environmen
 			continue
 		}
 
-		if svc.Edges.ServiceConfig.Database != nil {
-			providerSets[svc.EnvironmentID][string(*svc.Edges.ServiceConfig.Database)] = struct{}{}
+		if svc.Edges.ServiceConfig.Icon != "" {
+			iconSets[svc.EnvironmentID][string(svc.Edges.ServiceConfig.Icon)] = struct{}{}
 			continue
 		}
-
-		if svc.Edges.ServiceConfig.RailpackFramework != nil {
-			providerSets[svc.EnvironmentID][string(*svc.Edges.ServiceConfig.RailpackFramework)] = struct{}{}
-			continue
-		}
-
-		if svc.Edges.ServiceConfig.RailpackProvider != nil {
-			providerSets[svc.EnvironmentID][string(*svc.Edges.ServiceConfig.RailpackProvider)] = struct{}{}
-			continue
-		}
-
-		providerSets[svc.EnvironmentID][string(svc.Edges.ServiceConfig.Type)] = struct{}{}
 	}
 
 	// Convert to slices
-	providers = make(map[uuid.UUID][]string)
+	icons = make(map[uuid.UUID][]string)
 
-	for envID, providerSet := range providerSets {
-		for provider := range providerSet {
-			providers[envID] = append(providers[envID], provider)
+	for envID, iconSet := range iconSets {
+		for icon := range iconSet {
+			icons[envID] = append(icons[envID], icon)
 		}
 		// Sort providers
-		slices.Sort(providers[envID])
+		slices.Sort(icons[envID])
 	}
 
-	return counts, providers, nil
+	return counts, icons, nil
 }
 
 // See if a service needs a new deployment

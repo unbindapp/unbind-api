@@ -1,6 +1,7 @@
 package models
 
 import (
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,6 +46,7 @@ func (self *ProjectResponse) AttachServiceSummary(counts map[uuid.UUID]int, prov
 				self.ServiceIcons[i] = icon
 				i++
 			}
+			slices.Sort(self.ServiceIcons)
 		}
 	}
 }
