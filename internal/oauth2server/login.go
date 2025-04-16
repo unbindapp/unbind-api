@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"net/url"
 	"path"
 	"runtime"
 	"time"
@@ -92,18 +91,22 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	// Validate credentials against your repository
 	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 	if err != nil {
-		// Authentication failed - redirect back to login with error
-		// Preserve all original query parameters
-		q := url.Values{}
-		q.Set("client_id", clientID)
-		q.Set("redirect_uri", redirectURI)
-		q.Set("response_type", responseType)
-		q.Set("state", state)
-		q.Set("scope", scope)
-		q.Set("error", "invalid_credentials")
-		q.Set("page_key", pageKey)
+		loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{
+			"client_id":     clientID,
+			"redirect_uri":  redirectURI,
+			"response_type": responseType,
+			"state":         state,
+			"scope":         scope,
+			"error":         "invalid_credentials",
+			"page_key":      pageKey,
+		})
+		if err != nil {
+			log.Errorf("Error building login URL: %v\n", err)
+			http.Error(w, fmt.Sprintf("Error building login URL: %v", err), http.StatusInternalServerError)
+			return
+		}
 
-		http.Redirect(w, r, "/login?"+q.Encode(), http.StatusFound)
+		http.Redirect(w, r, loginURL, http.StatusFound)
 		return
 	}
 
@@ -120,15 +123,21 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Authentication succeeded - redirect back to authorize endpoint with user info
-	q := url.Values{}
-	q.Set("client_id", clientID)
-	q.Set("redirect_uri", redirectURI)
-	q.Set("response_type", responseType)
-	q.Set("state", state)
-	q.Set("scope", scope)
-	q.Set("user_id", user.Email) // Pass the authenticated user ID
+	authorizeURL, err := self.BuildOauthRedirect(RedirectAuthorize, map[string]string{
+		"client_id":     clientID,
+		"redirect_uri":  redirectURI,
+		"response_type": responseType,
+		"state":         state,
+		"scope":         scope,
+		"user_id":       user.ID.String(),
+	})
+	if err != nil {
+		log.Errorf("Error building authorize URL: %v\n", err)
+		http.Error(w, fmt.Sprintf("Error building authorize URL: %v", err), http.StatusInternalServerError)
+		return
+	}
 
-	http.Redirect(w, r, "/authorize?"+q.Encode(), http.StatusFound)
+	http.Redirect(w, r, authorizeURL, http.StatusFound)
 }
 
 // load template
