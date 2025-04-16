@@ -35,7 +35,7 @@ type UpdateServiceInput struct {
 	GitBranch         *string                `json:"git_branch,omitempty" required:"false"`
 	Builder           *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
 	Hosts             []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
-	Ports             []v1.PortSpec          `json:"ports,omitempty" required:"false"`
+	Ports             []schema.PortSpec      `json:"ports,omitempty" required:"false"`
 	Replicas          *int32                 `json:"replicas,omitempty" required:"false"`
 	AutoDeploy        *bool                  `json:"auto_deploy,omitempty" required:"false"`
 	RunCommand        *string                `json:"run_command,omitempty" required:"false"`
@@ -239,7 +239,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		crdToDeploy.Spec.Config.GitBranch = gitBranch
 		crdToDeploy.Spec.Config.Hosts = service.Edges.ServiceConfig.Hosts
 		crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
-		crdToDeploy.Spec.Config.Ports = service.Edges.ServiceConfig.Ports
+		crdToDeploy.Spec.Config.Ports = schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports)
 		crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
 		crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.Public
 

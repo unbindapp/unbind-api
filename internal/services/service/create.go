@@ -25,7 +25,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // CreateServiceInput defines the input for creating a new service
@@ -45,7 +44,7 @@ type CreateServiceInput struct {
 	Type              schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
 	Builder           schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
 	Hosts             []v1.HostSpec         `json:"hosts,omitempty"`
-	Ports             []v1.PortSpec         `json:"ports,omitempty"`
+	Ports             []schema.PortSpec     `json:"ports,omitempty"`
 	Replicas          *int32                `validate:"omitempty,min=0,max=10" json:"replicas,omitempty"`
 	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand        *string               `json:"run_command,omitempty"`
@@ -103,10 +102,10 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Nuke whatever they tell us for ports
-		input.Ports = []v1.PortSpec{
+		input.Ports = []schema.PortSpec{
 			{
 				Port:     int32(dbDefinition.Port),
-				Protocol: utils.ToPtr(corev1.ProtocolTCP),
+				Protocol: utils.ToPtr(schema.ProtocolTCP),
 			},
 		}
 
@@ -231,11 +230,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		for _, port := range ports {
 			// Split
 			portSplit := strings.Split(port, "/")
-			proto := corev1.ProtocolTCP
+			proto := schema.ProtocolTCP
 			if len(portSplit) > 1 {
 				// Check if the protocol is UDP
 				if strings.EqualFold(portSplit[1], "udp") {
-					proto = corev1.ProtocolUDP
+					proto = schema.ProtocolUDP
 				}
 			}
 			portInt, err := strconv.Atoi(portSplit[0])
@@ -243,7 +242,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				log.Errorf("Failed to parse port %s: %v", port, err)
 				continue
 			}
-			input.Ports = append(input.Ports, v1.PortSpec{
+			input.Ports = append(input.Ports, schema.PortSpec{
 				Port:     int32(portInt),
 				Protocol: utils.ToPtr(proto),
 			})
@@ -280,7 +279,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 			// Default configuration information
 			if len(ports) == 0 && analysisResult.Port != nil {
-				ports = append(ports, v1.PortSpec{
+				ports = append(ports, schema.PortSpec{
 					Port: int32(*analysisResult.Port),
 				})
 			}

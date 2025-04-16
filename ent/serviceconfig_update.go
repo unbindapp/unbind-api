@@ -288,14 +288,14 @@ func (scu *ServiceConfigUpdate) ClearHosts() *ServiceConfigUpdate {
 }
 
 // SetPorts sets the "ports" field.
-func (scu *ServiceConfigUpdate) SetPorts(vs []v1.PortSpec) *ServiceConfigUpdate {
-	scu.mutation.SetPorts(vs)
+func (scu *ServiceConfigUpdate) SetPorts(ss []schema.PortSpec) *ServiceConfigUpdate {
+	scu.mutation.SetPorts(ss)
 	return scu
 }
 
-// AppendPorts appends vs to the "ports" field.
-func (scu *ServiceConfigUpdate) AppendPorts(vs []v1.PortSpec) *ServiceConfigUpdate {
-	scu.mutation.AppendPorts(vs)
+// AppendPorts appends ss to the "ports" field.
+func (scu *ServiceConfigUpdate) AppendPorts(ss []schema.PortSpec) *ServiceConfigUpdate {
+	scu.mutation.AppendPorts(ss)
 	return scu
 }
 
@@ -908,14 +908,14 @@ func (scuo *ServiceConfigUpdateOne) ClearHosts() *ServiceConfigUpdateOne {
 }
 
 // SetPorts sets the "ports" field.
-func (scuo *ServiceConfigUpdateOne) SetPorts(vs []v1.PortSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.SetPorts(vs)
+func (scuo *ServiceConfigUpdateOne) SetPorts(ss []schema.PortSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.SetPorts(ss)
 	return scuo
 }
 
-// AppendPorts appends vs to the "ports" field.
-func (scuo *ServiceConfigUpdateOne) AppendPorts(vs []v1.PortSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.AppendPorts(vs)
+// AppendPorts appends ss to the "ports" field.
+func (scuo *ServiceConfigUpdateOne) AppendPorts(ss []schema.PortSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendPorts(ss)
 	return scuo
 }
 

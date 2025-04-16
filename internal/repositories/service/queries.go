@@ -296,7 +296,7 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 				GitBranch:  gitBranch,
 				Hosts:      service.Edges.ServiceConfig.Hosts,
 				Replicas:   utils.ToPtr(service.Edges.ServiceConfig.Replicas),
-				Ports:      service.Edges.ServiceConfig.Ports,
+				Ports:      schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports),
 				RunCommand: service.Edges.ServiceConfig.RunCommand,
 				Public:     service.Edges.ServiceConfig.Public,
 			},

@@ -57,7 +57,7 @@ type ServiceConfig struct {
 	// External domains and paths for the service
 	Hosts []v1.HostSpec `json:"hosts,omitempty"`
 	// Container ports to expose
-	Ports []v1.PortSpec `json:"ports,omitempty"`
+	Ports []schema.PortSpec `json:"ports,omitempty"`
 	// Number of replicas for the service
 	Replicas int32 `json:"replicas,omitempty"`
 	// Whether to automatically deploy on git push

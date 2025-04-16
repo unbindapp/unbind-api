@@ -10744,8 +10744,8 @@ type ServiceConfigMutation struct {
 	git_branch         *string
 	hosts              *[]v1.HostSpec
 	appendhosts        []v1.HostSpec
-	ports              *[]v1.PortSpec
-	appendports        []v1.PortSpec
+	ports              *[]schema.PortSpec
+	appendports        []schema.PortSpec
 	replicas           *int32
 	addreplicas        *int32
 	auto_deploy        *bool
@@ -11587,13 +11587,13 @@ func (m *ServiceConfigMutation) ResetHosts() {
 }
 
 // SetPorts sets the "ports" field.
-func (m *ServiceConfigMutation) SetPorts(vs []v1.PortSpec) {
-	m.ports = &vs
+func (m *ServiceConfigMutation) SetPorts(ss []schema.PortSpec) {
+	m.ports = &ss
 	m.appendports = nil
 }
 
 // Ports returns the value of the "ports" field in the mutation.
-func (m *ServiceConfigMutation) Ports() (r []v1.PortSpec, exists bool) {
+func (m *ServiceConfigMutation) Ports() (r []schema.PortSpec, exists bool) {
 	v := m.ports
 	if v == nil {
 		return
@@ -11604,7 +11604,7 @@ func (m *ServiceConfigMutation) Ports() (r []v1.PortSpec, exists bool) {
 // OldPorts returns the old "ports" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldPorts(ctx context.Context) (v []v1.PortSpec, err error) {
+func (m *ServiceConfigMutation) OldPorts(ctx context.Context) (v []schema.PortSpec, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPorts is only allowed on UpdateOne operations")
 	}
@@ -11618,13 +11618,13 @@ func (m *ServiceConfigMutation) OldPorts(ctx context.Context) (v []v1.PortSpec, 
 	return oldValue.Ports, nil
 }
 
-// AppendPorts adds vs to the "ports" field.
-func (m *ServiceConfigMutation) AppendPorts(vs []v1.PortSpec) {
-	m.appendports = append(m.appendports, vs...)
+// AppendPorts adds ss to the "ports" field.
+func (m *ServiceConfigMutation) AppendPorts(ss []schema.PortSpec) {
+	m.appendports = append(m.appendports, ss...)
 }
 
 // AppendedPorts returns the list of values that were appended to the "ports" field in this mutation.
-func (m *ServiceConfigMutation) AppendedPorts() ([]v1.PortSpec, bool) {
+func (m *ServiceConfigMutation) AppendedPorts() ([]schema.PortSpec, bool) {
 	if len(m.appendports) == 0 {
 		return nil, false
 	}
@@ -12232,7 +12232,7 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		m.SetHosts(v)
 		return nil
 	case serviceconfig.FieldPorts:
-		v, ok := value.([]v1.PortSpec)
+		v, ok := value.([]schema.PortSpec)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
