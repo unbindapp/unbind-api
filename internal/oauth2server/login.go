@@ -137,7 +137,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		"response_type": responseType,
 		"state":         state,
 		"scope":         scope,
-		"user_id":       user.ID.String(),
+		"user_id":       user.Email,
 	})
 	if err != nil {
 		log.Errorf("Error building authorize URL: %v\n", err)
