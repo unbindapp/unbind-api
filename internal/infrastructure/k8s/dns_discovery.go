@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -32,12 +33,17 @@ type ServiceEndpoint struct {
 
 // IngressEndpoint represents external DNS information for a Kubernetes ingress
 type IngressEndpoint struct {
-	Name          string        `json:"name"`
-	Hosts         []v1.HostSpec `json:"hosts" nullable:"false"`
-	TeamID        uuid.UUID     `json:"team_id"`
-	ProjectID     uuid.UUID     `json:"project_id"`
-	EnvironmentID uuid.UUID     `json:"environment_id"`
-	ServiceID     uuid.UUID     `json:"service_id"`
+	Name          string             `json:"name"`
+	Hosts         []ExtendedHostSpec `json:"hosts" nullable:"false"`
+	TeamID        uuid.UUID          `json:"team_id"`
+	ProjectID     uuid.UUID          `json:"project_id"`
+	EnvironmentID uuid.UUID          `json:"environment_id"`
+	ServiceID     uuid.UUID          `json:"service_id"`
+}
+
+type ExtendedHostSpec struct {
+	v1.HostSpec
+	Issued bool `json:"issued"`
 }
 
 // DiscoverEndpointsByLabels returns both internal (services) and external (ingresses) endpoints
@@ -108,7 +114,7 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 
 		endpoint := IngressEndpoint{
 			Name:          ing.Name,
-			Hosts:         []v1.HostSpec{},
+			Hosts:         []ExtendedHostSpec{},
 			TeamID:        teamID,
 			ProjectID:     projectID,
 			EnvironmentID: environmentID,
@@ -133,9 +139,20 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 			for _, host := range tls.Hosts {
 				path := pathMap[host]
 
-				endpoint.Hosts = append(endpoint.Hosts, v1.HostSpec{
-					Host: host,
-					Path: path,
+				// Check if the secret is issued
+				issued := false
+				if tls.SecretName != "" {
+					secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
+					issued = err == nil && isCertificateIssued(secret)
+				}
+
+				endpoint.Hosts = append(endpoint.Hosts, ExtendedHostSpec{
+					HostSpec: v1.HostSpec{
+						Host: host,
+						Path: path,
+						Port: utils.ToPtr[int32](443),
+					},
+					Issued: issued,
 				})
 			}
 		}
@@ -144,4 +161,29 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 	}
 
 	return discovery, nil
+}
+
+// isCertificateIssued checks if a TLS secret contains valid certificate data
+func isCertificateIssued(secret *corev1.Secret) bool {
+	if secret == nil {
+		return false
+	}
+
+	// Check if the secret contains the required TLS data
+	_, hasCert := secret.Data["tls.crt"]
+	_, hasKey := secret.Data["tls.key"]
+
+	// Check if the secret has any cert-manager annotations
+	hasCertManagerAnnotation := false
+	if secret.Annotations != nil {
+		for key := range secret.Annotations {
+			if strings.Contains(key, "cert-manager") {
+				hasCertManagerAnnotation = true
+				break
+			}
+		}
+	}
+
+	// Both fields must exist and contain data, and it should have cert-manager annotations
+	return hasCert && hasKey && len(secret.Data["tls.crt"]) > 0 && len(secret.Data["tls.key"]) > 0 && hasCertManagerAnnotation
 }
