@@ -210,23 +210,25 @@ func StartOauth2Server(cfg *config.Config) {
 	// Setup router
 	// New chi router
 	r := chi.NewRouter()
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
-	// OAuth2/OIDC endpoints
-	r.Post("/token", oauth2Srv.HandleToken)
-	r.Get("/authorize", oauth2Srv.HandleAuthorize)
-	r.Get("/userinfo", oauth2Srv.HandleUserinfo)
-	r.Get("/login", oauth2Srv.HandleLoginPage)
-	r.Post("/login", oauth2Srv.HandleLoginSubmit)
-	r.Get("/.well-known/openid-configuration", oauth2Srv.HandleOpenIDConfiguration)
-	r.Get("/.well-known/jwks.json", oauth2Srv.HandleJWKS)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RealIP)
+		r.Use(middleware.Logger)
+
+		// OAuth2/OIDC endpoints
+		r.Post("/token", oauth2Srv.HandleToken)
+		r.Get("/authorize", oauth2Srv.HandleAuthorize)
+		r.Get("/userinfo", oauth2Srv.HandleUserinfo)
+		r.Get("/login", oauth2Srv.HandleLoginPage)
+		r.Post("/login", oauth2Srv.HandleLoginSubmit)
+		r.Get("/.well-known/openid-configuration", oauth2Srv.HandleOpenIDConfiguration)
+		r.Get("/.well-known/jwks.json", oauth2Srv.HandleJWKS)
+	})
 
 	// Cron job to clean up expired tokens
 	s := gocron.NewScheduler(time.UTC)
