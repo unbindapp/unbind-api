@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
@@ -20,15 +21,23 @@ type EndpointDiscovery struct {
 
 // ServiceEndpoint represents internal DNS information for a Kubernetes service
 type ServiceEndpoint struct {
-	Name  string            `json:"name"`
-	DNS   string            `json:"dns"`
-	Ports []schema.PortSpec `json:"ports" nullable:"false"`
+	Name          string            `json:"name"`
+	DNS           string            `json:"dns"`
+	Ports         []schema.PortSpec `json:"ports" nullable:"false"`
+	TeamID        uuid.UUID         `json:"team_id"`
+	ProjectID     uuid.UUID         `json:"project_id"`
+	EnvironmentID uuid.UUID         `json:"environment_id"`
+	ServiceID     uuid.UUID         `json:"service_id"`
 }
 
 // IngressEndpoint represents external DNS information for a Kubernetes ingress
 type IngressEndpoint struct {
-	Name  string        `json:"name"`
-	Hosts []v1.HostSpec `json:"hosts" nullable:"false"`
+	Name          string        `json:"name"`
+	Hosts         []v1.HostSpec `json:"hosts" nullable:"false"`
+	TeamID        uuid.UUID     `json:"team_id"`
+	ProjectID     uuid.UUID     `json:"project_id"`
+	EnvironmentID uuid.UUID     `json:"environment_id"`
+	ServiceID     uuid.UUID     `json:"service_id"`
 }
 
 // DiscoverEndpointsByLabels returns both internal (services) and external (ingresses) endpoints
@@ -56,10 +65,19 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 
 	// Process services (internal endpoints)
 	for _, svc := range services.Items {
+		teamID, _ := uuid.Parse(svc.Labels["unbind-team"])
+		projectID, _ := uuid.Parse(svc.Labels["unbind-project"])
+		environmentID, _ := uuid.Parse(svc.Labels["unbind-environment"])
+		serviceID, _ := uuid.Parse(svc.Labels["unbind-service"])
+
 		endpoint := ServiceEndpoint{
-			Name:  svc.Name,
-			DNS:   fmt.Sprintf("%s.%s", svc.Name, namespace),
-			Ports: make([]schema.PortSpec, len(svc.Spec.Ports)),
+			Name:          svc.Name,
+			DNS:           fmt.Sprintf("%s.%s", svc.Name, namespace),
+			Ports:         make([]schema.PortSpec, len(svc.Spec.Ports)),
+			TeamID:        teamID,
+			ProjectID:     projectID,
+			EnvironmentID: environmentID,
+			ServiceID:     serviceID,
 		}
 
 		// Add port information
@@ -83,9 +101,18 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 
 	// Process ingresses (external endpoints)
 	for _, ing := range ingresses.Items {
+		teamID, _ := uuid.Parse(ing.Labels["unbind-team"])
+		projectID, _ := uuid.Parse(ing.Labels["unbind-project"])
+		environmentID, _ := uuid.Parse(ing.Labels["unbind-environment"])
+		serviceID, _ := uuid.Parse(ing.Labels["unbind-service"])
+
 		endpoint := IngressEndpoint{
-			Name:  ing.Name,
-			Hosts: []v1.HostSpec{},
+			Name:          ing.Name,
+			Hosts:         []v1.HostSpec{},
+			TeamID:        teamID,
+			ProjectID:     projectID,
+			EnvironmentID: environmentID,
+			ServiceID:     serviceID,
 		}
 
 		// Make a map of paths to iterate TLS
