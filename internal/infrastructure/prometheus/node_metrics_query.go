@@ -12,7 +12,6 @@ import (
 // Get metrics for specific nodes
 func (self *PrometheusClient) GetNodeMetrics(
 	ctx context.Context,
-	sumBy NodeMetricsFilterSumBy,
 	start time.Time,
 	end time.Time,
 	step time.Duration,
@@ -28,32 +27,32 @@ func (self *PrometheusClient) GetNodeMetrics(
 	nodeSelector := buildNodeLabelSelector(filter)
 
 	// Queries for node-level metrics
-	cpuQuery := fmt.Sprintf(`sum by (%s) (
-		rate(node_cpu_seconds_total{mode!="idle"}[%ds])%s
-	)`, sumBy.Label(), int(step.Seconds()), nodeSelector)
+	cpuQuery := fmt.Sprintf(`sum by (nodename) (
+  rate(node_cpu_seconds_total{mode!="idle"}[%ds])%s * on(instance) group_left(nodename) node_uname_info
+)`, int(step.Seconds()), nodeSelector)
 
-	ramQuery := fmt.Sprintf(`sum by (%s) (
-		(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)%s
-	)`, sumBy.Label(), nodeSelector)
+	ramQuery := fmt.Sprintf(`sum by (nodename) (
+  (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)%s * on(instance) group_left(nodename) node_uname_info
+)`, nodeSelector)
 
-	networkQuery := fmt.Sprintf(`sum by (%s) (
-		rate(node_network_receive_bytes_total[%ds]) + 
-		rate(node_network_transmit_bytes_total[%ds])%s
-	)`, sumBy.Label(), int(step.Seconds()), int(step.Seconds()), nodeSelector)
+	networkQuery := fmt.Sprintf(`sum by (nodename) (
+  (rate(node_network_receive_bytes_total[%ds]) + 
+   rate(node_network_transmit_bytes_total[%ds])%s) * on(instance) group_left(nodename) node_uname_info
+)`, int(step.Seconds()), int(step.Seconds()), nodeSelector)
 
-	diskQuery := fmt.Sprintf(`sum by (%s) (
-		rate(node_disk_read_bytes_total[%ds]) + 
-		rate(node_disk_written_bytes_total[%ds])%s
-	)`, sumBy.Label(), int(step.Seconds()), int(step.Seconds()), nodeSelector)
+	diskQuery := fmt.Sprintf(`sum by (nodename) (
+  (rate(node_disk_read_bytes_total[%ds]) + 
+   rate(node_disk_written_bytes_total[%ds])%s) * on(instance) group_left(nodename) node_uname_info
+)`, int(step.Seconds()), int(step.Seconds()), nodeSelector)
 
-	fsQuery := fmt.Sprintf(`sum by (%s) (
-		node_filesystem_size_bytes%s - node_filesystem_free_bytes%s
-	)`, sumBy.Label(), nodeSelector, nodeSelector)
+	fsQuery := fmt.Sprintf(`sum by (nodename) (
+  (node_filesystem_size_bytes%s - node_filesystem_free_bytes%s) * on(instance) group_left(nodename) node_uname_info
+)`, nodeSelector, nodeSelector)
 
 	// Load average
-	loadQuery := fmt.Sprintf(`sum by (%s) (
-		node_load1%s
-	)`, sumBy.Label(), nodeSelector)
+	loadQuery := fmt.Sprintf(`sum by (nodename) (
+  node_load1%s * on(instance) group_left(nodename) node_uname_info
+)`, nodeSelector)
 
 	// Execute queries
 	cpuResult, _, err := self.api.QueryRange(ctx, cpuQuery, r)
@@ -89,27 +88,27 @@ func (self *PrometheusClient) GetNodeMetrics(
 	// Process results
 	metricsResult := make(map[string]*NodeMetrics)
 
-	extractNodeMetrics(cpuResult, sumBy.Label(), metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
+	extractNodeMetrics(cpuResult, metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
 		metrics.CPU = samples
 	})
 
-	extractNodeMetrics(ramResult, sumBy.Label(), metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
+	extractNodeMetrics(ramResult, metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
 		metrics.RAM = samples
 	})
 
-	extractNodeMetrics(networkResult, sumBy.Label(), metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
+	extractNodeMetrics(networkResult, metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
 		metrics.Network = samples
 	})
 
-	extractNodeMetrics(diskResult, sumBy.Label(), metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
+	extractNodeMetrics(diskResult, metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
 		metrics.Disk = samples
 	})
 
-	extractNodeMetrics(fsResult, sumBy.Label(), metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
+	extractNodeMetrics(fsResult, metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
 		metrics.FileSystem = samples
 	})
 
-	extractNodeMetrics(loadResult, sumBy.Label(), metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
+	extractNodeMetrics(loadResult, metricsResult, func(metrics *NodeMetrics, samples []model.SamplePair) {
 		metrics.Load = samples
 	})
 
@@ -118,14 +117,13 @@ func (self *PrometheusClient) GetNodeMetrics(
 
 func extractNodeMetrics(
 	result model.Value,
-	sumByLabel string,
 	groupedMetrics map[string]*NodeMetrics,
 	assignFunc func(*NodeMetrics, []model.SamplePair),
 ) {
 	if matrix, ok := result.(model.Matrix); ok {
 		for _, series := range matrix {
 			// Get node identifier from the metric labels
-			nodeID := string(series.Metric[model.LabelName(sumByLabel)])
+			nodeID := string(series.Metric[model.LabelName("nodename")])
 			if nodeID == "" {
 				nodeID = "unknown" // Default for metrics without the specified label
 			}
@@ -150,23 +148,8 @@ func buildNodeLabelSelector(filter *NodeMetricsFilter) string {
 	var selector string
 
 	// Add node name filter
-	if len(filter.Name) > 0 {
-		selector += buildLabelValueFilter("node", filter.Name)
-	}
-
-	// Add zone filter
-	if len(filter.Zone) > 0 {
-		selector += buildLabelValueFilter("zone", filter.Zone)
-	}
-
-	// Add region filter
-	if len(filter.Region) > 0 {
-		selector += buildLabelValueFilter("region", filter.Region)
-	}
-
-	// Add cluster filter
-	if len(filter.Cluster) > 0 {
-		selector += buildLabelValueFilter("cluster", filter.Cluster)
+	if len(filter.NodeName) > 0 {
+		selector += buildLabelValueFilter("nodename", filter.NodeName)
 	}
 
 	return selector

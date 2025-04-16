@@ -28,32 +28,8 @@ func (self *MetricsService) GetNodeMetrics(ctx context.Context, requesterUserID 
 
 	// Build options
 	nodeMetricsFilters := prometheus.NodeMetricsFilter{}
-	var sumBy prometheus.NodeMetricsFilterSumBy
-
-	// Set the appropriate grouping based on the query type
-	switch input.Type {
-	case models.NodeMetricsTypeNode:
-		sumBy = prometheus.NodeSumByName
-		if input.NodeName != "" {
-			nodeMetricsFilters.Name = []string{input.NodeName}
-		}
-	case models.NodeMetricsTypeZone:
-		sumBy = prometheus.NodeSumByZone
-		if input.Zone != "" {
-			nodeMetricsFilters.Zone = []string{input.Zone}
-		}
-	case models.NodeMetricsTypeRegion:
-		sumBy = prometheus.NodeSumByRegion
-		if input.Region != "" {
-			nodeMetricsFilters.Region = []string{input.Region}
-		}
-	case models.NodeMetricsTypeCluster:
-		sumBy = prometheus.NodeSumByCluster
-		if input.ClusterName != "" {
-			nodeMetricsFilters.Cluster = []string{input.ClusterName}
-		}
-	default:
-		return nil, fmt.Errorf("invalid node metrics type: %s", input.Type)
+	if input.NodeName != "" {
+		nodeMetricsFilters.NodeName = []string{input.NodeName}
 	}
 
 	// Get start
@@ -97,11 +73,11 @@ func (self *MetricsService) GetNodeMetrics(ctx context.Context, requesterUserID 
 		filter = nil // Get all nodes if no specific filters
 	}
 
-	rawMetrics, err := self.promClient.GetNodeMetrics(ctx, sumBy, start, end, step, filter)
+	rawMetrics, err := self.promClient.GetNodeMetrics(ctx, start, end, step, filter)
 	if err != nil {
 		return nil, fmt.Errorf("error getting node metrics: %w", err)
 	}
 
 	// Convert to our format
-	return models.TransformNodeMetricsEntity(rawMetrics, step, sumBy), nil
+	return models.TransformNodeMetricsEntity(rawMetrics, step), nil
 }
