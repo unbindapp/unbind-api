@@ -63,7 +63,18 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 			Path:        "/references/available",
 			Method:      http.MethodGet,
 		},
-		handlers.ListReferenceableeVariables,
+		handlers.ListReferenceableVariables,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "read-variable-reference",
+			Summary:     "Read a referenced value",
+			Description: "Read a referenced value for a variable",
+			Path:        "/references/get",
+			Method:      http.MethodGet,
+		},
+		handlers.ResolveVariableReference,
 	)
 	huma.Register(
 		grp,

@@ -15,3 +15,12 @@ type CreateVariableReferenceInput struct {
 	SourceKey       string                             `json:"source_key" doc:"The key of the source of the variable reference" required:"false"`
 	ValueTemplate   *string                            `json:"value_template" doc:"The template for the value of the variable reference, e.g. 'https://${}'" required:"false"`
 }
+
+type ResolveVariableReferenceInput struct {
+	TeamID     uuid.UUID                          `json:"team_id"`
+	Type       schema.VariableReferenceType       `json:"type"`
+	Name       string                             `json:"name"`
+	SourceType schema.VariableReferenceSourceType `json:"source_type"`
+	SourceID   uuid.UUID                          `json:"source_id"`
+	Key        string                             `json:"key"`
+}

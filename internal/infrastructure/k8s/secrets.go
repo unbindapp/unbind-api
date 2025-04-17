@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -210,7 +211,7 @@ func (self *KubeClient) OverwriteSecretValues(ctx context.Context, name, namespa
 	return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
 }
 
-// GetAllSecrets retrieves all secrets for the team hierarchy and returns them with just their keys
+// GetAllSecrets retrieves all secrets for the team hierarchy concurrently and returns them with just their keys
 func (self *KubeClient) GetAllSecrets(
 	ctx context.Context,
 	teamID uuid.UUID,
@@ -221,15 +222,28 @@ func (self *KubeClient) GetAllSecrets(
 	client *kubernetes.Clientset,
 	namespace string,
 ) ([]models.SecretData, error) {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 	var result []models.SecretData
+	var errOnce sync.Once
+	var firstErr error
 
 	// Process team secret
 	if teamSecret != "" {
-		secretData, err := self.processSecretKeys(ctx, teamID, schema.VariableReferenceSourceTypeTeam, teamSecret, client, namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, secretData)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, teamID, schema.VariableReferenceSourceTypeTeam, teamSecret, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}()
 	}
 
 	// Process project secrets
@@ -237,11 +251,20 @@ func (self *KubeClient) GetAllSecrets(
 		if secretName == "" {
 			continue
 		}
-		secretData, err := self.processSecretKeys(ctx, projectID, schema.VariableReferenceSourceTypeProject, secretName, client, namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, secretData)
+		wg.Add(1)
+		go func(id uuid.UUID, name string) {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, id, schema.VariableReferenceSourceTypeProject, name, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}(projectID, secretName)
 	}
 
 	// Process environment secrets
@@ -249,11 +272,20 @@ func (self *KubeClient) GetAllSecrets(
 		if secretName == "" {
 			continue
 		}
-		secretData, err := self.processSecretKeys(ctx, envID, schema.VariableReferenceSourceTypeEnvironment, secretName, client, namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, secretData)
+		wg.Add(1)
+		go func(id uuid.UUID, name string) {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, id, schema.VariableReferenceSourceTypeEnvironment, name, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}(envID, secretName)
 	}
 
 	// Process service secrets
@@ -261,17 +293,35 @@ func (self *KubeClient) GetAllSecrets(
 		if secretName == "" {
 			continue
 		}
-		secretData, err := self.processSecretKeys(ctx, serviceID, schema.VariableReferenceSourceTypeService, secretName, client, namespace)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, secretData)
+		wg.Add(1)
+		go func(id uuid.UUID, name string) {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, id, schema.VariableReferenceSourceTypeService, name, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}(serviceID, secretName)
+	}
+
+	// Wait for all goroutines to finish
+	wg.Wait()
+
+	// Check if any error occurred
+	if firstErr != nil {
+		return nil, firstErr
 	}
 
 	return result, nil
 }
 
 // Helper function to process a single secret and extract just its keys
+// This function remains unchanged from your original
 func (self *KubeClient) processSecretKeys(
 	ctx context.Context,
 	id uuid.UUID,
@@ -296,9 +346,11 @@ func (self *KubeClient) processSecretKeys(
 	}
 
 	// Extract just the keys from the secret's data
-	keys := make([]string, 0, len(secret.Data))
+	keys := make([]string, len(secret.Data))
+	i := 0
 	for k := range secret.Data {
-		keys = append(keys, k)
+		keys[i] = k
+		i++
 	}
 
 	// Return the secret with just its keys

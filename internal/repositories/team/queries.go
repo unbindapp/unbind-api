@@ -36,6 +36,17 @@ func (self *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Tea
 		Only(ctx)
 }
 
+func (self *TeamRepository) GetNamespace(ctx context.Context, id uuid.UUID) (string, error) {
+	team, err := self.base.DB.Team.Query().
+		Select(team.FieldNamespace).
+		Where(team.ID(id)).
+		Only(ctx)
+	if err != nil {
+		return "", err
+	}
+	return team.Namespace, nil
+}
+
 func (self *TeamRepository) HasUserWithID(ctx context.Context, teamID uuid.UUID, userID uuid.UUID) (bool, error) {
 	return self.base.DB.User.Query().
 		Where(user.ID(userID)).
