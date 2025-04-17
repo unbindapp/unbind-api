@@ -60,6 +60,12 @@ func (vrc *VariableReferenceCreate) SetTargetServiceID(u uuid.UUID) *VariableRef
 	return vrc
 }
 
+// SetTargetName sets the "target_name" field.
+func (vrc *VariableReferenceCreate) SetTargetName(s string) *VariableReferenceCreate {
+	vrc.mutation.SetTargetName(s)
+	return vrc
+}
+
 // SetType sets the "type" field.
 func (vrc *VariableReferenceCreate) SetType(srt schema.VariableReferenceType) *VariableReferenceCreate {
 	vrc.mutation.SetType(srt)
@@ -87,14 +93,6 @@ func (vrc *VariableReferenceCreate) SetSourceName(s string) *VariableReferenceCr
 // SetSourceKey sets the "source_key" field.
 func (vrc *VariableReferenceCreate) SetSourceKey(s string) *VariableReferenceCreate {
 	vrc.mutation.SetSourceKey(s)
-	return vrc
-}
-
-// SetNillableSourceKey sets the "source_key" field if the given value is not nil.
-func (vrc *VariableReferenceCreate) SetNillableSourceKey(s *string) *VariableReferenceCreate {
-	if s != nil {
-		vrc.SetSourceKey(*s)
-	}
 	return vrc
 }
 
@@ -197,6 +195,9 @@ func (vrc *VariableReferenceCreate) check() error {
 	if _, ok := vrc.mutation.TargetServiceID(); !ok {
 		return &ValidationError{Name: "target_service_id", err: errors.New(`ent: missing required field "VariableReference.target_service_id"`)}
 	}
+	if _, ok := vrc.mutation.TargetName(); !ok {
+		return &ValidationError{Name: "target_name", err: errors.New(`ent: missing required field "VariableReference.target_name"`)}
+	}
 	if _, ok := vrc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "VariableReference.type"`)}
 	}
@@ -218,6 +219,9 @@ func (vrc *VariableReferenceCreate) check() error {
 	}
 	if _, ok := vrc.mutation.SourceName(); !ok {
 		return &ValidationError{Name: "source_name", err: errors.New(`ent: missing required field "VariableReference.source_name"`)}
+	}
+	if _, ok := vrc.mutation.SourceKey(); !ok {
+		return &ValidationError{Name: "source_key", err: errors.New(`ent: missing required field "VariableReference.source_key"`)}
 	}
 	if len(vrc.mutation.ServiceIDs()) == 0 {
 		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "VariableReference.service"`)}
@@ -266,6 +270,10 @@ func (vrc *VariableReferenceCreate) createSpec() (*VariableReference, *sqlgraph.
 		_spec.SetField(variablereference.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := vrc.mutation.TargetName(); ok {
+		_spec.SetField(variablereference.FieldTargetName, field.TypeString, value)
+		_node.TargetName = value
+	}
 	if value, ok := vrc.mutation.GetType(); ok {
 		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 		_node.Type = value
@@ -284,7 +292,7 @@ func (vrc *VariableReferenceCreate) createSpec() (*VariableReference, *sqlgraph.
 	}
 	if value, ok := vrc.mutation.SourceKey(); ok {
 		_spec.SetField(variablereference.FieldSourceKey, field.TypeString, value)
-		_node.SourceKey = &value
+		_node.SourceKey = value
 	}
 	if value, ok := vrc.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
@@ -383,6 +391,18 @@ func (u *VariableReferenceUpsert) UpdateTargetServiceID() *VariableReferenceUpse
 	return u
 }
 
+// SetTargetName sets the "target_name" field.
+func (u *VariableReferenceUpsert) SetTargetName(v string) *VariableReferenceUpsert {
+	u.Set(variablereference.FieldTargetName, v)
+	return u
+}
+
+// UpdateTargetName sets the "target_name" field to the value that was provided on create.
+func (u *VariableReferenceUpsert) UpdateTargetName() *VariableReferenceUpsert {
+	u.SetExcluded(variablereference.FieldTargetName)
+	return u
+}
+
 // SetType sets the "type" field.
 func (u *VariableReferenceUpsert) SetType(v schema.VariableReferenceType) *VariableReferenceUpsert {
 	u.Set(variablereference.FieldType, v)
@@ -440,12 +460,6 @@ func (u *VariableReferenceUpsert) SetSourceKey(v string) *VariableReferenceUpser
 // UpdateSourceKey sets the "source_key" field to the value that was provided on create.
 func (u *VariableReferenceUpsert) UpdateSourceKey() *VariableReferenceUpsert {
 	u.SetExcluded(variablereference.FieldSourceKey)
-	return u
-}
-
-// ClearSourceKey clears the value of the "source_key" field.
-func (u *VariableReferenceUpsert) ClearSourceKey() *VariableReferenceUpsert {
-	u.SetNull(variablereference.FieldSourceKey)
 	return u
 }
 
@@ -546,6 +560,20 @@ func (u *VariableReferenceUpsertOne) UpdateTargetServiceID() *VariableReferenceU
 	})
 }
 
+// SetTargetName sets the "target_name" field.
+func (u *VariableReferenceUpsertOne) SetTargetName(v string) *VariableReferenceUpsertOne {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.SetTargetName(v)
+	})
+}
+
+// UpdateTargetName sets the "target_name" field to the value that was provided on create.
+func (u *VariableReferenceUpsertOne) UpdateTargetName() *VariableReferenceUpsertOne {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.UpdateTargetName()
+	})
+}
+
 // SetType sets the "type" field.
 func (u *VariableReferenceUpsertOne) SetType(v schema.VariableReferenceType) *VariableReferenceUpsertOne {
 	return u.Update(func(s *VariableReferenceUpsert) {
@@ -613,13 +641,6 @@ func (u *VariableReferenceUpsertOne) SetSourceKey(v string) *VariableReferenceUp
 func (u *VariableReferenceUpsertOne) UpdateSourceKey() *VariableReferenceUpsertOne {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateSourceKey()
-	})
-}
-
-// ClearSourceKey clears the value of the "source_key" field.
-func (u *VariableReferenceUpsertOne) ClearSourceKey() *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.ClearSourceKey()
 	})
 }
 
@@ -890,6 +911,20 @@ func (u *VariableReferenceUpsertBulk) UpdateTargetServiceID() *VariableReference
 	})
 }
 
+// SetTargetName sets the "target_name" field.
+func (u *VariableReferenceUpsertBulk) SetTargetName(v string) *VariableReferenceUpsertBulk {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.SetTargetName(v)
+	})
+}
+
+// UpdateTargetName sets the "target_name" field to the value that was provided on create.
+func (u *VariableReferenceUpsertBulk) UpdateTargetName() *VariableReferenceUpsertBulk {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.UpdateTargetName()
+	})
+}
+
 // SetType sets the "type" field.
 func (u *VariableReferenceUpsertBulk) SetType(v schema.VariableReferenceType) *VariableReferenceUpsertBulk {
 	return u.Update(func(s *VariableReferenceUpsert) {
@@ -957,13 +992,6 @@ func (u *VariableReferenceUpsertBulk) SetSourceKey(v string) *VariableReferenceU
 func (u *VariableReferenceUpsertBulk) UpdateSourceKey() *VariableReferenceUpsertBulk {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateSourceKey()
-	})
-}
-
-// ClearSourceKey clears the value of the "source_key" field.
-func (u *VariableReferenceUpsertBulk) ClearSourceKey() *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.ClearSourceKey()
 	})
 }
 

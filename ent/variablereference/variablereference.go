@@ -23,6 +23,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldTargetServiceID holds the string denoting the target_service_id field in the database.
 	FieldTargetServiceID = "target_service_id"
+	// FieldTargetName holds the string denoting the target_name field in the database.
+	FieldTargetName = "target_name"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
 	// FieldSourceType holds the string denoting the source_type field in the database.
@@ -54,6 +56,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldTargetServiceID,
+	FieldTargetName,
 	FieldType,
 	FieldSourceType,
 	FieldSourceID,
@@ -124,6 +127,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByTargetServiceID orders the results by the target_service_id field.
 func ByTargetServiceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTargetServiceID, opts...).ToFunc()
+}
+
+// ByTargetName orders the results by the target_name field.
+func ByTargetName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTargetName, opts...).ToFunc()
 }
 
 // ByType orders the results by the type field.

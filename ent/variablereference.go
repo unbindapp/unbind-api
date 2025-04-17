@@ -27,6 +27,8 @@ type VariableReference struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// TargetServiceID holds the value of the "target_service_id" field.
 	TargetServiceID uuid.UUID `json:"target_service_id,omitempty"`
+	// TargetName holds the value of the "target_name" field.
+	TargetName string `json:"target_name,omitempty"`
 	// Type holds the value of the "type" field.
 	Type schema.VariableReferenceType `json:"type,omitempty"`
 	// SourceType holds the value of the "source_type" field.
@@ -36,7 +38,7 @@ type VariableReference struct {
 	// Kubernetes secret name, service name, or ingress name
 	SourceName string `json:"source_name,omitempty"`
 	// The key of the secret, or host override for ingresses
-	SourceKey *string `json:"source_key,omitempty"`
+	SourceKey string `json:"source_key,omitempty"`
 	// Optional template for the value, e.g. 'Hello ${} this is my variable'
 	ValueTemplate *string `json:"value_template,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -70,7 +72,7 @@ func (*VariableReference) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case variablereference.FieldType, variablereference.FieldSourceType, variablereference.FieldSourceName, variablereference.FieldSourceKey, variablereference.FieldValueTemplate:
+		case variablereference.FieldTargetName, variablereference.FieldType, variablereference.FieldSourceType, variablereference.FieldSourceName, variablereference.FieldSourceKey, variablereference.FieldValueTemplate:
 			values[i] = new(sql.NullString)
 		case variablereference.FieldCreatedAt, variablereference.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -115,6 +117,12 @@ func (vr *VariableReference) assignValues(columns []string, values []any) error 
 			} else if value != nil {
 				vr.TargetServiceID = *value
 			}
+		case variablereference.FieldTargetName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field target_name", values[i])
+			} else if value.Valid {
+				vr.TargetName = value.String
+			}
 		case variablereference.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
@@ -143,8 +151,7 @@ func (vr *VariableReference) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source_key", values[i])
 			} else if value.Valid {
-				vr.SourceKey = new(string)
-				*vr.SourceKey = value.String
+				vr.SourceKey = value.String
 			}
 		case variablereference.FieldValueTemplate:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -203,6 +210,9 @@ func (vr *VariableReference) String() string {
 	builder.WriteString("target_service_id=")
 	builder.WriteString(fmt.Sprintf("%v", vr.TargetServiceID))
 	builder.WriteString(", ")
+	builder.WriteString("target_name=")
+	builder.WriteString(vr.TargetName)
+	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(fmt.Sprintf("%v", vr.Type))
 	builder.WriteString(", ")
@@ -215,10 +225,8 @@ func (vr *VariableReference) String() string {
 	builder.WriteString("source_name=")
 	builder.WriteString(vr.SourceName)
 	builder.WriteString(", ")
-	if v := vr.SourceKey; v != nil {
-		builder.WriteString("source_key=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("source_key=")
+	builder.WriteString(vr.SourceKey)
 	builder.WriteString(", ")
 	if v := vr.ValueTemplate; v != nil {
 		builder.WriteString("value_template=")

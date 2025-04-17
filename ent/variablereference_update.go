@@ -52,6 +52,20 @@ func (vru *VariableReferenceUpdate) SetNillableTargetServiceID(u *uuid.UUID) *Va
 	return vru
 }
 
+// SetTargetName sets the "target_name" field.
+func (vru *VariableReferenceUpdate) SetTargetName(s string) *VariableReferenceUpdate {
+	vru.mutation.SetTargetName(s)
+	return vru
+}
+
+// SetNillableTargetName sets the "target_name" field if the given value is not nil.
+func (vru *VariableReferenceUpdate) SetNillableTargetName(s *string) *VariableReferenceUpdate {
+	if s != nil {
+		vru.SetTargetName(*s)
+	}
+	return vru
+}
+
 // SetType sets the "type" field.
 func (vru *VariableReferenceUpdate) SetType(srt schema.VariableReferenceType) *VariableReferenceUpdate {
 	vru.mutation.SetType(srt)
@@ -119,12 +133,6 @@ func (vru *VariableReferenceUpdate) SetNillableSourceKey(s *string) *VariableRef
 	if s != nil {
 		vru.SetSourceKey(*s)
 	}
-	return vru
-}
-
-// ClearSourceKey clears the value of the "source_key" field.
-func (vru *VariableReferenceUpdate) ClearSourceKey() *VariableReferenceUpdate {
-	vru.mutation.ClearSourceKey()
 	return vru
 }
 
@@ -245,6 +253,9 @@ func (vru *VariableReferenceUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := vru.mutation.UpdatedAt(); ok {
 		_spec.SetField(variablereference.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := vru.mutation.TargetName(); ok {
+		_spec.SetField(variablereference.FieldTargetName, field.TypeString, value)
+	}
 	if value, ok := vru.mutation.GetType(); ok {
 		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 	}
@@ -259,9 +270,6 @@ func (vru *VariableReferenceUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if value, ok := vru.mutation.SourceKey(); ok {
 		_spec.SetField(variablereference.FieldSourceKey, field.TypeString, value)
-	}
-	if vru.mutation.SourceKeyCleared() {
-		_spec.ClearField(variablereference.FieldSourceKey, field.TypeString)
 	}
 	if value, ok := vru.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
@@ -340,6 +348,20 @@ func (vruo *VariableReferenceUpdateOne) SetNillableTargetServiceID(u *uuid.UUID)
 	return vruo
 }
 
+// SetTargetName sets the "target_name" field.
+func (vruo *VariableReferenceUpdateOne) SetTargetName(s string) *VariableReferenceUpdateOne {
+	vruo.mutation.SetTargetName(s)
+	return vruo
+}
+
+// SetNillableTargetName sets the "target_name" field if the given value is not nil.
+func (vruo *VariableReferenceUpdateOne) SetNillableTargetName(s *string) *VariableReferenceUpdateOne {
+	if s != nil {
+		vruo.SetTargetName(*s)
+	}
+	return vruo
+}
+
 // SetType sets the "type" field.
 func (vruo *VariableReferenceUpdateOne) SetType(srt schema.VariableReferenceType) *VariableReferenceUpdateOne {
 	vruo.mutation.SetType(srt)
@@ -407,12 +429,6 @@ func (vruo *VariableReferenceUpdateOne) SetNillableSourceKey(s *string) *Variabl
 	if s != nil {
 		vruo.SetSourceKey(*s)
 	}
-	return vruo
-}
-
-// ClearSourceKey clears the value of the "source_key" field.
-func (vruo *VariableReferenceUpdateOne) ClearSourceKey() *VariableReferenceUpdateOne {
-	vruo.mutation.ClearSourceKey()
 	return vruo
 }
 
@@ -563,6 +579,9 @@ func (vruo *VariableReferenceUpdateOne) sqlSave(ctx context.Context) (_node *Var
 	if value, ok := vruo.mutation.UpdatedAt(); ok {
 		_spec.SetField(variablereference.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := vruo.mutation.TargetName(); ok {
+		_spec.SetField(variablereference.FieldTargetName, field.TypeString, value)
+	}
 	if value, ok := vruo.mutation.GetType(); ok {
 		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 	}
@@ -577,9 +596,6 @@ func (vruo *VariableReferenceUpdateOne) sqlSave(ctx context.Context) (_node *Var
 	}
 	if value, ok := vruo.mutation.SourceKey(); ok {
 		_spec.SetField(variablereference.FieldSourceKey, field.TypeString, value)
-	}
-	if vruo.mutation.SourceKeyCleared() {
-		_spec.ClearField(variablereference.FieldSourceKey, field.TypeString)
 	}
 	if value, ok := vruo.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)

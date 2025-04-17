@@ -72,6 +72,11 @@ func TargetServiceID(v uuid.UUID) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldEQ(FieldTargetServiceID, v))
 }
 
+// TargetName applies equality check predicate on the "target_name" field. It's identical to TargetNameEQ.
+func TargetName(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldEQ(FieldTargetName, v))
+}
+
 // SourceID applies equality check predicate on the "source_id" field. It's identical to SourceIDEQ.
 func SourceID(v uuid.UUID) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldEQ(FieldSourceID, v))
@@ -190,6 +195,71 @@ func TargetServiceIDIn(vs ...uuid.UUID) predicate.VariableReference {
 // TargetServiceIDNotIn applies the NotIn predicate on the "target_service_id" field.
 func TargetServiceIDNotIn(vs ...uuid.UUID) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldNotIn(FieldTargetServiceID, vs...))
+}
+
+// TargetNameEQ applies the EQ predicate on the "target_name" field.
+func TargetNameEQ(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldEQ(FieldTargetName, v))
+}
+
+// TargetNameNEQ applies the NEQ predicate on the "target_name" field.
+func TargetNameNEQ(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldNEQ(FieldTargetName, v))
+}
+
+// TargetNameIn applies the In predicate on the "target_name" field.
+func TargetNameIn(vs ...string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldIn(FieldTargetName, vs...))
+}
+
+// TargetNameNotIn applies the NotIn predicate on the "target_name" field.
+func TargetNameNotIn(vs ...string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldNotIn(FieldTargetName, vs...))
+}
+
+// TargetNameGT applies the GT predicate on the "target_name" field.
+func TargetNameGT(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldGT(FieldTargetName, v))
+}
+
+// TargetNameGTE applies the GTE predicate on the "target_name" field.
+func TargetNameGTE(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldGTE(FieldTargetName, v))
+}
+
+// TargetNameLT applies the LT predicate on the "target_name" field.
+func TargetNameLT(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldLT(FieldTargetName, v))
+}
+
+// TargetNameLTE applies the LTE predicate on the "target_name" field.
+func TargetNameLTE(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldLTE(FieldTargetName, v))
+}
+
+// TargetNameContains applies the Contains predicate on the "target_name" field.
+func TargetNameContains(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldContains(FieldTargetName, v))
+}
+
+// TargetNameHasPrefix applies the HasPrefix predicate on the "target_name" field.
+func TargetNameHasPrefix(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldHasPrefix(FieldTargetName, v))
+}
+
+// TargetNameHasSuffix applies the HasSuffix predicate on the "target_name" field.
+func TargetNameHasSuffix(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldHasSuffix(FieldTargetName, v))
+}
+
+// TargetNameEqualFold applies the EqualFold predicate on the "target_name" field.
+func TargetNameEqualFold(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldEqualFold(FieldTargetName, v))
+}
+
+// TargetNameContainsFold applies the ContainsFold predicate on the "target_name" field.
+func TargetNameContainsFold(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldContainsFold(FieldTargetName, v))
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.
@@ -410,16 +480,6 @@ func SourceKeyHasPrefix(v string) predicate.VariableReference {
 // SourceKeyHasSuffix applies the HasSuffix predicate on the "source_key" field.
 func SourceKeyHasSuffix(v string) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldHasSuffix(FieldSourceKey, v))
-}
-
-// SourceKeyIsNil applies the IsNil predicate on the "source_key" field.
-func SourceKeyIsNil() predicate.VariableReference {
-	return predicate.VariableReference(sql.FieldIsNull(FieldSourceKey))
-}
-
-// SourceKeyNotNil applies the NotNil predicate on the "source_key" field.
-func SourceKeyNotNil() predicate.VariableReference {
-	return predicate.VariableReference(sql.FieldNotNull(FieldSourceKey))
 }
 
 // SourceKeyEqualFold applies the EqualFold predicate on the "source_key" field.

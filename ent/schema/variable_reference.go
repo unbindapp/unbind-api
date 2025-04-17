@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
@@ -30,6 +31,7 @@ func (VariableReference) Mixin() []ent.Mixin {
 func (VariableReference) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("target_service_id", uuid.UUID{}),
+		field.String("target_name"),
 		field.Enum("type").GoType(VariableReferenceType("")),
 		field.Enum("source_type").GoType(VariableReferenceSourceType("")),
 		field.UUID("source_id", uuid.UUID{}),
@@ -38,7 +40,7 @@ func (VariableReference) Fields() []ent.Field {
 		),
 		field.String("source_key").Comment(
 			"The key of the secret, or host override for ingresses",
-		).Optional().Nillable(),
+		),
 		field.String("value_template").Optional().Nillable().
 			Comment("Optional template for the value, e.g. 'Hello ${} this is my variable'"),
 	}
@@ -53,6 +55,14 @@ func (VariableReference) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Comment("Service that this variable reference points to"),
+	}
+}
+
+// Indexes of the VariableReference.
+func (VariableReference) Indexes() []ent.Index {
+	return []ent.Index{
+		// Just prevent duplicates
+		index.Fields("target_service_id", "type", "source_type", "source_id", "source_name", "source_key", "value_template").Unique(),
 	}
 }
 

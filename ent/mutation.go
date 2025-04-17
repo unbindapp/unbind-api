@@ -14511,6 +14511,7 @@ type VariableReferenceMutation struct {
 	id             *uuid.UUID
 	created_at     *time.Time
 	updated_at     *time.Time
+	target_name    *string
 	_type          *schema.VariableReferenceType
 	source_type    *schema.VariableReferenceSourceType
 	source_id      *uuid.UUID
@@ -14737,6 +14738,42 @@ func (m *VariableReferenceMutation) ResetTargetServiceID() {
 	m.service = nil
 }
 
+// SetTargetName sets the "target_name" field.
+func (m *VariableReferenceMutation) SetTargetName(s string) {
+	m.target_name = &s
+}
+
+// TargetName returns the value of the "target_name" field in the mutation.
+func (m *VariableReferenceMutation) TargetName() (r string, exists bool) {
+	v := m.target_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTargetName returns the old "target_name" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldTargetName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTargetName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTargetName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTargetName: %w", err)
+	}
+	return oldValue.TargetName, nil
+}
+
+// ResetTargetName resets all changes to the "target_name" field.
+func (m *VariableReferenceMutation) ResetTargetName() {
+	m.target_name = nil
+}
+
 // SetType sets the "type" field.
 func (m *VariableReferenceMutation) SetType(srt schema.VariableReferenceType) {
 	m._type = &srt
@@ -14898,7 +14935,7 @@ func (m *VariableReferenceMutation) SourceKey() (r string, exists bool) {
 // OldSourceKey returns the old "source_key" field's value of the VariableReference entity.
 // If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VariableReferenceMutation) OldSourceKey(ctx context.Context) (v *string, err error) {
+func (m *VariableReferenceMutation) OldSourceKey(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSourceKey is only allowed on UpdateOne operations")
 	}
@@ -14912,22 +14949,9 @@ func (m *VariableReferenceMutation) OldSourceKey(ctx context.Context) (v *string
 	return oldValue.SourceKey, nil
 }
 
-// ClearSourceKey clears the value of the "source_key" field.
-func (m *VariableReferenceMutation) ClearSourceKey() {
-	m.source_key = nil
-	m.clearedFields[variablereference.FieldSourceKey] = struct{}{}
-}
-
-// SourceKeyCleared returns if the "source_key" field was cleared in this mutation.
-func (m *VariableReferenceMutation) SourceKeyCleared() bool {
-	_, ok := m.clearedFields[variablereference.FieldSourceKey]
-	return ok
-}
-
 // ResetSourceKey resets all changes to the "source_key" field.
 func (m *VariableReferenceMutation) ResetSourceKey() {
 	m.source_key = nil
-	delete(m.clearedFields, variablereference.FieldSourceKey)
 }
 
 // SetValueTemplate sets the "value_template" field.
@@ -15053,7 +15077,7 @@ func (m *VariableReferenceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VariableReferenceMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, variablereference.FieldCreatedAt)
 	}
@@ -15062,6 +15086,9 @@ func (m *VariableReferenceMutation) Fields() []string {
 	}
 	if m.service != nil {
 		fields = append(fields, variablereference.FieldTargetServiceID)
+	}
+	if m.target_name != nil {
+		fields = append(fields, variablereference.FieldTargetName)
 	}
 	if m._type != nil {
 		fields = append(fields, variablereference.FieldType)
@@ -15095,6 +15122,8 @@ func (m *VariableReferenceMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case variablereference.FieldTargetServiceID:
 		return m.TargetServiceID()
+	case variablereference.FieldTargetName:
+		return m.TargetName()
 	case variablereference.FieldType:
 		return m.GetType()
 	case variablereference.FieldSourceType:
@@ -15122,6 +15151,8 @@ func (m *VariableReferenceMutation) OldField(ctx context.Context, name string) (
 		return m.OldUpdatedAt(ctx)
 	case variablereference.FieldTargetServiceID:
 		return m.OldTargetServiceID(ctx)
+	case variablereference.FieldTargetName:
+		return m.OldTargetName(ctx)
 	case variablereference.FieldType:
 		return m.OldType(ctx)
 	case variablereference.FieldSourceType:
@@ -15163,6 +15194,13 @@ func (m *VariableReferenceMutation) SetField(name string, value ent.Value) error
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTargetServiceID(v)
+		return nil
+	case variablereference.FieldTargetName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTargetName(v)
 		return nil
 	case variablereference.FieldType:
 		v, ok := value.(schema.VariableReferenceType)
@@ -15236,9 +15274,6 @@ func (m *VariableReferenceMutation) AddField(name string, value ent.Value) error
 // mutation.
 func (m *VariableReferenceMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(variablereference.FieldSourceKey) {
-		fields = append(fields, variablereference.FieldSourceKey)
-	}
 	if m.FieldCleared(variablereference.FieldValueTemplate) {
 		fields = append(fields, variablereference.FieldValueTemplate)
 	}
@@ -15256,9 +15291,6 @@ func (m *VariableReferenceMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *VariableReferenceMutation) ClearField(name string) error {
 	switch name {
-	case variablereference.FieldSourceKey:
-		m.ClearSourceKey()
-		return nil
 	case variablereference.FieldValueTemplate:
 		m.ClearValueTemplate()
 		return nil
@@ -15278,6 +15310,9 @@ func (m *VariableReferenceMutation) ResetField(name string) error {
 		return nil
 	case variablereference.FieldTargetServiceID:
 		m.ResetTargetServiceID()
+		return nil
+	case variablereference.FieldTargetName:
+		m.ResetTargetName()
 		return nil
 	case variablereference.FieldType:
 		m.ResetType()

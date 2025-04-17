@@ -16,6 +16,7 @@ import (
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
 	user_repo "github.com/unbindapp/unbind-api/internal/repositories/user"
+	variable_repo "github.com/unbindapp/unbind-api/internal/repositories/variables"
 	webhook_repo "github.com/unbindapp/unbind-api/internal/repositories/webhook"
 )
 
@@ -37,6 +38,7 @@ type Repositories struct {
 	deployment  deployment_repo.DeploymentRepositoryInterface
 	system      system_repo.SystemRepositoryInterface
 	webhooks    webhook_repo.WebhookRepositoryInterface
+	variables   variable_repo.VariableRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -54,6 +56,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	groupRepo := group_repo.NewGroupRepository(db, permissionsRepo)
 	systemRepo := system_repo.NewSystemRepository(db)
 	webhooksRepo := webhook_repo.NewWebhookRepository(db)
+	variablesRepo := variable_repo.NewVariableRepository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -69,6 +72,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		deployment:  deploymentRepo,
 		system:      systemRepo,
 		webhooks:    webhooksRepo,
+		variables:   variablesRepo,
 	}
 }
 
@@ -135,6 +139,11 @@ func (r *Repositories) System() system_repo.SystemRepositoryInterface {
 // Webhooks returns the Webhook repository
 func (r *Repositories) Webhooks() webhook_repo.WebhookRepositoryInterface {
 	return r.webhooks
+}
+
+// Variables returns the Variable repository
+func (r *Repositories) Variables() variable_repo.VariableRepositoryInterface {
+	return r.variables
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {
