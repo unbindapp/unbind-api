@@ -216,8 +216,10 @@ func (self *KubeClient) GetAllSecrets(
 	ctx context.Context,
 	teamID uuid.UUID,
 	teamSecret string,
-	projectSecrets map[uuid.UUID]string,
-	environmentSecrets map[uuid.UUID]string,
+	projectID uuid.UUID,
+	projectSecret string,
+	environmentID uuid.UUID,
+	environmentSecret string,
 	serviceSecrets map[uuid.UUID]string,
 	client *kubernetes.Clientset,
 	namespace string,
@@ -246,15 +248,12 @@ func (self *KubeClient) GetAllSecrets(
 		}()
 	}
 
-	// Process project secrets
-	for projectID, secretName := range projectSecrets {
-		if secretName == "" {
-			continue
-		}
+	// Process project secret
+	if projectSecret != "" {
 		wg.Add(1)
-		go func(id uuid.UUID, name string) {
+		go func() {
 			defer wg.Done()
-			secretData, err := self.processSecretKeys(ctx, id, schema.VariableReferenceSourceTypeProject, name, client, namespace)
+			secretData, err := self.processSecretKeys(ctx, projectID, schema.VariableReferenceSourceTypeProject, projectSecret, client, namespace)
 			if err != nil {
 				errOnce.Do(func() {
 					firstErr = err
@@ -264,18 +263,15 @@ func (self *KubeClient) GetAllSecrets(
 			mu.Lock()
 			result = append(result, secretData)
 			mu.Unlock()
-		}(projectID, secretName)
+		}()
 	}
 
-	// Process environment secrets
-	for envID, secretName := range environmentSecrets {
-		if secretName == "" {
-			continue
-		}
+	// Process environment secret
+	if environmentSecret != "" {
 		wg.Add(1)
-		go func(id uuid.UUID, name string) {
+		go func() {
 			defer wg.Done()
-			secretData, err := self.processSecretKeys(ctx, id, schema.VariableReferenceSourceTypeEnvironment, name, client, namespace)
+			secretData, err := self.processSecretKeys(ctx, environmentID, schema.VariableReferenceSourceTypeEnvironment, environmentSecret, client, namespace)
 			if err != nil {
 				errOnce.Do(func() {
 					firstErr = err
@@ -285,7 +281,7 @@ func (self *KubeClient) GetAllSecrets(
 			mu.Lock()
 			result = append(result, secretData)
 			mu.Unlock()
-		}(envID, secretName)
+		}()
 	}
 
 	// Process service secrets

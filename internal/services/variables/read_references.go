@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
-func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID uuid.UUID) (*models.AvailableVariableReferenceResponse, error) {
+func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) (*models.AvailableVariableReferenceResponse, error) {
 	// ! TODO - we're going to need to change all of our permission checks to filter not reject
 	permissionChecks := []permissions_repo.PermissionCheck{
 		{
@@ -29,26 +29,24 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 	}
 
 	// Get available variable references
-	team, err := self.repo.Team().GetByID(ctx, teamID)
+	team, project, environment, _, err := self.validateInputs(ctx, teamID, projectID, environmentID, serviceID)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
-		}
 		return nil, err
 	}
 
-	// Get all kubernetes secrets in the team
+	// Base secret names
 	teamSecret := team.KubernetesSecret
-	projectSecrets := make(map[uuid.UUID]string)
-	environmentSecrets := make(map[uuid.UUID]string)
+	projectSecret := project.KubernetesSecret
+	environmentSecret := environment.KubernetesSecret
+
+	// They can access all service secrets in the same project
 	serviceSecrets := make(map[uuid.UUID]string)
-	for _, project := range team.Edges.Projects {
-		projectSecrets[project.ID] = project.KubernetesSecret
-		for _, environment := range project.Edges.Environments {
-			environmentSecrets[environment.ID] = environment.KubernetesSecret
-			for _, service := range environment.Edges.Services {
-				serviceSecrets[service.ID] = service.KubernetesSecret
+	for _, environment := range project.Edges.Environments {
+		for _, service := range environment.Edges.Services {
+			if service.ID == serviceID {
+				continue
 			}
+			serviceSecrets[service.ID] = service.KubernetesSecret
 		}
 	}
 
@@ -62,8 +60,10 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		ctx,
 		team.ID,
 		teamSecret,
-		projectSecrets,
-		environmentSecrets,
+		project.ID,
+		projectSecret,
+		environment.ID,
+		environmentSecret,
 		serviceSecrets,
 		client,
 		team.Namespace,
@@ -194,7 +194,7 @@ func (self *VariablesService) ResolveAvailableReferenceValue(ctx context.Context
 					if targetPort == nil {
 						return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "No TCP port found for endpoint")
 					}
-					return fmt.Sprint("%s:%d", endpoint.DNS, targetPort.Port), nil
+					return fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port), nil
 				}
 			}
 		} else {

@@ -14,7 +14,10 @@ import (
 // List all
 type ListReferenceableVariablesInput struct {
 	server.BaseAuthInput
-	TeamID uuid.UUID `query:"team_id" required:"true"`
+	TeamID        uuid.UUID `query:"team_id" required:"true"`
+	ProjectID     uuid.UUID `query:"project_id" required:"true"`
+	EnvironmentID uuid.UUID `query:"environment_id" required:"true"`
+	ServiceID     uuid.UUID `query:"service_id" required:"true"`
 }
 
 type ReferenceableVariablesResponse struct {
@@ -33,7 +36,7 @@ func (self *HandlerGroup) ListReferenceableVariables(ctx context.Context, input 
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
 	// Get team variables
-	references, err := self.srv.VariablesService.GetAvailableVariableReferences(ctx, user.ID, bearerToken, input.TeamID)
+	references, err := self.srv.VariablesService.GetAvailableVariableReferences(ctx, user.ID, bearerToken, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
 	if err != nil {
 		return nil, handleVariablesErr(err)
 	}
