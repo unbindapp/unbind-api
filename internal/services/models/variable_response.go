@@ -29,6 +29,11 @@ func (u VariableUpdateBehavior) Schema(r huma.Registry) *huma.Schema {
 }
 
 type VariableResponse struct {
+	References []*VariableReferenceResponse `json:"references" nullable:"false"`
+	Items      []*VariableResponseItem      `json:"items" nullable:"false"`
+}
+
+type VariableResponseItem struct {
 	Type  schema.VariableReferenceSourceType `json:"type"`
 	Name  string                             `json:"name"`
 	Value string                             `json:"value"`
@@ -39,7 +44,7 @@ type VariableDeleteInput struct {
 }
 
 // Sort by type then name
-func SortVariableResponse(vars []*VariableResponse) {
+func SortVariableResponse(vars []*VariableResponseItem) {
 	sort.Slice(vars, func(i, j int) bool {
 		if vars[i].Type != vars[j].Type {
 			return vars[i].Type < vars[j].Type

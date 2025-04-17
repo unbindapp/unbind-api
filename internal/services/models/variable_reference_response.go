@@ -134,7 +134,7 @@ func TransformVariableReferenceResponseEntity(entity *ent.VariableReference) *Va
 	}
 }
 
-func TransformVariableReferenceResponse(entities []*ent.VariableReference) []*VariableReferenceResponse {
+func TransformVariableReferenceResponseEntities(entities []*ent.VariableReference) []*VariableReferenceResponse {
 	responses := make([]*VariableReferenceResponse, len(entities))
 	for i, entity := range entities {
 		responses[i] = TransformVariableReferenceResponseEntity(entity)

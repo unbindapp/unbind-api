@@ -18,7 +18,7 @@ type ListVariablesInput struct {
 
 type VariablesResponse struct {
 	Body struct {
-		Data []*models.VariableResponse `json:"data" nullable:"false"`
+		Data *models.VariableResponse `json:"data" nullable:"false"`
 	}
 }
 

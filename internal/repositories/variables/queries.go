@@ -15,5 +15,8 @@ func (self *VariableRepository) GetReferencesForService(
 	// Get all references for a service
 	return self.base.DB.VariableReference.Query().
 		Where(variablereference.TargetServiceIDEQ(serviceID)).
+		Order(
+			ent.Desc(variablereference.FieldCreatedAt),
+		).
 		All(ctx)
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // Create secrets in bulk
-func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.UUID, bearerToken string, input models.BaseVariablesJSONInput, behavior models.VariableUpdateBehavior, newVariables map[string][]byte) ([]*models.VariableResponse, error) {
+func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.UUID, bearerToken string, input models.BaseVariablesJSONInput, behavior models.VariableUpdateBehavior, newVariables map[string][]byte) (*models.VariableResponse, error) {
 	var permissionChecks []permissions_repo.PermissionCheck
 
 	switch input.Type {
@@ -84,15 +84,28 @@ func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.U
 		return nil, err
 	}
 
-	variablesResponse := make([]*models.VariableResponse, len(secrets))
+	variableResponse := &models.VariableResponse{
+		Items:      make([]*models.VariableResponseItem, len(secrets)),
+		References: []*models.VariableReferenceResponse{},
+	}
 	i := 0
 	for k, v := range secrets {
-		variablesResponse[i] = &models.VariableResponse{
+		variableResponse.Items[i] = &models.VariableResponseItem{
 			Type:  input.Type,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
+	}
+	models.SortVariableResponse(variableResponse.Items)
+
+	// Add references if this is for a service
+	if input.Type == schema.VariableReferenceSourceTypeService {
+		references, err := self.repo.Variables().GetReferencesForService(ctx, input.ServiceID)
+		if err != nil {
+			return nil, err
+		}
+		variableResponse.References = models.TransformVariableReferenceResponseEntities(references)
 	}
 
 	// Perform a restart of pods...
@@ -116,7 +129,5 @@ func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.U
 		log.Error("Failed to restart pods", "err", err, "label", input.Type.KubernetesLabel(), "value", labelValue)
 		return nil, err
 	}
-
-	models.SortVariableResponse(variablesResponse)
-	return variablesResponse, nil
+	return variableResponse, nil
 }
