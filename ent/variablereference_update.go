@@ -93,6 +93,26 @@ func (vru *VariableReferenceUpdate) SetNillableValueTemplate(s *string) *Variabl
 	return vru
 }
 
+// SetError sets the "error" field.
+func (vru *VariableReferenceUpdate) SetError(s string) *VariableReferenceUpdate {
+	vru.mutation.SetError(s)
+	return vru
+}
+
+// SetNillableError sets the "error" field if the given value is not nil.
+func (vru *VariableReferenceUpdate) SetNillableError(s *string) *VariableReferenceUpdate {
+	if s != nil {
+		vru.SetError(*s)
+	}
+	return vru
+}
+
+// ClearError clears the value of the "error" field.
+func (vru *VariableReferenceUpdate) ClearError() *VariableReferenceUpdate {
+	vru.mutation.ClearError()
+	return vru
+}
+
 // SetServiceID sets the "service" edge to the Service entity by ID.
 func (vru *VariableReferenceUpdate) SetServiceID(id uuid.UUID) *VariableReferenceUpdate {
 	vru.mutation.SetServiceID(id)
@@ -193,6 +213,12 @@ func (vru *VariableReferenceUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if value, ok := vru.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
+	}
+	if value, ok := vru.mutation.Error(); ok {
+		_spec.SetField(variablereference.FieldError, field.TypeString, value)
+	}
+	if vru.mutation.ErrorCleared() {
+		_spec.ClearField(variablereference.FieldError, field.TypeString)
 	}
 	if vru.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -302,6 +328,26 @@ func (vruo *VariableReferenceUpdateOne) SetNillableValueTemplate(s *string) *Var
 	if s != nil {
 		vruo.SetValueTemplate(*s)
 	}
+	return vruo
+}
+
+// SetError sets the "error" field.
+func (vruo *VariableReferenceUpdateOne) SetError(s string) *VariableReferenceUpdateOne {
+	vruo.mutation.SetError(s)
+	return vruo
+}
+
+// SetNillableError sets the "error" field if the given value is not nil.
+func (vruo *VariableReferenceUpdateOne) SetNillableError(s *string) *VariableReferenceUpdateOne {
+	if s != nil {
+		vruo.SetError(*s)
+	}
+	return vruo
+}
+
+// ClearError clears the value of the "error" field.
+func (vruo *VariableReferenceUpdateOne) ClearError() *VariableReferenceUpdateOne {
+	vruo.mutation.ClearError()
 	return vruo
 }
 
@@ -435,6 +481,12 @@ func (vruo *VariableReferenceUpdateOne) sqlSave(ctx context.Context) (_node *Var
 	}
 	if value, ok := vruo.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
+	}
+	if value, ok := vruo.mutation.Error(); ok {
+		_spec.SetField(variablereference.FieldError, field.TypeString, value)
+	}
+	if vruo.mutation.ErrorCleared() {
+		_spec.ClearField(variablereference.FieldError, field.TypeString)
 	}
 	if vruo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

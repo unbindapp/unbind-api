@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
@@ -47,16 +48,22 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 					if !errors.IsNotFound(err) {
 						return nil, err
 					} else {
-						sourceValues[sourceKey] = "NOT_FOUND"
-						continue
+						if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
+							log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
+							return nil, err
+						}
+						return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
 					}
 				}
 
 				// Get the value from the secret
 				value, ok := secret.Data[source.Key]
 				if !ok {
-					sourceValues[sourceKey] = "NOT_FOUND"
-					continue
+					if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
+						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
+						return nil, err
+					}
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
 				}
 				sourceValues[sourceKey] = string(value)
 			case schema.VariableReferenceTypeInternalEndpoint, schema.VariableReferenceTypeExternalEndpoint:
@@ -69,10 +76,14 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 				}
 
 				if len(endpoints.Internal) == 0 && len(endpoints.External) == 0 {
-					sourceValues[sourceKey] = "NOT_FOUND"
-					continue
+					if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
+						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
+						return nil, err
+					}
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
 				}
 
+				found := false
 				if source.Type == schema.VariableReferenceTypeInternalEndpoint {
 					for _, endpoint := range endpoints.Internal {
 						if endpoint.Name == source.Key {
@@ -86,10 +97,14 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 							}
 							if targetPort == nil {
 								log.Warnf("No TCP port found for endpoint %s", endpoint.Name)
-								sourceValues[sourceKey] = "NOT_FOUND"
-								continue
+								if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
+									log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
+									return nil, err
+								}
+								return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s} - no TCP port found", source.Name, source.Key))
 							}
 							sourceValues[sourceKey] = fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port)
+							found = true
 						}
 					}
 
@@ -101,9 +116,18 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 					for _, host := range endpoint.Hosts {
 						if host.Host == source.Key {
 							sourceValues[sourceKey] = host.Host
+							found = true
 							break
 						}
 					}
+				}
+
+				if !found {
+					if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
+						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
+						return nil, err
+					}
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
 				}
 			}
 		}

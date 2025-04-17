@@ -395,6 +395,7 @@ var (
 		{Name: "target_name", Type: field.TypeString},
 		{Name: "sources", Type: field.TypeJSON},
 		{Name: "value_template", Type: field.TypeString},
+		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "target_service_id", Type: field.TypeUUID},
 	}
 	// VariableReferencesTable holds the schema information for the "variable_references" table.
@@ -405,7 +406,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "variable_references_services_variable_references",
-				Columns:    []*schema.Column{VariableReferencesColumns[6]},
+				Columns:    []*schema.Column{VariableReferencesColumns[7]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -414,7 +415,7 @@ var (
 			{
 				Name:    "variablereference_target_service_id_sources_value_template",
 				Unique:  true,
-				Columns: []*schema.Column{VariableReferencesColumns[6], VariableReferencesColumns[4], VariableReferencesColumns[5]},
+				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[4], VariableReferencesColumns[5]},
 			},
 		},
 	}

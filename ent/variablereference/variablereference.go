@@ -27,6 +27,8 @@ const (
 	FieldSources = "sources"
 	// FieldValueTemplate holds the string denoting the value_template field in the database.
 	FieldValueTemplate = "value_template"
+	// FieldError holds the string denoting the error field in the database.
+	FieldError = "error"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// Table holds the table name of the variablereference in the database.
@@ -49,6 +51,7 @@ var Columns = []string{
 	FieldTargetName,
 	FieldSources,
 	FieldValueTemplate,
+	FieldError,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -103,6 +106,11 @@ func ByTargetName(opts ...sql.OrderTermOption) OrderOption {
 // ByValueTemplate orders the results by the value_template field.
 func ByValueTemplate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldValueTemplate, opts...).ToFunc()
+}
+
+// ByError orders the results by the error field.
+func ByError(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldError, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

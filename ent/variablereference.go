@@ -34,6 +34,8 @@ type VariableReference struct {
 	Sources []schema.VariableReferenceSource `json:"sources,omitempty"`
 	// Optional template for the value, e.g. 'Hello ${a.b} this is my variable ${c.d}'
 	ValueTemplate string `json:"value_template,omitempty"`
+	// Error message if the variable reference could not be resolved
+	Error *string `json:"error,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VariableReferenceQuery when eager-loading is set.
 	Edges        VariableReferenceEdges `json:"edges"`
@@ -67,7 +69,7 @@ func (*VariableReference) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case variablereference.FieldSources:
 			values[i] = new([]byte)
-		case variablereference.FieldTargetName, variablereference.FieldValueTemplate:
+		case variablereference.FieldTargetName, variablereference.FieldValueTemplate, variablereference.FieldError:
 			values[i] = new(sql.NullString)
 		case variablereference.FieldCreatedAt, variablereference.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -132,6 +134,13 @@ func (vr *VariableReference) assignValues(columns []string, values []any) error 
 			} else if value.Valid {
 				vr.ValueTemplate = value.String
 			}
+		case variablereference.FieldError:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field error", values[i])
+			} else if value.Valid {
+				vr.Error = new(string)
+				*vr.Error = value.String
+			}
 		default:
 			vr.selectValues.Set(columns[i], values[i])
 		}
@@ -190,6 +199,11 @@ func (vr *VariableReference) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("value_template=")
 	builder.WriteString(vr.ValueTemplate)
+	builder.WriteString(", ")
+	if v := vr.Error; v != nil {
+		builder.WriteString("error=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

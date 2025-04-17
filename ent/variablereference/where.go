@@ -81,6 +81,11 @@ func ValueTemplate(v string) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldEQ(FieldValueTemplate, v))
 }
 
+// Error applies equality check predicate on the "error" field. It's identical to ErrorEQ.
+func Error(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldEQ(FieldError, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldEQ(FieldCreatedAt, v))
@@ -309,6 +314,81 @@ func ValueTemplateEqualFold(v string) predicate.VariableReference {
 // ValueTemplateContainsFold applies the ContainsFold predicate on the "value_template" field.
 func ValueTemplateContainsFold(v string) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldContainsFold(FieldValueTemplate, v))
+}
+
+// ErrorEQ applies the EQ predicate on the "error" field.
+func ErrorEQ(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldEQ(FieldError, v))
+}
+
+// ErrorNEQ applies the NEQ predicate on the "error" field.
+func ErrorNEQ(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldNEQ(FieldError, v))
+}
+
+// ErrorIn applies the In predicate on the "error" field.
+func ErrorIn(vs ...string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldIn(FieldError, vs...))
+}
+
+// ErrorNotIn applies the NotIn predicate on the "error" field.
+func ErrorNotIn(vs ...string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldNotIn(FieldError, vs...))
+}
+
+// ErrorGT applies the GT predicate on the "error" field.
+func ErrorGT(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldGT(FieldError, v))
+}
+
+// ErrorGTE applies the GTE predicate on the "error" field.
+func ErrorGTE(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldGTE(FieldError, v))
+}
+
+// ErrorLT applies the LT predicate on the "error" field.
+func ErrorLT(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldLT(FieldError, v))
+}
+
+// ErrorLTE applies the LTE predicate on the "error" field.
+func ErrorLTE(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldLTE(FieldError, v))
+}
+
+// ErrorContains applies the Contains predicate on the "error" field.
+func ErrorContains(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldContains(FieldError, v))
+}
+
+// ErrorHasPrefix applies the HasPrefix predicate on the "error" field.
+func ErrorHasPrefix(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldHasPrefix(FieldError, v))
+}
+
+// ErrorHasSuffix applies the HasSuffix predicate on the "error" field.
+func ErrorHasSuffix(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldHasSuffix(FieldError, v))
+}
+
+// ErrorIsNil applies the IsNil predicate on the "error" field.
+func ErrorIsNil() predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldIsNull(FieldError))
+}
+
+// ErrorNotNil applies the NotNil predicate on the "error" field.
+func ErrorNotNil() predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldNotNull(FieldError))
+}
+
+// ErrorEqualFold applies the EqualFold predicate on the "error" field.
+func ErrorEqualFold(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldEqualFold(FieldError, v))
+}
+
+// ErrorContainsFold applies the ContainsFold predicate on the "error" field.
+func ErrorContainsFold(v string) predicate.VariableReference {
+	return predicate.VariableReference(sql.FieldContainsFold(FieldError, v))
 }
 
 // HasService applies the HasEdge predicate on the "service" edge.

@@ -236,6 +236,7 @@ func main() {
 	k8s := k8s.NewK8SClient(cfg, cfg)
 
 	var dockerImg string
+	additionalEnv := make(map[string]string)
 
 	// We can bypass any build step if the image is already provided
 	if cfg.ServiceImage != "" || cfg.ServiceType == schema.ServiceTypeDatabase {
@@ -264,7 +265,6 @@ func main() {
 		}
 
 		if cfg.AdditionalEnv != "" {
-			additionalEnv := make(map[string]string)
 			if err := json.Unmarshal([]byte(cfg.AdditionalEnv), &additionalEnv); err != nil {
 				if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal additional env %v", err), cfg.ServiceDeploymentID); err != nil {
 					log.Errorf("Failed to mark deployment as failed: %v", err)
@@ -323,7 +323,7 @@ func main() {
 	}
 
 	// Deploy to kubernetes with context
-	createdCRD, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg)
+	createdCRD, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv)
 	if err != nil {
 		if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to deploy image %v", err), cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)

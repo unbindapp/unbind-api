@@ -78,6 +78,20 @@ func (vrc *VariableReferenceCreate) SetValueTemplate(s string) *VariableReferenc
 	return vrc
 }
 
+// SetError sets the "error" field.
+func (vrc *VariableReferenceCreate) SetError(s string) *VariableReferenceCreate {
+	vrc.mutation.SetError(s)
+	return vrc
+}
+
+// SetNillableError sets the "error" field if the given value is not nil.
+func (vrc *VariableReferenceCreate) SetNillableError(s *string) *VariableReferenceCreate {
+	if s != nil {
+		vrc.SetError(*s)
+	}
+	return vrc
+}
+
 // SetID sets the "id" field.
 func (vrc *VariableReferenceCreate) SetID(u uuid.UUID) *VariableReferenceCreate {
 	vrc.mutation.SetID(u)
@@ -231,6 +245,10 @@ func (vrc *VariableReferenceCreate) createSpec() (*VariableReference, *sqlgraph.
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
 		_node.ValueTemplate = value
 	}
+	if value, ok := vrc.mutation.Error(); ok {
+		_spec.SetField(variablereference.FieldError, field.TypeString, value)
+		_node.Error = &value
+	}
 	if nodes := vrc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -360,6 +378,24 @@ func (u *VariableReferenceUpsert) UpdateValueTemplate() *VariableReferenceUpsert
 	return u
 }
 
+// SetError sets the "error" field.
+func (u *VariableReferenceUpsert) SetError(v string) *VariableReferenceUpsert {
+	u.Set(variablereference.FieldError, v)
+	return u
+}
+
+// UpdateError sets the "error" field to the value that was provided on create.
+func (u *VariableReferenceUpsert) UpdateError() *VariableReferenceUpsert {
+	u.SetExcluded(variablereference.FieldError)
+	return u
+}
+
+// ClearError clears the value of the "error" field.
+func (u *VariableReferenceUpsert) ClearError() *VariableReferenceUpsert {
+	u.SetNull(variablereference.FieldError)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -478,6 +514,27 @@ func (u *VariableReferenceUpsertOne) SetValueTemplate(v string) *VariableReferen
 func (u *VariableReferenceUpsertOne) UpdateValueTemplate() *VariableReferenceUpsertOne {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateValueTemplate()
+	})
+}
+
+// SetError sets the "error" field.
+func (u *VariableReferenceUpsertOne) SetError(v string) *VariableReferenceUpsertOne {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.SetError(v)
+	})
+}
+
+// UpdateError sets the "error" field to the value that was provided on create.
+func (u *VariableReferenceUpsertOne) UpdateError() *VariableReferenceUpsertOne {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.UpdateError()
+	})
+}
+
+// ClearError clears the value of the "error" field.
+func (u *VariableReferenceUpsertOne) ClearError() *VariableReferenceUpsertOne {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.ClearError()
 	})
 }
 
@@ -766,6 +823,27 @@ func (u *VariableReferenceUpsertBulk) SetValueTemplate(v string) *VariableRefere
 func (u *VariableReferenceUpsertBulk) UpdateValueTemplate() *VariableReferenceUpsertBulk {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateValueTemplate()
+	})
+}
+
+// SetError sets the "error" field.
+func (u *VariableReferenceUpsertBulk) SetError(v string) *VariableReferenceUpsertBulk {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.SetError(v)
+	})
+}
+
+// UpdateError sets the "error" field to the value that was provided on create.
+func (u *VariableReferenceUpsertBulk) UpdateError() *VariableReferenceUpsertBulk {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.UpdateError()
+	})
+}
+
+// ClearError clears the value of the "error" field.
+func (u *VariableReferenceUpsertBulk) ClearError() *VariableReferenceUpsertBulk {
+	return u.Update(func(s *VariableReferenceUpsert) {
+		s.ClearError()
 	})
 }
 

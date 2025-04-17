@@ -14515,6 +14515,7 @@ type VariableReferenceMutation struct {
 	sources        *[]schema.VariableReferenceSource
 	appendsources  []schema.VariableReferenceSource
 	value_template *string
+	error          *string
 	clearedFields  map[string]struct{}
 	service        *uuid.UUID
 	clearedservice bool
@@ -14858,6 +14859,55 @@ func (m *VariableReferenceMutation) ResetValueTemplate() {
 	m.value_template = nil
 }
 
+// SetError sets the "error" field.
+func (m *VariableReferenceMutation) SetError(s string) {
+	m.error = &s
+}
+
+// Error returns the value of the "error" field in the mutation.
+func (m *VariableReferenceMutation) Error() (r string, exists bool) {
+	v := m.error
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldError returns the old "error" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldError(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldError is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldError requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldError: %w", err)
+	}
+	return oldValue.Error, nil
+}
+
+// ClearError clears the value of the "error" field.
+func (m *VariableReferenceMutation) ClearError() {
+	m.error = nil
+	m.clearedFields[variablereference.FieldError] = struct{}{}
+}
+
+// ErrorCleared returns if the "error" field was cleared in this mutation.
+func (m *VariableReferenceMutation) ErrorCleared() bool {
+	_, ok := m.clearedFields[variablereference.FieldError]
+	return ok
+}
+
+// ResetError resets all changes to the "error" field.
+func (m *VariableReferenceMutation) ResetError() {
+	m.error = nil
+	delete(m.clearedFields, variablereference.FieldError)
+}
+
 // SetServiceID sets the "service" edge to the Service entity by id.
 func (m *VariableReferenceMutation) SetServiceID(id uuid.UUID) {
 	m.service = &id
@@ -14932,7 +14982,7 @@ func (m *VariableReferenceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VariableReferenceMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, variablereference.FieldCreatedAt)
 	}
@@ -14950,6 +15000,9 @@ func (m *VariableReferenceMutation) Fields() []string {
 	}
 	if m.value_template != nil {
 		fields = append(fields, variablereference.FieldValueTemplate)
+	}
+	if m.error != nil {
+		fields = append(fields, variablereference.FieldError)
 	}
 	return fields
 }
@@ -14971,6 +15024,8 @@ func (m *VariableReferenceMutation) Field(name string) (ent.Value, bool) {
 		return m.Sources()
 	case variablereference.FieldValueTemplate:
 		return m.ValueTemplate()
+	case variablereference.FieldError:
+		return m.Error()
 	}
 	return nil, false
 }
@@ -14992,6 +15047,8 @@ func (m *VariableReferenceMutation) OldField(ctx context.Context, name string) (
 		return m.OldSources(ctx)
 	case variablereference.FieldValueTemplate:
 		return m.OldValueTemplate(ctx)
+	case variablereference.FieldError:
+		return m.OldError(ctx)
 	}
 	return nil, fmt.Errorf("unknown VariableReference field %s", name)
 }
@@ -15043,6 +15100,13 @@ func (m *VariableReferenceMutation) SetField(name string, value ent.Value) error
 		}
 		m.SetValueTemplate(v)
 		return nil
+	case variablereference.FieldError:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetError(v)
+		return nil
 	}
 	return fmt.Errorf("unknown VariableReference field %s", name)
 }
@@ -15072,7 +15136,11 @@ func (m *VariableReferenceMutation) AddField(name string, value ent.Value) error
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *VariableReferenceMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(variablereference.FieldError) {
+		fields = append(fields, variablereference.FieldError)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -15085,6 +15153,11 @@ func (m *VariableReferenceMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *VariableReferenceMutation) ClearField(name string) error {
+	switch name {
+	case variablereference.FieldError:
+		m.ClearError()
+		return nil
+	}
 	return fmt.Errorf("unknown VariableReference nullable field %s", name)
 }
 
@@ -15109,6 +15182,9 @@ func (m *VariableReferenceMutation) ResetField(name string) error {
 		return nil
 	case variablereference.FieldValueTemplate:
 		m.ResetValueTemplate()
+		return nil
+	case variablereference.FieldError:
+		m.ResetError()
 		return nil
 	}
 	return fmt.Errorf("unknown VariableReference field %s", name)

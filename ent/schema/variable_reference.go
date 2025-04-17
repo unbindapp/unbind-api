@@ -44,6 +44,7 @@ func (VariableReference) Fields() []ent.Field {
 			Comment("List of sources for this variable reference, interpolated as ${sourcename.sourcekey}"),
 		field.String("value_template").
 			Comment("Optional template for the value, e.g. 'Hello ${a.b} this is my variable ${c.d}'"),
+		field.String("error").Optional().Nillable().Comment("Error message if the variable reference could not be resolved"),
 	}
 }
 

@@ -289,28 +289,6 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_HOSTS"] = string(marshalled)
 	}
 
-	// Resolve referenced environment
-	referencedEnv, err := self.variableService.ResolveAllReferences(ctx, service.ID)
-	if err != nil {
-		log.Error("Error resolving environment variables", "err", err)
-		return nil, err
-	}
-
-	// Convert the byte arrays to base64 strings first
-	serializedReferences := make(map[string]string)
-	for k, v := range referencedEnv {
-		serializedReferences[k] = base64.StdEncoding.EncodeToString([]byte(v))
-	}
-
-	// Serialize the map to JSON
-	referencedEnvJSON, err := json.Marshal(serializedReferences)
-	if err != nil {
-		log.Error("Error marshalling referenced secrets", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to marshal referenced secrets")
-	}
-	// Add the referenced environment to the environment
-	env["ADDITIONAL_ENV"] = string(referencedEnvJSON)
-
 	// ! TODO - we need to support the custom run commands, the operator supports it
 
 	return env, nil
@@ -339,6 +317,36 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 	}
 
 	req.Environment["SERVICE_DEPLOYMENT_ID"] = job.ID.String()
+
+	// Resolve referenced environment
+	referencedEnv, err := self.variableService.ResolveAllReferences(ctx, req.ServiceID)
+	if err != nil {
+		log.Error("Error resolving environment variables", "err", err)
+		if _, err = self.repo.Deployment().MarkFailed(ctx, nil, job.ID, err.Error(), time.Now()); err != nil {
+			log.Error("Error marking job as failed", "err", err)
+			return nil, err
+		}
+		return nil, err
+	}
+
+	// Convert the byte arrays to base64 strings first
+	serializedReferences := make(map[string]string)
+	for k, v := range referencedEnv {
+		serializedReferences[k] = base64.StdEncoding.EncodeToString([]byte(v))
+	}
+
+	// Serialize the map to JSON
+	referencedEnvJSON, err := json.Marshal(serializedReferences)
+	if err != nil {
+		log.Error("Error marshalling referenced secrets", "err", err)
+		if _, err = self.repo.Deployment().MarkFailed(ctx, nil, job.ID, err.Error(), time.Now()); err != nil {
+			log.Error("Error marking job as failed", "err", err)
+			return nil, err
+		}
+		return nil, err
+	}
+	// Add the referenced environment to the environment
+	referencedEnv["ADDITIONAL_ENV"] = string(referencedEnvJSON)
 
 	// Add to the queue
 	err = self.jobQueue.Enqueue(ctx, job.ID.String(), req)

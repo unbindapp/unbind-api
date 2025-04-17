@@ -13,5 +13,6 @@ import (
 // VariableRepositoryInterface ...
 type VariableRepositoryInterface interface {
 	CreateReference(ctx context.Context, input *models.CreateVariableReferenceInput) (*ent.VariableReference, error)
+	AttachError(ctx context.Context, id uuid.UUID, err error) (*ent.VariableReference, error)
 	GetReferencesForService(ctx context.Context, serviceID uuid.UUID) ([]*ent.VariableReference, error)
 }
