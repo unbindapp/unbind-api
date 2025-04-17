@@ -31,6 +31,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.ListInstances,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "restart-instances",
+			Summary:     "Restart Instances (Pods)",
+			Description: "Restart all instances (pods) for a service",
+			Path:        "/restart",
+			Method:      http.MethodPut,
+		},
+		handlers.RestartInstances,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {
