@@ -52,7 +52,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 							log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 							return nil, err
 						}
-						return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
+						return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
 					}
 				}
 
@@ -63,7 +63,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 						return nil, err
 					}
-					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
 				}
 				sourceValues[sourceKey] = string(value)
 			case schema.VariableReferenceTypeInternalEndpoint, schema.VariableReferenceTypeExternalEndpoint:
@@ -80,7 +80,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 						return nil, err
 					}
-					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
 				}
 
 				found := false
@@ -101,7 +101,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 									log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 									return nil, err
 								}
-								return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s} - no TCP port found", source.Name, source.Key))
+								return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
 							}
 							sourceValues[sourceKey] = fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port)
 							found = true
