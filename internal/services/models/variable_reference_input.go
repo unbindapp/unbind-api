@@ -17,10 +17,10 @@ type CreateVariableReferenceInput struct {
 }
 
 type ResolveVariableReferenceInput struct {
-	TeamID     uuid.UUID                          `json:"team_id"`
-	Type       schema.VariableReferenceType       `json:"type"`
-	Name       string                             `json:"name"`
-	SourceType schema.VariableReferenceSourceType `json:"source_type"`
-	SourceID   uuid.UUID                          `json:"source_id"`
-	Key        string                             `json:"key"`
+	TeamID     uuid.UUID                          `query:"team_id"`
+	Type       schema.VariableReferenceType       `query:"type"`
+	Name       string                             `query:"name"`
+	SourceType schema.VariableReferenceSourceType `query:"source_type"`
+	SourceID   uuid.UUID                          `query:"source_id"`
+	Key        string                             `query:"key"`
 }

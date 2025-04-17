@@ -3,6 +3,7 @@ package variables_service
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -60,36 +61,68 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, err
 	}
 
-	// Get all kubernetes secrets in the team
-	k8sSecrets, err := self.k8s.GetAllSecrets(
-		ctx,
-		team.ID,
-		teamSecret,
-		project.ID,
-		projectSecret,
-		environment.ID,
-		environmentSecret,
-		serviceSecrets,
-		client,
-		team.Namespace,
-	)
+	// Use WaitGroup to handle concurrent K8s operations
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 
-	if err != nil {
-		return nil, err
+	// Variables to store results
+	var k8sSecrets []models.SecretData
+	var endpoints *models.EndpointDiscovery
+	var secretsErr, endpointsErr error
+
+	// Add two tasks to WaitGroup
+	wg.Add(2)
+
+	// Goroutine for getting all kubernetes secrets
+	go func() {
+		defer wg.Done()
+		secrets, err := self.k8s.GetAllSecrets(
+			ctx,
+			team.ID,
+			teamSecret,
+			project.ID,
+			projectSecret,
+			environment.ID,
+			environmentSecret,
+			serviceSecrets,
+			client,
+			team.Namespace,
+		)
+
+		mu.Lock()
+		k8sSecrets = secrets
+		secretsErr = err
+		mu.Unlock()
+	}()
+
+	// Goroutine for getting all DNS/endpoints
+	go func() {
+		defer wg.Done()
+		eps, err := self.k8s.DiscoverEndpointsByLabels(
+			ctx,
+			team.Namespace,
+			map[string]string{
+				"unbind-project": project.ID.String(),
+			},
+			client,
+		)
+
+		mu.Lock()
+		endpoints = eps
+		endpointsErr = err
+		mu.Unlock()
+	}()
+
+	// Wait for both operations to complete
+	wg.Wait()
+
+	// Check for errors
+	if secretsErr != nil {
+		return nil, secretsErr
 	}
 
-	// Get all the DNS/endpoints
-	endpoints, err := self.k8s.DiscoverEndpointsByLabels(
-		ctx,
-		team.Namespace,
-		map[string]string{
-			"unbind-team": team.ID.String(),
-		},
-		client,
-	)
-
-	if err != nil {
-		return nil, err
+	if endpointsErr != nil {
+		return nil, endpointsErr
 	}
 
 	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints), nil
