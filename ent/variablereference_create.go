@@ -72,41 +72,15 @@ func (vrc *VariableReferenceCreate) SetType(srt schema.VariableReferenceType) *V
 	return vrc
 }
 
-// SetSourceType sets the "source_type" field.
-func (vrc *VariableReferenceCreate) SetSourceType(srst schema.VariableReferenceSourceType) *VariableReferenceCreate {
-	vrc.mutation.SetSourceType(srst)
-	return vrc
-}
-
-// SetSourceID sets the "source_id" field.
-func (vrc *VariableReferenceCreate) SetSourceID(u uuid.UUID) *VariableReferenceCreate {
-	vrc.mutation.SetSourceID(u)
-	return vrc
-}
-
-// SetSourceName sets the "source_name" field.
-func (vrc *VariableReferenceCreate) SetSourceName(s string) *VariableReferenceCreate {
-	vrc.mutation.SetSourceName(s)
-	return vrc
-}
-
-// SetSourceKey sets the "source_key" field.
-func (vrc *VariableReferenceCreate) SetSourceKey(s string) *VariableReferenceCreate {
-	vrc.mutation.SetSourceKey(s)
+// SetSources sets the "sources" field.
+func (vrc *VariableReferenceCreate) SetSources(srs []schema.VariableReferenceSource) *VariableReferenceCreate {
+	vrc.mutation.SetSources(srs)
 	return vrc
 }
 
 // SetValueTemplate sets the "value_template" field.
 func (vrc *VariableReferenceCreate) SetValueTemplate(s string) *VariableReferenceCreate {
 	vrc.mutation.SetValueTemplate(s)
-	return vrc
-}
-
-// SetNillableValueTemplate sets the "value_template" field if the given value is not nil.
-func (vrc *VariableReferenceCreate) SetNillableValueTemplate(s *string) *VariableReferenceCreate {
-	if s != nil {
-		vrc.SetValueTemplate(*s)
-	}
 	return vrc
 }
 
@@ -206,22 +180,11 @@ func (vrc *VariableReferenceCreate) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.type": %w`, err)}
 		}
 	}
-	if _, ok := vrc.mutation.SourceType(); !ok {
-		return &ValidationError{Name: "source_type", err: errors.New(`ent: missing required field "VariableReference.source_type"`)}
+	if _, ok := vrc.mutation.Sources(); !ok {
+		return &ValidationError{Name: "sources", err: errors.New(`ent: missing required field "VariableReference.sources"`)}
 	}
-	if v, ok := vrc.mutation.SourceType(); ok {
-		if err := variablereference.SourceTypeValidator(v); err != nil {
-			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.source_type": %w`, err)}
-		}
-	}
-	if _, ok := vrc.mutation.SourceID(); !ok {
-		return &ValidationError{Name: "source_id", err: errors.New(`ent: missing required field "VariableReference.source_id"`)}
-	}
-	if _, ok := vrc.mutation.SourceName(); !ok {
-		return &ValidationError{Name: "source_name", err: errors.New(`ent: missing required field "VariableReference.source_name"`)}
-	}
-	if _, ok := vrc.mutation.SourceKey(); !ok {
-		return &ValidationError{Name: "source_key", err: errors.New(`ent: missing required field "VariableReference.source_key"`)}
+	if _, ok := vrc.mutation.ValueTemplate(); !ok {
+		return &ValidationError{Name: "value_template", err: errors.New(`ent: missing required field "VariableReference.value_template"`)}
 	}
 	if len(vrc.mutation.ServiceIDs()) == 0 {
 		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "VariableReference.service"`)}
@@ -278,25 +241,13 @@ func (vrc *VariableReferenceCreate) createSpec() (*VariableReference, *sqlgraph.
 		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 		_node.Type = value
 	}
-	if value, ok := vrc.mutation.SourceType(); ok {
-		_spec.SetField(variablereference.FieldSourceType, field.TypeEnum, value)
-		_node.SourceType = value
-	}
-	if value, ok := vrc.mutation.SourceID(); ok {
-		_spec.SetField(variablereference.FieldSourceID, field.TypeUUID, value)
-		_node.SourceID = value
-	}
-	if value, ok := vrc.mutation.SourceName(); ok {
-		_spec.SetField(variablereference.FieldSourceName, field.TypeString, value)
-		_node.SourceName = value
-	}
-	if value, ok := vrc.mutation.SourceKey(); ok {
-		_spec.SetField(variablereference.FieldSourceKey, field.TypeString, value)
-		_node.SourceKey = value
+	if value, ok := vrc.mutation.Sources(); ok {
+		_spec.SetField(variablereference.FieldSources, field.TypeJSON, value)
+		_node.Sources = value
 	}
 	if value, ok := vrc.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
-		_node.ValueTemplate = &value
+		_node.ValueTemplate = value
 	}
 	if nodes := vrc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -415,51 +366,15 @@ func (u *VariableReferenceUpsert) UpdateType() *VariableReferenceUpsert {
 	return u
 }
 
-// SetSourceType sets the "source_type" field.
-func (u *VariableReferenceUpsert) SetSourceType(v schema.VariableReferenceSourceType) *VariableReferenceUpsert {
-	u.Set(variablereference.FieldSourceType, v)
+// SetSources sets the "sources" field.
+func (u *VariableReferenceUpsert) SetSources(v []schema.VariableReferenceSource) *VariableReferenceUpsert {
+	u.Set(variablereference.FieldSources, v)
 	return u
 }
 
-// UpdateSourceType sets the "source_type" field to the value that was provided on create.
-func (u *VariableReferenceUpsert) UpdateSourceType() *VariableReferenceUpsert {
-	u.SetExcluded(variablereference.FieldSourceType)
-	return u
-}
-
-// SetSourceID sets the "source_id" field.
-func (u *VariableReferenceUpsert) SetSourceID(v uuid.UUID) *VariableReferenceUpsert {
-	u.Set(variablereference.FieldSourceID, v)
-	return u
-}
-
-// UpdateSourceID sets the "source_id" field to the value that was provided on create.
-func (u *VariableReferenceUpsert) UpdateSourceID() *VariableReferenceUpsert {
-	u.SetExcluded(variablereference.FieldSourceID)
-	return u
-}
-
-// SetSourceName sets the "source_name" field.
-func (u *VariableReferenceUpsert) SetSourceName(v string) *VariableReferenceUpsert {
-	u.Set(variablereference.FieldSourceName, v)
-	return u
-}
-
-// UpdateSourceName sets the "source_name" field to the value that was provided on create.
-func (u *VariableReferenceUpsert) UpdateSourceName() *VariableReferenceUpsert {
-	u.SetExcluded(variablereference.FieldSourceName)
-	return u
-}
-
-// SetSourceKey sets the "source_key" field.
-func (u *VariableReferenceUpsert) SetSourceKey(v string) *VariableReferenceUpsert {
-	u.Set(variablereference.FieldSourceKey, v)
-	return u
-}
-
-// UpdateSourceKey sets the "source_key" field to the value that was provided on create.
-func (u *VariableReferenceUpsert) UpdateSourceKey() *VariableReferenceUpsert {
-	u.SetExcluded(variablereference.FieldSourceKey)
+// UpdateSources sets the "sources" field to the value that was provided on create.
+func (u *VariableReferenceUpsert) UpdateSources() *VariableReferenceUpsert {
+	u.SetExcluded(variablereference.FieldSources)
 	return u
 }
 
@@ -472,12 +387,6 @@ func (u *VariableReferenceUpsert) SetValueTemplate(v string) *VariableReferenceU
 // UpdateValueTemplate sets the "value_template" field to the value that was provided on create.
 func (u *VariableReferenceUpsert) UpdateValueTemplate() *VariableReferenceUpsert {
 	u.SetExcluded(variablereference.FieldValueTemplate)
-	return u
-}
-
-// ClearValueTemplate clears the value of the "value_template" field.
-func (u *VariableReferenceUpsert) ClearValueTemplate() *VariableReferenceUpsert {
-	u.SetNull(variablereference.FieldValueTemplate)
 	return u
 }
 
@@ -588,59 +497,17 @@ func (u *VariableReferenceUpsertOne) UpdateType() *VariableReferenceUpsertOne {
 	})
 }
 
-// SetSourceType sets the "source_type" field.
-func (u *VariableReferenceUpsertOne) SetSourceType(v schema.VariableReferenceSourceType) *VariableReferenceUpsertOne {
+// SetSources sets the "sources" field.
+func (u *VariableReferenceUpsertOne) SetSources(v []schema.VariableReferenceSource) *VariableReferenceUpsertOne {
 	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceType(v)
+		s.SetSources(v)
 	})
 }
 
-// UpdateSourceType sets the "source_type" field to the value that was provided on create.
-func (u *VariableReferenceUpsertOne) UpdateSourceType() *VariableReferenceUpsertOne {
+// UpdateSources sets the "sources" field to the value that was provided on create.
+func (u *VariableReferenceUpsertOne) UpdateSources() *VariableReferenceUpsertOne {
 	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceType()
-	})
-}
-
-// SetSourceID sets the "source_id" field.
-func (u *VariableReferenceUpsertOne) SetSourceID(v uuid.UUID) *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceID(v)
-	})
-}
-
-// UpdateSourceID sets the "source_id" field to the value that was provided on create.
-func (u *VariableReferenceUpsertOne) UpdateSourceID() *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceID()
-	})
-}
-
-// SetSourceName sets the "source_name" field.
-func (u *VariableReferenceUpsertOne) SetSourceName(v string) *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceName(v)
-	})
-}
-
-// UpdateSourceName sets the "source_name" field to the value that was provided on create.
-func (u *VariableReferenceUpsertOne) UpdateSourceName() *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceName()
-	})
-}
-
-// SetSourceKey sets the "source_key" field.
-func (u *VariableReferenceUpsertOne) SetSourceKey(v string) *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceKey(v)
-	})
-}
-
-// UpdateSourceKey sets the "source_key" field to the value that was provided on create.
-func (u *VariableReferenceUpsertOne) UpdateSourceKey() *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceKey()
+		s.UpdateSources()
 	})
 }
 
@@ -655,13 +522,6 @@ func (u *VariableReferenceUpsertOne) SetValueTemplate(v string) *VariableReferen
 func (u *VariableReferenceUpsertOne) UpdateValueTemplate() *VariableReferenceUpsertOne {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateValueTemplate()
-	})
-}
-
-// ClearValueTemplate clears the value of the "value_template" field.
-func (u *VariableReferenceUpsertOne) ClearValueTemplate() *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.ClearValueTemplate()
 	})
 }
 
@@ -939,59 +799,17 @@ func (u *VariableReferenceUpsertBulk) UpdateType() *VariableReferenceUpsertBulk 
 	})
 }
 
-// SetSourceType sets the "source_type" field.
-func (u *VariableReferenceUpsertBulk) SetSourceType(v schema.VariableReferenceSourceType) *VariableReferenceUpsertBulk {
+// SetSources sets the "sources" field.
+func (u *VariableReferenceUpsertBulk) SetSources(v []schema.VariableReferenceSource) *VariableReferenceUpsertBulk {
 	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceType(v)
+		s.SetSources(v)
 	})
 }
 
-// UpdateSourceType sets the "source_type" field to the value that was provided on create.
-func (u *VariableReferenceUpsertBulk) UpdateSourceType() *VariableReferenceUpsertBulk {
+// UpdateSources sets the "sources" field to the value that was provided on create.
+func (u *VariableReferenceUpsertBulk) UpdateSources() *VariableReferenceUpsertBulk {
 	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceType()
-	})
-}
-
-// SetSourceID sets the "source_id" field.
-func (u *VariableReferenceUpsertBulk) SetSourceID(v uuid.UUID) *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceID(v)
-	})
-}
-
-// UpdateSourceID sets the "source_id" field to the value that was provided on create.
-func (u *VariableReferenceUpsertBulk) UpdateSourceID() *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceID()
-	})
-}
-
-// SetSourceName sets the "source_name" field.
-func (u *VariableReferenceUpsertBulk) SetSourceName(v string) *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceName(v)
-	})
-}
-
-// UpdateSourceName sets the "source_name" field to the value that was provided on create.
-func (u *VariableReferenceUpsertBulk) UpdateSourceName() *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceName()
-	})
-}
-
-// SetSourceKey sets the "source_key" field.
-func (u *VariableReferenceUpsertBulk) SetSourceKey(v string) *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetSourceKey(v)
-	})
-}
-
-// UpdateSourceKey sets the "source_key" field to the value that was provided on create.
-func (u *VariableReferenceUpsertBulk) UpdateSourceKey() *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateSourceKey()
+		s.UpdateSources()
 	})
 }
 
@@ -1006,13 +824,6 @@ func (u *VariableReferenceUpsertBulk) SetValueTemplate(v string) *VariableRefere
 func (u *VariableReferenceUpsertBulk) UpdateValueTemplate() *VariableReferenceUpsertBulk {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateValueTemplate()
-	})
-}
-
-// ClearValueTemplate clears the value of the "value_template" field.
-func (u *VariableReferenceUpsertBulk) ClearValueTemplate() *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.ClearValueTemplate()
 	})
 }
 

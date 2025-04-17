@@ -2,12 +2,14 @@ package variables_service
 
 import (
 	"context"
+	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -27,10 +29,9 @@ func (self *VariablesService) CreateVariableReference(ctx context.Context, reque
 		return nil, err
 	}
 
-	if input.ValueTemplate != nil {
-		if !utils.ContainsExactlyOneInterpolationMarker(*input.ValueTemplate) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Value template must contain exactly one interpolation marker")
-		}
+	// Validate the template with sources
+	if err := ValidateCreateVariableReferenceInput(input); err != nil {
+		return nil, err
 	}
 
 	// Ensure service exists
@@ -51,4 +52,53 @@ func (self *VariablesService) CreateVariableReference(ctx context.Context, reque
 	}
 
 	return models.TransformVariableReferenceResponseEntity(resp), nil
+}
+
+func ValidateCreateVariableReferenceInput(input *models.CreateVariableReferenceInput) error {
+	if len(input.Sources) == 0 {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "At least one source is required")
+	}
+
+	template := input.ValueTemplate
+
+	// Track which sources have been referenced
+	sourcesReferenced := make(map[string]bool)
+	for _, source := range input.Sources {
+		sourcesReferenced[source.Name+"."+source.Key] = false
+	}
+
+	// Find all occurrences of ${...} in the template that aren't escaped
+	// We'll use regexp to find all instances, then check if they're escaped
+	re := regexp.MustCompile(`\${([^}]+)}`)
+	matches := re.FindAllStringSubmatchIndex(template, -1)
+
+	for _, match := range matches {
+		// Check if this is an escaped instance (preceded by \)
+		if match[0] > 0 && template[match[0]-1] == '\\' {
+			continue // Skip escaped instances
+		}
+
+		// Extract the source reference (name.key)
+		reference := template[match[2]:match[3]]
+
+		// Mark this source as referenced if it exists in our sources
+		if _, exists := sourcesReferenced[reference]; exists {
+			sourcesReferenced[reference] = true
+		}
+	}
+
+	// Check if all sources have been referenced
+	var missingReferences []string
+	for sourceRef, referenced := range sourcesReferenced {
+		if !referenced {
+			missingReferences = append(missingReferences, sourceRef)
+		}
+	}
+
+	if len(missingReferences) > 0 {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("template is missing references to the following sources: %s",
+			strings.Join(missingReferences, ", ")))
+	}
+
+	return nil
 }

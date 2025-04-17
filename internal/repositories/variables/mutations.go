@@ -14,10 +14,7 @@ func (self *VariableRepository) CreateReference(ctx context.Context, input *mode
 		SetTargetServiceID(input.TargetServiceID).
 		SetTargetName(strings.TrimSpace(input.TargetName)).
 		SetType(input.Type).
-		SetSourceType(input.SourceType).
-		SetSourceID(input.SourceID).
-		SetSourceName(input.SourceName).
-		SetSourceKey(input.SourceKey).
-		SetNillableValueTemplate(input.ValueTemplate).
+		SetSources(input.Sources).
+		SetValueTemplate(input.ValueTemplate).
 		Save(ctx)
 }

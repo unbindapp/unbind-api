@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -31,16 +32,10 @@ type VariableReference struct {
 	TargetName string `json:"target_name,omitempty"`
 	// Type holds the value of the "type" field.
 	Type schema.VariableReferenceType `json:"type,omitempty"`
-	// SourceType holds the value of the "source_type" field.
-	SourceType schema.VariableReferenceSourceType `json:"source_type,omitempty"`
-	// SourceID holds the value of the "source_id" field.
-	SourceID uuid.UUID `json:"source_id,omitempty"`
-	// Kubernetes secret name, service name, or ingress name
-	SourceName string `json:"source_name,omitempty"`
-	// The key of the secret, or host override for ingresses
-	SourceKey string `json:"source_key,omitempty"`
-	// Optional template for the value, e.g. 'Hello ${} this is my variable'
-	ValueTemplate *string `json:"value_template,omitempty"`
+	// List of sources for this variable reference, interpolated as ${sourcename.sourcekey}
+	Sources []schema.VariableReferenceSource `json:"sources,omitempty"`
+	// Optional template for the value, e.g. 'Hello ${a.b} this is my variable ${c.d}'
+	ValueTemplate string `json:"value_template,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VariableReferenceQuery when eager-loading is set.
 	Edges        VariableReferenceEdges `json:"edges"`
@@ -72,11 +67,13 @@ func (*VariableReference) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case variablereference.FieldTargetName, variablereference.FieldType, variablereference.FieldSourceType, variablereference.FieldSourceName, variablereference.FieldSourceKey, variablereference.FieldValueTemplate:
+		case variablereference.FieldSources:
+			values[i] = new([]byte)
+		case variablereference.FieldTargetName, variablereference.FieldType, variablereference.FieldValueTemplate:
 			values[i] = new(sql.NullString)
 		case variablereference.FieldCreatedAt, variablereference.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case variablereference.FieldID, variablereference.FieldTargetServiceID, variablereference.FieldSourceID:
+		case variablereference.FieldID, variablereference.FieldTargetServiceID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -129,36 +126,19 @@ func (vr *VariableReference) assignValues(columns []string, values []any) error 
 			} else if value.Valid {
 				vr.Type = schema.VariableReferenceType(value.String)
 			}
-		case variablereference.FieldSourceType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field source_type", values[i])
-			} else if value.Valid {
-				vr.SourceType = schema.VariableReferenceSourceType(value.String)
-			}
-		case variablereference.FieldSourceID:
-			if value, ok := values[i].(*uuid.UUID); !ok {
-				return fmt.Errorf("unexpected type %T for field source_id", values[i])
-			} else if value != nil {
-				vr.SourceID = *value
-			}
-		case variablereference.FieldSourceName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field source_name", values[i])
-			} else if value.Valid {
-				vr.SourceName = value.String
-			}
-		case variablereference.FieldSourceKey:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field source_key", values[i])
-			} else if value.Valid {
-				vr.SourceKey = value.String
+		case variablereference.FieldSources:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field sources", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &vr.Sources); err != nil {
+					return fmt.Errorf("unmarshal field sources: %w", err)
+				}
 			}
 		case variablereference.FieldValueTemplate:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field value_template", values[i])
 			} else if value.Valid {
-				vr.ValueTemplate = new(string)
-				*vr.ValueTemplate = value.String
+				vr.ValueTemplate = value.String
 			}
 		default:
 			vr.selectValues.Set(columns[i], values[i])
@@ -216,22 +196,11 @@ func (vr *VariableReference) String() string {
 	builder.WriteString("type=")
 	builder.WriteString(fmt.Sprintf("%v", vr.Type))
 	builder.WriteString(", ")
-	builder.WriteString("source_type=")
-	builder.WriteString(fmt.Sprintf("%v", vr.SourceType))
+	builder.WriteString("sources=")
+	builder.WriteString(fmt.Sprintf("%v", vr.Sources))
 	builder.WriteString(", ")
-	builder.WriteString("source_id=")
-	builder.WriteString(fmt.Sprintf("%v", vr.SourceID))
-	builder.WriteString(", ")
-	builder.WriteString("source_name=")
-	builder.WriteString(vr.SourceName)
-	builder.WriteString(", ")
-	builder.WriteString("source_key=")
-	builder.WriteString(vr.SourceKey)
-	builder.WriteString(", ")
-	if v := vr.ValueTemplate; v != nil {
-		builder.WriteString("value_template=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("value_template=")
+	builder.WriteString(vr.ValueTemplate)
 	builder.WriteByte(')')
 	return builder.String()
 }

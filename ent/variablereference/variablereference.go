@@ -27,14 +27,8 @@ const (
 	FieldTargetName = "target_name"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
-	// FieldSourceType holds the string denoting the source_type field in the database.
-	FieldSourceType = "source_type"
-	// FieldSourceID holds the string denoting the source_id field in the database.
-	FieldSourceID = "source_id"
-	// FieldSourceName holds the string denoting the source_name field in the database.
-	FieldSourceName = "source_name"
-	// FieldSourceKey holds the string denoting the source_key field in the database.
-	FieldSourceKey = "source_key"
+	// FieldSources holds the string denoting the sources field in the database.
+	FieldSources = "sources"
 	// FieldValueTemplate holds the string denoting the value_template field in the database.
 	FieldValueTemplate = "value_template"
 	// EdgeService holds the string denoting the service edge name in mutations.
@@ -58,10 +52,7 @@ var Columns = []string{
 	FieldTargetServiceID,
 	FieldTargetName,
 	FieldType,
-	FieldSourceType,
-	FieldSourceID,
-	FieldSourceName,
-	FieldSourceKey,
+	FieldSources,
 	FieldValueTemplate,
 }
 
@@ -96,16 +87,6 @@ func TypeValidator(_type schema.VariableReferenceType) error {
 	}
 }
 
-// SourceTypeValidator is a validator for the "source_type" field enum values. It is called by the builders before save.
-func SourceTypeValidator(st schema.VariableReferenceSourceType) error {
-	switch st {
-	case "team", "project", "environment", "service":
-		return nil
-	default:
-		return fmt.Errorf("variablereference: invalid enum value for source_type field: %q", st)
-	}
-}
-
 // OrderOption defines the ordering options for the VariableReference queries.
 type OrderOption func(*sql.Selector)
 
@@ -137,26 +118,6 @@ func ByTargetName(opts ...sql.OrderTermOption) OrderOption {
 // ByType orders the results by the type field.
 func ByType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldType, opts...).ToFunc()
-}
-
-// BySourceType orders the results by the source_type field.
-func BySourceType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSourceType, opts...).ToFunc()
-}
-
-// BySourceID orders the results by the source_id field.
-func BySourceID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSourceID, opts...).ToFunc()
-}
-
-// BySourceName orders the results by the source_name field.
-func BySourceName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSourceName, opts...).ToFunc()
-}
-
-// BySourceKey orders the results by the source_key field.
-func BySourceKey(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSourceKey, opts...).ToFunc()
 }
 
 // ByValueTemplate orders the results by the value_template field.

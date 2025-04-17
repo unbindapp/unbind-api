@@ -394,11 +394,8 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "target_name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"variable", "external_endpoint", "internal_endpoint"}},
-		{Name: "source_type", Type: field.TypeEnum, Enums: []string{"team", "project", "environment", "service"}},
-		{Name: "source_id", Type: field.TypeUUID},
-		{Name: "source_name", Type: field.TypeString},
-		{Name: "source_key", Type: field.TypeString},
-		{Name: "value_template", Type: field.TypeString, Nullable: true},
+		{Name: "sources", Type: field.TypeJSON},
+		{Name: "value_template", Type: field.TypeString},
 		{Name: "target_service_id", Type: field.TypeUUID},
 	}
 	// VariableReferencesTable holds the schema information for the "variable_references" table.
@@ -409,16 +406,16 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "variable_references_services_variable_references",
-				Columns:    []*schema.Column{VariableReferencesColumns[10]},
+				Columns:    []*schema.Column{VariableReferencesColumns[7]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "variablereference_target_service_id_type_source_type_source_id_source_name_source_key_value_template",
+				Name:    "variablereference_target_service_id_type_sources_value_template",
 				Unique:  true,
-				Columns: []*schema.Column{VariableReferencesColumns[10], VariableReferencesColumns[4], VariableReferencesColumns[5], VariableReferencesColumns[6], VariableReferencesColumns[7], VariableReferencesColumns[8], VariableReferencesColumns[9]},
+				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[4], VariableReferencesColumns[5], VariableReferencesColumns[6]},
 			},
 		},
 	}

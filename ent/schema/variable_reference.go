@@ -14,6 +14,13 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 )
 
+type VariableReferenceSource struct {
+	Type VariableReferenceSourceType `json:"type"`
+	ID   uuid.UUID                   `json:"id"`
+	Name string                      `json:"name"`
+	Key  string                      `json:"key"`
+}
+
 // VariableReference holds the schema definition for the VariableReference entity.
 type VariableReference struct {
 	ent.Schema
@@ -33,16 +40,10 @@ func (VariableReference) Fields() []ent.Field {
 		field.UUID("target_service_id", uuid.UUID{}),
 		field.String("target_name"),
 		field.Enum("type").GoType(VariableReferenceType("")),
-		field.Enum("source_type").GoType(VariableReferenceSourceType("")),
-		field.UUID("source_id", uuid.UUID{}),
-		field.String("source_name").Comment(
-			"Kubernetes secret name, service name, or ingress name",
-		),
-		field.String("source_key").Comment(
-			"The key of the secret, or host override for ingresses",
-		),
-		field.String("value_template").Optional().Nillable().
-			Comment("Optional template for the value, e.g. 'Hello ${} this is my variable'"),
+		field.JSON("sources", []VariableReferenceSource{}).
+			Comment("List of sources for this variable reference, interpolated as ${sourcename.sourcekey}"),
+		field.String("value_template").
+			Comment("Optional template for the value, e.g. 'Hello ${a.b} this is my variable ${c.d}'"),
 	}
 }
 
@@ -62,7 +63,7 @@ func (VariableReference) Edges() []ent.Edge {
 func (VariableReference) Indexes() []ent.Index {
 	return []ent.Index{
 		// Just prevent duplicates
-		index.Fields("target_service_id", "type", "source_type", "source_id", "source_name", "source_key", "value_template").Unique(),
+		index.Fields("target_service_id", "type", "sources", "value_template").Unique(),
 	}
 }
 

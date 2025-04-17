@@ -111,28 +111,26 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 
 // The actual response object
 type VariableReferenceResponse struct {
-	ID              uuid.UUID                          `json:"id" doc:"The ID of the variable reference" required:"true"`
-	TargetServiceID uuid.UUID                          `json:"target_service_id" required:"true"`
-	TargetName      string                             `json:"target_name" required:"true"`
-	Type            schema.VariableReferenceType       `json:"type" required:"true"`
-	SourceType      schema.VariableReferenceSourceType `json:"source_type" required:"true"`
-	SourceID        uuid.UUID                          `json:"source_id" required:"true"`
-	SourceName      string                             `json:"source_name" required:"true"`
-	SourceKey       string                             `json:"source_key" required:"false"`
-	ValueTemplate   *string                            `json:"value_template" required:"false"`
-	CreatedAt       time.Time                          `json:"created_at" required:"true"`
+	ID              uuid.UUID                        `json:"id" doc:"The ID of the variable reference" required:"true"`
+	TargetServiceID uuid.UUID                        `json:"target_service_id" required:"true"`
+	TargetName      string                           `json:"target_name" required:"true"`
+	Type            schema.VariableReferenceType     `json:"type" required:"true"`
+	Sources         []schema.VariableReferenceSource `json:"sources" required:"true" nullable:"false"`
+	ValueTemplate   string                           `json:"value_template" required:"true"`
+	CreatedAt       time.Time                        `json:"created_at" required:"true"`
 }
 
 func TransformVariableReferenceResponseEntity(entity *ent.VariableReference) *VariableReferenceResponse {
+	sources := entity.Sources
+	if sources == nil {
+		sources = []schema.VariableReferenceSource{}
+	}
 	return &VariableReferenceResponse{
 		ID:              entity.ID,
 		TargetServiceID: entity.TargetServiceID,
 		TargetName:      entity.TargetName,
 		Type:            entity.Type,
-		SourceType:      entity.SourceType,
-		SourceID:        entity.SourceID,
-		SourceName:      entity.SourceName,
-		SourceKey:       entity.SourceKey,
+		Sources:         sources,
 		ValueTemplate:   entity.ValueTemplate,
 		CreatedAt:       entity.CreatedAt,
 	}

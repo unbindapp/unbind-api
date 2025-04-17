@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -80,59 +81,15 @@ func (vru *VariableReferenceUpdate) SetNillableType(srt *schema.VariableReferenc
 	return vru
 }
 
-// SetSourceType sets the "source_type" field.
-func (vru *VariableReferenceUpdate) SetSourceType(srst schema.VariableReferenceSourceType) *VariableReferenceUpdate {
-	vru.mutation.SetSourceType(srst)
+// SetSources sets the "sources" field.
+func (vru *VariableReferenceUpdate) SetSources(srs []schema.VariableReferenceSource) *VariableReferenceUpdate {
+	vru.mutation.SetSources(srs)
 	return vru
 }
 
-// SetNillableSourceType sets the "source_type" field if the given value is not nil.
-func (vru *VariableReferenceUpdate) SetNillableSourceType(srst *schema.VariableReferenceSourceType) *VariableReferenceUpdate {
-	if srst != nil {
-		vru.SetSourceType(*srst)
-	}
-	return vru
-}
-
-// SetSourceID sets the "source_id" field.
-func (vru *VariableReferenceUpdate) SetSourceID(u uuid.UUID) *VariableReferenceUpdate {
-	vru.mutation.SetSourceID(u)
-	return vru
-}
-
-// SetNillableSourceID sets the "source_id" field if the given value is not nil.
-func (vru *VariableReferenceUpdate) SetNillableSourceID(u *uuid.UUID) *VariableReferenceUpdate {
-	if u != nil {
-		vru.SetSourceID(*u)
-	}
-	return vru
-}
-
-// SetSourceName sets the "source_name" field.
-func (vru *VariableReferenceUpdate) SetSourceName(s string) *VariableReferenceUpdate {
-	vru.mutation.SetSourceName(s)
-	return vru
-}
-
-// SetNillableSourceName sets the "source_name" field if the given value is not nil.
-func (vru *VariableReferenceUpdate) SetNillableSourceName(s *string) *VariableReferenceUpdate {
-	if s != nil {
-		vru.SetSourceName(*s)
-	}
-	return vru
-}
-
-// SetSourceKey sets the "source_key" field.
-func (vru *VariableReferenceUpdate) SetSourceKey(s string) *VariableReferenceUpdate {
-	vru.mutation.SetSourceKey(s)
-	return vru
-}
-
-// SetNillableSourceKey sets the "source_key" field if the given value is not nil.
-func (vru *VariableReferenceUpdate) SetNillableSourceKey(s *string) *VariableReferenceUpdate {
-	if s != nil {
-		vru.SetSourceKey(*s)
-	}
+// AppendSources appends srs to the "sources" field.
+func (vru *VariableReferenceUpdate) AppendSources(srs []schema.VariableReferenceSource) *VariableReferenceUpdate {
+	vru.mutation.AppendSources(srs)
 	return vru
 }
 
@@ -147,12 +104,6 @@ func (vru *VariableReferenceUpdate) SetNillableValueTemplate(s *string) *Variabl
 	if s != nil {
 		vru.SetValueTemplate(*s)
 	}
-	return vru
-}
-
-// ClearValueTemplate clears the value of the "value_template" field.
-func (vru *VariableReferenceUpdate) ClearValueTemplate() *VariableReferenceUpdate {
-	vru.mutation.ClearValueTemplate()
 	return vru
 }
 
@@ -221,11 +172,6 @@ func (vru *VariableReferenceUpdate) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.type": %w`, err)}
 		}
 	}
-	if v, ok := vru.mutation.SourceType(); ok {
-		if err := variablereference.SourceTypeValidator(v); err != nil {
-			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.source_type": %w`, err)}
-		}
-	}
 	if vru.mutation.ServiceCleared() && len(vru.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "VariableReference.service"`)
 	}
@@ -259,23 +205,16 @@ func (vru *VariableReferenceUpdate) sqlSave(ctx context.Context) (n int, err err
 	if value, ok := vru.mutation.GetType(); ok {
 		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := vru.mutation.SourceType(); ok {
-		_spec.SetField(variablereference.FieldSourceType, field.TypeEnum, value)
+	if value, ok := vru.mutation.Sources(); ok {
+		_spec.SetField(variablereference.FieldSources, field.TypeJSON, value)
 	}
-	if value, ok := vru.mutation.SourceID(); ok {
-		_spec.SetField(variablereference.FieldSourceID, field.TypeUUID, value)
-	}
-	if value, ok := vru.mutation.SourceName(); ok {
-		_spec.SetField(variablereference.FieldSourceName, field.TypeString, value)
-	}
-	if value, ok := vru.mutation.SourceKey(); ok {
-		_spec.SetField(variablereference.FieldSourceKey, field.TypeString, value)
+	if value, ok := vru.mutation.AppendedSources(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, variablereference.FieldSources, value)
+		})
 	}
 	if value, ok := vru.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
-	}
-	if vru.mutation.ValueTemplateCleared() {
-		_spec.ClearField(variablereference.FieldValueTemplate, field.TypeString)
 	}
 	if vru.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -376,59 +315,15 @@ func (vruo *VariableReferenceUpdateOne) SetNillableType(srt *schema.VariableRefe
 	return vruo
 }
 
-// SetSourceType sets the "source_type" field.
-func (vruo *VariableReferenceUpdateOne) SetSourceType(srst schema.VariableReferenceSourceType) *VariableReferenceUpdateOne {
-	vruo.mutation.SetSourceType(srst)
+// SetSources sets the "sources" field.
+func (vruo *VariableReferenceUpdateOne) SetSources(srs []schema.VariableReferenceSource) *VariableReferenceUpdateOne {
+	vruo.mutation.SetSources(srs)
 	return vruo
 }
 
-// SetNillableSourceType sets the "source_type" field if the given value is not nil.
-func (vruo *VariableReferenceUpdateOne) SetNillableSourceType(srst *schema.VariableReferenceSourceType) *VariableReferenceUpdateOne {
-	if srst != nil {
-		vruo.SetSourceType(*srst)
-	}
-	return vruo
-}
-
-// SetSourceID sets the "source_id" field.
-func (vruo *VariableReferenceUpdateOne) SetSourceID(u uuid.UUID) *VariableReferenceUpdateOne {
-	vruo.mutation.SetSourceID(u)
-	return vruo
-}
-
-// SetNillableSourceID sets the "source_id" field if the given value is not nil.
-func (vruo *VariableReferenceUpdateOne) SetNillableSourceID(u *uuid.UUID) *VariableReferenceUpdateOne {
-	if u != nil {
-		vruo.SetSourceID(*u)
-	}
-	return vruo
-}
-
-// SetSourceName sets the "source_name" field.
-func (vruo *VariableReferenceUpdateOne) SetSourceName(s string) *VariableReferenceUpdateOne {
-	vruo.mutation.SetSourceName(s)
-	return vruo
-}
-
-// SetNillableSourceName sets the "source_name" field if the given value is not nil.
-func (vruo *VariableReferenceUpdateOne) SetNillableSourceName(s *string) *VariableReferenceUpdateOne {
-	if s != nil {
-		vruo.SetSourceName(*s)
-	}
-	return vruo
-}
-
-// SetSourceKey sets the "source_key" field.
-func (vruo *VariableReferenceUpdateOne) SetSourceKey(s string) *VariableReferenceUpdateOne {
-	vruo.mutation.SetSourceKey(s)
-	return vruo
-}
-
-// SetNillableSourceKey sets the "source_key" field if the given value is not nil.
-func (vruo *VariableReferenceUpdateOne) SetNillableSourceKey(s *string) *VariableReferenceUpdateOne {
-	if s != nil {
-		vruo.SetSourceKey(*s)
-	}
+// AppendSources appends srs to the "sources" field.
+func (vruo *VariableReferenceUpdateOne) AppendSources(srs []schema.VariableReferenceSource) *VariableReferenceUpdateOne {
+	vruo.mutation.AppendSources(srs)
 	return vruo
 }
 
@@ -443,12 +338,6 @@ func (vruo *VariableReferenceUpdateOne) SetNillableValueTemplate(s *string) *Var
 	if s != nil {
 		vruo.SetValueTemplate(*s)
 	}
-	return vruo
-}
-
-// ClearValueTemplate clears the value of the "value_template" field.
-func (vruo *VariableReferenceUpdateOne) ClearValueTemplate() *VariableReferenceUpdateOne {
-	vruo.mutation.ClearValueTemplate()
 	return vruo
 }
 
@@ -530,11 +419,6 @@ func (vruo *VariableReferenceUpdateOne) check() error {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.type": %w`, err)}
 		}
 	}
-	if v, ok := vruo.mutation.SourceType(); ok {
-		if err := variablereference.SourceTypeValidator(v); err != nil {
-			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.source_type": %w`, err)}
-		}
-	}
 	if vruo.mutation.ServiceCleared() && len(vruo.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "VariableReference.service"`)
 	}
@@ -585,23 +469,16 @@ func (vruo *VariableReferenceUpdateOne) sqlSave(ctx context.Context) (_node *Var
 	if value, ok := vruo.mutation.GetType(); ok {
 		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := vruo.mutation.SourceType(); ok {
-		_spec.SetField(variablereference.FieldSourceType, field.TypeEnum, value)
+	if value, ok := vruo.mutation.Sources(); ok {
+		_spec.SetField(variablereference.FieldSources, field.TypeJSON, value)
 	}
-	if value, ok := vruo.mutation.SourceID(); ok {
-		_spec.SetField(variablereference.FieldSourceID, field.TypeUUID, value)
-	}
-	if value, ok := vruo.mutation.SourceName(); ok {
-		_spec.SetField(variablereference.FieldSourceName, field.TypeString, value)
-	}
-	if value, ok := vruo.mutation.SourceKey(); ok {
-		_spec.SetField(variablereference.FieldSourceKey, field.TypeString, value)
+	if value, ok := vruo.mutation.AppendedSources(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, variablereference.FieldSources, value)
+		})
 	}
 	if value, ok := vruo.mutation.ValueTemplate(); ok {
 		_spec.SetField(variablereference.FieldValueTemplate, field.TypeString, value)
-	}
-	if vruo.mutation.ValueTemplateCleared() {
-		_spec.ClearField(variablereference.FieldValueTemplate, field.TypeString)
 	}
 	if vruo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
