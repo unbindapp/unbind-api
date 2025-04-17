@@ -297,7 +297,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 // EnqueueDeploymentJob adds a deployment to the queue
 func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req DeploymentJobRequest) (job *ent.Deployment, err error) {
 	// Cancel any existing queued jobs
-	if err := self.cancelExistingJobs(ctx, req.ServiceID); err != nil {
+	if err := self.CancelExistingJobs(ctx, req.ServiceID); err != nil {
 		return nil, fmt.Errorf("failed to cancel existing jobs: %w", err)
 	}
 
@@ -406,7 +406,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 
 // cancelExistingJobs marks all pending jobs for a service as cancelled in the DB
 // and removes them from the queue
-func (self *DeploymentController) cancelExistingJobs(ctx context.Context, serviceID uuid.UUID) error {
+func (self *DeploymentController) CancelExistingJobs(ctx context.Context, serviceID uuid.UUID) error {
 	// 1. Get all queued jobs for this service from the queue
 	queuedJobs, err := self.jobQueue.GetAll(ctx)
 	if err != nil {

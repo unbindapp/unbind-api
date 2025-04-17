@@ -6,20 +6,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 
 // Integrate environment management with internal permissions and kubernetes RBAC
 type EnvironmentService struct {
-	repo repositories.RepositoriesInterface
-	k8s  *k8s.KubeClient
+	repo      repositories.RepositoriesInterface
+	k8s       *k8s.KubeClient
+	deployCtl *deployctl.DeploymentController
 }
 
-func NewEnvironmentService(repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient) *EnvironmentService {
+func NewEnvironmentService(repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient, deployCtl *deployctl.DeploymentController) *EnvironmentService {
 	return &EnvironmentService{
-		repo: repo,
-		k8s:  k8sClient,
+		repo:      repo,
+		k8s:       k8sClient,
+		deployCtl: deployCtl,
 	}
 }
 
