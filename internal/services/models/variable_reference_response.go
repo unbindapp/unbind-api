@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 )
@@ -49,13 +51,24 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 	// Make endpoints response
 	resp.InternalEndpoints = make([]AvailableVariableReference, len(endpoints.Internal))
 	for i, endpoint := range endpoints.Internal {
+		// Find the target port (first TCP)
+		var targetPort *schema.PortSpec
+		for _, port := range endpoint.Ports {
+			if port.Protocol != nil && *port.Protocol == schema.ProtocolTCP {
+				targetPort = &port
+				break
+			}
+		}
+		if targetPort == nil {
+			continue
+		}
 		resp.InternalEndpoints[i] = AvailableVariableReference{
 			Type:       schema.VariableReferenceTypeInternalEndpoint,
 			Name:       endpoint.Name,
 			SourceType: schema.VariableReferenceSourceTypeService, // Always service
 			SourceID:   endpoint.ServiceID,
 			Values: map[string]string{
-				endpoint.Name: endpoint.DNS,
+				endpoint.Name: fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port),
 			},
 		}
 	}
