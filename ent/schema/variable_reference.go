@@ -1,0 +1,141 @@
+package schema
+
+import (
+	"reflect"
+
+	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
+	"entgo.io/ent/schema/field"
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema/mixin"
+)
+
+// VariableReference holds the schema definition for the VariableReference entity.
+type VariableReference struct {
+	ent.Schema
+}
+
+// Mixin of the VariableReference.
+func (VariableReference) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		mixin.PKMixin{},
+		mixin.TimeMixin{},
+	}
+}
+
+// Fields of the VariableReference.
+func (VariableReference) Fields() []ent.Field {
+	return []ent.Field{
+		field.UUID("target_service_id", uuid.UUID{}),
+		field.Enum("type").GoType(VariableReferenceType("")),
+		field.Enum("source_type").GoType(VariableReferenceSourceType("")),
+		field.UUID("source_id", uuid.UUID{}),
+		field.String("source_name").Comment(
+			"Kubernetes secret name, service name, or ingress name",
+		),
+		field.String("source_key").Comment(
+			"The key of the secret, or host override for ingresses",
+		).Optional().Nillable(),
+		field.String("value_template").Optional().Nillable().
+			Comment("Optional template for the value, e.g. 'Hello ${} this is my variable'"),
+	}
+}
+
+// Edges of the VariableReference.
+func (VariableReference) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("service", Service.Type).
+			Ref("variable_references").
+			Field("target_service_id").
+			Unique().
+			Required().
+			Comment("Service that this variable reference points to"),
+	}
+}
+
+// Annotations of the VariableReference
+func (VariableReference) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{
+			Table: "variable_references",
+		},
+	}
+}
+
+// Enums
+type VariableReferenceType string
+
+const (
+	VariableReferenceTypeVariable VariableReferenceType = "variable"
+	// Kubernetes ingresses
+	VariableReferenceTypeExternalEndpoint VariableReferenceType = "external_endpoint"
+	// Kubedns
+	VariableReferenceTypeInternalEndpoint VariableReferenceType = "internal_endpoint"
+)
+
+// Values provides list valid values for Enum.
+func (s VariableReferenceType) Values() (kinds []string) {
+	kinds = append(kinds, []string{
+		string(VariableReferenceTypeVariable),
+		string(VariableReferenceTypeExternalEndpoint),
+		string(VariableReferenceTypeInternalEndpoint),
+	}...)
+	return
+}
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u VariableReferenceType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["VariableReferenceType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "VariableReferenceType")
+		schemaRef.Title = "VariableReferenceType"
+		schemaRef.Enum = append(schemaRef.Enum, []any{
+			string(VariableReferenceTypeVariable),
+			string(VariableReferenceTypeExternalEndpoint),
+			string(VariableReferenceTypeInternalEndpoint),
+		}...)
+		r.Map()["VariableReferenceType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/VariableReferenceType"}
+}
+
+// Source of the VariableReference
+type VariableReferenceSourceType string
+
+const (
+	VariableReferenceSourceTypeTeam        VariableReferenceSourceType = "team"
+	VariableReferenceSourceTypeProject     VariableReferenceSourceType = "project"
+	VariableReferenceSourceTypeEnvironment VariableReferenceSourceType = "environment"
+	VariableReferenceSourceTypeService     VariableReferenceSourceType = "service"
+)
+
+// Values provides list valid values for Enum.
+func (s VariableReferenceSourceType) Values() (kinds []string) {
+	kinds = append(kinds, []string{
+		string(VariableReferenceSourceTypeTeam),
+		string(VariableReferenceSourceTypeProject),
+		string(VariableReferenceSourceTypeEnvironment),
+		string(VariableReferenceSourceTypeService),
+	}...)
+	return
+}
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u VariableReferenceSourceType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["VariableReferenceSourceType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "VariableReferenceSourceType")
+		schemaRef.Title = "VariableReferenceSourceType"
+		schemaRef.Enum = append(schemaRef.Enum, []any{
+			string(VariableReferenceSourceTypeTeam),
+			string(VariableReferenceSourceTypeProject),
+			string(VariableReferenceSourceTypeEnvironment),
+			string(VariableReferenceSourceTypeService),
+		}...)
+		r.Map()["VariableReferenceSourceType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/VariableReferenceSourceType"}
+}

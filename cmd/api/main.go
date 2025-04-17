@@ -52,6 +52,7 @@ import (
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/valkey-io/valkey-go"
@@ -186,6 +187,7 @@ func startAPI(cfg *config.Config) {
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
 	metricsService := metric_service.NewMetricService(promClient, repo)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
+	variableService := variables_service.NewVariablesService(repo, kubeClient)
 
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 
@@ -223,6 +225,7 @@ func startAPI(cfg *config.Config) {
 		MetricsService:       metricsService,
 		WebhooksService:      webhooksService,
 		InstanceService:      instanceService,
+		VariablesService:     variableService,
 	}
 
 	// New chi router

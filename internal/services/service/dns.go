@@ -5,12 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // Get a service by ID
-func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) (*k8s.EndpointDiscovery, error) {
+func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) (*models.EndpointDiscovery, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to admin service
 		{

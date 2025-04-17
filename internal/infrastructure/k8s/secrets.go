@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -205,4 +208,98 @@ func (self *KubeClient) OverwriteSecretValues(ctx context.Context, name, namespa
 	}
 
 	return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+}
+
+// GetAllSecrets retrieves all secrets for the team hierarchy and returns them with their data
+func (self *KubeClient) GetAllSecrets(
+	ctx context.Context,
+	teamID uuid.UUID,
+	teamSecret string,
+	projectSecrets map[uuid.UUID]string,
+	environmentSecrets map[uuid.UUID]string,
+	serviceSecrets map[uuid.UUID]string,
+	client *kubernetes.Clientset,
+	namespace string,
+) ([]models.SecretData, error) {
+	var result []models.SecretData
+
+	// Process team secret
+	if teamSecret != "" {
+		secretData, err := self.processSecret(ctx, teamID, schema.VariableReferenceSourceTypeTeam, teamSecret, client, namespace)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, secretData)
+	}
+
+	// Process project secrets
+	for projectID, secretName := range projectSecrets {
+		if secretName == "" {
+			continue
+		}
+		secretData, err := self.processSecret(ctx, projectID, schema.VariableReferenceSourceTypeProject, secretName, client, namespace)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, secretData)
+	}
+
+	// Process environment secrets
+	for envID, secretName := range environmentSecrets {
+		if secretName == "" {
+			continue
+		}
+		secretData, err := self.processSecret(ctx, envID, schema.VariableReferenceSourceTypeEnvironment, secretName, client, namespace)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, secretData)
+	}
+
+	// Process service secrets
+	for serviceID, secretName := range serviceSecrets {
+		if secretName == "" {
+			continue
+		}
+		secretData, err := self.processSecret(ctx, serviceID, schema.VariableReferenceSourceTypeService, secretName, client, namespace)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, secretData)
+	}
+
+	return result, nil
+}
+
+// Helper function to process a single secret
+func (self *KubeClient) processSecret(
+	ctx context.Context,
+	id uuid.UUID,
+	secretType schema.VariableReferenceSourceType,
+	secretName string,
+	client *kubernetes.Clientset,
+	namespace string,
+) (models.SecretData, error) {
+	// Get the secret data
+	secretMap, err := self.GetSecretMap(ctx, secretName, namespace, client)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// If secret doesn't exist, return an empty data map
+			return models.SecretData{
+				ID:         id,
+				Type:       secretType,
+				SecretName: secretName,
+				Data:       make(map[string][]byte),
+			}, nil
+		}
+		return models.SecretData{}, err
+	}
+
+	// Return the secret with its data
+	return models.SecretData{
+		ID:         id,
+		Type:       secretType,
+		SecretName: secretName,
+		Data:       secretMap,
+	}, nil
 }

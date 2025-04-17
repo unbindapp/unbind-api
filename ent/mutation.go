@@ -29,6 +29,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/variablereference"
 	"github.com/unbindapp/unbind-api/ent/webhook"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
@@ -58,6 +59,7 @@ const (
 	TypeServiceConfig      = "ServiceConfig"
 	TypeTeam               = "Team"
 	TypeUser               = "User"
+	TypeVariableReference  = "VariableReference"
 	TypeWebhook            = "Webhook"
 )
 
@@ -9485,6 +9487,9 @@ type ServiceMutation struct {
 	cleareddeployments         bool
 	current_deployment         *uuid.UUID
 	clearedcurrent_deployment  bool
+	variable_references        map[uuid.UUID]struct{}
+	removedvariable_references map[uuid.UUID]struct{}
+	clearedvariable_references bool
 	done                       bool
 	oldValue                   func(context.Context) (*Service, error)
 	predicates                 []predicate.Service
@@ -10229,6 +10234,60 @@ func (m *ServiceMutation) ResetCurrentDeployment() {
 	m.clearedcurrent_deployment = false
 }
 
+// AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by ids.
+func (m *ServiceMutation) AddVariableReferenceIDs(ids ...uuid.UUID) {
+	if m.variable_references == nil {
+		m.variable_references = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.variable_references[ids[i]] = struct{}{}
+	}
+}
+
+// ClearVariableReferences clears the "variable_references" edge to the VariableReference entity.
+func (m *ServiceMutation) ClearVariableReferences() {
+	m.clearedvariable_references = true
+}
+
+// VariableReferencesCleared reports if the "variable_references" edge to the VariableReference entity was cleared.
+func (m *ServiceMutation) VariableReferencesCleared() bool {
+	return m.clearedvariable_references
+}
+
+// RemoveVariableReferenceIDs removes the "variable_references" edge to the VariableReference entity by IDs.
+func (m *ServiceMutation) RemoveVariableReferenceIDs(ids ...uuid.UUID) {
+	if m.removedvariable_references == nil {
+		m.removedvariable_references = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.variable_references, ids[i])
+		m.removedvariable_references[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedVariableReferences returns the removed IDs of the "variable_references" edge to the VariableReference entity.
+func (m *ServiceMutation) RemovedVariableReferencesIDs() (ids []uuid.UUID) {
+	for id := range m.removedvariable_references {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// VariableReferencesIDs returns the "variable_references" edge IDs in the mutation.
+func (m *ServiceMutation) VariableReferencesIDs() (ids []uuid.UUID) {
+	for id := range m.variable_references {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetVariableReferences resets all changes to the "variable_references" edge.
+func (m *ServiceMutation) ResetVariableReferences() {
+	m.variable_references = nil
+	m.clearedvariable_references = false
+	m.removedvariable_references = nil
+}
+
 // Where appends a list predicates to the ServiceMutation builder.
 func (m *ServiceMutation) Where(ps ...predicate.Service) {
 	m.predicates = append(m.predicates, ps...)
@@ -10568,7 +10627,7 @@ func (m *ServiceMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ServiceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.environment != nil {
 		edges = append(edges, service.EdgeEnvironment)
 	}
@@ -10583,6 +10642,9 @@ func (m *ServiceMutation) AddedEdges() []string {
 	}
 	if m.current_deployment != nil {
 		edges = append(edges, service.EdgeCurrentDeployment)
+	}
+	if m.variable_references != nil {
+		edges = append(edges, service.EdgeVariableReferences)
 	}
 	return edges
 }
@@ -10613,15 +10675,24 @@ func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 		if id := m.current_deployment; id != nil {
 			return []ent.Value{*id}
 		}
+	case service.EdgeVariableReferences:
+		ids := make([]ent.Value, 0, len(m.variable_references))
+		for id := range m.variable_references {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ServiceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.removeddeployments != nil {
 		edges = append(edges, service.EdgeDeployments)
+	}
+	if m.removedvariable_references != nil {
+		edges = append(edges, service.EdgeVariableReferences)
 	}
 	return edges
 }
@@ -10636,13 +10707,19 @@ func (m *ServiceMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case service.EdgeVariableReferences:
+		ids := make([]ent.Value, 0, len(m.removedvariable_references))
+		for id := range m.removedvariable_references {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ServiceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.clearedenvironment {
 		edges = append(edges, service.EdgeEnvironment)
 	}
@@ -10657,6 +10734,9 @@ func (m *ServiceMutation) ClearedEdges() []string {
 	}
 	if m.clearedcurrent_deployment {
 		edges = append(edges, service.EdgeCurrentDeployment)
+	}
+	if m.clearedvariable_references {
+		edges = append(edges, service.EdgeVariableReferences)
 	}
 	return edges
 }
@@ -10675,6 +10755,8 @@ func (m *ServiceMutation) EdgeCleared(name string) bool {
 		return m.cleareddeployments
 	case service.EdgeCurrentDeployment:
 		return m.clearedcurrent_deployment
+	case service.EdgeVariableReferences:
+		return m.clearedvariable_references
 	}
 	return false
 }
@@ -10717,6 +10799,9 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 		return nil
 	case service.EdgeCurrentDeployment:
 		m.ResetCurrentDeployment()
+		return nil
+	case service.EdgeVariableReferences:
+		m.ResetVariableReferences()
 		return nil
 	}
 	return fmt.Errorf("unknown Service edge %s", name)
@@ -14416,6 +14501,878 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// VariableReferenceMutation represents an operation that mutates the VariableReference nodes in the graph.
+type VariableReferenceMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	created_at     *time.Time
+	updated_at     *time.Time
+	_type          *schema.VariableReferenceType
+	source_type    *schema.VariableReferenceSourceType
+	source_id      *uuid.UUID
+	source_name    *string
+	source_key     *string
+	value_template *string
+	clearedFields  map[string]struct{}
+	service        *uuid.UUID
+	clearedservice bool
+	done           bool
+	oldValue       func(context.Context) (*VariableReference, error)
+	predicates     []predicate.VariableReference
+}
+
+var _ ent.Mutation = (*VariableReferenceMutation)(nil)
+
+// variablereferenceOption allows management of the mutation configuration using functional options.
+type variablereferenceOption func(*VariableReferenceMutation)
+
+// newVariableReferenceMutation creates new mutation for the VariableReference entity.
+func newVariableReferenceMutation(c config, op Op, opts ...variablereferenceOption) *VariableReferenceMutation {
+	m := &VariableReferenceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeVariableReference,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withVariableReferenceID sets the ID field of the mutation.
+func withVariableReferenceID(id uuid.UUID) variablereferenceOption {
+	return func(m *VariableReferenceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *VariableReference
+		)
+		m.oldValue = func(ctx context.Context) (*VariableReference, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().VariableReference.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withVariableReference sets the old VariableReference of the mutation.
+func withVariableReference(node *VariableReference) variablereferenceOption {
+	return func(m *VariableReferenceMutation) {
+		m.oldValue = func(context.Context) (*VariableReference, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m VariableReferenceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m VariableReferenceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of VariableReference entities.
+func (m *VariableReferenceMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *VariableReferenceMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *VariableReferenceMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().VariableReference.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *VariableReferenceMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *VariableReferenceMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *VariableReferenceMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *VariableReferenceMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *VariableReferenceMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *VariableReferenceMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetTargetServiceID sets the "target_service_id" field.
+func (m *VariableReferenceMutation) SetTargetServiceID(u uuid.UUID) {
+	m.service = &u
+}
+
+// TargetServiceID returns the value of the "target_service_id" field in the mutation.
+func (m *VariableReferenceMutation) TargetServiceID() (r uuid.UUID, exists bool) {
+	v := m.service
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTargetServiceID returns the old "target_service_id" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldTargetServiceID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTargetServiceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTargetServiceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTargetServiceID: %w", err)
+	}
+	return oldValue.TargetServiceID, nil
+}
+
+// ResetTargetServiceID resets all changes to the "target_service_id" field.
+func (m *VariableReferenceMutation) ResetTargetServiceID() {
+	m.service = nil
+}
+
+// SetType sets the "type" field.
+func (m *VariableReferenceMutation) SetType(srt schema.VariableReferenceType) {
+	m._type = &srt
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *VariableReferenceMutation) GetType() (r schema.VariableReferenceType, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldType(ctx context.Context) (v schema.VariableReferenceType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *VariableReferenceMutation) ResetType() {
+	m._type = nil
+}
+
+// SetSourceType sets the "source_type" field.
+func (m *VariableReferenceMutation) SetSourceType(srst schema.VariableReferenceSourceType) {
+	m.source_type = &srst
+}
+
+// SourceType returns the value of the "source_type" field in the mutation.
+func (m *VariableReferenceMutation) SourceType() (r schema.VariableReferenceSourceType, exists bool) {
+	v := m.source_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceType returns the old "source_type" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldSourceType(ctx context.Context) (v schema.VariableReferenceSourceType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceType: %w", err)
+	}
+	return oldValue.SourceType, nil
+}
+
+// ResetSourceType resets all changes to the "source_type" field.
+func (m *VariableReferenceMutation) ResetSourceType() {
+	m.source_type = nil
+}
+
+// SetSourceID sets the "source_id" field.
+func (m *VariableReferenceMutation) SetSourceID(u uuid.UUID) {
+	m.source_id = &u
+}
+
+// SourceID returns the value of the "source_id" field in the mutation.
+func (m *VariableReferenceMutation) SourceID() (r uuid.UUID, exists bool) {
+	v := m.source_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceID returns the old "source_id" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldSourceID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceID: %w", err)
+	}
+	return oldValue.SourceID, nil
+}
+
+// ResetSourceID resets all changes to the "source_id" field.
+func (m *VariableReferenceMutation) ResetSourceID() {
+	m.source_id = nil
+}
+
+// SetSourceName sets the "source_name" field.
+func (m *VariableReferenceMutation) SetSourceName(s string) {
+	m.source_name = &s
+}
+
+// SourceName returns the value of the "source_name" field in the mutation.
+func (m *VariableReferenceMutation) SourceName() (r string, exists bool) {
+	v := m.source_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceName returns the old "source_name" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldSourceName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceName: %w", err)
+	}
+	return oldValue.SourceName, nil
+}
+
+// ResetSourceName resets all changes to the "source_name" field.
+func (m *VariableReferenceMutation) ResetSourceName() {
+	m.source_name = nil
+}
+
+// SetSourceKey sets the "source_key" field.
+func (m *VariableReferenceMutation) SetSourceKey(s string) {
+	m.source_key = &s
+}
+
+// SourceKey returns the value of the "source_key" field in the mutation.
+func (m *VariableReferenceMutation) SourceKey() (r string, exists bool) {
+	v := m.source_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceKey returns the old "source_key" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldSourceKey(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceKey: %w", err)
+	}
+	return oldValue.SourceKey, nil
+}
+
+// ClearSourceKey clears the value of the "source_key" field.
+func (m *VariableReferenceMutation) ClearSourceKey() {
+	m.source_key = nil
+	m.clearedFields[variablereference.FieldSourceKey] = struct{}{}
+}
+
+// SourceKeyCleared returns if the "source_key" field was cleared in this mutation.
+func (m *VariableReferenceMutation) SourceKeyCleared() bool {
+	_, ok := m.clearedFields[variablereference.FieldSourceKey]
+	return ok
+}
+
+// ResetSourceKey resets all changes to the "source_key" field.
+func (m *VariableReferenceMutation) ResetSourceKey() {
+	m.source_key = nil
+	delete(m.clearedFields, variablereference.FieldSourceKey)
+}
+
+// SetValueTemplate sets the "value_template" field.
+func (m *VariableReferenceMutation) SetValueTemplate(s string) {
+	m.value_template = &s
+}
+
+// ValueTemplate returns the value of the "value_template" field in the mutation.
+func (m *VariableReferenceMutation) ValueTemplate() (r string, exists bool) {
+	v := m.value_template
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldValueTemplate returns the old "value_template" field's value of the VariableReference entity.
+// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VariableReferenceMutation) OldValueTemplate(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldValueTemplate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldValueTemplate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldValueTemplate: %w", err)
+	}
+	return oldValue.ValueTemplate, nil
+}
+
+// ClearValueTemplate clears the value of the "value_template" field.
+func (m *VariableReferenceMutation) ClearValueTemplate() {
+	m.value_template = nil
+	m.clearedFields[variablereference.FieldValueTemplate] = struct{}{}
+}
+
+// ValueTemplateCleared returns if the "value_template" field was cleared in this mutation.
+func (m *VariableReferenceMutation) ValueTemplateCleared() bool {
+	_, ok := m.clearedFields[variablereference.FieldValueTemplate]
+	return ok
+}
+
+// ResetValueTemplate resets all changes to the "value_template" field.
+func (m *VariableReferenceMutation) ResetValueTemplate() {
+	m.value_template = nil
+	delete(m.clearedFields, variablereference.FieldValueTemplate)
+}
+
+// SetServiceID sets the "service" edge to the Service entity by id.
+func (m *VariableReferenceMutation) SetServiceID(id uuid.UUID) {
+	m.service = &id
+}
+
+// ClearService clears the "service" edge to the Service entity.
+func (m *VariableReferenceMutation) ClearService() {
+	m.clearedservice = true
+	m.clearedFields[variablereference.FieldTargetServiceID] = struct{}{}
+}
+
+// ServiceCleared reports if the "service" edge to the Service entity was cleared.
+func (m *VariableReferenceMutation) ServiceCleared() bool {
+	return m.clearedservice
+}
+
+// ServiceID returns the "service" edge ID in the mutation.
+func (m *VariableReferenceMutation) ServiceID() (id uuid.UUID, exists bool) {
+	if m.service != nil {
+		return *m.service, true
+	}
+	return
+}
+
+// ServiceIDs returns the "service" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ServiceID instead. It exists only for internal usage by the builders.
+func (m *VariableReferenceMutation) ServiceIDs() (ids []uuid.UUID) {
+	if id := m.service; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetService resets all changes to the "service" edge.
+func (m *VariableReferenceMutation) ResetService() {
+	m.service = nil
+	m.clearedservice = false
+}
+
+// Where appends a list predicates to the VariableReferenceMutation builder.
+func (m *VariableReferenceMutation) Where(ps ...predicate.VariableReference) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the VariableReferenceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *VariableReferenceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.VariableReference, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *VariableReferenceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *VariableReferenceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (VariableReference).
+func (m *VariableReferenceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *VariableReferenceMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.created_at != nil {
+		fields = append(fields, variablereference.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, variablereference.FieldUpdatedAt)
+	}
+	if m.service != nil {
+		fields = append(fields, variablereference.FieldTargetServiceID)
+	}
+	if m._type != nil {
+		fields = append(fields, variablereference.FieldType)
+	}
+	if m.source_type != nil {
+		fields = append(fields, variablereference.FieldSourceType)
+	}
+	if m.source_id != nil {
+		fields = append(fields, variablereference.FieldSourceID)
+	}
+	if m.source_name != nil {
+		fields = append(fields, variablereference.FieldSourceName)
+	}
+	if m.source_key != nil {
+		fields = append(fields, variablereference.FieldSourceKey)
+	}
+	if m.value_template != nil {
+		fields = append(fields, variablereference.FieldValueTemplate)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *VariableReferenceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case variablereference.FieldCreatedAt:
+		return m.CreatedAt()
+	case variablereference.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case variablereference.FieldTargetServiceID:
+		return m.TargetServiceID()
+	case variablereference.FieldType:
+		return m.GetType()
+	case variablereference.FieldSourceType:
+		return m.SourceType()
+	case variablereference.FieldSourceID:
+		return m.SourceID()
+	case variablereference.FieldSourceName:
+		return m.SourceName()
+	case variablereference.FieldSourceKey:
+		return m.SourceKey()
+	case variablereference.FieldValueTemplate:
+		return m.ValueTemplate()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *VariableReferenceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case variablereference.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case variablereference.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case variablereference.FieldTargetServiceID:
+		return m.OldTargetServiceID(ctx)
+	case variablereference.FieldType:
+		return m.OldType(ctx)
+	case variablereference.FieldSourceType:
+		return m.OldSourceType(ctx)
+	case variablereference.FieldSourceID:
+		return m.OldSourceID(ctx)
+	case variablereference.FieldSourceName:
+		return m.OldSourceName(ctx)
+	case variablereference.FieldSourceKey:
+		return m.OldSourceKey(ctx)
+	case variablereference.FieldValueTemplate:
+		return m.OldValueTemplate(ctx)
+	}
+	return nil, fmt.Errorf("unknown VariableReference field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VariableReferenceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case variablereference.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case variablereference.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case variablereference.FieldTargetServiceID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTargetServiceID(v)
+		return nil
+	case variablereference.FieldType:
+		v, ok := value.(schema.VariableReferenceType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case variablereference.FieldSourceType:
+		v, ok := value.(schema.VariableReferenceSourceType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceType(v)
+		return nil
+	case variablereference.FieldSourceID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceID(v)
+		return nil
+	case variablereference.FieldSourceName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceName(v)
+		return nil
+	case variablereference.FieldSourceKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceKey(v)
+		return nil
+	case variablereference.FieldValueTemplate:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetValueTemplate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown VariableReference field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *VariableReferenceMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *VariableReferenceMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *VariableReferenceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown VariableReference numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *VariableReferenceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(variablereference.FieldSourceKey) {
+		fields = append(fields, variablereference.FieldSourceKey)
+	}
+	if m.FieldCleared(variablereference.FieldValueTemplate) {
+		fields = append(fields, variablereference.FieldValueTemplate)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *VariableReferenceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *VariableReferenceMutation) ClearField(name string) error {
+	switch name {
+	case variablereference.FieldSourceKey:
+		m.ClearSourceKey()
+		return nil
+	case variablereference.FieldValueTemplate:
+		m.ClearValueTemplate()
+		return nil
+	}
+	return fmt.Errorf("unknown VariableReference nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *VariableReferenceMutation) ResetField(name string) error {
+	switch name {
+	case variablereference.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case variablereference.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case variablereference.FieldTargetServiceID:
+		m.ResetTargetServiceID()
+		return nil
+	case variablereference.FieldType:
+		m.ResetType()
+		return nil
+	case variablereference.FieldSourceType:
+		m.ResetSourceType()
+		return nil
+	case variablereference.FieldSourceID:
+		m.ResetSourceID()
+		return nil
+	case variablereference.FieldSourceName:
+		m.ResetSourceName()
+		return nil
+	case variablereference.FieldSourceKey:
+		m.ResetSourceKey()
+		return nil
+	case variablereference.FieldValueTemplate:
+		m.ResetValueTemplate()
+		return nil
+	}
+	return fmt.Errorf("unknown VariableReference field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *VariableReferenceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.service != nil {
+		edges = append(edges, variablereference.EdgeService)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *VariableReferenceMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case variablereference.EdgeService:
+		if id := m.service; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *VariableReferenceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *VariableReferenceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *VariableReferenceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedservice {
+		edges = append(edges, variablereference.EdgeService)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *VariableReferenceMutation) EdgeCleared(name string) bool {
+	switch name {
+	case variablereference.EdgeService:
+		return m.clearedservice
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *VariableReferenceMutation) ClearEdge(name string) error {
+	switch name {
+	case variablereference.EdgeService:
+		m.ClearService()
+		return nil
+	}
+	return fmt.Errorf("unknown VariableReference unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *VariableReferenceMutation) ResetEdge(name string) error {
+	switch name {
+	case variablereference.EdgeService:
+		m.ResetService()
+		return nil
+	}
+	return fmt.Errorf("unknown VariableReference edge %s", name)
 }
 
 // WebhookMutation represents an operation that mutates the Webhook nodes in the graph.

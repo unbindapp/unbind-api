@@ -387,6 +387,33 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// VariableReferencesColumns holds the columns for the "variable_references" table.
+	VariableReferencesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"variable", "external_endpoint", "internal_endpoint"}},
+		{Name: "source_type", Type: field.TypeEnum, Enums: []string{"team", "project", "environment", "service"}},
+		{Name: "source_id", Type: field.TypeUUID},
+		{Name: "source_name", Type: field.TypeString},
+		{Name: "source_key", Type: field.TypeString, Nullable: true},
+		{Name: "value_template", Type: field.TypeString, Nullable: true},
+		{Name: "target_service_id", Type: field.TypeUUID},
+	}
+	// VariableReferencesTable holds the schema information for the "variable_references" table.
+	VariableReferencesTable = &schema.Table{
+		Name:       "variable_references",
+		Columns:    VariableReferencesColumns,
+		PrimaryKey: []*schema.Column{VariableReferencesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "variable_references_services_variable_references",
+				Columns:    []*schema.Column{VariableReferencesColumns[9]},
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// WebhooksColumns holds the columns for the "webhooks" table.
 	WebhooksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -510,6 +537,7 @@ var (
 		ServiceConfigsTable,
 		TeamsTable,
 		UsersTable,
+		VariableReferencesTable,
 		WebhooksTable,
 		GroupPermissionsTable,
 		UserGroupsTable,
@@ -574,6 +602,10 @@ func init() {
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
+	}
+	VariableReferencesTable.ForeignKeys[0].RefTable = ServicesTable
+	VariableReferencesTable.Annotation = &entsql.Annotation{
+		Table: "variable_references",
 	}
 	WebhooksTable.ForeignKeys[0].RefTable = ProjectsTable
 	WebhooksTable.ForeignKeys[1].RefTable = TeamsTable

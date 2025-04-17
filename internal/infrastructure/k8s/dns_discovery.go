@@ -8,47 +8,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
-// EndpointDiscovery contains both internal (services) and external (ingresses) endpoints
-type EndpointDiscovery struct {
-	Internal []ServiceEndpoint `json:"internal" nullable:"false"`
-	External []IngressEndpoint `json:"external" nullable:"false"`
-}
-
-// ServiceEndpoint represents internal DNS information for a Kubernetes service
-type ServiceEndpoint struct {
-	Name          string            `json:"name"`
-	DNS           string            `json:"dns"`
-	Ports         []schema.PortSpec `json:"ports" nullable:"false"`
-	TeamID        uuid.UUID         `json:"team_id"`
-	ProjectID     uuid.UUID         `json:"project_id"`
-	EnvironmentID uuid.UUID         `json:"environment_id"`
-	ServiceID     uuid.UUID         `json:"service_id"`
-}
-
-// IngressEndpoint represents external DNS information for a Kubernetes ingress
-type IngressEndpoint struct {
-	Name          string             `json:"name"`
-	Hosts         []ExtendedHostSpec `json:"hosts" nullable:"false"`
-	TeamID        uuid.UUID          `json:"team_id"`
-	ProjectID     uuid.UUID          `json:"project_id"`
-	EnvironmentID uuid.UUID          `json:"environment_id"`
-	ServiceID     uuid.UUID          `json:"service_id"`
-}
-
-type ExtendedHostSpec struct {
-	v1.HostSpec
-	Issued bool `json:"issued"`
-}
-
 // DiscoverEndpointsByLabels returns both internal (services) and external (ingresses) endpoints
 // matching the provided labels in a namespace
-func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*EndpointDiscovery, error) {
+func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*models.EndpointDiscovery, error) {
 	// Convert the labels map to a selector string
 	var labelSelectors []string
 	for key, value := range labels {
@@ -56,9 +25,9 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 	}
 	labelSelector := strings.Join(labelSelectors, ",")
 
-	discovery := &EndpointDiscovery{
-		Internal: []ServiceEndpoint{},
-		External: []IngressEndpoint{},
+	discovery := &models.EndpointDiscovery{
+		Internal: []models.ServiceEndpoint{},
+		External: []models.IngressEndpoint{},
 	}
 
 	// Get services matching the label selector
@@ -76,7 +45,7 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 		environmentID, _ := uuid.Parse(svc.Labels["unbind-environment"])
 		serviceID, _ := uuid.Parse(svc.Labels["unbind-service"])
 
-		endpoint := ServiceEndpoint{
+		endpoint := models.ServiceEndpoint{
 			Name:          svc.Name,
 			DNS:           fmt.Sprintf("%s.%s", svc.Name, namespace),
 			Ports:         make([]schema.PortSpec, len(svc.Spec.Ports)),
@@ -112,9 +81,9 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 		environmentID, _ := uuid.Parse(ing.Labels["unbind-environment"])
 		serviceID, _ := uuid.Parse(ing.Labels["unbind-service"])
 
-		endpoint := IngressEndpoint{
+		endpoint := models.IngressEndpoint{
 			Name:          ing.Name,
-			Hosts:         []ExtendedHostSpec{},
+			Hosts:         []models.ExtendedHostSpec{},
 			TeamID:        teamID,
 			ProjectID:     projectID,
 			EnvironmentID: environmentID,
@@ -146,7 +115,7 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 					issued = err == nil && isCertificateIssued(secret)
 				}
 
-				endpoint.Hosts = append(endpoint.Hosts, ExtendedHostSpec{
+				endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
 					HostSpec: v1.HostSpec{
 						Host: host,
 						Path: path,

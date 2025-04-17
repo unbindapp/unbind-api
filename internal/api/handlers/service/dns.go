@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 type ListEndpointsInput struct {
@@ -21,7 +21,7 @@ type ListEndpointsInput struct {
 
 type ListEndpointsResponse struct {
 	Body struct {
-		Data *k8s.EndpointDiscovery `json:"data"`
+		Data *models.EndpointDiscovery `json:"data"`
 	}
 }
 

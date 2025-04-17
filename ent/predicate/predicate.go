@@ -51,5 +51,8 @@ type Team func(*sql.Selector)
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
+// VariableReference is the predicate function for variablereference builders.
+type VariableReference func(*sql.Selector)
+
 // Webhook is the predicate function for webhook builders.
 type Webhook func(*sql.Selector)

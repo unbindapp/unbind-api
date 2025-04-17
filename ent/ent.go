@@ -27,6 +27,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/variablereference"
 	"github.com/unbindapp/unbind-api/ent/webhook"
 )
 
@@ -103,6 +104,7 @@ func checkColumn(table, column string) error {
 			serviceconfig.Table:      serviceconfig.ValidColumn,
 			team.Table:               team.ValidColumn,
 			user.Table:               user.ValidColumn,
+			variablereference.Table:  variablereference.ValidColumn,
 			webhook.Table:            webhook.ValidColumn,
 		})
 	})

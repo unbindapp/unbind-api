@@ -18,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/variablereference"
 )
 
 // ServiceCreate is the builder for creating a Service entity.
@@ -211,6 +212,21 @@ func (sc *ServiceCreate) AddDeployments(d ...*Deployment) *ServiceCreate {
 // SetCurrentDeployment sets the "current_deployment" edge to the Deployment entity.
 func (sc *ServiceCreate) SetCurrentDeployment(d *Deployment) *ServiceCreate {
 	return sc.SetCurrentDeploymentID(d.ID)
+}
+
+// AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by IDs.
+func (sc *ServiceCreate) AddVariableReferenceIDs(ids ...uuid.UUID) *ServiceCreate {
+	sc.mutation.AddVariableReferenceIDs(ids...)
+	return sc
+}
+
+// AddVariableReferences adds the "variable_references" edges to the VariableReference entity.
+func (sc *ServiceCreate) AddVariableReferences(v ...*VariableReference) *ServiceCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return sc.AddVariableReferenceIDs(ids...)
 }
 
 // Mutation returns the ServiceMutation object of the builder.
@@ -439,6 +455,22 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.CurrentDeploymentID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.VariableReferencesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.VariableReferencesTable,
+			Columns: []string{service.VariableReferencesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(variablereference.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

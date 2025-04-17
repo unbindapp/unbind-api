@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -80,5 +81,37 @@ func (self *HandlerGroup) ListVariables(ctx context.Context, input *ListVariable
 
 	resp := &VariablesResponse{}
 	resp.Body.Data = variables
+	return resp, nil
+}
+
+// List all
+type ListReferenceableVariablesInput struct {
+	server.BaseAuthInput
+	TeamID uuid.UUID `query:"team_id" required:"true"`
+}
+
+type ReferenceableVariablsResponse struct {
+	Body struct {
+		Data *models.AvailableVariableReferenceResponse `json:"data" nullable:"false"`
+	}
+}
+
+func (self *HandlerGroup) ListReferenceableeVariables(ctx context.Context, input *ListReferenceableVariablesInput) (*ReferenceableVariablsResponse, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+
+	// Get team variables
+	references, err := self.srv.VariablesService.GetAvailableVariableReferences(ctx, user.ID, bearerToken, input.TeamID)
+	if err != nil {
+		return nil, handleVariablesErr(err)
+	}
+
+	resp := &ReferenceableVariablsResponse{}
+	resp.Body.Data = references
 	return resp, nil
 }

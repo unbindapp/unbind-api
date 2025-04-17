@@ -54,6 +54,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.DeleteVariables,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "list-available-references",
+			Summary:     "List Available Variable References",
+			Description: "List all items that can be references as variables in service configurations",
+			Path:        "/references/available",
+			Method:      http.MethodGet,
+		},
+		handlers.ListReferenceableeVariables,
+	)
 }
 
 func handleVariablesErr(err error) error {
