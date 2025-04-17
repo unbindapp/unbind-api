@@ -66,12 +66,6 @@ func (vrc *VariableReferenceCreate) SetTargetName(s string) *VariableReferenceCr
 	return vrc
 }
 
-// SetType sets the "type" field.
-func (vrc *VariableReferenceCreate) SetType(srt schema.VariableReferenceType) *VariableReferenceCreate {
-	vrc.mutation.SetType(srt)
-	return vrc
-}
-
 // SetSources sets the "sources" field.
 func (vrc *VariableReferenceCreate) SetSources(srs []schema.VariableReferenceSource) *VariableReferenceCreate {
 	vrc.mutation.SetSources(srs)
@@ -172,14 +166,6 @@ func (vrc *VariableReferenceCreate) check() error {
 	if _, ok := vrc.mutation.TargetName(); !ok {
 		return &ValidationError{Name: "target_name", err: errors.New(`ent: missing required field "VariableReference.target_name"`)}
 	}
-	if _, ok := vrc.mutation.GetType(); !ok {
-		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "VariableReference.type"`)}
-	}
-	if v, ok := vrc.mutation.GetType(); ok {
-		if err := variablereference.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.type": %w`, err)}
-		}
-	}
 	if _, ok := vrc.mutation.Sources(); !ok {
 		return &ValidationError{Name: "sources", err: errors.New(`ent: missing required field "VariableReference.sources"`)}
 	}
@@ -236,10 +222,6 @@ func (vrc *VariableReferenceCreate) createSpec() (*VariableReference, *sqlgraph.
 	if value, ok := vrc.mutation.TargetName(); ok {
 		_spec.SetField(variablereference.FieldTargetName, field.TypeString, value)
 		_node.TargetName = value
-	}
-	if value, ok := vrc.mutation.GetType(); ok {
-		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
-		_node.Type = value
 	}
 	if value, ok := vrc.mutation.Sources(); ok {
 		_spec.SetField(variablereference.FieldSources, field.TypeJSON, value)
@@ -351,18 +333,6 @@ func (u *VariableReferenceUpsert) SetTargetName(v string) *VariableReferenceUpse
 // UpdateTargetName sets the "target_name" field to the value that was provided on create.
 func (u *VariableReferenceUpsert) UpdateTargetName() *VariableReferenceUpsert {
 	u.SetExcluded(variablereference.FieldTargetName)
-	return u
-}
-
-// SetType sets the "type" field.
-func (u *VariableReferenceUpsert) SetType(v schema.VariableReferenceType) *VariableReferenceUpsert {
-	u.Set(variablereference.FieldType, v)
-	return u
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *VariableReferenceUpsert) UpdateType() *VariableReferenceUpsert {
-	u.SetExcluded(variablereference.FieldType)
 	return u
 }
 
@@ -480,20 +450,6 @@ func (u *VariableReferenceUpsertOne) SetTargetName(v string) *VariableReferenceU
 func (u *VariableReferenceUpsertOne) UpdateTargetName() *VariableReferenceUpsertOne {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateTargetName()
-	})
-}
-
-// SetType sets the "type" field.
-func (u *VariableReferenceUpsertOne) SetType(v schema.VariableReferenceType) *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *VariableReferenceUpsertOne) UpdateType() *VariableReferenceUpsertOne {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateType()
 	})
 }
 
@@ -782,20 +738,6 @@ func (u *VariableReferenceUpsertBulk) SetTargetName(v string) *VariableReference
 func (u *VariableReferenceUpsertBulk) UpdateTargetName() *VariableReferenceUpsertBulk {
 	return u.Update(func(s *VariableReferenceUpsert) {
 		s.UpdateTargetName()
-	})
-}
-
-// SetType sets the "type" field.
-func (u *VariableReferenceUpsertBulk) SetType(v schema.VariableReferenceType) *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *VariableReferenceUpsertBulk) UpdateType() *VariableReferenceUpsertBulk {
-	return u.Update(func(s *VariableReferenceUpsert) {
-		s.UpdateType()
 	})
 }
 

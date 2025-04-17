@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
-	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // ID filters vertices based on their ID field.
@@ -245,36 +244,6 @@ func TargetNameEqualFold(v string) predicate.VariableReference {
 // TargetNameContainsFold applies the ContainsFold predicate on the "target_name" field.
 func TargetNameContainsFold(v string) predicate.VariableReference {
 	return predicate.VariableReference(sql.FieldContainsFold(FieldTargetName, v))
-}
-
-// TypeEQ applies the EQ predicate on the "type" field.
-func TypeEQ(v schema.VariableReferenceType) predicate.VariableReference {
-	vc := v
-	return predicate.VariableReference(sql.FieldEQ(FieldType, vc))
-}
-
-// TypeNEQ applies the NEQ predicate on the "type" field.
-func TypeNEQ(v schema.VariableReferenceType) predicate.VariableReference {
-	vc := v
-	return predicate.VariableReference(sql.FieldNEQ(FieldType, vc))
-}
-
-// TypeIn applies the In predicate on the "type" field.
-func TypeIn(vs ...schema.VariableReferenceType) predicate.VariableReference {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.VariableReference(sql.FieldIn(FieldType, v...))
-}
-
-// TypeNotIn applies the NotIn predicate on the "type" field.
-func TypeNotIn(vs ...schema.VariableReferenceType) predicate.VariableReference {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.VariableReference(sql.FieldNotIn(FieldType, v...))
 }
 
 // ValueTemplateEQ applies the EQ predicate on the "value_template" field.

@@ -172,10 +172,11 @@ func startAPI(cfg *config.Config) {
 	}
 
 	// Create webhook service
+	variableService := variables_service.NewVariablesService(repo, kubeClient)
 	webhooksService := webhooks_service.NewWebhooksService(repo)
 
 	// Create deployment controller
-	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient, webhooksService)
+	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient, webhooksService, variableService)
 
 	// Create services
 	teamService := team_service.NewTeamService(repo, kubeClient)
@@ -187,7 +188,6 @@ func startAPI(cfg *config.Config) {
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
 	metricsService := metric_service.NewMetricService(promClient, repo)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
-	variableService := variables_service.NewVariablesService(repo, kubeClient)
 
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 

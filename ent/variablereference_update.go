@@ -67,20 +67,6 @@ func (vru *VariableReferenceUpdate) SetNillableTargetName(s *string) *VariableRe
 	return vru
 }
 
-// SetType sets the "type" field.
-func (vru *VariableReferenceUpdate) SetType(srt schema.VariableReferenceType) *VariableReferenceUpdate {
-	vru.mutation.SetType(srt)
-	return vru
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (vru *VariableReferenceUpdate) SetNillableType(srt *schema.VariableReferenceType) *VariableReferenceUpdate {
-	if srt != nil {
-		vru.SetType(*srt)
-	}
-	return vru
-}
-
 // SetSources sets the "sources" field.
 func (vru *VariableReferenceUpdate) SetSources(srs []schema.VariableReferenceSource) *VariableReferenceUpdate {
 	vru.mutation.SetSources(srs)
@@ -167,11 +153,6 @@ func (vru *VariableReferenceUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (vru *VariableReferenceUpdate) check() error {
-	if v, ok := vru.mutation.GetType(); ok {
-		if err := variablereference.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.type": %w`, err)}
-		}
-	}
 	if vru.mutation.ServiceCleared() && len(vru.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "VariableReference.service"`)
 	}
@@ -201,9 +182,6 @@ func (vru *VariableReferenceUpdate) sqlSave(ctx context.Context) (n int, err err
 	}
 	if value, ok := vru.mutation.TargetName(); ok {
 		_spec.SetField(variablereference.FieldTargetName, field.TypeString, value)
-	}
-	if value, ok := vru.mutation.GetType(); ok {
-		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := vru.mutation.Sources(); ok {
 		_spec.SetField(variablereference.FieldSources, field.TypeJSON, value)
@@ -297,20 +275,6 @@ func (vruo *VariableReferenceUpdateOne) SetTargetName(s string) *VariableReferen
 func (vruo *VariableReferenceUpdateOne) SetNillableTargetName(s *string) *VariableReferenceUpdateOne {
 	if s != nil {
 		vruo.SetTargetName(*s)
-	}
-	return vruo
-}
-
-// SetType sets the "type" field.
-func (vruo *VariableReferenceUpdateOne) SetType(srt schema.VariableReferenceType) *VariableReferenceUpdateOne {
-	vruo.mutation.SetType(srt)
-	return vruo
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (vruo *VariableReferenceUpdateOne) SetNillableType(srt *schema.VariableReferenceType) *VariableReferenceUpdateOne {
-	if srt != nil {
-		vruo.SetType(*srt)
 	}
 	return vruo
 }
@@ -414,11 +378,6 @@ func (vruo *VariableReferenceUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (vruo *VariableReferenceUpdateOne) check() error {
-	if v, ok := vruo.mutation.GetType(); ok {
-		if err := variablereference.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "VariableReference.type": %w`, err)}
-		}
-	}
 	if vruo.mutation.ServiceCleared() && len(vruo.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "VariableReference.service"`)
 	}
@@ -465,9 +424,6 @@ func (vruo *VariableReferenceUpdateOne) sqlSave(ctx context.Context) (_node *Var
 	}
 	if value, ok := vruo.mutation.TargetName(); ok {
 		_spec.SetField(variablereference.FieldTargetName, field.TypeString, value)
-	}
-	if value, ok := vruo.mutation.GetType(); ok {
-		_spec.SetField(variablereference.FieldType, field.TypeEnum, value)
 	}
 	if value, ok := vruo.mutation.Sources(); ok {
 		_spec.SetField(variablereference.FieldSources, field.TypeJSON, value)

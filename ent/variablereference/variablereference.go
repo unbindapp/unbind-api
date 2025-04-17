@@ -3,13 +3,11 @@
 package variablereference
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 const (
@@ -25,8 +23,6 @@ const (
 	FieldTargetServiceID = "target_service_id"
 	// FieldTargetName holds the string denoting the target_name field in the database.
 	FieldTargetName = "target_name"
-	// FieldType holds the string denoting the type field in the database.
-	FieldType = "type"
 	// FieldSources holds the string denoting the sources field in the database.
 	FieldSources = "sources"
 	// FieldValueTemplate holds the string denoting the value_template field in the database.
@@ -51,7 +47,6 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldTargetServiceID,
 	FieldTargetName,
-	FieldType,
 	FieldSources,
 	FieldValueTemplate,
 }
@@ -76,16 +71,6 @@ var (
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
-
-// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
-func TypeValidator(_type schema.VariableReferenceType) error {
-	switch _type {
-	case "variable", "external_endpoint", "internal_endpoint":
-		return nil
-	default:
-		return fmt.Errorf("variablereference: invalid enum value for type field: %q", _type)
-	}
-}
 
 // OrderOption defines the ordering options for the VariableReference queries.
 type OrderOption func(*sql.Selector)
@@ -113,11 +98,6 @@ func ByTargetServiceID(opts ...sql.OrderTermOption) OrderOption {
 // ByTargetName orders the results by the target_name field.
 func ByTargetName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTargetName, opts...).ToFunc()
-}
-
-// ByType orders the results by the type field.
-func ByType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
 // ByValueTemplate orders the results by the value_template field.

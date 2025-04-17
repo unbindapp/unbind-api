@@ -13,7 +13,6 @@ func (self *VariableRepository) CreateReference(ctx context.Context, input *mode
 	return self.base.DB.VariableReference.Create().
 		SetTargetServiceID(input.TargetServiceID).
 		SetTargetName(strings.TrimSpace(input.TargetName)).
-		SetType(input.Type).
 		SetSources(input.Sources).
 		SetValueTemplate(input.ValueTemplate).
 		Save(ctx)

@@ -30,8 +30,6 @@ type VariableReference struct {
 	TargetServiceID uuid.UUID `json:"target_service_id,omitempty"`
 	// TargetName holds the value of the "target_name" field.
 	TargetName string `json:"target_name,omitempty"`
-	// Type holds the value of the "type" field.
-	Type schema.VariableReferenceType `json:"type,omitempty"`
 	// List of sources for this variable reference, interpolated as ${sourcename.sourcekey}
 	Sources []schema.VariableReferenceSource `json:"sources,omitempty"`
 	// Optional template for the value, e.g. 'Hello ${a.b} this is my variable ${c.d}'
@@ -69,7 +67,7 @@ func (*VariableReference) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case variablereference.FieldSources:
 			values[i] = new([]byte)
-		case variablereference.FieldTargetName, variablereference.FieldType, variablereference.FieldValueTemplate:
+		case variablereference.FieldTargetName, variablereference.FieldValueTemplate:
 			values[i] = new(sql.NullString)
 		case variablereference.FieldCreatedAt, variablereference.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -119,12 +117,6 @@ func (vr *VariableReference) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field target_name", values[i])
 			} else if value.Valid {
 				vr.TargetName = value.String
-			}
-		case variablereference.FieldType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field type", values[i])
-			} else if value.Valid {
-				vr.Type = schema.VariableReferenceType(value.String)
 			}
 		case variablereference.FieldSources:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -192,9 +184,6 @@ func (vr *VariableReference) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("target_name=")
 	builder.WriteString(vr.TargetName)
-	builder.WriteString(", ")
-	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", vr.Type))
 	builder.WriteString(", ")
 	builder.WriteString("sources=")
 	builder.WriteString(fmt.Sprintf("%v", vr.Sources))

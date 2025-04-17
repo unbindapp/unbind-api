@@ -21,6 +21,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/queue"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/valkey-io/valkey-go"
 	"k8s.io/client-go/kubernetes"
@@ -42,28 +43,39 @@ type DeploymentJobRequest struct {
 
 // Handles triggering builds for services
 type DeploymentController struct {
-	cfg            *config.Config
-	k8s            *k8s.KubeClient
-	jobQueue       *queue.Queue[DeploymentJobRequest]
-	ctx            context.Context
-	cancelFunc     context.CancelFunc
-	repo           *repositories.Repositories
-	githubClient   *github.GithubClient
-	webhookService *webhooks_service.WebhooksService
+	cfg             *config.Config
+	k8s             *k8s.KubeClient
+	jobQueue        *queue.Queue[DeploymentJobRequest]
+	ctx             context.Context
+	cancelFunc      context.CancelFunc
+	repo            *repositories.Repositories
+	githubClient    *github.GithubClient
+	webhookService  *webhooks_service.WebhooksService
+	variableService *variables_service.VariablesService
 }
 
-func NewDeploymentController(ctx context.Context, cancel context.CancelFunc, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient, webeehookService *webhooks_service.WebhooksService) *DeploymentController {
+func NewDeploymentController(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	cfg *config.Config,
+	k8s *k8s.KubeClient,
+	valkeyClient valkey.Client,
+	repositories *repositories.Repositories,
+	githubClient *github.GithubClient,
+	webeehookService *webhooks_service.WebhooksService,
+	variableService *variables_service.VariablesService) *DeploymentController {
 	jobQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
 
 	return &DeploymentController{
-		cfg:            cfg,
-		k8s:            k8s,
-		jobQueue:       jobQueue,
-		ctx:            ctx,
-		cancelFunc:     cancel,
-		repo:           repositories,
-		githubClient:   githubClient,
-		webhookService: webeehookService,
+		cfg:             cfg,
+		k8s:             k8s,
+		jobQueue:        jobQueue,
+		ctx:             ctx,
+		cancelFunc:      cancel,
+		repo:            repositories,
+		githubClient:    githubClient,
+		webhookService:  webeehookService,
+		variableService: variableService,
 	}
 }
 
@@ -276,6 +288,28 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 		env["SERVICE_HOSTS"] = string(marshalled)
 	}
+
+	// Resolve referenced environment
+	referencedEnv, err := self.variableService.ResolveAllReferences(ctx, service.ID)
+	if err != nil {
+		log.Error("Error resolving environment variables", "err", err)
+		return nil, err
+	}
+
+	// Convert the byte arrays to base64 strings first
+	serializedReferences := make(map[string]string)
+	for k, v := range referencedEnv {
+		serializedReferences[k] = base64.StdEncoding.EncodeToString([]byte(v))
+	}
+
+	// Serialize the map to JSON
+	referencedEnvJSON, err := json.Marshal(serializedReferences)
+	if err != nil {
+		log.Error("Error marshalling referenced secrets", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to marshal referenced secrets")
+	}
+	// Add the referenced environment to the environment
+	env["ADDITIONAL_ENV"] = string(referencedEnvJSON)
 
 	// ! TODO - we need to support the custom run commands, the operator supports it
 

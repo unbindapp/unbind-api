@@ -131,31 +131,26 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 // Resolve a variable reference value for a key
 func (self *VariablesService) ResolveAvailableReferenceValue(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.ResolveVariableReferenceInput) (string, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{}
-	targetLabel := ""
 	switch input.SourceType {
 	case schema.VariableReferenceSourceTypeTeam:
-		targetLabel = "unbind-team"
 		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
 			Action:       schema.ActionViewer,
 			ResourceType: schema.ResourceTypeTeam,
 			ResourceID:   input.SourceID,
 		})
 	case schema.VariableReferenceSourceTypeProject:
-		targetLabel = "unbind-project"
 		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
 			Action:       schema.ActionViewer,
 			ResourceType: schema.ResourceTypeProject,
 			ResourceID:   input.SourceID,
 		})
 	case schema.VariableReferenceSourceTypeEnvironment:
-		targetLabel = "unbind-environment"
 		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
 			Action:       schema.ActionViewer,
 			ResourceType: schema.ResourceTypeEnvironment,
 			ResourceID:   input.SourceID,
 		})
 	case schema.VariableReferenceSourceTypeService:
-		targetLabel = "unbind-service"
 		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
 			Action:       schema.ActionViewer,
 			ResourceType: schema.ResourceTypeService,
@@ -206,7 +201,7 @@ func (self *VariablesService) ResolveAvailableReferenceValue(ctx context.Context
 			ctx,
 			namespace,
 			map[string]string{
-				targetLabel: input.SourceID.String(),
+				input.SourceType.KubernetesLabel(): input.SourceID.String(),
 			},
 			client,
 		)

@@ -15,10 +15,11 @@ import (
 )
 
 type VariableReferenceSource struct {
-	Type VariableReferenceSourceType `json:"type"`
-	ID   uuid.UUID                   `json:"id"`
-	Name string                      `json:"name"`
-	Key  string                      `json:"key"`
+	Type       VariableReferenceType       `json:"type"`
+	SourceType VariableReferenceSourceType `json:"source_type"`
+	ID         uuid.UUID                   `json:"id"`
+	Name       string                      `json:"name"`
+	Key        string                      `json:"key"`
 }
 
 // VariableReference holds the schema definition for the VariableReference entity.
@@ -39,7 +40,6 @@ func (VariableReference) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("target_service_id", uuid.UUID{}),
 		field.String("target_name"),
-		field.Enum("type").GoType(VariableReferenceType("")),
 		field.JSON("sources", []VariableReferenceSource{}).
 			Comment("List of sources for this variable reference, interpolated as ${sourcename.sourcekey}"),
 		field.String("value_template").
@@ -63,7 +63,7 @@ func (VariableReference) Edges() []ent.Edge {
 func (VariableReference) Indexes() []ent.Index {
 	return []ent.Index{
 		// Just prevent duplicates
-		index.Fields("target_service_id", "type", "sources", "value_template").Unique(),
+		index.Fields("target_service_id", "sources", "value_template").Unique(),
 	}
 }
 
@@ -122,6 +122,21 @@ const (
 	VariableReferenceSourceTypeEnvironment VariableReferenceSourceType = "environment"
 	VariableReferenceSourceTypeService     VariableReferenceSourceType = "service"
 )
+
+func (s VariableReferenceSourceType) KubernetesLabel() string {
+	switch s {
+	case VariableReferenceSourceTypeTeam:
+		return "unbind-team"
+	case VariableReferenceSourceTypeProject:
+		return "unbind-project"
+	case VariableReferenceSourceTypeEnvironment:
+		return "unbind-environment"
+	case VariableReferenceSourceTypeService:
+		return "unbind-service"
+	default:
+		return ""
+	}
+}
 
 // Values provides list valid values for Enum.
 func (s VariableReferenceSourceType) Values() (kinds []string) {

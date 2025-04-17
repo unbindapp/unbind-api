@@ -14512,7 +14512,6 @@ type VariableReferenceMutation struct {
 	created_at     *time.Time
 	updated_at     *time.Time
 	target_name    *string
-	_type          *schema.VariableReferenceType
 	sources        *[]schema.VariableReferenceSource
 	appendsources  []schema.VariableReferenceSource
 	value_template *string
@@ -14772,42 +14771,6 @@ func (m *VariableReferenceMutation) ResetTargetName() {
 	m.target_name = nil
 }
 
-// SetType sets the "type" field.
-func (m *VariableReferenceMutation) SetType(srt schema.VariableReferenceType) {
-	m._type = &srt
-}
-
-// GetType returns the value of the "type" field in the mutation.
-func (m *VariableReferenceMutation) GetType() (r schema.VariableReferenceType, exists bool) {
-	v := m._type
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldType returns the old "type" field's value of the VariableReference entity.
-// If the VariableReference object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *VariableReferenceMutation) OldType(ctx context.Context) (v schema.VariableReferenceType, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldType is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldType requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldType: %w", err)
-	}
-	return oldValue.Type, nil
-}
-
-// ResetType resets all changes to the "type" field.
-func (m *VariableReferenceMutation) ResetType() {
-	m._type = nil
-}
-
 // SetSources sets the "sources" field.
 func (m *VariableReferenceMutation) SetSources(srs []schema.VariableReferenceSource) {
 	m.sources = &srs
@@ -14969,7 +14932,7 @@ func (m *VariableReferenceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VariableReferenceMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, variablereference.FieldCreatedAt)
 	}
@@ -14981,9 +14944,6 @@ func (m *VariableReferenceMutation) Fields() []string {
 	}
 	if m.target_name != nil {
 		fields = append(fields, variablereference.FieldTargetName)
-	}
-	if m._type != nil {
-		fields = append(fields, variablereference.FieldType)
 	}
 	if m.sources != nil {
 		fields = append(fields, variablereference.FieldSources)
@@ -15007,8 +14967,6 @@ func (m *VariableReferenceMutation) Field(name string) (ent.Value, bool) {
 		return m.TargetServiceID()
 	case variablereference.FieldTargetName:
 		return m.TargetName()
-	case variablereference.FieldType:
-		return m.GetType()
 	case variablereference.FieldSources:
 		return m.Sources()
 	case variablereference.FieldValueTemplate:
@@ -15030,8 +14988,6 @@ func (m *VariableReferenceMutation) OldField(ctx context.Context, name string) (
 		return m.OldTargetServiceID(ctx)
 	case variablereference.FieldTargetName:
 		return m.OldTargetName(ctx)
-	case variablereference.FieldType:
-		return m.OldType(ctx)
 	case variablereference.FieldSources:
 		return m.OldSources(ctx)
 	case variablereference.FieldValueTemplate:
@@ -15072,13 +15028,6 @@ func (m *VariableReferenceMutation) SetField(name string, value ent.Value) error
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTargetName(v)
-		return nil
-	case variablereference.FieldType:
-		v, ok := value.(schema.VariableReferenceType)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetType(v)
 		return nil
 	case variablereference.FieldSources:
 		v, ok := value.([]schema.VariableReferenceSource)
@@ -15154,9 +15103,6 @@ func (m *VariableReferenceMutation) ResetField(name string) error {
 		return nil
 	case variablereference.FieldTargetName:
 		m.ResetTargetName()
-		return nil
-	case variablereference.FieldType:
-		m.ResetType()
 		return nil
 	case variablereference.FieldSources:
 		m.ResetSources()

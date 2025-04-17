@@ -70,6 +70,8 @@ type Config struct {
 	// Non-env config
 	Hosts []v1.HostSpec
 	Ports []v1.PortSpec
+	// Json serialized map[string]string to pass to build and deploy
+	AdditionalEnv string `env:"ADDITIONAL_ENV"`
 }
 
 func (self *Config) GetPostgresHost() string {

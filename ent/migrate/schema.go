@@ -393,7 +393,6 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "target_name", Type: field.TypeString},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"variable", "external_endpoint", "internal_endpoint"}},
 		{Name: "sources", Type: field.TypeJSON},
 		{Name: "value_template", Type: field.TypeString},
 		{Name: "target_service_id", Type: field.TypeUUID},
@@ -406,16 +405,16 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "variable_references_services_variable_references",
-				Columns:    []*schema.Column{VariableReferencesColumns[7]},
+				Columns:    []*schema.Column{VariableReferencesColumns[6]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "variablereference_target_service_id_type_sources_value_template",
+				Name:    "variablereference_target_service_id_sources_value_template",
 				Unique:  true,
-				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[4], VariableReferencesColumns[5], VariableReferencesColumns[6]},
+				Columns: []*schema.Column{VariableReferencesColumns[6], VariableReferencesColumns[4], VariableReferencesColumns[5]},
 			},
 		},
 	}

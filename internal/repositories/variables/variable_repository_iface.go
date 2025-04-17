@@ -5,6 +5,7 @@ package variable_repo
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -12,4 +13,5 @@ import (
 // VariableRepositoryInterface ...
 type VariableRepositoryInterface interface {
 	CreateReference(ctx context.Context, input *models.CreateVariableReferenceInput) (*ent.VariableReference, error)
+	GetReferencesForService(ctx context.Context, serviceID uuid.UUID) ([]*ent.VariableReference, error)
 }

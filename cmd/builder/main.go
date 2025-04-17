@@ -263,6 +263,25 @@ func main() {
 			}
 		}
 
+		if cfg.AdditionalEnv != "" {
+			additionalEnv := make(map[string]string)
+			if err := json.Unmarshal([]byte(cfg.AdditionalEnv), &additionalEnv); err != nil {
+				if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal additional env %v", err), cfg.ServiceDeploymentID); err != nil {
+					log.Errorf("Failed to mark deployment as failed: %v", err)
+				}
+				log.Fatalf("Failed to parse additional env: %v", err)
+			}
+
+			for k, v := range additionalEnv {
+				data, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					log.Warnf("Error decoding additional env %s: %v\n", k, err)
+					continue
+				}
+				buildSecrets[k] = string(data)
+			}
+		}
+
 		// Build with context
 		switch cfg.ServiceBuilder {
 		case schema.ServiceBuilderRailpack:
