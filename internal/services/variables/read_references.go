@@ -41,7 +41,12 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 
 	// They can access all service secrets in the same project
 	serviceSecrets := make(map[uuid.UUID]string)
-	for _, environment := range project.Edges.Environments {
+	// Get all environments in this project
+	projectEnvironments, err := self.repo.Environment().GetForProject(ctx, nil, project.ID)
+	if err != nil {
+		return nil, err
+	}
+	for _, environment := range projectEnvironments {
 		for _, service := range environment.Edges.Services {
 			if service.ID == serviceID {
 				continue

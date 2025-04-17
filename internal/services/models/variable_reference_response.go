@@ -1,6 +1,8 @@
 package models
 
 import (
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,6 +22,35 @@ type AvailableVariableReference struct {
 	SourceType schema.VariableReferenceSourceType `json:"source_type"`
 	SourceID   uuid.UUID                          `json:"source_id"`
 	Keys       []string                           `json:"keys"`
+}
+
+// Define a comparison function for AvailableVariableReference
+func compareAvailableVariableReferences(a, b AvailableVariableReference) int {
+	// Sort by source type first, team comes first
+	aPriority := getSourceTypePriority(a.SourceType)
+	bPriority := getSourceTypePriority(b.SourceType)
+	if aPriority != bPriority {
+		return aPriority - bPriority
+	}
+
+	// sort by name
+	return strings.Compare(a.Name, b.Name)
+}
+
+// Helper function to get priority of SourceType
+func getSourceTypePriority(sourceType schema.VariableReferenceSourceType) int {
+	switch sourceType {
+	case schema.VariableReferenceSourceTypeTeam:
+		return 0
+	case schema.VariableReferenceSourceTypeProject:
+		return 1
+	case schema.VariableReferenceSourceTypeEnvironment:
+		return 2
+	case schema.VariableReferenceSourceTypeService:
+		return 3
+	default:
+		return 4
+	}
 }
 
 // SecretData represents a Kubernetes secret with its metadata
@@ -70,6 +101,10 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 			resp.ExternalEndpoints[i].Keys[j] = host.Host
 		}
 	}
+
+	slices.SortFunc(resp.Variables, compareAvailableVariableReferences)
+	slices.SortFunc(resp.InternalEndpoints, compareAvailableVariableReferences)
+	slices.SortFunc(resp.ExternalEndpoints, compareAvailableVariableReferences)
 
 	return resp
 }
