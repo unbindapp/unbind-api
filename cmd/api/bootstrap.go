@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd.go"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 

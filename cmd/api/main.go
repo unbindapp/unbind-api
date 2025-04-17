@@ -35,7 +35,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd.go"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
