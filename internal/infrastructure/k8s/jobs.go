@@ -106,13 +106,13 @@ exec /app/builder`, self.config.GetBuildkitHost(), self.config.GetBuildkitHost()
 		},
 	}
 	// Create the Job in Kubernetes
-	_, err = self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).Create(ctx, job, metav1.CreateOptions{})
+	_, err = self.clientset.BatchV1().Jobs(self.config.GetSystemNamespace()).Create(ctx, job, metav1.CreateOptions{})
 	return jobName, err
 }
 
 // For canceling jobs.
 func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID string) error {
-	jobList, err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).List(ctx, metav1.ListOptions{
+	jobList, err := self.clientset.BatchV1().Jobs(self.config.GetSystemNamespace()).List(ctx, metav1.ListOptions{
 		// We use the "serviceID" label to select jobs.
 		LabelSelector: fmt.Sprintf("serviceID=%s", serviceID),
 	})
@@ -123,7 +123,7 @@ func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID str
 		if job.Status.Active > 0 {
 			// Delete the job. Using foreground deletion ensures that the pods are cleaned up.
 			deletePolicy := metav1.DeletePropagationForeground
-			if err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).Delete(ctx, job.Name, metav1.DeleteOptions{
+			if err := self.clientset.BatchV1().Jobs(self.config.GetSystemNamespace()).Delete(ctx, job.Name, metav1.DeleteOptions{
 				PropagationPolicy: &deletePolicy,
 			}); err != nil {
 				return fmt.Errorf("failed to delete job %s: %v", job.Name, err)
@@ -135,7 +135,7 @@ func (self *KubeClient) CancelJobsByServiceID(ctx context.Context, serviceID str
 }
 
 func (self *KubeClient) CountActiveDeploymentJobs(ctx context.Context) (int, error) {
-	jobList, err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).List(ctx, metav1.ListOptions{
+	jobList, err := self.clientset.BatchV1().Jobs(self.config.GetSystemNamespace()).List(ctx, metav1.ListOptions{
 		LabelSelector: "unbind-deployment-job=true",
 	})
 	if err != nil {
@@ -177,7 +177,7 @@ type JobStatus struct {
 
 func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobStatus, error) {
 	// Get the job from Kubernetes API
-	job, err := self.clientset.BatchV1().Jobs(self.config.GetBuilderNamespace()).Get(ctx, jobName, metav1.GetOptions{})
+	job, err := self.clientset.BatchV1().Jobs(self.config.GetSystemNamespace()).Get(ctx, jobName, metav1.GetOptions{})
 	if err != nil {
 		return JobStatus{}, fmt.Errorf("failed to get job %s: %v", jobName, err)
 	}
@@ -252,7 +252,7 @@ func (self *KubeClient) GetJobStatus(ctx context.Context, jobName string) (JobSt
 func (self *KubeClient) getJobPodsFailureReason(ctx context.Context, jobName string) string {
 	// Get pods with the job-name label
 	labelSelector := fmt.Sprintf("job-name=%s", jobName)
-	pods, err := self.clientset.CoreV1().Pods(self.config.GetBuilderNamespace()).List(ctx, metav1.ListOptions{
+	pods, err := self.clientset.CoreV1().Pods(self.config.GetSystemNamespace()).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 

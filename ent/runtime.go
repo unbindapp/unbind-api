@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/registry"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
@@ -299,6 +300,31 @@ func init() {
 	projectDescID := projectMixinFields0[0].Descriptor()
 	// project.DefaultID holds the default value on creation for the id field.
 	project.DefaultID = projectDescID.Default.(func() uuid.UUID)
+	registryMixin := schema.Registry{}.Mixin()
+	registryMixinFields0 := registryMixin[0].Fields()
+	_ = registryMixinFields0
+	registryMixinFields1 := registryMixin[1].Fields()
+	_ = registryMixinFields1
+	registryFields := schema.Registry{}.Fields()
+	_ = registryFields
+	// registryDescCreatedAt is the schema descriptor for created_at field.
+	registryDescCreatedAt := registryMixinFields1[0].Descriptor()
+	// registry.DefaultCreatedAt holds the default value on creation for the created_at field.
+	registry.DefaultCreatedAt = registryDescCreatedAt.Default.(func() time.Time)
+	// registryDescUpdatedAt is the schema descriptor for updated_at field.
+	registryDescUpdatedAt := registryMixinFields1[1].Descriptor()
+	// registry.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	registry.DefaultUpdatedAt = registryDescUpdatedAt.Default.(func() time.Time)
+	// registry.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	registry.UpdateDefaultUpdatedAt = registryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// registryDescHost is the schema descriptor for host field.
+	registryDescHost := registryFields[0].Descriptor()
+	// registry.HostValidator is a validator for the "host" field. It is called by the builders before save.
+	registry.HostValidator = registryDescHost.Validators[0].(func(string) error)
+	// registryDescID is the schema descriptor for id field.
+	registryDescID := registryMixinFields0[0].Descriptor()
+	// registry.DefaultID holds the default value on creation for the id field.
+	registry.DefaultID = registryDescID.Default.(func() uuid.UUID)
 	serviceMixin := schema.Service{}.Mixin()
 	serviceMixinFields0 := serviceMixin[0].Fields()
 	_ = serviceMixinFields0

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	corev1 "k8s.io/api/core/v1"
@@ -19,16 +20,15 @@ import (
 
 const (
 	// ConfigMap details
-	BuildkitDeploymentName  = "buildkitd"
-	BuildkitConfigName      = "buildkit-config"
-	BuildkitConfigNamespace = "unbind-system"
-	BuildkitConfigKey       = "buildkitd.toml"
+	BuildkitDeploymentName = "buildkitd"
+	BuildkitConfigName     = "buildkit-config"
+	BuildkitConfigKey      = "buildkitd.toml"
 
 	// Default buildkitd.toml content
 	DefaultBuildkitConfig = `[worker.oci]
 # Limit concurrency of build steps:
 max-parallelism = 2
-[registry."docker-registry.unbind-system:5000"]
+[registry."docker-registry.%s:5000"]
 http = true
 insecure = true
 [frontend."dockerfile.v0"]
@@ -37,12 +37,14 @@ enabled = true
 )
 
 type BuildkitSettingsManager struct {
+	cfg  *config.Config
 	Repo repositories.RepositoriesInterface
 	k8s  *k8s.KubeClient
 }
 
-func NewBuildkitSettingsManager(repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient) *BuildkitSettingsManager {
+func NewBuildkitSettingsManager(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient) *BuildkitSettingsManager {
 	return &BuildkitSettingsManager{
+		cfg:  cfg,
 		Repo: repo,
 		k8s:  k8sClient,
 	}
@@ -51,7 +53,7 @@ func NewBuildkitSettingsManager(repo repositories.RepositoriesInterface, k8sClie
 // GetOrCreateBuildkitConfig retrieves the existing buildkit ConfigMap or creates it if it doesn't exist
 func (self *BuildkitSettingsManager) GetOrCreateBuildkitConfig(ctx context.Context) (*corev1.ConfigMap, error) {
 	// Try to get the existing ConfigMap
-	cm, err := self.k8s.GetInternalClient().CoreV1().ConfigMaps(BuildkitConfigNamespace).Get(ctx, BuildkitConfigName, metav1.GetOptions{})
+	cm, err := self.k8s.GetInternalClient().CoreV1().ConfigMaps(self.cfg.SystemNamespace).Get(ctx, BuildkitConfigName, metav1.GetOptions{})
 
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -71,14 +73,14 @@ func (self *BuildkitSettingsManager) createDefaultBuildkitConfig(ctx context.Con
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      BuildkitConfigName,
-			Namespace: BuildkitConfigNamespace,
+			Namespace: self.cfg.SystemNamespace,
 		},
 		Data: map[string]string{
-			BuildkitConfigKey: DefaultBuildkitConfig,
+			BuildkitConfigKey: fmt.Sprintf(DefaultBuildkitConfig, self.cfg.SystemNamespace),
 		},
 	}
 
-	createdCM, err := self.k8s.GetInternalClient().CoreV1().ConfigMaps(BuildkitConfigNamespace).Create(ctx, cm, metav1.CreateOptions{})
+	createdCM, err := self.k8s.GetInternalClient().CoreV1().ConfigMaps(self.cfg.SystemNamespace).Create(ctx, cm, metav1.CreateOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create buildkit ConfigMap: %w", err)
 	}
@@ -97,7 +99,7 @@ func (self *BuildkitSettingsManager) UpdateMaxParallelism(ctx context.Context, p
 	tomlContent, exists := cm.Data[BuildkitConfigKey]
 	if !exists {
 		// If the key doesn't exist, use the default config
-		tomlContent = DefaultBuildkitConfig
+		tomlContent = fmt.Sprintf(DefaultBuildkitConfig, self.cfg.SystemNamespace)
 	}
 
 	// Update the max-parallelism value using regex
@@ -111,7 +113,7 @@ func (self *BuildkitSettingsManager) UpdateMaxParallelism(ctx context.Context, p
 
 	// Update the ConfigMap
 	cm.Data[BuildkitConfigKey] = newTomlContent
-	_, err = self.k8s.GetInternalClient().CoreV1().ConfigMaps(BuildkitConfigNamespace).Update(ctx, cm, metav1.UpdateOptions{})
+	_, err = self.k8s.GetInternalClient().CoreV1().ConfigMaps(self.cfg.SystemNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update buildkit ConfigMap: %w", err)
 	}
@@ -165,7 +167,7 @@ func (self *BuildkitSettingsManager) UpdateReplicas(ctx context.Context, replica
 	}
 
 	// Apply the patch to the deployment
-	_, err = self.k8s.GetInternalClient().AppsV1().Deployments(BuildkitConfigNamespace).Patch(
+	_, err = self.k8s.GetInternalClient().AppsV1().Deployments(self.cfg.SystemNamespace).Patch(
 		ctx,
 		BuildkitDeploymentName,
 		types.JSONPatchType,
@@ -181,7 +183,7 @@ func (self *BuildkitSettingsManager) UpdateReplicas(ctx context.Context, replica
 
 // GetCurrentReplicas retrieves the current number of replicas for the buildkitd deployment
 func (self *BuildkitSettingsManager) GetCurrentReplicas(ctx context.Context) (int, error) {
-	deployment, err := self.k8s.GetInternalClient().AppsV1().Deployments(BuildkitConfigNamespace).Get(ctx, BuildkitDeploymentName, metav1.GetOptions{})
+	deployment, err := self.k8s.GetInternalClient().AppsV1().Deployments(self.cfg.SystemNamespace).Get(ctx, BuildkitDeploymentName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return 0, fmt.Errorf("buildkitd deployment not found: %w", err)
@@ -195,7 +197,7 @@ func (self *BuildkitSettingsManager) GetCurrentReplicas(ctx context.Context) (in
 
 // RestartBuildkitdPods restarts the buildkitd pods by adding a restart annotation to the deployment
 func (self *BuildkitSettingsManager) RestartBuildkitdPods(ctx context.Context) error {
-	deployment, err := self.k8s.GetInternalClient().AppsV1().Deployments(BuildkitConfigNamespace).Get(ctx, BuildkitDeploymentName, metav1.GetOptions{})
+	deployment, err := self.k8s.GetInternalClient().AppsV1().Deployments(self.cfg.SystemNamespace).Get(ctx, BuildkitDeploymentName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return fmt.Errorf("buildkitd deployment not found: %w", err)
@@ -213,7 +215,7 @@ func (self *BuildkitSettingsManager) RestartBuildkitdPods(ctx context.Context) e
 	deployment.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = timestamp
 
 	// Update the deployment
-	_, err = self.k8s.GetInternalClient().AppsV1().Deployments(BuildkitConfigNamespace).Update(ctx, deployment, metav1.UpdateOptions{})
+	_, err = self.k8s.GetInternalClient().AppsV1().Deployments(self.cfg.SystemNamespace).Update(ctx, deployment, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to restart buildkitd pods: %w", err)
 	}

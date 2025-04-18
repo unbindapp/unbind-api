@@ -195,7 +195,7 @@ func (self *cli) createTeam(name, displayName string) {
 	fmt.Println("Team created successfully:")
 	fmt.Printf("ID: %s\n", team.ID)
 	fmt.Printf("Name: %s\n", team.Name)
-	fmt.Printf("Display Name: %s\n", team.Description)
+	fmt.Printf("Display Name: %s\n", team.DisplayName)
 	fmt.Printf("Namespace: %s\n", team.Namespace)
 }
 
@@ -413,19 +413,6 @@ func (self *cli) syncSecrets() {
 	}
 
 	for _, t := range teams {
-		// First make sure registry credentials  exist
-		_, err := self.k8s.CreateMultiRegistryCredentials(context.Background(), "unbind-registry-credentials", t.Namespace, []k8s.RegistryCredential{
-			{
-				RegistryURL: self.cfg.ContainerRegistryHost,
-				Username:    self.cfg.ContainerRegistryUser,
-				Password:    self.cfg.ContainerRegistryPassword,
-			},
-		}, client)
-		if err != nil {
-			fmt.Printf("Error creating registry credentials: %v\n", err)
-			return
-		}
-
 		// Get projects, environments, services
 		projects, err := self.repository.Ent().Project.Query().
 			Where(project.TeamIDEQ(t.ID)).

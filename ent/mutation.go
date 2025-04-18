@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/bootstrap"
 	"github.com/unbindapp/unbind-api/ent/buildkitsettings"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
@@ -24,6 +25,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/registry"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
@@ -44,6 +46,7 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeBootstrap          = "Bootstrap"
 	TypeBuildkitSettings   = "BuildkitSettings"
 	TypeDeployment         = "Deployment"
 	TypeEnvironment        = "Environment"
@@ -55,6 +58,7 @@ const (
 	TypeOauth2Token        = "Oauth2Token"
 	TypePermission         = "Permission"
 	TypeProject            = "Project"
+	TypeRegistry           = "Registry"
 	TypeService            = "Service"
 	TypeServiceConfig      = "ServiceConfig"
 	TypeTeam               = "Team"
@@ -62,6 +66,332 @@ const (
 	TypeVariableReference  = "VariableReference"
 	TypeWebhook            = "Webhook"
 )
+
+// BootstrapMutation represents an operation that mutates the Bootstrap nodes in the graph.
+type BootstrapMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	is_bootstrapped *bool
+	clearedFields   map[string]struct{}
+	done            bool
+	oldValue        func(context.Context) (*Bootstrap, error)
+	predicates      []predicate.Bootstrap
+}
+
+var _ ent.Mutation = (*BootstrapMutation)(nil)
+
+// bootstrapOption allows management of the mutation configuration using functional options.
+type bootstrapOption func(*BootstrapMutation)
+
+// newBootstrapMutation creates new mutation for the Bootstrap entity.
+func newBootstrapMutation(c config, op Op, opts ...bootstrapOption) *BootstrapMutation {
+	m := &BootstrapMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeBootstrap,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withBootstrapID sets the ID field of the mutation.
+func withBootstrapID(id int) bootstrapOption {
+	return func(m *BootstrapMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Bootstrap
+		)
+		m.oldValue = func(ctx context.Context) (*Bootstrap, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Bootstrap.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withBootstrap sets the old Bootstrap of the mutation.
+func withBootstrap(node *Bootstrap) bootstrapOption {
+	return func(m *BootstrapMutation) {
+		m.oldValue = func(context.Context) (*Bootstrap, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m BootstrapMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m BootstrapMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *BootstrapMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *BootstrapMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Bootstrap.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetIsBootstrapped sets the "is_bootstrapped" field.
+func (m *BootstrapMutation) SetIsBootstrapped(b bool) {
+	m.is_bootstrapped = &b
+}
+
+// IsBootstrapped returns the value of the "is_bootstrapped" field in the mutation.
+func (m *BootstrapMutation) IsBootstrapped() (r bool, exists bool) {
+	v := m.is_bootstrapped
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsBootstrapped returns the old "is_bootstrapped" field's value of the Bootstrap entity.
+// If the Bootstrap object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BootstrapMutation) OldIsBootstrapped(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsBootstrapped is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsBootstrapped requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsBootstrapped: %w", err)
+	}
+	return oldValue.IsBootstrapped, nil
+}
+
+// ResetIsBootstrapped resets all changes to the "is_bootstrapped" field.
+func (m *BootstrapMutation) ResetIsBootstrapped() {
+	m.is_bootstrapped = nil
+}
+
+// Where appends a list predicates to the BootstrapMutation builder.
+func (m *BootstrapMutation) Where(ps ...predicate.Bootstrap) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the BootstrapMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *BootstrapMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Bootstrap, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *BootstrapMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *BootstrapMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Bootstrap).
+func (m *BootstrapMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *BootstrapMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.is_bootstrapped != nil {
+		fields = append(fields, bootstrap.FieldIsBootstrapped)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *BootstrapMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case bootstrap.FieldIsBootstrapped:
+		return m.IsBootstrapped()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *BootstrapMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case bootstrap.FieldIsBootstrapped:
+		return m.OldIsBootstrapped(ctx)
+	}
+	return nil, fmt.Errorf("unknown Bootstrap field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BootstrapMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case bootstrap.FieldIsBootstrapped:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsBootstrapped(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Bootstrap field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *BootstrapMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *BootstrapMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BootstrapMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Bootstrap numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *BootstrapMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *BootstrapMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *BootstrapMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Bootstrap nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *BootstrapMutation) ResetField(name string) error {
+	switch name {
+	case bootstrap.FieldIsBootstrapped:
+		m.ResetIsBootstrapped()
+		return nil
+	}
+	return fmt.Errorf("unknown Bootstrap field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *BootstrapMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *BootstrapMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *BootstrapMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *BootstrapMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *BootstrapMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *BootstrapMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *BootstrapMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Bootstrap unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *BootstrapMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Bootstrap edge %s", name)
+}
 
 // BuildkitSettingsMutation represents an operation that mutates the BuildkitSettings nodes in the graph.
 type BuildkitSettingsMutation struct {
@@ -9459,6 +9789,576 @@ func (m *ProjectMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Project edge %s", name)
+}
+
+// RegistryMutation represents an operation that mutates the Registry nodes in the graph.
+type RegistryMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	created_at        *time.Time
+	updated_at        *time.Time
+	host              *string
+	kubernetes_secret *string
+	is_default        *bool
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*Registry, error)
+	predicates        []predicate.Registry
+}
+
+var _ ent.Mutation = (*RegistryMutation)(nil)
+
+// registryOption allows management of the mutation configuration using functional options.
+type registryOption func(*RegistryMutation)
+
+// newRegistryMutation creates new mutation for the Registry entity.
+func newRegistryMutation(c config, op Op, opts ...registryOption) *RegistryMutation {
+	m := &RegistryMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRegistry,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRegistryID sets the ID field of the mutation.
+func withRegistryID(id uuid.UUID) registryOption {
+	return func(m *RegistryMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Registry
+		)
+		m.oldValue = func(ctx context.Context) (*Registry, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Registry.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRegistry sets the old Registry of the mutation.
+func withRegistry(node *Registry) registryOption {
+	return func(m *RegistryMutation) {
+		m.oldValue = func(context.Context) (*Registry, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RegistryMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RegistryMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Registry entities.
+func (m *RegistryMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RegistryMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RegistryMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Registry.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RegistryMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RegistryMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Registry entity.
+// If the Registry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistryMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RegistryMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RegistryMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RegistryMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Registry entity.
+// If the Registry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistryMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RegistryMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetHost sets the "host" field.
+func (m *RegistryMutation) SetHost(s string) {
+	m.host = &s
+}
+
+// Host returns the value of the "host" field in the mutation.
+func (m *RegistryMutation) Host() (r string, exists bool) {
+	v := m.host
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHost returns the old "host" field's value of the Registry entity.
+// If the Registry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistryMutation) OldHost(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHost: %w", err)
+	}
+	return oldValue.Host, nil
+}
+
+// ResetHost resets all changes to the "host" field.
+func (m *RegistryMutation) ResetHost() {
+	m.host = nil
+}
+
+// SetKubernetesSecret sets the "kubernetes_secret" field.
+func (m *RegistryMutation) SetKubernetesSecret(s string) {
+	m.kubernetes_secret = &s
+}
+
+// KubernetesSecret returns the value of the "kubernetes_secret" field in the mutation.
+func (m *RegistryMutation) KubernetesSecret() (r string, exists bool) {
+	v := m.kubernetes_secret
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesSecret returns the old "kubernetes_secret" field's value of the Registry entity.
+// If the Registry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistryMutation) OldKubernetesSecret(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesSecret is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesSecret requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesSecret: %w", err)
+	}
+	return oldValue.KubernetesSecret, nil
+}
+
+// ClearKubernetesSecret clears the value of the "kubernetes_secret" field.
+func (m *RegistryMutation) ClearKubernetesSecret() {
+	m.kubernetes_secret = nil
+	m.clearedFields[registry.FieldKubernetesSecret] = struct{}{}
+}
+
+// KubernetesSecretCleared returns if the "kubernetes_secret" field was cleared in this mutation.
+func (m *RegistryMutation) KubernetesSecretCleared() bool {
+	_, ok := m.clearedFields[registry.FieldKubernetesSecret]
+	return ok
+}
+
+// ResetKubernetesSecret resets all changes to the "kubernetes_secret" field.
+func (m *RegistryMutation) ResetKubernetesSecret() {
+	m.kubernetes_secret = nil
+	delete(m.clearedFields, registry.FieldKubernetesSecret)
+}
+
+// SetIsDefault sets the "is_default" field.
+func (m *RegistryMutation) SetIsDefault(b bool) {
+	m.is_default = &b
+}
+
+// IsDefault returns the value of the "is_default" field in the mutation.
+func (m *RegistryMutation) IsDefault() (r bool, exists bool) {
+	v := m.is_default
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsDefault returns the old "is_default" field's value of the Registry entity.
+// If the Registry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RegistryMutation) OldIsDefault(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsDefault is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsDefault requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsDefault: %w", err)
+	}
+	return oldValue.IsDefault, nil
+}
+
+// ResetIsDefault resets all changes to the "is_default" field.
+func (m *RegistryMutation) ResetIsDefault() {
+	m.is_default = nil
+}
+
+// Where appends a list predicates to the RegistryMutation builder.
+func (m *RegistryMutation) Where(ps ...predicate.Registry) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RegistryMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RegistryMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Registry, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RegistryMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RegistryMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Registry).
+func (m *RegistryMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RegistryMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.created_at != nil {
+		fields = append(fields, registry.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, registry.FieldUpdatedAt)
+	}
+	if m.host != nil {
+		fields = append(fields, registry.FieldHost)
+	}
+	if m.kubernetes_secret != nil {
+		fields = append(fields, registry.FieldKubernetesSecret)
+	}
+	if m.is_default != nil {
+		fields = append(fields, registry.FieldIsDefault)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RegistryMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case registry.FieldCreatedAt:
+		return m.CreatedAt()
+	case registry.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case registry.FieldHost:
+		return m.Host()
+	case registry.FieldKubernetesSecret:
+		return m.KubernetesSecret()
+	case registry.FieldIsDefault:
+		return m.IsDefault()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RegistryMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case registry.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case registry.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case registry.FieldHost:
+		return m.OldHost(ctx)
+	case registry.FieldKubernetesSecret:
+		return m.OldKubernetesSecret(ctx)
+	case registry.FieldIsDefault:
+		return m.OldIsDefault(ctx)
+	}
+	return nil, fmt.Errorf("unknown Registry field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RegistryMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case registry.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case registry.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case registry.FieldHost:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHost(v)
+		return nil
+	case registry.FieldKubernetesSecret:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesSecret(v)
+		return nil
+	case registry.FieldIsDefault:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsDefault(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Registry field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RegistryMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RegistryMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RegistryMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Registry numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RegistryMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(registry.FieldKubernetesSecret) {
+		fields = append(fields, registry.FieldKubernetesSecret)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RegistryMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RegistryMutation) ClearField(name string) error {
+	switch name {
+	case registry.FieldKubernetesSecret:
+		m.ClearKubernetesSecret()
+		return nil
+	}
+	return fmt.Errorf("unknown Registry nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RegistryMutation) ResetField(name string) error {
+	switch name {
+	case registry.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case registry.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case registry.FieldHost:
+		m.ResetHost()
+		return nil
+	case registry.FieldKubernetesSecret:
+		m.ResetKubernetesSecret()
+		return nil
+	case registry.FieldIsDefault:
+		m.ResetIsDefault()
+		return nil
+	}
+	return fmt.Errorf("unknown Registry field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RegistryMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RegistryMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RegistryMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RegistryMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RegistryMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RegistryMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RegistryMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Registry unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RegistryMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Registry edge %s", name)
 }
 
 // ServiceMutation represents an operation that mutates the Service nodes in the graph.

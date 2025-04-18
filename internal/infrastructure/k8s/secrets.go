@@ -5,12 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -90,6 +92,47 @@ func (self *KubeClient) CreateMultiRegistryCredentials(ctx context.Context, name
 		return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
 	}
 }
+
+// After you've retrieved the credentials Secret
+func (self *KubeClient) ParseRegistryCredentials(secret *v1.Secret) (string, string, error) {
+	// Check if this is a dockerconfigjson type secret
+	if dockerConfigJSON, ok := secret.Data[".dockerconfigjson"]; ok {
+		// Parse the Docker config JSON
+		var dockerConfig struct {
+			Auths map[string]struct {
+				Username string `json:"username"`
+				Password string `json:"password"`
+				Auth     string `json:"auth,omitempty"`
+			} `json:"auths"`
+		}
+
+		if err := json.Unmarshal(dockerConfigJSON, &dockerConfig); err != nil {
+			return "", "", fmt.Errorf("failed to parse Docker config JSON: %w", err)
+		}
+
+		// Just grab the first auth entry (assuming there's only one registry)
+		for _, auth := range dockerConfig.Auths {
+			return auth.Username, auth.Password, nil
+		}
+
+		return "", "", fmt.Errorf("no registry credentials found in Docker config")
+	}
+
+	// Direct username/password fields
+	usernameBytes, hasUsername := secret.Data["username"]
+	passwordBytes, hasPassword := secret.Data["password"]
+
+	if !hasUsername || !hasPassword {
+		return "", "", fmt.Errorf("secret is missing username or password fields")
+	}
+
+	username := string(usernameBytes)
+	password := string(passwordBytes)
+
+	return username, password, nil
+}
+
+// Now you can use username and password
 
 // GetOrCreateSecret retrieves an existing secret or creates a new one if it doesn't exist
 // Returns the secret and a boolean indicating if it was created (true) or retrieved (false)

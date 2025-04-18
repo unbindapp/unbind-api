@@ -9,6 +9,17 @@ import (
 )
 
 var (
+	// BootstrapFlagColumns holds the columns for the "bootstrap_flag" table.
+	BootstrapFlagColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "is_bootstrapped", Type: field.TypeBool},
+	}
+	// BootstrapFlagTable holds the schema information for the "bootstrap_flag" table.
+	BootstrapFlagTable = &schema.Table{
+		Name:       "bootstrap_flag",
+		Columns:    BootstrapFlagColumns,
+		PrimaryKey: []*schema.Column{BootstrapFlagColumns[0]},
+	}
 	// BuildkitSettingsColumns holds the columns for the "buildkit_settings" table.
 	BuildkitSettingsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -275,6 +286,21 @@ var (
 			},
 		},
 	}
+	// RegistriesColumns holds the columns for the "registries" table.
+	RegistriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "host", Type: field.TypeString},
+		{Name: "kubernetes_secret", Type: field.TypeString, Nullable: true},
+		{Name: "is_default", Type: field.TypeBool},
+	}
+	// RegistriesTable holds the schema information for the "registries" table.
+	RegistriesTable = &schema.Table{
+		Name:       "registries",
+		Columns:    RegistriesColumns,
+		PrimaryKey: []*schema.Column{RegistriesColumns[0]},
+	}
 	// ServicesColumns holds the columns for the "services" table.
 	ServicesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -527,6 +553,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		BootstrapFlagTable,
 		BuildkitSettingsTable,
 		DeploymentsTable,
 		EnvironmentsTable,
@@ -538,6 +565,7 @@ var (
 		Oauth2TokensTable,
 		PermissionsTable,
 		ProjectsTable,
+		RegistriesTable,
 		ServicesTable,
 		ServiceConfigsTable,
 		TeamsTable,
@@ -551,6 +579,9 @@ var (
 )
 
 func init() {
+	BootstrapFlagTable.Annotation = &entsql.Annotation{
+		Table: "bootstrap_flag",
+	}
 	BuildkitSettingsTable.Annotation = &entsql.Annotation{
 		Table: "buildkit_settings",
 	}
@@ -591,6 +622,9 @@ func init() {
 	ProjectsTable.ForeignKeys[1].RefTable = TeamsTable
 	ProjectsTable.Annotation = &entsql.Annotation{
 		Table: "projects",
+	}
+	RegistriesTable.Annotation = &entsql.Annotation{
+		Table: "registries",
 	}
 	ServicesTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	ServicesTable.ForeignKeys[1].RefTable = GithubInstallationsTable

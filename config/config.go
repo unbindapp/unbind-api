@@ -18,12 +18,13 @@ type ConfigInterface interface {
 	GetPostgresDB() string
 	GetKubeConfig() string
 	GetBuildImage() string
-	GetBuilderNamespace() string
+	GetSystemNamespace() string
 	GetKubeProxyURL() string
 	GetBuildkitHost() string
 }
 
 type Config struct {
+	SystemNamespace string `env:"SYSTEM_NAMESPACE,required"`
 	// Root
 	ExternalUIUrl  string `env:"EXTERNAL_UI_URL" envDefault:"http://localhost:3000"`
 	ExternalAPIURL string `env:"EXTERNAL_API_URL" envDefault:"http://localhost:8089"`
@@ -55,12 +56,11 @@ type Config struct {
 	// kube-oidc-proxy
 	KubeProxyURL string `env:"KUBE_PROXY_URL" envDefault:"https://kube-oidc-proxy.unbind-system.svc.cluster.local:443"`
 	// Builder
-	BuildImage       string `env:"BUILD_IMAGE" envDefault:"unbindapp/unbind-builder:master-14117576548"`
-	BuilderNamespace string `env:"BUILDER_NAMESPACE" envDefault:"unbind-system"` // The namespace build containers will be created in
+	BuildImage string `env:"BUILD_IMAGE" envDefault:"unbindapp/unbind-builder:master-14117576548"`
 	// Registry specific
-	ContainerRegistryHost     string `env:"CONTAINER_REGISTRY_HOST,required" envDefault:"docker-registry.unbind-system:5000"`
-	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER,required" envDefault:"admin"`
-	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD"`
+	BootstrapContainerRegistryHost     string `env:"BOOTSTRAP_CONTAINER_REGISTRY_HOST"`
+	BootstrapContainerRegistryUser     string `env:"BOOTSTRAP_CONTAINER_REGISTRY_USER"`
+	BootstrapContainerRegistryPassword string `env:"BOOTSTRAP_CONTAINER_REGISTRY_PASSWORD"`
 	// Buildkit
 	BuildkitHost string `env:"BUILDKIT_HOST" envDefault:"tcp://buildkitd.unbind-system:1234"`
 	// Logging
@@ -101,8 +101,8 @@ func (self *Config) GetBuildImage() string {
 	return self.BuildImage
 }
 
-func (self *Config) GetBuilderNamespace() string {
-	return self.BuilderNamespace
+func (self *Config) GetSystemNamespace() string {
+	return self.SystemNamespace
 }
 
 func (self *Config) GetKubeProxyURL() string {
