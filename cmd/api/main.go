@@ -16,7 +16,6 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/ent"
 	deployments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/deployments"
 	environments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/environments"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
@@ -35,7 +34,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
@@ -44,7 +42,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
-	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
 	environment_service "github.com/unbindapp/unbind-api/internal/services/environment"
@@ -167,11 +164,16 @@ func startAPI(cfg *config.Config) {
 
 	// Bootstrap
 	bootstrapper := &Bootstrapper{
+		cfg:                     cfg,
+		kubeClient:              kubeClient,
 		repos:                   repo,
 		buildkitSettingsManager: buildkitSettings,
 	}
 	if err := bootstrapper.Sync(ctx); err != nil {
 		log.Errorf("Failed to sync system settings: %v", err)
+	}
+	if err := bootstrapper.bootstrapRegistry(ctx); err != nil {
+		log.Fatalf("Failed to bootstrap registry: %v", err)
 	}
 
 	// Create webhook service
@@ -229,69 +231,6 @@ func startAPI(cfg *config.Config) {
 		WebhooksService:      webhooksService,
 		InstanceService:      instanceService,
 		VariablesService:     variableService,
-	}
-
-	// * Bootstrap the registry, if needed
-	regCount, err := db.Registry.Query().Count(ctx)
-	if err != nil {
-		if !ent.IsNotFound(err) {
-			log.Fatalf("Failed to query registry: %v", err)
-		}
-	}
-	if regCount == 0 {
-		// Create initial registry
-		if cfg.BootstrapContainerRegistryHost == "" {
-			log.Fatal("BOOTSTRAP_CONTAINER_REGISTRY_HOST is empty")
-		}
-
-		if err := repo.WithTx(ctx, func(tx repository.TxInterface) error {
-			// Create credentials first if needed
-			if cfg.BootstrapContainerRegistryUser != "" {
-				if cfg.BootstrapContainerRegistryPassword == "" {
-					return fmt.Errorf("BOOTSTRAP_CONTAINER_REGISTRY_PASSWORD is empty")
-				}
-
-				secretName, err := utils.GenerateSlug(cfg.BootstrapContainerRegistryHost)
-				if err != nil {
-					return fmt.Errorf("failed to generate slug for registry secret: %w", err)
-				}
-
-				// Create registry
-				_, err = repo.System().CreateRegistry(ctx, tx, cfg.BootstrapContainerRegistryHost, &secretName, true)
-				if err != nil {
-					return fmt.Errorf("failed to create registry: %w", err)
-				}
-
-				// Create credentials second, so if it fails the above rolls back
-				_, err = kubeClient.CreateMultiRegistryCredentials(
-					ctx,
-					secretName,
-					cfg.SystemNamespace,
-					[]k8s.RegistryCredential{
-						{
-							RegistryURL: cfg.BootstrapContainerRegistryHost,
-							Username:    cfg.BootstrapContainerRegistryUser,
-							Password:    cfg.BootstrapContainerRegistryPassword,
-						},
-					},
-					kubeClient.GetInternalClient(),
-				)
-				if err != nil {
-					return fmt.Errorf("failed to create registry credentials: %w", err)
-				}
-			}
-
-			log.Warn("Creating initial registry without credentials")
-
-			_, err = repo.System().CreateRegistry(ctx, tx, cfg.BootstrapContainerRegistryHost, nil, true)
-			if err != nil {
-				return fmt.Errorf("failed to create registry: %w", err)
-			}
-
-			return nil
-		}); err != nil {
-			log.Fatalf("Failed to create initial registry: %v", err)
-		}
 	}
 
 	// New chi router

@@ -400,3 +400,52 @@ func (self *KubeClient) processSecretKeys(
 		Keys:       keys,
 	}, nil
 }
+
+// CopySecret copies a secret from one namespace to another
+func (self *KubeClient) CopySecret(ctx context.Context, secretName string,
+	sourceNamespace string, targetNamespace string,
+	client *kubernetes.Clientset) (*corev1.Secret, error) {
+
+	targetSecretName := secretName
+
+	// Get the source secret
+	sourceSecret, err := self.GetSecret(ctx, secretName, sourceNamespace, client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get source secret from %s namespace: %w", sourceNamespace, err)
+	}
+
+	// Create a new secret with the same data but in the target namespace
+	newSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        targetSecretName,
+			Namespace:   targetNamespace,
+			Labels:      sourceSecret.Labels,      // Copy labels
+			Annotations: sourceSecret.Annotations, // Copy annotations
+		},
+		Type: sourceSecret.Type,
+		Data: sourceSecret.Data,
+	}
+
+	// Try to create the secret in the target namespace
+	createdSecret, err := client.CoreV1().Secrets(targetNamespace).Create(ctx, newSecret, metav1.CreateOptions{})
+	if err != nil {
+		// If secret already exists, update it instead
+		if apierrors.IsAlreadyExists(err) {
+			existingSecret, err := self.GetSecret(ctx, targetSecretName, targetNamespace, client)
+			if err != nil {
+				return nil, fmt.Errorf("error getting existing secret in target namespace: %w", err)
+			}
+
+			// Update the existing secret
+			existingSecret.Type = sourceSecret.Type
+			existingSecret.Data = sourceSecret.Data
+			existingSecret.Labels = sourceSecret.Labels
+			existingSecret.Annotations = sourceSecret.Annotations
+
+			return client.CoreV1().Secrets(targetNamespace).Update(ctx, existingSecret, metav1.UpdateOptions{})
+		}
+		return nil, fmt.Errorf("failed to create secret in target namespace: %w", err)
+	}
+
+	return createdSecret, nil
+}

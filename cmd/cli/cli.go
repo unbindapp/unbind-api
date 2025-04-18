@@ -413,6 +413,24 @@ func (self *cli) syncSecrets() {
 	}
 
 	for _, t := range teams {
+		// Copy registry credentials to team namespace
+		registries, err := self.repository.Ent().Registry.Query().All(context.Background())
+		if err != nil {
+			fmt.Printf("Error querying registries: %v\n", err)
+			return
+		}
+
+		for _, r := range registries {
+			if r.KubernetesSecret == nil {
+				continue
+			}
+			_, err := self.k8s.CopySecret(context.Background(), *r.KubernetesSecret, self.cfg.SystemNamespace, t.Namespace, client)
+			if err != nil {
+				fmt.Printf("Error copying secret to team %s: %v\n", t.Name, err)
+				return
+			}
+		}
+
 		// Get projects, environments, services
 		projects, err := self.repository.Ent().Project.Query().
 			Where(project.TeamIDEQ(t.ID)).

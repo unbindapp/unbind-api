@@ -42,11 +42,12 @@ type ServiceParams struct {
 	GithubInstallationID *int64
 
 	// Deployment configuration
-	Image    string
-	Hosts    []v1.HostSpec
-	Ports    []v1.PortSpec
-	Public   *bool
-	Replicas *int32
+	Image            string
+	Hosts            []v1.HostSpec
+	Ports            []v1.PortSpec
+	Public           *bool
+	Replicas         *int32
+	ImagePullSecrets []string
 
 	// Database
 	DatabaseType          string
@@ -91,6 +92,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			KubernetesSecret: params.KubernetesSecret,
 			GitRepository:    gitRepository,
 			EnvVars:          params.EnvVars,
+			RegistrySecrets:  params.ImagePullSecrets,
 		},
 	}
 
