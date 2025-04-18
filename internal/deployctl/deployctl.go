@@ -344,6 +344,16 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		req.Environment["CONTAINER_REGISTRY_PASSWORD"] = password
 	}
 
+	// Add image pull secrets
+	pullSecrets, err := self.repo.System().GetImagePullSecrets(ctx)
+	if err != nil {
+		return nil, self.failWithErr(ctx, "Error getting image pull secrets", job.ID, err)
+	}
+	if len(pullSecrets) > 0 {
+		// Add to the environment, comma separated
+		req.Environment["IMAGE_PULL_SECRETS"] = strings.Join(pullSecrets, ",")
+	}
+
 	// Add to the queue
 	err = self.jobQueue.Enqueue(ctx, job.ID.String(), req)
 	if err != nil {

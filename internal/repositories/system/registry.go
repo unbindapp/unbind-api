@@ -30,3 +30,21 @@ func (self *SystemRepository) GetDefaultRegistry(ctx context.Context) (*ent.Regi
 		).
 		First(ctx)
 }
+
+func (self *SystemRepository) GetImagePullSecrets(ctx context.Context) ([]string, error) {
+	// Get all registries
+	registries, err := self.base.DB.Registry.Query().
+		Select(registry.FieldKubernetesSecret).
+		Where(
+			registry.KubernetesSecretNotNil(),
+		).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	imagePullSecrets := make([]string, len(registries))
+	for i, registry := range registries {
+		imagePullSecrets[i] = *registry.KubernetesSecret
+	}
+	return imagePullSecrets, nil
+}

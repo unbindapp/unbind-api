@@ -65,6 +65,8 @@ type Config struct {
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec
 	ServicePorts string `env:"SERVICE_PORTS"`
+	// Pull image secrets to pass to operator
+	ImagePullSecrets string `env:"IMAGE_PULL_SECRETS"`
 	// Kubeconfig for local testing
 	KubeConfig string `env:"KUBECONFIG"`
 	// Non-env config

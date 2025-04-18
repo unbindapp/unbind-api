@@ -92,7 +92,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			KubernetesSecret: params.KubernetesSecret,
 			GitRepository:    gitRepository,
 			EnvVars:          params.EnvVars,
-			RegistrySecrets:  params.ImagePullSecrets,
+			ImagePullSecrets: params.ImagePullSecrets,
 		},
 	}
 
@@ -199,6 +199,8 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		DatabaseConfig:        dbConfig,
 		DatabaseType:          self.builderConfig.ServiceDatabaseType,
 		DatabaseUSDVersionRef: self.builderConfig.ServiceDatabaseDefinitionVersion,
+		// ImagePullSecrets
+		ImagePullSecrets: strings.Split(self.builderConfig.ImagePullSecrets, ","),
 	}
 
 	// Set GitHub installation ID if provided
