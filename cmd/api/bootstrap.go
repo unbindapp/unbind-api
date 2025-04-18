@@ -160,6 +160,8 @@ func (self *Bootstrapper) bootstrapRegistry(ctx context.Context) error {
 						return fmt.Errorf("failed to copy registry credentials to team namespace: %w", err)
 					}
 				}
+
+				return nil
 			}
 
 			log.Warn("Creating initial registry without credentials")
