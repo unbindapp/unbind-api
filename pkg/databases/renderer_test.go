@@ -129,6 +129,14 @@ func TestDefinitionRendering(t *testing.T) {
 						Type: "string",
 					},
 				},
+				"environment": {
+					Type:        "object",
+					Description: "Environment variables to be set in the PostgreSQL container",
+					AdditionalProperties: &ParameterProperty{
+						Type: "string",
+					},
+					Default: map[string]interface{}{},
+				},
 			},
 			Required: []string{"common"},
 		},
@@ -239,6 +247,12 @@ spec:
       value: {{ .Parameters.s3.bucket }}
     - name: WALG_DISABLE_S3_SSE
       value: "true"
+    {{- end }}
+    {{- if .Parameters.environment }}
+    {{- range $key, $value := .Parameters.environment }}
+    - name: {{ $key }}
+      value: {{ $value | quote }}
+    {{- end }}
     {{- end }}`,
 	}
 
@@ -293,6 +307,143 @@ spec:
 		assert.Contains(t, result, "memory: 256Mi")
 
 		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("With Environment Variables", func(t *testing.T) {
+		// Create render context with environment variables
+		ctx := &RenderContext{
+			Name:      "test-postgres-env",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 2,
+				},
+				"environment": map[string]interface{}{
+					"POSTGRES_LOG_STATEMENT": "all",
+					"PGAUDIT_LOG":            "DDL",
+					"MAX_CONNECTIONS":        "100",
+					"LOGGING_COLLECTOR":      "on",
+					"LOG_STATEMENT":          "ddl",
+				},
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify environment variables are included in PostgreSQL object
+		assert.Contains(t, result, `name: POSTGRES_LOG_STATEMENT`)
+		assert.Contains(t, result, `value: "all"`)
+		assert.Contains(t, result, `name: PGAUDIT_LOG`)
+		assert.Contains(t, result, `value: "DDL"`)
+		assert.Contains(t, result, `name: MAX_CONNECTIONS`)
+		assert.Contains(t, result, `value: "100"`)
+		assert.Contains(t, result, `name: LOGGING_COLLECTOR`)
+		assert.Contains(t, result, `value: "on"`)
+		assert.Contains(t, result, `name: LOG_STATEMENT`)
+		assert.Contains(t, result, `value: "ddl"`)
+
+		// Ensure values are properly quoted
+		assert.NotContains(t, result, "value: all") // Should be quoted
+
+		// Standard envs should still be there
+		assert.Contains(t, result, `name: ALLOW_NOSSL`)
+		assert.Contains(t, result, `value: "true"`)
+
+		// Check docker image format
+		assert.Contains(t, result, "dockerImage: unbindapp/spilo:17-latest") // Should use default version with -latest
+
+		// Parse to objects to ensure we have correct resources
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("S3 with Environment Variables", func(t *testing.T) {
+		// Create render context with S3 enabled and environment variables
+		ctx := &RenderContext{
+			Name:      "test-postgres-s3-env",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 2,
+				},
+				"s3": map[string]interface{}{
+					"enabled": true,
+					"bucket":  "test-bucket",
+				},
+				"environment": map[string]interface{}{
+					"POSTGRES_LOG_STATEMENT": "all",
+					"PGUSER_SUPERUSER":       "true",
+				},
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify S3 section is included
+		assert.Contains(t, result, "AWS_ACCESS_KEY_ID")
+		assert.Contains(t, result, "value: test-bucket")
+
+		// Verify environment variables are included
+		assert.Contains(t, result, `name: POSTGRES_LOG_STATEMENT`)
+		assert.Contains(t, result, `value: "all"`)
+		assert.Contains(t, result, `name: PGUSER_SUPERUSER`)
+		assert.Contains(t, result, `value: "true"`)
+
+		// Check docker image format
+		assert.Contains(t, result, "dockerImage: unbindapp/spilo:17-latest") // Should use default version with -latest
+
+		// Parse to objects to ensure we have correct resources
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("Empty Environment Variables", func(t *testing.T) {
+		// Create render context with empty environment variables
+		ctx := &RenderContext{
+			Name:      "test-postgres-empty-env",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 2,
+				},
+				"environment": map[string]interface{}{},
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// No additional environment variables should be rendered
+		// but the template should still work without errors
+		assert.Contains(t, result, `name: ALLOW_NOSSL`)
+		assert.Contains(t, result, `value: "true"`)
+
+		// Parse to objects to ensure we have correct resources
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
 		assert.Len(t, objects, 1)
@@ -452,5 +603,54 @@ spec:
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
 		assert.Len(t, objects, 1) // PostgreSQL object
+	})
+
+	t.Run("Complex Environment Variables", func(t *testing.T) {
+		// Create render context with complex environment variables including special characters
+		ctx := &RenderContext{
+			Name:      "test-postgres-complex-env",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 2,
+				},
+				"environment": map[string]interface{}{
+					"POSTGRES_SHARED_BUFFERS":       "256MB",
+					"POSTGRES_EFFECTIVE_CACHE_SIZE": "1GB",
+					"POSTGRES_WORK_MEM":             "16MB",
+					"POSTGRES_CONF_ADDITIONAL":      "log_min_duration_statement=200\nrandom_page_cost=1.1",
+					"SPECIAL_CHARS_TEST":            "!@#$%^&*()_+",
+					"QUOTED_VALUE":                  "\"quoted string\"",
+				},
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify complex environment variables are included in PostgreSQL object
+		assert.Contains(t, result, `name: POSTGRES_SHARED_BUFFERS`)
+		assert.Contains(t, result, `value: "256MB"`)
+		assert.Contains(t, result, `name: POSTGRES_EFFECTIVE_CACHE_SIZE`)
+		assert.Contains(t, result, `value: "1GB"`)
+		assert.Contains(t, result, `name: SPECIAL_CHARS_TEST`)
+		assert.Contains(t, result, `value: "!@#$%^&*()_+"`)
+		assert.Contains(t, result, `name: QUOTED_VALUE`)
+		assert.Contains(t, result, `value: "\"quoted string\""`)
+
+		// Ensure multiline values are handled correctly
+		assert.Contains(t, result, `name: POSTGRES_CONF_ADDITIONAL`)
+		assert.Contains(t, result, `value: "log_min_duration_statement=200\nrandom_page_cost=1.1"`)
+
+		// Parse to objects to ensure we have correct resources
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
 	})
 }

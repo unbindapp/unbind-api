@@ -19,6 +19,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/variablereference"
 )
 
 // ServiceQuery is the builder for querying Service entities.
@@ -33,6 +34,7 @@ type ServiceQuery struct {
 	withServiceConfig      *ServiceConfigQuery
 	withDeployments        *DeploymentQuery
 	withCurrentDeployment  *DeploymentQuery
+	withVariableReferences *VariableReferenceQuery
 	modifiers              []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -173,6 +175,28 @@ func (sq *ServiceQuery) QueryCurrentDeployment() *DeploymentQuery {
 			sqlgraph.From(service.Table, service.FieldID, selector),
 			sqlgraph.To(deployment.Table, deployment.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, service.CurrentDeploymentTable, service.CurrentDeploymentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryVariableReferences chains the current query on the "variable_references" edge.
+func (sq *ServiceQuery) QueryVariableReferences() *VariableReferenceQuery {
+	query := (&VariableReferenceClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, selector),
+			sqlgraph.To(variablereference.Table, variablereference.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, service.VariableReferencesTable, service.VariableReferencesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -377,6 +401,7 @@ func (sq *ServiceQuery) Clone() *ServiceQuery {
 		withServiceConfig:      sq.withServiceConfig.Clone(),
 		withDeployments:        sq.withDeployments.Clone(),
 		withCurrentDeployment:  sq.withCurrentDeployment.Clone(),
+		withVariableReferences: sq.withVariableReferences.Clone(),
 		// clone intermediate query.
 		sql:       sq.sql.Clone(),
 		path:      sq.path,
@@ -436,6 +461,17 @@ func (sq *ServiceQuery) WithCurrentDeployment(opts ...func(*DeploymentQuery)) *S
 		opt(query)
 	}
 	sq.withCurrentDeployment = query
+	return sq
+}
+
+// WithVariableReferences tells the query-builder to eager-load the nodes that are connected to
+// the "variable_references" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ServiceQuery) WithVariableReferences(opts ...func(*VariableReferenceQuery)) *ServiceQuery {
+	query := (&VariableReferenceClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withVariableReferences = query
 	return sq
 }
 
@@ -517,12 +553,13 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 	var (
 		nodes       = []*Service{}
 		_spec       = sq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			sq.withEnvironment != nil,
 			sq.withGithubInstallation != nil,
 			sq.withServiceConfig != nil,
 			sq.withDeployments != nil,
 			sq.withCurrentDeployment != nil,
+			sq.withVariableReferences != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -574,6 +611,15 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 	if query := sq.withCurrentDeployment; query != nil {
 		if err := sq.loadCurrentDeployment(ctx, query, nodes, nil,
 			func(n *Service, e *Deployment) { n.Edges.CurrentDeployment = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withVariableReferences; query != nil {
+		if err := sq.loadVariableReferences(ctx, query, nodes,
+			func(n *Service) { n.Edges.VariableReferences = []*VariableReference{} },
+			func(n *Service, e *VariableReference) {
+				n.Edges.VariableReferences = append(n.Edges.VariableReferences, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -727,6 +773,36 @@ func (sq *ServiceQuery) loadCurrentDeployment(ctx context.Context, query *Deploy
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (sq *ServiceQuery) loadVariableReferences(ctx context.Context, query *VariableReferenceQuery, nodes []*Service, init func(*Service), assign func(*Service, *VariableReference)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Service)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(variablereference.FieldTargetServiceID)
+	}
+	query.Where(predicate.VariableReference(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(service.VariableReferencesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TargetServiceID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "target_service_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Bootstrap is the predicate function for bootstrap builders.
+type Bootstrap func(*sql.Selector)
+
 // BuildkitSettings is the predicate function for buildkitsettings builders.
 type BuildkitSettings func(*sql.Selector)
 
@@ -39,6 +42,9 @@ type Permission func(*sql.Selector)
 // Project is the predicate function for project builders.
 type Project func(*sql.Selector)
 
+// Registry is the predicate function for registry builders.
+type Registry func(*sql.Selector)
+
 // Service is the predicate function for service builders.
 type Service func(*sql.Selector)
 
@@ -50,6 +56,9 @@ type Team func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
+
+// VariableReference is the predicate function for variablereference builders.
+type VariableReference func(*sql.Selector)
 
 // Webhook is the predicate function for webhook builders.
 type Webhook func(*sql.Selector)

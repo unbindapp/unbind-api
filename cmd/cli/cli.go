@@ -195,7 +195,7 @@ func (self *cli) createTeam(name, displayName string) {
 	fmt.Println("Team created successfully:")
 	fmt.Printf("ID: %s\n", team.ID)
 	fmt.Printf("Name: %s\n", team.Name)
-	fmt.Printf("Display Name: %s\n", team.Description)
+	fmt.Printf("Display Name: %s\n", team.DisplayName)
 	fmt.Printf("Namespace: %s\n", team.Namespace)
 }
 
@@ -413,17 +413,22 @@ func (self *cli) syncSecrets() {
 	}
 
 	for _, t := range teams {
-		// First make sure registry credentials  exist
-		_, err := self.k8s.CreateMultiRegistryCredentials(context.Background(), "unbind-registry-credentials", t.Namespace, []k8s.RegistryCredential{
-			{
-				RegistryURL: self.cfg.ContainerRegistryHost,
-				Username:    self.cfg.ContainerRegistryUser,
-				Password:    self.cfg.ContainerRegistryPassword,
-			},
-		}, client)
+		// Copy registry credentials to team namespace
+		registries, err := self.repository.Ent().Registry.Query().All(context.Background())
 		if err != nil {
-			fmt.Printf("Error creating registry credentials: %v\n", err)
+			fmt.Printf("Error querying registries: %v\n", err)
 			return
+		}
+
+		for _, r := range registries {
+			if r.KubernetesSecret == nil {
+				continue
+			}
+			_, err := self.k8s.CopySecret(context.Background(), *r.KubernetesSecret, self.cfg.SystemNamespace, t.Namespace, client)
+			if err != nil {
+				fmt.Printf("Error copying secret to team %s: %v\n", t.Name, err)
+				return
+			}
 		}
 
 		// Get projects, environments, services

@@ -9,6 +9,7 @@ import (
 	// Import the operator API package
 	"github.com/unbindapp/unbind-api/ent/schema"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,6 +34,7 @@ type ServiceParams struct {
 	ProjectRef       string
 	EnvironmentRef   string
 	KubernetesSecret string
+	EnvVars          []corev1.EnvVar
 
 	// Git configuration
 	GitRepoURL           string
@@ -40,11 +42,12 @@ type ServiceParams struct {
 	GithubInstallationID *int64
 
 	// Deployment configuration
-	Image    string
-	Hosts    []v1.HostSpec
-	Ports    []v1.PortSpec
-	Public   *bool
-	Replicas *int32
+	Image            string
+	Hosts            []v1.HostSpec
+	Ports            []v1.PortSpec
+	Public           *bool
+	Replicas         *int32
+	ImagePullSecrets []string
 
 	// Database
 	DatabaseType          string
@@ -88,6 +91,8 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			DeploymentRef:    params.DeploymentRef,
 			KubernetesSecret: params.KubernetesSecret,
 			GitRepository:    gitRepository,
+			EnvVars:          params.EnvVars,
+			ImagePullSecrets: params.ImagePullSecrets,
 		},
 	}
 
@@ -137,7 +142,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 
 // DeployImage creates (or replaces) the service resource in the target namespace
 // for deployment after a successful build job.
-func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (*unstructured.Unstructured, *v1.Service, error) {
+func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, additionalEnv map[string]string) (*unstructured.Unstructured, *v1.Service, error) {
 	// Generate a sanitized service name from the repo name
 	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
 
@@ -154,6 +159,17 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		dbConfig = runtime.RawExtension{
 			Raw: []byte(self.builderConfig.ServiceDatabaseConfig),
 		}
+	}
+
+	// Turn addtiionalEnv into corev1.EnvVar
+	envVars := make([]corev1.EnvVar, len(additionalEnv))
+	i := 0
+	for k, v := range additionalEnv {
+		envVars[i] = corev1.EnvVar{
+			Name:  k,
+			Value: v,
+		}
+		i++
 	}
 
 	params := ServiceParams{
@@ -178,10 +194,13 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string) (
 		Ports:            self.builderConfig.Ports,
 		Public:           self.builderConfig.ServicePublic,
 		Replicas:         self.builderConfig.ServiceReplicas,
+		EnvVars:          envVars,
 		// Template
 		DatabaseConfig:        dbConfig,
 		DatabaseType:          self.builderConfig.ServiceDatabaseType,
 		DatabaseUSDVersionRef: self.builderConfig.ServiceDatabaseDefinitionVersion,
+		// ImagePullSecrets
+		ImagePullSecrets: strings.Split(self.builderConfig.ImagePullSecrets, ","),
 	}
 
 	// Set GitHub installation ID if provided

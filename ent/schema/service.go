@@ -62,6 +62,12 @@ func (Service) Edges() []ent.Edge {
 					OnDelete: entsql.SetNull,
 				},
 			),
+		// O2M with variabel references
+		edge.To("variable_references", VariableReference.Type).Annotations(
+			entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			},
+		),
 	}
 }
 

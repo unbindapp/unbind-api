@@ -9,6 +9,18 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 )
 
+// The BootstrapFunc type is an adapter to allow the use of ordinary
+// function as Bootstrap mutator.
+type BootstrapFunc func(context.Context, *ent.BootstrapMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BootstrapFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BootstrapMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BootstrapMutation", m)
+}
+
 // The BuildkitSettingsFunc type is an adapter to allow the use of ordinary
 // function as BuildkitSettings mutator.
 type BuildkitSettingsFunc func(context.Context, *ent.BuildkitSettingsMutation) (ent.Value, error)
@@ -141,6 +153,18 @@ func (f ProjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectMutation", m)
 }
 
+// The RegistryFunc type is an adapter to allow the use of ordinary
+// function as Registry mutator.
+type RegistryFunc func(context.Context, *ent.RegistryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RegistryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RegistryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RegistryMutation", m)
+}
+
 // The ServiceFunc type is an adapter to allow the use of ordinary
 // function as Service mutator.
 type ServiceFunc func(context.Context, *ent.ServiceMutation) (ent.Value, error)
@@ -187,6 +211,18 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
+}
+
+// The VariableReferenceFunc type is an adapter to allow the use of ordinary
+// function as VariableReference mutator.
+type VariableReferenceFunc func(context.Context, *ent.VariableReferenceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f VariableReferenceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.VariableReferenceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VariableReferenceMutation", m)
 }
 
 // The WebhookFunc type is an adapter to allow the use of ordinary

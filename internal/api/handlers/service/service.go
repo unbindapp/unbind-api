@@ -97,6 +97,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.GetDatabaseDefinition,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "list-service-endpoints",
+			Summary:     "List Service Endpoints",
+			Description: "List all endpoints for a service",
+			Path:        "/endpoints/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListEndpoints,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

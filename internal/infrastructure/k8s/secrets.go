@@ -5,8 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"sync"
 
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -86,6 +92,47 @@ func (self *KubeClient) CreateMultiRegistryCredentials(ctx context.Context, name
 		return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
 	}
 }
+
+// After you've retrieved the credentials Secret
+func (self *KubeClient) ParseRegistryCredentials(secret *v1.Secret) (string, string, error) {
+	// Check if this is a dockerconfigjson type secret
+	if dockerConfigJSON, ok := secret.Data[".dockerconfigjson"]; ok {
+		// Parse the Docker config JSON
+		var dockerConfig struct {
+			Auths map[string]struct {
+				Username string `json:"username"`
+				Password string `json:"password"`
+				Auth     string `json:"auth,omitempty"`
+			} `json:"auths"`
+		}
+
+		if err := json.Unmarshal(dockerConfigJSON, &dockerConfig); err != nil {
+			return "", "", fmt.Errorf("failed to parse Docker config JSON: %w", err)
+		}
+
+		// Just grab the first auth entry (assuming there's only one registry)
+		for _, auth := range dockerConfig.Auths {
+			return auth.Username, auth.Password, nil
+		}
+
+		return "", "", fmt.Errorf("no registry credentials found in Docker config")
+	}
+
+	// Direct username/password fields
+	usernameBytes, hasUsername := secret.Data["username"]
+	passwordBytes, hasPassword := secret.Data["password"]
+
+	if !hasUsername || !hasPassword {
+		return "", "", fmt.Errorf("secret is missing username or password fields")
+	}
+
+	username := string(usernameBytes)
+	password := string(passwordBytes)
+
+	return username, password, nil
+}
+
+// Now you can use username and password
 
 // GetOrCreateSecret retrieves an existing secret or creates a new one if it doesn't exist
 // Returns the secret and a boolean indicating if it was created (true) or retrieved (false)
@@ -205,4 +252,200 @@ func (self *KubeClient) OverwriteSecretValues(ctx context.Context, name, namespa
 	}
 
 	return client.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+}
+
+// GetAllSecrets retrieves all secrets for the team hierarchy concurrently and returns them with just their keys
+func (self *KubeClient) GetAllSecrets(
+	ctx context.Context,
+	teamID uuid.UUID,
+	teamSecret string,
+	projectID uuid.UUID,
+	projectSecret string,
+	environmentID uuid.UUID,
+	environmentSecret string,
+	serviceSecrets map[uuid.UUID]string,
+	client *kubernetes.Clientset,
+	namespace string,
+) ([]models.SecretData, error) {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var result []models.SecretData
+	var errOnce sync.Once
+	var firstErr error
+
+	// Process team secret
+	if teamSecret != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, teamID, schema.VariableReferenceSourceTypeTeam, teamSecret, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}()
+	}
+
+	// Process project secret
+	if projectSecret != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, projectID, schema.VariableReferenceSourceTypeProject, projectSecret, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}()
+	}
+
+	// Process environment secret
+	if environmentSecret != "" {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, environmentID, schema.VariableReferenceSourceTypeEnvironment, environmentSecret, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}()
+	}
+
+	// Process service secrets
+	for serviceID, secretName := range serviceSecrets {
+		if secretName == "" {
+			continue
+		}
+		wg.Add(1)
+		go func(id uuid.UUID, name string) {
+			defer wg.Done()
+			secretData, err := self.processSecretKeys(ctx, id, schema.VariableReferenceSourceTypeService, name, client, namespace)
+			if err != nil {
+				errOnce.Do(func() {
+					firstErr = err
+				})
+				return
+			}
+			mu.Lock()
+			result = append(result, secretData)
+			mu.Unlock()
+		}(serviceID, secretName)
+	}
+
+	// Wait for all goroutines to finish
+	wg.Wait()
+
+	// Check if any error occurred
+	if firstErr != nil {
+		return nil, firstErr
+	}
+
+	return result, nil
+}
+
+// Helper function to process a single secret and extract just its keys
+// This function remains unchanged from your original
+func (self *KubeClient) processSecretKeys(
+	ctx context.Context,
+	id uuid.UUID,
+	secretType schema.VariableReferenceSourceType,
+	secretName string,
+	client *kubernetes.Clientset,
+	namespace string,
+) (models.SecretData, error) {
+	// Get the secret
+	secret, err := self.GetSecret(ctx, secretName, namespace, client)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// If secret doesn't exist, return an empty keys slice
+			return models.SecretData{
+				ID:         id,
+				Type:       secretType,
+				SecretName: secretName,
+				Keys:       []string{},
+			}, nil
+		}
+		return models.SecretData{}, err
+	}
+
+	// Extract just the keys from the secret's data
+	keys := make([]string, len(secret.Data))
+	i := 0
+	for k := range secret.Data {
+		keys[i] = k
+		i++
+	}
+
+	// Return the secret with just its keys
+	return models.SecretData{
+		ID:         id,
+		Type:       secretType,
+		SecretName: secretName,
+		Keys:       keys,
+	}, nil
+}
+
+// CopySecret copies a secret from one namespace to another
+func (self *KubeClient) CopySecret(ctx context.Context, secretName string,
+	sourceNamespace string, targetNamespace string,
+	client *kubernetes.Clientset) (*corev1.Secret, error) {
+
+	targetSecretName := secretName
+
+	// Get the source secret
+	sourceSecret, err := self.GetSecret(ctx, secretName, sourceNamespace, client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get source secret from %s namespace: %w", sourceNamespace, err)
+	}
+
+	// Create a new secret with the same data but in the target namespace
+	newSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        targetSecretName,
+			Namespace:   targetNamespace,
+			Labels:      sourceSecret.Labels,      // Copy labels
+			Annotations: sourceSecret.Annotations, // Copy annotations
+		},
+		Type: sourceSecret.Type,
+		Data: sourceSecret.Data,
+	}
+
+	// Try to create the secret in the target namespace
+	createdSecret, err := client.CoreV1().Secrets(targetNamespace).Create(ctx, newSecret, metav1.CreateOptions{})
+	if err != nil {
+		// If secret already exists, update it instead
+		if apierrors.IsAlreadyExists(err) {
+			existingSecret, err := self.GetSecret(ctx, targetSecretName, targetNamespace, client)
+			if err != nil {
+				return nil, fmt.Errorf("error getting existing secret in target namespace: %w", err)
+			}
+
+			// Update the existing secret
+			existingSecret.Type = sourceSecret.Type
+			existingSecret.Data = sourceSecret.Data
+			existingSecret.Labels = sourceSecret.Labels
+			existingSecret.Annotations = sourceSecret.Annotations
+
+			return client.CoreV1().Secrets(targetNamespace).Update(ctx, existingSecret, metav1.UpdateOptions{})
+		}
+		return nil, fmt.Errorf("failed to create secret in target namespace: %w", err)
+	}
+
+	return createdSecret, nil
 }

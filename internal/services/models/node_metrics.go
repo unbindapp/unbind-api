@@ -9,32 +9,14 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 )
 
-// NodeMetricsType defines the grouping level for node metrics
-type NodeMetricsType string
-
-const (
-	NodeMetricsTypeNode    NodeMetricsType = "node"
-	NodeMetricsTypeZone    NodeMetricsType = "zone"
-	NodeMetricsTypeRegion  NodeMetricsType = "region"
-	NodeMetricsTypeCluster NodeMetricsType = "cluster"
-)
-
-var NodeMetricsTypeValues = []NodeMetricsType{
-	NodeMetricsTypeNode,
-	NodeMetricsTypeZone,
-	NodeMetricsTypeRegion,
-	NodeMetricsTypeCluster,
-}
-
 // NodeMetricsQueryInput defines the query parameters for node prometheus metrics
 type NodeMetricsQueryInput struct {
-	Type        NodeMetricsType `query:"type" required:"true"`
-	NodeName    string          `query:"node_name" required:"false"`
-	Zone        string          `query:"zone" required:"false"`
-	Region      string          `query:"region" required:"false"`
-	ClusterName string          `query:"cluster_name" required:"false"`
-	Start       time.Time       `query:"start" required:"false" doc:"Start time for the query, defaults to 24 hours ago"`
-	End         time.Time       `query:"end" required:"false" doc:"End time for the query, defaults to now"`
+	NodeName    string    `query:"node_name" required:"false"`
+	Zone        string    `query:"zone" required:"false"`
+	Region      string    `query:"region" required:"false"`
+	ClusterName string    `query:"cluster_name" required:"false"`
+	Start       time.Time `query:"start" required:"false" doc:"Start time for the query, defaults to 24 hours ago"`
+	End         time.Time `query:"end" required:"false" doc:"End time for the query, defaults to now"`
 }
 
 // NodeMetricsMapEntry contains arrays of metric details for each node resource type
@@ -49,30 +31,16 @@ type NodeMetricsMapEntry struct {
 
 // NodeMetricsResult is the top-level structure containing the sampling interval and metrics
 type NodeMetricsResult struct {
-	Step         time.Duration       `json:"step"`
-	BrokenDownBy NodeMetricsType     `json:"broken_down_by" doc:"The type of node metric that is broken down, e.g. node, zone"`
-	Metrics      NodeMetricsMapEntry `json:"metrics" nullable:"false"`
+	Step    time.Duration       `json:"step"`
+	Metrics NodeMetricsMapEntry `json:"metrics" nullable:"false"`
 }
 
-func TransformNodeMetricsEntity(metrics map[string]*prometheus.NodeMetrics, step time.Duration, sumBy prometheus.NodeMetricsFilterSumBy) *NodeMetricsResult {
-	brokenDownBy := NodeMetricsTypeNode
-	switch sumBy {
-	case prometheus.NodeSumByZone:
-		brokenDownBy = NodeMetricsTypeZone
-	case prometheus.NodeSumByRegion:
-		brokenDownBy = NodeMetricsTypeRegion
-	case prometheus.NodeSumByCluster:
-		brokenDownBy = NodeMetricsTypeCluster
-	case prometheus.NodeSumByName:
-		brokenDownBy = NodeMetricsTypeNode
-	}
-
+func TransformNodeMetricsEntity(metrics map[string]*prometheus.NodeMetrics, step time.Duration) *NodeMetricsResult {
 	// Collect all unique timestamps across all metrics and types
 	allTimestamps := collectAllNodeTimestamps(metrics)
 
 	result := &NodeMetricsResult{
-		Step:         step,
-		BrokenDownBy: brokenDownBy,
+		Step: step,
 		Metrics: NodeMetricsMapEntry{
 			CPU:        aggregateNodeMetricsByTime(metrics, NodeMetricTypeCPU, allTimestamps),
 			RAM:        aggregateNodeMetricsByTime(metrics, NodeMetricTypeRAM, allTimestamps),

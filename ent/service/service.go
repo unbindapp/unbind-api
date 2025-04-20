@@ -47,6 +47,8 @@ const (
 	EdgeDeployments = "deployments"
 	// EdgeCurrentDeployment holds the string denoting the current_deployment edge name in mutations.
 	EdgeCurrentDeployment = "current_deployment"
+	// EdgeVariableReferences holds the string denoting the variable_references edge name in mutations.
+	EdgeVariableReferences = "variable_references"
 	// Table holds the table name of the service in the database.
 	Table = "services"
 	// EnvironmentTable is the table that holds the environment relation/edge.
@@ -84,6 +86,13 @@ const (
 	CurrentDeploymentInverseTable = "deployments"
 	// CurrentDeploymentColumn is the table column denoting the current_deployment relation/edge.
 	CurrentDeploymentColumn = "current_deployment_id"
+	// VariableReferencesTable is the table that holds the variable_references relation/edge.
+	VariableReferencesTable = "variable_references"
+	// VariableReferencesInverseTable is the table name for the VariableReference entity.
+	// It exists in this package in order to avoid circular dependency with the "variablereference" package.
+	VariableReferencesInverseTable = "variable_references"
+	// VariableReferencesColumn is the table column denoting the variable_references relation/edge.
+	VariableReferencesColumn = "target_service_id"
 )
 
 // Columns holds all SQL columns for service fields.
@@ -229,6 +238,20 @@ func ByCurrentDeploymentField(field string, opts ...sql.OrderTermOption) OrderOp
 		sqlgraph.OrderByNeighborTerms(s, newCurrentDeploymentStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByVariableReferencesCount orders the results by variable_references count.
+func ByVariableReferencesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newVariableReferencesStep(), opts...)
+	}
+}
+
+// ByVariableReferences orders the results by variable_references terms.
+func ByVariableReferences(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newVariableReferencesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newEnvironmentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -262,5 +285,12 @@ func newCurrentDeploymentStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CurrentDeploymentInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, CurrentDeploymentTable, CurrentDeploymentColumn),
+	)
+}
+func newVariableReferencesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(VariableReferencesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, VariableReferencesTable, VariableReferencesColumn),
 	)
 }

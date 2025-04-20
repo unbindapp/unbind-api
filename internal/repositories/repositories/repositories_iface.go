@@ -18,6 +18,7 @@ import (
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
 	user_repo "github.com/unbindapp/unbind-api/internal/repositories/user"
+	variable_repo "github.com/unbindapp/unbind-api/internal/repositories/variables"
 	webhook_repo "github.com/unbindapp/unbind-api/internal/repositories/webhook"
 )
 
@@ -49,5 +50,7 @@ type RepositoriesInterface interface {
 	System() system_repo.SystemRepositoryInterface
 	// Webhooks returns the Webhook repository
 	Webhooks() webhook_repo.WebhookRepositoryInterface
+	// Variables returns the Variable repository
+	Variables() variable_repo.VariableRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

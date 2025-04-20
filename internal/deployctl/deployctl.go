@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
@@ -21,10 +20,9 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/queue"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/valkey-io/valkey-go"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 )
 
 // Valkey key for the queue
@@ -42,28 +40,39 @@ type DeploymentJobRequest struct {
 
 // Handles triggering builds for services
 type DeploymentController struct {
-	cfg            *config.Config
-	k8s            *k8s.KubeClient
-	jobQueue       *queue.Queue[DeploymentJobRequest]
-	ctx            context.Context
-	cancelFunc     context.CancelFunc
-	repo           *repositories.Repositories
-	githubClient   *github.GithubClient
-	webhookService *webhooks_service.WebhooksService
+	cfg             *config.Config
+	k8s             *k8s.KubeClient
+	jobQueue        *queue.Queue[DeploymentJobRequest]
+	ctx             context.Context
+	cancelFunc      context.CancelFunc
+	repo            *repositories.Repositories
+	githubClient    *github.GithubClient
+	webhookService  *webhooks_service.WebhooksService
+	variableService *variables_service.VariablesService
 }
 
-func NewDeploymentController(ctx context.Context, cancel context.CancelFunc, cfg *config.Config, k8s *k8s.KubeClient, valkeyClient valkey.Client, repositories *repositories.Repositories, githubClient *github.GithubClient, webeehookService *webhooks_service.WebhooksService) *DeploymentController {
+func NewDeploymentController(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	cfg *config.Config,
+	k8s *k8s.KubeClient,
+	valkeyClient valkey.Client,
+	repositories *repositories.Repositories,
+	githubClient *github.GithubClient,
+	webeehookService *webhooks_service.WebhooksService,
+	variableService *variables_service.VariablesService) *DeploymentController {
 	jobQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
 
 	return &DeploymentController{
-		cfg:            cfg,
-		k8s:            k8s,
-		jobQueue:       jobQueue,
-		ctx:            ctx,
-		cancelFunc:     cancel,
-		repo:           repositories,
-		githubClient:   githubClient,
-		webhookService: webeehookService,
+		cfg:             cfg,
+		k8s:             k8s,
+		jobQueue:        jobQueue,
+		ctx:             ctx,
+		cancelFunc:      cancel,
+		repo:            repositories,
+		githubClient:    githubClient,
+		webhookService:  webeehookService,
+		variableService: variableService,
 	}
 }
 
@@ -110,20 +119,10 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	namespace, err := self.repo.Service().GetDeploymentNamespace(ctx, service.ID)
 
 	// Get build secrets
-	// ! Use our cluster config for this
-	kubeConfig, err := rest.InClusterConfig()
-	if err != nil {
-		log.Fatalf("Error getting in-cluster config: %v", err)
-	}
-	client, err := kubernetes.NewForConfig(kubeConfig)
-	if err != nil {
-		log.Fatalf("Error creating clientset: %v", err)
-	}
-
-	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, namespace, client)
+	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, namespace, self.k8s.GetInternalClient())
 	if err != nil {
 		log.Error("Error getting secrets", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to get build secrets")
+		return nil, err
 	}
 
 	// Convert the byte arrays to base64 strings first
@@ -136,23 +135,20 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	secretsJSON, err := json.Marshal(serializableSecrets)
 	if err != nil {
 		log.Error("Error marshalling secrets", "err", err)
-		return nil, huma.Error500InternalServerError("Failed to marshal secrets")
+		return nil, err
 	}
 
 	// Populate environment
 	env := map[string]string{
-		"EXTERNAL_UI_URL":             self.cfg.ExternalUIUrl,
-		"CONTAINER_REGISTRY_HOST":     self.cfg.ContainerRegistryHost,
-		"CONTAINER_REGISTRY_USER":     self.cfg.ContainerRegistryUser,
-		"CONTAINER_REGISTRY_PASSWORD": self.cfg.ContainerRegistryPassword,
-		"DEPLOYMENT_NAMESPACE":        namespace,
-		"SERVICE_REF":                 service.ID.String(),
-		"SERVICE_NAME":                service.Name,
-		"SERVICE_TYPE":                string(service.Edges.ServiceConfig.Type),
-		"SERVICE_PUBLIC":              strconv.FormatBool(service.Edges.ServiceConfig.Public),
-		"SERVICE_REPLICAS":            strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
-		"SERVICE_SECRET_NAME":         service.KubernetesSecret,
-		"SERVICE_BUILD_SECRETS":       string(secretsJSON),
+		"EXTERNAL_UI_URL":       self.cfg.ExternalUIUrl,
+		"DEPLOYMENT_NAMESPACE":  namespace,
+		"SERVICE_REF":           service.ID.String(),
+		"SERVICE_NAME":          service.Name,
+		"SERVICE_TYPE":          string(service.Edges.ServiceConfig.Type),
+		"SERVICE_PUBLIC":        strconv.FormatBool(service.Edges.ServiceConfig.Public),
+		"SERVICE_REPLICAS":      strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
+		"SERVICE_SECRET_NAME":   service.KubernetesSecret,
+		"SERVICE_BUILD_SECRETS": string(secretsJSON),
 	}
 
 	if service.Edges.Environment != nil {
@@ -285,7 +281,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 // EnqueueDeploymentJob adds a deployment to the queue
 func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req DeploymentJobRequest) (job *ent.Deployment, err error) {
 	// Cancel any existing queued jobs
-	if err := self.cancelExistingJobs(ctx, req.ServiceID); err != nil {
+	if err := self.CancelExistingJobs(ctx, req.ServiceID); err != nil {
 		return nil, fmt.Errorf("failed to cancel existing jobs: %w", err)
 	}
 
@@ -305,6 +301,58 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 	}
 
 	req.Environment["SERVICE_DEPLOYMENT_ID"] = job.ID.String()
+
+	// Resolve referenced environment
+	referencedEnv, err := self.variableService.ResolveAllReferences(ctx, req.ServiceID)
+	if err != nil {
+		return nil, self.failWithErr(ctx, "Error resolving environment variables", job.ID, err)
+	}
+
+	// Convert the byte arrays to base64 strings first
+	serializedReferences := make(map[string]string)
+	for k, v := range referencedEnv {
+		serializedReferences[k] = base64.StdEncoding.EncodeToString([]byte(v))
+	}
+
+	// Serialize the map to JSON
+	referencedEnvJSON, err := json.Marshal(serializedReferences)
+	if err != nil {
+		return nil, self.failWithErr(ctx, "Error marshalling referenced secrets", job.ID, err)
+	}
+	// Add the referenced environment to the environment
+	referencedEnv["ADDITIONAL_ENV"] = string(referencedEnvJSON)
+
+	// Get registry to use
+	registry, err := self.repo.System().GetDefaultRegistry(ctx)
+	if err != nil {
+		return nil, self.failWithErr(ctx, "Error getting default registry", job.ID, err)
+	}
+	req.Environment["CONTAINER_REGISTRY_HOST"] = registry.Host
+
+	// Get credentials if applicable
+	var username, password string
+	if registry.KubernetesSecret != nil {
+		credentials, err := self.k8s.GetSecret(ctx, *registry.KubernetesSecret, self.cfg.SystemNamespace, self.k8s.GetInternalClient())
+		if err != nil {
+			return nil, self.failWithErr(ctx, "Error getting registry credentials", job.ID, err)
+		}
+		username, password, err = self.k8s.ParseRegistryCredentials(credentials)
+		if err != nil {
+			return nil, self.failWithErr(ctx, "Error parsing registry credentials", job.ID, err)
+		}
+		req.Environment["CONTAINER_REGISTRY_USERNAME"] = username
+		req.Environment["CONTAINER_REGISTRY_PASSWORD"] = password
+	}
+
+	// Add image pull secrets
+	pullSecrets, err := self.repo.System().GetImagePullSecrets(ctx)
+	if err != nil {
+		return nil, self.failWithErr(ctx, "Error getting image pull secrets", job.ID, err)
+	}
+	if len(pullSecrets) > 0 {
+		// Add to the environment, comma separated
+		req.Environment["IMAGE_PULL_SECRETS"] = strings.Join(pullSecrets, ",")
+	}
 
 	// Add to the queue
 	err = self.jobQueue.Enqueue(ctx, job.ID.String(), req)
@@ -362,9 +410,17 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 	return job, nil
 }
 
+func (self *DeploymentController) failWithErr(ctx context.Context, msg string, deploymentID uuid.UUID, err error) error {
+	log.Error(msg, "err", err)
+	if _, failErr := self.repo.Deployment().MarkFailed(ctx, nil, deploymentID, err.Error(), time.Now()); failErr != nil {
+		log.Error("Error marking job as failed", "err", failErr)
+	}
+	return err
+}
+
 // cancelExistingJobs marks all pending jobs for a service as cancelled in the DB
 // and removes them from the queue
-func (self *DeploymentController) cancelExistingJobs(ctx context.Context, serviceID uuid.UUID) error {
+func (self *DeploymentController) CancelExistingJobs(ctx context.Context, serviceID uuid.UUID) error {
 	// 1. Get all queued jobs for this service from the queue
 	queuedJobs, err := self.jobQueue.GetAll(ctx)
 	if err != nil {

@@ -35,7 +35,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd.go"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
@@ -52,6 +52,7 @@ import (
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/valkey-io/valkey-go"
@@ -144,7 +145,7 @@ func startAPI(cfg *config.Config) {
 	githubClient := github.NewGithubClient(cfg.GithubURL, cfg)
 
 	// Buildkit settings manager
-	buildkitSettings := buildkitd.NewBuildkitSettingsManager(repo, kubeClient)
+	buildkitSettings := buildkitd.NewBuildkitSettingsManager(cfg, repo, kubeClient)
 
 	// Loki log querier
 	lokiQuerier, err := loki.NewLokiLogger(cfg)
@@ -163,24 +164,30 @@ func startAPI(cfg *config.Config) {
 
 	// Bootstrap
 	bootstrapper := &Bootstrapper{
+		cfg:                     cfg,
+		kubeClient:              kubeClient,
 		repos:                   repo,
 		buildkitSettingsManager: buildkitSettings,
 	}
 	if err := bootstrapper.Sync(ctx); err != nil {
 		log.Errorf("Failed to sync system settings: %v", err)
 	}
+	if err := bootstrapper.bootstrapRegistry(ctx); err != nil {
+		log.Fatalf("Failed to bootstrap registry: %v", err)
+	}
 
 	// Create webhook service
+	variableService := variables_service.NewVariablesService(repo, kubeClient)
 	webhooksService := webhooks_service.NewWebhooksService(repo)
 
 	// Create deployment controller
-	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient, webhooksService)
+	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient, webhooksService, variableService)
 
 	// Create services
 	teamService := team_service.NewTeamService(repo, kubeClient)
-	projectService := project_service.NewProjectService(cfg, repo, kubeClient, webhooksService)
+	projectService := project_service.NewProjectService(cfg, repo, kubeClient, webhooksService, deploymentController)
 	serviceService := service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController, dbProvider, webhooksService)
-	environmentService := environment_service.NewEnvironmentService(repo, kubeClient)
+	environmentService := environment_service.NewEnvironmentService(repo, kubeClient, deploymentController)
 	logService := logs_service.NewLogsService(repo, kubeClient, lokiQuerier)
 	deploymentService := deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier)
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
@@ -223,18 +230,18 @@ func startAPI(cfg *config.Config) {
 		MetricsService:       metricsService,
 		WebhooksService:      webhooksService,
 		InstanceService:      instanceService,
+		VariablesService:     variableService,
 	}
 
 	// New chi router
 	r := chi.NewRouter()
 
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:3000",
 			"https://app.unbind.app",
 			"*.unbind.app",
+			cfg.ExternalUIUrl,
 		},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -244,18 +251,27 @@ func startAPI(cfg *config.Config) {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	config := NewHumaConfig("Unbind API", "1.0.0")
-	config.DocsPath = ""
-	config.OpenAPI.Servers = []*huma.Server{
-		{
-			URL: cfg.ExternalAPIURL,
-		},
-	}
-	api := humachi.New(r, config)
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
 
-	r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<!doctype html>
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RealIP)
+		r.Use(middleware.Logger)
+
+		config := NewHumaConfig("Unbind API", "1.0.0")
+		config.DocsPath = ""
+		config.OpenAPI.Servers = []*huma.Server{
+			{
+				URL: cfg.ExternalAPIURL,
+			},
+		}
+		api := humachi.New(r, config)
+
+		r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`<!doctype html>
 			<html>
 				<head>
 					<title>API Reference</title>
@@ -271,168 +287,142 @@ func startAPI(cfg *config.Config) {
 					<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 				</body>
 			</html>`))
+		})
+
+		// Create middleware
+		mw := middleware.NewMiddleware(cfg, repo, api)
+
+		// /auth group
+		authGroup := huma.NewGroup(api, "/auth")
+		authGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Auth"}
+			next(op)
+		})
+		logintmp_handler.RegisterHandlers(srvImpl, authGroup)
+
+		// /system group
+		systemGroup := huma.NewGroup(api, "/system")
+		systemGroup.UseMiddleware(mw.Authenticate)
+		systemGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"System"}
+			next(op)
+		})
+		system_handler.RegisterHandlers(srvImpl, systemGroup)
+
+		// /users group
+		userGroup := huma.NewGroup(api, "/users")
+		userGroup.UseMiddleware(mw.Authenticate)
+		userGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Users"}
+			next(op)
+		})
+		user_handler.RegisterHandlers(srvImpl, userGroup)
+
+		ghGroup := huma.NewGroup(api, "/github")
+		ghGroup.UseMiddleware(mw.Authenticate)
+		ghGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"GitHub"}
+			next(op)
+		})
+		github_handler.RegisterHandlers(srvImpl, ghGroup)
+
+		webhookGroup := huma.NewGroup(api, "/webhook")
+		webhookGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Webhook"}
+			next(op)
+		})
+		webhook_handler.RegisterHandlers(srvImpl, webhookGroup)
+
+		// /teams
+		teamsGroup := huma.NewGroup(api, "/teams")
+		teamsGroup.UseMiddleware(mw.Authenticate)
+		teamsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Teams"}
+			next(op)
+		})
+		teams_handler.RegisterHandlers(srvImpl, teamsGroup)
+
+		// /projects group
+		projectsGroup := huma.NewGroup(api, "/projects")
+		projectsGroup.UseMiddleware(mw.Authenticate)
+		projectsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Projects"}
+			next(op)
+		})
+		projects_handler.RegisterHandlers(srvImpl, projectsGroup)
+
+		// /environments group
+		environmentsGroup := huma.NewGroup(api, "/environments")
+		environmentsGroup.UseMiddleware(mw.Authenticate)
+		environmentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Environments"}
+			next(op)
+		})
+		environments_handler.RegisterHandlers(srvImpl, environmentsGroup)
+
+		// /services group
+		servicesGroup := huma.NewGroup(api, "/services")
+		servicesGroup.UseMiddleware(mw.Authenticate)
+		servicesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Services"}
+			next(op)
+		})
+		service_handler.RegisterHandlers(srvImpl, servicesGroup)
+
+		// /variables group
+		variablesGroup := huma.NewGroup(api, "/variables")
+		variablesGroup.UseMiddleware(mw.Authenticate)
+		variablesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Variables"}
+			next(op)
+		})
+		variables_handler.RegisterHandlers(srvImpl, variablesGroup)
+
+		// /logs group
+		logsGroup := huma.NewGroup(api, "/logs")
+		logsGroup.UseMiddleware(mw.Authenticate)
+		logsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Logs"}
+			next(op)
+		})
+		logs_handler.RegisterHandlers(srvImpl, logsGroup)
+
+		// /deployments group
+		deploymentsGroup := huma.NewGroup(api, "/deployments")
+		deploymentsGroup.UseMiddleware(mw.Authenticate)
+		deploymentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Deployments"}
+			next(op)
+		})
+		deployments_handler.RegisterHandlers(srvImpl, deploymentsGroup)
+
+		// /metrics group
+		metricsGroup := huma.NewGroup(api, "/metrics")
+		metricsGroup.UseMiddleware(mw.Authenticate)
+		metricsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Metrics"}
+			next(op)
+		})
+		metrics_handler.RegisterHandlers(srvImpl, metricsGroup)
+
+		// /unbindwebhooks group
+		unbindwebhooksGroup := huma.NewGroup(api, "/unbindwebhooks")
+		unbindwebhooksGroup.UseMiddleware(mw.Authenticate)
+		unbindwebhooksGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Unbind Webhooks"}
+			next(op)
+		})
+		unbindwebhooks_handler.RegisterHandlers(srvImpl, unbindwebhooksGroup)
+
+		// /instances group
+		instancesGroup := huma.NewGroup(api, "/instances")
+		instancesGroup.UseMiddleware(mw.Authenticate)
+		instancesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Instances"}
+			next(op)
+		})
+		instances_handler.RegisterHandlers(srvImpl, instancesGroup)
 	})
-
-	// Create middleware
-	mw, err := middleware.NewMiddleware(cfg, repo, api)
-	if err != nil {
-		log.Warnf("Failed to create middleware: %v", err)
-	}
-
-	type HealthResponse struct {
-		Body struct {
-			Status string `json:"status"`
-		}
-	}
-
-	huma.Register(
-		api,
-		huma.Operation{
-			OperationID: "health",
-			Summary:     "Health Check",
-			Description: "Check if the API is healthy",
-			Path:        "/health",
-			Method:      http.MethodGet,
-			Tags:        []string{"Meta"},
-		},
-		func(ctx context.Context, i *server.EmptyInput) (*HealthResponse, error) {
-
-			healthResponse := &HealthResponse{}
-			healthResponse.Body.Status = "ok"
-			return healthResponse, nil
-		},
-	)
-
-	// /auth group
-	authGroup := huma.NewGroup(api, "/auth")
-	authGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Auth"}
-		next(op)
-	})
-	logintmp_handler.RegisterHandlers(srvImpl, authGroup)
-
-	// /system group
-	systemGroup := huma.NewGroup(api, "/system")
-	systemGroup.UseMiddleware(mw.Authenticate)
-	systemGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"System"}
-		next(op)
-	})
-	system_handler.RegisterHandlers(srvImpl, systemGroup)
-
-	// /users group
-	userGroup := huma.NewGroup(api, "/users")
-	userGroup.UseMiddleware(mw.Authenticate)
-	userGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Users"}
-		next(op)
-	})
-	user_handler.RegisterHandlers(srvImpl, userGroup)
-
-	ghGroup := huma.NewGroup(api, "/github")
-	ghGroup.UseMiddleware(mw.Authenticate)
-	ghGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"GitHub"}
-		next(op)
-	})
-	github_handler.RegisterHandlers(srvImpl, ghGroup)
-
-	webhookGroup := huma.NewGroup(api, "/webhook")
-	webhookGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Webhook"}
-		next(op)
-	})
-	webhook_handler.RegisterHandlers(srvImpl, webhookGroup)
-
-	// /teams
-	teamsGroup := huma.NewGroup(api, "/teams")
-	teamsGroup.UseMiddleware(mw.Authenticate)
-	teamsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Teams"}
-		next(op)
-	})
-	teams_handler.RegisterHandlers(srvImpl, teamsGroup)
-
-	// /projects group
-	projectsGroup := huma.NewGroup(api, "/projects")
-	projectsGroup.UseMiddleware(mw.Authenticate)
-	projectsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Projects"}
-		next(op)
-	})
-	projects_handler.RegisterHandlers(srvImpl, projectsGroup)
-
-	// /environments group
-	environmentsGroup := huma.NewGroup(api, "/environments")
-	environmentsGroup.UseMiddleware(mw.Authenticate)
-	environmentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Environments"}
-		next(op)
-	})
-	environments_handler.RegisterHandlers(srvImpl, environmentsGroup)
-
-	// /services group
-	servicesGroup := huma.NewGroup(api, "/services")
-	servicesGroup.UseMiddleware(mw.Authenticate)
-	servicesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Services"}
-		next(op)
-	})
-	service_handler.RegisterHandlers(srvImpl, servicesGroup)
-
-	// /variables group
-	variablesGroup := huma.NewGroup(api, "/variables")
-	variablesGroup.UseMiddleware(mw.Authenticate)
-	variablesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Variables"}
-		next(op)
-	})
-	variables_handler.RegisterHandlers(srvImpl, variablesGroup)
-
-	// /logs group
-	logsGroup := huma.NewGroup(api, "/logs")
-	logsGroup.UseMiddleware(mw.Authenticate)
-	logsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Logs"}
-		next(op)
-	})
-	logs_handler.RegisterHandlers(srvImpl, logsGroup)
-
-	// /deployments group
-	deploymentsGroup := huma.NewGroup(api, "/deployments")
-	deploymentsGroup.UseMiddleware(mw.Authenticate)
-	deploymentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Deployments"}
-		next(op)
-	})
-	deployments_handler.RegisterHandlers(srvImpl, deploymentsGroup)
-
-	// /metrics group
-	metricsGroup := huma.NewGroup(api, "/metrics")
-	metricsGroup.UseMiddleware(mw.Authenticate)
-	metricsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Metrics"}
-		next(op)
-	})
-	metrics_handler.RegisterHandlers(srvImpl, metricsGroup)
-
-	// /unbindwebhooks group
-	unbindwebhooksGroup := huma.NewGroup(api, "/unbindwebhooks")
-	unbindwebhooksGroup.UseMiddleware(mw.Authenticate)
-	unbindwebhooksGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Unbind Webhooks"}
-		next(op)
-	})
-	unbindwebhooks_handler.RegisterHandlers(srvImpl, unbindwebhooksGroup)
-
-	// /instances group
-	instancesGroup := huma.NewGroup(api, "/instances")
-	instancesGroup.UseMiddleware(mw.Authenticate)
-	instancesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-		op.Tags = []string{"Instances"}
-		next(op)
-	})
-	instances_handler.RegisterHandlers(srvImpl, instancesGroup)
 
 	// Start the server
 	addr := ":8089"

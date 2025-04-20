@@ -198,7 +198,7 @@
         </svg>
         <p class="description">Sign in with Unbind</p>
       </div>
-      <form id="loginForm" class="form" method="post" action="/login">
+      <form id="loginForm" class="form" method="post" action="{{.LoginURI}}">
         <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}" />
         <input type="hidden" name="client_id" value="{{.ClientID}}" />
         <input type="hidden" name="response_type" value="{{.ResponseType}}" />

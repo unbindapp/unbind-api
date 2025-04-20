@@ -14,6 +14,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Bootstrap is the client for interacting with the Bootstrap builders.
+	Bootstrap *BootstrapClient
 	// BuildkitSettings is the client for interacting with the BuildkitSettings builders.
 	BuildkitSettings *BuildkitSettingsClient
 	// Deployment is the client for interacting with the Deployment builders.
@@ -36,6 +38,8 @@ type Tx struct {
 	Permission *PermissionClient
 	// Project is the client for interacting with the Project builders.
 	Project *ProjectClient
+	// Registry is the client for interacting with the Registry builders.
+	Registry *RegistryClient
 	// Service is the client for interacting with the Service builders.
 	Service *ServiceClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
@@ -44,6 +48,8 @@ type Tx struct {
 	Team *TeamClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// VariableReference is the client for interacting with the VariableReference builders.
+	VariableReference *VariableReferenceClient
 	// Webhook is the client for interacting with the Webhook builders.
 	Webhook *WebhookClient
 
@@ -177,6 +183,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Bootstrap = NewBootstrapClient(tx.config)
 	tx.BuildkitSettings = NewBuildkitSettingsClient(tx.config)
 	tx.Deployment = NewDeploymentClient(tx.config)
 	tx.Environment = NewEnvironmentClient(tx.config)
@@ -188,10 +195,12 @@ func (tx *Tx) init() {
 	tx.Oauth2Token = NewOauth2TokenClient(tx.config)
 	tx.Permission = NewPermissionClient(tx.config)
 	tx.Project = NewProjectClient(tx.config)
+	tx.Registry = NewRegistryClient(tx.config)
 	tx.Service = NewServiceClient(tx.config)
 	tx.ServiceConfig = NewServiceConfigClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.VariableReference = NewVariableReferenceClient(tx.config)
 	tx.Webhook = NewWebhookClient(tx.config)
 }
 
@@ -202,7 +211,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: BuildkitSettings.QueryXXX(), the query will be executed
+// applies a query, for example: Bootstrap.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

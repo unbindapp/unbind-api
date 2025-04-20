@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -25,7 +24,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // CreateServiceInput defines the input for creating a new service
@@ -45,7 +43,7 @@ type CreateServiceInput struct {
 	Type              schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
 	Builder           schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
 	Hosts             []v1.HostSpec         `json:"hosts,omitempty"`
-	Ports             []v1.PortSpec         `json:"ports,omitempty"`
+	Ports             []schema.PortSpec     `json:"ports,omitempty"`
 	Replicas          *int32                `validate:"omitempty,min=0,max=10" json:"replicas,omitempty"`
 	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand        *string               `json:"run_command,omitempty"`
@@ -69,7 +67,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	var err error
 	var dbDefinition *databases.Definition
 	var dbVersion *string
-	start := time.Now()
 	switch input.Type {
 	case schema.ServiceTypeGithub:
 		// Validate that if GitHub info is provided, all fields are set
@@ -103,10 +100,10 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Nuke whatever they tell us for ports
-		input.Ports = []v1.PortSpec{
+		input.Ports = []schema.PortSpec{
 			{
 				Port:     int32(dbDefinition.Port),
-				Protocol: utils.ToPtr(corev1.ProtocolTCP),
+				Protocol: utils.ToPtr(schema.ProtocolTCP),
 			},
 		}
 
@@ -138,8 +135,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	default:
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("received unsupported service type %s", input.Type))
 	}
-	end := time.Now()
-	log.Infof("Service creation validation took %s", end.Sub(start).String())
 
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
@@ -151,21 +146,15 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		},
 	}
 
-	start = time.Now()
 	if err := self.repo.Permissions().Check(ctx, requesterUserID, permissionChecks); err != nil {
 		return nil, err
 	}
-	end = time.Now()
-	log.Infof("Service creation permission check took %s", end.Sub(start).String())
 
 	// Verify inputs
-	start = time.Now()
 	_, project, err := self.VerifyInputs(ctx, input.TeamID, input.ProjectID, input.EnvironmentID)
 	if err != nil {
 		return nil, err
 	}
-	end = time.Now()
-	log.Infof("Service creation input verification took %s", end.Sub(start).String())
 
 	// Git integrations
 	var gitOwnerName *string
@@ -186,15 +175,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		gitOwnerName = utils.ToPtr(installation.AccountLogin)
 
 		// Verify repository access
-		start = time.Now()
 		canAccess, cloneUrl, defaultBranch, err := self.githubClient.VerifyRepositoryAccess(ctx, installation, *input.RepositoryOwner, *input.RepositoryName)
 		if err != nil {
 			log.Error("Error verifying repository access", "err", err)
 			return nil, err
 		}
 		gitBranch = utils.ToPtr(defaultBranch)
-		end = time.Now()
-		log.Infof("Service creation GitHub access verification took %s", end.Sub(start).String())
 
 		if !canAccess {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
@@ -202,40 +188,30 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Clone repository to infer information
-		start = time.Now()
 		tmpDir, err := self.githubClient.CloneRepository(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey, cloneUrl, fmt.Sprintf("refs/heads/%s", defaultBranch))
 		if err != nil {
 			log.Error("Error cloning repository", "err", err)
 			return nil, err
 		}
 		defer os.RemoveAll(tmpDir)
-		end = time.Now()
-		log.Infof("Service creation GitHub clone took %s", end.Sub(start).String())
 
 		// Perform analysis
-		start = time.Now()
 		analysisResult, err = sourceanalyzer.AnalyzeSourceCode(tmpDir)
 		if err != nil {
 			log.Error("Error analyzing source code", "err", err)
 			return nil, err
 		}
-		end = time.Now()
-		log.Infof("Service creation GitHub analysis took %s", end.Sub(start).String())
-
 	} else if input.Type == schema.ServiceTypeDockerimage && len(input.Ports) == 0 {
 		// Detect ports from image
-		start = time.Now()
 		ports, _ := utils.GetExposedPortsFromRegistry(*input.Image)
-		end = time.Now()
-		log.Infof("Service creation Docker image port detection took %s", end.Sub(start).String())
 		for _, port := range ports {
 			// Split
 			portSplit := strings.Split(port, "/")
-			proto := corev1.ProtocolTCP
+			proto := schema.ProtocolTCP
 			if len(portSplit) > 1 {
 				// Check if the protocol is UDP
 				if strings.EqualFold(portSplit[1], "udp") {
-					proto = corev1.ProtocolUDP
+					proto = schema.ProtocolUDP
 				}
 			}
 			portInt, err := strconv.Atoi(portSplit[0])
@@ -243,7 +219,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				log.Errorf("Failed to parse port %s: %v", port, err)
 				continue
 			}
-			input.Ports = append(input.Ports, v1.PortSpec{
+			input.Ports = append(input.Ports, schema.PortSpec{
 				Port:     int32(portInt),
 				Protocol: utils.ToPtr(proto),
 			})
@@ -251,13 +227,10 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// Create kubernetes client
-	start = time.Now()
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
 		return nil, err
 	}
-	end = time.Now()
-	log.Infof("Service creation Kubernetes client creation took %s", end.Sub(start).String())
 
 	// Create service and config in a transaction
 	var service *ent.Service
@@ -280,7 +253,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 			// Default configuration information
 			if len(ports) == 0 && analysisResult.Port != nil {
-				ports = append(ports, v1.PortSpec{
+				ports = append(ports, schema.PortSpec{
 					Port: int32(*analysisResult.Port),
 				})
 			}
@@ -338,16 +311,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("Team not found")
 		}
 		// Create kubernetes secrets
-		start = time.Now()
 		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace, client)
 		if err != nil {
 			return fmt.Errorf("failed to create secret: %v", err)
 		}
-		end = time.Now()
-		log.Infof("Service creation Kubernetes secret creation took %s", end.Sub(start).String())
 
 		// Create the service
-		start = time.Now()
 		createService, err := self.repo.Service().Create(ctx, tx,
 			name,
 			input.DisplayName,
@@ -390,8 +359,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("failed to create service config: %w", err)
 		}
 		service.Edges.ServiceConfig = serviceConfig
-		end = time.Now()
-		log.Infof("Service creation service config creation took %s", end.Sub(start).String())
 		return nil
 
 	}); err != nil {

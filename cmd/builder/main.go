@@ -236,6 +236,7 @@ func main() {
 	k8s := k8s.NewK8SClient(cfg, cfg)
 
 	var dockerImg string
+	additionalEnv := make(map[string]string)
 
 	// We can bypass any build step if the image is already provided
 	if cfg.ServiceImage != "" || cfg.ServiceType == schema.ServiceTypeDatabase {
@@ -257,6 +258,24 @@ func main() {
 				data, err := base64.StdEncoding.DecodeString(v)
 				if err != nil {
 					log.Warnf("Error decoding secret %s: %v\n", k, err)
+					continue
+				}
+				buildSecrets[k] = string(data)
+			}
+		}
+
+		if cfg.AdditionalEnv != "" {
+			if err := json.Unmarshal([]byte(cfg.AdditionalEnv), &additionalEnv); err != nil {
+				if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal additional env %v", err), cfg.ServiceDeploymentID); err != nil {
+					log.Errorf("Failed to mark deployment as failed: %v", err)
+				}
+				log.Fatalf("Failed to parse additional env: %v", err)
+			}
+
+			for k, v := range additionalEnv {
+				data, err := base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					log.Warnf("Error decoding additional env %s: %v\n", k, err)
 					continue
 				}
 				buildSecrets[k] = string(data)
@@ -304,7 +323,7 @@ func main() {
 	}
 
 	// Deploy to kubernetes with context
-	createdCRD, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg)
+	createdCRD, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv)
 	if err != nil {
 		if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to deploy image %v", err), cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)

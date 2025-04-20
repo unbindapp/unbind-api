@@ -63,9 +63,11 @@ type ServiceEdges struct {
 	Deployments []*Deployment `json:"deployments,omitempty"`
 	// Optional reference to the currently active deployment
 	CurrentDeployment *Deployment `json:"current_deployment,omitempty"`
+	// VariableReferences holds the value of the variable_references edge.
+	VariableReferences []*VariableReference `json:"variable_references,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // EnvironmentOrErr returns the Environment value or an error if the edge
@@ -119,6 +121,15 @@ func (e ServiceEdges) CurrentDeploymentOrErr() (*Deployment, error) {
 		return nil, &NotFoundError{label: deployment.Label}
 	}
 	return nil, &NotLoadedError{edge: "current_deployment"}
+}
+
+// VariableReferencesOrErr returns the VariableReferences value or an error if the edge
+// was not loaded in eager-loading.
+func (e ServiceEdges) VariableReferencesOrErr() ([]*VariableReference, error) {
+	if e.loadedTypes[5] {
+		return e.VariableReferences, nil
+	}
+	return nil, &NotLoadedError{edge: "variable_references"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -263,6 +274,11 @@ func (s *Service) QueryDeployments() *DeploymentQuery {
 // QueryCurrentDeployment queries the "current_deployment" edge of the Service entity.
 func (s *Service) QueryCurrentDeployment() *DeploymentQuery {
 	return NewServiceClient(s.config).QueryCurrentDeployment(s)
+}
+
+// QueryVariableReferences queries the "variable_references" edge of the Service entity.
+func (s *Service) QueryVariableReferences() *VariableReferenceQuery {
+	return NewServiceClient(s.config).QueryVariableReferences(s)
 }
 
 // Update returns a builder for updating this Service.

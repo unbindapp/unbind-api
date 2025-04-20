@@ -53,6 +53,11 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 
 	// Delete kubernetes resources, db resource
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		// Cancel deployments
+		if err := self.deploymentController.CancelExistingJobs(ctx, service.ID); err != nil {
+			log.Warnf("Error cancelling jobs for service %s: %v", service.Name, err)
+		}
+
 		if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.Name); err != nil {
 			log.Error("Error deleting service from k8s", "svc", service.Name, "err", err)
 

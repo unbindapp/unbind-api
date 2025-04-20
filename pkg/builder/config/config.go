@@ -26,9 +26,9 @@ type Config struct {
 	// Github app private key
 	GithubAppPrivateKey string `env:"GITHUB_APP_PRIVATE_KEY"`
 	// Registry specific
-	ContainerRegistryHost     string `env:"CONTAINER_REGISTRY_HOST,required" envDefault:"docker-registry.unbind-system:5000"`
-	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER,required" envDefault:"admin"`
-	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD,required"`
+	ContainerRegistryHost     string `env:"CONTAINER_REGISTRY_HOST,required"`
+	ContainerRegistryUser     string `env:"CONTAINER_REGISTRY_USER"`
+	ContainerRegistryPassword string `env:"CONTAINER_REGISTRY_PASSWORD"`
 	// Database access
 	PostgresHost     string `env:"POSTGRES_HOST" envDefault:"localhost"`
 	PostgresPort     int    `env:"POSTGRES_PORT" envDefault:"5432"`
@@ -38,7 +38,7 @@ type Config struct {
 	// Buildkitd host
 	BuildkitHost string `env:"BUILDKIT_HOST" envDefault:"tcp://buildkitd.unbind-system:1234"`
 	// Deployment namespace (kubernetes)
-	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE" envDefault:"unbind-user"`
+	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE,required"`
 	// Service specific
 	ServiceDeploymentID      uuid.UUID             `env:"SERVICE_DEPLOYMENT_ID"`
 	ServiceName              string                `env:"SERVICE_NAME"`
@@ -65,11 +65,15 @@ type Config struct {
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec
 	ServicePorts string `env:"SERVICE_PORTS"`
+	// Pull image secrets to pass to operator
+	ImagePullSecrets string `env:"IMAGE_PULL_SECRETS"`
 	// Kubeconfig for local testing
 	KubeConfig string `env:"KUBECONFIG"`
 	// Non-env config
 	Hosts []v1.HostSpec
 	Ports []v1.PortSpec
+	// Json serialized map[string]string to pass to build and deploy
+	AdditionalEnv string `env:"ADDITIONAL_ENV"`
 }
 
 func (self *Config) GetPostgresHost() string {
@@ -100,7 +104,7 @@ func (self *Config) GetBuildImage() string {
 	return ""
 }
 
-func (self *Config) GetBuilderNamespace() string {
+func (self *Config) GetSystemNamespace() string {
 	return ""
 }
 

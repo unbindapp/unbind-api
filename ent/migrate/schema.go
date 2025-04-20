@@ -9,6 +9,17 @@ import (
 )
 
 var (
+	// BootstrapFlagColumns holds the columns for the "bootstrap_flag" table.
+	BootstrapFlagColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "is_bootstrapped", Type: field.TypeBool},
+	}
+	// BootstrapFlagTable holds the schema information for the "bootstrap_flag" table.
+	BootstrapFlagTable = &schema.Table{
+		Name:       "bootstrap_flag",
+		Columns:    BootstrapFlagColumns,
+		PrimaryKey: []*schema.Column{BootstrapFlagColumns[0]},
+	}
 	// BuildkitSettingsColumns holds the columns for the "buildkit_settings" table.
 	BuildkitSettingsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -275,6 +286,21 @@ var (
 			},
 		},
 	}
+	// RegistriesColumns holds the columns for the "registries" table.
+	RegistriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "host", Type: field.TypeString},
+		{Name: "kubernetes_secret", Type: field.TypeString, Nullable: true},
+		{Name: "is_default", Type: field.TypeBool},
+	}
+	// RegistriesTable holds the schema information for the "registries" table.
+	RegistriesTable = &schema.Table{
+		Name:       "registries",
+		Columns:    RegistriesColumns,
+		PrimaryKey: []*schema.Column{RegistriesColumns[0]},
+	}
 	// ServicesColumns holds the columns for the "services" table.
 	ServicesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -387,6 +413,38 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// VariableReferencesColumns holds the columns for the "variable_references" table.
+	VariableReferencesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "target_name", Type: field.TypeString},
+		{Name: "sources", Type: field.TypeJSON},
+		{Name: "value_template", Type: field.TypeString},
+		{Name: "error", Type: field.TypeString, Nullable: true},
+		{Name: "target_service_id", Type: field.TypeUUID},
+	}
+	// VariableReferencesTable holds the schema information for the "variable_references" table.
+	VariableReferencesTable = &schema.Table{
+		Name:       "variable_references",
+		Columns:    VariableReferencesColumns,
+		PrimaryKey: []*schema.Column{VariableReferencesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "variable_references_services_variable_references",
+				Columns:    []*schema.Column{VariableReferencesColumns[7]},
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "variablereference_target_service_id_sources_value_template",
+				Unique:  true,
+				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[4], VariableReferencesColumns[5]},
+			},
+		},
+	}
 	// WebhooksColumns holds the columns for the "webhooks" table.
 	WebhooksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -495,6 +553,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		BootstrapFlagTable,
 		BuildkitSettingsTable,
 		DeploymentsTable,
 		EnvironmentsTable,
@@ -506,10 +565,12 @@ var (
 		Oauth2TokensTable,
 		PermissionsTable,
 		ProjectsTable,
+		RegistriesTable,
 		ServicesTable,
 		ServiceConfigsTable,
 		TeamsTable,
 		UsersTable,
+		VariableReferencesTable,
 		WebhooksTable,
 		GroupPermissionsTable,
 		UserGroupsTable,
@@ -518,6 +579,9 @@ var (
 )
 
 func init() {
+	BootstrapFlagTable.Annotation = &entsql.Annotation{
+		Table: "bootstrap_flag",
+	}
 	BuildkitSettingsTable.Annotation = &entsql.Annotation{
 		Table: "buildkit_settings",
 	}
@@ -559,6 +623,9 @@ func init() {
 	ProjectsTable.Annotation = &entsql.Annotation{
 		Table: "projects",
 	}
+	RegistriesTable.Annotation = &entsql.Annotation{
+		Table: "registries",
+	}
 	ServicesTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	ServicesTable.ForeignKeys[1].RefTable = GithubInstallationsTable
 	ServicesTable.ForeignKeys[2].RefTable = DeploymentsTable
@@ -574,6 +641,10 @@ func init() {
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",
+	}
+	VariableReferencesTable.ForeignKeys[0].RefTable = ServicesTable
+	VariableReferencesTable.Annotation = &entsql.Annotation{
+		Table: "variable_references",
 	}
 	WebhooksTable.ForeignKeys[0].RefTable = ProjectsTable
 	WebhooksTable.ForeignKeys[1].RefTable = TeamsTable

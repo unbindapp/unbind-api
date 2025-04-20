@@ -13,7 +13,7 @@ type ServiceConfigResponse struct {
 	Builder         schema.ServiceBuilder `json:"builder"`
 	Icon            string                `json:"icon"`
 	Host            []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
-	Port            []v1.PortSpec         `json:"ports,omitempty" nullable:"false"`
+	Port            []schema.PortSpec     `json:"ports,omitempty" nullable:"false"`
 	Replicas        int32                 `json:"replicas"`
 	AutoDeploy      bool                  `json:"auto_deploy"`
 	RunCommand      *string               `json:"run_command,omitempty"`

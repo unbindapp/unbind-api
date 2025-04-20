@@ -205,8 +205,8 @@ func (scc *ServiceConfigCreate) SetHosts(vs []v1.HostSpec) *ServiceConfigCreate 
 }
 
 // SetPorts sets the "ports" field.
-func (scc *ServiceConfigCreate) SetPorts(vs []v1.PortSpec) *ServiceConfigCreate {
-	scc.mutation.SetPorts(vs)
+func (scc *ServiceConfigCreate) SetPorts(ss []schema.PortSpec) *ServiceConfigCreate {
+	scc.mutation.SetPorts(ss)
 	return scc
 }
 
@@ -842,7 +842,7 @@ func (u *ServiceConfigUpsert) ClearHosts() *ServiceConfigUpsert {
 }
 
 // SetPorts sets the "ports" field.
-func (u *ServiceConfigUpsert) SetPorts(v []v1.PortSpec) *ServiceConfigUpsert {
+func (u *ServiceConfigUpsert) SetPorts(v []schema.PortSpec) *ServiceConfigUpsert {
 	u.Set(serviceconfig.FieldPorts, v)
 	return u
 }
@@ -1269,7 +1269,7 @@ func (u *ServiceConfigUpsertOne) ClearHosts() *ServiceConfigUpsertOne {
 }
 
 // SetPorts sets the "ports" field.
-func (u *ServiceConfigUpsertOne) SetPorts(v []v1.PortSpec) *ServiceConfigUpsertOne {
+func (u *ServiceConfigUpsertOne) SetPorts(v []schema.PortSpec) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetPorts(v)
 	})
@@ -1879,7 +1879,7 @@ func (u *ServiceConfigUpsertBulk) ClearHosts() *ServiceConfigUpsertBulk {
 }
 
 // SetPorts sets the "ports" field.
-func (u *ServiceConfigUpsertBulk) SetPorts(v []v1.PortSpec) *ServiceConfigUpsertBulk {
+func (u *ServiceConfigUpsertBulk) SetPorts(v []schema.PortSpec) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetPorts(v)
 	})

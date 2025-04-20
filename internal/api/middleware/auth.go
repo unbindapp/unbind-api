@@ -35,7 +35,13 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 		return
 	}
 
-	token, err := self.verifier.Verify(ctx.Context(), bearerToken)
+	verifier, err := self.getVerifier()
+	if err != nil {
+		log.Errorf("Failed to get verifier: %v", err)
+		huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to get verifier")
+		return
+	}
+	token, err := verifier.Verify(ctx.Context(), bearerToken)
 	if err != nil {
 		huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Invalid token")
 		return

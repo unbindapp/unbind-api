@@ -12,6 +12,7 @@ type DeploymentResponse struct {
 	ID            uuid.UUID               `json:"id"`
 	ServiceID     uuid.UUID               `json:"service_id"`
 	Status        schema.DeploymentStatus `json:"status"`
+	JobName       string                  `json:"job_name"`
 	Error         string                  `json:"error,omitempty"`
 	StartedAt     *time.Time              `json:"started_at,omitempty"`
 	CompletedAt   *time.Time              `json:"completed_at,omitempty"`
@@ -32,6 +33,7 @@ func TransformDeploymentEntity(entity *ent.Deployment) *DeploymentResponse {
 			ID:            entity.ID,
 			ServiceID:     entity.ServiceID,
 			Status:        entity.Status,
+			JobName:       entity.KubernetesJobName,
 			Error:         entity.Error,
 			StartedAt:     entity.StartedAt,
 			CompletedAt:   entity.CompletedAt,

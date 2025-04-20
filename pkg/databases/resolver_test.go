@@ -86,14 +86,30 @@ func TestFetchDatabase(t *testing.T) {
 		assert.Equal(t, "object", labelsProp.Type)
 		assert.Equal(t, "Custom labels to add to the PostgreSQL resource", labelsProp.Description)
 
-		// Check if labels has properties field defined
-		if labelsProp.Properties != nil {
-			// This would check if the labels schema has a nested 'properties' field
-			// which might not be the case for a simple additionalProperties: true schema
-			t.Logf("Labels properties: %+v", labelsProp.Properties)
-		} else {
-			t.Logf("WARNING: Labels property doesn't have subproperties defined")
-		}
+		// Check if labels has additionalProperties defined
+		assert.NotNil(t, labelsProp.AdditionalProperties, "Labels property should have additionalProperties")
+		assert.Equal(t, "string", labelsProp.AdditionalProperties.Type, "Labels additionalProperties should be of type string")
+	}
+
+	// Check if environment exists
+	envProp, hasEnv := database.Schema.Properties["environment"]
+	assert.True(t, hasEnv, "Schema should have an 'environment' property")
+
+	// If environment exists, verify it was imported correctly
+	if hasEnv {
+		t.Logf("Environment property: %+v", envProp)
+		assert.Equal(t, "object", envProp.Type)
+		assert.Equal(t, "Environment variables to be set in the PostgreSQL container", envProp.Description)
+
+		// Check if environment has additionalProperties defined
+		assert.NotNil(t, envProp.AdditionalProperties, "Environment should have additionalProperties defined")
+		assert.Equal(t, "string", envProp.AdditionalProperties.Type, "Environment additionalProperties should be of type string")
+
+		// Verify default is an empty object
+		assert.NotNil(t, envProp.Default, "Environment should have a default value")
+		defaultMap, ok := envProp.Default.(map[interface{}]interface{})
+		assert.True(t, ok, "Environment default should be a map")
+		assert.Empty(t, defaultMap, "Environment default should be an empty map")
 	}
 }
 
@@ -231,7 +247,13 @@ schema:
       default: "17"
       enum: ["14", "15", "16", "17"]
     s3:
-      $ref: "#/imports/s3Schema"`))
+      $ref: "#/imports/s3Schema"
+    environment:
+      type: "object"
+      description: "Environment variables to be set in the PostgreSQL container"
+      additionalProperties:
+        type: "string"
+      default: {}`))
 
 		case "/v0.1/definitions/databases/postgres/definition.yaml":
 			w.WriteHeader(http.StatusOK)
@@ -256,13 +278,30 @@ spec:
     version: "{{ .parameters.version }}"
   numberOfInstances: {{ .parameters.replicas }}
   volume:
-    size: "{{ .parameters.storage }}"`))
+    size: "{{ .parameters.storage }}"
+  env:
+    - name: ALLOW_NOSSL
+      value: "true"
+    {{- if .parameters.s3.enabled }}
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: {{ .name }}-s3-credentials
+          key: accessKey
+    - name: AWS_ENDPOINT
+      value: {{ .parameters.s3.endpoint }}
+    {{- end }}
+    {{- if .parameters.environment }}
+    {{- range $key, $value := .parameters.environment }}
+    - name: {{ $key }}
+      value: {{ $value | quote }}
+    {{- end }}
+    {{- end }}`))
 
 		// This is the path after resolveRelativePath is applied to "../../common/base.yaml" from "definitions/postgres"
 		case "/v0.1/definitions/common/base.yaml":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
-type: "object"
 description: "Common base configuration for databases"
 properties:
   replicas:
@@ -318,6 +357,14 @@ properties:
   accessKey:
     type: "string"
     description: "AWS access key"
+  endpoint:
+    type: "string"
+    description: "S3 endpoint URL"
+    default: "https://s3.amazonaws.com"
+  enabled:
+    type: "boolean"
+    description: "Enable S3 backups"
+    default: false
 required:
   - bucketName`))
 
@@ -368,7 +415,13 @@ version: "1.0.0"
 schema:
   properties:
     test:
-      type: "string"`))
+      type: "string"
+    environment:
+      type: "object"
+      description: "Environment variables"
+      additionalProperties:
+        type: "string"
+      default: {}`))
 
 		case "/v0.1/definitions/databases/missing-database/definition.yaml":
 			w.WriteHeader(http.StatusNotFound)
@@ -393,7 +446,13 @@ schema:
     missing:
       $ref: "#/imports/missingSchema"
     labels:
-      $ref: "#/imports/labels"`))
+      $ref: "#/imports/labels"
+    environment:
+      type: "object"
+      description: "Environment variables"
+      additionalProperties:
+        type: "string"
+      default: {}`))
 
 		case "/v0.1/definitions/databases/missing-import/definition.yaml":
 			w.WriteHeader(http.StatusOK)
@@ -427,7 +486,13 @@ schema:
     invalid:
       $ref: "#/imports/invalidSchema"
     labels:
-      $ref: "#/imports/labels"`))
+      $ref: "#/imports/labels"
+    environment:
+      type: "object"
+      description: "Environment variables"
+      additionalProperties:
+        type: "string"
+      default: {}`))
 
 		case "/v0.1/definitions/databases/invalid-import/definition.yaml":
 			w.WriteHeader(http.StatusOK)
@@ -460,7 +525,13 @@ schema:
     invalid:
       $ref: "invalid-reference"
     labels:
-      $ref: "invalid-labels-reference"`))
+      $ref: "invalid-labels-reference"
+    environment:
+      type: "object"
+      description: "Environment variables"
+      additionalProperties:
+        type: "string"
+      default: {}`))
 
 		case "/v0.1/definitions/databases/invalid-reference/definition.yaml":
 			w.WriteHeader(http.StatusOK)

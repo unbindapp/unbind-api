@@ -52,7 +52,7 @@ type MutateConfigInput struct {
 	Provider                *enum.Provider
 	Framework               *enum.Framework
 	GitBranch               *string
-	Ports                   []v1.PortSpec
+	Ports                   []schema.PortSpec
 	Hosts                   []v1.HostSpec
 	Replicas                *int32
 	AutoDeploy              *bool

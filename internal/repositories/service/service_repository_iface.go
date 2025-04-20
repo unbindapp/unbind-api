@@ -29,6 +29,6 @@ type ServiceRepositoryInterface interface {
 	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error)
 	GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error)
 	// Summarize services in environment
-	SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, providers map[uuid.UUID][]string, err error)
+	SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, icons map[uuid.UUID][]string, err error)
 	NeedsDeployment(ctx context.Context, service *ent.Service) (NeedsDeploymentResponse, error)
 }

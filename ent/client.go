@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/unbindapp/unbind-api/ent/bootstrap"
 	"github.com/unbindapp/unbind-api/ent/buildkitsettings"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
@@ -27,10 +28,12 @@ import (
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/registry"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
+	"github.com/unbindapp/unbind-api/ent/variablereference"
 	"github.com/unbindapp/unbind-api/ent/webhook"
 
 	stdsql "database/sql"
@@ -41,6 +44,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Bootstrap is the client for interacting with the Bootstrap builders.
+	Bootstrap *BootstrapClient
 	// BuildkitSettings is the client for interacting with the BuildkitSettings builders.
 	BuildkitSettings *BuildkitSettingsClient
 	// Deployment is the client for interacting with the Deployment builders.
@@ -63,6 +68,8 @@ type Client struct {
 	Permission *PermissionClient
 	// Project is the client for interacting with the Project builders.
 	Project *ProjectClient
+	// Registry is the client for interacting with the Registry builders.
+	Registry *RegistryClient
 	// Service is the client for interacting with the Service builders.
 	Service *ServiceClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
@@ -71,6 +78,8 @@ type Client struct {
 	Team *TeamClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// VariableReference is the client for interacting with the VariableReference builders.
+	VariableReference *VariableReferenceClient
 	// Webhook is the client for interacting with the Webhook builders.
 	Webhook *WebhookClient
 }
@@ -84,6 +93,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Bootstrap = NewBootstrapClient(c.config)
 	c.BuildkitSettings = NewBuildkitSettingsClient(c.config)
 	c.Deployment = NewDeploymentClient(c.config)
 	c.Environment = NewEnvironmentClient(c.config)
@@ -95,10 +105,12 @@ func (c *Client) init() {
 	c.Oauth2Token = NewOauth2TokenClient(c.config)
 	c.Permission = NewPermissionClient(c.config)
 	c.Project = NewProjectClient(c.config)
+	c.Registry = NewRegistryClient(c.config)
 	c.Service = NewServiceClient(c.config)
 	c.ServiceConfig = NewServiceConfigClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.VariableReference = NewVariableReferenceClient(c.config)
 	c.Webhook = NewWebhookClient(c.config)
 }
 
@@ -192,6 +204,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		Bootstrap:          NewBootstrapClient(cfg),
 		BuildkitSettings:   NewBuildkitSettingsClient(cfg),
 		Deployment:         NewDeploymentClient(cfg),
 		Environment:        NewEnvironmentClient(cfg),
@@ -203,10 +216,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Oauth2Token:        NewOauth2TokenClient(cfg),
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
+		Registry:           NewRegistryClient(cfg),
 		Service:            NewServiceClient(cfg),
 		ServiceConfig:      NewServiceConfigClient(cfg),
 		Team:               NewTeamClient(cfg),
 		User:               NewUserClient(cfg),
+		VariableReference:  NewVariableReferenceClient(cfg),
 		Webhook:            NewWebhookClient(cfg),
 	}, nil
 }
@@ -227,6 +242,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:                ctx,
 		config:             cfg,
+		Bootstrap:          NewBootstrapClient(cfg),
 		BuildkitSettings:   NewBuildkitSettingsClient(cfg),
 		Deployment:         NewDeploymentClient(cfg),
 		Environment:        NewEnvironmentClient(cfg),
@@ -238,10 +254,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Oauth2Token:        NewOauth2TokenClient(cfg),
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
+		Registry:           NewRegistryClient(cfg),
 		Service:            NewServiceClient(cfg),
 		ServiceConfig:      NewServiceConfigClient(cfg),
 		Team:               NewTeamClient(cfg),
 		User:               NewUserClient(cfg),
+		VariableReference:  NewVariableReferenceClient(cfg),
 		Webhook:            NewWebhookClient(cfg),
 	}, nil
 }
@@ -249,7 +267,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		BuildkitSettings.
+//		Bootstrap.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -272,9 +290,10 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.BuildkitSettings, c.Deployment, c.Environment, c.GithubApp,
+		c.Bootstrap, c.BuildkitSettings, c.Deployment, c.Environment, c.GithubApp,
 		c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
-		c.Permission, c.Project, c.Service, c.ServiceConfig, c.Team, c.User, c.Webhook,
+		c.Permission, c.Project, c.Registry, c.Service, c.ServiceConfig, c.Team,
+		c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -284,9 +303,10 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.BuildkitSettings, c.Deployment, c.Environment, c.GithubApp,
+		c.Bootstrap, c.BuildkitSettings, c.Deployment, c.Environment, c.GithubApp,
 		c.GithubInstallation, c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token,
-		c.Permission, c.Project, c.Service, c.ServiceConfig, c.Team, c.User, c.Webhook,
+		c.Permission, c.Project, c.Registry, c.Service, c.ServiceConfig, c.Team,
+		c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -295,6 +315,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *BootstrapMutation:
+		return c.Bootstrap.mutate(ctx, m)
 	case *BuildkitSettingsMutation:
 		return c.BuildkitSettings.mutate(ctx, m)
 	case *DeploymentMutation:
@@ -317,6 +339,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Permission.mutate(ctx, m)
 	case *ProjectMutation:
 		return c.Project.mutate(ctx, m)
+	case *RegistryMutation:
+		return c.Registry.mutate(ctx, m)
 	case *ServiceMutation:
 		return c.Service.mutate(ctx, m)
 	case *ServiceConfigMutation:
@@ -325,10 +349,145 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Team.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *VariableReferenceMutation:
+		return c.VariableReference.mutate(ctx, m)
 	case *WebhookMutation:
 		return c.Webhook.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// BootstrapClient is a client for the Bootstrap schema.
+type BootstrapClient struct {
+	config
+}
+
+// NewBootstrapClient returns a client for the Bootstrap from the given config.
+func NewBootstrapClient(c config) *BootstrapClient {
+	return &BootstrapClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `bootstrap.Hooks(f(g(h())))`.
+func (c *BootstrapClient) Use(hooks ...Hook) {
+	c.hooks.Bootstrap = append(c.hooks.Bootstrap, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `bootstrap.Intercept(f(g(h())))`.
+func (c *BootstrapClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Bootstrap = append(c.inters.Bootstrap, interceptors...)
+}
+
+// Create returns a builder for creating a Bootstrap entity.
+func (c *BootstrapClient) Create() *BootstrapCreate {
+	mutation := newBootstrapMutation(c.config, OpCreate)
+	return &BootstrapCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Bootstrap entities.
+func (c *BootstrapClient) CreateBulk(builders ...*BootstrapCreate) *BootstrapCreateBulk {
+	return &BootstrapCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BootstrapClient) MapCreateBulk(slice any, setFunc func(*BootstrapCreate, int)) *BootstrapCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BootstrapCreateBulk{err: fmt.Errorf("calling to BootstrapClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BootstrapCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BootstrapCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Bootstrap.
+func (c *BootstrapClient) Update() *BootstrapUpdate {
+	mutation := newBootstrapMutation(c.config, OpUpdate)
+	return &BootstrapUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BootstrapClient) UpdateOne(b *Bootstrap) *BootstrapUpdateOne {
+	mutation := newBootstrapMutation(c.config, OpUpdateOne, withBootstrap(b))
+	return &BootstrapUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BootstrapClient) UpdateOneID(id int) *BootstrapUpdateOne {
+	mutation := newBootstrapMutation(c.config, OpUpdateOne, withBootstrapID(id))
+	return &BootstrapUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Bootstrap.
+func (c *BootstrapClient) Delete() *BootstrapDelete {
+	mutation := newBootstrapMutation(c.config, OpDelete)
+	return &BootstrapDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BootstrapClient) DeleteOne(b *Bootstrap) *BootstrapDeleteOne {
+	return c.DeleteOneID(b.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BootstrapClient) DeleteOneID(id int) *BootstrapDeleteOne {
+	builder := c.Delete().Where(bootstrap.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BootstrapDeleteOne{builder}
+}
+
+// Query returns a query builder for Bootstrap.
+func (c *BootstrapClient) Query() *BootstrapQuery {
+	return &BootstrapQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBootstrap},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Bootstrap entity by its id.
+func (c *BootstrapClient) Get(ctx context.Context, id int) (*Bootstrap, error) {
+	return c.Query().Where(bootstrap.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BootstrapClient) GetX(ctx context.Context, id int) *Bootstrap {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *BootstrapClient) Hooks() []Hook {
+	return c.hooks.Bootstrap
+}
+
+// Interceptors returns the client interceptors.
+func (c *BootstrapClient) Interceptors() []Interceptor {
+	return c.inters.Bootstrap
+}
+
+func (c *BootstrapClient) mutate(ctx context.Context, m *BootstrapMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BootstrapCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BootstrapUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BootstrapUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BootstrapDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Bootstrap mutation op: %q", m.Op())
 	}
 }
 
@@ -2067,6 +2226,139 @@ func (c *ProjectClient) mutate(ctx context.Context, m *ProjectMutation) (Value, 
 	}
 }
 
+// RegistryClient is a client for the Registry schema.
+type RegistryClient struct {
+	config
+}
+
+// NewRegistryClient returns a client for the Registry from the given config.
+func NewRegistryClient(c config) *RegistryClient {
+	return &RegistryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `registry.Hooks(f(g(h())))`.
+func (c *RegistryClient) Use(hooks ...Hook) {
+	c.hooks.Registry = append(c.hooks.Registry, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `registry.Intercept(f(g(h())))`.
+func (c *RegistryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Registry = append(c.inters.Registry, interceptors...)
+}
+
+// Create returns a builder for creating a Registry entity.
+func (c *RegistryClient) Create() *RegistryCreate {
+	mutation := newRegistryMutation(c.config, OpCreate)
+	return &RegistryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Registry entities.
+func (c *RegistryClient) CreateBulk(builders ...*RegistryCreate) *RegistryCreateBulk {
+	return &RegistryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RegistryClient) MapCreateBulk(slice any, setFunc func(*RegistryCreate, int)) *RegistryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RegistryCreateBulk{err: fmt.Errorf("calling to RegistryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RegistryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RegistryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Registry.
+func (c *RegistryClient) Update() *RegistryUpdate {
+	mutation := newRegistryMutation(c.config, OpUpdate)
+	return &RegistryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RegistryClient) UpdateOne(r *Registry) *RegistryUpdateOne {
+	mutation := newRegistryMutation(c.config, OpUpdateOne, withRegistry(r))
+	return &RegistryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RegistryClient) UpdateOneID(id uuid.UUID) *RegistryUpdateOne {
+	mutation := newRegistryMutation(c.config, OpUpdateOne, withRegistryID(id))
+	return &RegistryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Registry.
+func (c *RegistryClient) Delete() *RegistryDelete {
+	mutation := newRegistryMutation(c.config, OpDelete)
+	return &RegistryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RegistryClient) DeleteOne(r *Registry) *RegistryDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RegistryClient) DeleteOneID(id uuid.UUID) *RegistryDeleteOne {
+	builder := c.Delete().Where(registry.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RegistryDeleteOne{builder}
+}
+
+// Query returns a query builder for Registry.
+func (c *RegistryClient) Query() *RegistryQuery {
+	return &RegistryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRegistry},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Registry entity by its id.
+func (c *RegistryClient) Get(ctx context.Context, id uuid.UUID) (*Registry, error) {
+	return c.Query().Where(registry.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RegistryClient) GetX(ctx context.Context, id uuid.UUID) *Registry {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RegistryClient) Hooks() []Hook {
+	return c.hooks.Registry
+}
+
+// Interceptors returns the client interceptors.
+func (c *RegistryClient) Interceptors() []Interceptor {
+	return c.inters.Registry
+}
+
+func (c *RegistryClient) mutate(ctx context.Context, m *RegistryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RegistryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RegistryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RegistryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RegistryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Registry mutation op: %q", m.Op())
+	}
+}
+
 // ServiceClient is a client for the Service schema.
 type ServiceClient struct {
 	config
@@ -2248,6 +2540,22 @@ func (c *ServiceClient) QueryCurrentDeployment(s *Service) *DeploymentQuery {
 			sqlgraph.From(service.Table, service.FieldID, id),
 			sqlgraph.To(deployment.Table, deployment.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, service.CurrentDeploymentTable, service.CurrentDeploymentColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryVariableReferences queries the variable_references edge of a Service.
+func (c *ServiceClient) QueryVariableReferences(s *Service) *VariableReferenceQuery {
+	query := (&VariableReferenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(variablereference.Table, variablereference.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, service.VariableReferencesTable, service.VariableReferencesColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil
@@ -2823,6 +3131,155 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// VariableReferenceClient is a client for the VariableReference schema.
+type VariableReferenceClient struct {
+	config
+}
+
+// NewVariableReferenceClient returns a client for the VariableReference from the given config.
+func NewVariableReferenceClient(c config) *VariableReferenceClient {
+	return &VariableReferenceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `variablereference.Hooks(f(g(h())))`.
+func (c *VariableReferenceClient) Use(hooks ...Hook) {
+	c.hooks.VariableReference = append(c.hooks.VariableReference, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `variablereference.Intercept(f(g(h())))`.
+func (c *VariableReferenceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.VariableReference = append(c.inters.VariableReference, interceptors...)
+}
+
+// Create returns a builder for creating a VariableReference entity.
+func (c *VariableReferenceClient) Create() *VariableReferenceCreate {
+	mutation := newVariableReferenceMutation(c.config, OpCreate)
+	return &VariableReferenceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of VariableReference entities.
+func (c *VariableReferenceClient) CreateBulk(builders ...*VariableReferenceCreate) *VariableReferenceCreateBulk {
+	return &VariableReferenceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *VariableReferenceClient) MapCreateBulk(slice any, setFunc func(*VariableReferenceCreate, int)) *VariableReferenceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &VariableReferenceCreateBulk{err: fmt.Errorf("calling to VariableReferenceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*VariableReferenceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &VariableReferenceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for VariableReference.
+func (c *VariableReferenceClient) Update() *VariableReferenceUpdate {
+	mutation := newVariableReferenceMutation(c.config, OpUpdate)
+	return &VariableReferenceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *VariableReferenceClient) UpdateOne(vr *VariableReference) *VariableReferenceUpdateOne {
+	mutation := newVariableReferenceMutation(c.config, OpUpdateOne, withVariableReference(vr))
+	return &VariableReferenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *VariableReferenceClient) UpdateOneID(id uuid.UUID) *VariableReferenceUpdateOne {
+	mutation := newVariableReferenceMutation(c.config, OpUpdateOne, withVariableReferenceID(id))
+	return &VariableReferenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for VariableReference.
+func (c *VariableReferenceClient) Delete() *VariableReferenceDelete {
+	mutation := newVariableReferenceMutation(c.config, OpDelete)
+	return &VariableReferenceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *VariableReferenceClient) DeleteOne(vr *VariableReference) *VariableReferenceDeleteOne {
+	return c.DeleteOneID(vr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *VariableReferenceClient) DeleteOneID(id uuid.UUID) *VariableReferenceDeleteOne {
+	builder := c.Delete().Where(variablereference.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &VariableReferenceDeleteOne{builder}
+}
+
+// Query returns a query builder for VariableReference.
+func (c *VariableReferenceClient) Query() *VariableReferenceQuery {
+	return &VariableReferenceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeVariableReference},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a VariableReference entity by its id.
+func (c *VariableReferenceClient) Get(ctx context.Context, id uuid.UUID) (*VariableReference, error) {
+	return c.Query().Where(variablereference.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *VariableReferenceClient) GetX(ctx context.Context, id uuid.UUID) *VariableReference {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryService queries the service edge of a VariableReference.
+func (c *VariableReferenceClient) QueryService(vr *VariableReference) *ServiceQuery {
+	query := (&ServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := vr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(variablereference.Table, variablereference.FieldID, id),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, variablereference.ServiceTable, variablereference.ServiceColumn),
+		)
+		fromV = sqlgraph.Neighbors(vr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *VariableReferenceClient) Hooks() []Hook {
+	return c.hooks.VariableReference
+}
+
+// Interceptors returns the client interceptors.
+func (c *VariableReferenceClient) Interceptors() []Interceptor {
+	return c.inters.VariableReference
+}
+
+func (c *VariableReferenceClient) mutate(ctx context.Context, m *VariableReferenceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&VariableReferenceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&VariableReferenceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&VariableReferenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&VariableReferenceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown VariableReference mutation op: %q", m.Op())
+	}
+}
+
 // WebhookClient is a client for the Webhook schema.
 type WebhookClient struct {
 	config
@@ -2991,14 +3448,16 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		BuildkitSettings, Deployment, Environment, GithubApp, GithubInstallation, Group,
-		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig,
-		Team, User, Webhook []ent.Hook
+		Bootstrap, BuildkitSettings, Deployment, Environment, GithubApp,
+		GithubInstallation, Group, JWTKey, Oauth2Code, Oauth2Token, Permission,
+		Project, Registry, Service, ServiceConfig, Team, User, VariableReference,
+		Webhook []ent.Hook
 	}
 	inters struct {
-		BuildkitSettings, Deployment, Environment, GithubApp, GithubInstallation, Group,
-		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Service, ServiceConfig,
-		Team, User, Webhook []ent.Interceptor
+		Bootstrap, BuildkitSettings, Deployment, Environment, GithubApp,
+		GithubInstallation, Group, JWTKey, Oauth2Code, Oauth2Token, Permission,
+		Project, Registry, Service, ServiceConfig, Team, User, VariableReference,
+		Webhook []ent.Interceptor
 	}
 )
 
