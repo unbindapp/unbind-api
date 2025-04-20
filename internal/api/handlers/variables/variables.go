@@ -36,7 +36,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		grp,
 		huma.Operation{
 			OperationID: "update-variables",
-			Summary:     "Update Variables",
+			Summary:     "Create or Update Variables",
 			Description: "Create or update variables for a service, environment, project, or team by key",
 			Path:        "/update",
 			Method:      http.MethodPost,
