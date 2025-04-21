@@ -13,6 +13,14 @@ import (
 	"github.com/unbindapp/unbind-api/ent/variablereference"
 )
 
+func (self *VariableRepository) GetReferenceByID(ctx context.Context, id uuid.UUID) (*ent.VariableReference, error) {
+	return self.base.DB.VariableReference.Query().
+		Where(
+			variablereference.ID(id),
+		).
+		Only(ctx)
+}
+
 func (self *VariableRepository) GetReferencesForService(
 	ctx context.Context,
 	serviceID uuid.UUID,

@@ -2,16 +2,12 @@ package variables_service
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) ([]models.AvailableVariableReference, error) {
@@ -147,121 +143,4 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 	}
 
 	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints, nameMap), nil
-}
-
-// Resolve a variable reference value for a key
-func (self *VariablesService) ResolveAvailableReferenceValue(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.ResolveVariableReferenceInput) (string, error) {
-	permissionChecks := []permissions_repo.PermissionCheck{}
-	switch input.SourceType {
-	case schema.VariableReferenceSourceTypeTeam:
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeTeam,
-			ResourceID:   input.SourceID,
-		})
-	case schema.VariableReferenceSourceTypeProject:
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeProject,
-			ResourceID:   input.SourceID,
-		})
-	case schema.VariableReferenceSourceTypeEnvironment:
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeEnvironment,
-			ResourceID:   input.SourceID,
-		})
-	case schema.VariableReferenceSourceTypeService:
-		permissionChecks = append(permissionChecks, permissions_repo.PermissionCheck{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeService,
-			ResourceID:   input.SourceID,
-		})
-	default:
-		return "", errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid source type")
-	}
-
-	// Check permissions
-	if err := self.repo.Permissions().Check(ctx, requesterUserID, permissionChecks); err != nil {
-		return "", err
-	}
-
-	client, err := self.k8s.CreateClientWithToken(bearerToken)
-	if err != nil {
-		return "", err
-	}
-
-	// Get team by ID
-	namespace, err := self.repo.Team().GetNamespace(ctx, input.TeamID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
-		}
-		return "", err
-	}
-
-	switch input.Type {
-	case schema.VariableReferenceTypeVariable:
-		// Get variable
-		secret, err := self.k8s.GetSecret(ctx, input.Name, namespace, client)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Variable not found")
-			}
-			return "", err
-		}
-		for k, v := range secret.Data {
-			if k == input.Key {
-				return string(v), nil
-			}
-		}
-		return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Variable not found")
-	case schema.VariableReferenceTypeInternalEndpoint, schema.VariableReferenceTypeExternalEndpoint:
-		// Get endpoint
-		endpoints, err := self.k8s.DiscoverEndpointsByLabels(
-			ctx,
-			namespace,
-			map[string]string{
-				input.SourceType.KubernetesLabel(): input.SourceID.String(),
-			},
-			client,
-		)
-		if err != nil {
-			return "", err
-		}
-
-		if len(endpoints.Internal) == 0 && len(endpoints.External) == 0 {
-			return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Endpoint not found")
-		}
-
-		if input.Type == schema.VariableReferenceTypeInternalEndpoint {
-			for _, endpoint := range endpoints.Internal {
-				if endpoint.KubernetesName == input.Key {
-					// Figure out port
-					var targetPort *schema.PortSpec
-					for _, port := range endpoint.Ports {
-						if port.Protocol != nil && *port.Protocol == schema.ProtocolTCP {
-							targetPort = &port
-							break
-						}
-					}
-					if targetPort == nil {
-						return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "No TCP port found for endpoint")
-					}
-					return fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port), nil
-				}
-			}
-		} else {
-			for _, endpoint := range endpoints.External {
-				for _, host := range endpoint.Hosts {
-					if host.Host == input.Key {
-						return host.Host, nil
-					}
-				}
-			}
-		}
-
-	}
-
-	return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Variable not found")
 }

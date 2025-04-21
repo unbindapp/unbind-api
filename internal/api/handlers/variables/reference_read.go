@@ -49,7 +49,8 @@ func (self *HandlerGroup) ListReferenceableVariables(ctx context.Context, input 
 // Resolve
 type ResolveVariableReferenceInput struct {
 	server.BaseAuthInput
-	models.ResolveVariableReferenceInput
+	ServiceID   uuid.UUID `query:"service_id" required:"true"`
+	ReferenceID uuid.UUID `query:"reference_id" required:"true"`
 }
 
 type ResolveVariableReferenceResponse struct {
@@ -67,7 +68,7 @@ func (self *HandlerGroup) ResolveVariableReference(ctx context.Context, input *R
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	resolved, err := self.srv.VariablesService.ResolveAvailableReferenceValue(ctx, user.ID, bearerToken, &input.ResolveVariableReferenceInput)
+	resolved, err := self.srv.VariablesService.ResolveSingleReference(ctx, user.ID, bearerToken, input.ServiceID, input.ReferenceID)
 	if err != nil {
 		return nil, handleVariablesErr(err)
 	}
