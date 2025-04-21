@@ -115,7 +115,21 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		)
 
 		mu.Lock()
-		endpoints = eps
+		filteredEPs := &models.EndpointDiscovery{
+			External: []models.IngressEndpoint{},
+			Internal: []models.ServiceEndpoint{},
+		}
+		for _, ep := range eps.Internal {
+			if ep.ServiceID != serviceID {
+				filteredEPs.Internal = append(filteredEPs.Internal, ep)
+			}
+		}
+		for _, ep := range eps.External {
+			if ep.ServiceID != serviceID {
+				filteredEPs.External = append(filteredEPs.External, ep)
+			}
+		}
+		endpoints = filteredEPs
 		endpointsErr = err
 		mu.Unlock()
 	}()
