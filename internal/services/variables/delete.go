@@ -82,19 +82,19 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 	}
 
 	variableResponse := &models.VariableResponse{
-		Items:      make([]*models.VariableResponseItem, len(secrets)),
-		References: []*models.VariableReferenceResponse{},
+		Variables:          make([]*models.VariableResponseItem, len(secrets)),
+		VariableReferences: []*models.VariableReferenceResponse{},
 	}
 	i := 0
 	for k, v := range secrets {
-		variableResponse.Items[i] = &models.VariableResponseItem{
+		variableResponse.Variables[i] = &models.VariableResponseItem{
 			Type:  input.Type,
 			Name:  k,
 			Value: string(v),
 		}
 		i++
 	}
-	models.SortVariableResponse(variableResponse.Items)
+	models.SortVariableResponse(variableResponse.Variables)
 
 	// Add references if this is for a service
 	if input.Type == schema.VariableReferenceSourceTypeService {
@@ -102,7 +102,7 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 		if err != nil {
 			return nil, err
 		}
-		variableResponse.References = models.TransformVariableReferenceResponseEntities(references)
+		variableResponse.VariableReferences = models.TransformVariableReferenceResponseEntities(references)
 	}
 
 	// Perform a restart of pods...

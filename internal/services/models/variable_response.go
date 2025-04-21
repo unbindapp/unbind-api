@@ -29,8 +29,8 @@ func (u VariableUpdateBehavior) Schema(r huma.Registry) *huma.Schema {
 }
 
 type VariableResponse struct {
-	References []*VariableReferenceResponse `json:"references" nullable:"false"`
-	Items      []*VariableResponseItem      `json:"items" nullable:"false"`
+	VariableReferences []*VariableReferenceResponse `json:"variable_references" nullable:"false"`
+	Variables          []*VariableResponseItem      `json:"variables" nullable:"false"`
 }
 
 type VariableResponseItem struct {
