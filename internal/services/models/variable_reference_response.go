@@ -11,9 +11,7 @@ import (
 )
 
 type AvailableVariableReferenceResponse struct {
-	Variables         []AvailableVariableReference `json:"variables" nullable:"false"`
-	InternalEndpoints []AvailableVariableReference `json:"internal_endpoints" nullable:"false"`
-	ExternalEndpoints []AvailableVariableReference `json:"external_endpoints" nullable:"false"`
+	Variables []AvailableVariableReference `json:"variables" nullable:"false"`
 }
 
 type AvailableVariableReference struct {
@@ -26,6 +24,11 @@ type AvailableVariableReference struct {
 
 // Define a comparison function for AvailableVariableReference
 func compareAvailableVariableReferences(a, b AvailableVariableReference) int {
+	// Sort by type first
+	if a.Type != b.Type {
+		return strings.Compare(string(a.Type), string(b.Type))
+	}
+
 	// Sort by source type first, team comes first
 	aPriority := getSourceTypePriority(a.SourceType)
 	bPriority := getSourceTypePriority(b.SourceType)
@@ -63,10 +66,11 @@ type SecretData struct {
 
 func TransformAvailableVariableResponse(secretData []SecretData, endpoints *EndpointDiscovery) *AvailableVariableReferenceResponse {
 	resp := &AvailableVariableReferenceResponse{}
-	resp.Variables = make([]AvailableVariableReference, len(secretData))
+	resp.Variables = make([]AvailableVariableReference, len(secretData)+len(endpoints.Internal)+len(endpoints.External))
 
 	// Process variables
-	for i, secret := range secretData {
+	i := 0
+	for _, secret := range secretData {
 		resp.Variables[i] = AvailableVariableReference{
 			Type:       schema.VariableReferenceTypeVariable,
 			Name:       secret.SecretName,
@@ -74,37 +78,37 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 			SourceID:   secret.ID,
 			Keys:       secret.Keys,
 		}
+		i++
 	}
 
 	// Make endpoints response
-	resp.InternalEndpoints = make([]AvailableVariableReference, len(endpoints.Internal))
-	for i, endpoint := range endpoints.Internal {
-		resp.InternalEndpoints[i] = AvailableVariableReference{
+	for _, endpoint := range endpoints.Internal {
+		resp.Variables[i] = AvailableVariableReference{
 			Type:       schema.VariableReferenceTypeInternalEndpoint,
 			Name:       endpoint.Name,
 			SourceType: schema.VariableReferenceSourceTypeService, // Always service
 			SourceID:   endpoint.ServiceID,
 			Keys:       []string{endpoint.Name},
 		}
+		i++
 	}
-	resp.ExternalEndpoints = make([]AvailableVariableReference, len(endpoints.External))
-	for i, endpoint := range endpoints.External {
-		resp.ExternalEndpoints[i] = AvailableVariableReference{
+
+	for _, endpoint := range endpoints.External {
+		resp.Variables[i] = AvailableVariableReference{
 			Type:       schema.VariableReferenceTypeExternalEndpoint,
 			Name:       endpoint.Name,
 			SourceType: schema.VariableReferenceSourceTypeService, // Always service
 			SourceID:   endpoint.ServiceID,
 		}
 
-		resp.ExternalEndpoints[i].Keys = make([]string, len(endpoint.Hosts))
+		resp.Variables[i].Keys = make([]string, len(endpoint.Hosts))
 		for j, host := range endpoint.Hosts {
-			resp.ExternalEndpoints[i].Keys[j] = host.Host
+			resp.Variables[i].Keys[j] = host.Host
 		}
+		i++
 	}
 
 	slices.SortFunc(resp.Variables, compareAvailableVariableReferences)
-	slices.SortFunc(resp.InternalEndpoints, compareAvailableVariableReferences)
-	slices.SortFunc(resp.ExternalEndpoints, compareAvailableVariableReferences)
 
 	return resp
 }
