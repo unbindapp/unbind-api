@@ -28,6 +28,8 @@ func (self *PortSpec) AsV1PortSpec() v1.PortSpec {
 	var protocol *corev1.Protocol
 	if self.Protocol != nil {
 		protocol = utils.ToPtr(corev1.Protocol(*self.Protocol))
+	} else {
+		protocol = utils.ToPtr(corev1.ProtocolTCP)
 	}
 	return v1.PortSpec{
 		Port:     self.Port,
