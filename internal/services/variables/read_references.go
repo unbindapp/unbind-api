@@ -35,6 +35,11 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, err
 	}
 
+	// Build a map of names
+	nameMap := make(map[uuid.UUID]string)
+	nameMap[team.ID] = team.Name
+	nameMap[project.ID] = project.Name
+
 	// Base secret names
 	teamSecret := team.KubernetesSecret
 	projectSecret := project.KubernetesSecret
@@ -48,11 +53,13 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, err
 	}
 	for _, environment := range projectEnvironments {
+		nameMap[environment.ID] = environment.Name
 		for _, service := range environment.Edges.Services {
 			if service.ID == serviceID {
 				continue
 			}
 			serviceSecrets[service.ID] = service.KubernetesSecret
+			nameMap[service.ID] = service.Name
 		}
 	}
 
@@ -125,7 +132,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, endpointsErr
 	}
 
-	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints), nil
+	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints, nameMap), nil
 }
 
 // Resolve a variable reference value for a key
@@ -215,7 +222,7 @@ func (self *VariablesService) ResolveAvailableReferenceValue(ctx context.Context
 
 		if input.Type == schema.VariableReferenceTypeInternalEndpoint {
 			for _, endpoint := range endpoints.Internal {
-				if endpoint.Name == input.Key {
+				if endpoint.KubernetesName == input.Key {
 					// Figure out port
 					var targetPort *schema.PortSpec
 					for _, port := range endpoint.Ports {

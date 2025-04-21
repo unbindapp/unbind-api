@@ -38,12 +38,12 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 		sourceValues := make(map[string]string)
 		for _, source := range reference.Sources {
 			// The key we want to replace in our template
-			sourceKey := fmt.Sprintf("${%s.%s}", source.Name, source.Key)
+			sourceKey := fmt.Sprintf("${%s.%s}", source.KubernetesName, source.Key)
 
 			switch source.Type {
 			case schema.VariableReferenceTypeVariable:
 				// Get from kubernetes secret
-				secret, err := self.k8s.GetSecret(ctx, source.Name, namespace, client)
+				secret, err := self.k8s.GetSecret(ctx, source.KubernetesName, namespace, client)
 				if err != nil {
 					if !errors.IsNotFound(err) {
 						return nil, err
@@ -52,7 +52,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 							log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 							return nil, err
 						}
-						return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
+						return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
 					}
 				}
 
@@ -63,7 +63,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 						return nil, err
 					}
-					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
 				}
 				sourceValues[sourceKey] = string(value)
 			case schema.VariableReferenceTypeInternalEndpoint, schema.VariableReferenceTypeExternalEndpoint:
@@ -80,13 +80,13 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 						return nil, err
 					}
-					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
 				}
 
 				found := false
 				if source.Type == schema.VariableReferenceTypeInternalEndpoint {
 					for _, endpoint := range endpoints.Internal {
-						if endpoint.Name == source.Key {
+						if endpoint.KubernetesName == source.Key {
 							// Figure out port
 							var targetPort *schema.PortSpec
 							for _, port := range endpoint.Ports {
@@ -96,12 +96,12 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 								}
 							}
 							if targetPort == nil {
-								log.Warnf("No TCP port found for endpoint %s", endpoint.Name)
+								log.Warnf("No TCP port found for endpoint %s", endpoint.KubernetesName)
 								if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
 									log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 									return nil, err
 								}
-								return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.Name, source.Key))
+								return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
 							}
 							sourceValues[sourceKey] = fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port)
 							found = true
@@ -127,7 +127,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 						return nil, err
 					}
-					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.Name, source.Key))
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.KubernetesName, source.Key))
 				}
 			}
 		}

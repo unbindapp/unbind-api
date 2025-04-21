@@ -15,11 +15,12 @@ import (
 )
 
 type VariableReferenceSource struct {
-	Type       VariableReferenceType       `json:"type"`
-	SourceType VariableReferenceSourceType `json:"source_type"`
-	ID         uuid.UUID                   `json:"id"`
-	Name       string                      `json:"name"`
-	Key        string                      `json:"key"`
+	Type           VariableReferenceType       `json:"type"`
+	SourceName     string                      `json:"source_name"`
+	SourceType     VariableReferenceSourceType `json:"source_type"`
+	ID             uuid.UUID                   `json:"id"`
+	KubernetesName string                      `json:"kubernetes_name"`
+	Key            string                      `json:"key"`
 }
 
 // VariableReference holds the schema definition for the VariableReference entity.

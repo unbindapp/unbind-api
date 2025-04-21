@@ -46,13 +46,13 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 		serviceID, _ := uuid.Parse(svc.Labels["unbind-service"])
 
 		endpoint := models.ServiceEndpoint{
-			Name:          svc.Name,
-			DNS:           fmt.Sprintf("%s.%s", svc.Name, namespace),
-			Ports:         make([]schema.PortSpec, len(svc.Spec.Ports)),
-			TeamID:        teamID,
-			ProjectID:     projectID,
-			EnvironmentID: environmentID,
-			ServiceID:     serviceID,
+			KubernetesName: svc.Name,
+			DNS:            fmt.Sprintf("%s.%s", svc.Name, namespace),
+			Ports:          make([]schema.PortSpec, len(svc.Spec.Ports)),
+			TeamID:         teamID,
+			ProjectID:      projectID,
+			EnvironmentID:  environmentID,
+			ServiceID:      serviceID,
 		}
 
 		// Add port information
@@ -82,12 +82,12 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 		serviceID, _ := uuid.Parse(ing.Labels["unbind-service"])
 
 		endpoint := models.IngressEndpoint{
-			Name:          ing.Name,
-			Hosts:         []models.ExtendedHostSpec{},
-			TeamID:        teamID,
-			ProjectID:     projectID,
-			EnvironmentID: environmentID,
-			ServiceID:     serviceID,
+			KubernetesName: ing.Name,
+			Hosts:          []models.ExtendedHostSpec{},
+			TeamID:         teamID,
+			ProjectID:      projectID,
+			EnvironmentID:  environmentID,
+			ServiceID:      serviceID,
 		}
 
 		// Make a map of paths to iterate TLS

@@ -13,23 +13,23 @@ type EndpointDiscovery struct {
 
 // ServiceEndpoint represents internal DNS information for a Kubernetes service
 type ServiceEndpoint struct {
-	Name          string            `json:"name"`
-	DNS           string            `json:"dns"`
-	Ports         []schema.PortSpec `json:"ports" nullable:"false"`
-	TeamID        uuid.UUID         `json:"team_id"`
-	ProjectID     uuid.UUID         `json:"project_id"`
-	EnvironmentID uuid.UUID         `json:"environment_id"`
-	ServiceID     uuid.UUID         `json:"service_id"`
+	KubernetesName string            `json:"kubernetes_name"`
+	DNS            string            `json:"dns"`
+	Ports          []schema.PortSpec `json:"ports" nullable:"false"`
+	TeamID         uuid.UUID         `json:"team_id"`
+	ProjectID      uuid.UUID         `json:"project_id"`
+	EnvironmentID  uuid.UUID         `json:"environment_id"`
+	ServiceID      uuid.UUID         `json:"service_id"`
 }
 
 // IngressEndpoint represents external DNS information for a Kubernetes ingress
 type IngressEndpoint struct {
-	Name          string             `json:"name"`
-	Hosts         []ExtendedHostSpec `json:"hosts" nullable:"false"`
-	TeamID        uuid.UUID          `json:"team_id"`
-	ProjectID     uuid.UUID          `json:"project_id"`
-	EnvironmentID uuid.UUID          `json:"environment_id"`
-	ServiceID     uuid.UUID          `json:"service_id"`
+	KubernetesName string             `json:"kubernetes_name"`
+	Hosts          []ExtendedHostSpec `json:"hosts" nullable:"false"`
+	TeamID         uuid.UUID          `json:"team_id"`
+	ProjectID      uuid.UUID          `json:"project_id"`
+	EnvironmentID  uuid.UUID          `json:"environment_id"`
+	ServiceID      uuid.UUID          `json:"service_id"`
 }
 
 type ExtendedHostSpec struct {

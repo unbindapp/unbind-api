@@ -11,11 +11,12 @@ import (
 )
 
 type AvailableVariableReference struct {
-	Type       schema.VariableReferenceType       `json:"type"`
-	Name       string                             `json:"name"`
-	SourceType schema.VariableReferenceSourceType `json:"source_type"`
-	SourceID   uuid.UUID                          `json:"source_id"`
-	Keys       []string                           `json:"keys"`
+	Type           schema.VariableReferenceType       `json:"type"`
+	SourceName     string                             `json:"name"`
+	KubernetesName string                             `json:"kubernetes_name"`
+	SourceType     schema.VariableReferenceSourceType `json:"source_type"`
+	SourceID       uuid.UUID                          `json:"source_id"`
+	Keys           []string                           `json:"keys"`
 }
 
 // Define a comparison function for AvailableVariableReference
@@ -33,7 +34,7 @@ func compareAvailableVariableReferences(a, b AvailableVariableReference) int {
 	}
 
 	// sort by name
-	return strings.Compare(a.Name, b.Name)
+	return strings.Compare(a.KubernetesName, b.KubernetesName)
 }
 
 // Helper function to get priority of SourceType
@@ -60,18 +61,19 @@ type SecretData struct {
 	Keys       []string
 }
 
-func TransformAvailableVariableResponse(secretData []SecretData, endpoints *EndpointDiscovery) []AvailableVariableReference {
+func TransformAvailableVariableResponse(secretData []SecretData, endpoints *EndpointDiscovery, nameMap map[uuid.UUID]string) []AvailableVariableReference {
 	resp := make([]AvailableVariableReference, len(secretData)+len(endpoints.Internal)+len(endpoints.External))
 
 	// Process variables
 	i := 0
 	for _, secret := range secretData {
 		resp[i] = AvailableVariableReference{
-			Type:       schema.VariableReferenceTypeVariable,
-			Name:       secret.SecretName,
-			SourceType: secret.Type,
-			SourceID:   secret.ID,
-			Keys:       secret.Keys,
+			Type:           schema.VariableReferenceTypeVariable,
+			SourceName:     nameMap[secret.ID],
+			KubernetesName: secret.SecretName,
+			SourceType:     secret.Type,
+			SourceID:       secret.ID,
+			Keys:           secret.Keys,
 		}
 		i++
 	}
@@ -79,21 +81,23 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 	// Make endpoints response
 	for _, endpoint := range endpoints.Internal {
 		resp[i] = AvailableVariableReference{
-			Type:       schema.VariableReferenceTypeInternalEndpoint,
-			Name:       endpoint.Name,
-			SourceType: schema.VariableReferenceSourceTypeService, // Always service
-			SourceID:   endpoint.ServiceID,
-			Keys:       []string{endpoint.Name},
+			Type:           schema.VariableReferenceTypeInternalEndpoint,
+			SourceName:     nameMap[endpoint.ServiceID],
+			KubernetesName: endpoint.KubernetesName,
+			SourceType:     schema.VariableReferenceSourceTypeService, // Always service
+			SourceID:       endpoint.ServiceID,
+			Keys:           []string{endpoint.KubernetesName},
 		}
 		i++
 	}
 
 	for _, endpoint := range endpoints.External {
 		resp[i] = AvailableVariableReference{
-			Type:       schema.VariableReferenceTypeExternalEndpoint,
-			Name:       endpoint.Name,
-			SourceType: schema.VariableReferenceSourceTypeService, // Always service
-			SourceID:   endpoint.ServiceID,
+			Type:           schema.VariableReferenceTypeExternalEndpoint,
+			SourceName:     nameMap[endpoint.ServiceID],
+			KubernetesName: endpoint.KubernetesName,
+			SourceType:     schema.VariableReferenceSourceTypeService, // Always service
+			SourceID:       endpoint.ServiceID,
 		}
 
 		resp[i].Keys = make([]string, len(endpoint.Hosts))

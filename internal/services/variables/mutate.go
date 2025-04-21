@@ -183,7 +183,7 @@ func ValidateCreateVariableReferenceInput(serviceID uuid.UUID, items []*models.V
 		// Track which sources have been referenced
 		sourcesReferenced := make(map[string]bool)
 		for _, source := range item.Sources {
-			sourcesReferenced[source.Name+"."+source.Key] = false
+			sourcesReferenced[source.KubernetesName+"."+source.Key] = false
 		}
 
 		// Find all occurrences of ${...} in the template that aren't escaped
