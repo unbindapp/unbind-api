@@ -3,6 +3,7 @@ package variables_service
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/google/uuid"
@@ -47,6 +48,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 
 	// They can access all service secrets in the same project
 	serviceSecrets := make(map[uuid.UUID]string)
+	var serviceIDs []uuid.UUID
 	// Get all environments in this project
 	projectEnvironments, err := self.repo.Environment().GetForProject(ctx, nil, project.ID)
 	if err != nil {
@@ -60,6 +62,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 			}
 			serviceSecrets[service.ID] = service.KubernetesSecret
 			nameMap[service.ID] = service.Name
+			serviceIDs = append(serviceIDs, service.ID)
 		}
 	}
 
@@ -120,12 +123,12 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 			Internal: []models.ServiceEndpoint{},
 		}
 		for _, ep := range eps.Internal {
-			if ep.ServiceID != serviceID {
+			if ep.ServiceID != serviceID && slices.Contains(serviceIDs, ep.ServiceID) {
 				filteredEPs.Internal = append(filteredEPs.Internal, ep)
 			}
 		}
 		for _, ep := range eps.External {
-			if ep.ServiceID != serviceID {
+			if ep.ServiceID != serviceID && slices.Contains(serviceIDs, ep.ServiceID) {
 				filteredEPs.External = append(filteredEPs.External, ep)
 			}
 		}
