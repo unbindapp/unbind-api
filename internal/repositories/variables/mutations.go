@@ -6,17 +6,51 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/variablereference"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *VariableRepository) CreateReference(ctx context.Context, input *models.CreateVariableReferenceInput) (*ent.VariableReference, error) {
+func (self *VariableRepository) UpdateReferences(ctx context.Context, tx repository.TxInterface, behavior models.VariableUpdateBehavior, input *models.MutateVariableReferenceInput) ([]*ent.VariableReference, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
 	// Create variable reference
-	return self.base.DB.VariableReference.Create().
-		SetTargetServiceID(input.TargetServiceID).
-		SetTargetName(strings.TrimSpace(input.TargetName)).
-		SetSources(input.Sources).
-		SetValueTemplate(input.ValueTemplate).
-		Save(ctx)
+	if behavior == models.VariableUpdateBehaviorOverwrite {
+		// Delete all existing references for the service
+		if _, err := db.VariableReference.Delete().
+			Where(variablereference.TargetServiceIDEQ(input.TargetServiceID)).
+			Exec(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	var references []*ent.VariableReference
+
+	// Create new variable references
+	for _, reference := range input.Items {
+		ref := db.VariableReference.Create().
+			SetTargetServiceID(input.TargetServiceID).
+			SetTargetName(strings.TrimSpace(reference.TargetName)).
+			SetSources(reference.Sources).
+			SetValueTemplate(reference.ValueTemplate)
+
+		if behavior == models.VariableUpdateBehaviorUpsert {
+			ref.OnConflictColumns(
+				variablereference.FieldTargetName,
+			).UpdateNewValues()
+		}
+
+		reference, err := ref.Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		references = append(references, reference)
+	}
+
+	return references, nil
 }
 
 func (self *VariableRepository) AttachError(ctx context.Context, id uuid.UUID, err error) (*ent.VariableReference, error) {

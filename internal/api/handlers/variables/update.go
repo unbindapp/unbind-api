@@ -20,6 +20,7 @@ type UpsertVariablesInput struct {
 			Name  string `json:"name" required:"true"`
 			Value string `json:"value" required:"true"`
 		} `json:"variables" required:"true"`
+		References *models.MutateVariableReferenceInput `json:"references" required:"false"`
 	}
 }
 
@@ -42,6 +43,7 @@ func (self *HandlerGroup) UpdateVariables(ctx context.Context, input *UpsertVari
 		ctx,
 		user.ID,
 		bearerToken,
+		input.Body.References,
 		input.Body.BaseVariablesJSONInput,
 		input.Body.Behavior,
 		variablesUpdateMap,

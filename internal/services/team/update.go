@@ -13,7 +13,7 @@ import (
 
 type TeamUpdateInput struct {
 	ID          uuid.UUID `json:"id" validate:"required,uuid4"`
-	DisplayName string    `json:"display_name"`
+	Name        string    `json:"name"`
 	Description *string   `json:"description"`
 }
 
@@ -25,7 +25,7 @@ func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
-	if input.DisplayName == "" && input.Description == nil {
+	if input.Name == "" && input.Description == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "No fields to update")
 	}
 
@@ -47,7 +47,7 @@ func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input
 	}
 
 	// Update the team in the database
-	updatedTeam, err := self.repo.Team().Update(ctx, input.ID, input.DisplayName, input.Description)
+	updatedTeam, err := self.repo.Team().Update(ctx, input.ID, input.Name, input.Description)
 	if err != nil {
 		// May be ent.NotFound
 		return nil, err

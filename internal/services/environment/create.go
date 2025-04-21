@@ -18,7 +18,7 @@ import (
 type CreateEnvironmentInput struct {
 	TeamID      uuid.UUID `json:"team_id" validate:"required,uuid4" required:"true"`
 	ProjectID   uuid.UUID `json:"project_id" validate:"required,uuid4" required:"true"`
-	DisplayName string    `json:"display_name" validate:"required" required:"true"`
+	Name        string    `json:"name" validate:"required" required:"true"`
 	Description *string   `json:"description"`
 }
 
@@ -62,17 +62,17 @@ func (self *EnvironmentService) CreateEnvironment(ctx context.Context, requester
 	var environment *ent.Environment
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Generate neme
-		name, err := utils.GenerateSlug(input.DisplayName)
+		kubernetesName, err := utils.GenerateSlug(input.Name)
 		if err != nil {
 			return err
 		}
 		// Create secret for this project
-		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, team.Namespace, client)
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, kubernetesName, team.Namespace, client)
 		if err != nil {
 			return err
 		}
 
-		environment, err = self.repo.Environment().Create(ctx, tx, name, input.DisplayName, secret.Name, input.Description, project.ID)
+		environment, err = self.repo.Environment().Create(ctx, tx, kubernetesName, input.Name, secret.Name, input.Description, project.ID)
 		if err != nil {
 			return err
 		}

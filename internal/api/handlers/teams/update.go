@@ -18,7 +18,7 @@ type UpdateTeamInput struct {
 	server.BaseAuthInput
 	Body struct {
 		TeamID      uuid.UUID `json:"team_id" required:"true"`
-		DisplayName string    `json:"display_name"`
+		Name        string    `json:"name"`
 		Description *string   `json:"description"`
 	}
 }
@@ -40,7 +40,7 @@ func (self *HandlerGroup) UpdateTeam(ctx context.Context, input *UpdateTeamInput
 
 	updatedTeam, err := self.srv.TeamService.UpdateTeam(ctx, user.ID, &team_service.TeamUpdateInput{
 		ID:          input.Body.TeamID,
-		DisplayName: input.Body.DisplayName,
+		Name:        input.Body.Name,
 		Description: input.Body.Description,
 	})
 	if err != nil {

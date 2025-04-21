@@ -74,17 +74,6 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.ResolveVariableReference,
 	)
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "create-variable-reference",
-			Summary:     "Create Variable Reference",
-			Description: "Create a variable reference for a service, environment, project, or team",
-			Path:        "/references/create",
-			Method:      http.MethodPost,
-		},
-		handlers.CreateVariableReference,
-	)
 }
 
 func handleVariablesErr(err error) error {

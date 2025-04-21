@@ -7,12 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // VariableRepositoryInterface ...
 type VariableRepositoryInterface interface {
-	CreateReference(ctx context.Context, input *models.CreateVariableReferenceInput) (*ent.VariableReference, error)
+	UpdateReferences(ctx context.Context, tx repository.TxInterface, behavior models.VariableUpdateBehavior, input *models.MutateVariableReferenceInput) ([]*ent.VariableReference, error)
 	AttachError(ctx context.Context, id uuid.UUID, err error) (*ent.VariableReference, error)
 	GetReferencesForService(ctx context.Context, serviceID uuid.UUID) ([]*ent.VariableReference, error)
 }

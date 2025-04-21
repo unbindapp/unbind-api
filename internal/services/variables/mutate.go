@@ -2,17 +2,30 @@ package variables_service
 
 import (
 	"context"
+	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // Create secrets in bulk
-func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.UUID, bearerToken string, input models.BaseVariablesJSONInput, behavior models.VariableUpdateBehavior, newVariables map[string][]byte) (*models.VariableResponse, error) {
+func (self *VariablesService) UpdateVariables(
+	ctx context.Context,
+	userID uuid.UUID,
+	bearerToken string,
+	referenceInput *models.MutateVariableReferenceInput,
+	input models.BaseVariablesJSONInput,
+	behavior models.VariableUpdateBehavior,
+	newVariables map[string][]byte,
+) (*models.VariableResponse, error) {
 	var permissionChecks []permissions_repo.PermissionCheck
 
 	switch input.Type {
@@ -58,24 +71,50 @@ func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.U
 		return nil, err
 	}
 
+	// Validate reference input
+	if input.Type == schema.VariableReferenceSourceTypeService && referenceInput != nil && len(referenceInput.Items) > 0 {
+		if err := ValidateCreateVariableReferenceInput(referenceInput); err != nil {
+			return nil, err
+		}
+	}
+
 	// Create kubernetes client
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
 		return nil, err
 	}
 
-	if behavior == models.VariableUpdateBehaviorOverwrite {
-		// make secrets
-		_, err = self.k8s.OverwriteSecretValues(ctx, secretName, team.Namespace, newVariables, client)
-		if err != nil {
-			return nil, err
+	references := []*models.VariableReferenceResponse{}
+	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		if input.Type == schema.VariableReferenceSourceTypeService && referenceInput != nil && len(referenceInput.Items) > 0 {
+			referenceResp, err := self.repo.Variables().UpdateReferences(ctx, tx, behavior, referenceInput)
+			if err != nil {
+				if ent.IsConstraintError(err) {
+					return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Variable reference already exists")
+				}
+				return err
+			}
+
+			references = models.TransformVariableReferenceResponseEntities(referenceResp)
 		}
-	} else {
-		// make secrets
-		_, err = self.k8s.UpsertSecretValues(ctx, secretName, team.Namespace, newVariables, client)
-		if err != nil {
-			return nil, err
+
+		if behavior == models.VariableUpdateBehaviorOverwrite {
+			// make secrets
+			_, err = self.k8s.OverwriteSecretValues(ctx, secretName, team.Namespace, newVariables, client)
+			if err != nil {
+				return err
+			}
+		} else {
+			// make secrets
+			_, err = self.k8s.UpsertSecretValues(ctx, secretName, team.Namespace, newVariables, client)
+			if err != nil {
+				return err
+			}
 		}
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	// Get secrets
@@ -86,7 +125,7 @@ func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.U
 
 	variableResponse := &models.VariableResponse{
 		Items:      make([]*models.VariableResponseItem, len(secrets)),
-		References: []*models.VariableReferenceResponse{},
+		References: references,
 	}
 	i := 0
 	for k, v := range secrets {
@@ -130,4 +169,56 @@ func (self *VariablesService) UpdateVariables(ctx context.Context, userID uuid.U
 		return nil, err
 	}
 	return variableResponse, nil
+}
+
+// Validate for CreateVariableReferenceInput
+func ValidateCreateVariableReferenceInput(input *models.MutateVariableReferenceInput) error {
+	for _, item := range input.Items {
+		if len(item.Sources) == 0 {
+			return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "At least one source is required")
+		}
+
+		template := item.ValueTemplate
+
+		// Track which sources have been referenced
+		sourcesReferenced := make(map[string]bool)
+		for _, source := range item.Sources {
+			sourcesReferenced[source.Name+"."+source.Key] = false
+		}
+
+		// Find all occurrences of ${...} in the template that aren't escaped
+		// We'll use regexp to find all instances, then check if they're escaped
+		re := regexp.MustCompile(`\${([^}]+)}`)
+		matches := re.FindAllStringSubmatchIndex(template, -1)
+
+		for _, match := range matches {
+			// Check if this is an escaped instance (preceded by \)
+			if match[0] > 0 && template[match[0]-1] == '\\' {
+				continue // Skip escaped instances
+			}
+
+			// Extract the source reference (name.key)
+			reference := template[match[2]:match[3]]
+
+			// Mark this source as referenced if it exists in our sources
+			if _, exists := sourcesReferenced[reference]; exists {
+				sourcesReferenced[reference] = true
+			}
+		}
+
+		// Check if all sources have been referenced
+		var missingReferences []string
+		for sourceRef, referenced := range sourcesReferenced {
+			if !referenced {
+				missingReferences = append(missingReferences, sourceRef)
+			}
+		}
+
+		if len(missingReferences) > 0 {
+			return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("template is missing references to the following sources: %s",
+				strings.Join(missingReferences, ", ")))
+		}
+	}
+
+	return nil
 }
