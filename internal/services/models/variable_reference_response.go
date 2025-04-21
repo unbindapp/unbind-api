@@ -12,8 +12,8 @@ import (
 
 type AvailableVariableReference struct {
 	Type           schema.VariableReferenceType       `json:"type"`
-	SourceName     string                             `json:"name"`
 	KubernetesName string                             `json:"kubernetes_name"`
+	SourceName     string                             `json:"source_name"`
 	SourceType     schema.VariableReferenceSourceType `json:"source_type"`
 	SourceID       uuid.UUID                          `json:"source_id"`
 	Keys           []string                           `json:"keys"`
