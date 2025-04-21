@@ -20,7 +20,7 @@ type UpsertVariablesInput struct {
 			Name  string `json:"name" required:"true"`
 			Value string `json:"value" required:"true"`
 		} `json:"variables" required:"true"`
-		VariableReferences *models.MutateVariableReferenceInput `json:"variable_references" required:"false"`
+		VariableReferences []*models.VariableReferenceInputItem `json:"variable_references" required:"false"`
 	}
 }
 

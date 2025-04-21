@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *VariableRepository) UpdateReferences(ctx context.Context, tx repository.TxInterface, behavior models.VariableUpdateBehavior, input *models.MutateVariableReferenceInput) ([]*ent.VariableReference, error) {
+func (self *VariableRepository) UpdateReferences(ctx context.Context, tx repository.TxInterface, behavior models.VariableUpdateBehavior, targetServiceID uuid.UUID, items []*models.VariableReferenceInputItem) ([]*ent.VariableReference, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
@@ -20,7 +20,7 @@ func (self *VariableRepository) UpdateReferences(ctx context.Context, tx reposit
 	if behavior == models.VariableUpdateBehaviorOverwrite {
 		// Delete all existing references for the service
 		if _, err := db.VariableReference.Delete().
-			Where(variablereference.TargetServiceIDEQ(input.TargetServiceID)).
+			Where(variablereference.TargetServiceIDEQ(targetServiceID)).
 			Exec(ctx); err != nil {
 			return nil, err
 		}
@@ -29,9 +29,9 @@ func (self *VariableRepository) UpdateReferences(ctx context.Context, tx reposit
 	var references []*ent.VariableReference
 
 	// Create new variable references
-	for _, reference := range input.Items {
+	for _, reference := range items {
 		ref := db.VariableReference.Create().
-			SetTargetServiceID(input.TargetServiceID).
+			SetTargetServiceID(targetServiceID).
 			SetTargetName(strings.TrimSpace(reference.TargetName)).
 			SetSources(reference.Sources).
 			SetValueTemplate(reference.ValueTemplate)

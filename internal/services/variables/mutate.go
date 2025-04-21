@@ -21,7 +21,7 @@ func (self *VariablesService) UpdateVariables(
 	ctx context.Context,
 	userID uuid.UUID,
 	bearerToken string,
-	referenceInput *models.MutateVariableReferenceInput,
+	referenceInput []*models.VariableReferenceInputItem,
 	input models.BaseVariablesJSONInput,
 	behavior models.VariableUpdateBehavior,
 	newVariables map[string][]byte,
@@ -72,8 +72,8 @@ func (self *VariablesService) UpdateVariables(
 	}
 
 	// Validate reference input
-	if input.Type == schema.VariableReferenceSourceTypeService && referenceInput != nil && len(referenceInput.Items) > 0 {
-		if err := ValidateCreateVariableReferenceInput(referenceInput); err != nil {
+	if input.Type == schema.VariableReferenceSourceTypeService && len(referenceInput) > 0 {
+		if err := ValidateCreateVariableReferenceInput(input.ServiceID, referenceInput); err != nil {
 			return nil, err
 		}
 	}
@@ -86,8 +86,8 @@ func (self *VariablesService) UpdateVariables(
 
 	references := []*models.VariableReferenceResponse{}
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
-		if input.Type == schema.VariableReferenceSourceTypeService && referenceInput != nil && len(referenceInput.Items) > 0 {
-			referenceResp, err := self.repo.Variables().UpdateReferences(ctx, tx, behavior, referenceInput)
+		if input.Type == schema.VariableReferenceSourceTypeService && len(referenceInput) > 0 {
+			referenceResp, err := self.repo.Variables().UpdateReferences(ctx, tx, behavior, input.ServiceID, referenceInput)
 			if err != nil {
 				if ent.IsConstraintError(err) {
 					return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Variable reference already exists")
@@ -172,8 +172,8 @@ func (self *VariablesService) UpdateVariables(
 }
 
 // Validate for CreateVariableReferenceInput
-func ValidateCreateVariableReferenceInput(input *models.MutateVariableReferenceInput) error {
-	for _, item := range input.Items {
+func ValidateCreateVariableReferenceInput(serviceID uuid.UUID, items []*models.VariableReferenceInputItem) error {
+	for _, item := range items {
 		if len(item.Sources) == 0 {
 			return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "At least one source is required")
 		}
