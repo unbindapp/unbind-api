@@ -55,6 +55,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "read-variable-reference",
+			Summary:     "Read a variable reference value",
+			Description: "Read a referenced value for a variable",
+			Path:        "/referneces/get",
+			Method:      http.MethodGet,
+		},
+		handlers.ResolveVariableReference,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "list-available-references",
 			Summary:     "List Available Variable References",
 			Description: "List all items that can be references as variables in service configurations",
@@ -66,13 +77,13 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "read-variable-reference",
-			Summary:     "Read a referenced value",
-			Description: "Read a referenced value for a variable",
-			Path:        "/references/get",
+			OperationID: "read-available-variable-reference",
+			Summary:     "Read an available reference value",
+			Description: "Read an available referenced value for a variable",
+			Path:        "/references/available/get",
 			Method:      http.MethodGet,
 		},
-		handlers.ResolveVariableReference,
+		handlers.ResolveAvailableVariableReference,
 	)
 }
 

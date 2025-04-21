@@ -47,6 +47,37 @@ func (self *HandlerGroup) ListReferenceableVariables(ctx context.Context, input 
 }
 
 // Resolve
+type ResolveAvailableVariableReferenceInput struct {
+	server.BaseAuthInput
+	models.ResolveVariableReferenceInput
+}
+
+type ResolveAvailableVariableReferenceResponse struct {
+	Body struct {
+		Data string `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) ResolveAvailableVariableReference(ctx context.Context, input *ResolveAvailableVariableReferenceInput) (*ResolveAvailableVariableReferenceResponse, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+
+	resolved, err := self.srv.VariablesService.ResolveAvailableReferenceValue(ctx, user.ID, bearerToken, &input.ResolveVariableReferenceInput)
+	if err != nil {
+		return nil, handleVariablesErr(err)
+	}
+
+	resp := &ResolveAvailableVariableReferenceResponse{}
+	resp.Body.Data = resolved
+	return resp, nil
+}
+
+// Resolve
 type ResolveVariableReferenceInput struct {
 	server.BaseAuthInput
 	ServiceID   uuid.UUID `query:"service_id" required:"true"`
