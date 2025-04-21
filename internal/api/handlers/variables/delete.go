@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -15,7 +16,8 @@ type DeleteVariablesInput struct {
 	server.BaseAuthInput
 	Body struct {
 		models.BaseVariablesJSONInput
-		Variables []models.VariableDeleteInput `json:"variables" validate:"required"`
+		Variables    []models.VariableDeleteInput `json:"variables" required:"false" nullable:"false"`
+		ReferenceIDs []uuid.UUID                  `json:"reference_ids" required:"false" nullable:"false"`
 	}
 }
 
@@ -34,6 +36,7 @@ func (self *HandlerGroup) DeleteVariables(ctx context.Context, input *DeleteVari
 		bearerToken,
 		input.Body.BaseVariablesJSONInput,
 		input.Body.Variables,
+		input.Body.ReferenceIDs,
 	)
 	if err != nil {
 		return nil, handleVariablesErr(err)

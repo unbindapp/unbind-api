@@ -7,12 +7,17 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // Delete a secret by key
-func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, input models.BaseVariablesJSONInput, keys []models.VariableDeleteInput) (*models.VariableResponse, error) {
+func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID uuid.UUID, bearerToken string, input models.BaseVariablesJSONInput, keys []models.VariableDeleteInput, referenceIDs []uuid.UUID) (*models.VariableResponse, error) {
+	if len(referenceIDs) > 0 && input.Type != schema.VariableReferenceSourceTypeService {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Reference IDs are only valid for service variables")
+	}
+
 	var permissionChecks []permissions_repo.PermissionCheck
 
 	switch input.Type {
@@ -64,20 +69,38 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 		return nil, err
 	}
 
-	// Get secrets
-	secrets, err := self.k8s.GetSecretMap(ctx, secretName, team.Namespace, client)
-	if err != nil {
-		return nil, err
-	}
+	secrets := make(map[string][]byte)
+	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		// Delete reference IDs
+		if input.Type == schema.VariableReferenceSourceTypeService {
+			deletedCount, err := self.repo.Variables().DeleteReferences(ctx, tx, input.ServiceID, referenceIDs)
+			if err != nil {
+				return err
+			}
+			if deletedCount != len(referenceIDs) {
+				return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid reference IDs")
+			}
+		}
 
-	// Remove from map
-	for _, secretKey := range keys {
-		delete(secrets, secretKey.Name)
-	}
+		// Get secrets
+		secrets, err = self.k8s.GetSecretMap(ctx, secretName, team.Namespace, client)
+		if err != nil {
+			return err
+		}
 
-	// Update secrets
-	_, err = self.k8s.UpdateSecret(ctx, secretName, team.Namespace, secrets, client)
-	if err != nil {
+		// Remove from map
+		for _, secretKey := range keys {
+			delete(secrets, secretKey.Name)
+		}
+
+		// Update secrets
+		_, err = self.k8s.UpdateSecret(ctx, secretName, team.Namespace, secrets, client)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 

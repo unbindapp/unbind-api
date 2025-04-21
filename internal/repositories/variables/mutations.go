@@ -59,3 +59,17 @@ func (self *VariableRepository) AttachError(ctx context.Context, id uuid.UUID, e
 		SetError(err.Error()).
 		Save(ctx)
 }
+
+func (self *VariableRepository) DeleteReferences(ctx context.Context, tx repository.TxInterface, targetServiceID uuid.UUID, ids []uuid.UUID) (int, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	// Delete all existing references for the service
+	return db.VariableReference.Delete().
+		Where(
+			variablereference.TargetServiceIDEQ(targetServiceID),
+			variablereference.IDIn(ids...),
+		).
+		Exec(ctx)
+}
