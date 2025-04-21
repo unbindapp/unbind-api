@@ -22,7 +22,7 @@ type ListReferenceableVariablesInput struct {
 
 type ReferenceableVariablesResponse struct {
 	Body struct {
-		Data *models.AvailableVariableReferenceResponse `json:"data" nullable:"false"`
+		Data []models.AvailableVariableReference `json:"data" nullable:"false"`
 	}
 }
 

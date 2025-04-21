@@ -26,8 +26,8 @@ func (Service) Mixin() []ent.Mixin {
 // Fields of the Service.
 func (Service) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").NotEmpty(),
-		field.String("display_name"),
+		field.String("kubernetes_name").NotEmpty().Unique(),
+		field.String("name"),
 		field.String("description").Optional(),
 		field.UUID("environment_id", uuid.UUID{}),
 		field.Int64("github_installation_id").Optional().Nillable().Comment("Optional reference to GitHub installation"),

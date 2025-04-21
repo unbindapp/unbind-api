@@ -55,15 +55,15 @@ func (pc *ProjectCreate) SetNillableUpdatedAt(t *time.Time) *ProjectCreate {
 	return pc
 }
 
-// SetName sets the "name" field.
-func (pc *ProjectCreate) SetName(s string) *ProjectCreate {
-	pc.mutation.SetName(s)
+// SetKubernetesName sets the "kubernetes_name" field.
+func (pc *ProjectCreate) SetKubernetesName(s string) *ProjectCreate {
+	pc.mutation.SetKubernetesName(s)
 	return pc
 }
 
-// SetDisplayName sets the "display_name" field.
-func (pc *ProjectCreate) SetDisplayName(s string) *ProjectCreate {
-	pc.mutation.SetDisplayName(s)
+// SetName sets the "name" field.
+func (pc *ProjectCreate) SetName(s string) *ProjectCreate {
+	pc.mutation.SetName(s)
 	return pc
 }
 
@@ -236,16 +236,16 @@ func (pc *ProjectCreate) check() error {
 	if _, ok := pc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Project.updated_at"`)}
 	}
-	if _, ok := pc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Project.name"`)}
+	if _, ok := pc.mutation.KubernetesName(); !ok {
+		return &ValidationError{Name: "kubernetes_name", err: errors.New(`ent: missing required field "Project.kubernetes_name"`)}
 	}
-	if v, ok := pc.mutation.Name(); ok {
-		if err := project.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Project.name": %w`, err)}
+	if v, ok := pc.mutation.KubernetesName(); ok {
+		if err := project.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Project.kubernetes_name": %w`, err)}
 		}
 	}
-	if _, ok := pc.mutation.DisplayName(); !ok {
-		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Project.display_name"`)}
+	if _, ok := pc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Project.name"`)}
 	}
 	if _, ok := pc.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Project.status"`)}
@@ -303,13 +303,13 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		_spec.SetField(project.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := pc.mutation.KubernetesName(); ok {
+		_spec.SetField(project.FieldKubernetesName, field.TypeString, value)
+		_node.KubernetesName = value
+	}
 	if value, ok := pc.mutation.Name(); ok {
 		_spec.SetField(project.FieldName, field.TypeString, value)
 		_node.Name = value
-	}
-	if value, ok := pc.mutation.DisplayName(); ok {
-		_spec.SetField(project.FieldDisplayName, field.TypeString, value)
-		_node.DisplayName = value
 	}
 	if value, ok := pc.mutation.Description(); ok {
 		_spec.SetField(project.FieldDescription, field.TypeString, value)
@@ -453,6 +453,18 @@ func (u *ProjectUpsert) UpdateUpdatedAt() *ProjectUpsert {
 	return u
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *ProjectUpsert) SetKubernetesName(v string) *ProjectUpsert {
+	u.Set(project.FieldKubernetesName, v)
+	return u
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *ProjectUpsert) UpdateKubernetesName() *ProjectUpsert {
+	u.SetExcluded(project.FieldKubernetesName)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *ProjectUpsert) SetName(v string) *ProjectUpsert {
 	u.Set(project.FieldName, v)
@@ -462,18 +474,6 @@ func (u *ProjectUpsert) SetName(v string) *ProjectUpsert {
 // UpdateName sets the "name" field to the value that was provided on create.
 func (u *ProjectUpsert) UpdateName() *ProjectUpsert {
 	u.SetExcluded(project.FieldName)
-	return u
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *ProjectUpsert) SetDisplayName(v string) *ProjectUpsert {
-	u.Set(project.FieldDisplayName, v)
-	return u
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *ProjectUpsert) UpdateDisplayName() *ProjectUpsert {
-	u.SetExcluded(project.FieldDisplayName)
 	return u
 }
 
@@ -614,6 +614,20 @@ func (u *ProjectUpsertOne) UpdateUpdatedAt() *ProjectUpsertOne {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *ProjectUpsertOne) SetKubernetesName(v string) *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *ProjectUpsertOne) UpdateKubernetesName() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *ProjectUpsertOne) SetName(v string) *ProjectUpsertOne {
 	return u.Update(func(s *ProjectUpsert) {
@@ -625,20 +639,6 @@ func (u *ProjectUpsertOne) SetName(v string) *ProjectUpsertOne {
 func (u *ProjectUpsertOne) UpdateName() *ProjectUpsertOne {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *ProjectUpsertOne) SetDisplayName(v string) *ProjectUpsertOne {
-	return u.Update(func(s *ProjectUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *ProjectUpsertOne) UpdateDisplayName() *ProjectUpsertOne {
-	return u.Update(func(s *ProjectUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 
@@ -958,6 +958,20 @@ func (u *ProjectUpsertBulk) UpdateUpdatedAt() *ProjectUpsertBulk {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *ProjectUpsertBulk) SetKubernetesName(v string) *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *ProjectUpsertBulk) UpdateKubernetesName() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *ProjectUpsertBulk) SetName(v string) *ProjectUpsertBulk {
 	return u.Update(func(s *ProjectUpsert) {
@@ -969,20 +983,6 @@ func (u *ProjectUpsertBulk) SetName(v string) *ProjectUpsertBulk {
 func (u *ProjectUpsertBulk) UpdateName() *ProjectUpsertBulk {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *ProjectUpsertBulk) SetDisplayName(v string) *ProjectUpsertBulk {
-	return u.Update(func(s *ProjectUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *ProjectUpsertBulk) UpdateDisplayName() *ProjectUpsertBulk {
-	return u.Update(func(s *ProjectUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 

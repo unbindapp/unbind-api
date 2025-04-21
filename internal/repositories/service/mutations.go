@@ -18,8 +18,8 @@ import (
 func (self *ServiceRepository) Create(
 	ctx context.Context,
 	tx repository.TxInterface,
+	kubernetesName string,
 	name string,
-	displayName string,
 	description string,
 	environmentID uuid.UUID,
 	gitHubInstallationID *int64,
@@ -33,8 +33,8 @@ func (self *ServiceRepository) Create(
 	}
 
 	return db.Service.Create().
+		SetKubernetesName(kubernetesName).
 		SetName(name).
-		SetDisplayName(displayName).
 		SetDescription(description).
 		SetEnvironmentID(environmentID).
 		SetNillableGithubInstallationID(gitHubInstallationID).
@@ -132,7 +132,7 @@ func (self *ServiceRepository) Update(
 	ctx context.Context,
 	tx repository.TxInterface,
 	serviceID uuid.UUID,
-	displayName *string,
+	name *string,
 	description *string,
 ) error {
 	db := self.base.DB
@@ -141,7 +141,7 @@ func (self *ServiceRepository) Update(
 	}
 	return db.Service.Update().
 		Where(service.IDEQ(serviceID)).
-		SetNillableDisplayName(displayName).
+		SetNillableName(name).
 		SetNillableDescription(description).
 		Exec(ctx)
 }

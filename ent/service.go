@@ -27,10 +27,10 @@ type Service struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// KubernetesName holds the value of the "kubernetes_name" field.
+	KubernetesName string `json:"kubernetes_name,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// DisplayName holds the value of the "display_name" field.
-	DisplayName string `json:"display_name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// EnvironmentID holds the value of the "environment_id" field.
@@ -141,7 +141,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldName, service.FieldDisplayName, service.FieldDescription, service.FieldGitRepositoryOwner, service.FieldGitRepository, service.FieldKubernetesSecret:
+		case service.FieldKubernetesName, service.FieldName, service.FieldDescription, service.FieldGitRepositoryOwner, service.FieldGitRepository, service.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -180,17 +180,17 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.UpdatedAt = value.Time
 			}
+		case service.FieldKubernetesName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_name", values[i])
+			} else if value.Valid {
+				s.KubernetesName = value.String
+			}
 		case service.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				s.Name = value.String
-			}
-		case service.FieldDisplayName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field display_name", values[i])
-			} else if value.Valid {
-				s.DisplayName = value.String
 			}
 		case service.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -310,11 +310,11 @@ func (s *Service) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(s.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("kubernetes_name=")
+	builder.WriteString(s.KubernetesName)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(s.Name)
-	builder.WriteString(", ")
-	builder.WriteString("display_name=")
-	builder.WriteString(s.DisplayName)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(s.Description)

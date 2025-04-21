@@ -28,8 +28,8 @@ type UpdateServiceInput struct {
 	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
 	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
 	ServiceID     uuid.UUID `validate:"required,uuid4" required:"true" json:"service_id"`
-	DisplayName   *string   ` required:"false" json:"display_name"`
-	Description   *string   ` required:"false" json:"description"`
+	Name          *string   `required:"false" json:"name"`
+	Description   *string   `required:"false" json:"description"`
 
 	// Configuration
 	GitBranch         *string                `json:"git_branch,omitempty" required:"false"`
@@ -112,14 +112,14 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Update the service
-		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.DisplayName, input.Description); err != nil {
+		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.Name, input.Description); err != nil {
 			return fmt.Errorf("failed to update service: %w", err)
 		}
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
 			input.Public != nil && *input.Public && len(input.Hosts) < 1 && service.Edges.ServiceConfig.Type != schema.ServiceTypeDatabase &&
 			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
-			host, err := utils.GenerateSubdomain(service.Name, self.cfg.ExternalWildcardBaseURL)
+			host, err := utils.GenerateSubdomain(service.KubernetesName, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
 				log.Warn("failed to generate subdomain", "error", err)
 			} else {
@@ -357,23 +357,23 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Service Updated",
 			Url:         url,
-			Description: fmt.Sprintf("A service has been updated in project %s by %s", service.Edges.Environment.Edges.Project.DisplayName, user.Email),
+			Description: fmt.Sprintf("A service has been updated in project %s by %s", service.Edges.Environment.Edges.Project.Name, user.Email),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Name",
-					Value: service.DisplayName,
+					Value: service.Name,
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.DisplayName,
+					Value: service.Edges.Environment.Name,
 				},
 			},
 		}
 
-		if input.DisplayName != nil {
+		if input.Name != nil {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
-				Name:  "Display Name",
-				Value: *input.DisplayName,
+				Name:  "Name",
+				Value: *input.Name,
 			})
 		}
 

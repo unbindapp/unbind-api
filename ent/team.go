@@ -23,10 +23,10 @@ type Team struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	// KubernetesName holds the value of the "kubernetes_name" field.
+	KubernetesName string `json:"kubernetes_name,omitempty"`
 	// Human-readable name
-	DisplayName string `json:"display_name,omitempty"`
+	Name string `json:"name,omitempty"`
 	// Kubernetes namespace tied to this team
 	Namespace string `json:"namespace,omitempty"`
 	// Kubernetes secret for this team
@@ -84,7 +84,7 @@ func (*Team) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case team.FieldName, team.FieldDisplayName, team.FieldNamespace, team.FieldKubernetesSecret, team.FieldDescription:
+		case team.FieldKubernetesName, team.FieldName, team.FieldNamespace, team.FieldKubernetesSecret, team.FieldDescription:
 			values[i] = new(sql.NullString)
 		case team.FieldCreatedAt, team.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -123,17 +123,17 @@ func (t *Team) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.UpdatedAt = value.Time
 			}
+		case team.FieldKubernetesName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_name", values[i])
+			} else if value.Valid {
+				t.KubernetesName = value.String
+			}
 		case team.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				t.Name = value.String
-			}
-		case team.FieldDisplayName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field display_name", values[i])
-			} else if value.Valid {
-				t.DisplayName = value.String
 			}
 		case team.FieldNamespace:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -211,11 +211,11 @@ func (t *Team) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(t.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("kubernetes_name=")
+	builder.WriteString(t.KubernetesName)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(t.Name)
-	builder.WriteString(", ")
-	builder.WriteString("display_name=")
-	builder.WriteString(t.DisplayName)
 	builder.WriteString(", ")
 	builder.WriteString("namespace=")
 	builder.WriteString(t.Namespace)

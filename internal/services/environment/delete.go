@@ -50,11 +50,11 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 		for _, service := range services {
 			// Cancel deployments
 			if err := self.deployCtl.CancelExistingJobs(ctx, service.ID); err != nil {
-				log.Warnf("Error cancelling jobs for service %s: %v", service.Name, err)
+				log.Warnf("Error cancelling jobs for service %s: %v", service.KubernetesName, err)
 			}
 
-			if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.Name); err != nil {
-				log.Error("Error deleting service from k8s", "svc", service.Name, "err", err)
+			if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.KubernetesName); err != nil {
+				log.Error("Error deleting service from k8s", "svc", service.KubernetesName, "err", err)
 
 				return err
 			}

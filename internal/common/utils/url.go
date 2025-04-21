@@ -77,7 +77,7 @@ func GenerateSubdomain(name, externalURL string) (string, error) {
 
 	// Check if we have valid components
 	if sanitizedDisplay == "" {
-		return "", fmt.Errorf("could not generate subdomain: display name sanitized to empty string")
+		return "", fmt.Errorf("could not generate subdomain: name sanitized to empty string")
 	}
 
 	// Create the subdomain pattern

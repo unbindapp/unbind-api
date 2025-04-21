@@ -55,11 +55,11 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Cancel deployments
 		if err := self.deploymentController.CancelExistingJobs(ctx, service.ID); err != nil {
-			log.Warnf("Error cancelling jobs for service %s: %v", service.Name, err)
+			log.Warnf("Error cancelling jobs for service %s: %v", service.KubernetesName, err)
 		}
 
-		if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.Name); err != nil {
-			log.Error("Error deleting service from k8s", "svc", service.Name, "err", err)
+		if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.KubernetesName); err != nil {
+			log.Error("Error deleting service from k8s", "svc", service.KubernetesName, "err", err)
 
 			return err
 		}
@@ -94,15 +94,15 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 		data := webhooks_service.WebookData{
 			Title:       "Service Deleted",
 			Url:         url,
-			Description: fmt.Sprintf("A service has been deleted in project %s by %s", project.DisplayName, user.Email),
+			Description: fmt.Sprintf("A service has been deleted in project %s by %s", project.Name, user.Email),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service",
-					Value: service.DisplayName,
+					Value: service.Name,
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.DisplayName,
+					Value: service.Edges.Environment.Name,
 				},
 			},
 		}

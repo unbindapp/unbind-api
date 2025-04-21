@@ -26,8 +26,8 @@ func (Environment) Mixin() []ent.Mixin {
 // Fields of the Environment.
 func (Environment) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").NotEmpty(),
-		field.String("display_name"),
+		field.String("kubernetes_name").NotEmpty().Unique(),
+		field.String("name"),
 		field.String("description").Optional().Nillable(),
 		field.Bool("active").Default(true),
 		field.UUID("project_id", uuid.UUID{}),

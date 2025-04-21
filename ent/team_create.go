@@ -55,15 +55,15 @@ func (tc *TeamCreate) SetNillableUpdatedAt(t *time.Time) *TeamCreate {
 	return tc
 }
 
-// SetName sets the "name" field.
-func (tc *TeamCreate) SetName(s string) *TeamCreate {
-	tc.mutation.SetName(s)
+// SetKubernetesName sets the "kubernetes_name" field.
+func (tc *TeamCreate) SetKubernetesName(s string) *TeamCreate {
+	tc.mutation.SetKubernetesName(s)
 	return tc
 }
 
-// SetDisplayName sets the "display_name" field.
-func (tc *TeamCreate) SetDisplayName(s string) *TeamCreate {
-	tc.mutation.SetDisplayName(s)
+// SetName sets the "name" field.
+func (tc *TeamCreate) SetName(s string) *TeamCreate {
+	tc.mutation.SetName(s)
 	return tc
 }
 
@@ -209,16 +209,16 @@ func (tc *TeamCreate) check() error {
 	if _, ok := tc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Team.updated_at"`)}
 	}
-	if _, ok := tc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Team.name"`)}
+	if _, ok := tc.mutation.KubernetesName(); !ok {
+		return &ValidationError{Name: "kubernetes_name", err: errors.New(`ent: missing required field "Team.kubernetes_name"`)}
 	}
-	if v, ok := tc.mutation.Name(); ok {
-		if err := team.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Team.name": %w`, err)}
+	if v, ok := tc.mutation.KubernetesName(); ok {
+		if err := team.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Team.kubernetes_name": %w`, err)}
 		}
 	}
-	if _, ok := tc.mutation.DisplayName(); !ok {
-		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Team.display_name"`)}
+	if _, ok := tc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Team.name"`)}
 	}
 	if _, ok := tc.mutation.Namespace(); !ok {
 		return &ValidationError{Name: "namespace", err: errors.New(`ent: missing required field "Team.namespace"`)}
@@ -270,13 +270,13 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		_spec.SetField(team.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := tc.mutation.KubernetesName(); ok {
+		_spec.SetField(team.FieldKubernetesName, field.TypeString, value)
+		_node.KubernetesName = value
+	}
 	if value, ok := tc.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 		_node.Name = value
-	}
-	if value, ok := tc.mutation.DisplayName(); ok {
-		_spec.SetField(team.FieldDisplayName, field.TypeString, value)
-		_node.DisplayName = value
 	}
 	if value, ok := tc.mutation.Namespace(); ok {
 		_spec.SetField(team.FieldNamespace, field.TypeString, value)
@@ -402,6 +402,18 @@ func (u *TeamUpsert) UpdateUpdatedAt() *TeamUpsert {
 	return u
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *TeamUpsert) SetKubernetesName(v string) *TeamUpsert {
+	u.Set(team.FieldKubernetesName, v)
+	return u
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateKubernetesName() *TeamUpsert {
+	u.SetExcluded(team.FieldKubernetesName)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *TeamUpsert) SetName(v string) *TeamUpsert {
 	u.Set(team.FieldName, v)
@@ -411,18 +423,6 @@ func (u *TeamUpsert) SetName(v string) *TeamUpsert {
 // UpdateName sets the "name" field to the value that was provided on create.
 func (u *TeamUpsert) UpdateName() *TeamUpsert {
 	u.SetExcluded(team.FieldName)
-	return u
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *TeamUpsert) SetDisplayName(v string) *TeamUpsert {
-	u.Set(team.FieldDisplayName, v)
-	return u
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *TeamUpsert) UpdateDisplayName() *TeamUpsert {
-	u.SetExcluded(team.FieldDisplayName)
 	return u
 }
 
@@ -533,6 +533,20 @@ func (u *TeamUpsertOne) UpdateUpdatedAt() *TeamUpsertOne {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *TeamUpsertOne) SetKubernetesName(v string) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateKubernetesName() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *TeamUpsertOne) SetName(v string) *TeamUpsertOne {
 	return u.Update(func(s *TeamUpsert) {
@@ -544,20 +558,6 @@ func (u *TeamUpsertOne) SetName(v string) *TeamUpsertOne {
 func (u *TeamUpsertOne) UpdateName() *TeamUpsertOne {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *TeamUpsertOne) SetDisplayName(v string) *TeamUpsertOne {
-	return u.Update(func(s *TeamUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *TeamUpsertOne) UpdateDisplayName() *TeamUpsertOne {
-	return u.Update(func(s *TeamUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 
@@ -842,6 +842,20 @@ func (u *TeamUpsertBulk) UpdateUpdatedAt() *TeamUpsertBulk {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *TeamUpsertBulk) SetKubernetesName(v string) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateKubernetesName() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *TeamUpsertBulk) SetName(v string) *TeamUpsertBulk {
 	return u.Update(func(s *TeamUpsert) {
@@ -853,20 +867,6 @@ func (u *TeamUpsertBulk) SetName(v string) *TeamUpsertBulk {
 func (u *TeamUpsertBulk) UpdateName() *TeamUpsertBulk {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *TeamUpsertBulk) SetDisplayName(v string) *TeamUpsertBulk {
-	return u.Update(func(s *TeamUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *TeamUpsertBulk) UpdateDisplayName() *TeamUpsertBulk {
-	return u.Update(func(s *TeamUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 

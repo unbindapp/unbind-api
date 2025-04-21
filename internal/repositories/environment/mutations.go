@@ -8,15 +8,15 @@ import (
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
-func (self *EnvironmentRepository) Create(ctx context.Context, tx repository.TxInterface, name, displayName, kuberneteSecret string, description *string, projectID uuid.UUID) (*ent.Environment, error) {
+func (self *EnvironmentRepository) Create(ctx context.Context, tx repository.TxInterface, kubernetesName, name, kuberneteSecret string, description *string, projectID uuid.UUID) (*ent.Environment, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
 	}
 
 	return db.Environment.Create().
+		SetKubernetesName(kubernetesName).
 		SetName(name).
-		SetDisplayName(displayName).
 		SetNillableDescription(description).
 		SetProjectID(projectID).
 		SetKubernetesSecret(kuberneteSecret).
@@ -32,10 +32,10 @@ func (self *EnvironmentRepository) Delete(ctx context.Context, tx repository.TxI
 	return db.Environment.DeleteOneID(environmentID).Exec(ctx)
 }
 
-func (self *EnvironmentRepository) Update(ctx context.Context, environmentID uuid.UUID, displayName *string, description *string) (*ent.Environment, error) {
+func (self *EnvironmentRepository) Update(ctx context.Context, environmentID uuid.UUID, name *string, description *string) (*ent.Environment, error) {
 	upd := self.base.DB.Environment.UpdateOneID(environmentID)
-	if displayName != nil {
-		upd.SetDisplayName(*displayName)
+	if name != nil {
+		upd.SetName(*name)
 	}
 	if description != nil {
 		upd.SetNillableDescription(description)

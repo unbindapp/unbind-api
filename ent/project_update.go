@@ -39,6 +39,20 @@ func (pu *ProjectUpdate) SetUpdatedAt(t time.Time) *ProjectUpdate {
 	return pu
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (pu *ProjectUpdate) SetKubernetesName(s string) *ProjectUpdate {
+	pu.mutation.SetKubernetesName(s)
+	return pu
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableKubernetesName(s *string) *ProjectUpdate {
+	if s != nil {
+		pu.SetKubernetesName(*s)
+	}
+	return pu
+}
+
 // SetName sets the "name" field.
 func (pu *ProjectUpdate) SetName(s string) *ProjectUpdate {
 	pu.mutation.SetName(s)
@@ -49,20 +63,6 @@ func (pu *ProjectUpdate) SetName(s string) *ProjectUpdate {
 func (pu *ProjectUpdate) SetNillableName(s *string) *ProjectUpdate {
 	if s != nil {
 		pu.SetName(*s)
-	}
-	return pu
-}
-
-// SetDisplayName sets the "display_name" field.
-func (pu *ProjectUpdate) SetDisplayName(s string) *ProjectUpdate {
-	pu.mutation.SetDisplayName(s)
-	return pu
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (pu *ProjectUpdate) SetNillableDisplayName(s *string) *ProjectUpdate {
-	if s != nil {
-		pu.SetDisplayName(*s)
 	}
 	return pu
 }
@@ -286,9 +286,9 @@ func (pu *ProjectUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (pu *ProjectUpdate) check() error {
-	if v, ok := pu.mutation.Name(); ok {
-		if err := project.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Project.name": %w`, err)}
+	if v, ok := pu.mutation.KubernetesName(); ok {
+		if err := project.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Project.kubernetes_name": %w`, err)}
 		}
 	}
 	if pu.mutation.TeamCleared() && len(pu.mutation.TeamIDs()) > 0 {
@@ -318,11 +318,11 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := pu.mutation.UpdatedAt(); ok {
 		_spec.SetField(project.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := pu.mutation.KubernetesName(); ok {
+		_spec.SetField(project.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := pu.mutation.Name(); ok {
 		_spec.SetField(project.FieldName, field.TypeString, value)
-	}
-	if value, ok := pu.mutation.DisplayName(); ok {
-		_spec.SetField(project.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := pu.mutation.Description(); ok {
 		_spec.SetField(project.FieldDescription, field.TypeString, value)
@@ -512,6 +512,20 @@ func (puo *ProjectUpdateOne) SetUpdatedAt(t time.Time) *ProjectUpdateOne {
 	return puo
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (puo *ProjectUpdateOne) SetKubernetesName(s string) *ProjectUpdateOne {
+	puo.mutation.SetKubernetesName(s)
+	return puo
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableKubernetesName(s *string) *ProjectUpdateOne {
+	if s != nil {
+		puo.SetKubernetesName(*s)
+	}
+	return puo
+}
+
 // SetName sets the "name" field.
 func (puo *ProjectUpdateOne) SetName(s string) *ProjectUpdateOne {
 	puo.mutation.SetName(s)
@@ -522,20 +536,6 @@ func (puo *ProjectUpdateOne) SetName(s string) *ProjectUpdateOne {
 func (puo *ProjectUpdateOne) SetNillableName(s *string) *ProjectUpdateOne {
 	if s != nil {
 		puo.SetName(*s)
-	}
-	return puo
-}
-
-// SetDisplayName sets the "display_name" field.
-func (puo *ProjectUpdateOne) SetDisplayName(s string) *ProjectUpdateOne {
-	puo.mutation.SetDisplayName(s)
-	return puo
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (puo *ProjectUpdateOne) SetNillableDisplayName(s *string) *ProjectUpdateOne {
-	if s != nil {
-		puo.SetDisplayName(*s)
 	}
 	return puo
 }
@@ -772,9 +772,9 @@ func (puo *ProjectUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (puo *ProjectUpdateOne) check() error {
-	if v, ok := puo.mutation.Name(); ok {
-		if err := project.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Project.name": %w`, err)}
+	if v, ok := puo.mutation.KubernetesName(); ok {
+		if err := project.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Project.kubernetes_name": %w`, err)}
 		}
 	}
 	if puo.mutation.TeamCleared() && len(puo.mutation.TeamIDs()) > 0 {
@@ -821,11 +821,11 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	if value, ok := puo.mutation.UpdatedAt(); ok {
 		_spec.SetField(project.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := puo.mutation.KubernetesName(); ok {
+		_spec.SetField(project.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := puo.mutation.Name(); ok {
 		_spec.SetField(project.FieldName, field.TypeString, value)
-	}
-	if value, ok := puo.mutation.DisplayName(); ok {
-		_spec.SetField(project.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := puo.mutation.Description(); ok {
 		_spec.SetField(project.FieldDescription, field.TypeString, value)

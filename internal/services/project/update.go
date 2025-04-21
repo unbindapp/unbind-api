@@ -20,7 +20,7 @@ type UpdateProjectInput struct {
 	TeamID               uuid.UUID  `validate:"required,uuid4"`
 	ProjectID            uuid.UUID  `validate:"required,uuid4"`
 	DefaultEnvironmentID *uuid.UUID `validate:"omitempty,uuid4"`
-	DisplayName          string
+	Name                 string
 	Description          *string
 }
 
@@ -29,7 +29,7 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 	if err := validate.Validator().Struct(input); err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
-	if input.DisplayName == "" && input.Description == nil {
+	if input.Name == "" && input.Description == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "No fields to update")
 	}
 
@@ -69,7 +69,7 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 	}
 
 	// Update the project
-	project, err = self.repo.Project().Update(ctx, nil, input.ProjectID, input.DefaultEnvironmentID, input.DisplayName, input.Description)
+	project, err = self.repo.Project().Update(ctx, nil, input.ProjectID, input.DefaultEnvironmentID, input.Name, input.Description)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Project Updated",
 			Url:         url,
-			Description: fmt.Sprintf("A project has been updated in team %s by %s", project.Edges.Team.DisplayName, user.Email),
+			Description: fmt.Sprintf("A project has been updated in team %s by %s", project.Edges.Team.Name, user.Email),
 			Fields:      []webhooks_service.WebhookDataField{},
 		}
 
@@ -110,10 +110,10 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 			}
 		}
 
-		if input.DisplayName != "" {
+		if input.Name != "" {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 				Name:  "Name",
-				Value: input.DisplayName,
+				Value: input.Name,
 			})
 		}
 

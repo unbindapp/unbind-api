@@ -105,10 +105,10 @@ func init() {
 	environment.DefaultUpdatedAt = environmentDescUpdatedAt.Default.(func() time.Time)
 	// environment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	environment.UpdateDefaultUpdatedAt = environmentDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// environmentDescName is the schema descriptor for name field.
-	environmentDescName := environmentFields[0].Descriptor()
-	// environment.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	environment.NameValidator = environmentDescName.Validators[0].(func(string) error)
+	// environmentDescKubernetesName is the schema descriptor for kubernetes_name field.
+	environmentDescKubernetesName := environmentFields[0].Descriptor()
+	// environment.KubernetesNameValidator is a validator for the "kubernetes_name" field. It is called by the builders before save.
+	environment.KubernetesNameValidator = environmentDescKubernetesName.Validators[0].(func(string) error)
 	// environmentDescActive is the schema descriptor for active field.
 	environmentDescActive := environmentFields[3].Descriptor()
 	// environment.DefaultActive holds the default value on creation for the active field.
@@ -288,10 +288,10 @@ func init() {
 	project.DefaultUpdatedAt = projectDescUpdatedAt.Default.(func() time.Time)
 	// project.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	project.UpdateDefaultUpdatedAt = projectDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// projectDescName is the schema descriptor for name field.
-	projectDescName := projectFields[0].Descriptor()
-	// project.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	project.NameValidator = projectDescName.Validators[0].(func(string) error)
+	// projectDescKubernetesName is the schema descriptor for kubernetes_name field.
+	projectDescKubernetesName := projectFields[0].Descriptor()
+	// project.KubernetesNameValidator is a validator for the "kubernetes_name" field. It is called by the builders before save.
+	project.KubernetesNameValidator = projectDescKubernetesName.Validators[0].(func(string) error)
 	// projectDescStatus is the schema descriptor for status field.
 	projectDescStatus := projectFields[3].Descriptor()
 	// project.DefaultStatus holds the default value on creation for the status field.
@@ -342,10 +342,10 @@ func init() {
 	service.DefaultUpdatedAt = serviceDescUpdatedAt.Default.(func() time.Time)
 	// service.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	service.UpdateDefaultUpdatedAt = serviceDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// serviceDescName is the schema descriptor for name field.
-	serviceDescName := serviceFields[0].Descriptor()
-	// service.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	service.NameValidator = serviceDescName.Validators[0].(func(string) error)
+	// serviceDescKubernetesName is the schema descriptor for kubernetes_name field.
+	serviceDescKubernetesName := serviceFields[0].Descriptor()
+	// service.KubernetesNameValidator is a validator for the "kubernetes_name" field. It is called by the builders before save.
+	service.KubernetesNameValidator = serviceDescKubernetesName.Validators[0].(func(string) error)
 	// serviceDescID is the schema descriptor for id field.
 	serviceDescID := serviceMixinFields0[0].Descriptor()
 	// service.DefaultID holds the default value on creation for the id field.
@@ -400,10 +400,10 @@ func init() {
 	team.DefaultUpdatedAt = teamDescUpdatedAt.Default.(func() time.Time)
 	// team.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	team.UpdateDefaultUpdatedAt = teamDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// teamDescName is the schema descriptor for name field.
-	teamDescName := teamFields[0].Descriptor()
-	// team.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	team.NameValidator = teamDescName.Validators[0].(func(string) error)
+	// teamDescKubernetesName is the schema descriptor for kubernetes_name field.
+	teamDescKubernetesName := teamFields[0].Descriptor()
+	// team.KubernetesNameValidator is a validator for the "kubernetes_name" field. It is called by the builders before save.
+	team.KubernetesNameValidator = teamDescKubernetesName.Validators[0].(func(string) error)
 	// teamDescID is the schema descriptor for id field.
 	teamDescID := teamMixinFields0[0].Descriptor()
 	// team.DefaultID holds the default value on creation for the id field.

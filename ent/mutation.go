@@ -2389,8 +2389,8 @@ type EnvironmentMutation struct {
 	id                     *uuid.UUID
 	created_at             *time.Time
 	updated_at             *time.Time
+	kubernetes_name        *string
 	name                   *string
-	display_name           *string
 	description            *string
 	active                 *bool
 	kubernetes_secret      *string
@@ -2584,6 +2584,42 @@ func (m *EnvironmentMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (m *EnvironmentMutation) SetKubernetesName(s string) {
+	m.kubernetes_name = &s
+}
+
+// KubernetesName returns the value of the "kubernetes_name" field in the mutation.
+func (m *EnvironmentMutation) KubernetesName() (r string, exists bool) {
+	v := m.kubernetes_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesName returns the old "kubernetes_name" field's value of the Environment entity.
+// If the Environment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EnvironmentMutation) OldKubernetesName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesName: %w", err)
+	}
+	return oldValue.KubernetesName, nil
+}
+
+// ResetKubernetesName resets all changes to the "kubernetes_name" field.
+func (m *EnvironmentMutation) ResetKubernetesName() {
+	m.kubernetes_name = nil
+}
+
 // SetName sets the "name" field.
 func (m *EnvironmentMutation) SetName(s string) {
 	m.name = &s
@@ -2618,42 +2654,6 @@ func (m *EnvironmentMutation) OldName(ctx context.Context) (v string, err error)
 // ResetName resets all changes to the "name" field.
 func (m *EnvironmentMutation) ResetName() {
 	m.name = nil
-}
-
-// SetDisplayName sets the "display_name" field.
-func (m *EnvironmentMutation) SetDisplayName(s string) {
-	m.display_name = &s
-}
-
-// DisplayName returns the value of the "display_name" field in the mutation.
-func (m *EnvironmentMutation) DisplayName() (r string, exists bool) {
-	v := m.display_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDisplayName returns the old "display_name" field's value of the Environment entity.
-// If the Environment object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *EnvironmentMutation) OldDisplayName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDisplayName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
-	}
-	return oldValue.DisplayName, nil
-}
-
-// ResetDisplayName resets all changes to the "display_name" field.
-func (m *EnvironmentMutation) ResetDisplayName() {
-	m.display_name = nil
 }
 
 // SetDescription sets the "description" field.
@@ -2989,11 +2989,11 @@ func (m *EnvironmentMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, environment.FieldUpdatedAt)
 	}
+	if m.kubernetes_name != nil {
+		fields = append(fields, environment.FieldKubernetesName)
+	}
 	if m.name != nil {
 		fields = append(fields, environment.FieldName)
-	}
-	if m.display_name != nil {
-		fields = append(fields, environment.FieldDisplayName)
 	}
 	if m.description != nil {
 		fields = append(fields, environment.FieldDescription)
@@ -3019,10 +3019,10 @@ func (m *EnvironmentMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case environment.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case environment.FieldKubernetesName:
+		return m.KubernetesName()
 	case environment.FieldName:
 		return m.Name()
-	case environment.FieldDisplayName:
-		return m.DisplayName()
 	case environment.FieldDescription:
 		return m.Description()
 	case environment.FieldActive:
@@ -3044,10 +3044,10 @@ func (m *EnvironmentMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldCreatedAt(ctx)
 	case environment.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case environment.FieldKubernetesName:
+		return m.OldKubernetesName(ctx)
 	case environment.FieldName:
 		return m.OldName(ctx)
-	case environment.FieldDisplayName:
-		return m.OldDisplayName(ctx)
 	case environment.FieldDescription:
 		return m.OldDescription(ctx)
 	case environment.FieldActive:
@@ -3079,19 +3079,19 @@ func (m *EnvironmentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case environment.FieldKubernetesName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesName(v)
+		return nil
 	case environment.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
-		return nil
-	case environment.FieldDisplayName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDisplayName(v)
 		return nil
 	case environment.FieldDescription:
 		v, ok := value.(string)
@@ -3185,11 +3185,11 @@ func (m *EnvironmentMutation) ResetField(name string) error {
 	case environment.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
+	case environment.FieldKubernetesName:
+		m.ResetKubernetesName()
+		return nil
 	case environment.FieldName:
 		m.ResetName()
-		return nil
-	case environment.FieldDisplayName:
-		m.ResetDisplayName()
 		return nil
 	case environment.FieldDescription:
 		m.ResetDescription()
@@ -8726,8 +8726,8 @@ type ProjectMutation struct {
 	id                         *uuid.UUID
 	created_at                 *time.Time
 	updated_at                 *time.Time
+	kubernetes_name            *string
 	name                       *string
-	display_name               *string
 	description                *string
 	status                     *string
 	kubernetes_secret          *string
@@ -8923,6 +8923,42 @@ func (m *ProjectMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (m *ProjectMutation) SetKubernetesName(s string) {
+	m.kubernetes_name = &s
+}
+
+// KubernetesName returns the value of the "kubernetes_name" field in the mutation.
+func (m *ProjectMutation) KubernetesName() (r string, exists bool) {
+	v := m.kubernetes_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesName returns the old "kubernetes_name" field's value of the Project entity.
+// If the Project object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProjectMutation) OldKubernetesName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesName: %w", err)
+	}
+	return oldValue.KubernetesName, nil
+}
+
+// ResetKubernetesName resets all changes to the "kubernetes_name" field.
+func (m *ProjectMutation) ResetKubernetesName() {
+	m.kubernetes_name = nil
+}
+
 // SetName sets the "name" field.
 func (m *ProjectMutation) SetName(s string) {
 	m.name = &s
@@ -8957,42 +8993,6 @@ func (m *ProjectMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *ProjectMutation) ResetName() {
 	m.name = nil
-}
-
-// SetDisplayName sets the "display_name" field.
-func (m *ProjectMutation) SetDisplayName(s string) {
-	m.display_name = &s
-}
-
-// DisplayName returns the value of the "display_name" field in the mutation.
-func (m *ProjectMutation) DisplayName() (r string, exists bool) {
-	v := m.display_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDisplayName returns the old "display_name" field's value of the Project entity.
-// If the Project object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ProjectMutation) OldDisplayName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDisplayName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
-	}
-	return oldValue.DisplayName, nil
-}
-
-// ResetDisplayName resets all changes to the "display_name" field.
-func (m *ProjectMutation) ResetDisplayName() {
-	m.display_name = nil
 }
 
 // SetDescription sets the "description" field.
@@ -9404,11 +9404,11 @@ func (m *ProjectMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, project.FieldUpdatedAt)
 	}
+	if m.kubernetes_name != nil {
+		fields = append(fields, project.FieldKubernetesName)
+	}
 	if m.name != nil {
 		fields = append(fields, project.FieldName)
-	}
-	if m.display_name != nil {
-		fields = append(fields, project.FieldDisplayName)
 	}
 	if m.description != nil {
 		fields = append(fields, project.FieldDescription)
@@ -9437,10 +9437,10 @@ func (m *ProjectMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case project.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case project.FieldKubernetesName:
+		return m.KubernetesName()
 	case project.FieldName:
 		return m.Name()
-	case project.FieldDisplayName:
-		return m.DisplayName()
 	case project.FieldDescription:
 		return m.Description()
 	case project.FieldStatus:
@@ -9464,10 +9464,10 @@ func (m *ProjectMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldCreatedAt(ctx)
 	case project.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case project.FieldKubernetesName:
+		return m.OldKubernetesName(ctx)
 	case project.FieldName:
 		return m.OldName(ctx)
-	case project.FieldDisplayName:
-		return m.OldDisplayName(ctx)
 	case project.FieldDescription:
 		return m.OldDescription(ctx)
 	case project.FieldStatus:
@@ -9501,19 +9501,19 @@ func (m *ProjectMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case project.FieldKubernetesName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesName(v)
+		return nil
 	case project.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
-		return nil
-	case project.FieldDisplayName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDisplayName(v)
 		return nil
 	case project.FieldDescription:
 		v, ok := value.(string)
@@ -9620,11 +9620,11 @@ func (m *ProjectMutation) ResetField(name string) error {
 	case project.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
+	case project.FieldKubernetesName:
+		m.ResetKubernetesName()
+		return nil
 	case project.FieldName:
 		m.ResetName()
-		return nil
-	case project.FieldDisplayName:
-		m.ResetDisplayName()
 		return nil
 	case project.FieldDescription:
 		m.ResetDescription()
@@ -10369,8 +10369,8 @@ type ServiceMutation struct {
 	id                         *uuid.UUID
 	created_at                 *time.Time
 	updated_at                 *time.Time
+	kubernetes_name            *string
 	name                       *string
-	display_name               *string
 	description                *string
 	git_repository_owner       *string
 	git_repository             *string
@@ -10571,6 +10571,42 @@ func (m *ServiceMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (m *ServiceMutation) SetKubernetesName(s string) {
+	m.kubernetes_name = &s
+}
+
+// KubernetesName returns the value of the "kubernetes_name" field in the mutation.
+func (m *ServiceMutation) KubernetesName() (r string, exists bool) {
+	v := m.kubernetes_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesName returns the old "kubernetes_name" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldKubernetesName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesName: %w", err)
+	}
+	return oldValue.KubernetesName, nil
+}
+
+// ResetKubernetesName resets all changes to the "kubernetes_name" field.
+func (m *ServiceMutation) ResetKubernetesName() {
+	m.kubernetes_name = nil
+}
+
 // SetName sets the "name" field.
 func (m *ServiceMutation) SetName(s string) {
 	m.name = &s
@@ -10605,42 +10641,6 @@ func (m *ServiceMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *ServiceMutation) ResetName() {
 	m.name = nil
-}
-
-// SetDisplayName sets the "display_name" field.
-func (m *ServiceMutation) SetDisplayName(s string) {
-	m.display_name = &s
-}
-
-// DisplayName returns the value of the "display_name" field in the mutation.
-func (m *ServiceMutation) DisplayName() (r string, exists bool) {
-	v := m.display_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDisplayName returns the old "display_name" field's value of the Service entity.
-// If the Service object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceMutation) OldDisplayName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDisplayName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
-	}
-	return oldValue.DisplayName, nil
-}
-
-// ResetDisplayName resets all changes to the "display_name" field.
-func (m *ServiceMutation) ResetDisplayName() {
-	m.display_name = nil
 }
 
 // SetDescription sets the "description" field.
@@ -11229,11 +11229,11 @@ func (m *ServiceMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, service.FieldUpdatedAt)
 	}
+	if m.kubernetes_name != nil {
+		fields = append(fields, service.FieldKubernetesName)
+	}
 	if m.name != nil {
 		fields = append(fields, service.FieldName)
-	}
-	if m.display_name != nil {
-		fields = append(fields, service.FieldDisplayName)
 	}
 	if m.description != nil {
 		fields = append(fields, service.FieldDescription)
@@ -11268,10 +11268,10 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case service.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case service.FieldKubernetesName:
+		return m.KubernetesName()
 	case service.FieldName:
 		return m.Name()
-	case service.FieldDisplayName:
-		return m.DisplayName()
 	case service.FieldDescription:
 		return m.Description()
 	case service.FieldEnvironmentID:
@@ -11299,10 +11299,10 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldCreatedAt(ctx)
 	case service.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case service.FieldKubernetesName:
+		return m.OldKubernetesName(ctx)
 	case service.FieldName:
 		return m.OldName(ctx)
-	case service.FieldDisplayName:
-		return m.OldDisplayName(ctx)
 	case service.FieldDescription:
 		return m.OldDescription(ctx)
 	case service.FieldEnvironmentID:
@@ -11340,19 +11340,19 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case service.FieldKubernetesName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesName(v)
+		return nil
 	case service.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
-		return nil
-	case service.FieldDisplayName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDisplayName(v)
 		return nil
 	case service.FieldDescription:
 		v, ok := value.(string)
@@ -11494,11 +11494,11 @@ func (m *ServiceMutation) ResetField(name string) error {
 	case service.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
+	case service.FieldKubernetesName:
+		m.ResetKubernetesName()
+		return nil
 	case service.FieldName:
 		m.ResetName()
-		return nil
-	case service.FieldDisplayName:
-		m.ResetDisplayName()
 		return nil
 	case service.FieldDescription:
 		m.ResetDescription()
@@ -13555,8 +13555,8 @@ type TeamMutation struct {
 	id                   *uuid.UUID
 	created_at           *time.Time
 	updated_at           *time.Time
+	kubernetes_name      *string
 	name                 *string
-	display_name         *string
 	namespace            *string
 	kubernetes_secret    *string
 	description          *string
@@ -13751,6 +13751,42 @@ func (m *TeamMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (m *TeamMutation) SetKubernetesName(s string) {
+	m.kubernetes_name = &s
+}
+
+// KubernetesName returns the value of the "kubernetes_name" field in the mutation.
+func (m *TeamMutation) KubernetesName() (r string, exists bool) {
+	v := m.kubernetes_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKubernetesName returns the old "kubernetes_name" field's value of the Team entity.
+// If the Team object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamMutation) OldKubernetesName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKubernetesName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKubernetesName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKubernetesName: %w", err)
+	}
+	return oldValue.KubernetesName, nil
+}
+
+// ResetKubernetesName resets all changes to the "kubernetes_name" field.
+func (m *TeamMutation) ResetKubernetesName() {
+	m.kubernetes_name = nil
+}
+
 // SetName sets the "name" field.
 func (m *TeamMutation) SetName(s string) {
 	m.name = &s
@@ -13785,42 +13821,6 @@ func (m *TeamMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *TeamMutation) ResetName() {
 	m.name = nil
-}
-
-// SetDisplayName sets the "display_name" field.
-func (m *TeamMutation) SetDisplayName(s string) {
-	m.display_name = &s
-}
-
-// DisplayName returns the value of the "display_name" field in the mutation.
-func (m *TeamMutation) DisplayName() (r string, exists bool) {
-	v := m.display_name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDisplayName returns the old "display_name" field's value of the Team entity.
-// If the Team object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TeamMutation) OldDisplayName(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDisplayName requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
-	}
-	return oldValue.DisplayName, nil
-}
-
-// ResetDisplayName resets all changes to the "display_name" field.
-func (m *TeamMutation) ResetDisplayName() {
-	m.display_name = nil
 }
 
 // SetNamespace sets the "namespace" field.
@@ -14147,11 +14147,11 @@ func (m *TeamMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, team.FieldUpdatedAt)
 	}
+	if m.kubernetes_name != nil {
+		fields = append(fields, team.FieldKubernetesName)
+	}
 	if m.name != nil {
 		fields = append(fields, team.FieldName)
-	}
-	if m.display_name != nil {
-		fields = append(fields, team.FieldDisplayName)
 	}
 	if m.namespace != nil {
 		fields = append(fields, team.FieldNamespace)
@@ -14174,10 +14174,10 @@ func (m *TeamMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case team.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case team.FieldKubernetesName:
+		return m.KubernetesName()
 	case team.FieldName:
 		return m.Name()
-	case team.FieldDisplayName:
-		return m.DisplayName()
 	case team.FieldNamespace:
 		return m.Namespace()
 	case team.FieldKubernetesSecret:
@@ -14197,10 +14197,10 @@ func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreatedAt(ctx)
 	case team.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case team.FieldKubernetesName:
+		return m.OldKubernetesName(ctx)
 	case team.FieldName:
 		return m.OldName(ctx)
-	case team.FieldDisplayName:
-		return m.OldDisplayName(ctx)
 	case team.FieldNamespace:
 		return m.OldNamespace(ctx)
 	case team.FieldKubernetesSecret:
@@ -14230,19 +14230,19 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case team.FieldKubernetesName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKubernetesName(v)
+		return nil
 	case team.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
-		return nil
-	case team.FieldDisplayName:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDisplayName(v)
 		return nil
 	case team.FieldNamespace:
 		v, ok := value.(string)
@@ -14329,11 +14329,11 @@ func (m *TeamMutation) ResetField(name string) error {
 	case team.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
+	case team.FieldKubernetesName:
+		m.ResetKubernetesName()
+		return nil
 	case team.FieldName:
 		m.ResetName()
-		return nil
-	case team.FieldDisplayName:
-		m.ResetDisplayName()
 		return nil
 	case team.FieldNamespace:
 		m.ResetNamespace()

@@ -143,7 +143,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		"EXTERNAL_UI_URL":       self.cfg.ExternalUIUrl,
 		"DEPLOYMENT_NAMESPACE":  namespace,
 		"SERVICE_REF":           service.ID.String(),
-		"SERVICE_NAME":          service.Name,
+		"SERVICE_NAME":          service.KubernetesName,
 		"SERVICE_TYPE":          string(service.Edges.ServiceConfig.Type),
 		"SERVICE_PUBLIC":        strconv.FormatBool(service.Edges.ServiceConfig.Public),
 		"SERVICE_REPLICAS":      strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
@@ -385,7 +385,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		data := webhooks_service.WebookData{
 			Title:       "Deployment Queued",
 			Url:         url,
-			Description: fmt.Sprintf("A new deployment has been queued for %s", service.DisplayName),
+			Description: fmt.Sprintf("A new deployment has been queued for %s", service.Name),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Type",
@@ -393,7 +393,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.DisplayName,
+					Value: service.Edges.Environment.Name,
 				},
 				{
 					Name:  "Builder",
@@ -468,7 +468,7 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 			data := webhooks_service.WebookData{
 				Title:       "Deployment Cancelled",
 				Url:         url,
-				Description: fmt.Sprintf("A deployment has been cancelled for %s", service.DisplayName),
+				Description: fmt.Sprintf("A deployment has been cancelled for %s", service.Name),
 				Fields: []webhooks_service.WebhookDataField{
 					{
 						Name:  "Service Type",
@@ -476,7 +476,7 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 					},
 					{
 						Name:  "Environment",
-						Value: service.Edges.Environment.DisplayName,
+						Value: service.Edges.Environment.Name,
 					},
 					{
 						Name:  "Builder",

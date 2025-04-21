@@ -11,8 +11,8 @@ import (
 // ServiceResponse defines the response structure for service operations
 type ServiceResponse struct {
 	ID                       uuid.UUID              `json:"id"`
+	KubernetesName           string                 `json:"kubernetes_name"`
 	Name                     string                 `json:"name"`
-	DisplayName              string                 `json:"display_name"`
 	Description              string                 `json:"description"`
 	EnvironmentID            uuid.UUID              `json:"environment_id"`
 	GitHubInstallationID     *int64                 `json:"github_installation_id,omitempty"`
@@ -32,8 +32,8 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 	if entity != nil {
 		response = &ServiceResponse{
 			ID:                   entity.ID,
+			KubernetesName:       entity.KubernetesName,
 			Name:                 entity.Name,
-			DisplayName:          entity.DisplayName,
 			Description:          entity.Description,
 			EnvironmentID:        entity.EnvironmentID,
 			GitHubInstallationID: entity.GithubInstallationID,
