@@ -151,7 +151,7 @@ func (self *cli) createTeam(name, displayName string) {
 
 	// Check if team
 	exists, err := self.repository.Ent().Team.Query().
-		Where(team.NameEQ(name)).
+		Where(team.KubernetesNameEQ(name)).
 		Exist(ctx)
 	if err != nil {
 		log.Errorf("Error checking if team exists: %v", err)
@@ -181,8 +181,8 @@ func (self *cli) createTeam(name, displayName string) {
 			return fmt.Errorf("error creating secret: %v", err)
 		}
 		team, err = db.Team.Create().
-			SetName(name).
-			SetDisplayName(displayName).
+			SetKubernetesName(name).
+			SetName(displayName).
 			SetNamespace(strings.ToLower(name)).
 			SetKubernetesSecret(secret.Name).Save(ctx)
 
@@ -194,8 +194,8 @@ func (self *cli) createTeam(name, displayName string) {
 
 	fmt.Println("Team created successfully:")
 	fmt.Printf("ID: %s\n", team.ID)
+	fmt.Printf("Kubernetes Name: %s\n", team.KubernetesName)
 	fmt.Printf("Name: %s\n", team.Name)
-	fmt.Printf("Display Name: %s\n", team.DisplayName)
 	fmt.Printf("Namespace: %s\n", team.Namespace)
 }
 
@@ -426,7 +426,7 @@ func (self *cli) syncSecrets() {
 			}
 			_, err := self.k8s.CopySecret(context.Background(), *r.KubernetesSecret, self.cfg.SystemNamespace, t.Namespace, client)
 			if err != nil {
-				fmt.Printf("Error copying secret to team %s: %v\n", t.Name, err)
+				fmt.Printf("Error copying secret to team %s: %v\n", t.KubernetesName, err)
 				return
 			}
 		}
@@ -444,7 +444,7 @@ func (self *cli) syncSecrets() {
 		}
 
 		// Create team secret
-		secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), t.Name, t.Namespace, client)
+		secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), t.KubernetesName, t.Namespace, client)
 		if err != nil {
 			fmt.Printf("Error creating secret: %v\n", err)
 			return
@@ -460,7 +460,7 @@ func (self *cli) syncSecrets() {
 		// Create project secrets
 		for _, p := range projects {
 			// Create secret
-			secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), p.Name, t.Namespace, client)
+			secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), p.KubernetesName, t.Namespace, client)
 			if err != nil {
 				fmt.Printf("Error creating secret: %v\n", err)
 				return
@@ -476,7 +476,7 @@ func (self *cli) syncSecrets() {
 			// Create environment secrets
 			for _, e := range p.Edges.Environments {
 				// Create secret
-				secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), e.Name, t.Namespace, client)
+				secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), e.KubernetesName, t.Namespace, client)
 				if err != nil {
 					fmt.Printf("Error creating secret: %v\n", err)
 					return
@@ -492,7 +492,7 @@ func (self *cli) syncSecrets() {
 				// Create service secrets
 				for _, s := range e.Edges.Services {
 					// Create secret
-					secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), s.Name, t.Namespace, client)
+					secret, _, err := self.k8s.GetOrCreateSecret(context.Background(), s.KubernetesName, t.Namespace, client)
 					if err != nil {
 						fmt.Printf("Error creating secret: %v\n", err)
 						return

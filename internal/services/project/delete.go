@@ -87,11 +87,11 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 			for _, service := range environment.Edges.Services {
 				// Cancel deployments
 				if err := self.deployCtl.CancelExistingJobs(ctx, service.ID); err != nil {
-					log.Warnf("Error cancelling jobs for service %s: %v", service.Name, err)
+					log.Warnf("Error cancelling jobs for service %s: %v", service.KubernetesName, err)
 				}
 
-				if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.Name); err != nil {
-					log.Error("Error deleting service from k8s", "svc", service.Name, "err", err)
+				if err := self.k8s.DeleteUnbindService(ctx, team.Namespace, service.KubernetesName); err != nil {
+					log.Error("Error deleting service from k8s", "svc", service.KubernetesName, "err", err)
 
 					return err
 				}
@@ -148,7 +148,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Project Deleted",
 			Url:         url,
-			Description: fmt.Sprintf("A project has been deleted in team %s by %s", team.DisplayName, user.Email),
+			Description: fmt.Sprintf("A project has been deleted in team %s by %s", team.Name, user.Email),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Project",

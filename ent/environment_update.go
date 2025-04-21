@@ -38,6 +38,20 @@ func (eu *EnvironmentUpdate) SetUpdatedAt(t time.Time) *EnvironmentUpdate {
 	return eu
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (eu *EnvironmentUpdate) SetKubernetesName(s string) *EnvironmentUpdate {
+	eu.mutation.SetKubernetesName(s)
+	return eu
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (eu *EnvironmentUpdate) SetNillableKubernetesName(s *string) *EnvironmentUpdate {
+	if s != nil {
+		eu.SetKubernetesName(*s)
+	}
+	return eu
+}
+
 // SetName sets the "name" field.
 func (eu *EnvironmentUpdate) SetName(s string) *EnvironmentUpdate {
 	eu.mutation.SetName(s)
@@ -48,20 +62,6 @@ func (eu *EnvironmentUpdate) SetName(s string) *EnvironmentUpdate {
 func (eu *EnvironmentUpdate) SetNillableName(s *string) *EnvironmentUpdate {
 	if s != nil {
 		eu.SetName(*s)
-	}
-	return eu
-}
-
-// SetDisplayName sets the "display_name" field.
-func (eu *EnvironmentUpdate) SetDisplayName(s string) *EnvironmentUpdate {
-	eu.mutation.SetDisplayName(s)
-	return eu
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (eu *EnvironmentUpdate) SetNillableDisplayName(s *string) *EnvironmentUpdate {
-	if s != nil {
-		eu.SetDisplayName(*s)
 	}
 	return eu
 }
@@ -254,9 +254,9 @@ func (eu *EnvironmentUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (eu *EnvironmentUpdate) check() error {
-	if v, ok := eu.mutation.Name(); ok {
-		if err := environment.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Environment.name": %w`, err)}
+	if v, ok := eu.mutation.KubernetesName(); ok {
+		if err := environment.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Environment.kubernetes_name": %w`, err)}
 		}
 	}
 	if eu.mutation.ProjectCleared() && len(eu.mutation.ProjectIDs()) > 0 {
@@ -286,11 +286,11 @@ func (eu *EnvironmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := eu.mutation.UpdatedAt(); ok {
 		_spec.SetField(environment.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := eu.mutation.KubernetesName(); ok {
+		_spec.SetField(environment.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := eu.mutation.Name(); ok {
 		_spec.SetField(environment.FieldName, field.TypeString, value)
-	}
-	if value, ok := eu.mutation.DisplayName(); ok {
-		_spec.SetField(environment.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := eu.mutation.Description(); ok {
 		_spec.SetField(environment.FieldDescription, field.TypeString, value)
@@ -451,6 +451,20 @@ func (euo *EnvironmentUpdateOne) SetUpdatedAt(t time.Time) *EnvironmentUpdateOne
 	return euo
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (euo *EnvironmentUpdateOne) SetKubernetesName(s string) *EnvironmentUpdateOne {
+	euo.mutation.SetKubernetesName(s)
+	return euo
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (euo *EnvironmentUpdateOne) SetNillableKubernetesName(s *string) *EnvironmentUpdateOne {
+	if s != nil {
+		euo.SetKubernetesName(*s)
+	}
+	return euo
+}
+
 // SetName sets the "name" field.
 func (euo *EnvironmentUpdateOne) SetName(s string) *EnvironmentUpdateOne {
 	euo.mutation.SetName(s)
@@ -461,20 +475,6 @@ func (euo *EnvironmentUpdateOne) SetName(s string) *EnvironmentUpdateOne {
 func (euo *EnvironmentUpdateOne) SetNillableName(s *string) *EnvironmentUpdateOne {
 	if s != nil {
 		euo.SetName(*s)
-	}
-	return euo
-}
-
-// SetDisplayName sets the "display_name" field.
-func (euo *EnvironmentUpdateOne) SetDisplayName(s string) *EnvironmentUpdateOne {
-	euo.mutation.SetDisplayName(s)
-	return euo
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (euo *EnvironmentUpdateOne) SetNillableDisplayName(s *string) *EnvironmentUpdateOne {
-	if s != nil {
-		euo.SetDisplayName(*s)
 	}
 	return euo
 }
@@ -680,9 +680,9 @@ func (euo *EnvironmentUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (euo *EnvironmentUpdateOne) check() error {
-	if v, ok := euo.mutation.Name(); ok {
-		if err := environment.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Environment.name": %w`, err)}
+	if v, ok := euo.mutation.KubernetesName(); ok {
+		if err := environment.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Environment.kubernetes_name": %w`, err)}
 		}
 	}
 	if euo.mutation.ProjectCleared() && len(euo.mutation.ProjectIDs()) > 0 {
@@ -729,11 +729,11 @@ func (euo *EnvironmentUpdateOne) sqlSave(ctx context.Context) (_node *Environmen
 	if value, ok := euo.mutation.UpdatedAt(); ok {
 		_spec.SetField(environment.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := euo.mutation.KubernetesName(); ok {
+		_spec.SetField(environment.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := euo.mutation.Name(); ok {
 		_spec.SetField(environment.FieldName, field.TypeString, value)
-	}
-	if value, ok := euo.mutation.DisplayName(); ok {
-		_spec.SetField(environment.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := euo.mutation.Description(); ok {
 		_spec.SetField(environment.FieldDescription, field.TypeString, value)

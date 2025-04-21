@@ -20,7 +20,6 @@ import (
 type CreateProjectInput struct {
 	TeamID      uuid.UUID `validate:"required,uuid4"`
 	Name        string    `validate:"required"`
-	DisplayName string    `validate:"required"`
 	Description *string
 }
 
@@ -69,7 +68,14 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 			return err
 		}
 
-		project, err = self.repo.Project().Create(ctx, tx, input.TeamID, input.Name, input.DisplayName, input.Description, secret.Name)
+		// Create a unique name
+		kubernetesName, err := utils.GenerateSlug(input.Name)
+		if err != nil {
+			log.Errorf("Failed to generate kubernetes name for project %s: %v", input.Name, err)
+			return err
+		}
+
+		project, err = self.repo.Project().Create(ctx, tx, input.TeamID, kubernetesName, input.Name, input.Description, secret.Name)
 		if err != nil {
 			return err
 		}
@@ -93,7 +99,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 		}
 
 		// Set as default
-		project, err = self.repo.Project().Update(ctx, tx, project.ID, utils.ToPtr(environment.ID), input.DisplayName, nil)
+		project, err = self.repo.Project().Update(ctx, tx, project.ID, utils.ToPtr(environment.ID), input.Name, nil)
 		if err != nil {
 			return err
 		}
@@ -123,11 +129,11 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Project Created",
 			Url:         url,
-			Description: fmt.Sprintf("A new project has been created in team %s by %s", project.Edges.Team.DisplayName, user.Email),
+			Description: fmt.Sprintf("A new project has been created in team %s by %s", project.Edges.Team.Name, user.Email),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Project Name",
-					Value: project.DisplayName,
+					Value: project.Name,
 				},
 			},
 		}

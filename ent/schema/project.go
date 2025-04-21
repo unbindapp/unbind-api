@@ -26,8 +26,8 @@ func (Project) Mixin() []ent.Mixin {
 // Fields of the Project.
 func (Project) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name").NotEmpty(),
-		field.String("display_name"),
+		field.String("kubernetes_name").NotEmpty().Unique(),
+		field.String("name"),
 		field.String("description").Optional().Nillable(),
 		field.String("status").Default("active"),
 		field.UUID("team_id", uuid.UUID{}),

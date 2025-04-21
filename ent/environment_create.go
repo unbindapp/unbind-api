@@ -54,15 +54,15 @@ func (ec *EnvironmentCreate) SetNillableUpdatedAt(t *time.Time) *EnvironmentCrea
 	return ec
 }
 
-// SetName sets the "name" field.
-func (ec *EnvironmentCreate) SetName(s string) *EnvironmentCreate {
-	ec.mutation.SetName(s)
+// SetKubernetesName sets the "kubernetes_name" field.
+func (ec *EnvironmentCreate) SetKubernetesName(s string) *EnvironmentCreate {
+	ec.mutation.SetKubernetesName(s)
 	return ec
 }
 
-// SetDisplayName sets the "display_name" field.
-func (ec *EnvironmentCreate) SetDisplayName(s string) *EnvironmentCreate {
-	ec.mutation.SetDisplayName(s)
+// SetName sets the "name" field.
+func (ec *EnvironmentCreate) SetName(s string) *EnvironmentCreate {
+	ec.mutation.SetName(s)
 	return ec
 }
 
@@ -216,16 +216,16 @@ func (ec *EnvironmentCreate) check() error {
 	if _, ok := ec.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Environment.updated_at"`)}
 	}
-	if _, ok := ec.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Environment.name"`)}
+	if _, ok := ec.mutation.KubernetesName(); !ok {
+		return &ValidationError{Name: "kubernetes_name", err: errors.New(`ent: missing required field "Environment.kubernetes_name"`)}
 	}
-	if v, ok := ec.mutation.Name(); ok {
-		if err := environment.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Environment.name": %w`, err)}
+	if v, ok := ec.mutation.KubernetesName(); ok {
+		if err := environment.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Environment.kubernetes_name": %w`, err)}
 		}
 	}
-	if _, ok := ec.mutation.DisplayName(); !ok {
-		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Environment.display_name"`)}
+	if _, ok := ec.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Environment.name"`)}
 	}
 	if _, ok := ec.mutation.Active(); !ok {
 		return &ValidationError{Name: "active", err: errors.New(`ent: missing required field "Environment.active"`)}
@@ -283,13 +283,13 @@ func (ec *EnvironmentCreate) createSpec() (*Environment, *sqlgraph.CreateSpec) {
 		_spec.SetField(environment.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := ec.mutation.KubernetesName(); ok {
+		_spec.SetField(environment.FieldKubernetesName, field.TypeString, value)
+		_node.KubernetesName = value
+	}
 	if value, ok := ec.mutation.Name(); ok {
 		_spec.SetField(environment.FieldName, field.TypeString, value)
 		_node.Name = value
-	}
-	if value, ok := ec.mutation.DisplayName(); ok {
-		_spec.SetField(environment.FieldDisplayName, field.TypeString, value)
-		_node.DisplayName = value
 	}
 	if value, ok := ec.mutation.Description(); ok {
 		_spec.SetField(environment.FieldDescription, field.TypeString, value)
@@ -416,6 +416,18 @@ func (u *EnvironmentUpsert) UpdateUpdatedAt() *EnvironmentUpsert {
 	return u
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *EnvironmentUpsert) SetKubernetesName(v string) *EnvironmentUpsert {
+	u.Set(environment.FieldKubernetesName, v)
+	return u
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *EnvironmentUpsert) UpdateKubernetesName() *EnvironmentUpsert {
+	u.SetExcluded(environment.FieldKubernetesName)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *EnvironmentUpsert) SetName(v string) *EnvironmentUpsert {
 	u.Set(environment.FieldName, v)
@@ -425,18 +437,6 @@ func (u *EnvironmentUpsert) SetName(v string) *EnvironmentUpsert {
 // UpdateName sets the "name" field to the value that was provided on create.
 func (u *EnvironmentUpsert) UpdateName() *EnvironmentUpsert {
 	u.SetExcluded(environment.FieldName)
-	return u
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *EnvironmentUpsert) SetDisplayName(v string) *EnvironmentUpsert {
-	u.Set(environment.FieldDisplayName, v)
-	return u
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *EnvironmentUpsert) UpdateDisplayName() *EnvironmentUpsert {
-	u.SetExcluded(environment.FieldDisplayName)
 	return u
 }
 
@@ -559,6 +559,20 @@ func (u *EnvironmentUpsertOne) UpdateUpdatedAt() *EnvironmentUpsertOne {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *EnvironmentUpsertOne) SetKubernetesName(v string) *EnvironmentUpsertOne {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *EnvironmentUpsertOne) UpdateKubernetesName() *EnvironmentUpsertOne {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *EnvironmentUpsertOne) SetName(v string) *EnvironmentUpsertOne {
 	return u.Update(func(s *EnvironmentUpsert) {
@@ -570,20 +584,6 @@ func (u *EnvironmentUpsertOne) SetName(v string) *EnvironmentUpsertOne {
 func (u *EnvironmentUpsertOne) UpdateName() *EnvironmentUpsertOne {
 	return u.Update(func(s *EnvironmentUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *EnvironmentUpsertOne) SetDisplayName(v string) *EnvironmentUpsertOne {
-	return u.Update(func(s *EnvironmentUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *EnvironmentUpsertOne) UpdateDisplayName() *EnvironmentUpsertOne {
-	return u.Update(func(s *EnvironmentUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 
@@ -882,6 +882,20 @@ func (u *EnvironmentUpsertBulk) UpdateUpdatedAt() *EnvironmentUpsertBulk {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *EnvironmentUpsertBulk) SetKubernetesName(v string) *EnvironmentUpsertBulk {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *EnvironmentUpsertBulk) UpdateKubernetesName() *EnvironmentUpsertBulk {
+	return u.Update(func(s *EnvironmentUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *EnvironmentUpsertBulk) SetName(v string) *EnvironmentUpsertBulk {
 	return u.Update(func(s *EnvironmentUpsert) {
@@ -893,20 +907,6 @@ func (u *EnvironmentUpsertBulk) SetName(v string) *EnvironmentUpsertBulk {
 func (u *EnvironmentUpsertBulk) UpdateName() *EnvironmentUpsertBulk {
 	return u.Update(func(s *EnvironmentUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *EnvironmentUpsertBulk) SetDisplayName(v string) *EnvironmentUpsertBulk {
-	return u.Update(func(s *EnvironmentUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *EnvironmentUpsertBulk) UpdateDisplayName() *EnvironmentUpsertBulk {
-	return u.Update(func(s *EnvironmentUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 

@@ -10,8 +10,8 @@ import (
 
 type ProjectResponse struct {
 	ID                   uuid.UUID              `json:"id"`
+	KubernetesName       string                 `json:"kubernetes_name"`
 	Name                 string                 `json:"name"`
-	DisplayName          string                 `json:"display_name"`
 	Description          *string                `json:"description"`
 	Status               string                 `json:"status"`
 	TeamID               uuid.UUID              `json:"team_id"`
@@ -57,8 +57,8 @@ func TransformProjectEntity(entity *ent.Project) *ProjectResponse {
 	if entity != nil {
 		response = &ProjectResponse{
 			ID:               entity.ID,
+			KubernetesName:   entity.KubernetesName,
 			Name:             entity.Name,
-			DisplayName:      entity.DisplayName,
 			Description:      entity.Description,
 			Status:           entity.Status,
 			TeamID:           entity.TeamID,

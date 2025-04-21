@@ -8,11 +8,11 @@ import (
 )
 
 type TeamResponse struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	DisplayName string    `json:"display_name"`
-	Description *string   `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID             uuid.UUID `json:"id"`
+	KubernetesName string    `json:"kubernetes_name"`
+	Name           string    `json:"name"`
+	Description    *string   `json:"description"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 // TransformTeamEntity transforms an ent.Team entity into a TeamResponse
@@ -20,11 +20,11 @@ func TransformTeamEntity(entity *ent.Team) *TeamResponse {
 	response := &TeamResponse{}
 	if entity != nil {
 		response = &TeamResponse{
-			ID:          entity.ID,
-			Name:        entity.Name,
-			DisplayName: entity.DisplayName,
-			Description: entity.Description,
-			CreatedAt:   entity.CreatedAt,
+			ID:             entity.ID,
+			KubernetesName: entity.KubernetesName,
+			Name:           entity.Name,
+			Description:    entity.Description,
+			CreatedAt:      entity.CreatedAt,
 		}
 	}
 	return response

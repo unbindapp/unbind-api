@@ -66,14 +66,14 @@ func UpdatedAt(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// KubernetesName applies equality check predicate on the "kubernetes_name" field. It's identical to KubernetesNameEQ.
+func KubernetesName(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldKubernetesName, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldName, v))
-}
-
-// DisplayName applies equality check predicate on the "display_name" field. It's identical to DisplayNameEQ.
-func DisplayName(v string) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldDisplayName, v))
 }
 
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
@@ -191,6 +191,71 @@ func UpdatedAtLTE(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
+// KubernetesNameEQ applies the EQ predicate on the "kubernetes_name" field.
+func KubernetesNameEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldKubernetesName, v))
+}
+
+// KubernetesNameNEQ applies the NEQ predicate on the "kubernetes_name" field.
+func KubernetesNameNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldKubernetesName, v))
+}
+
+// KubernetesNameIn applies the In predicate on the "kubernetes_name" field.
+func KubernetesNameIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldKubernetesName, vs...))
+}
+
+// KubernetesNameNotIn applies the NotIn predicate on the "kubernetes_name" field.
+func KubernetesNameNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldKubernetesName, vs...))
+}
+
+// KubernetesNameGT applies the GT predicate on the "kubernetes_name" field.
+func KubernetesNameGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldKubernetesName, v))
+}
+
+// KubernetesNameGTE applies the GTE predicate on the "kubernetes_name" field.
+func KubernetesNameGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldKubernetesName, v))
+}
+
+// KubernetesNameLT applies the LT predicate on the "kubernetes_name" field.
+func KubernetesNameLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldKubernetesName, v))
+}
+
+// KubernetesNameLTE applies the LTE predicate on the "kubernetes_name" field.
+func KubernetesNameLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldKubernetesName, v))
+}
+
+// KubernetesNameContains applies the Contains predicate on the "kubernetes_name" field.
+func KubernetesNameContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldKubernetesName, v))
+}
+
+// KubernetesNameHasPrefix applies the HasPrefix predicate on the "kubernetes_name" field.
+func KubernetesNameHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldKubernetesName, v))
+}
+
+// KubernetesNameHasSuffix applies the HasSuffix predicate on the "kubernetes_name" field.
+func KubernetesNameHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldKubernetesName, v))
+}
+
+// KubernetesNameEqualFold applies the EqualFold predicate on the "kubernetes_name" field.
+func KubernetesNameEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldKubernetesName, v))
+}
+
+// KubernetesNameContainsFold applies the ContainsFold predicate on the "kubernetes_name" field.
+func KubernetesNameContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldKubernetesName, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldName, v))
@@ -254,71 +319,6 @@ func NameEqualFold(v string) predicate.Service {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Service {
 	return predicate.Service(sql.FieldContainsFold(FieldName, v))
-}
-
-// DisplayNameEQ applies the EQ predicate on the "display_name" field.
-func DisplayNameEQ(v string) predicate.Service {
-	return predicate.Service(sql.FieldEQ(FieldDisplayName, v))
-}
-
-// DisplayNameNEQ applies the NEQ predicate on the "display_name" field.
-func DisplayNameNEQ(v string) predicate.Service {
-	return predicate.Service(sql.FieldNEQ(FieldDisplayName, v))
-}
-
-// DisplayNameIn applies the In predicate on the "display_name" field.
-func DisplayNameIn(vs ...string) predicate.Service {
-	return predicate.Service(sql.FieldIn(FieldDisplayName, vs...))
-}
-
-// DisplayNameNotIn applies the NotIn predicate on the "display_name" field.
-func DisplayNameNotIn(vs ...string) predicate.Service {
-	return predicate.Service(sql.FieldNotIn(FieldDisplayName, vs...))
-}
-
-// DisplayNameGT applies the GT predicate on the "display_name" field.
-func DisplayNameGT(v string) predicate.Service {
-	return predicate.Service(sql.FieldGT(FieldDisplayName, v))
-}
-
-// DisplayNameGTE applies the GTE predicate on the "display_name" field.
-func DisplayNameGTE(v string) predicate.Service {
-	return predicate.Service(sql.FieldGTE(FieldDisplayName, v))
-}
-
-// DisplayNameLT applies the LT predicate on the "display_name" field.
-func DisplayNameLT(v string) predicate.Service {
-	return predicate.Service(sql.FieldLT(FieldDisplayName, v))
-}
-
-// DisplayNameLTE applies the LTE predicate on the "display_name" field.
-func DisplayNameLTE(v string) predicate.Service {
-	return predicate.Service(sql.FieldLTE(FieldDisplayName, v))
-}
-
-// DisplayNameContains applies the Contains predicate on the "display_name" field.
-func DisplayNameContains(v string) predicate.Service {
-	return predicate.Service(sql.FieldContains(FieldDisplayName, v))
-}
-
-// DisplayNameHasPrefix applies the HasPrefix predicate on the "display_name" field.
-func DisplayNameHasPrefix(v string) predicate.Service {
-	return predicate.Service(sql.FieldHasPrefix(FieldDisplayName, v))
-}
-
-// DisplayNameHasSuffix applies the HasSuffix predicate on the "display_name" field.
-func DisplayNameHasSuffix(v string) predicate.Service {
-	return predicate.Service(sql.FieldHasSuffix(FieldDisplayName, v))
-}
-
-// DisplayNameEqualFold applies the EqualFold predicate on the "display_name" field.
-func DisplayNameEqualFold(v string) predicate.Service {
-	return predicate.Service(sql.FieldEqualFold(FieldDisplayName, v))
-}
-
-// DisplayNameContainsFold applies the ContainsFold predicate on the "display_name" field.
-func DisplayNameContainsFold(v string) predicate.Service {
-	return predicate.Service(sql.FieldContainsFold(FieldDisplayName, v))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.

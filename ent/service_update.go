@@ -41,6 +41,20 @@ func (su *ServiceUpdate) SetUpdatedAt(t time.Time) *ServiceUpdate {
 	return su
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (su *ServiceUpdate) SetKubernetesName(s string) *ServiceUpdate {
+	su.mutation.SetKubernetesName(s)
+	return su
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableKubernetesName(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetKubernetesName(*s)
+	}
+	return su
+}
+
 // SetName sets the "name" field.
 func (su *ServiceUpdate) SetName(s string) *ServiceUpdate {
 	su.mutation.SetName(s)
@@ -51,20 +65,6 @@ func (su *ServiceUpdate) SetName(s string) *ServiceUpdate {
 func (su *ServiceUpdate) SetNillableName(s *string) *ServiceUpdate {
 	if s != nil {
 		su.SetName(*s)
-	}
-	return su
-}
-
-// SetDisplayName sets the "display_name" field.
-func (su *ServiceUpdate) SetDisplayName(s string) *ServiceUpdate {
-	su.mutation.SetDisplayName(s)
-	return su
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (su *ServiceUpdate) SetNillableDisplayName(s *string) *ServiceUpdate {
-	if s != nil {
-		su.SetDisplayName(*s)
 	}
 	return su
 }
@@ -370,9 +370,9 @@ func (su *ServiceUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (su *ServiceUpdate) check() error {
-	if v, ok := su.mutation.Name(); ok {
-		if err := service.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Service.name": %w`, err)}
+	if v, ok := su.mutation.KubernetesName(); ok {
+		if err := service.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Service.kubernetes_name": %w`, err)}
 		}
 	}
 	if su.mutation.EnvironmentCleared() && len(su.mutation.EnvironmentIDs()) > 0 {
@@ -402,11 +402,11 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.UpdatedAt(); ok {
 		_spec.SetField(service.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := su.mutation.KubernetesName(); ok {
+		_spec.SetField(service.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := su.mutation.Name(); ok {
 		_spec.SetField(service.FieldName, field.TypeString, value)
-	}
-	if value, ok := su.mutation.DisplayName(); ok {
-		_spec.SetField(service.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := su.mutation.Description(); ok {
 		_spec.SetField(service.FieldDescription, field.TypeString, value)
@@ -663,6 +663,20 @@ func (suo *ServiceUpdateOne) SetUpdatedAt(t time.Time) *ServiceUpdateOne {
 	return suo
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (suo *ServiceUpdateOne) SetKubernetesName(s string) *ServiceUpdateOne {
+	suo.mutation.SetKubernetesName(s)
+	return suo
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableKubernetesName(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetKubernetesName(*s)
+	}
+	return suo
+}
+
 // SetName sets the "name" field.
 func (suo *ServiceUpdateOne) SetName(s string) *ServiceUpdateOne {
 	suo.mutation.SetName(s)
@@ -673,20 +687,6 @@ func (suo *ServiceUpdateOne) SetName(s string) *ServiceUpdateOne {
 func (suo *ServiceUpdateOne) SetNillableName(s *string) *ServiceUpdateOne {
 	if s != nil {
 		suo.SetName(*s)
-	}
-	return suo
-}
-
-// SetDisplayName sets the "display_name" field.
-func (suo *ServiceUpdateOne) SetDisplayName(s string) *ServiceUpdateOne {
-	suo.mutation.SetDisplayName(s)
-	return suo
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableDisplayName(s *string) *ServiceUpdateOne {
-	if s != nil {
-		suo.SetDisplayName(*s)
 	}
 	return suo
 }
@@ -1005,9 +1005,9 @@ func (suo *ServiceUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (suo *ServiceUpdateOne) check() error {
-	if v, ok := suo.mutation.Name(); ok {
-		if err := service.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Service.name": %w`, err)}
+	if v, ok := suo.mutation.KubernetesName(); ok {
+		if err := service.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Service.kubernetes_name": %w`, err)}
 		}
 	}
 	if suo.mutation.EnvironmentCleared() && len(suo.mutation.EnvironmentIDs()) > 0 {
@@ -1054,11 +1054,11 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	if value, ok := suo.mutation.UpdatedAt(); ok {
 		_spec.SetField(service.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := suo.mutation.KubernetesName(); ok {
+		_spec.SetField(service.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := suo.mutation.Name(); ok {
 		_spec.SetField(service.FieldName, field.TypeString, value)
-	}
-	if value, ok := suo.mutation.DisplayName(); ok {
-		_spec.SetField(service.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := suo.mutation.Description(); ok {
 		_spec.SetField(service.FieldDescription, field.TypeString, value)

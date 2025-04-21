@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 )
@@ -17,7 +16,7 @@ type CreateProjectInput struct {
 	server.BaseAuthInput
 	Body struct {
 		TeamID      uuid.UUID `json:"team_id" required:"true"`
-		DisplayName string    `json:"display_name" required:"true"`
+		Name        string    `json:"name" required:"true"`
 		Description *string   `json:"description" required:"false"`
 	}
 }
@@ -37,17 +36,9 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	// Generate name
-	name, err := utils.GenerateSlug(input.Body.DisplayName)
-	if err != nil {
-		log.Error("Error generating project name", "err", err)
-		return nil, huma.Error500InternalServerError("Unable to generate project name")
-	}
-
 	createdProject, err := self.srv.ProjectService.CreateProject(ctx, user.ID, &project_service.CreateProjectInput{
 		TeamID:      input.Body.TeamID,
-		Name:        name,
-		DisplayName: input.Body.DisplayName,
+		Name:        input.Body.Name,
 		Description: input.Body.Description,
 	}, bearerToken)
 	if err != nil {

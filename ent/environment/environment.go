@@ -19,10 +19,10 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldKubernetesName holds the string denoting the kubernetes_name field in the database.
+	FieldKubernetesName = "kubernetes_name"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldDisplayName holds the string denoting the display_name field in the database.
-	FieldDisplayName = "display_name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldActive holds the string denoting the active field in the database.
@@ -67,8 +67,8 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldKubernetesName,
 	FieldName,
-	FieldDisplayName,
 	FieldDescription,
 	FieldActive,
 	FieldProjectID,
@@ -92,8 +92,8 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// NameValidator is a validator for the "name" field. It is called by the builders before save.
-	NameValidator func(string) error
+	// KubernetesNameValidator is a validator for the "kubernetes_name" field. It is called by the builders before save.
+	KubernetesNameValidator func(string) error
 	// DefaultActive holds the default value on creation for the "active" field.
 	DefaultActive bool
 	// DefaultID holds the default value on creation for the "id" field.
@@ -118,14 +118,14 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByKubernetesName orders the results by the kubernetes_name field.
+func ByKubernetesName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldKubernetesName, opts...).ToFunc()
+}
+
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
-}
-
-// ByDisplayName orders the results by the display_name field.
-func ByDisplayName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDisplayName, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.

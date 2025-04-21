@@ -56,7 +56,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 	data := webhooks_service.WebookData{
 		Title:       "Deployment Succeeded",
 		Url:         url,
-		Description: fmt.Sprintf("A deployment has succeeded for %s", service.DisplayName),
+		Description: fmt.Sprintf("A deployment has succeeded for %s", service.Name),
 		Fields: []webhooks_service.WebhookDataField{
 			{
 				Name:  "Service Type",
@@ -64,7 +64,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 			},
 			{
 				Name:  "Environment",
-				Value: service.Edges.Environment.DisplayName,
+				Value: service.Edges.Environment.Name,
 			},
 			{
 				Name:  "Builder",
@@ -111,7 +111,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 	data := webhooks_service.WebookData{
 		Title:       "Deployment Failed",
 		Url:         url,
-		Description: fmt.Sprintf("A build has failed for %s", service.DisplayName),
+		Description: fmt.Sprintf("A build has failed for %s", service.Name),
 		Fields: []webhooks_service.WebhookDataField{
 			{
 				Name:  "Service Type",
@@ -119,7 +119,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 			},
 			{
 				Name:  "Environment",
-				Value: service.Edges.Environment.DisplayName,
+				Value: service.Edges.Environment.Name,
 			},
 			{
 				Name:  "Builder",
@@ -210,7 +210,7 @@ func main() {
 		data := webhooks_service.WebookData{
 			Title:       "Deployment Building",
 			Url:         url,
-			Description: fmt.Sprintf("A build has started for %s", service.DisplayName),
+			Description: fmt.Sprintf("A build has started for %s", service.Name),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Type",
@@ -218,7 +218,7 @@ func main() {
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.DisplayName,
+					Value: service.Edges.Environment.Name,
 				},
 				{
 					Name:  "Builder",

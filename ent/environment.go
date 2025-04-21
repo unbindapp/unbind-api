@@ -24,10 +24,10 @@ type Environment struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// KubernetesName holds the value of the "kubernetes_name" field.
+	KubernetesName string `json:"kubernetes_name,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// DisplayName holds the value of the "display_name" field.
-	DisplayName string `json:"display_name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description *string `json:"description,omitempty"`
 	// Active holds the value of the "active" field.
@@ -91,7 +91,7 @@ func (*Environment) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case environment.FieldActive:
 			values[i] = new(sql.NullBool)
-		case environment.FieldName, environment.FieldDisplayName, environment.FieldDescription, environment.FieldKubernetesSecret:
+		case environment.FieldKubernetesName, environment.FieldName, environment.FieldDescription, environment.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case environment.FieldCreatedAt, environment.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -130,17 +130,17 @@ func (e *Environment) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				e.UpdatedAt = value.Time
 			}
+		case environment.FieldKubernetesName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_name", values[i])
+			} else if value.Valid {
+				e.KubernetesName = value.String
+			}
 		case environment.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				e.Name = value.String
-			}
-		case environment.FieldDisplayName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field display_name", values[i])
-			} else if value.Valid {
-				e.DisplayName = value.String
 			}
 		case environment.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -224,11 +224,11 @@ func (e *Environment) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(e.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("kubernetes_name=")
+	builder.WriteString(e.KubernetesName)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(e.Name)
-	builder.WriteString(", ")
-	builder.WriteString("display_name=")
-	builder.WriteString(e.DisplayName)
 	builder.WriteString(", ")
 	if v := e.Description; v != nil {
 		builder.WriteString("description=")

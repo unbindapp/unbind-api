@@ -110,7 +110,7 @@ func TestGenerateSlug(t *testing.T) {
 }
 
 func TestGenerateSlugUniqueness(t *testing.T) {
-	// Generate multiple slugs from the same display name
+	// Generate multiple slugs from the same name
 	displayName := "Test Project"
 	numSlugs := 10
 	slugs := make([]string, numSlugs)

@@ -25,10 +25,10 @@ type Project struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// KubernetesName holds the value of the "kubernetes_name" field.
+	KubernetesName string `json:"kubernetes_name,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// DisplayName holds the value of the "display_name" field.
-	DisplayName string `json:"display_name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description *string `json:"description,omitempty"`
 	// Status holds the value of the "status" field.
@@ -107,7 +107,7 @@ func (*Project) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case project.FieldDefaultEnvironmentID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case project.FieldName, project.FieldDisplayName, project.FieldDescription, project.FieldStatus, project.FieldKubernetesSecret:
+		case project.FieldKubernetesName, project.FieldName, project.FieldDescription, project.FieldStatus, project.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case project.FieldCreatedAt, project.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -146,17 +146,17 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				pr.UpdatedAt = value.Time
 			}
+		case project.FieldKubernetesName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kubernetes_name", values[i])
+			} else if value.Valid {
+				pr.KubernetesName = value.String
+			}
 		case project.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				pr.Name = value.String
-			}
-		case project.FieldDisplayName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field display_name", values[i])
-			} else if value.Valid {
-				pr.DisplayName = value.String
 			}
 		case project.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -252,11 +252,11 @@ func (pr *Project) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(pr.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("kubernetes_name=")
+	builder.WriteString(pr.KubernetesName)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(pr.Name)
-	builder.WriteString(", ")
-	builder.WriteString("display_name=")
-	builder.WriteString(pr.DisplayName)
 	builder.WriteString(", ")
 	if v := pr.Description; v != nil {
 		builder.WriteString("description=")

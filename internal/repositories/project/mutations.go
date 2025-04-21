@@ -10,7 +10,7 @@ import (
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
-func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, displayName string, description *string, kubernetesSecret string) (*ent.Project, error) {
+func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, kubernetesName, name string, description *string, kubernetesSecret string) (*ent.Project, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
@@ -18,8 +18,8 @@ func (self *ProjectRepository) Create(ctx context.Context, tx repository.TxInter
 	// Create the project in the database
 	return db.Project.Create().
 		SetTeamID(teamID).
+		SetKubernetesName(kubernetesName).
 		SetName(name).
-		SetDisplayName(displayName).
 		SetNillableDescription(description).
 		SetKubernetesSecret(kubernetesSecret).
 		Save(ctx)
@@ -34,15 +34,15 @@ func (self *ProjectRepository) ClearDefaultEnvironment(ctx context.Context, tx r
 	return db.Project.UpdateOneID(projectID).ClearDefaultEnvironment().Exec(ctx)
 }
 
-func (self *ProjectRepository) Update(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID, defaultEnvironmentID *uuid.UUID, displayName string, description *string) (*ent.Project, error) {
+func (self *ProjectRepository) Update(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID, defaultEnvironmentID *uuid.UUID, name string, description *string) (*ent.Project, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
 	}
 
 	m := db.Project.UpdateOneID(projectID)
-	if displayName != "" {
-		m.SetDisplayName(displayName)
+	if name != "" {
+		m.SetName(name)
 	}
 	if description != nil {
 		// Reset on empty string

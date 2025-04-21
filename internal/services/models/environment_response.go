@@ -8,14 +8,14 @@ import (
 )
 
 type EnvironmentResponse struct {
-	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
-	DisplayName  string    `json:"display_name"`
-	Description  string    `json:"description"`
-	Active       bool      `json:"active"`
-	ServiceCount int       `json:"service_count,omitempty"`
-	ServiceIcons []string  `json:"service_icons,omitempty" nullable:"false"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID             uuid.UUID `json:"id"`
+	KubernetesName string    `json:"kubernetes_name"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	Active         bool      `json:"active"`
+	ServiceCount   int       `json:"service_count,omitempty"`
+	ServiceIcons   []string  `json:"service_icons,omitempty" nullable:"false"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 // TransformEnvironmentEntity transforms an ent.Environment entity into an EnvironmentResponse
@@ -27,13 +27,13 @@ func TransformEnvironmentEntity(entity *ent.Environment) *EnvironmentResponse {
 			description = *entity.Description
 		}
 		response = &EnvironmentResponse{
-			ID:           entity.ID,
-			Name:         entity.Name,
-			DisplayName:  entity.DisplayName,
-			Description:  description,
-			Active:       entity.Active,
-			CreatedAt:    entity.CreatedAt,
-			ServiceIcons: []string{},
+			ID:             entity.ID,
+			KubernetesName: entity.KubernetesName,
+			Name:           entity.Name,
+			Description:    description,
+			Active:         entity.Active,
+			CreatedAt:      entity.CreatedAt,
+			ServiceIcons:   []string{},
 		}
 	}
 	return response

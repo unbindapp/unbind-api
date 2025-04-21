@@ -31,7 +31,7 @@ type CreateServiceInput struct {
 	TeamID        uuid.UUID `validate:"required,uuid4" required:"true" json:"team_id"`
 	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
 	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
-	DisplayName   string    `validate:"required" required:"true" json:"display_name"`
+	Name          string    `validate:"required" required:"true" json:"name"`
 	Description   string    `json:"description,omitempty"`
 
 	// GitHub integration
@@ -260,7 +260,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Generate unique name
-		name, err := utils.GenerateSlug(input.DisplayName)
+		kubernetesName, err := utils.GenerateSlug(input.Name)
 		if err != nil {
 			return err
 		}
@@ -271,7 +271,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		if len(hosts) == 0 && input.Public != nil && *public && input.Type != schema.ServiceTypeDatabase && len(ports) > 0 {
 			// Generate a subdomain
-			domain, err := utils.GenerateSubdomain(name, self.cfg.ExternalWildcardBaseURL)
+			domain, err := utils.GenerateSubdomain(kubernetesName, self.cfg.ExternalWildcardBaseURL)
 			if err != nil {
 				log.Warnf("Failed to generate subdomain: %v", err)
 				public = utils.ToPtr(false)
@@ -284,7 +284,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				}
 				if domainCount > 0 {
 					// Re-generate with numerical suffix
-					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s-%d", name, domainCount), self.cfg.ExternalWildcardBaseURL)
+					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s-%d", kubernetesName, domainCount), self.cfg.ExternalWildcardBaseURL)
 					if err != nil {
 						log.Warnf("Failed to generate subdomain: %v", err)
 						public = utils.ToPtr(false)
@@ -311,15 +311,15 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("Team not found")
 		}
 		// Create kubernetes secrets
-		secret, _, err := self.k8s.GetOrCreateSecret(ctx, name, project.Edges.Team.Namespace, client)
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, kubernetesName, project.Edges.Team.Namespace, client)
 		if err != nil {
 			return fmt.Errorf("failed to create secret: %v", err)
 		}
 
 		// Create the service
 		createService, err := self.repo.Service().Create(ctx, tx,
-			name,
-			input.DisplayName,
+			kubernetesName,
+			input.Name,
 			input.Description,
 			input.EnvironmentID,
 			input.GitHubInstallationID,
@@ -395,15 +395,15 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		data := webhooks_service.WebookData{
 			Title:       "Service Created",
 			Url:         url,
-			Description: fmt.Sprintf("A new service has been created in project %s by %s", service.Edges.Environment.Edges.Project.DisplayName, user.Email),
+			Description: fmt.Sprintf("A new service has been created in project %s by %s", service.Edges.Environment.Edges.Project.Name, user.Email),
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Name",
-					Value: service.DisplayName,
+					Value: service.Name,
 				},
 				{
 					Name:  "Environment",
-					Value: service.Edges.Environment.DisplayName,
+					Value: service.Edges.Environment.Name,
 				},
 				{
 					Name:  "Service Type",

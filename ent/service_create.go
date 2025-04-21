@@ -57,15 +57,15 @@ func (sc *ServiceCreate) SetNillableUpdatedAt(t *time.Time) *ServiceCreate {
 	return sc
 }
 
-// SetName sets the "name" field.
-func (sc *ServiceCreate) SetName(s string) *ServiceCreate {
-	sc.mutation.SetName(s)
+// SetKubernetesName sets the "kubernetes_name" field.
+func (sc *ServiceCreate) SetKubernetesName(s string) *ServiceCreate {
+	sc.mutation.SetKubernetesName(s)
 	return sc
 }
 
-// SetDisplayName sets the "display_name" field.
-func (sc *ServiceCreate) SetDisplayName(s string) *ServiceCreate {
-	sc.mutation.SetDisplayName(s)
+// SetName sets the "name" field.
+func (sc *ServiceCreate) SetName(s string) *ServiceCreate {
+	sc.mutation.SetName(s)
 	return sc
 }
 
@@ -286,16 +286,16 @@ func (sc *ServiceCreate) check() error {
 	if _, ok := sc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Service.updated_at"`)}
 	}
-	if _, ok := sc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Service.name"`)}
+	if _, ok := sc.mutation.KubernetesName(); !ok {
+		return &ValidationError{Name: "kubernetes_name", err: errors.New(`ent: missing required field "Service.kubernetes_name"`)}
 	}
-	if v, ok := sc.mutation.Name(); ok {
-		if err := service.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Service.name": %w`, err)}
+	if v, ok := sc.mutation.KubernetesName(); ok {
+		if err := service.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Service.kubernetes_name": %w`, err)}
 		}
 	}
-	if _, ok := sc.mutation.DisplayName(); !ok {
-		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Service.display_name"`)}
+	if _, ok := sc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Service.name"`)}
 	}
 	if _, ok := sc.mutation.EnvironmentID(); !ok {
 		return &ValidationError{Name: "environment_id", err: errors.New(`ent: missing required field "Service.environment_id"`)}
@@ -350,13 +350,13 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := sc.mutation.KubernetesName(); ok {
+		_spec.SetField(service.FieldKubernetesName, field.TypeString, value)
+		_node.KubernetesName = value
+	}
 	if value, ok := sc.mutation.Name(); ok {
 		_spec.SetField(service.FieldName, field.TypeString, value)
 		_node.Name = value
-	}
-	if value, ok := sc.mutation.DisplayName(); ok {
-		_spec.SetField(service.FieldDisplayName, field.TypeString, value)
-		_node.DisplayName = value
 	}
 	if value, ok := sc.mutation.Description(); ok {
 		_spec.SetField(service.FieldDescription, field.TypeString, value)
@@ -537,6 +537,18 @@ func (u *ServiceUpsert) UpdateUpdatedAt() *ServiceUpsert {
 	return u
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *ServiceUpsert) SetKubernetesName(v string) *ServiceUpsert {
+	u.Set(service.FieldKubernetesName, v)
+	return u
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateKubernetesName() *ServiceUpsert {
+	u.SetExcluded(service.FieldKubernetesName)
+	return u
+}
+
 // SetName sets the "name" field.
 func (u *ServiceUpsert) SetName(v string) *ServiceUpsert {
 	u.Set(service.FieldName, v)
@@ -546,18 +558,6 @@ func (u *ServiceUpsert) SetName(v string) *ServiceUpsert {
 // UpdateName sets the "name" field to the value that was provided on create.
 func (u *ServiceUpsert) UpdateName() *ServiceUpsert {
 	u.SetExcluded(service.FieldName)
-	return u
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *ServiceUpsert) SetDisplayName(v string) *ServiceUpsert {
-	u.Set(service.FieldDisplayName, v)
-	return u
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *ServiceUpsert) UpdateDisplayName() *ServiceUpsert {
-	u.SetExcluded(service.FieldDisplayName)
 	return u
 }
 
@@ -740,6 +740,20 @@ func (u *ServiceUpsertOne) UpdateUpdatedAt() *ServiceUpsertOne {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *ServiceUpsertOne) SetKubernetesName(v string) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateKubernetesName() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *ServiceUpsertOne) SetName(v string) *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
@@ -751,20 +765,6 @@ func (u *ServiceUpsertOne) SetName(v string) *ServiceUpsertOne {
 func (u *ServiceUpsertOne) UpdateName() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *ServiceUpsertOne) SetDisplayName(v string) *ServiceUpsertOne {
-	return u.Update(func(s *ServiceUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *ServiceUpsertOne) UpdateDisplayName() *ServiceUpsertOne {
-	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 
@@ -1133,6 +1133,20 @@ func (u *ServiceUpsertBulk) UpdateUpdatedAt() *ServiceUpsertBulk {
 	})
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (u *ServiceUpsertBulk) SetKubernetesName(v string) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetKubernetesName(v)
+	})
+}
+
+// UpdateKubernetesName sets the "kubernetes_name" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateKubernetesName() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateKubernetesName()
+	})
+}
+
 // SetName sets the "name" field.
 func (u *ServiceUpsertBulk) SetName(v string) *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
@@ -1144,20 +1158,6 @@ func (u *ServiceUpsertBulk) SetName(v string) *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) UpdateName() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateName()
-	})
-}
-
-// SetDisplayName sets the "display_name" field.
-func (u *ServiceUpsertBulk) SetDisplayName(v string) *ServiceUpsertBulk {
-	return u.Update(func(s *ServiceUpsert) {
-		s.SetDisplayName(v)
-	})
-}
-
-// UpdateDisplayName sets the "display_name" field to the value that was provided on create.
-func (u *ServiceUpsertBulk) UpdateDisplayName() *ServiceUpsertBulk {
-	return u.Update(func(s *ServiceUpsert) {
-		s.UpdateDisplayName()
 	})
 }
 

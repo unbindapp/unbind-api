@@ -39,6 +39,20 @@ func (tu *TeamUpdate) SetUpdatedAt(t time.Time) *TeamUpdate {
 	return tu
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (tu *TeamUpdate) SetKubernetesName(s string) *TeamUpdate {
+	tu.mutation.SetKubernetesName(s)
+	return tu
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (tu *TeamUpdate) SetNillableKubernetesName(s *string) *TeamUpdate {
+	if s != nil {
+		tu.SetKubernetesName(*s)
+	}
+	return tu
+}
+
 // SetName sets the "name" field.
 func (tu *TeamUpdate) SetName(s string) *TeamUpdate {
 	tu.mutation.SetName(s)
@@ -49,20 +63,6 @@ func (tu *TeamUpdate) SetName(s string) *TeamUpdate {
 func (tu *TeamUpdate) SetNillableName(s *string) *TeamUpdate {
 	if s != nil {
 		tu.SetName(*s)
-	}
-	return tu
-}
-
-// SetDisplayName sets the "display_name" field.
-func (tu *TeamUpdate) SetDisplayName(s string) *TeamUpdate {
-	tu.mutation.SetDisplayName(s)
-	return tu
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (tu *TeamUpdate) SetNillableDisplayName(s *string) *TeamUpdate {
-	if s != nil {
-		tu.SetDisplayName(*s)
 	}
 	return tu
 }
@@ -266,9 +266,9 @@ func (tu *TeamUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (tu *TeamUpdate) check() error {
-	if v, ok := tu.mutation.Name(); ok {
-		if err := team.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Team.name": %w`, err)}
+	if v, ok := tu.mutation.KubernetesName(); ok {
+		if err := team.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Team.kubernetes_name": %w`, err)}
 		}
 	}
 	return nil
@@ -295,11 +295,11 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.UpdatedAt(); ok {
 		_spec.SetField(team.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := tu.mutation.KubernetesName(); ok {
+		_spec.SetField(team.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := tu.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
-	}
-	if value, ok := tu.mutation.DisplayName(); ok {
-		_spec.SetField(team.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := tu.mutation.Namespace(); ok {
 		_spec.SetField(team.FieldNamespace, field.TypeString, value)
@@ -476,6 +476,20 @@ func (tuo *TeamUpdateOne) SetUpdatedAt(t time.Time) *TeamUpdateOne {
 	return tuo
 }
 
+// SetKubernetesName sets the "kubernetes_name" field.
+func (tuo *TeamUpdateOne) SetKubernetesName(s string) *TeamUpdateOne {
+	tuo.mutation.SetKubernetesName(s)
+	return tuo
+}
+
+// SetNillableKubernetesName sets the "kubernetes_name" field if the given value is not nil.
+func (tuo *TeamUpdateOne) SetNillableKubernetesName(s *string) *TeamUpdateOne {
+	if s != nil {
+		tuo.SetKubernetesName(*s)
+	}
+	return tuo
+}
+
 // SetName sets the "name" field.
 func (tuo *TeamUpdateOne) SetName(s string) *TeamUpdateOne {
 	tuo.mutation.SetName(s)
@@ -486,20 +500,6 @@ func (tuo *TeamUpdateOne) SetName(s string) *TeamUpdateOne {
 func (tuo *TeamUpdateOne) SetNillableName(s *string) *TeamUpdateOne {
 	if s != nil {
 		tuo.SetName(*s)
-	}
-	return tuo
-}
-
-// SetDisplayName sets the "display_name" field.
-func (tuo *TeamUpdateOne) SetDisplayName(s string) *TeamUpdateOne {
-	tuo.mutation.SetDisplayName(s)
-	return tuo
-}
-
-// SetNillableDisplayName sets the "display_name" field if the given value is not nil.
-func (tuo *TeamUpdateOne) SetNillableDisplayName(s *string) *TeamUpdateOne {
-	if s != nil {
-		tuo.SetDisplayName(*s)
 	}
 	return tuo
 }
@@ -716,9 +716,9 @@ func (tuo *TeamUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (tuo *TeamUpdateOne) check() error {
-	if v, ok := tuo.mutation.Name(); ok {
-		if err := team.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Team.name": %w`, err)}
+	if v, ok := tuo.mutation.KubernetesName(); ok {
+		if err := team.KubernetesNameValidator(v); err != nil {
+			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Team.kubernetes_name": %w`, err)}
 		}
 	}
 	return nil
@@ -762,11 +762,11 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if value, ok := tuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(team.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := tuo.mutation.KubernetesName(); ok {
+		_spec.SetField(team.FieldKubernetesName, field.TypeString, value)
+	}
 	if value, ok := tuo.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
-	}
-	if value, ok := tuo.mutation.DisplayName(); ok {
-		_spec.SetField(team.FieldDisplayName, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.Namespace(); ok {
 		_spec.SetField(team.FieldNamespace, field.TypeString, value)
