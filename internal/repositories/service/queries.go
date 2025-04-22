@@ -74,7 +74,7 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 		All(ctx)
 }
 
-func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.Service, error) {
+func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID, withLatestDeployment bool) ([]*ent.Service, error) {
 	services, err := self.base.DB.Service.Query().
 		Where(service.EnvironmentIDEQ(environmentID)).
 		WithServiceConfig().
@@ -86,28 +86,30 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 		return nil, err
 	}
 
-	// Get the latest deployment for each service
-	for _, svc := range services {
-		latestDeployment, err := self.base.DB.Deployment.Query().
-			Where(deployment.ServiceIDEQ(svc.ID)).
-			Order(ent.Desc(deployment.FieldCreatedAt)).
-			Limit(1).
-			First(ctx)
+	if !withLatestDeployment {
+		// Get the latest deployment for each service
+		for _, svc := range services {
+			latestDeployment, err := self.base.DB.Deployment.Query().
+				Where(deployment.ServiceIDEQ(svc.ID)).
+				Order(ent.Desc(deployment.FieldCreatedAt)).
+				Limit(1).
+				First(ctx)
 
-		if err != nil && !ent.IsNotFound(err) {
-			return nil, err
-		}
+			if err != nil && !ent.IsNotFound(err) {
+				return nil, err
+			}
 
-		if latestDeployment != nil {
-			svc.Edges.Deployments = []*ent.Deployment{latestDeployment}
-			if latestDeployment.Status != schema.DeploymentStatusSucceeded {
-				// Get last successful deployment if the latest one is not successful
-				lastSuccessfulDeployment, err := self.deploymentRepo.GetLastSuccessfulDeployment(ctx, svc.ID)
-				if err != nil && !ent.IsNotFound(err) {
-					return nil, err
-				}
-				if !ent.IsNotFound(err) {
-					svc.Edges.Deployments = append(svc.Edges.Deployments, lastSuccessfulDeployment)
+			if latestDeployment != nil {
+				svc.Edges.Deployments = []*ent.Deployment{latestDeployment}
+				if latestDeployment.Status != schema.DeploymentStatusSucceeded {
+					// Get last successful deployment if the latest one is not successful
+					lastSuccessfulDeployment, err := self.deploymentRepo.GetLastSuccessfulDeployment(ctx, svc.ID)
+					if err != nil && !ent.IsNotFound(err) {
+						return nil, err
+					}
+					if !ent.IsNotFound(err) {
+						svc.Edges.Deployments = append(svc.Edges.Deployments, lastSuccessfulDeployment)
+					}
 				}
 			}
 		}

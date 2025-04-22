@@ -14,6 +14,7 @@ type AvailableVariableReference struct {
 	Type           schema.VariableReferenceType       `json:"type"`
 	KubernetesName string                             `json:"kubernetes_name"`
 	SourceName     string                             `json:"source_name"`
+	SourceIcon     string                             `json:"source_icon"`
 	SourceType     schema.VariableReferenceSourceType `json:"source_type"`
 	SourceID       uuid.UUID                          `json:"source_id"`
 	Keys           []string                           `json:"keys"`
@@ -61,7 +62,7 @@ type SecretData struct {
 	Keys       []string
 }
 
-func TransformAvailableVariableResponse(secretData []SecretData, endpoints *EndpointDiscovery, nameMap map[uuid.UUID]string) []AvailableVariableReference {
+func TransformAvailableVariableResponse(secretData []SecretData, endpoints *EndpointDiscovery, nameMap map[uuid.UUID]string, iconMap map[uuid.UUID]string) []AvailableVariableReference {
 	resp := make([]AvailableVariableReference, len(secretData)+len(endpoints.Internal)+len(endpoints.External))
 
 	// Process variables
@@ -70,10 +71,12 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 		resp[i] = AvailableVariableReference{
 			Type:           schema.VariableReferenceTypeVariable,
 			SourceName:     nameMap[secret.ID],
+			SourceIcon:     iconMap[secret.ID],
 			KubernetesName: secret.SecretName,
 			SourceType:     secret.Type,
-			SourceID:       secret.ID,
-			Keys:           secret.Keys,
+
+			SourceID: secret.ID,
+			Keys:     secret.Keys,
 		}
 		i++
 	}
@@ -83,6 +86,7 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 		resp[i] = AvailableVariableReference{
 			Type:           schema.VariableReferenceTypeInternalEndpoint,
 			SourceName:     nameMap[endpoint.ServiceID],
+			SourceIcon:     iconMap[endpoint.ServiceID],
 			KubernetesName: endpoint.KubernetesName,
 			SourceType:     schema.VariableReferenceSourceTypeService, // Always service
 			SourceID:       endpoint.ServiceID,
@@ -95,6 +99,7 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 		resp[i] = AvailableVariableReference{
 			Type:           schema.VariableReferenceTypeExternalEndpoint,
 			SourceName:     nameMap[endpoint.ServiceID],
+			SourceIcon:     iconMap[endpoint.ServiceID],
 			KubernetesName: endpoint.KubernetesName,
 			SourceType:     schema.VariableReferenceSourceTypeService, // Always service
 			SourceID:       endpoint.ServiceID,

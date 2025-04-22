@@ -59,6 +59,7 @@ func (self *VariableRepository) GetReferencesForService(
 
 	// Get the name map
 	nameMap := make(map[uuid.UUID]string)
+	iconMap := make(map[uuid.UUID]string)
 
 	if len(teamIDs) > 0 {
 		teams, err := self.base.DB.Team.Query().
@@ -108,12 +109,14 @@ func (self *VariableRepository) GetReferencesForService(
 				service.IDIn(serviceIDs...),
 			).
 			Select(service.FieldName).
+			WithServiceConfig().
 			All(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, service := range services {
 			nameMap[service.ID] = service.Name
+			iconMap[service.ID] = service.Edges.ServiceConfig.Icon
 		}
 	}
 
@@ -122,6 +125,18 @@ func (self *VariableRepository) GetReferencesForService(
 		for i, source := range reference.Sources {
 			if name, ok := nameMap[source.ID]; ok {
 				reference.Sources[i].SourceName = name
+			}
+			switch source.SourceType {
+			case schema.VariableReferenceSourceTypeService:
+				if icon, ok := iconMap[source.ID]; ok {
+					reference.Sources[i].SourceIcon = icon
+				}
+			case schema.VariableReferenceSourceTypeEnvironment:
+				reference.Sources[i].SourceIcon = "environment"
+			case schema.VariableReferenceSourceTypeProject:
+				reference.Sources[i].SourceIcon = "project"
+			case schema.VariableReferenceSourceTypeTeam:
+				reference.Sources[i].SourceIcon = "team"
 			}
 		}
 	}

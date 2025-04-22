@@ -36,10 +36,13 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, err
 	}
 
-	// Build a map of names
+	// Build a map of names and icons
 	nameMap := make(map[uuid.UUID]string)
+	iconMap := make(map[uuid.UUID]string)
 	nameMap[team.ID] = team.Name
+	iconMap[team.ID] = "team"
 	nameMap[project.ID] = project.Name
+	iconMap[project.ID] = "project"
 
 	// Base secret names
 	teamSecret := team.KubernetesSecret
@@ -50,6 +53,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 	serviceSecrets := make(map[uuid.UUID]string)
 	var serviceIDs []uuid.UUID
 	nameMap[environment.ID] = environment.Name
+	iconMap[environment.ID] = "environment"
 
 	// Re-fetch environment to populate edges
 	environment, err = self.repo.Environment().GetByID(ctx, environment.ID)
@@ -57,12 +61,19 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, err
 	}
 
-	for _, service := range environment.Edges.Services {
+	// Re-fetch services to get icons
+	environmentServices, err := self.repo.Service().GetByEnvironmentID(ctx, environment.ID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range environmentServices {
 		if service.ID == serviceID {
 			continue
 		}
 		serviceSecrets[service.ID] = service.KubernetesSecret
 		nameMap[service.ID] = service.Name
+		iconMap[service.ID] = service.Edges.ServiceConfig.Icon
 		serviceIDs = append(serviceIDs, service.ID)
 	}
 
@@ -149,7 +160,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, endpointsErr
 	}
 
-	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints, nameMap), nil
+	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints, nameMap, iconMap), nil
 }
 
 // Resolve a variable reference value for a key

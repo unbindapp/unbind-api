@@ -33,7 +33,7 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 	// Make sure this isn't the only environment in the team
 
 	// Get services in this environment
-	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID)
+	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID, false)
 	if err != nil {
 		return err
 	}

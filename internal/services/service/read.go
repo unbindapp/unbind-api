@@ -34,7 +34,7 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	}
 
 	// Get services in environment
-	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID)
+	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID, true)
 	if err != nil {
 		return nil, err
 	}
