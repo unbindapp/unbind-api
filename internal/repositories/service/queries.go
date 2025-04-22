@@ -86,7 +86,7 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 		return nil, err
 	}
 
-	if !withLatestDeployment {
+	if withLatestDeployment {
 		// Get the latest deployment for each service
 		for _, svc := range services {
 			latestDeployment, err := self.base.DB.Deployment.Query().
