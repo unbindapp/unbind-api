@@ -7,6 +7,8 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	helmv2 "github.com/fluxcd/helm-controller/api/v2"
+	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -43,6 +45,21 @@ func NewDatabaseRenderer() *DatabaseRenderer {
 		Kind:    "postgresql",
 	}
 	r.RegisterCRD(zalandoGVK, &postgresv1.Postgresql{})
+
+	// Register Flux CRDs with concrete types
+	helmReleaseGVK := schema.GroupVersionKind{
+		Group:   "helm.toolkit.fluxcd.io",
+		Version: "v2",
+		Kind:    "HelmRelease",
+	}
+	r.RegisterCRD(helmReleaseGVK, &helmv2.HelmRelease{})
+
+	helmRepoGVK := schema.GroupVersionKind{
+		Group:   "source.toolkit.fluxcd.io",
+		Version: "v1",
+		Kind:    "HelmRepository",
+	}
+	r.RegisterCRD(helmRepoGVK, &sourcev1.HelmRepository{})
 
 	return r
 }
@@ -137,7 +154,7 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 
 	// Create a Helm release custom resource
 	helmRelease := map[string]interface{}{
-		"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+		"apiVersion": "helm.toolkit.fluxcd.io/v2",
 		"kind":       "HelmRelease",
 		"metadata": map[string]interface{}{
 			"name":      context.Name,
@@ -166,7 +183,7 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 
 	// Add the Helm repository CR
 	helmRepo := map[string]interface{}{
-		"apiVersion": "source.toolkit.fluxcd.io/v1beta2",
+		"apiVersion": "source.toolkit.fluxcd.io/v1",
 		"kind":       "HelmRepository",
 		"metadata": map[string]interface{}{
 			"name":      repositoryName,
@@ -191,49 +208,6 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 
 	// Combine the YAMLs with a separator
 	return fmt.Sprintf("---\n%s\n---\n%s", string(helmRepoYAML), string(helmReleaseYAML)), nil
-}
-
-// getChartRepositoryForType returns the Helm chart repository for a given database type
-func (r *DatabaseRenderer) getChartRepositoryForType(dbType string) string {
-	// Map database types to Helm chart repositories
-	repositories := map[string]string{
-		"Redis": "https://charts.bitnami.com/bitnami",
-		// Add more mappings as needed
-	}
-
-	if repo, ok := repositories[dbType]; ok {
-		return repo
-	}
-
-	// Default to Bitnami repo if type not found
-	return "https://charts.bitnami.com/bitnami"
-}
-
-// getChartNameForType returns the Helm chart name for a given database type
-func (r *DatabaseRenderer) getChartNameForType(dbType string) string {
-	// Map database types to Helm chart names
-	chartNames := map[string]string{
-		"Redis": "redis",
-		// Add more mappings as needed
-	}
-
-	if name, ok := chartNames[dbType]; ok {
-		return name
-	}
-
-	// Default to lowercase name if not found
-	return strings.ToLower(dbType)
-}
-
-// getChartVersion extracts chart version from parameters
-func getChartVersion(params map[string]interface{}) string {
-	if version, ok := params["chartVersion"]; ok {
-		if strVersion, ok := version.(string); ok {
-			return strVersion
-		}
-	}
-	// Default to latest if not specified
-	return ""
 }
 
 // RenderToObjects parses the rendered YAML into Kubernetes objects
