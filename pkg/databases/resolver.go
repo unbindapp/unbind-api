@@ -65,6 +65,7 @@ func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVe
 		return nil, fmt.Errorf("failed to resolve references: %w", err)
 	}
 
+	// Create the database definition
 	db := &Definition{
 		Name:        metadata.Name,
 		Description: metadata.Description,
@@ -73,6 +74,29 @@ func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVe
 		Version:     metadata.Version,
 		Schema:      resolvedSchema,
 		Content:     string(defBytes),
+		// Include chart info if available
+		Chart: metadata.Chart,
+	}
+
+	// Strict validation for Helm charts: Chart info must be provided
+	if db.Type == "helm" {
+		if db.Chart == nil {
+			return nil, fmt.Errorf("chart information is required for Helm database type")
+		}
+
+		// Validate required chart fields
+		if db.Chart.Name == "" {
+			return nil, fmt.Errorf("chart name is required for Helm database type")
+		}
+		if db.Chart.Version == "" {
+			return nil, fmt.Errorf("chart version is required for Helm database type")
+		}
+		if db.Chart.Repository == "" {
+			return nil, fmt.Errorf("chart repository is required for Helm database type")
+		}
+		if db.Chart.RepositoryName == "" {
+			return nil, fmt.Errorf("chart repositoryName is required for Helm database type")
+		}
 	}
 
 	return db, nil

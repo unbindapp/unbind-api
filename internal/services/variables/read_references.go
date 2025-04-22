@@ -49,21 +49,21 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 	// They can access all service secrets in the same project
 	serviceSecrets := make(map[uuid.UUID]string)
 	var serviceIDs []uuid.UUID
-	// Get all environments in this project
-	projectEnvironments, err := self.repo.Environment().GetForProject(ctx, nil, project.ID)
+	nameMap[environment.ID] = environment.Name
+
+	// Re-fetch environment to populate edges
+	environment, err = self.repo.Environment().GetByID(ctx, environment.ID)
 	if err != nil {
 		return nil, err
 	}
-	for _, environment := range projectEnvironments {
-		nameMap[environment.ID] = environment.Name
-		for _, service := range environment.Edges.Services {
-			if service.ID == serviceID {
-				continue
-			}
-			serviceSecrets[service.ID] = service.KubernetesSecret
-			nameMap[service.ID] = service.Name
-			serviceIDs = append(serviceIDs, service.ID)
+
+	for _, service := range environment.Edges.Services {
+		if service.ID == serviceID {
+			continue
 		}
+		serviceSecrets[service.ID] = service.KubernetesSecret
+		nameMap[service.ID] = service.Name
+		serviceIDs = append(serviceIDs, service.ID)
 	}
 
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
@@ -112,7 +112,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 			ctx,
 			team.Namespace,
 			map[string]string{
-				"unbind-project": project.ID.String(),
+				"unbind-environment": environment.ID.String(),
 			},
 			client,
 		)

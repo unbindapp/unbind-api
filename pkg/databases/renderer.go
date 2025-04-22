@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	yamlDecoder "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/yaml"
 )
 
 // DatabaseRenderer renders a DB definition into Kubernetes resources
@@ -72,6 +73,16 @@ func (r *DatabaseRenderer) Render(unbindDefinition *Definition, context *RenderC
 	context.Definition.Type = unbindDefinition.Type
 	context.Definition.Port = unbindDefinition.Port
 
+	// Copy chart info if available
+	if unbindDefinition.Chart != nil {
+		context.Definition.Chart = unbindDefinition.Chart
+	}
+
+	// Special handling for Helm chart type
+	if unbindDefinition.Type == "helm" {
+		return r.renderHelmChart(unbindDefinition, context)
+	}
+
 	// Process definition
 	var buf bytes.Buffer
 	tmpl, err := template.New("definition").Funcs(sprig.FuncMap()).Parse(unbindDefinition.Content)
@@ -84,6 +95,145 @@ func (r *DatabaseRenderer) Render(unbindDefinition *Definition, context *RenderC
 	}
 
 	return buf.String(), nil
+}
+
+// renderHelmChart renders a Helm chart definition
+func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context *RenderContext) (string, error) {
+	// First render the template to get the Helm values
+	var buf bytes.Buffer
+	tmpl, err := template.New("helm-values").Funcs(sprig.FuncMap()).Parse(unbindDefinition.Content)
+	if err != nil {
+		return "", fmt.Errorf("helm values parsing error: %w", err)
+	}
+
+	if err := tmpl.Execute(&buf, context); err != nil {
+		return "", fmt.Errorf("helm values execution error: %w", err)
+	}
+
+	// Parse the rendered values YAML
+	values := make(map[string]interface{})
+	err = yaml.Unmarshal(buf.Bytes(), &values)
+	if err != nil {
+		return "", fmt.Errorf("error parsing Helm values: %w", err)
+	}
+
+	var chartName, chartVersion, repositoryURL, repositoryName string
+	if context.Definition.Chart != nil {
+		if context.Definition.Chart.Name != "" {
+			chartName = context.Definition.Chart.Name
+		}
+		if context.Definition.Chart.Version != "" {
+			chartVersion = context.Definition.Chart.Version
+		}
+		if context.Definition.Chart.Repository != "" {
+			repositoryURL = context.Definition.Chart.Repository
+		}
+		if context.Definition.Chart.RepositoryName != "" {
+			repositoryName = context.Definition.Chart.RepositoryName
+		}
+	} else {
+		return "", fmt.Errorf("chart information is missing in the definition")
+	}
+
+	// Create a Helm release custom resource
+	helmRelease := map[string]interface{}{
+		"apiVersion": "helm.toolkit.fluxcd.io/v2beta1",
+		"kind":       "HelmRelease",
+		"metadata": map[string]interface{}{
+			"name":      context.Name,
+			"namespace": context.Namespace,
+			"labels": map[string]string{
+				"unbind/usd-type":     context.Definition.Type,
+				"unbind/usd-version":  context.Definition.Version,
+				"unbind/usd-category": "databases",
+			},
+		},
+		"spec": map[string]interface{}{
+			"chart": map[string]interface{}{
+				"spec": map[string]interface{}{
+					"chart":   chartName,
+					"version": chartVersion,
+					"sourceRef": map[string]interface{}{
+						"kind": "HelmRepository",
+						"name": repositoryName,
+					},
+				},
+			},
+			"interval": "1m",
+			"values":   values,
+		},
+	}
+
+	// Add the Helm repository CR
+	helmRepo := map[string]interface{}{
+		"apiVersion": "source.toolkit.fluxcd.io/v1beta2",
+		"kind":       "HelmRepository",
+		"metadata": map[string]interface{}{
+			"name":      repositoryName,
+			"namespace": context.Namespace,
+		},
+		"spec": map[string]interface{}{
+			"url":      repositoryURL,
+			"interval": "1h",
+		},
+	}
+
+	// Convert both resources to YAML
+	helmReleaseYAML, err := yaml.Marshal(helmRelease)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling Helm release: %w", err)
+	}
+
+	helmRepoYAML, err := yaml.Marshal(helmRepo)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling Helm repository: %w", err)
+	}
+
+	// Combine the YAMLs with a separator
+	return fmt.Sprintf("---\n%s\n---\n%s", string(helmRepoYAML), string(helmReleaseYAML)), nil
+}
+
+// getChartRepositoryForType returns the Helm chart repository for a given database type
+func (r *DatabaseRenderer) getChartRepositoryForType(dbType string) string {
+	// Map database types to Helm chart repositories
+	repositories := map[string]string{
+		"Redis": "https://charts.bitnami.com/bitnami",
+		// Add more mappings as needed
+	}
+
+	if repo, ok := repositories[dbType]; ok {
+		return repo
+	}
+
+	// Default to Bitnami repo if type not found
+	return "https://charts.bitnami.com/bitnami"
+}
+
+// getChartNameForType returns the Helm chart name for a given database type
+func (r *DatabaseRenderer) getChartNameForType(dbType string) string {
+	// Map database types to Helm chart names
+	chartNames := map[string]string{
+		"Redis": "redis",
+		// Add more mappings as needed
+	}
+
+	if name, ok := chartNames[dbType]; ok {
+		return name
+	}
+
+	// Default to lowercase name if not found
+	return strings.ToLower(dbType)
+}
+
+// getChartVersion extracts chart version from parameters
+func getChartVersion(params map[string]interface{}) string {
+	if version, ok := params["chartVersion"]; ok {
+		if strVersion, ok := version.(string); ok {
+			return strVersion
+		}
+	}
+	// Default to latest if not specified
+	return ""
 }
 
 // RenderToObjects parses the rendered YAML into Kubernetes objects

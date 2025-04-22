@@ -9,6 +9,17 @@ type DefinitionMetadata struct {
 	Version     string                    `yaml:"version" json:"version"`
 	Imports     []DefinitionImport        `yaml:"imports,omitempty" json:"imports,omitempty"`
 	Schema      DefinitionParameterSchema `yaml:"schema" json:"schema"`
+
+	// Helm-specific fields
+	Chart *HelmChartInfo `yaml:"chart,omitempty" json:"chart,omitempty"`
+}
+
+// HelmChartInfo contains information about a Helm chart
+type HelmChartInfo struct {
+	Name           string `yaml:"name" json:"name"`                                         // Name of the chart
+	Version        string `yaml:"version" json:"version"`                                   // Version of the chart to use
+	Repository     string `yaml:"repository" json:"repository"`                             // Chart repository URL
+	RepositoryName string `yaml:"repositoryName,omitempty" json:"repositoryName,omitempty"` // Name for the repository CR
 }
 
 // DefinitionImport represents an import of an external schema
@@ -47,4 +58,5 @@ type Definition struct {
 	Version     string                    `json:"version"`
 	Schema      DefinitionParameterSchema `json:"schema"`
 	Content     string                    `json:"-"`
+	Chart       *HelmChartInfo            `json:"chart,omitempty"`
 }

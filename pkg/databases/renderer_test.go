@@ -654,3 +654,267 @@ spec:
 		assert.Len(t, objects, 1)
 	})
 }
+
+func TestHelmRendering(t *testing.T) {
+	// Create a sample Helm template for Redis with chart info at top level
+	template := &Definition{
+		Name:        "Redis",
+		Category:    DB_CATEGORY,
+		Port:        6379,
+		Description: "Standard Redis installation using bitnami helm chart.",
+		Type:        "helm",
+		Version:     "1.0.0",
+		Chart: &HelmChartInfo{
+			Name:           "redis",
+			Version:        "20.13.0",
+			Repository:     "oci://registry-1.docker.io/bitnamicharts",
+			RepositoryName: "bitnami",
+		},
+		Schema: DefinitionParameterSchema{
+			Properties: map[string]ParameterProperty{
+				"secretName": {
+					Type:        "string",
+					Description: "Name of the secret to store Redis password",
+				},
+				"secretKey": {
+					Type:        "string",
+					Description: "Key in the secret that contains the redis password",
+				},
+				"common": {
+					Type: "object",
+					Properties: map[string]ParameterProperty{
+						"replicas": {
+							Type:        "integer",
+							Description: "Number of replicas",
+							Default:     1,
+							Minimum:     utils.ToPtr[float64](1),
+							Maximum:     utils.ToPtr[float64](5),
+						},
+						"storage": {
+							Type:        "string",
+							Description: "Storage size",
+							Default:     "1Gi",
+						},
+						"resources": {
+							Type: "object",
+							Properties: map[string]ParameterProperty{
+								"requests": {
+									Type: "object",
+									Properties: map[string]ParameterProperty{
+										"cpu": {
+											Type:        "string",
+											Description: "CPU request",
+											Default:     "100m",
+										},
+										"memory": {
+											Type:        "string",
+											Description: "Memory request",
+											Default:     "128Mi",
+										},
+									},
+								},
+								"limits": {
+									Type: "object",
+									Properties: map[string]ParameterProperty{
+										"cpu": {
+											Type:        "string",
+											Description: "CPU limit",
+											Default:     "500m",
+										},
+										"memory": {
+											Type:        "string",
+											Description: "Memory limit",
+											Default:     "256Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"labels": {
+					Type:        "object",
+					Description: "Custom labels to add to the Redis resources",
+					AdditionalProperties: &ParameterProperty{
+						Type: "string",
+					},
+				},
+			},
+			Required: []string{"secretName", "secretKey"},
+		},
+		Content: `{{- $requestedReplicas := .Parameters.common.replicas | default 1 -}}
+# This file defines the values passed to the Bitnami Redis Helm chart.
+# Apply common labels to all resources created by the chart
+commonLabels:
+  # Standard USD labels
+  unbind/usd-type: {{ .Definition.Type }}
+  unbind/usd-version: {{ .Definition.Version }}
+  unbind/usd-category: databases
+  {{- range $key, $value := .Parameters.labels }}
+  {{ $key }}: {{ $value }}
+  {{- end }}
+auth:
+  enabled: true
+  existingSecret: {{ .Parameters.secretName }}
+  existingSecretPasswordKey: {{ .Parameters.secretKey }}
+{{- if gt $requestedReplicas 1 }}
+# --- Replication Mode ---
+# Triggered if .Parameters.common.replicas >= 2
+# Deploys 1 Master + (N-1) Replicas
+architecture: replication
+# Master configuration (always 1 in this replication mode)
+master:
+  count: 1
+  persistence:
+    enabled: true
+    size: {{ $.Parameters.common.storage | default "1Gi" }}
+  # Disable resource presets to use specific values below
+  resourcesPreset: "none"
+  # Map resource requests/limits from common parameters
+  resources:
+    requests:
+      cpu: {{ $.Parameters.common.resources.requests.cpu | default "100m" }}
+      memory: {{ $.Parameters.common.resources.requests.memory | default "128Mi" }}
+    limits:
+      cpu: {{ $.Parameters.common.resources.limits.cpu | default "500m" }}
+      memory: {{ $.Parameters.common.resources.limits.memory | default "256Mi" }}
+# Replica configuration (N-1 replicas)
+replica:
+  replicaCount: {{ sub $requestedReplicas 1 }}
+  persistence:
+    enabled: true
+    size: {{ $.Parameters.common.storage | default "1Gi" }}
+  # Disable resource presets to use specific values below
+  resourcesPreset: "none"
+  resources:
+    requests:
+      cpu: {{ $.Parameters.common.resources.requests.cpu | default "100m" }}
+      memory: {{ $.Parameters.common.resources.requests.memory | default "128Mi" }}
+    limits:
+      cpu: {{ $.Parameters.common.resources.limits.cpu | default "500m" }}
+      memory: {{ $.Parameters.common.resources.limits.memory | default "256Mi" }}
+{{- else }}
+# --- Standalone Mode ---
+# Triggered if .Parameters.common.replicas = 1 (or omitted, as default is 1)
+# Deploys 1 Master, 0 Replicas
+architecture: standalone
+# Master configuration (the only node)
+master:
+  count: 1
+  persistence:
+    # Enable persistence for the single master node
+    enabled: true
+    # Map storage size from common parameters
+    size: {{ $.Parameters.common.storage | default "1Gi" }}
+  # Disable resource presets to use specific values below
+  resourcesPreset: "none"
+  # Map resource requests/limits from common parameters
+  resources:
+    requests:
+      cpu: {{ $.Parameters.common.resources.requests.cpu | default "100m" }}
+      memory: {{ $.Parameters.common.resources.requests.memory | default "128Mi" }}
+    limits:
+      cpu: {{ $.Parameters.common.resources.limits.cpu | default "500m" }}
+      memory: {{ $.Parameters.common.resources.limits.memory | default "256Mi" }}
+# Replica configuration (disabled for standalone)
+replica:
+  replicaCount: 0
+  persistence:
+    enabled: false
+{{- end }}`,
+	}
+
+	// Create a renderer
+	renderer := NewDatabaseRenderer()
+
+	t.Run("Basic Helm Redis Rendering With Top-Level Chart", func(t *testing.T) {
+		// Create render context with required parameters
+		ctx := &RenderContext{
+			Name:      "test-redis",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"secretName": "redis-secret",
+				"secretKey":  "redis-password",
+				"common": map[string]interface{}{
+					"replicas": 1, // Standalone mode
+				},
+			},
+			Definition: Definition{
+				Type:    "helm",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify the output contains both HelmRepository and HelmRelease resources
+		assert.Contains(t, result, "kind: HelmRepository")
+		assert.Contains(t, result, "kind: HelmRelease")
+
+		// Verify repository details
+		assert.Contains(t, result, "name: bitnami")
+		assert.Contains(t, result, "oci://registry-1.docker.io/bitnamicharts")
+
+		// Verify release details
+		assert.Contains(t, result, "name: test-redis")
+		assert.Contains(t, result, "namespace: default")
+
+		// Verify chart details from top-level config
+		assert.Contains(t, result, "chart: redis")
+		assert.Contains(t, result, "version: 20.13.0")
+
+		// Verify Helm values - fixed to match actual output format
+		assert.Contains(t, result, "architecture: standalone")
+		assert.Contains(t, result, "unbind/usd-type: helm")                     // No quotes in actual output
+		assert.Contains(t, result, "existingSecret: redis-secret")              // No quotes in actual output
+		assert.Contains(t, result, "existingSecretPasswordKey: redis-password") // No quotes in actual output
+
+		// Parse to objects to verify structure
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 2) // HelmRepository and HelmRelease
+	})
+
+	t.Run("Redis Replication Mode With Top-Level Chart", func(t *testing.T) {
+		// Create render context with replication mode
+		ctx := &RenderContext{
+			Name:      "test-redis-replication",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"secretName": "redis-secret",
+				"secretKey":  "redis-password",
+				"common": map[string]interface{}{
+					"replicas": 3, // Replication mode with 3 nodes (1 master + 2 replicas)
+					"storage":  "5Gi",
+				},
+			},
+			Definition: Definition{
+				Type:    "helm",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify top-level chart info is used
+		assert.Contains(t, result, "chart: redis")
+		assert.Contains(t, result, "version: 20.13.0")
+		assert.Contains(t, result, "oci://registry-1.docker.io/bitnamicharts")
+
+		// Verify replication mode configuration
+		assert.Contains(t, result, "architecture: replication")
+		assert.Contains(t, result, "replicaCount: 2") // 3 total - 1 master = 2 replicas
+		assert.Contains(t, result, "size: 5Gi")       // Custom storage size
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 2) // HelmRepository and HelmRelease
+	})
+}
