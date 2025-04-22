@@ -181,6 +181,15 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 		},
 	}
 
+	helmRepoSpec := map[string]interface{}{
+		"url":      repositoryURL,
+		"interval": "1h",
+	}
+
+	if strings.HasPrefix(repositoryURL, "oci://") {
+		helmRepoSpec["type"] = "oci"
+	}
+
 	// Add the Helm repository CR
 	helmRepo := map[string]interface{}{
 		"apiVersion": "source.toolkit.fluxcd.io/v1",
@@ -189,10 +198,7 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 			"name":      repositoryName,
 			"namespace": context.Namespace,
 		},
-		"spec": map[string]interface{}{
-			"url":      repositoryURL,
-			"interval": "1h",
-		},
+		"spec": helmRepoSpec,
 	}
 
 	// Convert both resources to YAML
