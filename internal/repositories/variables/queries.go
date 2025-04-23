@@ -46,13 +46,13 @@ func (self *VariableRepository) GetReferencesForService(
 		for _, source := range reference.Sources {
 			switch source.SourceType {
 			case schema.VariableReferenceSourceTypeTeam:
-				teamIDs = append(teamIDs, source.ID)
+				teamIDs = append(teamIDs, source.SourceID)
 			case schema.VariableReferenceSourceTypeProject:
-				projectIDs = append(projectIDs, source.ID)
+				projectIDs = append(projectIDs, source.SourceID)
 			case schema.VariableReferenceSourceTypeEnvironment:
-				environmentIDs = append(environmentIDs, source.ID)
+				environmentIDs = append(environmentIDs, source.SourceID)
 			case schema.VariableReferenceSourceTypeService:
-				serviceIDs = append(serviceIDs, source.ID)
+				serviceIDs = append(serviceIDs, source.SourceID)
 			}
 		}
 	}
@@ -125,15 +125,15 @@ func (self *VariableRepository) GetReferencesForService(
 	// Set the names
 	for _, reference := range references {
 		for i, source := range reference.Sources {
-			if name, ok := nameMap[source.ID]; ok {
+			if name, ok := nameMap[source.SourceID]; ok {
 				reference.Sources[i].SourceName = name
 			}
 			switch source.SourceType {
 			case schema.VariableReferenceSourceTypeService:
-				if icon, ok := iconMap[source.ID]; ok {
+				if icon, ok := iconMap[source.SourceID]; ok {
 					reference.Sources[i].SourceIcon = icon
 				}
-				if kubernetesName, ok := kubernetsNameMap[source.ID]; ok {
+				if kubernetesName, ok := kubernetsNameMap[source.SourceID]; ok {
 					reference.Sources[i].KubernetesName = kubernetesName
 				}
 			case schema.VariableReferenceSourceTypeEnvironment:

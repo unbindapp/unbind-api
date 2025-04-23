@@ -125,7 +125,7 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 		case schema.VariableReferenceTypeInternalEndpoint, schema.VariableReferenceTypeExternalEndpoint:
 			endpoints, err := self.k8s.DiscoverEndpointsByLabels(ctx, namespace,
 				map[string]string{
-					source.SourceType.KubernetesLabel(): source.ID.String(),
+					source.SourceType.KubernetesLabel(): source.SourceID.String(),
 				}, client)
 			if err != nil {
 				return "", err

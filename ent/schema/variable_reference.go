@@ -19,7 +19,7 @@ type VariableReferenceSource struct {
 	SourceName     string                      `json:"source_name" required:"false"`
 	SourceIcon     string                      `json:"source_icon" required:"false"`
 	SourceType     VariableReferenceSourceType `json:"source_type"`
-	ID             uuid.UUID                   `json:"id"`
+	SourceID       uuid.UUID                   `json:"source_id"`
 	KubernetesName string                      `json:"kubernetes_name"`
 	Key            string                      `json:"key"`
 }
