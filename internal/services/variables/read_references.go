@@ -37,10 +37,13 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 	}
 
 	// Build a map of names and icons
+	kubernetesNameMap := make(map[uuid.UUID]string)
 	nameMap := make(map[uuid.UUID]string)
 	iconMap := make(map[uuid.UUID]string)
+	kubernetesNameMap[team.ID] = team.KubernetesName
 	nameMap[team.ID] = team.Name
 	iconMap[team.ID] = "team"
+	kubernetesNameMap[project.ID] = project.KubernetesName
 	nameMap[project.ID] = project.Name
 	iconMap[project.ID] = "project"
 
@@ -52,6 +55,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 	// They can access all service secrets in the same project
 	serviceSecrets := make(map[uuid.UUID]string)
 	var serviceIDs []uuid.UUID
+	kubernetesNameMap[environment.ID] = environment.KubernetesName
 	nameMap[environment.ID] = environment.Name
 	iconMap[environment.ID] = "environment"
 
@@ -72,6 +76,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 			continue
 		}
 		serviceSecrets[service.ID] = service.KubernetesSecret
+		kubernetesNameMap[service.ID] = service.KubernetesName
 		nameMap[service.ID] = service.Name
 		iconMap[service.ID] = service.Edges.ServiceConfig.Icon
 		serviceIDs = append(serviceIDs, service.ID)
@@ -160,7 +165,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, endpointsErr
 	}
 
-	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints, nameMap, iconMap), nil
+	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints, kubernetesNameMap, nameMap, iconMap), nil
 }
 
 // Resolve a variable reference value for a key

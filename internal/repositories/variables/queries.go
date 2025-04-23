@@ -58,6 +58,7 @@ func (self *VariableRepository) GetReferencesForService(
 	}
 
 	// Get the name map
+	kubernetsNameMap := make(map[uuid.UUID]string)
 	nameMap := make(map[uuid.UUID]string)
 	iconMap := make(map[uuid.UUID]string)
 
@@ -115,6 +116,7 @@ func (self *VariableRepository) GetReferencesForService(
 			return nil, err
 		}
 		for _, service := range services {
+			kubernetsNameMap[service.ID] = service.KubernetesName
 			nameMap[service.ID] = service.Name
 			iconMap[service.ID] = service.Edges.ServiceConfig.Icon
 		}
@@ -130,6 +132,9 @@ func (self *VariableRepository) GetReferencesForService(
 			case schema.VariableReferenceSourceTypeService:
 				if icon, ok := iconMap[source.ID]; ok {
 					reference.Sources[i].SourceIcon = icon
+				}
+				if kubernetesName, ok := kubernetsNameMap[source.ID]; ok {
+					reference.Sources[i].KubernetesName = kubernetesName
 				}
 			case schema.VariableReferenceSourceTypeEnvironment:
 				reference.Sources[i].SourceIcon = "environment"
