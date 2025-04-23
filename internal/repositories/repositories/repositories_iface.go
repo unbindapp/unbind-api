@@ -7,6 +7,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	bootstrap_repo "github.com/unbindapp/unbind-api/internal/repositories/bootstrap"
 	deployment_repo "github.com/unbindapp/unbind-api/internal/repositories/deployment"
 	environment_repo "github.com/unbindapp/unbind-api/internal/repositories/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repositories/github"
@@ -52,5 +53,7 @@ type RepositoriesInterface interface {
 	Webhooks() webhook_repo.WebhookRepositoryInterface
 	// Variables returns the Variable repository
 	Variables() variable_repo.VariableRepositoryInterface
+	// Bootstrap returns the Bootstrap repository
+	Bootstrap() bootstrap_repo.BootstrapRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

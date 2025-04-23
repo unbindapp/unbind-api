@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Gets specified namespaces
@@ -40,4 +41,24 @@ func (k *KubeClient) GetNamespaces(ctx context.Context, namespaceNames []string,
 	}
 
 	return namespaces, nil
+}
+
+// CreateNamespace creates a new namespace in the Kubernetes cluster
+func (k *KubeClient) CreateNamespace(ctx context.Context, namespaceName string, client *kubernetes.Clientset) (*v1.Namespace, error) {
+	// Define the namespace object
+	namespace := &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespaceName,
+		},
+	}
+
+	// Create the namespace
+	createdNamespace, err := client.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
+	if err != nil {
+		log.Errorf("Error creating namespace %s: %v", namespaceName, err)
+		return nil, fmt.Errorf("error creating namespace %s: %v", namespaceName, err)
+	}
+
+	log.Infof("Successfully created namespace: %s", namespaceName)
+	return createdNamespace, nil
 }

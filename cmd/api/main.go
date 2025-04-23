@@ -25,6 +25,7 @@ import (
 	metrics_handler "github.com/unbindapp/unbind-api/internal/api/handlers/metrics"
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
+	setup_handler "github.com/unbindapp/unbind-api/internal/api/handlers/setup"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
 	unbindwebhooks_handler "github.com/unbindapp/unbind-api/internal/api/handlers/unbindwebhooks"
@@ -172,9 +173,6 @@ func startAPI(cfg *config.Config) {
 	if err := bootstrapper.Sync(ctx); err != nil {
 		log.Errorf("Failed to sync system settings: %v", err)
 	}
-	if err := bootstrapper.bootstrapRegistry(ctx); err != nil {
-		log.Fatalf("Failed to bootstrap registry: %v", err)
-	}
 
 	// Create webhook service
 	variableService := variables_service.NewVariablesService(repo, kubeClient)
@@ -291,8 +289,14 @@ func startAPI(cfg *config.Config) {
 
 		// Create middleware
 		mw := middleware.NewMiddleware(cfg, repo, api)
-		// Set bootstrap middleware
-		api.UseMiddleware(mw.CheckBootstrapped)
+
+		// /setup group
+		setupGroup := huma.NewGroup(api, "/setup")
+		setupGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Setup"}
+			next(op)
+		})
+		setup_handler.RegisterHandlers(srvImpl, setupGroup)
 
 		// /auth group
 		authGroup := huma.NewGroup(api, "/auth")

@@ -5,6 +5,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	bootstrap_repo "github.com/unbindapp/unbind-api/internal/repositories/bootstrap"
 	deployment_repo "github.com/unbindapp/unbind-api/internal/repositories/deployment"
 	environment_repo "github.com/unbindapp/unbind-api/internal/repositories/environment"
 	github_repo "github.com/unbindapp/unbind-api/internal/repositories/github"
@@ -39,6 +40,7 @@ type Repositories struct {
 	system      system_repo.SystemRepositoryInterface
 	webhooks    webhook_repo.WebhookRepositoryInterface
 	variables   variable_repo.VariableRepositoryInterface
+	bootstrap   bootstrap_repo.BootstrapRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -57,6 +59,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	systemRepo := system_repo.NewSystemRepository(db)
 	webhooksRepo := webhook_repo.NewWebhookRepository(db)
 	variablesRepo := variable_repo.NewVariableRepository(db)
+	bootstrapRepo := bootstrap_repo.NewBootstrapRepository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -73,6 +76,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		system:      systemRepo,
 		webhooks:    webhooksRepo,
 		variables:   variablesRepo,
+		bootstrap:   bootstrapRepo,
 	}
 }
 
@@ -144,6 +148,11 @@ func (r *Repositories) Webhooks() webhook_repo.WebhookRepositoryInterface {
 // Variables returns the Variable repository
 func (r *Repositories) Variables() variable_repo.VariableRepositoryInterface {
 	return r.variables
+}
+
+// Bootstrap returns the Bootstrap repository
+func (r *Repositories) Bootstrap() bootstrap_repo.BootstrapRepositoryInterface {
+	return r.bootstrap
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {

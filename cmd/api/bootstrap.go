@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd"
@@ -27,6 +28,14 @@ func (self *Bootstrapper) Sync(ctx context.Context) error {
 
 	// Sync system settings
 	multierror.Append(multierr, self.syncBuildkitdSettings(ctx))
+	// Bootstrap registry
+	multierror.Append(multierr, self.bootstrapRegistry(ctx))
+	// Bootstrap team
+	multierror.Append(multierr, self.bootstrapTeam(ctx))
+	// Bootstrap groups and permissions
+	multierror.Append(multierr, self.bootstrapGroupsAndPermissions(ctx))
+	// Sync RBAC
+	multierror.Append(multierr, self.syncK8sRBAC(ctx))
 
 	return multierr
 }
@@ -176,5 +185,155 @@ func (self *Bootstrapper) bootstrapRegistry(ctx context.Context) error {
 			return fmt.Errorf("failed to bootstrap registry: %w", err)
 		}
 	}
+	return nil
+}
+
+// * Team
+func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
+	// See if team exists
+	teamCount, err := self.repos.Ent().Team.Query().Count(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query team count: %w", err)
+	}
+	if teamCount > 0 {
+		return nil
+	}
+
+	// Create a team
+	name := "Default"
+	kubernetesName, err := utils.GenerateSlug(name)
+	if err != nil {
+		return fmt.Errorf("failed to generate slug for team name: %w", err)
+	}
+
+	if err := self.repos.WithTx(ctx, func(tx repository.TxInterface) error {
+		db := tx.Client()
+		_, err = db.Team.Create().
+			SetKubernetesName(kubernetesName).
+			SetName(name).
+			SetNamespace(kubernetesName).
+			SetKubernetesSecret(kubernetesName).Save(ctx)
+		if err != nil {
+			return fmt.Errorf("error creating team: %v", err)
+		}
+
+		// Create namespace
+		_, err = self.kubeClient.CreateNamespace(
+			ctx,
+			kubernetesName,
+			self.kubeClient.GetInternalClient(),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create namespace: %w", err)
+		}
+
+		// Create secret to associate with the name
+		_, _, err := self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
+		if err != nil {
+			return fmt.Errorf("error creating secret: %v", err)
+		}
+
+		return nil
+	}); err != nil {
+		fmt.Printf("Error creating team: %v\n", err)
+		return err
+	}
+
+	return nil
+}
+
+// /app/cli group:add-user --email=EMAIL --group-name=superuser
+// /app/cli group:grant-permission --group-name=superuser --resource-type=system --resource-id="*" --action=admin
+// /app/cli group:grant-permission --group-name=superuser --resource-type=team --resource-id="*" --action=admin
+
+// * Groups
+func (self *Bootstrapper) bootstrapGroupsAndPermissions(ctx context.Context) error {
+	if err := self.repos.WithTx(ctx, func(tx repository.TxInterface) error {
+		db := tx.Client()
+
+		// See if group exists
+		groupCount, err := db.Group.Query().Count(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to query group count: %w", err)
+		}
+		if groupCount > 0 {
+			return nil
+		}
+
+		// Create group
+		group, err := db.Group.Create().
+			SetName("superuser").
+			SetDescription("Default superuser group").
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("error creating group: %v", err)
+		}
+
+		// Create permission (system)
+		perm, err := db.Permission.Create().
+			SetAction(schema.ActionAdmin).
+			SetResourceType(schema.ResourceTypeSystem).
+			SetResourceSelector(schema.ResourceSelector{
+				Superuser: true,
+			}).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("error creating permission: %w", err)
+		}
+
+		_, err = db.Group.UpdateOneID(group.ID).
+			AddPermissionIDs(perm.ID).
+			Save(ctx)
+
+		if err != nil {
+			return fmt.Errorf("error adding permission to group: %w", err)
+		}
+
+		// Create permission (team)
+		perm, err = db.Permission.Create().
+			SetAction(schema.ActionAdmin).
+			SetResourceType(schema.ResourceTypeTeam).
+			SetResourceSelector(schema.ResourceSelector{
+				Superuser: true,
+			}).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("error creating permission: %w", err)
+		}
+
+		_, err = db.Group.UpdateOneID(group.ID).
+			AddPermissionIDs(perm.ID).
+			Save(ctx)
+
+		if err != nil {
+			return fmt.Errorf("error adding permission to group: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		fmt.Printf("Error creating group: %v\n", err)
+		return err
+	}
+
+	return nil
+}
+
+// * Sync with K8S
+func (self *Bootstrapper) syncK8sRBAC(ctx context.Context) error {
+	rbacManager := k8s.NewRBACManager(self.repos, self.kubeClient)
+
+	// Get all groups
+	groups, err := self.repos.Ent().Group.Query().All(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query groups: %w", err)
+	}
+
+	for _, group := range groups {
+		err := rbacManager.SyncGroupToK8s(ctx, group)
+		if err != nil {
+			return fmt.Errorf("failed to sync group %s to k8s: %w", group.Name, err)
+		}
+	}
+
 	return nil
 }
