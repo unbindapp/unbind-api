@@ -291,6 +291,8 @@ func startAPI(cfg *config.Config) {
 
 		// Create middleware
 		mw := middleware.NewMiddleware(cfg, repo, api)
+		// Set bootstrap middleware
+		api.UseMiddleware(mw.CheckBootstrapped)
 
 		// /auth group
 		authGroup := huma.NewGroup(api, "/auth")
