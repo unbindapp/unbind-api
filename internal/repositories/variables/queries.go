@@ -157,12 +157,10 @@ func (self *VariableRepository) GetServicesReferencingID(ctx context.Context, id
 		predicates = append(predicates,
 			sqljson.ValueContains(
 				variablereference.FieldSources,
-				map[string]any{
+				[]map[string]any{{
 					"source_id": id.String(),
 					"key":       k,
-				},
-				// look at every element in the array
-				sqljson.Path("[*]"),
+				}},
 			),
 		)
 	}
