@@ -172,8 +172,6 @@ func (self *Bootstrapper) bootstrapRegistry(ctx context.Context) error {
 			}
 
 			return nil
-
-			return nil
 		}); err != nil {
 			return fmt.Errorf("failed to bootstrap registry: %w", err)
 		}

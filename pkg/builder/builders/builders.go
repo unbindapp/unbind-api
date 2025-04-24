@@ -30,7 +30,12 @@ func (self *Builder) GenerateBuildMetadata() (repoName string, outputImage strin
 		log.Warnf("Failed to extract repository name: %v", err)
 		repoName = fmt.Sprintf("unbind-build-%d", time.Now().Unix())
 	}
-	outputImage = fmt.Sprintf("%s/%s:%d", self.config.ContainerRegistryHost, repoName, time.Now().Unix())
+	if self.config.ContainerRegistryHost == "" || self.config.ContainerRegistryHost == "docker.io" {
+		outputImage = fmt.Sprintf("%s/%s:%d", self.config.ContainerRegistryUser, repoName, time.Now().Unix())
+	} else {
+		// Prepend registry URL to image name if configured
+		outputImage = fmt.Sprintf("%s/%s:%d", self.config.ContainerRegistryHost, repoName, time.Now().Unix())
+	}
 	cacheKey = fmt.Sprintf("%s/%s:buildcache", self.config.ContainerRegistryHost, repoName)
 
 	return repoName, outputImage, cacheKey
