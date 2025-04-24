@@ -5,6 +5,9 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -50,6 +53,46 @@ func (self *HandlerGroup) UpdateVariables(ctx context.Context, input *UpsertVari
 	)
 	if err != nil {
 		return nil, handleVariablesErr(err)
+	}
+
+	// If any references were updated, we need a new deployment
+	if input.Body.Type == schema.VariableReferenceSourceTypeService && len(input.Body.VariableReferences) > 0 {
+		service, err := self.srv.Repository.Service().GetByID(ctx, input.Body.ServiceID)
+		if err != nil {
+			log.Errorf("Error getting service: %v", err)
+			// Don't fail
+		} else {
+			_, err := self.srv.ServiceService.DeployAdhocServices(ctx, []*ent.Service{service})
+			if err != nil {
+				log.Errorf("Error deploying service: %v", err)
+			}
+		}
+	}
+
+	// Re-deploy anything referencing these
+	keys := make([]string, len(input.Body.Variables))
+	for i, variable := range input.Body.Variables {
+		keys[i] = variable.Name
+	}
+	var sourceId uuid.UUID
+	switch input.Body.Type {
+	case schema.VariableReferenceSourceTypeTeam:
+		sourceId = input.Body.TeamID
+	case schema.VariableReferenceSourceTypeProject:
+		sourceId = input.Body.ProjectID
+	case schema.VariableReferenceSourceTypeEnvironment:
+		sourceId = input.Body.EnvironmentID
+	case schema.VariableReferenceSourceTypeService:
+		sourceId = input.Body.ServiceID
+	}
+	services, err := self.srv.Repository.Variables().GetServicesReferencingID(ctx, sourceId, keys)
+	if err != nil {
+		log.Errorf("Error getting services referencing variable: %v", err)
+	} else {
+		_, err := self.srv.ServiceService.DeployAdhocServices(ctx, services)
+		if err != nil {
+			log.Errorf("Error deploying service: %v", err)
+		}
 	}
 
 	resp := &VariablesResponse{}

@@ -3,8 +3,6 @@ package service_service
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -13,7 +11,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/common/validate"
-	"github.com/unbindapp/unbind-api/internal/deployctl"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
@@ -171,154 +168,15 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		return nil, fmt.Errorf("failed to re-fetch service: %w", err)
 	}
 
-	// See if a deployment is needed
-	needsDeploymentType, err := self.repo.Service().NeedsDeployment(ctx, service)
+	deployments, err := self.RedeployServices(ctx, []*ent.Service{service})
 	if err != nil {
-		return nil, fmt.Errorf("failed to check if deployment is needed: %w", err)
-	}
-
-	// Populated if we deploy something in this process
-	var newDeployment *ent.Deployment
-
-	switch needsDeploymentType {
-	case service_repo.NeedsBuildAndDeployment:
-		// New full build needed
-		env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID)
-		if err != nil {
-			return nil, err
-		}
-
-		var commitSHA string
-		var commitMessage string
-		var committer *schema.GitCommitter
-
-		if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
-			commitSHA, commitMessage, committer, err = self.githubClient.GetBranchHeadSummary(ctx,
-				service.Edges.GithubInstallation,
-				service.Edges.GithubInstallation.AccountLogin,
-				*service.GitRepository,
-				*service.Edges.ServiceConfig.GitBranch)
-
-			// ! TODO - Should we hard fail here?
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		_, err = self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
-			ServiceID:     input.ServiceID,
-			Environment:   env,
-			Source:        schema.DeploymentSourceManual,
-			CommitSHA:     commitSHA,
-			CommitMessage: commitMessage,
-			Committer:     committer,
-		})
-		if err != nil {
-			log.Errorf("failed to enqueue deployment job: %v", err)
-			return nil, err
-		}
-	case service_repo.NeedsDeployment:
-		// New adhoc deployment needed
-		crdToDeploy := &v1.Service{}
-		// Metadata
-		crdToDeploy.Name = service.Edges.CurrentDeployment.ResourceDefinition.Name
-		crdToDeploy.Namespace = service.Edges.CurrentDeployment.ResourceDefinition.Namespace
-		crdToDeploy.Kind = service.Edges.CurrentDeployment.ResourceDefinition.Kind
-		crdToDeploy.APIVersion = service.Edges.CurrentDeployment.ResourceDefinition.APIVersion
-		crdToDeploy.Labels = service.Edges.CurrentDeployment.ResourceDefinition.Labels
-		crdToDeploy.Spec = service.Edges.CurrentDeployment.ResourceDefinition.Spec
-
-		// Update the Spec
-		var gitBranch string
-		if service.Edges.ServiceConfig.GitBranch != nil {
-			gitBranch = *service.Edges.ServiceConfig.GitBranch
-			if !strings.HasPrefix(gitBranch, "refs/heads/") {
-				gitBranch = fmt.Sprintf("refs/heads/%s", gitBranch)
-			}
-		}
-		crdToDeploy.Spec.Config.GitBranch = gitBranch
-		crdToDeploy.Spec.Config.Hosts = service.Edges.ServiceConfig.Hosts
-		crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
-		crdToDeploy.Spec.Config.Ports = schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports)
-		crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
-		crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.Public
-
-		// Deploy the new CRD
-		if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
-			// Create a record in the database
-			commitSha := ""
-			if service.Edges.CurrentDeployment.CommitSha != nil {
-				commitSha = *service.Edges.CurrentDeployment.CommitSha
-			}
-			commitMessage := ""
-			if service.Edges.CurrentDeployment.CommitMessage != nil {
-				commitMessage = *service.Edges.CurrentDeployment.CommitMessage
-			}
-
-			newDeployment, err = self.repo.Deployment().Create(
-				ctx,
-				tx,
-				service.Edges.CurrentDeployment.ServiceID,
-				commitSha,
-				commitMessage,
-				service.Edges.CurrentDeployment.CommitAuthor,
-				service.Edges.CurrentDeployment.Source,
-			)
-			if err != nil {
-				return err
-			}
-
-			// Mark the deployment as started
-			if _, err := self.repo.Deployment().MarkStarted(ctx, tx, newDeployment.ID, time.Now()); err != nil {
-				return err
-			}
-
-			// Deploy to kubernetes
-			_, newService, err := self.k8s.DeployUnbindService(ctx, crdToDeploy)
-			if err != nil {
-				// Mark failed
-				if _, err := self.repo.Deployment().MarkFailed(ctx, tx, newDeployment.ID, err.Error(), time.Now()); err != nil {
-					return err
-				}
-				// Pass through since we already marked the deployment as failed
-				return nil
-			}
-
-			// Attach metadata
-			if _, err := self.repo.Deployment().AttachDeploymentMetadata(
-				ctx,
-				tx,
-				newDeployment.ID,
-				crdToDeploy.Spec.Config.Image,
-				newService,
-			); err != nil {
-				// Mark failed
-				if _, err := self.repo.Deployment().MarkFailed(ctx, tx, newDeployment.ID, err.Error(), time.Now()); err != nil {
-					return err
-				}
-				// Pass through since we already marked the deployment as failed
-				return nil
-			}
-
-			// Mark as succeeded
-			if _, err := self.repo.Deployment().MarkSucceeded(ctx, tx, newDeployment.ID, time.Now()); err != nil {
-				return err
-			}
-
-			// Update the service with the new deployment
-			if err := self.repo.Service().SetCurrentDeployment(ctx, tx, service.ID, newDeployment.ID); err != nil {
-				return err
-			}
-
-			return nil
-		}); err != nil {
-			log.Errorf("failed to deploy new CRD: %v", err)
-			return nil, err
-		}
+		return nil, err
 	}
 
 	// Update service deployment
-	if newDeployment != nil {
+	var newDeployment *ent.Deployment
+	if len(deployments) > 0 {
+		newDeployment = deployments[0]
 		if newDeployment.Status == schema.DeploymentStatusSucceeded {
 			service.Edges.CurrentDeployment = newDeployment
 		}

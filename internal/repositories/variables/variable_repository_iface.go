@@ -18,4 +18,5 @@ type VariableRepositoryInterface interface {
 	DeleteReferences(ctx context.Context, tx repository.TxInterface, targetServiceID uuid.UUID, ids []uuid.UUID) (int, error)
 	GetReferenceByID(ctx context.Context, id uuid.UUID) (*ent.VariableReference, error)
 	GetReferencesForService(ctx context.Context, serviceID uuid.UUID) ([]*ent.VariableReference, error)
+	GetServicesReferencingID(ctx context.Context, id uuid.UUID, keys []string) ([]*ent.Service, error)
 }

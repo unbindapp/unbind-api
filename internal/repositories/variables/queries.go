@@ -3,6 +3,8 @@ package variable_repo
 import (
 	"context"
 
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/environment"
@@ -147,4 +149,50 @@ func (self *VariableRepository) GetReferencesForService(
 	}
 
 	return references, nil
+}
+
+func (self *VariableRepository) GetServicesReferencingID(ctx context.Context, id uuid.UUID, keys []string) ([]*ent.Service, error) {
+	predicates := make([]*sql.Predicate, 0, len(keys))
+	for _, k := range keys {
+		predicates = append(predicates,
+			sqljson.ValueContains(
+				variablereference.FieldSources,
+				map[string]any{
+					"source_id": id.String(),
+					"key":       k,
+				},
+				// look at every element in the array
+				sqljson.Path("[*]"),
+			),
+		)
+	}
+
+	references, err := self.base.DB.VariableReference.
+		Query().
+		Select(variablereference.FieldTargetServiceID).
+		Where(func(sel *sql.Selector) {
+			sel.Where(sql.Or(predicates...))
+		}).
+		Order(ent.Desc(variablereference.FieldCreatedAt)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(references) == 0 {
+		return nil, nil
+	}
+
+	serviceIDs := make([]uuid.UUID, len(references))
+	for i, reference := range references {
+		serviceIDs[i] = reference.TargetServiceID
+	}
+
+	return self.base.DB.Service.Query().
+		Where(service.IDIn(serviceIDs...)).
+		WithServiceConfig().
+		WithCurrentDeployment().
+		WithGithubInstallation().
+		Order(ent.Desc(service.FieldCreatedAt)).
+		All(ctx)
 }
