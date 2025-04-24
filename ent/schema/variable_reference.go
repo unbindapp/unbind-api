@@ -16,8 +16,8 @@ import (
 
 type VariableReferenceSource struct {
 	Type                 VariableReferenceType       `json:"type"`
-	SourceName           string                      `json:"source_name" required:"false"`
-	SourceIcon           string                      `json:"source_icon" required:"false"`
+	SourceName           string                      `json:"source_name"`
+	SourceIcon           string                      `json:"source_icon"`
 	SourceType           VariableReferenceSourceType `json:"source_type"`
 	SourceID             uuid.UUID                   `json:"source_id"`
 	SourceKubernetesName string                      `json:"source_kubernetes_name"`
