@@ -117,68 +117,61 @@ func (self *Bootstrapper) bootstrapRegistry(ctx context.Context) error {
 	}
 	if regCount == 0 {
 		// Create initial registry
-		if self.cfg.BootstrapContainerRegistryHost == "" {
-			return fmt.Errorf("BOOTSTRAP_CONTAINER_REGISTRY_HOST is empty")
+		registryHost := self.cfg.BootstrapContainerRegistryHost
+		if registryHost == "" {
+			// Assume docker hub
+			registryHost = "docker.io"
+		}
+
+		if self.cfg.BootstrapContainerRegistryUser == "" || self.cfg.BootstrapContainerRegistryPassword == "" {
+			return fmt.Errorf("BOOTSTRAP_CONTAINER_REGISTRY_USER and BOOTSTRAP_CONTAINER_REGISTRY_PASSWORD must be set")
 		}
 
 		if err := self.repos.WithTx(ctx, func(tx repository.TxInterface) error {
 			// Create credentials first if needed
-			if self.cfg.BootstrapContainerRegistryUser != "" {
-				if self.cfg.BootstrapContainerRegistryPassword == "" {
-					return fmt.Errorf("BOOTSTRAP_CONTAINER_REGISTRY_PASSWORD is empty")
-				}
-
-				secretName, err := utils.GenerateSlug(self.cfg.BootstrapContainerRegistryHost)
-				if err != nil {
-					return fmt.Errorf("failed to generate slug for registry secret: %w", err)
-				}
-
-				// Create registry
-				_, err = self.repos.System().CreateRegistry(ctx, tx, self.cfg.BootstrapContainerRegistryHost, &secretName, true)
-				if err != nil {
-					return fmt.Errorf("failed to create registry: %w", err)
-				}
-
-				// Get teams so we can copy secret
-				teams, err := self.repos.Ent().Team.Query().All(ctx)
-				if err != nil {
-					return fmt.Errorf("failed to query teams: %w", err)
-				}
-
-				// Create credentials second, so if it fails the above rolls back
-				_, err = self.kubeClient.CreateMultiRegistryCredentials(
-					ctx,
-					secretName,
-					self.cfg.SystemNamespace,
-					[]k8s.RegistryCredential{
-						{
-							RegistryURL: self.cfg.BootstrapContainerRegistryHost,
-							Username:    self.cfg.BootstrapContainerRegistryUser,
-							Password:    self.cfg.BootstrapContainerRegistryPassword,
-						},
-					},
-					self.kubeClient.GetInternalClient(),
-				)
-				if err != nil {
-					return fmt.Errorf("failed to create registry credentials: %w", err)
-				}
-
-				for _, team := range teams {
-					_, err = self.kubeClient.CopySecret(ctx, secretName, self.cfg.SystemNamespace, team.Namespace, self.kubeClient.GetInternalClient())
-					if err != nil {
-						return fmt.Errorf("failed to copy registry credentials to team namespace: %w", err)
-					}
-				}
-
-				return nil
+			secretName, err := utils.GenerateSlug(registryHost)
+			if err != nil {
+				return fmt.Errorf("failed to generate slug for registry secret: %w", err)
 			}
 
-			log.Warn("Creating initial registry without credentials")
-
-			_, err = self.repos.System().CreateRegistry(ctx, tx, self.cfg.BootstrapContainerRegistryHost, nil, true)
+			// Create registry
+			_, err = self.repos.System().CreateRegistry(ctx, tx, registryHost, &secretName, true)
 			if err != nil {
 				return fmt.Errorf("failed to create registry: %w", err)
 			}
+
+			// Get teams so we can copy secret
+			teams, err := self.repos.Ent().Team.Query().All(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to query teams: %w", err)
+			}
+
+			// Create credentials second, so if it fails the above rolls back
+			_, err = self.kubeClient.CreateMultiRegistryCredentials(
+				ctx,
+				secretName,
+				self.cfg.SystemNamespace,
+				[]k8s.RegistryCredential{
+					{
+						RegistryURL: registryHost,
+						Username:    self.cfg.BootstrapContainerRegistryUser,
+						Password:    self.cfg.BootstrapContainerRegistryPassword,
+					},
+				},
+				self.kubeClient.GetInternalClient(),
+			)
+			if err != nil {
+				return fmt.Errorf("failed to create registry credentials: %w", err)
+			}
+
+			for _, team := range teams {
+				_, err = self.kubeClient.CopySecret(ctx, secretName, self.cfg.SystemNamespace, team.Namespace, self.kubeClient.GetInternalClient())
+				if err != nil {
+					return fmt.Errorf("failed to copy registry credentials to team namespace: %w", err)
+				}
+			}
+
+			return nil
 
 			return nil
 		}); err != nil {

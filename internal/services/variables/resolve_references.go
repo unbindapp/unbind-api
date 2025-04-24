@@ -189,9 +189,7 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 	// Replace all references in the template
 	template := reference.ValueTemplate
 	for k, v := range sourceValues {
-		log.Infof("Replacing %s with %s in template %s", k, v, template)
 		template = strings.ReplaceAll(template, k, v)
-		log.Infof("New template: %s", template)
 	}
 	return template, nil
 }
