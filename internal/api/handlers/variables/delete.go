@@ -6,6 +6,8 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -40,6 +42,20 @@ func (self *HandlerGroup) DeleteVariables(ctx context.Context, input *DeleteVari
 	)
 	if err != nil {
 		return nil, handleVariablesErr(err)
+	}
+
+	// If any references were updated, we need a new deployment
+	if input.Body.Type == schema.VariableReferenceSourceTypeService && len(input.Body.VariableReferenceIDs) > 0 {
+		service, err := self.srv.Repository.Service().GetByID(ctx, input.Body.ServiceID)
+		if err != nil {
+			log.Errorf("Error getting service: %v", err)
+			// Don't fail
+		} else {
+			_, err := self.srv.ServiceService.DeployAdhocServices(ctx, []*ent.Service{service})
+			if err != nil {
+				log.Errorf("Error deploying service: %v", err)
+			}
+		}
 	}
 
 	resp := &VariablesResponse{}
