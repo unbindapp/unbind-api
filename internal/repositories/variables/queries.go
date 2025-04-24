@@ -109,7 +109,7 @@ func (self *VariableRepository) GetReferencesForService(
 			Where(
 				service.IDIn(serviceIDs...),
 			).
-			Select(service.FieldName).
+			Select(service.FieldKubernetesName, service.FieldName).
 			WithServiceConfig().
 			All(ctx)
 		if err != nil {
