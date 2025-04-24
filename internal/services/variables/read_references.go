@@ -2,7 +2,6 @@ package variables_service
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"sync"
 
@@ -267,7 +266,7 @@ func (self *VariablesService) ResolveAvailableReferenceValue(ctx context.Context
 					if targetPort == nil {
 						return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "No TCP port found for endpoint")
 					}
-					return fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port), nil
+					return endpoint.DNS, nil
 				}
 			}
 		} else {

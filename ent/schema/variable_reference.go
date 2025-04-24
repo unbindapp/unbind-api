@@ -15,13 +15,13 @@ import (
 )
 
 type VariableReferenceSource struct {
-	Type           VariableReferenceType       `json:"type"`
-	SourceName     string                      `json:"source_name" required:"false"`
-	SourceIcon     string                      `json:"source_icon" required:"false"`
-	SourceType     VariableReferenceSourceType `json:"source_type"`
-	SourceID       uuid.UUID                   `json:"source_id"`
-	KubernetesName string                      `json:"kubernetes_name"`
-	Key            string                      `json:"key"`
+	Type                 VariableReferenceType       `json:"type"`
+	SourceName           string                      `json:"source_name" required:"false"`
+	SourceIcon           string                      `json:"source_icon" required:"false"`
+	SourceType           VariableReferenceSourceType `json:"source_type"`
+	SourceID             uuid.UUID                   `json:"source_id"`
+	SourceKubernetesName string                      `json:"kubernetes_name"`
+	Key                  string                      `json:"key"`
 }
 
 // VariableReference holds the schema definition for the VariableReference entity.
@@ -43,7 +43,7 @@ func (VariableReference) Fields() []ent.Field {
 		field.UUID("target_service_id", uuid.UUID{}),
 		field.String("target_name"),
 		field.JSON("sources", []VariableReferenceSource{}).
-			Comment("List of sources for this variable reference, interpolated as ${sourcename.sourcekey}"),
+			Comment("List of sources for this variable reference, interpolated as ${source_kubernetes_name.key}"),
 		field.String("value_template").
 			Comment("Optional template for the value, e.g. 'Hello ${a.b} this is my variable ${c.d}'"),
 		field.String("error").Optional().Nillable().Comment("Error message if the variable reference could not be resolved"),

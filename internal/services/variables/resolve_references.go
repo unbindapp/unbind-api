@@ -94,12 +94,12 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 	sourceValues := make(map[string]string)
 	for _, source := range reference.Sources {
 		// The key we want to replace in our template
-		sourceKey := fmt.Sprintf("${%s.%s}", source.KubernetesName, source.Key)
+		sourceKey := fmt.Sprintf("${%s.%s}", source.SourceKubernetesName, source.Key)
 
 		switch source.Type {
 		case schema.VariableReferenceTypeVariable:
 			// Get from kubernetes secret
-			secret, err := self.k8s.GetSecret(ctx, source.KubernetesName, namespace, client)
+			secret, err := self.k8s.GetSecret(ctx, source.SourceKubernetesName, namespace, client)
 			if err != nil {
 				if !errors.IsNotFound(err) {
 					return "", err
@@ -108,7 +108,7 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 						log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 						return "", err
 					}
-					return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
+					return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.SourceKubernetesName, source.Key))
 				}
 			}
 
@@ -119,7 +119,7 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 					log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 					return "", err
 				}
-				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
+				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.SourceKubernetesName, source.Key))
 			}
 			sourceValues[sourceKey] = string(value)
 		case schema.VariableReferenceTypeInternalEndpoint, schema.VariableReferenceTypeExternalEndpoint:
@@ -136,7 +136,7 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 					log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 					return "", err
 				}
-				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
+				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.SourceKubernetesName, source.Key))
 			}
 
 			found := false
@@ -157,9 +157,9 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 								log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 								return "", err
 							}
-							return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.KubernetesName, source.Key))
+							return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.SourceKubernetesName, source.Key))
 						}
-						sourceValues[sourceKey] = fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port)
+						sourceValues[sourceKey] = endpoint.DNS
 						found = true
 					}
 				}
@@ -183,7 +183,7 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 					log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 					return "", err
 				}
-				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.KubernetesName, source.Key))
+				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("Unable to resolve ${%s.%s}", source.SourceKubernetesName, source.Key))
 			}
 		}
 	}

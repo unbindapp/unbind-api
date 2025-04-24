@@ -30,7 +30,7 @@ type VariableReference struct {
 	TargetServiceID uuid.UUID `json:"target_service_id,omitempty"`
 	// TargetName holds the value of the "target_name" field.
 	TargetName string `json:"target_name,omitempty"`
-	// List of sources for this variable reference, interpolated as ${sourcename.sourcekey}
+	// List of sources for this variable reference, interpolated as ${source_kubernetes_name.key}
 	Sources []schema.VariableReferenceSource `json:"sources,omitempty"`
 	// Optional template for the value, e.g. 'Hello ${a.b} this is my variable ${c.d}'
 	ValueTemplate string `json:"value_template,omitempty"`

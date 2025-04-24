@@ -134,7 +134,7 @@ func (self *VariableRepository) GetReferencesForService(
 					reference.Sources[i].SourceIcon = icon
 				}
 				if kubernetesName, ok := kubernetsNameMap[source.SourceID]; ok {
-					reference.Sources[i].KubernetesName = kubernetesName
+					reference.Sources[i].SourceKubernetesName = kubernetesName
 				}
 			case schema.VariableReferenceSourceTypeEnvironment:
 				reference.Sources[i].SourceIcon = "environment"
