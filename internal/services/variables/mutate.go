@@ -178,7 +178,7 @@ func ValidateCreateVariableReferenceInput(serviceID uuid.UUID, items []*models.V
 			return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "At least one source is required")
 		}
 
-		template := item.ValueTemplate
+		template := item.Value
 
 		// Track which sources have been referenced
 		sourcesReferenced := make(map[string]bool)

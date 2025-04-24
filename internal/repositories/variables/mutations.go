@@ -32,9 +32,9 @@ func (self *VariableRepository) UpdateReferences(ctx context.Context, tx reposit
 	for _, reference := range items {
 		ref := db.VariableReference.Create().
 			SetTargetServiceID(targetServiceID).
-			SetTargetName(strings.TrimSpace(reference.TargetName)).
+			SetTargetName(strings.TrimSpace(reference.Name)).
 			SetSources(reference.Sources).
-			SetValueTemplate(reference.ValueTemplate)
+			SetValueTemplate(reference.Value)
 
 		if behavior == models.VariableUpdateBehaviorUpsert {
 			ref.OnConflictColumns(
