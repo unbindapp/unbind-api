@@ -41,21 +41,29 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		imageName = getImageName(appDir)
 	}
 
-	// Prepend registry URL to image name if configured
+	// Handle registry URL
 	if cfg.ContainerRegistryHost != "" {
-		// Only prepend registry URL if the image name doesn't already have registry information
-		// and if it doesn't contain a port number or domain suffix (like '.com')
-		if !strings.Contains(imageName, "/") ||
-			(!strings.Contains(imageName, ":") && !strings.Contains(strings.Split(imageName, "/")[0], ".")) {
+		// Special handling for Docker Hub (docker.io)
+		if cfg.ContainerRegistryHost == "docker.io" {
+			// For Docker Hub, we expect the format: username/repository:tag
+			// Don't prepend docker.io to the image name
+			if !strings.Contains(imageName, "/") {
+				return fmt.Errorf("Docker Hub requires image name in format: username/repository[:tag]")
+			}
+		} else {
+			// For other registries, prepend registry URL if needed
+			if !strings.Contains(imageName, "/") ||
+				(!strings.Contains(imageName, ":") && !strings.Contains(strings.Split(imageName, "/")[0], ".")) {
 
-			// Clean registry URL (remove http/https prefix if present)
-			registryURL := cfg.ContainerRegistryHost
-			registryURL = strings.TrimPrefix(registryURL, "http://")
-			registryURL = strings.TrimPrefix(registryURL, "https://")
-			registryURL = strings.TrimRight(registryURL, "/")
+				// Clean registry URL (remove http/https prefix if present)
+				registryURL := cfg.ContainerRegistryHost
+				registryURL = strings.TrimPrefix(registryURL, "http://")
+				registryURL = strings.TrimPrefix(registryURL, "https://")
+				registryURL = strings.TrimRight(registryURL, "/")
 
-			// Prepend the registry URL to the image name
-			imageName = fmt.Sprintf("%s/%s", registryURL, imageName)
+				// Prepend the registry URL to the image name
+				imageName = fmt.Sprintf("%s/%s", registryURL, imageName)
+			}
 		}
 	}
 
@@ -123,9 +131,16 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		// Create a new config file
 		configFile := configfile.New("")
 
+		// Use the appropriate registry host for auth
+		authRegistryHost := cfg.ContainerRegistryHost
+		if authRegistryHost == "docker.io" {
+			// Docker Hub uses specific auth servers
+			authRegistryHost = "https://index.docker.io/v1/"
+		}
+
 		// Add the auth entry for the registry
 		configFile.AuthConfigs = map[string]types.AuthConfig{
-			cfg.ContainerRegistryHost: {
+			authRegistryHost: {
 				Username: cfg.ContainerRegistryUser,
 				Password: cfg.ContainerRegistryPassword,
 				Auth:     "",
@@ -133,11 +148,11 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		}
 
 		// Create the auth provider configuration
-		cfg := authprovider.DockerAuthProviderConfig{
+		authProviderCfg := authprovider.DockerAuthProviderConfig{
 			ConfigFile: configFile,
 		}
 
-		sessionAttachables = append(sessionAttachables, authprovider.NewDockerAuthProvider(cfg))
+		sessionAttachables = append(sessionAttachables, authprovider.NewDockerAuthProvider(authProviderCfg))
 	}
 
 	solveOpts := client.SolveOpt{
@@ -153,7 +168,6 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		"push":              "true",
 		"compression":       "gzip",
 		"compression-level": "3",
-		"registry.insecure": "true",
 	}
 
 	if opts.DockerfilePath != "" {
@@ -189,15 +203,6 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		solveOpts.Frontend = "dockerfile.v0"
 		solveOpts.FrontendAttrs = map[string]string{
 			"filename": dockerfileBasename,
-		}
-
-		// Export attributes for Dockerfile build
-		exportAttrs = map[string]string{
-			"name":              imageName,
-			"push":              "true",
-			"compression":       "gzip",
-			"compression-level": "3",
-			"registry.insecure": "true",
 		}
 	} else if opts.RailpackBuildPlan != nil {
 		// Using RailPack BuildPlan

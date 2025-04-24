@@ -49,8 +49,14 @@ func (self *KubeClient) CreateMultiRegistryCredentials(ctx context.Context, name
 		// Create auth string (base64 encoded username:password)
 		auth := base64.StdEncoding.EncodeToString([]byte(cred.Username + ":" + cred.Password))
 
+		registryURL := cred.RegistryURL
+		if registryURL == "docker.io" {
+			// Docker Hub uses this specific auth endpoint
+			registryURL = "https://index.docker.io/v1/"
+		}
+
 		// Add to docker config
-		dockerConfig.Auths[cred.RegistryURL] = DockerConfigEntry{
+		dockerConfig.Auths[registryURL] = DockerConfigEntry{
 			Username: cred.Username,
 			Password: cred.Password,
 			Auth:     auth,
