@@ -121,6 +121,7 @@ type VariableReferenceResponse struct {
 	ID              uuid.UUID                        `json:"id" doc:"The ID of the variable reference" required:"true"`
 	TargetServiceID uuid.UUID                        `json:"target_service_id" required:"true"`
 	Name            string                           `json:"name" required:"true"`
+	Error           *string                          `json:"error" required:"false"`
 	Sources         []schema.VariableReferenceSource `json:"sources" required:"true" nullable:"false"`
 	Value           string                           `json:"value" required:"true"`
 	CreatedAt       time.Time                        `json:"created_at" required:"true"`
@@ -135,6 +136,7 @@ func TransformVariableReferenceResponseEntity(entity *ent.VariableReference) *Va
 		ID:              entity.ID,
 		TargetServiceID: entity.TargetServiceID,
 		Name:            entity.TargetName,
+		Error:           entity.Error,
 		Sources:         sources,
 		Value:           entity.ValueTemplate,
 		CreatedAt:       entity.CreatedAt,

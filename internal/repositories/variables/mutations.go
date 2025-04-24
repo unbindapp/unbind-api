@@ -47,6 +47,14 @@ func (self *VariableRepository) UpdateReferences(ctx context.Context, tx reposit
 			return nil, err
 		}
 
+		// Clear error
+		_, err = db.VariableReference.UpdateOneID(reference.ID).
+			ClearError().
+			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		references = append(references, reference)
 	}
 
