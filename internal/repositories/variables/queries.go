@@ -173,7 +173,6 @@ func (self *VariableRepository) GetServicesReferencingID(ctx context.Context, id
 		Where(func(sel *sql.Selector) {
 			sel.Where(sql.Or(predicates...))
 		}).
-		Order(ent.Desc(variablereference.FieldCreatedAt)).
 		All(ctx)
 	if err != nil {
 		return nil, err
@@ -193,6 +192,5 @@ func (self *VariableRepository) GetServicesReferencingID(ctx context.Context, id
 		WithServiceConfig().
 		WithCurrentDeployment().
 		WithGithubInstallation().
-		Order(ent.Desc(service.FieldCreatedAt)).
 		All(ctx)
 }

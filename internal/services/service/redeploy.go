@@ -14,6 +14,7 @@ import (
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // EnqueueFullBuildDeployments enqueues full deployment jobs for services that need a complete rebuild
@@ -118,6 +119,27 @@ func (self *ServiceService) deployAdhocService(ctx context.Context, service *ent
 		if _, err := self.repo.Deployment().MarkStarted(ctx, tx, newDeployment.ID, time.Now()); err != nil {
 			return err
 		}
+
+		// Resolve references
+		additionalEnv, err := self.variableService.ResolveAllReferences(ctx, service.ID)
+		if err != nil {
+			// Mark failed
+			if _, err := self.repo.Deployment().MarkFailed(ctx, tx, newDeployment.ID, err.Error(), time.Now()); err != nil {
+				return err
+			}
+			return err
+		}
+		envVars := make([]corev1.EnvVar, len(additionalEnv))
+		i := 0
+		for k, v := range additionalEnv {
+			envVars[i] = corev1.EnvVar{
+				Name:  k,
+				Value: v,
+			}
+			i++
+		}
+
+		crdToDeploy.Spec.EnvVars = envVars
 
 		// Deploy to kubernetes
 		_, newService, err := self.k8s.DeployUnbindService(ctx, crdToDeploy)

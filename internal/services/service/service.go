@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 )
@@ -24,9 +25,10 @@ type ServiceService struct {
 	deploymentController *deployctl.DeploymentController
 	dbProvider           *databases.DatabaseProvider
 	webhookService       *webhooks_service.WebhooksService
+	variableService      *variables_service.VariablesService
 }
 
-func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterface, githubClient *github.GithubClient, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController, dbProvider *databases.DatabaseProvider, webhookService *webhooks_service.WebhooksService) *ServiceService {
+func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterface, githubClient *github.GithubClient, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController, dbProvider *databases.DatabaseProvider, webhookService *webhooks_service.WebhooksService, variableService *variables_service.VariablesService) *ServiceService {
 	return &ServiceService{
 		cfg:                  cfg,
 		repo:                 repo,
@@ -35,6 +37,7 @@ func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterfa
 		deploymentController: deploymentController,
 		dbProvider:           dbProvider,
 		webhookService:       webhookService,
+		variableService:      variableService,
 	}
 }
 
