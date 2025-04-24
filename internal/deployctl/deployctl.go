@@ -320,7 +320,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		return nil, self.failWithErr(ctx, "Error marshalling referenced secrets", job.ID, err)
 	}
 	// Add the referenced environment to the environment
-	referencedEnv["ADDITIONAL_ENV"] = string(referencedEnvJSON)
+	req.Environment["ADDITIONAL_ENV"] = string(referencedEnvJSON)
 
 	// Get registry to use
 	registry, err := self.repo.System().GetDefaultRegistry(ctx)
