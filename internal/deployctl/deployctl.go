@@ -340,7 +340,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		if err != nil {
 			return nil, self.failWithErr(ctx, "Error parsing registry credentials", job.ID, err)
 		}
-		req.Environment["CONTAINER_REGISTRY_USERNAME"] = username
+		req.Environment["CONTAINER_REGISTRY_USER"] = username
 		req.Environment["CONTAINER_REGISTRY_PASSWORD"] = password
 	}
 
