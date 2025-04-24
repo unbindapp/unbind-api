@@ -32,11 +32,12 @@ func (self *Builder) GenerateBuildMetadata() (repoName string, outputImage strin
 	}
 	if self.config.ContainerRegistryHost == "" || self.config.ContainerRegistryHost == "docker.io" {
 		outputImage = fmt.Sprintf("%s/%s:%d", self.config.ContainerRegistryUser, repoName, time.Now().Unix())
+		cacheKey = fmt.Sprintf("%s/%s:buildcache", self.config.ContainerRegistryUser, repoName)
 	} else {
 		// Prepend registry URL to image name if configured
 		outputImage = fmt.Sprintf("%s/%s:%d", self.config.ContainerRegistryHost, repoName, time.Now().Unix())
+		cacheKey = fmt.Sprintf("%s/%s:buildcache", self.config.ContainerRegistryHost, repoName)
 	}
-	cacheKey = fmt.Sprintf("%s/%s:buildcache", self.config.ContainerRegistryHost, repoName)
 
 	return repoName, outputImage, cacheKey
 }
