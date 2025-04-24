@@ -38,7 +38,7 @@ func (self *VariableRepository) UpdateReferences(ctx context.Context, tx reposit
 
 		if behavior == models.VariableUpdateBehaviorUpsert {
 			ref.OnConflictColumns(
-				variablereference.FieldTargetName,
+				variablereference.FieldTargetServiceID, variablereference.FieldTargetName,
 			).UpdateNewValues()
 		}
 

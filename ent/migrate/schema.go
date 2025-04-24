@@ -439,9 +439,9 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "variablereference_target_service_id_sources_value_template",
+				Name:    "variablereference_target_service_id_target_name",
 				Unique:  true,
-				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[4], VariableReferencesColumns[5]},
+				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[3]},
 			},
 		},
 	}

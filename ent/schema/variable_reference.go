@@ -66,7 +66,7 @@ func (VariableReference) Edges() []ent.Edge {
 func (VariableReference) Indexes() []ent.Index {
 	return []ent.Index{
 		// Just prevent duplicates
-		index.Fields("target_service_id", "sources", "value_template").Unique(),
+		index.Fields("target_service_id", "target_name").Unique(),
 	}
 }
 
