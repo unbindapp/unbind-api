@@ -132,7 +132,7 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 			}
 
 			if len(endpoints.Internal) == 0 && len(endpoints.External) == 0 {
-				if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
+				if _, err = self.repo.Variables().AttachError(ctx, reference.ID, fmt.Errorf("Unable to resolve variable %s ${%s.%s}", reference.TargetName, source.SourceKubernetesName, source.Key)); err != nil {
 					log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 					return "", err
 				}
@@ -163,23 +163,21 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 						found = true
 					}
 				}
-
-				continue
-			}
-
-			// External endpoint
-			for _, endpoint := range endpoints.External {
-				for _, host := range endpoint.Hosts {
-					if host.Host == source.Key {
-						sourceValues[sourceKey] = host.Host
-						found = true
-						break
+			} else {
+				// External endpoint
+				for _, endpoint := range endpoints.External {
+					for _, host := range endpoint.Hosts {
+						if host.Host == source.Key {
+							sourceValues[sourceKey] = host.Host
+							found = true
+							break
+						}
 					}
 				}
 			}
 
 			if !found {
-				if _, err = self.repo.Variables().AttachError(ctx, reference.ID, err); err != nil {
+				if _, err = self.repo.Variables().AttachError(ctx, reference.ID, fmt.Errorf("Unable to resolve ${%s.%s}", source.SourceKubernetesName, source.Key)); err != nil {
 					log.Errorf("Failed to attach error to variable reference %s: %v", reference.ID, err)
 					return "", err
 				}
@@ -191,7 +189,9 @@ func (self *VariablesService) resolveReference(ctx context.Context, client *kube
 	// Replace all references in the template
 	template := reference.ValueTemplate
 	for k, v := range sourceValues {
+		log.Infof("Replacing %s with %s in template %s", k, v, template)
 		template = strings.ReplaceAll(template, k, v)
+		log.Infof("New template: %s", template)
 	}
 	return template, nil
 }

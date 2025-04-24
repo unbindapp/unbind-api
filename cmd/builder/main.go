@@ -278,6 +278,7 @@ func main() {
 					log.Warnf("Error decoding additional env %s: %v\n", k, err)
 					continue
 				}
+				additionalEnv[k] = string(data)
 				buildSecrets[k] = string(data)
 			}
 		}
