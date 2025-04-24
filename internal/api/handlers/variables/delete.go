@@ -16,8 +16,8 @@ type DeleteVariablesInput struct {
 	server.BaseAuthInput
 	Body struct {
 		models.BaseVariablesJSONInput
-		Variables    []models.VariableDeleteInput `json:"variables" required:"false" nullable:"false"`
-		ReferenceIDs []uuid.UUID                  `json:"reference_ids" required:"false" nullable:"false"`
+		Variables            []models.VariableDeleteInput `json:"variables" required:"false" nullable:"false"`
+		VariableReferenceIDs []uuid.UUID                  `json:"variable_reference_ids" required:"false" nullable:"false"`
 	}
 }
 
@@ -36,7 +36,7 @@ func (self *HandlerGroup) DeleteVariables(ctx context.Context, input *DeleteVari
 		bearerToken,
 		input.Body.BaseVariablesJSONInput,
 		input.Body.Variables,
-		input.Body.ReferenceIDs,
+		input.Body.VariableReferenceIDs,
 	)
 	if err != nil {
 		return nil, handleVariablesErr(err)
