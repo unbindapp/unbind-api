@@ -11,7 +11,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) ([]models.AvailableVariableReference, error) {
@@ -218,68 +217,19 @@ func (self *VariablesService) ResolveAvailableReferenceValue(ctx context.Context
 		return "", err
 	}
 
-	switch input.Type {
-	case schema.VariableReferenceTypeVariable:
-		// Get variable
-		secret, err := self.k8s.GetSecret(ctx, input.Name, namespace, client)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Variable not found")
-			}
-			return "", err
-		}
-		for k, v := range secret.Data {
-			if k == input.Key {
-				return string(v), nil
-			}
-		}
-		return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Variable not found")
-	case schema.VariableReferenceTypeInternalEndpoint, schema.VariableReferenceTypeExternalEndpoint:
-		// Get endpoint
-		endpoints, err := self.k8s.DiscoverEndpointsByLabels(
-			ctx,
-			namespace,
-			map[string]string{
-				input.SourceType.KubernetesLabel(): input.SourceID.String(),
-			},
-			client,
-		)
-		if err != nil {
-			return "", err
-		}
-
-		if len(endpoints.Internal) == 0 && len(endpoints.External) == 0 {
-			return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Endpoint not found")
-		}
-
-		if input.Type == schema.VariableReferenceTypeInternalEndpoint {
-			for _, endpoint := range endpoints.Internal {
-				if endpoint.KubernetesName == input.Key {
-					// Figure out port
-					var targetPort *schema.PortSpec
-					for _, port := range endpoint.Ports {
-						if port.Protocol != nil && *port.Protocol == schema.ProtocolTCP {
-							targetPort = &port
-							break
-						}
-					}
-					if targetPort == nil {
-						return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "No TCP port found for endpoint")
-					}
-					return endpoint.DNS, nil
-				}
-			}
-		} else {
-			for _, endpoint := range endpoints.External {
-				for _, host := range endpoint.Hosts {
-					if host.Host == input.Key {
-						return host.Host, nil
-					}
-				}
-			}
-		}
-
+	// Create a reference source to reuse the resolution logic
+	source := schema.VariableReferenceSource{
+		Type:                 input.Type,
+		SourceType:           input.SourceType,
+		SourceID:             input.SourceID,
+		SourceKubernetesName: input.Name,
+		Key:                  input.Key,
 	}
 
-	return "", errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Variable not found")
+	value, err := self.resolveSourceValue(ctx, client, namespace, source)
+	if err != nil {
+		return "", err
+	}
+
+	return value, nil
 }

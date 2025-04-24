@@ -64,6 +64,20 @@ func (self *ServiceRepository) GetByName(ctx context.Context, name string) (*ent
 		Only(ctx)
 }
 
+func (self *ServiceRepository) GetDatabaseType(ctx context.Context, serviceID uuid.UUID) (string, error) {
+	svc, err := self.base.DB.Service.Query().
+		Where(service.IDEQ(serviceID)).
+		QueryServiceConfig().
+		Only(ctx)
+	if err != nil {
+		return "", err
+	}
+	if svc.Database == nil {
+		return "", nil
+	}
+	return *svc.Database, nil
+}
+
 func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error) {
 	return self.base.DB.Service.Query().
 		Where(service.GithubInstallationIDEQ(installationID)).
