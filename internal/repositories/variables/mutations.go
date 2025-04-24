@@ -39,18 +39,10 @@ func (self *VariableRepository) UpdateReferences(ctx context.Context, tx reposit
 		if behavior == models.VariableUpdateBehaviorUpsert {
 			ref.OnConflictColumns(
 				variablereference.FieldTargetServiceID, variablereference.FieldTargetName,
-			).UpdateNewValues()
+			).UpdateNewValues().ClearError()
 		}
 
 		reference, err := ref.Save(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		// Clear error
-		_, err = db.VariableReference.UpdateOneID(reference.ID).
-			ClearError().
-			Save(ctx)
 		if err != nil {
 			return nil, err
 		}
