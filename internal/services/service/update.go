@@ -116,24 +116,25 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
 			input.Public != nil && *input.Public && len(input.Hosts) < 1 && service.Edges.ServiceConfig.Type != schema.ServiceTypeDatabase &&
 			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
-			host, err := utils.GenerateSubdomain(service.KubernetesName, self.cfg.ExternalWildcardBaseURL)
+
+			// Figure out ports
+			var ports []schema.PortSpec
+			if len(input.Ports) > 0 {
+				ports = input.Ports
+			}
+
+			if len(service.Edges.ServiceConfig.Ports) > 0 {
+				ports = append(ports, service.Edges.ServiceConfig.Ports...)
+			}
+
+			generatedHost, err := self.generateWildcardHost(ctx, tx, service.KubernetesName, ports)
 			if err != nil {
-				log.Warn("failed to generate subdomain", "error", err)
+				return fmt.Errorf("failed to generate wildcard host: %w", err)
+			}
+			if generatedHost == nil {
+				input.Public = utils.ToPtr(false)
 			} else {
-				input.Hosts = []v1.HostSpec{
-					{
-						Host: host,
-						Path: "/",
-					},
-				}
-				// Figure out ports
-				if len(input.Ports) > 0 {
-					input.Hosts[0].Port = &input.Ports[0].Port
-				} else {
-					if len(service.Edges.ServiceConfig.Ports) > 0 {
-						input.Hosts[0].Port = &service.Edges.ServiceConfig.Ports[0].Port
-					}
-				}
+				input.Hosts = append(input.Hosts, *generatedHost)
 			}
 		}
 

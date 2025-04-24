@@ -18,4 +18,6 @@ type SystemRepositoryInterface interface {
 	CreateRegistry(ctx context.Context, tx repository.TxInterface, host string, kubernetesSecret *string, isDefault bool) (*ent.Registry, error)
 	GetDefaultRegistry(ctx context.Context) (*ent.Registry, error)
 	GetImagePullSecrets(ctx context.Context) ([]string, error)
+	GetSystemSettings(ctx context.Context, tx repository.TxInterface) (*ent.SystemSetting, error)
+	UpdateSystemSettings(ctx context.Context, input *SystemSettingUpdateInput) (settings *ent.SystemSetting, err error)
 }

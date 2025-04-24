@@ -29,8 +29,8 @@ type Config struct {
 	ExternalUIUrl  string `env:"EXTERNAL_UI_URL" envDefault:"http://localhost:3000"`
 	ExternalAPIURL string `env:"EXTERNAL_API_URL" envDefault:"http://localhost:8089"`
 	// This is for generating subdomains
-	ExternalWildcardBaseURL string `env:"EXTERNAL_WILDCARD_BASE_URL" envDefault:"http://localhost:8089"`
-	ExternalOauth2URL       string `env:"EXTERNAL_OAUTH2_URL" envDefault:"http://localhost:8090"`
+	BootstrapWildcardBaseURL string `env:"BOOTSTRAP_WILDCARD_BASE_URL" envDefault:"http://localhost:8089"`
+	ExternalOauth2URL        string `env:"EXTERNAL_OAUTH2_URL" envDefault:"http://localhost:8090"`
 	// For unbind custom service definitions
 	UnbindServiceDefVersion string `env:"UNBIND_SERVICE_DEF_VERSION" envDefault:"v0.1.25"`
 	// Github Specific

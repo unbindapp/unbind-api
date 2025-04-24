@@ -27,6 +27,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/registry"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/systemsetting"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
@@ -106,6 +107,7 @@ func checkColumn(table, column string) error {
 			registry.Table:           registry.ValidColumn,
 			service.Table:            service.ValidColumn,
 			serviceconfig.Table:      serviceconfig.ValidColumn,
+			systemsetting.Table:      systemsetting.ValidColumn,
 			team.Table:               team.ValidColumn,
 			user.Table:               user.ValidColumn,
 			variablereference.Table:  variablereference.ValidColumn,

@@ -382,6 +382,19 @@ var (
 			},
 		},
 	}
+	// SystemSettingsColumns holds the columns for the "system_settings" table.
+	SystemSettingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "wildcard_base_url", Type: field.TypeString, Nullable: true},
+	}
+	// SystemSettingsTable holds the schema information for the "system_settings" table.
+	SystemSettingsTable = &schema.Table{
+		Name:       "system_settings",
+		Columns:    SystemSettingsColumns,
+		PrimaryKey: []*schema.Column{SystemSettingsColumns[0]},
+	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -568,6 +581,7 @@ var (
 		RegistriesTable,
 		ServicesTable,
 		ServiceConfigsTable,
+		SystemSettingsTable,
 		TeamsTable,
 		UsersTable,
 		VariableReferencesTable,
@@ -635,6 +649,9 @@ func init() {
 	ServiceConfigsTable.ForeignKeys[0].RefTable = ServicesTable
 	ServiceConfigsTable.Annotation = &entsql.Annotation{
 		Table: "service_configs",
+	}
+	SystemSettingsTable.Annotation = &entsql.Annotation{
+		Table: "system_settings",
 	}
 	TeamsTable.Annotation = &entsql.Annotation{
 		Table: "teams",

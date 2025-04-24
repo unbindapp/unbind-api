@@ -2,18 +2,23 @@ package service_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // Integrate service management with internal permissions and kubernetes RBAC
@@ -72,4 +77,38 @@ func (self *ServiceService) VerifyInputs(ctx context.Context, teamID, projectID,
 	}
 
 	return environment, environment.Edges.Project, nil
+}
+
+func (self *ServiceService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec) (*v1.HostSpec, error) {
+	settings, err := self.repo.System().GetSystemSettings(ctx, tx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get system settings: %w", err)
+	}
+
+	if settings.WildcardBaseURL == nil {
+		return nil, nil // No wildcard base URL configured
+	}
+
+	domain, err := utils.GenerateSubdomain(kubernetesName, *settings.WildcardBaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate subdomain: %w", err)
+	}
+
+	domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, domain)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count domain collisions: %w", err)
+	}
+
+	if domainCount > 0 {
+		domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s-%d", kubernetesName, domainCount), *settings.WildcardBaseURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate subdomain with suffix: %w", err)
+		}
+	}
+
+	return &v1.HostSpec{
+		Host: domain,
+		Path: "/",
+		Port: utils.ToPtr(ports[0].Port),
+	}, nil
 }

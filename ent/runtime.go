@@ -20,6 +20,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/systemsetting"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
@@ -383,6 +384,27 @@ func init() {
 	serviceconfigDescID := serviceconfigMixinFields0[0].Descriptor()
 	// serviceconfig.DefaultID holds the default value on creation for the id field.
 	serviceconfig.DefaultID = serviceconfigDescID.Default.(func() uuid.UUID)
+	systemsettingMixin := schema.SystemSetting{}.Mixin()
+	systemsettingMixinFields0 := systemsettingMixin[0].Fields()
+	_ = systemsettingMixinFields0
+	systemsettingMixinFields1 := systemsettingMixin[1].Fields()
+	_ = systemsettingMixinFields1
+	systemsettingFields := schema.SystemSetting{}.Fields()
+	_ = systemsettingFields
+	// systemsettingDescCreatedAt is the schema descriptor for created_at field.
+	systemsettingDescCreatedAt := systemsettingMixinFields1[0].Descriptor()
+	// systemsetting.DefaultCreatedAt holds the default value on creation for the created_at field.
+	systemsetting.DefaultCreatedAt = systemsettingDescCreatedAt.Default.(func() time.Time)
+	// systemsettingDescUpdatedAt is the schema descriptor for updated_at field.
+	systemsettingDescUpdatedAt := systemsettingMixinFields1[1].Descriptor()
+	// systemsetting.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	systemsetting.DefaultUpdatedAt = systemsettingDescUpdatedAt.Default.(func() time.Time)
+	// systemsetting.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	systemsetting.UpdateDefaultUpdatedAt = systemsettingDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// systemsettingDescID is the schema descriptor for id field.
+	systemsettingDescID := systemsettingMixinFields0[0].Descriptor()
+	// systemsetting.DefaultID holds the default value on creation for the id field.
+	systemsetting.DefaultID = systemsettingDescID.Default.(func() uuid.UUID)
 	teamMixin := schema.Team{}.Mixin()
 	teamMixinFields0 := teamMixin[0].Fields()
 	_ = teamMixinFields0

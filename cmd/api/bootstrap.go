@@ -14,6 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 )
 
 type Bootstrapper struct {
@@ -27,6 +28,7 @@ func (self *Bootstrapper) Sync(ctx context.Context) error {
 	var multierr error
 
 	// Sync system settings
+	multierror.Append(multierr, self.syncSystemSettings(ctx))
 	multierror.Append(multierr, self.syncBuildkitdSettings(ctx))
 	// Bootstrap registry
 	multierror.Append(multierr, self.bootstrapRegistry(ctx))
@@ -38,6 +40,21 @@ func (self *Bootstrapper) Sync(ctx context.Context) error {
 	multierror.Append(multierr, self.syncK8sRBAC(ctx))
 
 	return multierr
+}
+
+// * System settings
+func (self *Bootstrapper) syncSystemSettings(ctx context.Context) error {
+	var wildcardDomain *string
+
+	if self.cfg.BootstrapWildcardBaseURL != "" {
+		wildcardDomain = utils.ToPtr(self.cfg.BootstrapWildcardBaseURL)
+	}
+
+	_, err := self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
+		WildcardDomain: wildcardDomain,
+	})
+
+	return err
 }
 
 // * Buildkit

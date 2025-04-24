@@ -270,35 +270,14 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(hosts) == 0 && input.Public != nil && *public && input.Type != schema.ServiceTypeDatabase && len(ports) > 0 {
-			// Generate a subdomain
-			domain, err := utils.GenerateSubdomain(kubernetesName, self.cfg.ExternalWildcardBaseURL)
+			generatedHost, err := self.generateWildcardHost(ctx, tx, kubernetesName, ports)
 			if err != nil {
-				log.Warnf("Failed to generate subdomain: %v", err)
+				return fmt.Errorf("failed to generate wildcard host: %w", err)
+			}
+			if generatedHost == nil {
 				public = utils.ToPtr(false)
 			} else {
-				// Check for collisons of the domain
-				domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, domain)
-				if err != nil {
-					log.Errorf("Failed to count domain collisions: %v", err)
-					return err
-				}
-				if domainCount > 0 {
-					// Re-generate with numerical suffix
-					domain, err = utils.GenerateSubdomain(fmt.Sprintf("%s-%d", kubernetesName, domainCount), self.cfg.ExternalWildcardBaseURL)
-					if err != nil {
-						log.Warnf("Failed to generate subdomain: %v", err)
-						public = utils.ToPtr(false)
-						domain = ""
-					}
-				}
-
-				if domain != "" {
-					hosts = append(hosts, v1.HostSpec{
-						Host: domain,
-						Path: "/",
-						Port: utils.ToPtr(ports[0].Port),
-					})
-				}
+				hosts = append(hosts, *generatedHost)
 			}
 		}
 
