@@ -188,7 +188,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Clone repository to infer information
-		tmpDir, err := self.githubClient.CloneRepository(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey, cloneUrl, fmt.Sprintf("refs/heads/%s", defaultBranch))
+		tmpDir, err := self.githubClient.CloneRepository(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey, cloneUrl, fmt.Sprintf("refs/heads/%s", defaultBranch), "")
 		if err != nil {
 			log.Error("Error cloning repository", "err", err)
 			return nil, err

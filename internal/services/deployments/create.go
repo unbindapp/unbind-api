@@ -39,11 +39,20 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	var committer *schema.GitCommitter
 
 	if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
-		commitSHA, commitMessage, committer, err = self.githubClient.GetBranchHeadSummary(ctx,
+		// Branch or sha
+		summaryTarget := *service.Edges.ServiceConfig.GitBranch
+		isCommitHash := false
+		if input.GitSha != nil {
+			summaryTarget = *input.GitSha
+			isCommitHash = true
+		}
+
+		commitSHA, commitMessage, committer, err = self.githubClient.GetCommitSummary(ctx,
 			service.Edges.GithubInstallation,
 			service.Edges.GithubInstallation.AccountLogin,
 			*service.GitRepository,
-			*service.Edges.ServiceConfig.GitBranch)
+			summaryTarget,
+			isCommitHash)
 
 		// ! TODO - Should we hard fail here?
 		if err != nil {
@@ -55,6 +64,9 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID)
 	if err != nil {
 		return nil, err
+	}
+	if input.GitSha != nil {
+		env["CHECKOUT_COMMIT_SHA"] = *input.GitSha
 	}
 
 	job, err := self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{

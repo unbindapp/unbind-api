@@ -29,6 +29,7 @@ func (self *Builder) BuildWithRailpack(ctx context.Context, buildSecrets map[str
 		self.config.GithubAppPrivateKey,
 		self.config.GitRepoURL,
 		self.config.GitRef,
+		self.config.CheckoutCommitSHA,
 	)
 	if err != nil {
 		log.Error("Error cloning repository", "err", err)

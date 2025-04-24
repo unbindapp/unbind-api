@@ -53,6 +53,7 @@ type CreateDeploymentInput struct {
 	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
 	ServiceID     uuid.UUID `validate:"required,uuid4" required:"true" json:"service_id"`
 	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
+	GitSha        *string   `json:"git_sha" required:"false" doc:"The git sha of the deployment"`
 }
 
 func (self *CreateDeploymentInput) GetTeamID() uuid.UUID {

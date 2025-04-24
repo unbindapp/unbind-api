@@ -32,11 +32,12 @@ func (self *ServiceService) EnqueueFullBuildDeployments(ctx context.Context, ser
 
 		// Get git information if available
 		if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
-			commitSHA, commitMessage, committer, err = self.githubClient.GetBranchHeadSummary(ctx,
+			commitSHA, commitMessage, committer, err = self.githubClient.GetCommitSummary(ctx,
 				service.Edges.GithubInstallation,
 				service.Edges.GithubInstallation.AccountLogin,
 				*service.GitRepository,
-				*service.Edges.ServiceConfig.GitBranch)
+				*service.Edges.ServiceConfig.GitBranch,
+				false)
 
 			if err != nil {
 				return fmt.Errorf("failed to get branch head summary for service %s: %w", service.ID, err)

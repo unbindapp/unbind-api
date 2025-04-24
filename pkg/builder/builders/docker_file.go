@@ -28,6 +28,7 @@ func (self *Builder) BuildDockerfile(ctx context.Context, buildSecrets map[strin
 		self.config.GithubAppPrivateKey,
 		self.config.GitRepoURL,
 		self.config.GitRef,
+		self.config.CheckoutCommitSHA,
 	)
 	if err != nil {
 		log.Error("Error cloning repository", "err", err)

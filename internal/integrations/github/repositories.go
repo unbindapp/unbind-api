@@ -507,7 +507,8 @@ func (self *GithubClient) VerifyRepositoryAccess(ctx context.Context, installati
 }
 
 // Get branch head summary - sha, message, author
-func (self *GithubClient) GetBranchHeadSummary(ctx context.Context, installation *ent.GithubInstallation, owner, repo, branch string) (commitSHA, commitMessage string, committer *schema.GitCommitter, err error) {
+// GetCommitSummary - get summary for a specific commit or branch head
+func (self *GithubClient) GetCommitSummary(ctx context.Context, installation *ent.GithubInstallation, owner, repo string, branchOrSHA string, isCommitSHA bool) (commitSHA, commitMessage string, committer *schema.GitCommitter, err error) {
 	if installation == nil || installation.Edges.GithubApp == nil {
 		return "", "", nil, fmt.Errorf("invalid installation: missing app edge or nil")
 	}
@@ -523,18 +524,29 @@ func (self *GithubClient) GetBranchHeadSummary(ctx context.Context, installation
 	}
 	defer authenticatedClient.Client().CloseIdleConnections()
 
-	// Get branch information (which includes the head commit SHA)
-	branchInfo, _, err := authenticatedClient.Repositories.GetBranch(ctx, owner, repo, branch, 3)
-	if err != nil {
-		return "", "", nil, fmt.Errorf("error getting branch %s for repository %s/%s: %v", branch, owner, repo, err)
+	var repoCommit *github.RepositoryCommit
+
+	if isCommitSHA {
+		// Get commit by SHA
+		repoCommit, _, err = authenticatedClient.Repositories.GetCommit(ctx, owner, repo, branchOrSHA, nil)
+		if err != nil {
+			return "", "", nil, fmt.Errorf("error getting commit %s for repository %s/%s: %v", branchOrSHA, owner, repo, err)
+		}
+	} else {
+		// Get branch information (which includes the head commit SHA)
+		branchInfo, _, err := authenticatedClient.Repositories.GetBranch(ctx, owner, repo, branchOrSHA, 3)
+		if err != nil {
+			return "", "", nil, fmt.Errorf("error getting branch %s for repository %s/%s: %v", branchOrSHA, owner, repo, err)
+		}
+		repoCommit = branchInfo.GetCommit()
 	}
 
-	repoCommit := branchInfo.GetCommit()
 	commit := repoCommit.GetCommit()
 	author := repoCommit.GetAuthor()
 
 	commitSHA = commit.GetSHA()
 	commitMessage = commit.GetMessage()
+
 	if author != nil {
 		committer = &schema.GitCommitter{
 			Name:      author.GetLogin(),

@@ -74,6 +74,8 @@ type Config struct {
 	Ports []v1.PortSpec
 	// Json serialized map[string]string to pass to build and deploy
 	AdditionalEnv string `env:"ADDITIONAL_ENV"`
+	// Checking out specific commit
+	CheckoutCommitSHA string `env:"CHECKOUT_COMMIT_SHA"`
 }
 
 func (self *Config) GetPostgresHost() string {
