@@ -58,7 +58,7 @@ func (self *PrometheusClient) GetResourceMetrics(
 		kubelet_volume_stats_used_bytes
 			* on(namespace,persistentvolumeclaim) group_left(pod)
 				kube_pod_spec_volumes_persistentvolumeclaims_info
-			* on(namespace,pod) group_left(label_unbind_service)
+			* on(namespace,pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 				kube_pod_labels%s
 	)`, sumBy.Label(), kubeLabelsSelector)
 
