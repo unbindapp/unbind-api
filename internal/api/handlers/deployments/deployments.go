@@ -53,6 +53,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.CreateDeployment,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "redeploy-deployment",
+			Summary:     "Redeploy Deployment",
+			Description: "Redeploy an existing deployment",
+			Path:        "/redeploy",
+			Method:      http.MethodPost,
+		},
+		handlers.CreateNewRedeployment,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

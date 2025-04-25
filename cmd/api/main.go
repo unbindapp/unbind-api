@@ -42,6 +42,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/registry"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
@@ -187,7 +188,7 @@ func startAPI(cfg *config.Config) {
 	serviceService := service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController, dbProvider, webhooksService, variableService)
 	environmentService := environment_service.NewEnvironmentService(repo, kubeClient, deploymentController)
 	logService := logs_service.NewLogsService(repo, kubeClient, lokiQuerier)
-	deploymentService := deployments_service.NewDeploymentService(repo, deploymentController, githubClient, lokiQuerier)
+	deploymentService := deployments_service.NewDeploymentService(repo, kubeClient, deploymentController, githubClient, lokiQuerier, registry.NewImageChecker(cfg, repo, kubeClient), variableService)
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
 	metricsService := metric_service.NewMetricService(promClient, repo)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)

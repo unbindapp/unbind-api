@@ -71,3 +71,28 @@ func (self *CreateDeploymentInput) GetServiceID() uuid.UUID {
 func (self *CreateDeploymentInput) GetEnvironmentID() uuid.UUID {
 	return self.EnvironmentID
 }
+
+// Re-deploying specific deployment ID
+type RedeployExistingDeploymentInput struct {
+	TeamID        uuid.UUID `validate:"required,uuid4" required:"true" json:"team_id"`
+	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
+	ServiceID     uuid.UUID `validate:"required,uuid4" required:"true" json:"service_id"`
+	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
+	DeploymentID  uuid.UUID `validate:"required,uuid4" required:"true" json:"deployment_id"`
+}
+
+func (self *RedeployExistingDeploymentInput) GetTeamID() uuid.UUID {
+	return self.TeamID
+}
+
+func (self *RedeployExistingDeploymentInput) GetProjectID() uuid.UUID {
+	return self.ProjectID
+}
+
+func (self *RedeployExistingDeploymentInput) GetServiceID() uuid.UUID {
+	return self.ServiceID
+}
+
+func (self *RedeployExistingDeploymentInput) GetEnvironmentID() uuid.UUID {
+	return self.EnvironmentID
+}

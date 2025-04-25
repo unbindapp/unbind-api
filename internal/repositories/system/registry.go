@@ -48,3 +48,12 @@ func (self *SystemRepository) GetImagePullSecrets(ctx context.Context) ([]string
 	}
 	return imagePullSecrets, nil
 }
+
+func (self *SystemRepository) GetAllRegistries(ctx context.Context) ([]*ent.Registry, error) {
+	// Get all registries
+	return self.base.DB.Registry.Query().
+		Order(
+			ent.Desc(registry.FieldCreatedAt),
+		).
+		All(ctx)
+}

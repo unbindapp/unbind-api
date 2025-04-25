@@ -123,3 +123,22 @@ func (self *DeploymentRepository) AttachDeploymentMetadata(ctx context.Context, 
 		SetResourceDefinition(resourceDefinition).
 		Save(ctx)
 }
+
+// Create a copy with all metadata, except for failed_at, completed_at, and status
+func (self *DeploymentRepository) CreateCopy(ctx context.Context, tx repository.TxInterface, deployment *ent.Deployment) (*ent.Deployment, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Deployment.Create().
+		SetServiceID(deployment.ServiceID).
+		SetStatus(schema.DeploymentStatusQueued).
+		SetNillableCommitSha(deployment.CommitSha).
+		SetNillableCommitMessage(deployment.CommitMessage).
+		SetCommitAuthor(deployment.CommitAuthor).
+		SetResourceDefinition(deployment.ResourceDefinition).
+		SetSource(schema.DeploymentSourceManual).
+		SetNillableImage(deployment.Image).
+		Save(ctx)
+}

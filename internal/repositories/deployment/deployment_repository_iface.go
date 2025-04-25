@@ -27,6 +27,8 @@ type DeploymentRepositoryInterface interface {
 	AssignKubernetesJobName(ctx context.Context, deploymentID uuid.UUID, jobName string) (*ent.Deployment, error)
 	SetKubernetesJobStatus(ctx context.Context, deploymentID uuid.UUID, status string) (*ent.Deployment, error)
 	AttachDeploymentMetadata(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, imageName string, resourceDefinition *v1.Service) (*ent.Deployment, error)
+	// Create a copy with all metadata, except for failed_at, completed_at, and status
+	CreateCopy(ctx context.Context, tx repository.TxInterface, deployment *ent.Deployment) (*ent.Deployment, error)
 	GetByID(ctx context.Context, deploymentID uuid.UUID) (*ent.Deployment, error)
 	ExistsInEnvironment(ctx context.Context, deploymentID uuid.UUID, environmentID uuid.UUID) (bool, error)
 	ExistsInProject(ctx context.Context, deploymentID uuid.UUID, projectID uuid.UUID) (bool, error)
