@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -11,9 +12,10 @@ import (
 )
 
 type KubeClient struct {
-	config    config.ConfigInterface
-	client    *dynamic.DynamicClient
-	clientset *kubernetes.Clientset
+	config     config.ConfigInterface
+	client     *dynamic.DynamicClient
+	clientset  *kubernetes.Clientset
+	dnsChecker *utils.DNSChecker
 }
 
 func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
@@ -45,9 +47,10 @@ func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
 	}
 
 	return &KubeClient{
-		config:    cfg,
-		client:    dynamicClient,
-		clientset: clientSet,
+		config:     cfg,
+		client:     dynamicClient,
+		clientset:  clientSet,
+		dnsChecker: utils.NewDNSChecker(),
 	}
 }
 

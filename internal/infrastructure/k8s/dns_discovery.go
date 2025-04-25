@@ -17,7 +17,7 @@ import (
 
 // DiscoverEndpointsByLabels returns both internal (services) and external (ingresses) endpoints
 // matching the provided labels in a namespace
-func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*models.EndpointDiscovery, error) {
+func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*models.EndpointDiscovery, error) {
 	// Convert the labels map to a selector string
 	var labelSelectors []string
 	for key, value := range labels {
@@ -110,9 +110,30 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 
 				// Check if the secret is issued
 				issued := false
+				dnsConfigured := false
 				if tls.SecretName != "" {
 					secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
 					issued = err == nil && isCertificateIssued(secret)
+					if issued {
+						dnsConfigured = true
+					}
+				}
+
+				if !dnsConfigured {
+					ips, err := self.GetIngressNginxIP(ctx)
+					if err != nil {
+						return nil, fmt.Errorf("failed to get ingress nginx IP: %w", err)
+					}
+					// Check ipv4 first
+					dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv4)
+					if !dnsConfigured {
+						// Check ipv6
+						dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv6)
+					}
+					if !dnsConfigured {
+						// Check cloudflare
+						dnsConfigured, _ = self.dnsChecker.IsUsingCloudflareProxy(host)
+					}
 				}
 
 				endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
@@ -121,7 +142,8 @@ func (k *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace st
 						Path: path,
 						Port: utils.ToPtr[int32](443),
 					},
-					Issued: issued,
+					Issued:        issued,
+					DnsConfigured: dnsConfigured,
 				})
 			}
 		}

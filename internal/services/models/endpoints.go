@@ -34,5 +34,6 @@ type IngressEndpoint struct {
 
 type ExtendedHostSpec struct {
 	v1.HostSpec
-	Issued bool `json:"issued"`
+	DnsConfigured bool `json:"dns_configured"`
+	Issued        bool `json:"issued"`
 }
