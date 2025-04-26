@@ -6,8 +6,8 @@ import (
 	"os"
 
 	charmLog "github.com/charmbracelet/log"
-	"github.com/go-git/go-git/config"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/unbindapp/unbind-api/internal/common/log"
