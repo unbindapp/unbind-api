@@ -51,7 +51,7 @@ type ListEnvironmentInput struct {
 
 type ListEnvironmentsOutput struct {
 	Body struct {
-		Data []*models.EnvironmentResponse `json:"data"`
+		Data []*models.EnvironmentResponse `json:"data" nullable:"false"`
 	}
 }
 
