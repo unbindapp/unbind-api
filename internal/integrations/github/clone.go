@@ -6,6 +6,7 @@ import (
 	"os"
 
 	charmLog "github.com/charmbracelet/log"
+	"github.com/go-git/go-git/config"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -30,8 +31,7 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 	}
 
 	cloneOptions := &git.CloneOptions{
-		URL:   repoURL,
-		Depth: 1,
+		URL: repoURL,
 		Auth: &http.BasicAuth{
 			Username: "x-access-token",
 			Password: bearerToken,
@@ -41,11 +41,12 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 
 	// If a specific commit SHA is provided, we need to modify the clone strategy
 	if commitSHA != "" {
-		// First clone without specifying a branch
-		cloneOptions.ReferenceName = ""
+		// For specific commits, we need to fetch more history
+		cloneOptions.Depth = 0 // Full clone
 		cloneOptions.SingleBranch = false
 	} else {
-		// Standard branch-based clone
+		// Standard branch-based shallow clone
+		cloneOptions.Depth = 1
 		cloneOptions.SingleBranch = true
 		cloneOptions.ReferenceName = plumbing.ReferenceName(refName)
 	}
@@ -60,6 +61,19 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 		worktree, err := repo.Worktree()
 		if err != nil {
 			return "", fmt.Errorf("failed to get worktree: %v", err)
+		}
+
+		// First, fetch all branches to ensure we have the commit
+		err = repo.Fetch(&git.FetchOptions{
+			Auth: &http.BasicAuth{
+				Username: "x-access-token",
+				Password: bearerToken,
+			},
+			RefSpecs: []config.RefSpec{"refs/*:refs/*"},
+			Depth:    0,
+		})
+		if err != nil && err != git.NoErrAlreadyUpToDate {
+			return "", fmt.Errorf("failed to fetch references: %v", err)
 		}
 
 		err = worktree.Checkout(&git.CheckoutOptions{
