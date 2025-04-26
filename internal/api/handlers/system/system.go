@@ -43,6 +43,18 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.UpdateBuildkitSettings,
 	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "check-dns-resolution",
+			Summary:     "Check DNS Resolution",
+			Description: "Check if the domain is pointing to the correct IP address.",
+			Path:        "/dns/check",
+			Method:      http.MethodGet,
+		},
+		handlers.CheckDNSResolution,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

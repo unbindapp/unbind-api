@@ -35,6 +35,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/buildkitd"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
@@ -219,6 +220,7 @@ func startAPI(cfg *config.Config) {
 		HttpClient:           &http.Client{},
 		DeploymentController: deploymentController,
 		DatabaseProvider:     dbProvider,
+		DNSChecker:           utils.NewDNSChecker(),
 		TeamService:          teamService,
 		ProjectService:       projectService,
 		ServiceService:       serviceService,

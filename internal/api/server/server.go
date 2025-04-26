@@ -6,6 +6,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
@@ -45,6 +46,7 @@ type Server struct {
 	HttpClient           *http.Client
 	DeploymentController *deployctl.DeploymentController
 	DatabaseProvider     *databases.DatabaseProvider
+	DNSChecker           *utils.DNSChecker
 	// Services
 	TeamService        *team_service.TeamService
 	ProjectService     *project_service.ProjectService
