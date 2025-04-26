@@ -9,7 +9,7 @@ import (
 const DB_CATEGORY = "databases"
 
 type DatabaseList struct {
-	Databases []string `json:"databases"`
+	Databases []string `json:"databases" nullable:"false"`
 }
 
 // ListDatabases lists all available databases
