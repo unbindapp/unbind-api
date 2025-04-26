@@ -356,7 +356,7 @@ var (
 		{Name: "database_version", Type: field.TypeString, Nullable: true},
 		{Name: "dockerfile_path", Type: field.TypeString, Nullable: true},
 		{Name: "dockerfile_context", Type: field.TypeString, Nullable: true},
-		{Name: "railpack_provider", Type: field.TypeEnum, Nullable: true, Enums: []string{"node", "deno", "go", "java", "php", "python", "ruby", "rust", "staticfile", "unknown"}},
+		{Name: "railpack_provider", Type: field.TypeEnum, Nullable: true, Enums: []string{"node", "deno", "go", "java", "php", "python", "ruby", "rust", "elixir", "staticfile", "unknown"}},
 		{Name: "railpack_framework", Type: field.TypeEnum, Nullable: true, Enums: []string{"next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "rocket", "unknown"}},
 		{Name: "git_branch", Type: field.TypeString, Nullable: true},
 		{Name: "hosts", Type: field.TypeJSON, Nullable: true},
