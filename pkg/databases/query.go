@@ -8,12 +8,15 @@ import (
 
 const DB_CATEGORY = "databases"
 
-type DatabaseList struct {
-	Databases []string `json:"databases" nullable:"false"`
+type IndexResponse struct {
+	Categories []struct {
+		Name      string   `json:"name"`
+		Templates []string `json:"templates"`
+	} `json:"categories"`
 }
 
 // ListDatabases lists all available databases
-func (self *DatabaseProvider) ListDatabases(ctx context.Context, tagVersion string) (*DatabaseList, error) {
+func (self *DatabaseProvider) ListDatabases(ctx context.Context, tagVersion string) ([]string, error) {
 	// Base version URL
 	baseURL := fmt.Sprintf(BaseDatabaseURL, tagVersion)
 
@@ -26,10 +29,21 @@ func (self *DatabaseProvider) ListDatabases(ctx context.Context, tagVersion stri
 	}
 
 	// Parse the index
-	var dbList DatabaseList
-	if err := json.Unmarshal(indexBytes, &dbList); err != nil {
+	var index IndexResponse
+	if err := json.Unmarshal(indexBytes, &index); err != nil {
 		return nil, fmt.Errorf("failed to parse template index: %w", err)
 	}
 
-	return &dbList, nil
+	dbList := []string{}
+	for _, category := range index.Categories {
+		if category.Name == DB_CATEGORY {
+			for _, template := range category.Templates {
+				// Add the template to the list
+				dbList = append(dbList, template)
+			}
+			break
+		}
+	}
+
+	return dbList, nil
 }

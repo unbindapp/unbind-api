@@ -12,7 +12,7 @@ import (
 
 type ListDatabasesResponse struct {
 	Body struct {
-		Data *databases.DatabaseList `json:"data" nullable:"false"`
+		Data []string `json:"data" nullable:"false"`
 	}
 }
 
@@ -25,13 +25,9 @@ func (self *HandlerGroup) ListDatabases(ctx context.Context, input *server.BaseA
 		return nil, huma.Error500InternalServerError("An unknown error occured")
 	}
 
-	return &ListDatabasesResponse{
-		Body: struct {
-			Data *databases.DatabaseList `json:"data" nullable:"false"`
-		}{
-			Data: dbList,
-		},
-	}, nil
+	resp := &ListDatabasesResponse{}
+	resp.Body.Data = dbList
+	return resp, nil
 }
 
 type GetDatabaseSpecInput struct {
