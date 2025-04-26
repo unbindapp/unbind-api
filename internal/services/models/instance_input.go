@@ -12,7 +12,7 @@ type InstanceType string
 const (
 	InstanceTypeTeam        InstanceType = "team"
 	InstanceTypeProject     InstanceType = "project"
-	InstanceTypeEnvironment InstanceType = "instance"
+	InstanceTypeEnvironment InstanceType = "environment"
 	InstanceTypeService     InstanceType = "service"
 )
 
