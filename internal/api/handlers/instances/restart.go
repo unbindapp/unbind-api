@@ -55,6 +55,8 @@ func (self *HandlerGroup) RestartInstances(ctx context.Context, input *RestartIn
 	}
 
 	resp := &RestartServicesResponse{}
-	resp.Body.Data.Restarted = true
+	resp.Body.Data = &Restarted{
+		Restarted: true,
+	}
 	return resp, nil
 }
