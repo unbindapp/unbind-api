@@ -138,21 +138,10 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 
 	// Build a full deployment
 	// Get git information if applicable
-	var commitSHA string
 	var commitMessage string
-	var committer *schema.GitCommitter
 
-	if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
-		commitSHA, commitMessage, committer, err = self.githubClient.GetCommitSummary(ctx,
-			service.Edges.GithubInstallation,
-			service.Edges.GithubInstallation.AccountLogin,
-			*service.GitRepository,
-			*deployment.CommitSha,
-			true)
-
-		if err != nil {
-			return nil, err
-		}
+	if deployment.CommitMessage != nil {
+		commitMessage = *deployment.CommitMessage
 	}
 
 	// Enqueue build job
@@ -166,9 +155,9 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 		ServiceID:     input.ServiceID,
 		Environment:   env,
 		Source:        schema.DeploymentSourceManual,
-		CommitSHA:     commitSHA,
+		CommitSHA:     *deployment.CommitSha,
 		CommitMessage: commitMessage,
-		Committer:     committer,
+		Committer:     deployment.CommitAuthor,
 	})
 	if err != nil {
 		return nil, err
