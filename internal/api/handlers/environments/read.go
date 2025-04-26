@@ -19,7 +19,7 @@ type GetEnvironmentInput struct {
 
 type GetEnvironmentOutput struct {
 	Body struct {
-		Data *models.EnvironmentResponse `json:"data"`
+		Data *models.EnvironmentResponse `json:"data" nullable:"false"`
 	}
 }
 
