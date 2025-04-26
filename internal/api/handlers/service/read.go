@@ -19,7 +19,7 @@ type ListServiceInput struct {
 
 type ListServiceResponse struct {
 	Body struct {
-		Data []*models.ServiceResponse `json:"data"`
+		Data []*models.ServiceResponse `json:"data" nullable:"false"`
 	}
 }
 

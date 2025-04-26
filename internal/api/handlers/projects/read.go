@@ -18,7 +18,7 @@ type ListProjectInput struct {
 
 type ListProjectResponse struct {
 	Body struct {
-		Data []*models.ProjectResponse `json:"data"`
+		Data []*models.ProjectResponse `json:"data" nullable:"false"`
 	}
 }
 

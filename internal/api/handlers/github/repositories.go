@@ -13,7 +13,7 @@ import (
 // GET Github admin organizations for installation
 type GithubAdminRepositoryListResponse struct {
 	Body struct {
-		Data []*github.GithubRepository `json:"data"`
+		Data []*github.GithubRepository `json:"data" nullable:"false"`
 	}
 }
 
@@ -34,7 +34,7 @@ func (self *HandlerGroup) HandleListGithubAdminRepositories(ctx context.Context,
 	if len(installations) == 0 {
 		return &GithubAdminRepositoryListResponse{
 			Body: struct {
-				Data []*github.GithubRepository `json:"data"`
+				Data []*github.GithubRepository `json:"data" nullable:"false"`
 			}{
 				Data: []*github.GithubRepository{},
 			},
