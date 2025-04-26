@@ -12,7 +12,7 @@ import (
 
 type ListDatabasesResponse struct {
 	Body struct {
-		Data []*databases.DatabaseList `json:"data" nullable:"false"`
+		Data *databases.DatabaseList `json:"data" nullable:"false"`
 	}
 }
 
@@ -27,9 +27,9 @@ func (self *HandlerGroup) ListDatabases(ctx context.Context, input *server.BaseA
 
 	return &ListDatabasesResponse{
 		Body: struct {
-			Data []*databases.DatabaseList `json:"data" nullable:"false"`
+			Data *databases.DatabaseList `json:"data" nullable:"false"`
 		}{
-			Data: []*databases.DatabaseList{dbList},
+			Data: dbList,
 		},
 	}, nil
 }
