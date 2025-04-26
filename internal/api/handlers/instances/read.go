@@ -14,7 +14,7 @@ import (
 // List instances (pods) for a service
 type ListInstancesInput struct {
 	server.BaseAuthInput
-	Body models.InstanceStatusInput
+	models.InstanceStatusInput
 }
 
 type ListInstancesResponse struct {
@@ -38,7 +38,7 @@ func (self *HandlerGroup) ListInstances(ctx context.Context, input *ListInstance
 		ctx,
 		user.ID,
 		bearerToken,
-		&input.Body,
+		&input.InstanceStatusInput,
 	)
 	if err != nil {
 		return nil, self.handleErr(err)
