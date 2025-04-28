@@ -2,6 +2,8 @@ package system_handler
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -58,6 +60,43 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 			return nil, huma.Error500InternalServerError("Error checking Cloudflare")
 		}
 		dnsCheck.Cloudflare = resolved
+	}
+
+	if dnsCheck.Cloudflare {
+		// Spin up an ingress to verify
+		testIngress, err := self.srv.KubeClient.CreateVerificationIngress(ctx, input.Domain, self.srv.KubeClient.GetInternalClient())
+		if err != nil {
+			log.Warnf("Error creating ingress test for domain %s: %v", input.Domain, err)
+		} else {
+			defer func() {
+				err := self.srv.KubeClient.DeleteVerificationIngress(ctx, testIngress.Name, self.srv.KubeClient.GetInternalClient())
+				if err != nil {
+					log.Warnf("Error deleting ingress test for domain %s: %v", input.Domain, err)
+				}
+			}()
+
+			url := fmt.Sprintf("https://%s/.unbind-challenge/%s", input.Domain, "/.unbind-challenge/dns-check")
+
+			// Make an http call to the domain at /.unbind-challenge/dns-check
+			// Create a new request with context
+			req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+			if err != nil {
+				log.Warnf("Error creating HTTP request for domain %s: %v", input.Domain, err)
+			} else {
+				// Execute the request
+				resp, err := self.srv.HttpClient.Do(req)
+				if err != nil {
+					log.Warnf("Error executing HTTP request for domain %s: %v", input.Domain, err)
+				} else {
+					defer resp.Body.Close()
+
+					// Check for the special header
+					if resp.Header.Get("X-DNS-Check") == "resolved" {
+						dnsCheck.DnsConfigured = true
+					}
+				}
+			}
+		}
 	}
 
 	resp := &DnsCheckResponse{}

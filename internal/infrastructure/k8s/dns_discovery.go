@@ -11,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -177,4 +178,87 @@ func isCertificateIssued(secret *corev1.Secret) bool {
 
 	// Both fields must exist and contain data, and it should have cert-manager annotations
 	return hasCert && hasKey && len(secret.Data["tls.crt"]) > 0 && len(secret.Data["tls.key"]) > 0 && hasCertManagerAnnotation
+}
+
+// CreateVerificationIngress creates an ingress with a configuration snippet to help verify
+// that a domain is pointing to the Kubernetes cluster
+func (self *KubeClient) CreateVerificationIngress(
+	ctx context.Context,
+	domain string,
+	client *kubernetes.Clientset,
+) (*networkingv1.Ingress, error) {
+	pathType := networkingv1.PathTypePrefix
+	ingressClassName := "nginx"
+
+	name, err := utils.GenerateSlug(domain)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate slug for domain %s: %w", domain, err)
+	}
+
+	// Create the ingress specification
+	ingress := &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: self.config.GetSystemNamespace(),
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":              ingressClassName,
+				"nginx.ingress.kubernetes.io/ssl-redirect": "false",
+				"nginx.ingress.kubernetes.io/configuration-snippet": `
+add_header X-DNS-Check "resolved" always;
+return 200 "Domain verification successful: CloudFlare connection to Kubernetes confirmed";
+add_header Content-Type text/plain;
+`,
+			},
+			Labels: map[string]string{
+				"app":       "unbind-verification",
+				"type":      "domain-verification",
+				"domain":    domain,
+				"temporary": "true",
+			},
+		},
+		Spec: networkingv1.IngressSpec{
+			IngressClassName: &ingressClassName,
+			Rules: []networkingv1.IngressRule{
+				{
+					Host: domain,
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								{
+									Path:     "/.unbind-challenge/dns-check",
+									PathType: &pathType,
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: "dummy-service",
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create the ingress in the cluster
+	return client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).Create(ctx, ingress, metav1.CreateOptions{})
+}
+
+// DeleteVerificationIngress deletes the verification ingress for a domain
+func (self *KubeClient) DeleteVerificationIngress(
+	ctx context.Context,
+	ingressName string,
+	client *kubernetes.Clientset,
+) error {
+	// Delete the ingress
+	err := client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).Delete(ctx, ingressName, metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete verification ingress %s: %w", ingressName, err)
+	}
+
+	return nil
 }
