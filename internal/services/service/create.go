@@ -127,7 +127,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Check metadata
-		if dbVersion != nil && dbDefinition.DBVersion != "" {
+		if dbVersion == nil && dbDefinition.DBVersion != "" {
 			dbVersion = utils.ToPtr(dbDefinition.DBVersion)
 		}
 
