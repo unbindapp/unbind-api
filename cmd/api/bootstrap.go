@@ -45,6 +45,8 @@ func (self *Bootstrapper) Sync(ctx context.Context) error {
 
 // * System settings
 func (self *Bootstrapper) syncSystemSettings(ctx context.Context) error {
+	log.Infof("Syncing system settings")
+
 	var wildcardDomain *string
 
 	if self.cfg.BootstrapWildcardBaseURL != "" {
@@ -60,6 +62,8 @@ func (self *Bootstrapper) syncSystemSettings(ctx context.Context) error {
 
 // * Buildkit
 func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
+	log.Infof("Syncing buildkitd settings")
+
 	// Get from kubernetes
 	_, err := self.buildkitSettingsManager.GetBuildkitConfig(ctx)
 	if err != nil {
@@ -148,6 +152,8 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 
 // * Bootstrap the registry, if needed
 func (self *Bootstrapper) bootstrapRegistry(ctx context.Context) error {
+	log.Infof("Bootstrapping registry if needed")
+
 	regCount, err := self.repos.Ent().Registry.Query().Count(ctx)
 	if err != nil {
 		if !ent.IsNotFound(err) {
@@ -220,6 +226,8 @@ func (self *Bootstrapper) bootstrapRegistry(ctx context.Context) error {
 
 // * Team
 func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
+	log.Infof("Bootstrapping team if needed")
+
 	// See if team exists
 	teamCount, err := self.repos.Ent().Team.Query().Count(ctx)
 	if err != nil {
@@ -272,12 +280,10 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 	return nil
 }
 
-// /app/cli group:add-user --email=EMAIL --group-name=superuser
-// /app/cli group:grant-permission --group-name=superuser --resource-type=system --resource-id="*" --action=admin
-// /app/cli group:grant-permission --group-name=superuser --resource-type=team --resource-id="*" --action=admin
-
 // * Groups
 func (self *Bootstrapper) bootstrapGroupsAndPermissions(ctx context.Context) error {
+	log.Infof("Bootstrapping groups and permissions if needed")
+
 	if err := self.repos.WithTx(ctx, func(tx repository.TxInterface) error {
 		db := tx.Client()
 
@@ -350,6 +356,8 @@ func (self *Bootstrapper) bootstrapGroupsAndPermissions(ctx context.Context) err
 
 // * Sync with K8S
 func (self *Bootstrapper) syncK8sRBAC(ctx context.Context) error {
+	log.Infof("Syncing RBAC with Kubernetes")
+
 	rbacManager := k8s.NewRBACManager(self.repos, self.kubeClient)
 
 	// Get all groups
