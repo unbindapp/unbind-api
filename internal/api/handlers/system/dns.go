@@ -95,8 +95,6 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 					// Check for the special header
 					if resp.Header.Get("X-DNS-Check") == "resolved" {
 						dnsCheck.DnsConfigured = true
-					} else {
-						log.Infof("DNS Check Header is %s", resp.Header.Get("X-DNS-Check"))
 					}
 				}
 			}

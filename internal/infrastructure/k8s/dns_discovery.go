@@ -187,7 +187,7 @@ func (self *KubeClient) CreateVerificationIngress(
 	domain string,
 	client *kubernetes.Clientset,
 ) (*networkingv1.Ingress, error) {
-	pathType := networkingv1.PathTypePrefix
+	pathType := networkingv1.PathTypeImplementationSpecific
 	ingressClassName := "nginx"
 
 	name, err := utils.GenerateSlug(domain)
@@ -201,7 +201,6 @@ func (self *KubeClient) CreateVerificationIngress(
 			Name:      name,
 			Namespace: self.config.GetSystemNamespace(),
 			Annotations: map[string]string{
-				"kubernetes.io/ingress.class":              ingressClassName,
 				"nginx.ingress.kubernetes.io/ssl-redirect": "false",
 				"nginx.ingress.kubernetes.io/configuration-snippet": `
 add_header X-DNS-Check "resolved" always;
