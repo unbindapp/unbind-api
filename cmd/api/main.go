@@ -14,6 +14,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
 	deployments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/deployments"
@@ -446,6 +447,40 @@ func startAPI(cfg *config.Config) {
 
 	// Start deployment queue processeor
 	deploymentController.StartAsync()
+
+	// Start cron jobs
+	// Initialize scheduler
+	scheduler, err := gocron.NewScheduler(gocron.WithLocation(time.UTC))
+	if err != nil {
+		log.Fatal("Failed to create scheduler", "err", err)
+	}
+
+	// Add a dummy job that logs a message every minute
+	_, err = scheduler.NewJob(
+		gocron.DurationJob(10*time.Minute),
+		gocron.NewTask(
+			func(ctx context.Context) {
+				log.Infof("Cleaning up ingress tests.")
+				if err := kubeClient.DeleteOldVerificationIngresses(ctx, kubeClient.GetInternalClient()); err != nil {
+					log.Error("Failed to delete old verification ingresses", "err", err)
+				}
+			},
+			ctx,
+		),
+	)
+	if err != nil {
+		log.Fatal("Failed to create scheduled job", "err", err)
+	}
+
+	// Start the scheduler
+	scheduler.Start()
+	defer func() {
+		if err := scheduler.Shutdown(); err != nil {
+			log.Error("Scheduler shutdown error", "err", err)
+		} else {
+			log.Info("Scheduler gracefully stopped")
+		}
+	}()
 
 	// Start the server in a goroutine
 	go func() {

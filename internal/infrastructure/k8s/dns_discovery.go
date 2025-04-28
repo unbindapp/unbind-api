@@ -318,3 +318,48 @@ func (self *KubeClient) DeleteVerificationIngress(
 
 	return nil
 }
+
+// DeleteOldVerificationIngresses deletes verification ingresses created more than 10 minutes ago
+func (self *KubeClient) DeleteOldVerificationIngresses(
+	ctx context.Context,
+	client *kubernetes.Clientset,
+) error {
+	// Create a label selector for the verification ingresses
+	labelSelector := "app=unbind-verification,type=domain-verification,temporary=true"
+
+	// Get the list of ingresses matching the label selector
+	ingresses, err := client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).List(
+		ctx,
+		metav1.ListOptions{
+			LabelSelector: labelSelector,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to list verification ingresses: %w", err)
+	}
+
+	// Get the current time to compare against creation time
+	currentTime := time.Now()
+	cutoffTime := currentTime.Add(-10 * time.Minute)
+
+	// Delete each matching ingress that is older than 10 minutes
+	for _, ingress := range ingresses.Items {
+		creationTime := ingress.GetCreationTimestamp().Time
+
+		// Skip ingresses that are less than 10 minutes old
+		if creationTime.After(cutoffTime) {
+			continue
+		}
+
+		err := client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).Delete(
+			ctx,
+			ingress.Name,
+			metav1.DeleteOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to delete old verification ingress %s: %w", ingress.Name, err)
+		}
+	}
+
+	return nil
+}
