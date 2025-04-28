@@ -126,7 +126,7 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 		return err
 	}
 
-	if settings.BuildkitSettings.MaxParallelism != parallelism || settings.BuildkitSettings.Replicas != replicas {
+	if settings.BuildkitSettings == nil || settings.BuildkitSettings.MaxParallelism != parallelism || settings.BuildkitSettings.Replicas != replicas {
 		// Update record
 		log.Infof("Updating buildkitd settings in DB: replicas=%d, parallelism=%d", replicas, parallelism)
 		settings, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
