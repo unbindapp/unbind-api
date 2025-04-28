@@ -36,9 +36,15 @@ type GetDatabaseSpecInput struct {
 	Version string `query:"version" required:"false" description:"Version of the custom services release"`
 }
 
+type DatabaseConfigurable struct {
+	Name    string   `json:"name" description:"Name of the field"`
+	Default string   `json:"default" description:"Default value for the field"`
+	Values  []string `json:"values" description:"Possible values for the field"`
+}
+
 type GetDatabaseResponse struct {
 	Body struct {
-		Data *databases.Definition `json:"data" nullable:"false"`
+		Data []DatabaseConfigurable `json:"data" nullable:"false"`
 	}
 }
 
@@ -62,7 +68,22 @@ func (self *HandlerGroup) GetDatabaseDefinition(ctx context.Context, input *GetD
 		return nil, huma.Error500InternalServerError("An unknown error occured")
 	}
 
+	configurables := []DatabaseConfigurable{}
+
+	versionProperty, ok := template.Schema.Properties["version"]
+	if ok {
+		dbVersionDefault, _ := versionProperty.Default.(string)
+		if dbVersionDefault != "" {
+			configurables = append(configurables, DatabaseConfigurable{
+				Name:    "version",
+				Default: dbVersionDefault,
+				Values:  versionProperty.Enum,
+			},
+			)
+		}
+	}
+
 	response := &GetDatabaseResponse{}
-	response.Body.Data = template
+	response.Body.Data = configurables
 	return response, nil
 }
