@@ -19,8 +19,8 @@ func (self *SystemRepository) GetSystemSettings(ctx context.Context, tx reposito
 }
 
 type SystemSettingUpdateInput struct {
-	WildcardDomain   *string
-	BuildkitSettings *schema.BuildkitSettings
+	WildcardDomain   *string                  `json:"wildcard_domain" doc:"Wildcard domain for the system"`
+	BuildkitSettings *schema.BuildkitSettings `json:"buildkit_settings" doc:"Buildkit settings"`
 }
 
 func (self *SystemRepository) UpdateSystemSettings(ctx context.Context, input *SystemSettingUpdateInput) (settings *ent.SystemSetting, err error) {
