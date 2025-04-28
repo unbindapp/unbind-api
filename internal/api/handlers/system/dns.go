@@ -78,23 +78,36 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 
 			url := fmt.Sprintf("https://%s/.unbind-challenge/%s", input.Domain, "/.unbind-challenge/dns-check")
 
-			// Make an http call to the domain at /.unbind-challenge/dns-check
 			// Create a new request with context
 			req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 			if err != nil {
 				log.Warnf("Error creating HTTP request for domain %s: %v", input.Domain, err)
 			} else {
-				time.Sleep(250 * time.Millisecond) // Wait for the ingress to be created
-				// Execute the request
-				resp, err := self.srv.HttpClient.Do(req)
-				if err != nil {
-					log.Warnf("Error executing HTTP request for domain %s: %v", input.Domain, err)
-				} else {
-					defer resp.Body.Close()
+				// Try for up to 2 seconds, checking every 200ms
+				maxRetries := 10 // 2000ms / 200ms = 10 retries
+				for attempt := 0; attempt < maxRetries; attempt++ {
+					if attempt > 0 {
+						time.Sleep(200 * time.Millisecond)
+					}
 
-					// Check for the special header
-					if resp.Header.Get("X-DNS-Check") == "resolved" {
-						dnsCheck.DnsConfigured = true
+					// Execute the request
+					resp, err := self.srv.HttpClient.Do(req)
+					if err != nil {
+						log.Warnf("Attempt %d: Error executing HTTP request for domain %s: %v", attempt+1, input.Domain, err)
+						continue // Try again after sleep
+					}
+
+					func() {
+						defer resp.Body.Close()
+						// Check for the special header
+						if resp.Header.Get("X-DNS-Check") == "resolved" {
+							dnsCheck.DnsConfigured = true
+							return // Exit the closure
+						}
+					}()
+
+					if dnsCheck.DnsConfigured {
+						break
 					}
 				}
 			}
