@@ -113,13 +113,15 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				if versionStr, ok := version.(string); ok {
 					dbVersion = utils.ToPtr(versionStr)
 				}
-			} else {
-				versionProperty, ok := dbDefinition.Schema.Properties["version"]
-				if ok {
-					dbVersionDefault, _ := versionProperty.Default.(string)
-					if dbVersionDefault != "" {
-						dbVersion = utils.ToPtr(dbVersionDefault)
-					}
+			}
+		}
+
+		if dbVersion == nil {
+			versionProperty, ok := dbDefinition.Schema.Properties["version"]
+			if ok {
+				dbVersionDefault, _ := versionProperty.Default.(string)
+				if dbVersionDefault != "" {
+					dbVersion = utils.ToPtr(dbVersionDefault)
 				}
 			}
 		}
