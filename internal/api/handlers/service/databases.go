@@ -38,7 +38,7 @@ type GetDatabaseSpecInput struct {
 
 type DatabaseConfigurable struct {
 	Default string   `json:"default" description:"Default value for the field"`
-	Values  []string `json:"values" nullable:"false" description:"Possible values for the field"`
+	Options []string `json:"options" nullable:"false" description:"Possible values for the field"`
 }
 
 type DatabaseConfigurables struct {
@@ -79,7 +79,7 @@ func (self *HandlerGroup) GetDatabaseDefinition(ctx context.Context, input *GetD
 		if dbVersionDefault != "" {
 			versionConfigurable = DatabaseConfigurable{
 				Default: dbVersionDefault,
-				Values:  versionProperty.Enum,
+				Options: versionProperty.Enum,
 			}
 		}
 	}
@@ -88,7 +88,7 @@ func (self *HandlerGroup) GetDatabaseDefinition(ctx context.Context, input *GetD
 		if template.DBVersion != "" {
 			versionConfigurable = DatabaseConfigurable{
 				Default: template.DBVersion,
-				Values:  []string{template.DBVersion},
+				Options: []string{template.DBVersion},
 			}
 		}
 	}
