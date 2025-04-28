@@ -185,7 +185,7 @@ func (self *VariablesService) resolveInternalEndpointURL(ctx context.Context, cl
 		}
 	}
 
-	return fmt.Sprintf("https://%s:%d", endpoint.DNS, targetPort.Port), nil
+	return fmt.Sprintf("http://%s:%d", endpoint.DNS, targetPort.Port), nil
 }
 
 // resolve reference template

@@ -2,6 +2,7 @@ package service_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -31,6 +32,12 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 		return nil, err
 	}
 
+	// Get service
+	service, err := self.repo.Service().GetByID(ctx, serviceID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create kubernetes client
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
@@ -38,7 +45,7 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 	}
 
 	// Get discovery
-	return self.k8s.DiscoverEndpointsByLabels(
+	endpoints, err := self.k8s.DiscoverEndpointsByLabels(
 		ctx,
 		project.Edges.Team.Namespace,
 		map[string]string{
@@ -46,4 +53,33 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 		},
 		client,
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if service.Edges.ServiceConfig.Database != nil {
+		for _, endpoint := range endpoints.Internal {
+			// ! TODO parse database commonly since this is repeated logic
+			switch *service.Edges.ServiceConfig.Database {
+			case "redis", "postgres":
+				// Get database password from secret
+				secret, err := self.k8s.GetSecret(ctx, service.KubernetesName, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, client)
+				if err != nil {
+					return nil, err
+				}
+				username := string(secret.Data["DATABASE_USERNAME"])
+				password := string(secret.Data["DATABASE_PASSWORD"])
+
+				if *service.Edges.ServiceConfig.Database == "redis" {
+					endpoint.DNS = fmt.Sprintf("redis://%s:%s@%s:%d", username, password, endpoint.DNS, 6379)
+				}
+				if *service.Edges.ServiceConfig.Database == "postgres" {
+					endpoint.DNS = fmt.Sprintf("postgresql://%s:%s@%s:%d/postgres?sslmode=disable", username, password, endpoint.DNS, 5432)
+				}
+			}
+		}
+	}
+
+	return endpoints, nil
 }
