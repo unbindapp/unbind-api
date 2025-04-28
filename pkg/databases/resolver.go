@@ -94,6 +94,7 @@ func (p *DatabaseProvider) FetchDatabaseDefinition(
 		Port:        metadata.Port,
 		Type:        metadata.Type,
 		Version:     metadata.Version,
+		DBVersion:   metadata.DBVersion,
 		Schema:      safeSchema,
 		Content:     string(defBytes),
 		Chart:       metadata.Chart,

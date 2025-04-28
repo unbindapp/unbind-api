@@ -7,6 +7,7 @@ type DefinitionMetadata struct {
 	Description string                    `yaml:"description" json:"description"`
 	Type        string                    `yaml:"type" json:"type"`
 	Version     string                    `yaml:"version" json:"version"`
+	DBVersion   string                    `yaml:"dbVersion" json:"dbVersion"`
 	Imports     []DefinitionImport        `yaml:"imports,omitempty" json:"imports,omitempty"`
 	Schema      DefinitionParameterSchema `yaml:"schema" json:"schema"`
 
@@ -56,6 +57,7 @@ type Definition struct {
 	Description string                    `json:"description"`
 	Type        string                    `json:"type"`
 	Version     string                    `json:"version"`
+	DBVersion   string                    `json:"dbVersion"`
 	Schema      DefinitionParameterSchema `json:"schema"`
 	Content     string                    `json:"-"`
 	Chart       *HelmChartInfo            `json:"chart,omitempty"`

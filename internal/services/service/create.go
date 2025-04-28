@@ -126,6 +126,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 		}
 
+		// Check metadata
+		if dbVersion != nil && dbDefinition.DBVersion != "" {
+			dbVersion = utils.ToPtr(dbDefinition.DBVersion)
+		}
+
 		imageProperty, ok := dbDefinition.Schema.Properties["dockerImage"]
 		if ok {
 			if image, ok := imageProperty.Default.(string); ok {
