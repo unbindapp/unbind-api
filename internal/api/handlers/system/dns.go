@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -83,6 +84,7 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 			if err != nil {
 				log.Warnf("Error creating HTTP request for domain %s: %v", input.Domain, err)
 			} else {
+				time.Sleep(250 * time.Millisecond) // Wait for the ingress to be created
 				// Execute the request
 				resp, err := self.srv.HttpClient.Do(req)
 				if err != nil {
@@ -93,6 +95,8 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 					// Check for the special header
 					if resp.Header.Get("X-DNS-Check") == "resolved" {
 						dnsCheck.DnsConfigured = true
+					} else {
+						log.Infof("DNS Check Header is %s", resp.Header.Get("X-DNS-Check"))
 					}
 				}
 			}
