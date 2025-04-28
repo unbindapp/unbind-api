@@ -2,6 +2,8 @@ package k8s
 
 import (
 	"log"
+	"net/http"
+	"time"
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
@@ -16,6 +18,7 @@ type KubeClient struct {
 	client     *dynamic.DynamicClient
 	clientset  *kubernetes.Clientset
 	dnsChecker *utils.DNSChecker
+	httpClient *http.Client
 }
 
 func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
@@ -51,6 +54,9 @@ func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
 		client:     dynamicClient,
 		clientset:  clientSet,
 		dnsChecker: utils.NewDNSChecker(),
+		httpClient: &http.Client{
+			Timeout: 1 * time.Second,
+		},
 	}
 }
 

@@ -3,10 +3,13 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
@@ -112,28 +115,60 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 				// Check if the secret is issued
 				issued := false
 				dnsConfigured := false
+				cloudflare := false
 				if tls.SecretName != "" {
 					secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
 					issued = err == nil && isCertificateIssued(secret)
-					if issued {
-						dnsConfigured = true
-					}
 				}
 
+				ips, err := self.GetIngressNginxIP(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get ingress nginx IP: %w", err)
+				}
+				// Check ipv4 first
+				dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv4)
 				if !dnsConfigured {
-					ips, err := self.GetIngressNginxIP(ctx)
-					if err != nil {
-						return nil, fmt.Errorf("failed to get ingress nginx IP: %w", err)
-					}
-					// Check ipv4 first
-					dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv4)
-					if !dnsConfigured {
-						// Check ipv6
-						dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv6)
-					}
-					if !dnsConfigured {
-						// Check cloudflare
-						dnsConfigured, _ = self.dnsChecker.IsUsingCloudflareProxy(host)
+					// Check ipv6
+					dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv6)
+				}
+				if !dnsConfigured {
+					// Check cloudflare
+					cloudflare, _ = self.dnsChecker.IsUsingCloudflareProxy(host)
+
+					if cloudflare {
+						// Spin up an ingress to verify
+						testIngress, err := self.CreateVerificationIngress(ctx, host, self.GetInternalClient())
+						if err != nil {
+							log.Warnf("Error creating ingress test for domain %s: %v", host, err)
+						} else {
+							defer func() {
+								err := self.DeleteVerificationIngress(ctx, testIngress.Name, self.GetInternalClient())
+								if err != nil {
+									log.Warnf("Error deleting ingress test for domain %s: %v", host, err)
+								}
+							}()
+
+							url := fmt.Sprintf("https://%s/.unbind-challenge/%s", host, "/.unbind-challenge/dns-check")
+
+							// Make an http call to the domain at /.unbind-challenge/dns-check
+							// Create a new request with context
+							req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+							if err != nil {
+								log.Warnf("Error creating HTTP request for domain %s: %v", host, err)
+							} else {
+								time.Sleep(250 * time.Millisecond) // Wait for the ingress to be created
+								// Execute the request
+								resp, err := self.httpClient.Do(req)
+								if err != nil {
+									log.Warnf("Error executing HTTP request for domain %s: %v", host, err)
+								} else {
+									defer resp.Body.Close()
+
+									// Check for the special header
+									dnsConfigured = resp.Header.Get("X-DNS-Check") == "resolved"
+								}
+							}
+						}
 					}
 				}
 
@@ -145,6 +180,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 					},
 					Issued:        issued,
 					DnsConfigured: dnsConfigured,
+					Cloudflare:    cloudflare,
 				})
 			}
 		}
