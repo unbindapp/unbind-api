@@ -8,6 +8,12 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 )
 
+// Sub categories
+type BuildkitSettings struct {
+	MaxParallelism int `json:"max_parallelism"`
+	Replicas       int `json:"replicas"`
+}
+
 // SystemSetting holds the schema definition for the SystemSetting entity.
 type SystemSetting struct {
 	ent.Schema
@@ -25,6 +31,9 @@ func (SystemSetting) Mixin() []ent.Mixin {
 func (SystemSetting) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("wildcard_base_url").Optional().Nillable().Comment("Wildcard base URL for the system"),
+		field.JSON("buildkit_settings", &BuildkitSettings{}).
+			Optional().
+			Comment("Buildkit settings"),
 	}
 }
 

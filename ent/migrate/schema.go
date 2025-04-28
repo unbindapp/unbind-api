@@ -20,20 +20,6 @@ var (
 		Columns:    BootstrapFlagColumns,
 		PrimaryKey: []*schema.Column{BootstrapFlagColumns[0]},
 	}
-	// BuildkitSettingsColumns holds the columns for the "buildkit_settings" table.
-	BuildkitSettingsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "max_parallelism", Type: field.TypeInt, Default: 2},
-		{Name: "replicas", Type: field.TypeInt, Default: 1},
-	}
-	// BuildkitSettingsTable holds the schema information for the "buildkit_settings" table.
-	BuildkitSettingsTable = &schema.Table{
-		Name:       "buildkit_settings",
-		Columns:    BuildkitSettingsColumns,
-		PrimaryKey: []*schema.Column{BuildkitSettingsColumns[0]},
-	}
 	// DeploymentsColumns holds the columns for the "deployments" table.
 	DeploymentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -388,6 +374,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "wildcard_base_url", Type: field.TypeString, Nullable: true},
+		{Name: "buildkit_settings", Type: field.TypeJSON, Nullable: true},
 	}
 	// SystemSettingsTable holds the schema information for the "system_settings" table.
 	SystemSettingsTable = &schema.Table{
@@ -567,7 +554,6 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		BootstrapFlagTable,
-		BuildkitSettingsTable,
 		DeploymentsTable,
 		EnvironmentsTable,
 		GithubAppsTable,
@@ -595,9 +581,6 @@ var (
 func init() {
 	BootstrapFlagTable.Annotation = &entsql.Annotation{
 		Table: "bootstrap_flag",
-	}
-	BuildkitSettingsTable.Annotation = &entsql.Annotation{
-		Table: "buildkit_settings",
 	}
 	DeploymentsTable.ForeignKeys[0].RefTable = ServicesTable
 	DeploymentsTable.Annotation = &entsql.Annotation{

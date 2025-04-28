@@ -10,9 +10,9 @@ import (
 )
 
 type SystemMeta struct {
-	ExternalIPV6     string                                   `json:"external_ipv6" nullable:"false"`
-	ExternalIPV4     string                                   `json:"external_ipv4" nullable:"false"`
-	BuildkitSettings *system_service.BuildkitSettingsResponse `json:"buildkit_settings" nullable:"false"`
+	ExternalIPV6   string                                 `json:"external_ipv6" nullable:"false"`
+	ExternalIPV4   string                                 `json:"external_ipv4" nullable:"false"`
+	SystemSettings *system_service.SystemSettingsResponse `json:"system_settings" nullable:"false"`
 }
 
 type SystemMetaResponse struct {
@@ -43,12 +43,12 @@ func (self *HandlerGroup) GetSystemInformation(ctx context.Context, input *serve
 	}
 
 	// Get buildkit settings
-	settings, err := self.srv.SystemService.GetBuildkitSettings(ctx, user.ID)
+	settings, err := self.srv.SystemService.GetSettings(ctx, user.ID)
 	if err != nil {
 		log.Error("Error getting buildkit settings", "err", err)
 		return nil, self.handleErr(err)
 	}
-	meta.BuildkitSettings = settings
+	meta.SystemSettings = settings
 
 	return &SystemMetaResponse{
 		Body: struct {

@@ -21,18 +21,6 @@ func (f BootstrapFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BootstrapMutation", m)
 }
 
-// The BuildkitSettingsFunc type is an adapter to allow the use of ordinary
-// function as BuildkitSettings mutator.
-type BuildkitSettingsFunc func(context.Context, *ent.BuildkitSettingsMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f BuildkitSettingsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.BuildkitSettingsMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BuildkitSettingsMutation", m)
-}
-
 // The DeploymentFunc type is an adapter to allow the use of ordinary
 // function as Deployment mutator.
 type DeploymentFunc func(context.Context, *ent.DeploymentMutation) (ent.Value, error)

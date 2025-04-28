@@ -20,6 +20,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldWildcardBaseURL holds the string denoting the wildcard_base_url field in the database.
 	FieldWildcardBaseURL = "wildcard_base_url"
+	// FieldBuildkitSettings holds the string denoting the buildkit_settings field in the database.
+	FieldBuildkitSettings = "buildkit_settings"
 	// Table holds the table name of the systemsetting in the database.
 	Table = "system_settings"
 )
@@ -30,6 +32,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldWildcardBaseURL,
+	FieldBuildkitSettings,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

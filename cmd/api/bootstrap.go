@@ -15,6 +15,7 @@ import (
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type Bootstrapper struct {
@@ -60,16 +61,20 @@ func (self *Bootstrapper) syncSystemSettings(ctx context.Context) error {
 // * Buildkit
 func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 	// Get from kubernetes
-	_, err := self.buildkitSettingsManager.GetOrCreateBuildkitConfig(ctx)
+	_, err := self.buildkitSettingsManager.GetBuildkitConfig(ctx)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			log.Infof("Buildkitd config not found - assuming externally managed")
+			return nil
+		}
 		log.Errorf("Failed to get buildkitd settings from kubernetes: %v", err)
 		return err
 	}
 
 	// Get buildkit settings from DB
-	settings, err := self.repos.System().GetBuildkitSettings(ctx)
+	settings, err := self.repos.System().GetSystemSettings(ctx, nil)
 	if err != nil && !ent.IsNotFound(err) {
-		log.Errorf("Failed to get buildkit settings from DB: %v", err)
+		log.Errorf("Failed to get settings from DB: %v", err)
 		return err
 	}
 
@@ -86,13 +91,22 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 			log.Errorf("Failed to get current replicas: %v", err)
 			return err
 		}
-		settings, err = self.repos.System().CreateBuildkitSettings(ctx, replicas, parallelism)
+		settings, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
+			BuildkitSettings: &schema.BuildkitSettings{
+				Replicas:       replicas,
+				MaxParallelism: parallelism,
+			},
+		})
 		if err != nil {
 			log.Errorf("Failed to create buildkit settings in DB: %v", err)
 			return err
 		}
 
-		log.Info("Created buildkitd settings", "replicas", replicas, "parallelism", parallelism)
+		log.Info("Updated buildkitd settings", "replicas", replicas, "parallelism", parallelism)
+		return nil
+	}
+
+	if settings.BuildkitSettings == nil {
 		return nil
 	}
 
@@ -110,9 +124,14 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 		return err
 	}
 
-	if settings.MaxParallelism != parallelism || settings.Replicas != replicas {
+	if settings.BuildkitSettings.MaxParallelism != parallelism || settings.BuildkitSettings.Replicas != replicas {
 		// Update record
-		settings, err = self.repos.System().UpdateBuildkitSettings(ctx, settings.ID, replicas, parallelism)
+		settings, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
+			BuildkitSettings: &schema.BuildkitSettings{
+				Replicas:       replicas,
+				MaxParallelism: parallelism,
+			},
+		})
 		if err != nil {
 			log.Errorf("Failed to update buildkit settings in DB: %v", err)
 			return err

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 )
 
@@ -52,6 +53,18 @@ func (ssu *SystemSettingUpdate) SetNillableWildcardBaseURL(s *string) *SystemSet
 // ClearWildcardBaseURL clears the value of the "wildcard_base_url" field.
 func (ssu *SystemSettingUpdate) ClearWildcardBaseURL() *SystemSettingUpdate {
 	ssu.mutation.ClearWildcardBaseURL()
+	return ssu
+}
+
+// SetBuildkitSettings sets the "buildkit_settings" field.
+func (ssu *SystemSettingUpdate) SetBuildkitSettings(ss *schema.BuildkitSettings) *SystemSettingUpdate {
+	ssu.mutation.SetBuildkitSettings(ss)
+	return ssu
+}
+
+// ClearBuildkitSettings clears the value of the "buildkit_settings" field.
+func (ssu *SystemSettingUpdate) ClearBuildkitSettings() *SystemSettingUpdate {
+	ssu.mutation.ClearBuildkitSettings()
 	return ssu
 }
 
@@ -120,6 +133,12 @@ func (ssu *SystemSettingUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if ssu.mutation.WildcardBaseURLCleared() {
 		_spec.ClearField(systemsetting.FieldWildcardBaseURL, field.TypeString)
 	}
+	if value, ok := ssu.mutation.BuildkitSettings(); ok {
+		_spec.SetField(systemsetting.FieldBuildkitSettings, field.TypeJSON, value)
+	}
+	if ssu.mutation.BuildkitSettingsCleared() {
+		_spec.ClearField(systemsetting.FieldBuildkitSettings, field.TypeJSON)
+	}
 	_spec.AddModifiers(ssu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, ssu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -165,6 +184,18 @@ func (ssuo *SystemSettingUpdateOne) SetNillableWildcardBaseURL(s *string) *Syste
 // ClearWildcardBaseURL clears the value of the "wildcard_base_url" field.
 func (ssuo *SystemSettingUpdateOne) ClearWildcardBaseURL() *SystemSettingUpdateOne {
 	ssuo.mutation.ClearWildcardBaseURL()
+	return ssuo
+}
+
+// SetBuildkitSettings sets the "buildkit_settings" field.
+func (ssuo *SystemSettingUpdateOne) SetBuildkitSettings(ss *schema.BuildkitSettings) *SystemSettingUpdateOne {
+	ssuo.mutation.SetBuildkitSettings(ss)
+	return ssuo
+}
+
+// ClearBuildkitSettings clears the value of the "buildkit_settings" field.
+func (ssuo *SystemSettingUpdateOne) ClearBuildkitSettings() *SystemSettingUpdateOne {
+	ssuo.mutation.ClearBuildkitSettings()
 	return ssuo
 }
 
@@ -262,6 +293,12 @@ func (ssuo *SystemSettingUpdateOne) sqlSave(ctx context.Context) (_node *SystemS
 	}
 	if ssuo.mutation.WildcardBaseURLCleared() {
 		_spec.ClearField(systemsetting.FieldWildcardBaseURL, field.TypeString)
+	}
+	if value, ok := ssuo.mutation.BuildkitSettings(); ok {
+		_spec.SetField(systemsetting.FieldBuildkitSettings, field.TypeJSON, value)
+	}
+	if ssuo.mutation.BuildkitSettingsCleared() {
+		_spec.ClearField(systemsetting.FieldBuildkitSettings, field.TypeJSON)
 	}
 	_spec.AddModifiers(ssuo.modifiers...)
 	_node = &SystemSetting{config: ssuo.config}

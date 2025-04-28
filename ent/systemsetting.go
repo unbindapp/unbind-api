@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 )
 
@@ -25,7 +27,9 @@ type SystemSetting struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Wildcard base URL for the system
 	WildcardBaseURL *string `json:"wildcard_base_url,omitempty"`
-	selectValues    sql.SelectValues
+	// Buildkit settings
+	BuildkitSettings *schema.BuildkitSettings `json:"buildkit_settings,omitempty"`
+	selectValues     sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -33,6 +37,8 @@ func (*SystemSetting) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case systemsetting.FieldBuildkitSettings:
+			values[i] = new([]byte)
 		case systemsetting.FieldWildcardBaseURL:
 			values[i] = new(sql.NullString)
 		case systemsetting.FieldCreatedAt, systemsetting.FieldUpdatedAt:
@@ -78,6 +84,14 @@ func (ss *SystemSetting) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				ss.WildcardBaseURL = new(string)
 				*ss.WildcardBaseURL = value.String
+			}
+		case systemsetting.FieldBuildkitSettings:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field buildkit_settings", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &ss.BuildkitSettings); err != nil {
+					return fmt.Errorf("unmarshal field buildkit_settings: %w", err)
+				}
 			}
 		default:
 			ss.selectValues.Set(columns[i], values[i])
@@ -125,6 +139,9 @@ func (ss *SystemSetting) String() string {
 		builder.WriteString("wildcard_base_url=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("buildkit_settings=")
+	builder.WriteString(fmt.Sprintf("%v", ss.BuildkitSettings))
 	builder.WriteByte(')')
 	return builder.String()
 }

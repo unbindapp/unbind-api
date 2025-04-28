@@ -16,8 +16,6 @@ type Tx struct {
 	config
 	// Bootstrap is the client for interacting with the Bootstrap builders.
 	Bootstrap *BootstrapClient
-	// BuildkitSettings is the client for interacting with the BuildkitSettings builders.
-	BuildkitSettings *BuildkitSettingsClient
 	// Deployment is the client for interacting with the Deployment builders.
 	Deployment *DeploymentClient
 	// Environment is the client for interacting with the Environment builders.
@@ -186,7 +184,6 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Bootstrap = NewBootstrapClient(tx.config)
-	tx.BuildkitSettings = NewBuildkitSettingsClient(tx.config)
 	tx.Deployment = NewDeploymentClient(tx.config)
 	tx.Environment = NewEnvironmentClient(tx.config)
 	tx.GithubApp = NewGithubAppClient(tx.config)

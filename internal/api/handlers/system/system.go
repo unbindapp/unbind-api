@@ -35,10 +35,10 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "update-buildkit-settings",
-			Summary:     "Update Buildkit Settings",
-			Description: "Update buildkit settings such as replicas and parallelism.",
-			Path:        "/buildkit/update",
+			OperationID: "update-system-settings",
+			Summary:     "Update System Settings",
+			Description: "Update system settings such as wild card domain, buildkit, etc.",
+			Path:        "/settings/update",
 			Method:      http.MethodPut,
 		},
 		handlers.UpdateBuildkitSettings,

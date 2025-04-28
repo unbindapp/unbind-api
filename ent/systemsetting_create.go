@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 )
 
@@ -63,6 +64,12 @@ func (ssc *SystemSettingCreate) SetNillableWildcardBaseURL(s *string) *SystemSet
 	if s != nil {
 		ssc.SetWildcardBaseURL(*s)
 	}
+	return ssc
+}
+
+// SetBuildkitSettings sets the "buildkit_settings" field.
+func (ssc *SystemSettingCreate) SetBuildkitSettings(ss *schema.BuildkitSettings) *SystemSettingCreate {
+	ssc.mutation.SetBuildkitSettings(ss)
 	return ssc
 }
 
@@ -185,6 +192,10 @@ func (ssc *SystemSettingCreate) createSpec() (*SystemSetting, *sqlgraph.CreateSp
 		_spec.SetField(systemsetting.FieldWildcardBaseURL, field.TypeString, value)
 		_node.WildcardBaseURL = &value
 	}
+	if value, ok := ssc.mutation.BuildkitSettings(); ok {
+		_spec.SetField(systemsetting.FieldBuildkitSettings, field.TypeJSON, value)
+		_node.BuildkitSettings = value
+	}
 	return _node, _spec
 }
 
@@ -264,6 +275,24 @@ func (u *SystemSettingUpsert) UpdateWildcardBaseURL() *SystemSettingUpsert {
 // ClearWildcardBaseURL clears the value of the "wildcard_base_url" field.
 func (u *SystemSettingUpsert) ClearWildcardBaseURL() *SystemSettingUpsert {
 	u.SetNull(systemsetting.FieldWildcardBaseURL)
+	return u
+}
+
+// SetBuildkitSettings sets the "buildkit_settings" field.
+func (u *SystemSettingUpsert) SetBuildkitSettings(v *schema.BuildkitSettings) *SystemSettingUpsert {
+	u.Set(systemsetting.FieldBuildkitSettings, v)
+	return u
+}
+
+// UpdateBuildkitSettings sets the "buildkit_settings" field to the value that was provided on create.
+func (u *SystemSettingUpsert) UpdateBuildkitSettings() *SystemSettingUpsert {
+	u.SetExcluded(systemsetting.FieldBuildkitSettings)
+	return u
+}
+
+// ClearBuildkitSettings clears the value of the "buildkit_settings" field.
+func (u *SystemSettingUpsert) ClearBuildkitSettings() *SystemSettingUpsert {
+	u.SetNull(systemsetting.FieldBuildkitSettings)
 	return u
 }
 
@@ -350,6 +379,27 @@ func (u *SystemSettingUpsertOne) UpdateWildcardBaseURL() *SystemSettingUpsertOne
 func (u *SystemSettingUpsertOne) ClearWildcardBaseURL() *SystemSettingUpsertOne {
 	return u.Update(func(s *SystemSettingUpsert) {
 		s.ClearWildcardBaseURL()
+	})
+}
+
+// SetBuildkitSettings sets the "buildkit_settings" field.
+func (u *SystemSettingUpsertOne) SetBuildkitSettings(v *schema.BuildkitSettings) *SystemSettingUpsertOne {
+	return u.Update(func(s *SystemSettingUpsert) {
+		s.SetBuildkitSettings(v)
+	})
+}
+
+// UpdateBuildkitSettings sets the "buildkit_settings" field to the value that was provided on create.
+func (u *SystemSettingUpsertOne) UpdateBuildkitSettings() *SystemSettingUpsertOne {
+	return u.Update(func(s *SystemSettingUpsert) {
+		s.UpdateBuildkitSettings()
+	})
+}
+
+// ClearBuildkitSettings clears the value of the "buildkit_settings" field.
+func (u *SystemSettingUpsertOne) ClearBuildkitSettings() *SystemSettingUpsertOne {
+	return u.Update(func(s *SystemSettingUpsert) {
+		s.ClearBuildkitSettings()
 	})
 }
 
@@ -603,6 +653,27 @@ func (u *SystemSettingUpsertBulk) UpdateWildcardBaseURL() *SystemSettingUpsertBu
 func (u *SystemSettingUpsertBulk) ClearWildcardBaseURL() *SystemSettingUpsertBulk {
 	return u.Update(func(s *SystemSettingUpsert) {
 		s.ClearWildcardBaseURL()
+	})
+}
+
+// SetBuildkitSettings sets the "buildkit_settings" field.
+func (u *SystemSettingUpsertBulk) SetBuildkitSettings(v *schema.BuildkitSettings) *SystemSettingUpsertBulk {
+	return u.Update(func(s *SystemSettingUpsert) {
+		s.SetBuildkitSettings(v)
+	})
+}
+
+// UpdateBuildkitSettings sets the "buildkit_settings" field to the value that was provided on create.
+func (u *SystemSettingUpsertBulk) UpdateBuildkitSettings() *SystemSettingUpsertBulk {
+	return u.Update(func(s *SystemSettingUpsert) {
+		s.UpdateBuildkitSettings()
+	})
+}
+
+// ClearBuildkitSettings clears the value of the "buildkit_settings" field.
+func (u *SystemSettingUpsertBulk) ClearBuildkitSettings() *SystemSettingUpsertBulk {
+	return u.Update(func(s *SystemSettingUpsert) {
+		s.ClearBuildkitSettings()
 	})
 }
 

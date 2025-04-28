@@ -9,9 +9,6 @@ import (
 // Bootstrap is the predicate function for bootstrap builders.
 type Bootstrap func(*sql.Selector)
 
-// BuildkitSettings is the predicate function for buildkitsettings builders.
-type BuildkitSettings func(*sql.Selector)
-
 // Deployment is the predicate function for deployment builders.
 type Deployment func(*sql.Selector)
 

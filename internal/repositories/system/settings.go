@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
@@ -18,7 +19,8 @@ func (self *SystemRepository) GetSystemSettings(ctx context.Context, tx reposito
 }
 
 type SystemSettingUpdateInput struct {
-	WildcardDomain *string
+	WildcardDomain   *string
+	BuildkitSettings *schema.BuildkitSettings
 }
 
 func (self *SystemRepository) UpdateSystemSettings(ctx context.Context, input *SystemSettingUpdateInput) (settings *ent.SystemSetting, err error) {
@@ -37,9 +39,15 @@ func (self *SystemRepository) UpdateSystemSettings(ctx context.Context, input *S
 		}
 
 		// Update system settings
-		settings, err = tx.Client().SystemSetting.UpdateOneID(settings.ID).
-			SetNillableWildcardBaseURL(input.WildcardDomain).
-			Save(ctx)
+		m := tx.Client().SystemSetting.UpdateOneID(settings.ID).
+			SetNillableWildcardBaseURL(input.WildcardDomain)
+
+		if input.BuildkitSettings != nil {
+			m.SetBuildkitSettings(input.BuildkitSettings)
+		}
+
+		// Save system settings
+		settings, err = m.Save(ctx)
 
 		if err != nil {
 			return err

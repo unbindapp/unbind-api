@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	corev1 "k8s.io/api/core/v1"
@@ -50,47 +51,25 @@ func NewBuildkitSettingsManager(cfg *config.Config, repo repositories.Repositori
 	}
 }
 
-// GetOrCreateBuildkitConfig retrieves the existing buildkit ConfigMap or creates it if it doesn't exist
-func (self *BuildkitSettingsManager) GetOrCreateBuildkitConfig(ctx context.Context) (*corev1.ConfigMap, error) {
+// GetOrCreateBuildkitConfig retrieves the existing buildkit ConfigMap, returns NotFound if it does not exist
+func (self *BuildkitSettingsManager) GetBuildkitConfig(ctx context.Context) (*corev1.ConfigMap, error) {
 	// Try to get the existing ConfigMap
 	cm, err := self.k8s.GetInternalClient().CoreV1().ConfigMaps(self.cfg.SystemNamespace).Get(ctx, BuildkitConfigName, metav1.GetOptions{})
 
 	if err != nil {
-		if errors.IsNotFound(err) {
-			// ConfigMap doesn't exist, create it with default configuration
-			return self.createDefaultBuildkitConfig(ctx)
+		if !errors.IsNotFound(err) {
+			log.Errorf("failed to get buildkit ConfigMap: %v", err)
 		}
-		// Some other error occurred
-		return nil, fmt.Errorf("failed to get buildkit ConfigMap: %w", err)
+		return nil, err
 	}
 
 	// ConfigMap exists, return it
 	return cm, nil
 }
 
-// createDefaultBuildkitConfig creates the buildkit ConfigMap with default configuration
-func (self *BuildkitSettingsManager) createDefaultBuildkitConfig(ctx context.Context) (*corev1.ConfigMap, error) {
-	cm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      BuildkitConfigName,
-			Namespace: self.cfg.SystemNamespace,
-		},
-		Data: map[string]string{
-			BuildkitConfigKey: fmt.Sprintf(DefaultBuildkitConfig, self.cfg.SystemNamespace),
-		},
-	}
-
-	createdCM, err := self.k8s.GetInternalClient().CoreV1().ConfigMaps(self.cfg.SystemNamespace).Create(ctx, cm, metav1.CreateOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create buildkit ConfigMap: %w", err)
-	}
-
-	return createdCM, nil
-}
-
 // UpdateMaxParallelism updates the max-parallelism setting in the buildkitd.toml
 func (self *BuildkitSettingsManager) UpdateMaxParallelism(ctx context.Context, parallelism int) error {
-	cm, err := self.GetOrCreateBuildkitConfig(ctx)
+	cm, err := self.GetBuildkitConfig(ctx)
 	if err != nil {
 		return err
 	}
@@ -123,7 +102,7 @@ func (self *BuildkitSettingsManager) UpdateMaxParallelism(ctx context.Context, p
 
 // GetCurrentMaxParallelism retrieves the current max-parallelism setting from the buildkitd.toml
 func (self *BuildkitSettingsManager) GetCurrentMaxParallelism(ctx context.Context) (int, error) {
-	cm, err := self.GetOrCreateBuildkitConfig(ctx)
+	cm, err := self.GetBuildkitConfig(ctx)
 	if err != nil {
 		return 0, err
 	}

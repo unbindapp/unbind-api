@@ -225,6 +225,16 @@ func WildcardBaseURLContainsFold(v string) predicate.SystemSetting {
 	return predicate.SystemSetting(sql.FieldContainsFold(FieldWildcardBaseURL, v))
 }
 
+// BuildkitSettingsIsNil applies the IsNil predicate on the "buildkit_settings" field.
+func BuildkitSettingsIsNil() predicate.SystemSetting {
+	return predicate.SystemSetting(sql.FieldIsNull(FieldBuildkitSettings))
+}
+
+// BuildkitSettingsNotNil applies the NotNil predicate on the "buildkit_settings" field.
+func BuildkitSettingsNotNil() predicate.SystemSetting {
+	return predicate.SystemSetting(sql.FieldNotNull(FieldBuildkitSettings))
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.SystemSetting) predicate.SystemSetting {
 	return predicate.SystemSetting(sql.AndPredicates(predicates...))
