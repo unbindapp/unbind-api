@@ -181,7 +181,7 @@ func (self *VariablesService) resolveInternalEndpointURL(ctx context.Context, cl
 			return fmt.Sprintf("redis://%s:%s@%s:%d", username, password, endpoint.DNS, targetPort.Port), nil
 		}
 		if databaseType == "postgres" {
-			return fmt.Sprintf("postgresql://%s:%s@%s:%d?sslmode=disable", username, password, endpoint.DNS, targetPort.Port), nil
+			return fmt.Sprintf("postgresql://%s:%s@%s:%d/postgres?sslmode=disable", username, password, endpoint.DNS, targetPort.Port), nil
 		}
 	}
 
