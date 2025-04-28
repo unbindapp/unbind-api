@@ -19,7 +19,7 @@ type SettingsUpdateInput struct {
 
 type SettingsResponse struct {
 	Body struct {
-		Data *system_service.SystemSettingsResponse `json:"settings" nullable:"false"`
+		Data *system_service.SystemSettingsResponse `json:"data" nullable:"false"`
 	}
 }
 
