@@ -83,8 +83,8 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 			if err != nil {
 				log.Warnf("Error creating HTTP request for domain %s: %v", input.Domain, err)
 			} else {
-				// Try for up to 2 seconds, checking every 200ms
-				maxRetries := 10 // 2000ms / 200ms = 10 retries
+				// Retry delaying 200ms between tries
+				maxRetries := 20
 				for attempt := 0; attempt < maxRetries; attempt++ {
 					if attempt > 0 {
 						time.Sleep(200 * time.Millisecond)
