@@ -112,10 +112,6 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 		return nil
 	}
 
-	if settings.BuildkitSettings == nil {
-		return nil
-	}
-
 	// Sync with kubernetes
 	parallelism, err := self.buildkitSettingsManager.GetCurrentMaxParallelism(ctx)
 	if err != nil {
