@@ -58,7 +58,6 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 			return nil, huma.Error500InternalServerError("Error checking Cloudflare")
 		}
 		dnsCheck.Cloudflare = resolved
-		dnsCheck.DnsConfigured = true
 	}
 
 	resp := &DnsCheckResponse{}

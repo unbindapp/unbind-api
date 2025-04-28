@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
 // DNSChecker provides methods to check DNS and Cloudflare proxy status
@@ -35,7 +37,8 @@ func NewDNSChecker() *DNSChecker {
 func (self *DNSChecker) IsPointingToIP(domain string, expectedIP string) (bool, error) {
 	ips, err := net.LookupHost(domain)
 	if err != nil {
-		return false, fmt.Errorf("failed to lookup domain %s: %w", domain, err)
+		log.Errorf("failed to lookup domain %s: %v", domain, err)
+		return false, nil
 	}
 
 	for _, ip := range ips {
