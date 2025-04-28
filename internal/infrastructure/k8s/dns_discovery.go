@@ -15,6 +15,7 @@ import (
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -251,18 +252,42 @@ func (self *KubeClient) CreateVerificationIngress(
 
 	path := fmt.Sprintf("/.unbind-challenge/dns-check/%s", uuid.NewString())
 
+	// ConfigMap name for DNS check headers
+	configMapName := "dns-check-headers"
+	namespace := self.config.GetSystemNamespace()
+
+	// Check if ConfigMap exists, create if not
+	_, err = client.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Create the ConfigMap
+			configMap := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      configMapName,
+					Namespace: namespace,
+				},
+				Data: map[string]string{
+					"X-DNS-Check": "resolved",
+				},
+			}
+			_, err = client.CoreV1().ConfigMaps(namespace).Create(ctx, configMap, metav1.CreateOptions{})
+			if err != nil {
+				return nil, "", fmt.Errorf("failed to create ConfigMap %s: %w", configMapName, err)
+			}
+		} else {
+			return nil, "", fmt.Errorf("error checking ConfigMap %s: %w", configMapName, err)
+		}
+	}
+
 	// Create the ingress specification
 	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: self.config.GetSystemNamespace(),
+			Namespace: namespace,
 			Annotations: map[string]string{
-				"nginx.ingress.kubernetes.io/ssl-redirect": "false",
-				"nginx.ingress.kubernetes.io/configuration-snippet": `
-add_header X-DNS-Check "resolved" always;
-return 200 "Domain verification successful: CloudFlare connection to Kubernetes confirmed";
-add_header Content-Type text/plain;
-`,
+				"nginx.ingress.kubernetes.io/ssl-redirect":   "false",
+				"nginx.ingress.kubernetes.io/custom-headers": fmt.Sprintf("%s/%s", namespace, configMapName),
+				"nginx.ingress.kubernetes.io/rewrite-target": "/",
 			},
 			Labels: map[string]string{
 				"app":       "unbind-verification",
@@ -300,7 +325,7 @@ add_header Content-Type text/plain;
 	}
 
 	// Create the ingress in the cluster
-	ing, err := client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).Create(ctx, ingress, metav1.CreateOptions{})
+	ing, err := client.NetworkingV1().Ingresses(namespace).Create(ctx, ingress, metav1.CreateOptions{})
 	return ing, path, err
 }
 
