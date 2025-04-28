@@ -64,7 +64,7 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 
 	if dnsCheck.Cloudflare {
 		// Spin up an ingress to verify
-		testIngress, err := self.srv.KubeClient.CreateVerificationIngress(ctx, input.Domain, self.srv.KubeClient.GetInternalClient())
+		testIngress, testPath, err := self.srv.KubeClient.CreateVerificationIngress(ctx, input.Domain, self.srv.KubeClient.GetInternalClient())
 		if err != nil {
 			log.Warnf("Error creating ingress test for domain %s: %v", input.Domain, err)
 		} else {
@@ -75,7 +75,7 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 				}
 			}()
 
-			url := fmt.Sprintf("https://%s/.unbind-challenge/%s", input.Domain, "/.unbind-challenge/dns-check")
+			url := fmt.Sprintf("https://%s/.unbind-challenge/%s", input.Domain, testPath)
 
 			// Create a new request with context
 			req, err := http.NewRequestWithContext(ctx, "GET", url, nil)

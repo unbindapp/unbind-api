@@ -139,7 +139,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 
 						if cloudflare {
 							// Spin up an ingress to verify
-							testIngress, err := self.CreateVerificationIngress(ctx, host, self.GetInternalClient())
+							testIngress, path, err := self.CreateVerificationIngress(ctx, host, self.GetInternalClient())
 							if err != nil {
 								log.Warnf("Error creating ingress test for domain %s: %v", host, err)
 							} else {
@@ -150,24 +150,39 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 									}
 								}()
 
-								url := fmt.Sprintf("https://%s/.unbind-challenge/%s", host, "/.unbind-challenge/dns-check")
+								url := fmt.Sprintf("https://%s/.unbind-challenge/%s", host, path)
 
-								// Make an http call to the domain at /.unbind-challenge/dns-check
 								// Create a new request with context
 								req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 								if err != nil {
 									log.Warnf("Error creating HTTP request for domain %s: %v", host, err)
 								} else {
-									time.Sleep(250 * time.Millisecond) // Wait for the ingress to be created
-									// Execute the request
-									resp, err := self.httpClient.Do(req)
-									if err != nil {
-										log.Warnf("Error executing HTTP request for domain %s: %v", host, err)
-									} else {
-										defer resp.Body.Close()
+									// Retry delaying 200ms between tries
+									maxRetries := 20
+									for attempt := 0; attempt < maxRetries; attempt++ {
+										if attempt > 0 {
+											time.Sleep(200 * time.Millisecond)
+										}
 
-										// Check for the special header
-										dnsConfigured = resp.Header.Get("X-DNS-Check") == "resolved"
+										// Execute the request
+										resp, err := self.httpClient.Do(req)
+										if err != nil {
+											log.Warnf("Attempt %d: Error executing HTTP request for domain %s: %v", attempt+1, host, err)
+											continue // Try again after sleep
+										}
+
+										func() {
+											defer resp.Body.Close()
+											// Check for the special header
+											if resp.Header.Get("X-DNS-Check") == "resolved" {
+												dnsConfigured = true
+												return // Exit the closure
+											}
+										}()
+
+										if dnsConfigured {
+											break
+										}
 									}
 								}
 							}
@@ -225,14 +240,16 @@ func (self *KubeClient) CreateVerificationIngress(
 	ctx context.Context,
 	domain string,
 	client *kubernetes.Clientset,
-) (*networkingv1.Ingress, error) {
+) (*networkingv1.Ingress, string, error) {
 	pathType := networkingv1.PathTypeImplementationSpecific
 	ingressClassName := "nginx"
 
 	name, err := utils.GenerateSlug(domain)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate slug for domain %s: %w", domain, err)
+		return nil, "", fmt.Errorf("failed to generate slug for domain %s: %w", domain, err)
 	}
+
+	path := fmt.Sprintf("/.unbind-challenge/dns-check/%s", uuid.NewString())
 
 	// Create the ingress specification
 	ingress := &networkingv1.Ingress{
@@ -263,7 +280,7 @@ add_header Content-Type text/plain;
 						HTTP: &networkingv1.HTTPIngressRuleValue{
 							Paths: []networkingv1.HTTPIngressPath{
 								{
-									Path:     "/.unbind-challenge/dns-check",
+									Path:     path,
 									PathType: &pathType,
 									Backend: networkingv1.IngressBackend{
 										Service: &networkingv1.IngressServiceBackend{
@@ -283,7 +300,8 @@ add_header Content-Type text/plain;
 	}
 
 	// Create the ingress in the cluster
-	return client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).Create(ctx, ingress, metav1.CreateOptions{})
+	ing, err := client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).Create(ctx, ingress, metav1.CreateOptions{})
+	return ing, path, err
 }
 
 // DeleteVerificationIngress deletes the verification ingress for a domain
