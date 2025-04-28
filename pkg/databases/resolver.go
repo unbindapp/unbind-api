@@ -2,188 +2,214 @@ package databases
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 )
 
-// FetchDatabaseDefinition fetches a db from GitHub
-func (self *DatabaseProvider) FetchDatabaseDefinition(ctx context.Context, tagVersion, dbType string) (*Definition, error) {
-	// Base version URL
+// FetchDatabaseDefinition downloads the metadata/definition for the requested
+// database, resolves $ref imports, converts every YAML map to
+// map[string]interface{}, and returns a Definition ready for Huma to marshal.
+func (p *DatabaseProvider) FetchDatabaseDefinition(
+	ctx context.Context,
+	tagVersion, dbType string,
+) (*Definition, error) {
+	//----------------------------------------------------------------------
+	// 1. Download metadata + definition files
+	//----------------------------------------------------------------------
 	baseURL := fmt.Sprintf(BaseDatabaseURL, tagVersion)
-	// Fetch files
-	metadataURL := fmt.Sprintf("%s/definitions/%s/%s/metadata.yaml", baseURL, DB_CATEGORY, dbType)
-	defURL := fmt.Sprintf("%s/definitions/%s/%s/definition.yaml", baseURL, DB_CATEGORY, dbType)
 
-	metadataBytes, err := self.fetchURL(ctx, metadataURL)
+	metadataURL := fmt.Sprintf("%s/definitions/%s/%s/metadata.yaml",
+		baseURL, DB_CATEGORY, dbType)
+	defURL := fmt.Sprintf("%s/definitions/%s/%s/definition.yaml",
+		baseURL, DB_CATEGORY, dbType)
+
+	metadataBytes, err := p.fetchURL(ctx, metadataURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch metadata: %w", err)
 	}
 
-	defBytes, err := self.fetchURL(ctx, defURL)
+	defBytes, err := p.fetchURL(ctx, defURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch database definition: %w", err)
 	}
 
-	// Parse metadata
+	//----------------------------------------------------------------------
+	// 2. Parse metadata YAML
+	//----------------------------------------------------------------------
 	var metadata DefinitionMetadata
 	if err := yaml.Unmarshal(metadataBytes, &metadata); err != nil {
 		return nil, fmt.Errorf("failed to parse metadata: %w", err)
 	}
-
-	// Initialize imports map
 	metadata.Schema.Imports = make(map[string]interface{})
 
-	// Process imports
+	//----------------------------------------------------------------------
+	// 3. Pull in declared imports
+	//----------------------------------------------------------------------
 	for _, imp := range metadata.Imports {
 		dbBasePath := fmt.Sprintf("definitions/%s/%s", DB_CATEGORY, dbType)
 		importPath := resolveRelativePath(dbBasePath, imp.Path)
 		importURL := fmt.Sprintf("%s/%s", baseURL, importPath)
 
-		importBytes, err := self.fetchURL(ctx, importURL)
+		importBytes, err := p.fetchURL(ctx, importURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch import %s: %w", imp.Path, err)
 		}
 
-		// Convert YAML to map[string]interface{} for JSON compatibility
-		var importSchemaYAML interface{}
-		if err := yaml.Unmarshal(importBytes, &importSchemaYAML); err != nil {
+		var importYAML interface{}
+		if err := yaml.Unmarshal(importBytes, &importYAML); err != nil {
 			return nil, fmt.Errorf("failed to parse import %s: %w", imp.Path, err)
 		}
-
-		// Convert to JSON-compatible structure
-		importSchema, err := convertToJSONCompatible(importSchemaYAML)
+		norm, err := convertToJSONCompatible(importYAML)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert import %s to JSON-compatible format: %w", imp.Path, err)
+			return nil, err
 		}
-
-		metadata.Schema.Imports[imp.As] = importSchema
+		metadata.Schema.Imports[imp.As] = norm
 	}
 
-	// Convert the entire schema to JSON-compatible format before resolving references
-	jsonCompatibleSchema, err := convertSchemaToJSONCompatible(metadata.Schema)
+	//----------------------------------------------------------------------
+	// 4. Resolve $ref in the schema
+	//----------------------------------------------------------------------
+	resolvedSchema, err := p.resolveReferences(metadata.Schema)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert schema to JSON-compatible format: %w", err)
+		return nil, fmt.Errorf("failed to resolve $ref: %w", err)
 	}
 
-	// Resolve references with the JSON-compatible schema
-	resolvedSchema, err := self.resolveReferences(jsonCompatibleSchema)
+	//----------------------------------------------------------------------
+	// 5. Make the *entire* schema JSON-safe in one shot
+	//----------------------------------------------------------------------
+	safeSchema, err := makeSchemaJSONSafe(resolvedSchema)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve references: %w", err)
+		return nil, fmt.Errorf("schema sanitisation: %w", err)
 	}
 
-	// Create the database definition
+	//----------------------------------------------------------------------
+	// 6. Build and validate the Definition
+	//----------------------------------------------------------------------
 	db := &Definition{
 		Name:        metadata.Name,
 		Description: metadata.Description,
 		Port:        metadata.Port,
 		Type:        metadata.Type,
 		Version:     metadata.Version,
-		Schema:      resolvedSchema,
+		Schema:      safeSchema,
 		Content:     string(defBytes),
 		Chart:       metadata.Chart,
 	}
 
-	// Strict validation for Helm charts
-	if db.Type == "helm" {
-		if db.Chart == nil {
-			return nil, fmt.Errorf("chart information is required for Helm database type")
-		}
-		// ... (rest of the validation)
+	if db.Type == "helm" && db.Chart == nil {
+		return nil, fmt.Errorf("chart information is required for Helm database type")
+	}
+
+	//----------------------------------------------------------------------
+	// 7. Extra safety: ensure JSON marshal still works
+	//----------------------------------------------------------------------
+	if _, err := json.Marshal(db); err != nil {
+		return nil, fmt.Errorf("definition still not JSON-safe: %w", err)
 	}
 
 	return db, nil
 }
 
-// convertToJSONCompatible converts interface{} types to JSON-compatible types
-func convertToJSONCompatible(input interface{}) (interface{}, error) {
-	switch v := input.(type) {
+////////////////////////////////////////////////////////////////////////////////
+// Helpers
+////////////////////////////////////////////////////////////////////////////////
+
+// convertToJSONCompatible recursively converts every map[interface{}]interface{}
+// or []interface{} element into JSON-safe forms.
+func convertToJSONCompatible(in interface{}) (interface{}, error) {
+	switch v := in.(type) {
 	case map[interface{}]interface{}:
-		m := make(map[string]interface{})
-		for key, value := range v {
-			keyStr, ok := key.(string)
+		out := make(map[string]interface{}, len(v))
+		for k, val := range v {
+			ks, ok := k.(string)
 			if !ok {
-				return nil, fmt.Errorf("map key is not a string: %v", key)
+				return nil, fmt.Errorf("map key %v is not a string", k)
 			}
-			convertedValue, err := convertToJSONCompatible(value)
+			conv, err := convertToJSONCompatible(val)
 			if err != nil {
 				return nil, err
 			}
-			m[keyStr] = convertedValue
+			out[ks] = conv
 		}
-		return m, nil
+		return out, nil
+
 	case []interface{}:
-		a := make([]interface{}, len(v))
-		for i, value := range v {
-			convertedValue, err := convertToJSONCompatible(value)
+		out := make([]interface{}, len(v))
+		for i, val := range v {
+			conv, err := convertToJSONCompatible(val)
 			if err != nil {
 				return nil, err
 			}
-			a[i] = convertedValue
+			out[i] = conv
 		}
-		return a, nil
+		return out, nil
+
 	default:
 		return v, nil
 	}
 }
 
-// convertSchemaToJSONCompatible converts DefinitionParameterSchema to a JSON-compatible format
-func convertSchemaToJSONCompatible(schema DefinitionParameterSchema) (DefinitionParameterSchema, error) {
-	// Convert the imports map
-	jsonCompatibleImports := make(map[string]interface{})
-	for key, value := range schema.Imports {
-		convertedValue, err := convertToJSONCompatible(value)
-		if err != nil {
-			return schema, fmt.Errorf("failed to convert import %s: %w", key, err)
-		}
-		jsonCompatibleImports[key] = convertedValue
+// makeSchemaJSONSafe converts the whole DefinitionParameterSchema into a YAML
+// blob, loads it back as an arbitrary interface{}, runs convertToJSONCompatible
+// on that, then re-unmarshals it into the strongly typed struct.  That way we
+// don’t need to know which fields your ParameterProperty actually has.
+func makeSchemaJSONSafe(
+	s DefinitionParameterSchema,
+) (DefinitionParameterSchema, error) {
+	// 1. Marshal the typed struct to YAML
+	yamlBytes, err := yaml.Marshal(s)
+	if err != nil {
+		return s, err
 	}
-	schema.Imports = jsonCompatibleImports
 
-	// Convert properties if needed
-	jsonCompatibleProperties := make(map[string]ParameterProperty)
-	for key, prop := range schema.Properties {
-		// If the property contains nested objects, convert them too
-		// This might need to be extended based on your ParameterProperty structure
-		jsonCompatibleProperties[key] = prop
+	// 2. Load the YAML into an arbitrary interface{}
+	var asAny interface{}
+	if err := yaml.Unmarshal(yamlBytes, &asAny); err != nil {
+		return s, err
 	}
-	schema.Properties = jsonCompatibleProperties
 
-	return schema, nil
+	// 3. Convert every map to map[string]interface{}
+	conv, err := convertToJSONCompatible(asAny)
+	if err != nil {
+		return s, err
+	}
+
+	// 4. Marshal back to JSON, then unmarshal into the typed struct
+	jsonBytes, _ := json.Marshal(conv)
+	var out DefinitionParameterSchema
+	if err := json.Unmarshal(jsonBytes, &out); err != nil {
+		return s, err
+	}
+	return out, nil
 }
 
-// resolveRelativePath resolves a relative path from a base path
-func resolveRelativePath(basePath, relativePath string) string {
-	// If the relativePath is not relative, return it as is
-	if !strings.HasPrefix(relativePath, "../") && !strings.HasPrefix(relativePath, "./") {
-		return relativePath
+// resolveRelativePath resolves ../ or ./ sequences against a base directory.
+func resolveRelativePath(basePath, rel string) string {
+	if !strings.HasPrefix(rel, "../") && !strings.HasPrefix(rel, "./") {
+		return rel // already absolute
+	}
+	base := strings.Split(basePath, "/")
+	parts := strings.Split(rel, "/")
+
+	if strings.HasPrefix(rel, "./") {
+		return strings.Join(append(base, parts[1:]...), "/")
 	}
 
-	baseParts := strings.Split(basePath, "/")
-	relativeParts := strings.Split(relativePath, "/")
-
-	// Handle "./" prefix by just removing it
-	if strings.HasPrefix(relativePath, "./") {
-		relativeParts = relativeParts[1:] // Skip the "." part
-		return strings.Join(append(baseParts, relativeParts...), "/")
-	}
-
-	// Handle "../" by moving up in the directory hierarchy
-	resultParts := append([]string{}, baseParts...)
-
-	for i, part := range relativeParts {
-		if part == ".." {
-			if len(resultParts) > 0 {
-				resultParts = resultParts[:len(resultParts)-1] // Move up one directory
+	stack := append([]string{}, base...)
+	for _, p := range parts {
+		switch p {
+		case "..":
+			if len(stack) > 0 {
+				stack = stack[:len(stack)-1]
 			}
-		} else {
-			resultParts = append(resultParts, relativeParts[i:]...)
-			break
+		default:
+			stack = append(stack, p)
 		}
 	}
-
-	return strings.Join(resultParts, "/")
+	return strings.Join(stack, "/")
 }
 
 // resolveReferences resolves $ref references in the schema

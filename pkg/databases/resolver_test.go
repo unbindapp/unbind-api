@@ -85,8 +85,8 @@ func TestFetchDatabase(t *testing.T) {
 			assert.Equal(t, "string", envProp.AdditionalProperties.Type)
 		}
 		assert.NotNil(t, envProp.Default)
-		assert.IsType(t, map[interface{}]interface{}{}, envProp.Default) // Check it's a map
-		assert.Empty(t, envProp.Default)                                 // Check it's empty
+		assert.IsType(t, map[string]interface{}{}, envProp.Default) // Check it's a map
+		assert.Empty(t, envProp.Default)                            // Check it's empty
 	}
 
 	commonProp, hasCommon := database.Schema.Properties["common"]
@@ -256,7 +256,7 @@ func TestFetchDatabaseErrors(t *testing.T) {
 		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "invalid-reference")
 		t.Logf("Invalid reference error: %v", err)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to resolve references")
+		assert.Contains(t, err.Error(), "failed to resolve")
 	})
 }
 
