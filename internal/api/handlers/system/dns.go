@@ -58,7 +58,6 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 		resolved, err = self.srv.DNSChecker.IsUsingCloudflareProxy(input.Domain)
 		if err != nil {
 			log.Error("Error checking Cloudflare", "err", err)
-			return nil, huma.Error500InternalServerError("Error checking Cloudflare")
 		}
 		dnsCheck.Cloudflare = resolved
 	}
