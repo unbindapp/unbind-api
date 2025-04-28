@@ -12,8 +12,8 @@ import (
 )
 
 type SystemSettingsResponse struct {
-	WildcardDomain    *string                  `json:"wildcard_domain" required:"false"`
-	BuildkitSettings  *schema.BuildkitSettings `json:"buildkit_settings" required:"false"`
+	WildcardDomain    *string                  `json:"wildcard_domain,omitempty" required:"false"`
+	BuildkitSettings  *schema.BuildkitSettings `json:"buildkit_settings,omitempty" required:"false"`
 	CanUpdateBuildkit bool                     `json:"can_update_buildkit" doc:"If not externally managed, this indicates if the user can update buildkit settings"`
 }
 
