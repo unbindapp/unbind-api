@@ -37,14 +37,17 @@ type GetDatabaseSpecInput struct {
 }
 
 type DatabaseConfigurable struct {
-	Name    string   `json:"name" description:"Name of the field"`
 	Default string   `json:"default" description:"Default value for the field"`
 	Values  []string `json:"values" description:"Possible values for the field"`
 }
 
+type DatabaseConfigurables struct {
+	Version DatabaseConfigurable `json:"version" description:"Version of the database"`
+}
+
 type GetDatabaseResponse struct {
 	Body struct {
-		Data []DatabaseConfigurable `json:"data" nullable:"false"`
+		Data DatabaseConfigurables `json:"data" nullable:"false"`
 	}
 }
 
@@ -68,32 +71,32 @@ func (self *HandlerGroup) GetDatabaseDefinition(ctx context.Context, input *GetD
 		return nil, huma.Error500InternalServerError("An unknown error occured")
 	}
 
-	configurables := []DatabaseConfigurable{}
+	versionConfigurable := DatabaseConfigurable{}
 
 	versionProperty, ok := template.Schema.Properties["version"]
 	if ok {
 		dbVersionDefault, _ := versionProperty.Default.(string)
 		if dbVersionDefault != "" {
-			configurables = append(configurables, DatabaseConfigurable{
-				Name:    "version",
+			versionConfigurable = DatabaseConfigurable{
 				Default: dbVersionDefault,
 				Values:  versionProperty.Enum,
-			},
-			)
+			}
 		}
 	}
 	if !ok {
 		// See if version is in metadata
 		if template.DBVersion != "" {
-			configurables = append(configurables, DatabaseConfigurable{
-				Name:    "version",
+			versionConfigurable = DatabaseConfigurable{
 				Default: template.DBVersion,
 				Values:  []string{template.DBVersion},
-			})
+			}
 		}
 	}
 
 	response := &GetDatabaseResponse{}
-	response.Body.Data = configurables
+	response.Body.Data = DatabaseConfigurables{
+		Version: versionConfigurable,
+	}
+
 	return response, nil
 }
