@@ -82,6 +82,16 @@ func (self *HandlerGroup) GetDatabaseDefinition(ctx context.Context, input *GetD
 			)
 		}
 	}
+	if !ok {
+		// See if version is in metadata
+		if template.DBVersion != "" {
+			configurables = append(configurables, DatabaseConfigurable{
+				Name:    "version",
+				Default: template.DBVersion,
+				Values:  []string{template.DBVersion},
+			})
+		}
+	}
 
 	response := &GetDatabaseResponse{}
 	response.Body.Data = configurables
