@@ -51,6 +51,7 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 		map[string]string{
 			"unbind-service": serviceID.String(),
 		},
+		false,
 		client,
 	)
 

@@ -128,6 +128,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 			map[string]string{
 				"unbind-environment": environment.ID.String(),
 			},
+			true,
 			client,
 		)
 
