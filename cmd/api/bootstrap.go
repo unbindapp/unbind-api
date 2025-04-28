@@ -91,6 +91,8 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 			log.Errorf("Failed to get current replicas: %v", err)
 			return err
 		}
+
+		log.Infof("Creating buildkitd settings in DB: replicas=%d, parallelism=%d", replicas, parallelism)
 		settings, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
 			BuildkitSettings: &schema.BuildkitSettings{
 				Replicas:       replicas,
@@ -126,6 +128,7 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 
 	if settings.BuildkitSettings.MaxParallelism != parallelism || settings.BuildkitSettings.Replicas != replicas {
 		// Update record
+		log.Infof("Updating buildkitd settings in DB: replicas=%d, parallelism=%d", replicas, parallelism)
 		settings, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
 			BuildkitSettings: &schema.BuildkitSettings{
 				Replicas:       replicas,

@@ -13,7 +13,7 @@ import (
 
 type SystemSettingsResponse struct {
 	WildcardDomain    *string                  `json:"wildcard_domain"`
-	BuildkitSettings  *schema.BuildkitSettings `json:"buildkit_settings"`
+	BuildkitSettings  *schema.BuildkitSettings `json:"buildkit_settings" required:"false"`
 	CanUpdateBuildkit bool                     `json:"can_update_buildkit" doc:"If not externally managed, this indicates if the user can update buildkit settings"`
 }
 
