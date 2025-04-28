@@ -38,7 +38,7 @@ type GetDatabaseSpecInput struct {
 
 type DatabaseConfigurable struct {
 	Default string   `json:"default" description:"Default value for the field"`
-	Values  []string `json:"values" description:"Possible values for the field"`
+	Values  []string `json:"values" nullable:"false" description:"Possible values for the field"`
 }
 
 type DatabaseConfigurables struct {
