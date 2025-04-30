@@ -37,6 +37,7 @@ type NodeRegexes struct {
 	ProcessEnvAssign *regexp.Regexp
 	ListenLiteral    *regexp.Regexp
 	ListenFallback   *regexp.Regexp
+	ServeOption      *regexp.Regexp // serve({ … port: 8787 })
 }
 
 func NewNodeRegexes() *NodeRegexes {
@@ -46,6 +47,7 @@ func NewNodeRegexes() *NodeRegexes {
 		ProcessEnvAssign: regexp.MustCompile(`process\.env\.PORT\s*=\s*(\d{2,5})`),
 		ListenLiteral:    regexp.MustCompile(`\.listen\s*\(\s*(\d{2,5})`),
 		ListenFallback:   regexp.MustCompile(`\.listen\s*\([^)]*\|\|\s*(\d{2,5})`),
+		ServeOption:      regexp.MustCompile(`\bserve\s*\([^)]*?port\s*:\s*(\d{2,5})`),
 	}
 }
 
@@ -122,6 +124,13 @@ func (pd *PortDetector) scanSource(root string) (*int, error) {
 		}
 		// app.listen(1234)
 		if m := nodeRegexes.ListenLiteral.FindStringSubmatch(code); len(m) == 2 {
+			if n, _ := strconv.Atoi(m[1]); n != 0 {
+				port = &n
+				return fs.SkipAll
+			}
+		}
+		// serve({ port: 1234 })
+		if m := nodeRegexes.ServeOption.FindStringSubmatch(code); len(m) == 2 {
 			if n, _ := strconv.Atoi(m[1]); n != 0 {
 				port = &n
 				return fs.SkipAll
