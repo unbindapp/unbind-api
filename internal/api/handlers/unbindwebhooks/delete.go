@@ -23,10 +23,7 @@ type DeleteWebhookInput struct {
 
 type DeleteWebhookResponse struct {
 	Body struct {
-		Data struct {
-			ID      uuid.UUID `json:"id"`
-			Deleted bool      `json:"deleted"`
-		} `json:"data"`
+		Data server.DeletedResponse `json:"data"`
 	}
 }
 
@@ -44,10 +41,7 @@ func (self *HandlerGroup) DeleteWebhook(ctx context.Context, input *DeleteWebhoo
 	}
 
 	resp := &DeleteWebhookResponse{}
-	resp.Body.Data = struct {
-		ID      uuid.UUID `json:"id"`
-		Deleted bool      `json:"deleted"`
-	}{
+	resp.Body.Data = server.DeletedResponse{
 		ID:      input.Body.ID,
 		Deleted: true,
 	}

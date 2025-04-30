@@ -22,3 +22,12 @@ func (self *S3Repository) Create(ctx context.Context, tx repository.TxInterface,
 		SetKubernetesSecret(kubernetesSecret).
 		Save(ctx)
 }
+
+func (self *S3Repository) Delete(ctx context.Context, tx repository.TxInterface, id uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	// Delete s3
+	return db.S3.DeleteOneID(id).Exec(ctx)
+}

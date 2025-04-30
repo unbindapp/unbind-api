@@ -21,10 +21,7 @@ type DeleteEnvironmentInput struct {
 
 type DeleteEnvironmentResponse struct {
 	Body struct {
-		Data struct {
-			ID      uuid.UUID `json:"id"`
-			Deleted bool      `json:"deleted"`
-		} `json:"data"`
+		Data server.DeletedResponse `json:"data"`
 	}
 }
 
@@ -43,10 +40,7 @@ func (self *HandlerGroup) DeleteEnvironment(ctx context.Context, input *DeleteEn
 	}
 
 	resp := &DeleteEnvironmentResponse{}
-	resp.Body.Data = struct {
-		ID      uuid.UUID `json:"id"`
-		Deleted bool      `json:"deleted"`
-	}{
+	resp.Body.Data = server.DeletedResponse{
 		ID:      input.Body.EnvironmentID,
 		Deleted: true,
 	}

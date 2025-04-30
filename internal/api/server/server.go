@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
@@ -34,6 +35,12 @@ type EmptyInput struct{}
 // BaseAuthInput can be used when no input is needed and the user must be authenticated.
 type BaseAuthInput struct {
 	Authorization string `header:"Authorization" doc:"Bearer token" required:"true"`
+}
+
+// DeletedResponse is used to return a deleted response.
+type DeletedResponse struct {
+	ID      uuid.UUID `json:"id"`
+	Deleted bool      `json:"deleted"`
 }
 
 // Server implements generated.ServerInterface

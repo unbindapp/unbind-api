@@ -12,6 +12,63 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
+// Get a specific storage backend by ID
+func (self *StorageService) GetS3StorageByID(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, id uuid.UUID) (*models.S3Response, error) {
+	permissionChecks := []permissions_repo.PermissionCheck{
+		// Team viewer can view s3 sources
+		{
+			Action:       schema.ActionViewer,
+			ResourceType: schema.ResourceTypeTeam,
+			ResourceID:   teamID,
+		},
+	}
+
+	// Check permissions
+	if err := self.repo.Permissions().Check(ctx, requesterUserID, permissionChecks); err != nil {
+		return nil, err
+	}
+
+	// Check if the team exists
+	team, err := self.repo.Team().GetByID(ctx, teamID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
+		}
+		return nil, err
+	}
+
+	// Get all s3 sources for this team
+	s3Source, err := self.repo.S3().GetByID(ctx, id)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 source not found")
+		}
+		return nil, err
+	}
+	if s3Source.TeamID != team.ID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 source not found")
+	}
+
+	// Create kubernetes client
+	client, err := self.k8s.CreateClientWithToken(bearerToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the secret
+	secret, err := self.k8s.GetSecret(ctx, s3Source.KubernetesSecret, team.Namespace, client)
+	if err != nil {
+		log.Errorf("Failed to get secret %s for s3 %s: %v", s3Source.KubernetesSecret, s3Source.ID, err)
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Secret not found")
+	}
+
+	accessKey := string(secret.Data["access_key_id"])
+	secretKey := string(secret.Data["secret_key"])
+
+	return models.TransformS3Entity(s3Source, accessKey, secretKey), nil
+}
+
+// ListS3StorageBackends lists all S3 storage backends for a given team.
 func (self *StorageService) ListS3StorageBackends(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID uuid.UUID) ([]*models.S3Response, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Team viewer can view s3 sources
@@ -67,5 +124,4 @@ func (self *StorageService) ListS3StorageBackends(ctx context.Context, requester
 	}
 
 	return models.TransformS3Entities(s3Sources, accessKeyMap, secretKeyMap), nil
-
 }

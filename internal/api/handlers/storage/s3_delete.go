@@ -1,4 +1,4 @@
-package service_handler
+package storage_handler
 
 import (
 	"context"
@@ -10,23 +10,21 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
-type DeleteServiceInput struct {
+type DeleteS3SourceByIDInput struct {
 	server.BaseAuthInput
 	Body struct {
-		TeamID        uuid.UUID `json:"team_id" required:"true"`
-		ProjectID     uuid.UUID `json:"project_id" required:"true"`
-		EnvironmentID uuid.UUID `json:"environment_id" required:"true"`
-		ServiceID     uuid.UUID `json:"service_id" required:"true"`
+		ID     uuid.UUID `json:"id" format:"uuid" required:"true"`
+		TeamID uuid.UUID `json:"team_id" format:"uuid" required:"true"`
 	}
 }
 
-type DeleteServiceResponse struct {
+type DeleteS3SourceByIDOutput struct {
 	Body struct {
 		Data server.DeletedResponse `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) DeleteService(ctx context.Context, input *DeleteServiceInput) (*DeleteServiceResponse, error) {
+func (self *HandlerGroup) DeleteS3Source(ctx context.Context, input *DeleteS3SourceByIDInput) (*DeleteS3SourceByIDOutput, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -35,14 +33,20 @@ func (self *HandlerGroup) DeleteService(ctx context.Context, input *DeleteServic
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	err := self.srv.ServiceService.DeleteServiceByID(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID, input.Body.ServiceID)
+	err := self.srv.StorageService.DeleteS3StorageByID(
+		ctx,
+		user.ID,
+		bearerToken,
+		input.Body.TeamID,
+		input.Body.ID,
+	)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}
 
-	resp := &DeleteServiceResponse{}
+	resp := &DeleteS3SourceByIDOutput{}
 	resp.Body.Data = server.DeletedResponse{
-		ID:      input.Body.ServiceID,
+		ID:      input.Body.ID,
 		Deleted: true,
 	}
 	return resp, nil

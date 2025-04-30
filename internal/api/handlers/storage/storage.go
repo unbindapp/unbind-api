@@ -34,6 +34,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "get-s3-source-by-id",
+			Summary:     "Get S3 Source by ID",
+			Description: "Get S3 source by ID.",
+			Path:        "/s3/get",
+			Method:      http.MethodGet,
+		},
+		handlers.GetS3SourceByID,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "list-s3-sources",
 			Summary:     "List S3 Sources",
 			Description: "List all S3 sources for a team.",
@@ -41,6 +52,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 			Method:      http.MethodGet,
 		},
 		handlers.ListS3Source,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "delete-s3-source",
+			Summary:     "Delete S3 Source",
+			Description: "Delete an S3 source.",
+			Path:        "/s3/delete",
+			Method:      http.MethodDelete,
+		},
+		handlers.DeleteS3Source,
 	)
 }
 
