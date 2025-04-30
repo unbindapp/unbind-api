@@ -59,6 +59,7 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 	// Detect port
 	detector := &portdetector.PortDetector{
 		Provider:  detectedProvider,
+		Framework: detectedFramework,
 		SourceDir: sourceDir,
 	}
 
