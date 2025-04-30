@@ -179,6 +179,16 @@ func (self *ServiceRepository) UpdateConfig(
 
 	if input.DatabaseConfig != nil {
 		upd.SetDatabaseConfig(input.DatabaseConfig)
+
+		if input.DatabaseConfig.Version != "" {
+			// Set on service
+			_, err := db.Service.UpdateOneID(input.ServiceID).
+				SetDatabaseVersion(input.DatabaseConfig.Version).
+				Save(ctx)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if input.DockerfilePath != nil {
