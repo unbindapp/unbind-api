@@ -49,10 +49,10 @@ func (self *GetDeploymentBaseInput) GetEnvironmentID() uuid.UUID {
 // Triggering build
 
 type CreateDeploymentInput struct {
-	TeamID        uuid.UUID `validate:"required,uuid4" required:"true" json:"team_id"`
-	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
-	ServiceID     uuid.UUID `validate:"required,uuid4" required:"true" json:"service_id"`
-	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
+	TeamID        uuid.UUID `format:"uuid" required:"true" json:"team_id"`
+	ProjectID     uuid.UUID `format:"uuid" required:"true" json:"project_id"`
+	ServiceID     uuid.UUID `format:"uuid" required:"true" json:"service_id"`
+	EnvironmentID uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
 	GitSha        *string   `json:"git_sha" required:"false" doc:"The git sha of the deployment"`
 }
 
@@ -74,11 +74,11 @@ func (self *CreateDeploymentInput) GetEnvironmentID() uuid.UUID {
 
 // Re-deploying specific deployment ID
 type RedeployExistingDeploymentInput struct {
-	TeamID        uuid.UUID `validate:"required,uuid4" required:"true" json:"team_id"`
-	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
-	ServiceID     uuid.UUID `validate:"required,uuid4" required:"true" json:"service_id"`
-	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
-	DeploymentID  uuid.UUID `validate:"required,uuid4" required:"true" json:"deployment_id"`
+	TeamID        uuid.UUID `format:"uuid" required:"true" json:"team_id"`
+	ProjectID     uuid.UUID `format:"uuid" required:"true" json:"project_id"`
+	ServiceID     uuid.UUID `format:"uuid" required:"true" json:"service_id"`
+	EnvironmentID uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
+	DeploymentID  uuid.UUID `format:"uuid" required:"true" json:"deployment_id"`
 }
 
 func (self *RedeployExistingDeploymentInput) GetTeamID() uuid.UUID {

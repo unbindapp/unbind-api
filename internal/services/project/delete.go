@@ -10,23 +10,17 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
 type DeleteProjectInput struct {
-	TeamID    uuid.UUID `validate:"required,uuid4"`
-	ProjectID uuid.UUID `validate:"required,uuid4"`
+	TeamID    uuid.UUID `format:"uuid" required:"true"`
+	ProjectID uuid.UUID `format:"uuid" required:"true"`
 }
 
 func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID uuid.UUID, input *DeleteProjectInput, bearerToken string) error {
-	// Validate input
-	if err := validate.Validator().Struct(input); err != nil {
-		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to delete system resources
 		{

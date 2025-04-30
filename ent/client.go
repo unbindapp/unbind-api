@@ -28,6 +28,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/registry"
+	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
@@ -68,6 +69,8 @@ type Client struct {
 	Project *ProjectClient
 	// Registry is the client for interacting with the Registry builders.
 	Registry *RegistryClient
+	// S3 is the client for interacting with the S3 builders.
+	S3 *S3Client
 	// Service is the client for interacting with the Service builders.
 	Service *ServiceClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
@@ -105,6 +108,7 @@ func (c *Client) init() {
 	c.Permission = NewPermissionClient(c.config)
 	c.Project = NewProjectClient(c.config)
 	c.Registry = NewRegistryClient(c.config)
+	c.S3 = NewS3Client(c.config)
 	c.Service = NewServiceClient(c.config)
 	c.ServiceConfig = NewServiceConfigClient(c.config)
 	c.SystemSetting = NewSystemSettingClient(c.config)
@@ -216,6 +220,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
 		Registry:           NewRegistryClient(cfg),
+		S3:                 NewS3Client(cfg),
 		Service:            NewServiceClient(cfg),
 		ServiceConfig:      NewServiceConfigClient(cfg),
 		SystemSetting:      NewSystemSettingClient(cfg),
@@ -254,6 +259,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
 		Registry:           NewRegistryClient(cfg),
+		S3:                 NewS3Client(cfg),
 		Service:            NewServiceClient(cfg),
 		ServiceConfig:      NewServiceConfigClient(cfg),
 		SystemSetting:      NewSystemSettingClient(cfg),
@@ -292,7 +298,7 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
 		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.Service, c.ServiceConfig, c.SystemSetting, c.Team, c.User,
+		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team, c.User,
 		c.VariableReference, c.Webhook,
 	} {
 		n.Use(hooks...)
@@ -305,7 +311,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
 		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.Service, c.ServiceConfig, c.SystemSetting, c.Team, c.User,
+		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team, c.User,
 		c.VariableReference, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
@@ -339,6 +345,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Project.mutate(ctx, m)
 	case *RegistryMutation:
 		return c.Registry.mutate(ctx, m)
+	case *S3Mutation:
+		return c.S3.mutate(ctx, m)
 	case *ServiceMutation:
 		return c.Service.mutate(ctx, m)
 	case *ServiceConfigMutation:
@@ -2226,6 +2234,139 @@ func (c *RegistryClient) mutate(ctx context.Context, m *RegistryMutation) (Value
 	}
 }
 
+// S3Client is a client for the S3 schema.
+type S3Client struct {
+	config
+}
+
+// NewS3Client returns a client for the S3 from the given config.
+func NewS3Client(c config) *S3Client {
+	return &S3Client{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `s3.Hooks(f(g(h())))`.
+func (c *S3Client) Use(hooks ...Hook) {
+	c.hooks.S3 = append(c.hooks.S3, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `s3.Intercept(f(g(h())))`.
+func (c *S3Client) Intercept(interceptors ...Interceptor) {
+	c.inters.S3 = append(c.inters.S3, interceptors...)
+}
+
+// Create returns a builder for creating a S3 entity.
+func (c *S3Client) Create() *S3Create {
+	mutation := newS3Mutation(c.config, OpCreate)
+	return &S3Create{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of S3 entities.
+func (c *S3Client) CreateBulk(builders ...*S3Create) *S3CreateBulk {
+	return &S3CreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *S3Client) MapCreateBulk(slice any, setFunc func(*S3Create, int)) *S3CreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &S3CreateBulk{err: fmt.Errorf("calling to S3Client.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*S3Create, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &S3CreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for S3.
+func (c *S3Client) Update() *S3Update {
+	mutation := newS3Mutation(c.config, OpUpdate)
+	return &S3Update{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *S3Client) UpdateOne(s *S3) *S3UpdateOne {
+	mutation := newS3Mutation(c.config, OpUpdateOne, withS3(s))
+	return &S3UpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *S3Client) UpdateOneID(id uuid.UUID) *S3UpdateOne {
+	mutation := newS3Mutation(c.config, OpUpdateOne, withS3ID(id))
+	return &S3UpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for S3.
+func (c *S3Client) Delete() *S3Delete {
+	mutation := newS3Mutation(c.config, OpDelete)
+	return &S3Delete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *S3Client) DeleteOne(s *S3) *S3DeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *S3Client) DeleteOneID(id uuid.UUID) *S3DeleteOne {
+	builder := c.Delete().Where(s3.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &S3DeleteOne{builder}
+}
+
+// Query returns a query builder for S3.
+func (c *S3Client) Query() *S3Query {
+	return &S3Query{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeS3},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a S3 entity by its id.
+func (c *S3Client) Get(ctx context.Context, id uuid.UUID) (*S3, error) {
+	return c.Query().Where(s3.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *S3Client) GetX(ctx context.Context, id uuid.UUID) *S3 {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *S3Client) Hooks() []Hook {
+	return c.hooks.S3
+}
+
+// Interceptors returns the client interceptors.
+func (c *S3Client) Interceptors() []Interceptor {
+	return c.inters.S3
+}
+
+func (c *S3Client) mutate(ctx context.Context, m *S3Mutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&S3Create{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&S3Update{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&S3UpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&S3Delete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown S3 mutation op: %q", m.Op())
+	}
+}
+
 // ServiceClient is a client for the Service schema.
 type ServiceClient struct {
 	config
@@ -3449,12 +3590,12 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 type (
 	hooks struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
-		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, Service,
+		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
 		ServiceConfig, SystemSetting, Team, User, VariableReference, Webhook []ent.Hook
 	}
 	inters struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
-		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, Service,
+		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
 		ServiceConfig, SystemSetting, Team, User, VariableReference,
 		Webhook []ent.Interceptor
 	}

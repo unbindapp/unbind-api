@@ -6,29 +6,29 @@ import (
 )
 
 type WebhookCreateInput struct {
-	Type      schema.WebhookType    `json:"type" validate:"required" required:"true"`
-	TeamID    uuid.UUID             `json:"team_id" validate:"required,uuid4" required:"true"`
-	ProjectID *uuid.UUID            `json:"project_id,omitempty" validate:"omitempty,uuid4" required:"false" doc:"required if type is project"`
-	URL       string                `json:"url" validate:"required,url" required:"true"`
-	Events    []schema.WebhookEvent `json:"events" validate:"required" required:"true" nullable:"false"`
+	Type      schema.WebhookType    `json:"type" required:"true"`
+	TeamID    uuid.UUID             `json:"team_id" format:"uuid" required:"true"`
+	ProjectID *uuid.UUID            `json:"project_id,omitempty" format:"uuid" required:"false" doc:"required if type is project"`
+	URL       string                `json:"url" format:"uri" required:"true"`
+	Events    []schema.WebhookEvent `json:"events" required:"true" nullable:"false"`
 }
 
 type WebhookUpdateInput struct {
-	ID        uuid.UUID              `json:"id" validate:"required,uuid4" required:"true"`
-	TeamID    uuid.UUID              `json:"team_id" validate:"required,uuid4" required:"true"`
-	ProjectID *uuid.UUID             `json:"project_id,omitempty" validate:"omitempty,uuid4" required:"false" doc:"required if type is project"`
-	URL       *string                `json:"url" validate:"omitempty,url" required:"false"`
+	ID        uuid.UUID              `json:"id" format:"uuid" required:"true"`
+	TeamID    uuid.UUID              `json:"team_id" format:"uuid" required:"true"`
+	ProjectID *uuid.UUID             `json:"project_id,omitempty" format:"uuid" required:"false" doc:"required if type is project"`
+	URL       *string                `json:"url" format:"uri" required:"false"`
 	Events    *[]schema.WebhookEvent `json:"events" required:"false"`
 }
 
 type WebhookListInput struct {
-	Type      schema.WebhookType `query:"type" validate:"required" required:"true"`
-	TeamID    uuid.UUID          `query:"team_id" validate:"required,uuid4" required:"true"`
-	ProjectID uuid.UUID          `query:"project_id" validate:"omitempty,uuid4" required:"false"`
+	Type      schema.WebhookType `query:"type" required:"true"`
+	TeamID    uuid.UUID          `query:"team_id" format:"uuid" required:"true"`
+	ProjectID uuid.UUID          `query:"project_id" format:"uuid" required:"false"`
 }
 
 type WebhookGetInput struct {
-	ID        uuid.UUID `query:"id" validate:"required,uuid4" required:"true"`
-	TeamID    uuid.UUID `query:"team_id" validate:"required,uuid4" required:"true"`
-	ProjectID uuid.UUID `query:"project_id" validate:"omitempty,uuid4" required:"false"`
+	ID        uuid.UUID `query:"id" format:"uuid" required:"true"`
+	TeamID    uuid.UUID `query:"team_id" format:"uuid" required:"true"`
+	ProjectID uuid.UUID `query:"project_id" format:"uuid" required:"false"`
 }

@@ -11,6 +11,7 @@ import (
 // ServiceResponse defines the response structure for service operations
 type ServiceResponse struct {
 	ID                       uuid.UUID              `json:"id"`
+	Type                     schema.ServiceType     `json:"type"`
 	KubernetesName           string                 `json:"kubernetes_name"`
 	Name                     string                 `json:"name"`
 	Description              string                 `json:"description"`
@@ -24,6 +25,8 @@ type ServiceResponse struct {
 	LastDeployment           *DeploymentResponse    `json:"last_deployment,omitempty"`
 	LastSuccessfulDeployment *DeploymentResponse    `json:"last_successful_deployment,omitempty"`
 	Config                   *ServiceConfigResponse `json:"config"`
+	DatabaseVersion          *string                `json:"database_version,omitempty"`
+	DatabaseType             *string                `json:"database_type,omitempty"`
 }
 
 // TransformServiceEntity transforms an ent.Service entity into a ServiceResponse
@@ -32,6 +35,7 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 	if entity != nil {
 		response = &ServiceResponse{
 			ID:                   entity.ID,
+			Type:                 entity.Type,
 			KubernetesName:       entity.KubernetesName,
 			Name:                 entity.Name,
 			Description:          entity.Description,
@@ -41,6 +45,8 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 			GitRepositoryOwner:   entity.GitRepositoryOwner,
 			CreatedAt:            entity.CreatedAt,
 			UpdatedAt:            entity.UpdatedAt,
+			DatabaseVersion:      entity.DatabaseVersion,
+			DatabaseType:         entity.Database,
 			Config:               TransformServiceConfigEntity(entity.Edges.ServiceConfig),
 		}
 

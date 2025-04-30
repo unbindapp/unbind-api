@@ -38,6 +38,8 @@ type Tx struct {
 	Project *ProjectClient
 	// Registry is the client for interacting with the Registry builders.
 	Registry *RegistryClient
+	// S3 is the client for interacting with the S3 builders.
+	S3 *S3Client
 	// Service is the client for interacting with the Service builders.
 	Service *ServiceClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
@@ -195,6 +197,7 @@ func (tx *Tx) init() {
 	tx.Permission = NewPermissionClient(tx.config)
 	tx.Project = NewProjectClient(tx.config)
 	tx.Registry = NewRegistryClient(tx.config)
+	tx.S3 = NewS3Client(tx.config)
 	tx.Service = NewServiceClient(tx.config)
 	tx.ServiceConfig = NewServiceConfigClient(tx.config)
 	tx.SystemSetting = NewSystemSettingClient(tx.config)

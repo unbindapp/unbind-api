@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/registry"
+	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
@@ -292,6 +293,31 @@ func init() {
 	registryDescID := registryMixinFields0[0].Descriptor()
 	// registry.DefaultID holds the default value on creation for the id field.
 	registry.DefaultID = registryDescID.Default.(func() uuid.UUID)
+	s3Mixin := schema.S3{}.Mixin()
+	s3MixinFields0 := s3Mixin[0].Fields()
+	_ = s3MixinFields0
+	s3MixinFields1 := s3Mixin[1].Fields()
+	_ = s3MixinFields1
+	s3Fields := schema.S3{}.Fields()
+	_ = s3Fields
+	// s3DescCreatedAt is the schema descriptor for created_at field.
+	s3DescCreatedAt := s3MixinFields1[0].Descriptor()
+	// s3.DefaultCreatedAt holds the default value on creation for the created_at field.
+	s3.DefaultCreatedAt = s3DescCreatedAt.Default.(func() time.Time)
+	// s3DescUpdatedAt is the schema descriptor for updated_at field.
+	s3DescUpdatedAt := s3MixinFields1[1].Descriptor()
+	// s3.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	s3.DefaultUpdatedAt = s3DescUpdatedAt.Default.(func() time.Time)
+	// s3.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	s3.UpdateDefaultUpdatedAt = s3DescUpdatedAt.UpdateDefault.(func() time.Time)
+	// s3DescForcePathStyle is the schema descriptor for force_path_style field.
+	s3DescForcePathStyle := s3Fields[2].Descriptor()
+	// s3.DefaultForcePathStyle holds the default value on creation for the force_path_style field.
+	s3.DefaultForcePathStyle = s3DescForcePathStyle.Default.(bool)
+	// s3DescID is the schema descriptor for id field.
+	s3DescID := s3MixinFields0[0].Descriptor()
+	// s3.DefaultID holds the default value on creation for the id field.
+	s3.DefaultID = s3DescID.Default.(func() uuid.UUID)
 	serviceMixin := schema.Service{}.Mixin()
 	serviceMixinFields0 := serviceMixin[0].Fields()
 	_ = serviceMixinFields0
@@ -310,7 +336,7 @@ func init() {
 	// service.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	service.UpdateDefaultUpdatedAt = serviceDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// serviceDescKubernetesName is the schema descriptor for kubernetes_name field.
-	serviceDescKubernetesName := serviceFields[0].Descriptor()
+	serviceDescKubernetesName := serviceFields[1].Descriptor()
 	// service.KubernetesNameValidator is a validator for the "kubernetes_name" field. It is called by the builders before save.
 	service.KubernetesNameValidator = serviceDescKubernetesName.Validators[0].(func(string) error)
 	// serviceDescID is the schema descriptor for id field.
@@ -335,17 +361,17 @@ func init() {
 	// serviceconfig.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	serviceconfig.UpdateDefaultUpdatedAt = serviceconfigDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// serviceconfigDescReplicas is the schema descriptor for replicas field.
-	serviceconfigDescReplicas := serviceconfigFields[15].Descriptor()
+	serviceconfigDescReplicas := serviceconfigFields[10].Descriptor()
 	// serviceconfig.DefaultReplicas holds the default value on creation for the replicas field.
 	serviceconfig.DefaultReplicas = serviceconfigDescReplicas.Default.(int32)
 	// serviceconfigDescAutoDeploy is the schema descriptor for auto_deploy field.
-	serviceconfigDescAutoDeploy := serviceconfigFields[16].Descriptor()
+	serviceconfigDescAutoDeploy := serviceconfigFields[11].Descriptor()
 	// serviceconfig.DefaultAutoDeploy holds the default value on creation for the auto_deploy field.
 	serviceconfig.DefaultAutoDeploy = serviceconfigDescAutoDeploy.Default.(bool)
-	// serviceconfigDescPublic is the schema descriptor for public field.
-	serviceconfigDescPublic := serviceconfigFields[18].Descriptor()
-	// serviceconfig.DefaultPublic holds the default value on creation for the public field.
-	serviceconfig.DefaultPublic = serviceconfigDescPublic.Default.(bool)
+	// serviceconfigDescIsPublic is the schema descriptor for is_public field.
+	serviceconfigDescIsPublic := serviceconfigFields[13].Descriptor()
+	// serviceconfig.DefaultIsPublic holds the default value on creation for the is_public field.
+	serviceconfig.DefaultIsPublic = serviceconfigDescIsPublic.Default.(bool)
 	// serviceconfigDescID is the schema descriptor for id field.
 	serviceconfigDescID := serviceconfigMixinFields0[0].Descriptor()
 	// serviceconfig.DefaultID holds the default value on creation for the id field.

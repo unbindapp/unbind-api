@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 // ID filters vertices based on their ID field.
@@ -84,6 +85,16 @@ func Description(v string) predicate.Service {
 // EnvironmentID applies equality check predicate on the "environment_id" field. It's identical to EnvironmentIDEQ.
 func EnvironmentID(v uuid.UUID) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldEnvironmentID, v))
+}
+
+// Database applies equality check predicate on the "database" field. It's identical to DatabaseEQ.
+func Database(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldDatabase, v))
+}
+
+// DatabaseVersion applies equality check predicate on the "database_version" field. It's identical to DatabaseVersionEQ.
+func DatabaseVersion(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldDatabaseVersion, v))
 }
 
 // GithubInstallationID applies equality check predicate on the "github_installation_id" field. It's identical to GithubInstallationIDEQ.
@@ -189,6 +200,36 @@ func UpdatedAtLT(v time.Time) predicate.Service {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// TypeEQ applies the EQ predicate on the "type" field.
+func TypeEQ(v schema.ServiceType) predicate.Service {
+	vc := v
+	return predicate.Service(sql.FieldEQ(FieldType, vc))
+}
+
+// TypeNEQ applies the NEQ predicate on the "type" field.
+func TypeNEQ(v schema.ServiceType) predicate.Service {
+	vc := v
+	return predicate.Service(sql.FieldNEQ(FieldType, vc))
+}
+
+// TypeIn applies the In predicate on the "type" field.
+func TypeIn(vs ...schema.ServiceType) predicate.Service {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Service(sql.FieldIn(FieldType, v...))
+}
+
+// TypeNotIn applies the NotIn predicate on the "type" field.
+func TypeNotIn(vs ...schema.ServiceType) predicate.Service {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Service(sql.FieldNotIn(FieldType, v...))
 }
 
 // KubernetesNameEQ applies the EQ predicate on the "kubernetes_name" field.
@@ -414,6 +455,156 @@ func EnvironmentIDIn(vs ...uuid.UUID) predicate.Service {
 // EnvironmentIDNotIn applies the NotIn predicate on the "environment_id" field.
 func EnvironmentIDNotIn(vs ...uuid.UUID) predicate.Service {
 	return predicate.Service(sql.FieldNotIn(FieldEnvironmentID, vs...))
+}
+
+// DatabaseEQ applies the EQ predicate on the "database" field.
+func DatabaseEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldDatabase, v))
+}
+
+// DatabaseNEQ applies the NEQ predicate on the "database" field.
+func DatabaseNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldDatabase, v))
+}
+
+// DatabaseIn applies the In predicate on the "database" field.
+func DatabaseIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldDatabase, vs...))
+}
+
+// DatabaseNotIn applies the NotIn predicate on the "database" field.
+func DatabaseNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldDatabase, vs...))
+}
+
+// DatabaseGT applies the GT predicate on the "database" field.
+func DatabaseGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldDatabase, v))
+}
+
+// DatabaseGTE applies the GTE predicate on the "database" field.
+func DatabaseGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldDatabase, v))
+}
+
+// DatabaseLT applies the LT predicate on the "database" field.
+func DatabaseLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldDatabase, v))
+}
+
+// DatabaseLTE applies the LTE predicate on the "database" field.
+func DatabaseLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldDatabase, v))
+}
+
+// DatabaseContains applies the Contains predicate on the "database" field.
+func DatabaseContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldDatabase, v))
+}
+
+// DatabaseHasPrefix applies the HasPrefix predicate on the "database" field.
+func DatabaseHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldDatabase, v))
+}
+
+// DatabaseHasSuffix applies the HasSuffix predicate on the "database" field.
+func DatabaseHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldDatabase, v))
+}
+
+// DatabaseIsNil applies the IsNil predicate on the "database" field.
+func DatabaseIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldDatabase))
+}
+
+// DatabaseNotNil applies the NotNil predicate on the "database" field.
+func DatabaseNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldDatabase))
+}
+
+// DatabaseEqualFold applies the EqualFold predicate on the "database" field.
+func DatabaseEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldDatabase, v))
+}
+
+// DatabaseContainsFold applies the ContainsFold predicate on the "database" field.
+func DatabaseContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldDatabase, v))
+}
+
+// DatabaseVersionEQ applies the EQ predicate on the "database_version" field.
+func DatabaseVersionEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionNEQ applies the NEQ predicate on the "database_version" field.
+func DatabaseVersionNEQ(v string) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionIn applies the In predicate on the "database_version" field.
+func DatabaseVersionIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldDatabaseVersion, vs...))
+}
+
+// DatabaseVersionNotIn applies the NotIn predicate on the "database_version" field.
+func DatabaseVersionNotIn(vs ...string) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldDatabaseVersion, vs...))
+}
+
+// DatabaseVersionGT applies the GT predicate on the "database_version" field.
+func DatabaseVersionGT(v string) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionGTE applies the GTE predicate on the "database_version" field.
+func DatabaseVersionGTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionLT applies the LT predicate on the "database_version" field.
+func DatabaseVersionLT(v string) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionLTE applies the LTE predicate on the "database_version" field.
+func DatabaseVersionLTE(v string) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionContains applies the Contains predicate on the "database_version" field.
+func DatabaseVersionContains(v string) predicate.Service {
+	return predicate.Service(sql.FieldContains(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionHasPrefix applies the HasPrefix predicate on the "database_version" field.
+func DatabaseVersionHasPrefix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasPrefix(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionHasSuffix applies the HasSuffix predicate on the "database_version" field.
+func DatabaseVersionHasSuffix(v string) predicate.Service {
+	return predicate.Service(sql.FieldHasSuffix(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionIsNil applies the IsNil predicate on the "database_version" field.
+func DatabaseVersionIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldDatabaseVersion))
+}
+
+// DatabaseVersionNotNil applies the NotNil predicate on the "database_version" field.
+func DatabaseVersionNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldDatabaseVersion))
+}
+
+// DatabaseVersionEqualFold applies the EqualFold predicate on the "database_version" field.
+func DatabaseVersionEqualFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldEqualFold(FieldDatabaseVersion, v))
+}
+
+// DatabaseVersionContainsFold applies the ContainsFold predicate on the "database_version" field.
+func DatabaseVersionContainsFold(v string) predicate.Service {
+	return predicate.Service(sql.FieldContainsFold(FieldDatabaseVersion, v))
 }
 
 // GithubInstallationIDEQ applies the EQ predicate on the "github_installation_id" field.

@@ -5,26 +5,19 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 type UpdateEnvironmentInput struct {
-	TeamID        uuid.UUID `json:"team_id" validate:"required,uuid4" required:"true"`
-	ProjectID     uuid.UUID `json:"project_id" validate:"required,uuid4" required:"true"`
-	EnvironmentID uuid.UUID `json:"environment_id" validate:"required,uuid4" required:"true"`
+	TeamID        uuid.UUID `json:"team_id" format:"uuid" required:"true"`
+	ProjectID     uuid.UUID `json:"project_id" format:"uuid" required:"true"`
+	EnvironmentID uuid.UUID `json:"environment_id" format:"uuid" required:"true"`
 	Name          *string   `json:"name"`
 	Description   *string   `json:"description"`
 }
 
 func (self *EnvironmentService) UpdateEnvironment(ctx context.Context, requesterUserID uuid.UUID, input *UpdateEnvironmentInput) (*models.EnvironmentResponse, error) {
-	// Validate input
-	if err := validate.Validator().Struct(input); err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Project editor can create environments
 		{

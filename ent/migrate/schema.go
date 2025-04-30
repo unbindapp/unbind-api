@@ -287,14 +287,33 @@ var (
 		Columns:    RegistriesColumns,
 		PrimaryKey: []*schema.Column{RegistriesColumns[0]},
 	}
+	// S3SourcesColumns holds the columns for the "s3_sources" table.
+	S3SourcesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "endpoint", Type: field.TypeString},
+		{Name: "region", Type: field.TypeString},
+		{Name: "force_path_style", Type: field.TypeBool, Default: true},
+		{Name: "kubernetes_secret", Type: field.TypeString},
+	}
+	// S3SourcesTable holds the schema information for the "s3_sources" table.
+	S3SourcesTable = &schema.Table{
+		Name:       "s3_sources",
+		Columns:    S3SourcesColumns,
+		PrimaryKey: []*schema.Column{S3SourcesColumns[0]},
+	}
 	// ServicesColumns holds the columns for the "services" table.
 	ServicesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"github", "docker-image", "database"}},
 		{Name: "kubernetes_name", Type: field.TypeString, Unique: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "database", Type: field.TypeString, Nullable: true},
+		{Name: "database_version", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository_owner", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
 		{Name: "kubernetes_secret", Type: field.TypeString},
@@ -310,19 +329,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[9]},
+				Columns:    []*schema.Column{ServicesColumns[12]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[10]},
+				Columns:    []*schema.Column{ServicesColumns[13]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "services_deployments_current_deployment",
-				Columns:    []*schema.Column{ServicesColumns[11]},
+				Columns:    []*schema.Column{ServicesColumns[14]},
 				RefColumns: []*schema.Column{DeploymentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -333,13 +352,8 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"github", "docker-image", "database"}},
 		{Name: "builder", Type: field.TypeEnum, Enums: []string{"railpack", "docker", "database"}},
 		{Name: "icon", Type: field.TypeString},
-		{Name: "database", Type: field.TypeString, Nullable: true},
-		{Name: "definition_version", Type: field.TypeString, Nullable: true},
-		{Name: "database_config", Type: field.TypeJSON, Nullable: true},
-		{Name: "database_version", Type: field.TypeString, Nullable: true},
 		{Name: "dockerfile_path", Type: field.TypeString, Nullable: true},
 		{Name: "dockerfile_context", Type: field.TypeString, Nullable: true},
 		{Name: "railpack_provider", Type: field.TypeEnum, Nullable: true, Enums: []string{"node", "deno", "go", "java", "php", "python", "ruby", "rust", "elixir", "staticfile", "unknown"}},
@@ -350,8 +364,10 @@ var (
 		{Name: "replicas", Type: field.TypeInt32, Default: 2},
 		{Name: "auto_deploy", Type: field.TypeBool, Default: false},
 		{Name: "run_command", Type: field.TypeString, Nullable: true},
-		{Name: "public", Type: field.TypeBool, Default: false},
+		{Name: "is_public", Type: field.TypeBool, Default: false},
 		{Name: "image", Type: field.TypeString, Nullable: true},
+		{Name: "definition_version", Type: field.TypeString, Nullable: true},
+		{Name: "database_config", Type: field.TypeJSON, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID, Unique: true},
 	}
 	// ServiceConfigsTable holds the schema information for the "service_configs" table.
@@ -362,7 +378,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[22]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[19]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -565,6 +581,7 @@ var (
 		PermissionsTable,
 		ProjectsTable,
 		RegistriesTable,
+		S3SourcesTable,
 		ServicesTable,
 		ServiceConfigsTable,
 		SystemSettingsTable,
@@ -622,6 +639,9 @@ func init() {
 	}
 	RegistriesTable.Annotation = &entsql.Annotation{
 		Table: "registries",
+	}
+	S3SourcesTable.Annotation = &entsql.Annotation{
+		Table: "s3_sources",
 	}
 	ServicesTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	ServicesTable.ForeignKeys[1].RefTable = GithubInstallationsTable

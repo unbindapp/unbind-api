@@ -13,7 +13,7 @@ import (
 // ServiceRepositoryInterface ...
 type ServiceRepositoryInterface interface {
 	// Create the service
-	Create(ctx context.Context, tx repository.TxInterface, kubernetesName string, name string, description string, environmentID uuid.UUID, gitHubInstallationID *int64, gitRepository *string, gitRepositoryOwner *string, kubernetesSecret string) (*ent.Service, error)
+	Create(ctx context.Context, tx repository.TxInterface, input *CreateServiceInput) (*ent.Service, error)
 	CreateConfig(ctx context.Context, tx repository.TxInterface, input *MutateConfigInput) (*ent.ServiceConfig, error)
 	// Update the service
 	Update(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, name *string, description *string) error

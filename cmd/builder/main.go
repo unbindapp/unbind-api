@@ -60,7 +60,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 		Fields: []webhooks_service.WebhookDataField{
 			{
 				Name:  "Service Type",
-				Value: string(service.Edges.ServiceConfig.Type),
+				Value: string(service.Type),
 			},
 			{
 				Name:  "Environment",
@@ -115,7 +115,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 		Fields: []webhooks_service.WebhookDataField{
 			{
 				Name:  "Service Type",
-				Value: string(service.Edges.ServiceConfig.Type),
+				Value: string(service.Type),
 			},
 			{
 				Name:  "Environment",
@@ -214,7 +214,7 @@ func main() {
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Type",
-					Value: string(service.Edges.ServiceConfig.Type),
+					Value: string(service.Type),
 				},
 				{
 					Name:  "Environment",

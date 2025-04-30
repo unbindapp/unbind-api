@@ -144,8 +144,8 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		"DEPLOYMENT_NAMESPACE":  namespace,
 		"SERVICE_REF":           service.ID.String(),
 		"SERVICE_NAME":          service.KubernetesName,
-		"SERVICE_TYPE":          string(service.Edges.ServiceConfig.Type),
-		"SERVICE_PUBLIC":        strconv.FormatBool(service.Edges.ServiceConfig.Public),
+		"SERVICE_TYPE":          string(service.Type),
+		"SERVICE_PUBLIC":        strconv.FormatBool(service.Edges.ServiceConfig.IsPublic),
 		"SERVICE_REPLICAS":      strconv.Itoa(int(service.Edges.ServiceConfig.Replicas)),
 		"SERVICE_SECRET_NAME":   service.KubernetesSecret,
 		"SERVICE_BUILD_SECRETS": string(secretsJSON),
@@ -161,15 +161,15 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
-	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase {
-		if service.Edges.ServiceConfig.Database == nil ||
+	if service.Type == schema.ServiceTypeDatabase {
+		if service.Database == nil ||
 			service.Edges.ServiceConfig.DefinitionVersion == nil {
-			return nil, fmt.Errorf("Service database name pr defomotopm is nil")
+			return nil, fmt.Errorf("Service database name or definition is nil")
 		}
 
 		config := make(map[string]interface{})
 		if service.Edges.ServiceConfig.DatabaseConfig != nil {
-			config = service.Edges.ServiceConfig.DatabaseConfig
+			config = service.Edges.ServiceConfig.DatabaseConfig.AsMap()
 		}
 
 		// Marshal as string
@@ -178,7 +178,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 			return nil, err
 		}
 
-		env["SERVICE_DATABASE_TYPE"] = *service.Edges.ServiceConfig.Database
+		env["SERVICE_DATABASE_TYPE"] = *service.Database
 		env["SERVICE_DATABASE_USD_VERSION"] = *service.Edges.ServiceConfig.DefinitionVersion
 		env["SERVICE_DATABASE_CONFIG"] = string(marshalledConfig)
 	}
@@ -389,7 +389,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Type",
-					Value: string(service.Edges.ServiceConfig.Type),
+					Value: string(service.Type),
 				},
 				{
 					Name:  "Environment",
@@ -472,7 +472,7 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 				Fields: []webhooks_service.WebhookDataField{
 					{
 						Name:  "Service Type",
-						Value: string(service.Edges.ServiceConfig.Type),
+						Value: string(service.Type),
 					},
 					{
 						Name:  "Environment",

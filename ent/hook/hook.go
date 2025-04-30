@@ -153,6 +153,18 @@ func (f RegistryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RegistryMutation", m)
 }
 
+// The S3Func type is an adapter to allow the use of ordinary
+// function as S3 mutator.
+type S3Func func(context.Context, *ent.S3Mutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f S3Func) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.S3Mutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.S3Mutation", m)
+}
+
 // The ServiceFunc type is an adapter to allow the use of ordinary
 // function as Service mutator.
 type ServiceFunc func(context.Context, *ent.ServiceMutation) (ent.Value, error)

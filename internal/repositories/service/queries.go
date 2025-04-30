@@ -67,7 +67,6 @@ func (self *ServiceRepository) GetByName(ctx context.Context, name string) (*ent
 func (self *ServiceRepository) GetDatabaseType(ctx context.Context, serviceID uuid.UUID) (string, error) {
 	svc, err := self.base.DB.Service.Query().
 		Where(service.IDEQ(serviceID)).
-		QueryServiceConfig().
 		Only(ctx)
 	if err != nil {
 		return "", err
@@ -302,7 +301,7 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 				Replicas:   utils.ToPtr(service.Edges.ServiceConfig.Replicas),
 				Ports:      schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports),
 				RunCommand: service.Edges.ServiceConfig.RunCommand,
-				Public:     service.Edges.ServiceConfig.Public,
+				Public:     service.Edges.ServiceConfig.IsPublic,
 			},
 		},
 	}

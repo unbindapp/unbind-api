@@ -7,22 +7,16 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 // Input for creating group
 type GroupCreateInput struct {
-	Name        string `validate:"required"`
-	Description string `validate:"required"`
+	Name        string `required:"true"`
+	Description string `required:"true"`
 }
 
 func (self *GroupService) CreateGroup(ctx context.Context, userID uuid.UUID, input *GroupCreateInput) (*ent.Group, error) {
-	err := validate.Validator().Struct(input)
-	if err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	// Creating a globally scoped group
 	// ! TODO - in the long run we may want to scope groups to different teams
 	if err := self.repo.Permissions().Check(

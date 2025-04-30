@@ -79,6 +79,19 @@ func (u Protocol) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/Protocol"}
 }
 
+type DatabaseConfig struct {
+	Version string `json:"version" description:"Version of the database"`
+}
+
+func (self *DatabaseConfig) AsMap() map[string]interface{} {
+	ret := make(map[string]interface{})
+
+	if self.Version != "" {
+		ret["version"] = self.Version
+	}
+	return ret
+}
+
 // ServiceConfig holds environment-specific configuration for a service
 type ServiceConfig struct {
 	ent.Schema
@@ -96,14 +109,8 @@ func (ServiceConfig) Mixin() []ent.Mixin {
 func (ServiceConfig) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("service_id", uuid.UUID{}),
-		field.Enum("type").GoType(ServiceType("")).Comment("Type of service"),
 		field.Enum("builder").GoType(ServiceBuilder("")),
 		field.String("icon").Comment("Icon metadata, unique of framework, provider, database"),
-		// Database
-		field.String("database").Optional().Nillable().Comment("Database to use for the service"),
-		field.String("definition_version").Optional().Nillable().Comment("Version of the database custom resource definition"),
-		field.JSON("database_config", map[string]interface{}{}).Optional().Comment("Database configuration for the service"),
-		field.String("database_version").Optional().Nillable().Comment("Version of the database"),
 		// For builds from git using Dockerfile
 		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
 		field.String("dockerfile_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
@@ -118,8 +125,11 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.Int32("replicas").Default(2).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
-		field.Bool("public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),
+		field.Bool("is_public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),
 		field.String("image").Optional().Comment("Custom Docker image if not building from git"), // Only applies to type=docker-image
+		// Database
+		field.String("definition_version").Optional().Nillable().Comment("Version of the database custom resource definition"),
+		field.JSON("database_config", &DatabaseConfig{}).Optional().Comment("Database configuration for the service"),
 	}
 }
 
@@ -140,42 +150,6 @@ func (ServiceConfig) Annotations() []schema.Annotation {
 }
 
 // Enums
-// Type enum
-type ServiceType string
-
-const (
-	ServiceTypeGithub      ServiceType = "github"
-	ServiceTypeDockerimage ServiceType = "docker-image"
-	ServiceTypeDatabase    ServiceType = "database"
-)
-
-var allServiceTypes = []ServiceType{
-	ServiceTypeGithub,
-	ServiceTypeDockerimage,
-	ServiceTypeDatabase,
-}
-
-// Values provides list valid values for Enum.
-func (s ServiceType) Values() (kinds []string) {
-	for _, s := range allServiceTypes {
-		kinds = append(kinds, string(s))
-	}
-	return
-}
-
-// Register enum in OpenAPI specification
-// https://github.com/danielgtaylor/huma/issues/621
-func (u ServiceType) Schema(r huma.Registry) *huma.Schema {
-	if r.Map()["ServiceType"] == nil {
-		schemaRef := r.Schema(reflect.TypeOf(""), true, "ServiceType")
-		schemaRef.Title = "ServiceType"
-		for _, v := range allServiceTypes {
-			schemaRef.Enum = append(schemaRef.Enum, string(v))
-		}
-		r.Map()["ServiceType"] = schemaRef
-	}
-	return &huma.Schema{Ref: "#/components/schemas/ServiceType"}
-}
 
 // Builder enum
 type ServiceBuilder string

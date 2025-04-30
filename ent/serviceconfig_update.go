@@ -55,20 +55,6 @@ func (scu *ServiceConfigUpdate) SetNillableServiceID(u *uuid.UUID) *ServiceConfi
 	return scu
 }
 
-// SetType sets the "type" field.
-func (scu *ServiceConfigUpdate) SetType(st schema.ServiceType) *ServiceConfigUpdate {
-	scu.mutation.SetType(st)
-	return scu
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableType(st *schema.ServiceType) *ServiceConfigUpdate {
-	if st != nil {
-		scu.SetType(*st)
-	}
-	return scu
-}
-
 // SetBuilder sets the "builder" field.
 func (scu *ServiceConfigUpdate) SetBuilder(sb schema.ServiceBuilder) *ServiceConfigUpdate {
 	scu.mutation.SetBuilder(sb)
@@ -94,78 +80,6 @@ func (scu *ServiceConfigUpdate) SetNillableIcon(s *string) *ServiceConfigUpdate 
 	if s != nil {
 		scu.SetIcon(*s)
 	}
-	return scu
-}
-
-// SetDatabase sets the "database" field.
-func (scu *ServiceConfigUpdate) SetDatabase(s string) *ServiceConfigUpdate {
-	scu.mutation.SetDatabase(s)
-	return scu
-}
-
-// SetNillableDatabase sets the "database" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableDatabase(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetDatabase(*s)
-	}
-	return scu
-}
-
-// ClearDatabase clears the value of the "database" field.
-func (scu *ServiceConfigUpdate) ClearDatabase() *ServiceConfigUpdate {
-	scu.mutation.ClearDatabase()
-	return scu
-}
-
-// SetDefinitionVersion sets the "definition_version" field.
-func (scu *ServiceConfigUpdate) SetDefinitionVersion(s string) *ServiceConfigUpdate {
-	scu.mutation.SetDefinitionVersion(s)
-	return scu
-}
-
-// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableDefinitionVersion(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetDefinitionVersion(*s)
-	}
-	return scu
-}
-
-// ClearDefinitionVersion clears the value of the "definition_version" field.
-func (scu *ServiceConfigUpdate) ClearDefinitionVersion() *ServiceConfigUpdate {
-	scu.mutation.ClearDefinitionVersion()
-	return scu
-}
-
-// SetDatabaseConfig sets the "database_config" field.
-func (scu *ServiceConfigUpdate) SetDatabaseConfig(m map[string]interface{}) *ServiceConfigUpdate {
-	scu.mutation.SetDatabaseConfig(m)
-	return scu
-}
-
-// ClearDatabaseConfig clears the value of the "database_config" field.
-func (scu *ServiceConfigUpdate) ClearDatabaseConfig() *ServiceConfigUpdate {
-	scu.mutation.ClearDatabaseConfig()
-	return scu
-}
-
-// SetDatabaseVersion sets the "database_version" field.
-func (scu *ServiceConfigUpdate) SetDatabaseVersion(s string) *ServiceConfigUpdate {
-	scu.mutation.SetDatabaseVersion(s)
-	return scu
-}
-
-// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableDatabaseVersion(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetDatabaseVersion(*s)
-	}
-	return scu
-}
-
-// ClearDatabaseVersion clears the value of the "database_version" field.
-func (scu *ServiceConfigUpdate) ClearDatabaseVersion() *ServiceConfigUpdate {
-	scu.mutation.ClearDatabaseVersion()
 	return scu
 }
 
@@ -360,16 +274,16 @@ func (scu *ServiceConfigUpdate) ClearRunCommand() *ServiceConfigUpdate {
 	return scu
 }
 
-// SetPublic sets the "public" field.
-func (scu *ServiceConfigUpdate) SetPublic(b bool) *ServiceConfigUpdate {
-	scu.mutation.SetPublic(b)
+// SetIsPublic sets the "is_public" field.
+func (scu *ServiceConfigUpdate) SetIsPublic(b bool) *ServiceConfigUpdate {
+	scu.mutation.SetIsPublic(b)
 	return scu
 }
 
-// SetNillablePublic sets the "public" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillablePublic(b *bool) *ServiceConfigUpdate {
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableIsPublic(b *bool) *ServiceConfigUpdate {
 	if b != nil {
-		scu.SetPublic(*b)
+		scu.SetIsPublic(*b)
 	}
 	return scu
 }
@@ -391,6 +305,38 @@ func (scu *ServiceConfigUpdate) SetNillableImage(s *string) *ServiceConfigUpdate
 // ClearImage clears the value of the "image" field.
 func (scu *ServiceConfigUpdate) ClearImage() *ServiceConfigUpdate {
 	scu.mutation.ClearImage()
+	return scu
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (scu *ServiceConfigUpdate) SetDefinitionVersion(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDefinitionVersion(s)
+	return scu
+}
+
+// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDefinitionVersion(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetDefinitionVersion(*s)
+	}
+	return scu
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (scu *ServiceConfigUpdate) ClearDefinitionVersion() *ServiceConfigUpdate {
+	scu.mutation.ClearDefinitionVersion()
+	return scu
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (scu *ServiceConfigUpdate) SetDatabaseConfig(sc *schema.DatabaseConfig) *ServiceConfigUpdate {
+	scu.mutation.SetDatabaseConfig(sc)
+	return scu
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (scu *ServiceConfigUpdate) ClearDatabaseConfig() *ServiceConfigUpdate {
+	scu.mutation.ClearDatabaseConfig()
 	return scu
 }
 
@@ -448,11 +394,6 @@ func (scu *ServiceConfigUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (scu *ServiceConfigUpdate) check() error {
-	if v, ok := scu.mutation.GetType(); ok {
-		if err := serviceconfig.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.type": %w`, err)}
-		}
-	}
 	if v, ok := scu.mutation.Builder(); ok {
 		if err := serviceconfig.BuilderValidator(v); err != nil {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
@@ -495,38 +436,11 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := scu.mutation.GetType(); ok {
-		_spec.SetField(serviceconfig.FieldType, field.TypeEnum, value)
-	}
 	if value, ok := scu.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 	}
 	if value, ok := scu.mutation.Icon(); ok {
 		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
-	}
-	if value, ok := scu.mutation.Database(); ok {
-		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
-	}
-	if scu.mutation.DatabaseCleared() {
-		_spec.ClearField(serviceconfig.FieldDatabase, field.TypeString)
-	}
-	if value, ok := scu.mutation.DefinitionVersion(); ok {
-		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
-	}
-	if scu.mutation.DefinitionVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldDefinitionVersion, field.TypeString)
-	}
-	if value, ok := scu.mutation.DatabaseConfig(); ok {
-		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
-	}
-	if scu.mutation.DatabaseConfigCleared() {
-		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
-	}
-	if value, ok := scu.mutation.DatabaseVersion(); ok {
-		_spec.SetField(serviceconfig.FieldDatabaseVersion, field.TypeString, value)
-	}
-	if scu.mutation.DatabaseVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldDatabaseVersion, field.TypeString)
 	}
 	if value, ok := scu.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
@@ -595,14 +509,26 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if scu.mutation.RunCommandCleared() {
 		_spec.ClearField(serviceconfig.FieldRunCommand, field.TypeString)
 	}
-	if value, ok := scu.mutation.Public(); ok {
-		_spec.SetField(serviceconfig.FieldPublic, field.TypeBool, value)
+	if value, ok := scu.mutation.IsPublic(); ok {
+		_spec.SetField(serviceconfig.FieldIsPublic, field.TypeBool, value)
 	}
 	if value, ok := scu.mutation.Image(); ok {
 		_spec.SetField(serviceconfig.FieldImage, field.TypeString, value)
 	}
 	if scu.mutation.ImageCleared() {
 		_spec.ClearField(serviceconfig.FieldImage, field.TypeString)
+	}
+	if value, ok := scu.mutation.DefinitionVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
+	}
+	if scu.mutation.DefinitionVersionCleared() {
+		_spec.ClearField(serviceconfig.FieldDefinitionVersion, field.TypeString)
+	}
+	if value, ok := scu.mutation.DatabaseConfig(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
+	}
+	if scu.mutation.DatabaseConfigCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -675,20 +601,6 @@ func (scuo *ServiceConfigUpdateOne) SetNillableServiceID(u *uuid.UUID) *ServiceC
 	return scuo
 }
 
-// SetType sets the "type" field.
-func (scuo *ServiceConfigUpdateOne) SetType(st schema.ServiceType) *ServiceConfigUpdateOne {
-	scuo.mutation.SetType(st)
-	return scuo
-}
-
-// SetNillableType sets the "type" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableType(st *schema.ServiceType) *ServiceConfigUpdateOne {
-	if st != nil {
-		scuo.SetType(*st)
-	}
-	return scuo
-}
-
 // SetBuilder sets the "builder" field.
 func (scuo *ServiceConfigUpdateOne) SetBuilder(sb schema.ServiceBuilder) *ServiceConfigUpdateOne {
 	scuo.mutation.SetBuilder(sb)
@@ -714,78 +626,6 @@ func (scuo *ServiceConfigUpdateOne) SetNillableIcon(s *string) *ServiceConfigUpd
 	if s != nil {
 		scuo.SetIcon(*s)
 	}
-	return scuo
-}
-
-// SetDatabase sets the "database" field.
-func (scuo *ServiceConfigUpdateOne) SetDatabase(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetDatabase(s)
-	return scuo
-}
-
-// SetNillableDatabase sets the "database" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableDatabase(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetDatabase(*s)
-	}
-	return scuo
-}
-
-// ClearDatabase clears the value of the "database" field.
-func (scuo *ServiceConfigUpdateOne) ClearDatabase() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearDatabase()
-	return scuo
-}
-
-// SetDefinitionVersion sets the "definition_version" field.
-func (scuo *ServiceConfigUpdateOne) SetDefinitionVersion(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetDefinitionVersion(s)
-	return scuo
-}
-
-// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableDefinitionVersion(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetDefinitionVersion(*s)
-	}
-	return scuo
-}
-
-// ClearDefinitionVersion clears the value of the "definition_version" field.
-func (scuo *ServiceConfigUpdateOne) ClearDefinitionVersion() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearDefinitionVersion()
-	return scuo
-}
-
-// SetDatabaseConfig sets the "database_config" field.
-func (scuo *ServiceConfigUpdateOne) SetDatabaseConfig(m map[string]interface{}) *ServiceConfigUpdateOne {
-	scuo.mutation.SetDatabaseConfig(m)
-	return scuo
-}
-
-// ClearDatabaseConfig clears the value of the "database_config" field.
-func (scuo *ServiceConfigUpdateOne) ClearDatabaseConfig() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearDatabaseConfig()
-	return scuo
-}
-
-// SetDatabaseVersion sets the "database_version" field.
-func (scuo *ServiceConfigUpdateOne) SetDatabaseVersion(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetDatabaseVersion(s)
-	return scuo
-}
-
-// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableDatabaseVersion(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetDatabaseVersion(*s)
-	}
-	return scuo
-}
-
-// ClearDatabaseVersion clears the value of the "database_version" field.
-func (scuo *ServiceConfigUpdateOne) ClearDatabaseVersion() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearDatabaseVersion()
 	return scuo
 }
 
@@ -980,16 +820,16 @@ func (scuo *ServiceConfigUpdateOne) ClearRunCommand() *ServiceConfigUpdateOne {
 	return scuo
 }
 
-// SetPublic sets the "public" field.
-func (scuo *ServiceConfigUpdateOne) SetPublic(b bool) *ServiceConfigUpdateOne {
-	scuo.mutation.SetPublic(b)
+// SetIsPublic sets the "is_public" field.
+func (scuo *ServiceConfigUpdateOne) SetIsPublic(b bool) *ServiceConfigUpdateOne {
+	scuo.mutation.SetIsPublic(b)
 	return scuo
 }
 
-// SetNillablePublic sets the "public" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillablePublic(b *bool) *ServiceConfigUpdateOne {
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableIsPublic(b *bool) *ServiceConfigUpdateOne {
 	if b != nil {
-		scuo.SetPublic(*b)
+		scuo.SetIsPublic(*b)
 	}
 	return scuo
 }
@@ -1011,6 +851,38 @@ func (scuo *ServiceConfigUpdateOne) SetNillableImage(s *string) *ServiceConfigUp
 // ClearImage clears the value of the "image" field.
 func (scuo *ServiceConfigUpdateOne) ClearImage() *ServiceConfigUpdateOne {
 	scuo.mutation.ClearImage()
+	return scuo
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (scuo *ServiceConfigUpdateOne) SetDefinitionVersion(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDefinitionVersion(s)
+	return scuo
+}
+
+// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDefinitionVersion(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetDefinitionVersion(*s)
+	}
+	return scuo
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (scuo *ServiceConfigUpdateOne) ClearDefinitionVersion() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDefinitionVersion()
+	return scuo
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (scuo *ServiceConfigUpdateOne) SetDatabaseConfig(sc *schema.DatabaseConfig) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDatabaseConfig(sc)
+	return scuo
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (scuo *ServiceConfigUpdateOne) ClearDatabaseConfig() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDatabaseConfig()
 	return scuo
 }
 
@@ -1081,11 +953,6 @@ func (scuo *ServiceConfigUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (scuo *ServiceConfigUpdateOne) check() error {
-	if v, ok := scuo.mutation.GetType(); ok {
-		if err := serviceconfig.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.type": %w`, err)}
-		}
-	}
 	if v, ok := scuo.mutation.Builder(); ok {
 		if err := serviceconfig.BuilderValidator(v); err != nil {
 			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.builder": %w`, err)}
@@ -1145,38 +1012,11 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	if value, ok := scuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := scuo.mutation.GetType(); ok {
-		_spec.SetField(serviceconfig.FieldType, field.TypeEnum, value)
-	}
 	if value, ok := scuo.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 	}
 	if value, ok := scuo.mutation.Icon(); ok {
 		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
-	}
-	if value, ok := scuo.mutation.Database(); ok {
-		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
-	}
-	if scuo.mutation.DatabaseCleared() {
-		_spec.ClearField(serviceconfig.FieldDatabase, field.TypeString)
-	}
-	if value, ok := scuo.mutation.DefinitionVersion(); ok {
-		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
-	}
-	if scuo.mutation.DefinitionVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldDefinitionVersion, field.TypeString)
-	}
-	if value, ok := scuo.mutation.DatabaseConfig(); ok {
-		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
-	}
-	if scuo.mutation.DatabaseConfigCleared() {
-		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
-	}
-	if value, ok := scuo.mutation.DatabaseVersion(); ok {
-		_spec.SetField(serviceconfig.FieldDatabaseVersion, field.TypeString, value)
-	}
-	if scuo.mutation.DatabaseVersionCleared() {
-		_spec.ClearField(serviceconfig.FieldDatabaseVersion, field.TypeString)
 	}
 	if value, ok := scuo.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
@@ -1245,14 +1085,26 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	if scuo.mutation.RunCommandCleared() {
 		_spec.ClearField(serviceconfig.FieldRunCommand, field.TypeString)
 	}
-	if value, ok := scuo.mutation.Public(); ok {
-		_spec.SetField(serviceconfig.FieldPublic, field.TypeBool, value)
+	if value, ok := scuo.mutation.IsPublic(); ok {
+		_spec.SetField(serviceconfig.FieldIsPublic, field.TypeBool, value)
 	}
 	if value, ok := scuo.mutation.Image(); ok {
 		_spec.SetField(serviceconfig.FieldImage, field.TypeString, value)
 	}
 	if scuo.mutation.ImageCleared() {
 		_spec.ClearField(serviceconfig.FieldImage, field.TypeString)
+	}
+	if value, ok := scuo.mutation.DefinitionVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
+	}
+	if scuo.mutation.DefinitionVersionCleared() {
+		_spec.ClearField(serviceconfig.FieldDefinitionVersion, field.TypeString)
+	}
+	if value, ok := scuo.mutation.DatabaseConfig(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
+	}
+	if scuo.mutation.DatabaseConfigCleared() {
+		_spec.ClearField(serviceconfig.FieldDatabaseConfig, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -213,7 +213,7 @@ func (self *ServiceService) createCRDFromService(service *ent.Service) *v1.Servi
 	crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
 	crdToDeploy.Spec.Config.Ports = schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports)
 	crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
-	crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.Public
+	crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.IsPublic
 
 	return crdToDeploy
 }

@@ -10,25 +10,12 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
-type UpdateProjectInput struct {
-	TeamID               uuid.UUID  `validate:"required,uuid4"`
-	ProjectID            uuid.UUID  `validate:"required,uuid4"`
-	DefaultEnvironmentID *uuid.UUID `validate:"omitempty,uuid4"`
-	Name                 string
-	Description          *string
-}
-
-func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID uuid.UUID, input *UpdateProjectInput) (*models.ProjectResponse, error) {
-	// Validate input
-	if err := validate.Validator().Struct(input); err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
+func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID uuid.UUID, input *models.UpdateProjectInput) (*models.ProjectResponse, error) {
 	if input.Name == "" && input.Description == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "No fields to update")
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -18,17 +17,12 @@ import (
 )
 
 type CreateProjectInput struct {
-	TeamID      uuid.UUID `validate:"required,uuid4"`
-	Name        string    `validate:"required"`
+	TeamID      uuid.UUID `format:"uuid" required:"true"`
+	Name        string    `format:"uuid" required:"true"`
 	Description *string
 }
 
 func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID uuid.UUID, input *CreateProjectInput, bearerToken string) (*models.ProjectResponse, error) {
-	// Validate input
-	if err := validate.Validator().Struct(input); err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Team editor can create projects
 		{

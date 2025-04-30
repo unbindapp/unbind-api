@@ -13,6 +13,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 )
@@ -27,6 +28,8 @@ type Service struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Type of service
+	Type schema.ServiceType `json:"type,omitempty"`
 	// KubernetesName holds the value of the "kubernetes_name" field.
 	KubernetesName string `json:"kubernetes_name,omitempty"`
 	// Name holds the value of the "name" field.
@@ -35,6 +38,10 @@ type Service struct {
 	Description string `json:"description,omitempty"`
 	// EnvironmentID holds the value of the "environment_id" field.
 	EnvironmentID uuid.UUID `json:"environment_id,omitempty"`
+	// Database to use for the service
+	Database *string `json:"database,omitempty"`
+	// Version of the database
+	DatabaseVersion *string `json:"database_version,omitempty"`
 	// Optional reference to GitHub installation
 	GithubInstallationID *int64 `json:"github_installation_id,omitempty"`
 	// Git repository owner
@@ -141,7 +148,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
-		case service.FieldKubernetesName, service.FieldName, service.FieldDescription, service.FieldGitRepositoryOwner, service.FieldGitRepository, service.FieldKubernetesSecret:
+		case service.FieldType, service.FieldKubernetesName, service.FieldName, service.FieldDescription, service.FieldDatabase, service.FieldDatabaseVersion, service.FieldGitRepositoryOwner, service.FieldGitRepository, service.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case service.FieldCreatedAt, service.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -180,6 +187,12 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.UpdatedAt = value.Time
 			}
+		case service.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				s.Type = schema.ServiceType(value.String)
+			}
 		case service.FieldKubernetesName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field kubernetes_name", values[i])
@@ -203,6 +216,20 @@ func (s *Service) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field environment_id", values[i])
 			} else if value != nil {
 				s.EnvironmentID = *value
+			}
+		case service.FieldDatabase:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field database", values[i])
+			} else if value.Valid {
+				s.Database = new(string)
+				*s.Database = value.String
+			}
+		case service.FieldDatabaseVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field database_version", values[i])
+			} else if value.Valid {
+				s.DatabaseVersion = new(string)
+				*s.DatabaseVersion = value.String
 			}
 		case service.FieldGithubInstallationID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -310,6 +337,9 @@ func (s *Service) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(s.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("type=")
+	builder.WriteString(fmt.Sprintf("%v", s.Type))
+	builder.WriteString(", ")
 	builder.WriteString("kubernetes_name=")
 	builder.WriteString(s.KubernetesName)
 	builder.WriteString(", ")
@@ -321,6 +351,16 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("environment_id=")
 	builder.WriteString(fmt.Sprintf("%v", s.EnvironmentID))
+	builder.WriteString(", ")
+	if v := s.Database; v != nil {
+		builder.WriteString("database=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := s.DatabaseVersion; v != nil {
+		builder.WriteString("database_version=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := s.GithubInstallationID; v != nil {
 		builder.WriteString("github_installation_id=")

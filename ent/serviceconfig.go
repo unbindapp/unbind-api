@@ -30,20 +30,10 @@ type ServiceConfig struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// ServiceID holds the value of the "service_id" field.
 	ServiceID uuid.UUID `json:"service_id,omitempty"`
-	// Type of service
-	Type schema.ServiceType `json:"type,omitempty"`
 	// Builder holds the value of the "builder" field.
 	Builder schema.ServiceBuilder `json:"builder,omitempty"`
 	// Icon metadata, unique of framework, provider, database
 	Icon string `json:"icon,omitempty"`
-	// Database to use for the service
-	Database *string `json:"database,omitempty"`
-	// Version of the database custom resource definition
-	DefinitionVersion *string `json:"definition_version,omitempty"`
-	// Database configuration for the service
-	DatabaseConfig map[string]interface{} `json:"database_config,omitempty"`
-	// Version of the database
-	DatabaseVersion *string `json:"database_version,omitempty"`
 	// Path to Dockerfile if using docker builder
 	DockerfilePath *string `json:"dockerfile_path,omitempty"`
 	// Path to Dockerfile context if using docker builder
@@ -65,9 +55,13 @@ type ServiceConfig struct {
 	// Custom run command
 	RunCommand *string `json:"run_command,omitempty"`
 	// Whether the service is publicly accessible, creates an ingress resource
-	Public bool `json:"public,omitempty"`
+	IsPublic bool `json:"is_public,omitempty"`
 	// Custom Docker image if not building from git
 	Image string `json:"image,omitempty"`
+	// Version of the database custom resource definition
+	DefinitionVersion *string `json:"definition_version,omitempty"`
+	// Database configuration for the service
+	DatabaseConfig *schema.DatabaseConfig `json:"database_config,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -99,13 +93,13 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case serviceconfig.FieldDatabaseConfig, serviceconfig.FieldHosts, serviceconfig.FieldPorts:
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig:
 			values[i] = new([]byte)
-		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldPublic:
+		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldType, serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDatabase, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldDatabaseVersion, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage:
+		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -150,12 +144,6 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				sc.ServiceID = *value
 			}
-		case serviceconfig.FieldType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field type", values[i])
-			} else if value.Valid {
-				sc.Type = schema.ServiceType(value.String)
-			}
 		case serviceconfig.FieldBuilder:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field builder", values[i])
@@ -167,35 +155,6 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field icon", values[i])
 			} else if value.Valid {
 				sc.Icon = value.String
-			}
-		case serviceconfig.FieldDatabase:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field database", values[i])
-			} else if value.Valid {
-				sc.Database = new(string)
-				*sc.Database = value.String
-			}
-		case serviceconfig.FieldDefinitionVersion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field definition_version", values[i])
-			} else if value.Valid {
-				sc.DefinitionVersion = new(string)
-				*sc.DefinitionVersion = value.String
-			}
-		case serviceconfig.FieldDatabaseConfig:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field database_config", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &sc.DatabaseConfig); err != nil {
-					return fmt.Errorf("unmarshal field database_config: %w", err)
-				}
-			}
-		case serviceconfig.FieldDatabaseVersion:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field database_version", values[i])
-			} else if value.Valid {
-				sc.DatabaseVersion = new(string)
-				*sc.DatabaseVersion = value.String
 			}
 		case serviceconfig.FieldDockerfilePath:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -267,17 +226,32 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				sc.RunCommand = new(string)
 				*sc.RunCommand = value.String
 			}
-		case serviceconfig.FieldPublic:
+		case serviceconfig.FieldIsPublic:
 			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field public", values[i])
+				return fmt.Errorf("unexpected type %T for field is_public", values[i])
 			} else if value.Valid {
-				sc.Public = value.Bool
+				sc.IsPublic = value.Bool
 			}
 		case serviceconfig.FieldImage:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field image", values[i])
 			} else if value.Valid {
 				sc.Image = value.String
+			}
+		case serviceconfig.FieldDefinitionVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field definition_version", values[i])
+			} else if value.Valid {
+				sc.DefinitionVersion = new(string)
+				*sc.DefinitionVersion = value.String
+			}
+		case serviceconfig.FieldDatabaseConfig:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field database_config", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.DatabaseConfig); err != nil {
+					return fmt.Errorf("unmarshal field database_config: %w", err)
+				}
 			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
@@ -329,32 +303,11 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString("service_id=")
 	builder.WriteString(fmt.Sprintf("%v", sc.ServiceID))
 	builder.WriteString(", ")
-	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", sc.Type))
-	builder.WriteString(", ")
 	builder.WriteString("builder=")
 	builder.WriteString(fmt.Sprintf("%v", sc.Builder))
 	builder.WriteString(", ")
 	builder.WriteString("icon=")
 	builder.WriteString(sc.Icon)
-	builder.WriteString(", ")
-	if v := sc.Database; v != nil {
-		builder.WriteString("database=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := sc.DefinitionVersion; v != nil {
-		builder.WriteString("definition_version=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	builder.WriteString("database_config=")
-	builder.WriteString(fmt.Sprintf("%v", sc.DatabaseConfig))
-	builder.WriteString(", ")
-	if v := sc.DatabaseVersion; v != nil {
-		builder.WriteString("database_version=")
-		builder.WriteString(*v)
-	}
 	builder.WriteString(", ")
 	if v := sc.DockerfilePath; v != nil {
 		builder.WriteString("dockerfile_path=")
@@ -398,11 +351,19 @@ func (sc *ServiceConfig) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	builder.WriteString("public=")
-	builder.WriteString(fmt.Sprintf("%v", sc.Public))
+	builder.WriteString("is_public=")
+	builder.WriteString(fmt.Sprintf("%v", sc.IsPublic))
 	builder.WriteString(", ")
 	builder.WriteString("image=")
 	builder.WriteString(sc.Image)
+	builder.WriteString(", ")
+	if v := sc.DefinitionVersion; v != nil {
+		builder.WriteString("definition_version=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("database_config=")
+	builder.WriteString(fmt.Sprintf("%v", sc.DatabaseConfig))
 	builder.WriteByte(')')
 	return builder.String()
 }

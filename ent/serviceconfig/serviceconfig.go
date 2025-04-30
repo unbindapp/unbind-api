@@ -24,20 +24,10 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldServiceID holds the string denoting the service_id field in the database.
 	FieldServiceID = "service_id"
-	// FieldType holds the string denoting the type field in the database.
-	FieldType = "type"
 	// FieldBuilder holds the string denoting the builder field in the database.
 	FieldBuilder = "builder"
 	// FieldIcon holds the string denoting the icon field in the database.
 	FieldIcon = "icon"
-	// FieldDatabase holds the string denoting the database field in the database.
-	FieldDatabase = "database"
-	// FieldDefinitionVersion holds the string denoting the definition_version field in the database.
-	FieldDefinitionVersion = "definition_version"
-	// FieldDatabaseConfig holds the string denoting the database_config field in the database.
-	FieldDatabaseConfig = "database_config"
-	// FieldDatabaseVersion holds the string denoting the database_version field in the database.
-	FieldDatabaseVersion = "database_version"
 	// FieldDockerfilePath holds the string denoting the dockerfile_path field in the database.
 	FieldDockerfilePath = "dockerfile_path"
 	// FieldDockerfileContext holds the string denoting the dockerfile_context field in the database.
@@ -58,10 +48,14 @@ const (
 	FieldAutoDeploy = "auto_deploy"
 	// FieldRunCommand holds the string denoting the run_command field in the database.
 	FieldRunCommand = "run_command"
-	// FieldPublic holds the string denoting the public field in the database.
-	FieldPublic = "public"
+	// FieldIsPublic holds the string denoting the is_public field in the database.
+	FieldIsPublic = "is_public"
 	// FieldImage holds the string denoting the image field in the database.
 	FieldImage = "image"
+	// FieldDefinitionVersion holds the string denoting the definition_version field in the database.
+	FieldDefinitionVersion = "definition_version"
+	// FieldDatabaseConfig holds the string denoting the database_config field in the database.
+	FieldDatabaseConfig = "database_config"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// Table holds the table name of the serviceconfig in the database.
@@ -81,13 +75,8 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldServiceID,
-	FieldType,
 	FieldBuilder,
 	FieldIcon,
-	FieldDatabase,
-	FieldDefinitionVersion,
-	FieldDatabaseConfig,
-	FieldDatabaseVersion,
 	FieldDockerfilePath,
 	FieldDockerfileContext,
 	FieldRailpackProvider,
@@ -98,8 +87,10 @@ var Columns = []string{
 	FieldReplicas,
 	FieldAutoDeploy,
 	FieldRunCommand,
-	FieldPublic,
+	FieldIsPublic,
 	FieldImage,
+	FieldDefinitionVersion,
+	FieldDatabaseConfig,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -123,21 +114,11 @@ var (
 	DefaultReplicas int32
 	// DefaultAutoDeploy holds the default value on creation for the "auto_deploy" field.
 	DefaultAutoDeploy bool
-	// DefaultPublic holds the default value on creation for the "public" field.
-	DefaultPublic bool
+	// DefaultIsPublic holds the default value on creation for the "is_public" field.
+	DefaultIsPublic bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
-
-// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
-func TypeValidator(_type schema.ServiceType) error {
-	switch _type {
-	case "github", "docker-image", "database":
-		return nil
-	default:
-		return fmt.Errorf("serviceconfig: invalid enum value for type field: %q", _type)
-	}
-}
 
 // BuilderValidator is a validator for the "builder" field enum values. It is called by the builders before save.
 func BuilderValidator(b schema.ServiceBuilder) error {
@@ -192,11 +173,6 @@ func ByServiceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldServiceID, opts...).ToFunc()
 }
 
-// ByType orders the results by the type field.
-func ByType(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldType, opts...).ToFunc()
-}
-
 // ByBuilder orders the results by the builder field.
 func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
@@ -205,21 +181,6 @@ func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
 // ByIcon orders the results by the icon field.
 func ByIcon(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIcon, opts...).ToFunc()
-}
-
-// ByDatabase orders the results by the database field.
-func ByDatabase(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDatabase, opts...).ToFunc()
-}
-
-// ByDefinitionVersion orders the results by the definition_version field.
-func ByDefinitionVersion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDefinitionVersion, opts...).ToFunc()
-}
-
-// ByDatabaseVersion orders the results by the database_version field.
-func ByDatabaseVersion(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDatabaseVersion, opts...).ToFunc()
 }
 
 // ByDockerfilePath orders the results by the dockerfile_path field.
@@ -262,14 +223,19 @@ func ByRunCommand(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRunCommand, opts...).ToFunc()
 }
 
-// ByPublic orders the results by the public field.
-func ByPublic(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPublic, opts...).ToFunc()
+// ByIsPublic orders the results by the is_public field.
+func ByIsPublic(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsPublic, opts...).ToFunc()
 }
 
 // ByImage orders the results by the image field.
 func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
+}
+
+// ByDefinitionVersion orders the results by the definition_version field.
+func ByDefinitionVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDefinitionVersion, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

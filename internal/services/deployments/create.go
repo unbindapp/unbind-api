@@ -5,18 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 func (self *DeploymentService) CreateManualDeployment(ctx context.Context, requesterUserId uuid.UUID, input *models.CreateDeploymentInput) (*models.DeploymentResponse, error) {
-	if err := validate.Validator().Struct(input); err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	// Editor can create deployments
 	if err := self.repo.Permissions().Check(ctx, requesterUserId, []permissions_repo.PermissionCheck{
 		{

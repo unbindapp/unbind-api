@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/predicate"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
@@ -38,6 +39,20 @@ func (su *ServiceUpdate) Where(ps ...predicate.Service) *ServiceUpdate {
 // SetUpdatedAt sets the "updated_at" field.
 func (su *ServiceUpdate) SetUpdatedAt(t time.Time) *ServiceUpdate {
 	su.mutation.SetUpdatedAt(t)
+	return su
+}
+
+// SetType sets the "type" field.
+func (su *ServiceUpdate) SetType(st schema.ServiceType) *ServiceUpdate {
+	su.mutation.SetType(st)
+	return su
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableType(st *schema.ServiceType) *ServiceUpdate {
+	if st != nil {
+		su.SetType(*st)
+	}
 	return su
 }
 
@@ -100,6 +115,46 @@ func (su *ServiceUpdate) SetNillableEnvironmentID(u *uuid.UUID) *ServiceUpdate {
 	if u != nil {
 		su.SetEnvironmentID(*u)
 	}
+	return su
+}
+
+// SetDatabase sets the "database" field.
+func (su *ServiceUpdate) SetDatabase(s string) *ServiceUpdate {
+	su.mutation.SetDatabase(s)
+	return su
+}
+
+// SetNillableDatabase sets the "database" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableDatabase(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetDatabase(*s)
+	}
+	return su
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (su *ServiceUpdate) ClearDatabase() *ServiceUpdate {
+	su.mutation.ClearDatabase()
+	return su
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (su *ServiceUpdate) SetDatabaseVersion(s string) *ServiceUpdate {
+	su.mutation.SetDatabaseVersion(s)
+	return su
+}
+
+// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableDatabaseVersion(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetDatabaseVersion(*s)
+	}
+	return su
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (su *ServiceUpdate) ClearDatabaseVersion() *ServiceUpdate {
+	su.mutation.ClearDatabaseVersion()
 	return su
 }
 
@@ -370,6 +425,11 @@ func (su *ServiceUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (su *ServiceUpdate) check() error {
+	if v, ok := su.mutation.GetType(); ok {
+		if err := service.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Service.type": %w`, err)}
+		}
+	}
 	if v, ok := su.mutation.KubernetesName(); ok {
 		if err := service.KubernetesNameValidator(v); err != nil {
 			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Service.kubernetes_name": %w`, err)}
@@ -402,6 +462,9 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := su.mutation.UpdatedAt(); ok {
 		_spec.SetField(service.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := su.mutation.GetType(); ok {
+		_spec.SetField(service.FieldType, field.TypeEnum, value)
+	}
 	if value, ok := su.mutation.KubernetesName(); ok {
 		_spec.SetField(service.FieldKubernetesName, field.TypeString, value)
 	}
@@ -413,6 +476,18 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if su.mutation.DescriptionCleared() {
 		_spec.ClearField(service.FieldDescription, field.TypeString)
+	}
+	if value, ok := su.mutation.Database(); ok {
+		_spec.SetField(service.FieldDatabase, field.TypeString, value)
+	}
+	if su.mutation.DatabaseCleared() {
+		_spec.ClearField(service.FieldDatabase, field.TypeString)
+	}
+	if value, ok := su.mutation.DatabaseVersion(); ok {
+		_spec.SetField(service.FieldDatabaseVersion, field.TypeString, value)
+	}
+	if su.mutation.DatabaseVersionCleared() {
+		_spec.ClearField(service.FieldDatabaseVersion, field.TypeString)
 	}
 	if value, ok := su.mutation.GitRepositoryOwner(); ok {
 		_spec.SetField(service.FieldGitRepositoryOwner, field.TypeString, value)
@@ -663,6 +738,20 @@ func (suo *ServiceUpdateOne) SetUpdatedAt(t time.Time) *ServiceUpdateOne {
 	return suo
 }
 
+// SetType sets the "type" field.
+func (suo *ServiceUpdateOne) SetType(st schema.ServiceType) *ServiceUpdateOne {
+	suo.mutation.SetType(st)
+	return suo
+}
+
+// SetNillableType sets the "type" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableType(st *schema.ServiceType) *ServiceUpdateOne {
+	if st != nil {
+		suo.SetType(*st)
+	}
+	return suo
+}
+
 // SetKubernetesName sets the "kubernetes_name" field.
 func (suo *ServiceUpdateOne) SetKubernetesName(s string) *ServiceUpdateOne {
 	suo.mutation.SetKubernetesName(s)
@@ -722,6 +811,46 @@ func (suo *ServiceUpdateOne) SetNillableEnvironmentID(u *uuid.UUID) *ServiceUpda
 	if u != nil {
 		suo.SetEnvironmentID(*u)
 	}
+	return suo
+}
+
+// SetDatabase sets the "database" field.
+func (suo *ServiceUpdateOne) SetDatabase(s string) *ServiceUpdateOne {
+	suo.mutation.SetDatabase(s)
+	return suo
+}
+
+// SetNillableDatabase sets the "database" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableDatabase(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetDatabase(*s)
+	}
+	return suo
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (suo *ServiceUpdateOne) ClearDatabase() *ServiceUpdateOne {
+	suo.mutation.ClearDatabase()
+	return suo
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (suo *ServiceUpdateOne) SetDatabaseVersion(s string) *ServiceUpdateOne {
+	suo.mutation.SetDatabaseVersion(s)
+	return suo
+}
+
+// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableDatabaseVersion(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetDatabaseVersion(*s)
+	}
+	return suo
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (suo *ServiceUpdateOne) ClearDatabaseVersion() *ServiceUpdateOne {
+	suo.mutation.ClearDatabaseVersion()
 	return suo
 }
 
@@ -1005,6 +1134,11 @@ func (suo *ServiceUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (suo *ServiceUpdateOne) check() error {
+	if v, ok := suo.mutation.GetType(); ok {
+		if err := service.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Service.type": %w`, err)}
+		}
+	}
 	if v, ok := suo.mutation.KubernetesName(); ok {
 		if err := service.KubernetesNameValidator(v); err != nil {
 			return &ValidationError{Name: "kubernetes_name", err: fmt.Errorf(`ent: validator failed for field "Service.kubernetes_name": %w`, err)}
@@ -1054,6 +1188,9 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	if value, ok := suo.mutation.UpdatedAt(); ok {
 		_spec.SetField(service.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := suo.mutation.GetType(); ok {
+		_spec.SetField(service.FieldType, field.TypeEnum, value)
+	}
 	if value, ok := suo.mutation.KubernetesName(); ok {
 		_spec.SetField(service.FieldKubernetesName, field.TypeString, value)
 	}
@@ -1065,6 +1202,18 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	}
 	if suo.mutation.DescriptionCleared() {
 		_spec.ClearField(service.FieldDescription, field.TypeString)
+	}
+	if value, ok := suo.mutation.Database(); ok {
+		_spec.SetField(service.FieldDatabase, field.TypeString, value)
+	}
+	if suo.mutation.DatabaseCleared() {
+		_spec.ClearField(service.FieldDatabase, field.TypeString)
+	}
+	if value, ok := suo.mutation.DatabaseVersion(); ok {
+		_spec.SetField(service.FieldDatabaseVersion, field.TypeString, value)
+	}
+	if suo.mutation.DatabaseVersionCleared() {
+		_spec.ClearField(service.FieldDatabaseVersion, field.TypeString)
 	}
 	if value, ok := suo.mutation.GitRepositoryOwner(); ok {
 		_spec.SetField(service.FieldGitRepositoryOwner, field.TypeString, value)

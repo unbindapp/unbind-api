@@ -14,18 +14,25 @@ import (
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
+type CreateServiceInput struct {
+	KubernetesName       string
+	Name                 string
+	ServiceType          schema.ServiceType
+	Description          string
+	EnvironmentID        uuid.UUID
+	GitHubInstallationID *int64
+	GitRepository        *string
+	GitRepositoryOwner   *string
+	KubernetesSecret     string
+	Database             *string
+	DatabaseVersion      *string
+}
+
 // Create the service
 func (self *ServiceRepository) Create(
 	ctx context.Context,
 	tx repository.TxInterface,
-	kubernetesName string,
-	name string,
-	description string,
-	environmentID uuid.UUID,
-	gitHubInstallationID *int64,
-	gitRepository *string,
-	gitRepositoryOwner *string,
-	kubernetesSecret string,
+	input *CreateServiceInput,
 ) (*ent.Service, error) {
 	db := self.base.DB
 	if tx != nil {
@@ -33,21 +40,22 @@ func (self *ServiceRepository) Create(
 	}
 
 	return db.Service.Create().
-		SetKubernetesName(kubernetesName).
-		SetName(name).
-		SetDescription(description).
-		SetEnvironmentID(environmentID).
-		SetNillableGithubInstallationID(gitHubInstallationID).
-		SetNillableGitRepository(gitRepository).
-		SetNillableGitRepositoryOwner(gitRepositoryOwner).
-		SetKubernetesSecret(kubernetesSecret).
-		Save(ctx)
+		SetType(input.ServiceType).
+		SetKubernetesName(input.KubernetesName).
+		SetName(input.Name).
+		SetDescription(input.Description).
+		SetEnvironmentID(input.EnvironmentID).
+		SetNillableGithubInstallationID(input.GitHubInstallationID).
+		SetNillableGitRepository(input.GitRepository).
+		SetNillableGitRepositoryOwner(input.GitRepositoryOwner).
+		SetKubernetesSecret(input.KubernetesSecret).
+		SetNillableDatabase(input.Database).
+		SetNillableDatabaseVersion(input.DatabaseVersion).Save(ctx)
 }
 
 // Create the service config
 type MutateConfigInput struct {
 	ServiceID               uuid.UUID
-	ServiceType             schema.ServiceType
 	Builder                 *schema.ServiceBuilder
 	Provider                *enum.Provider
 	Framework               *enum.Framework
@@ -61,10 +69,8 @@ type MutateConfigInput struct {
 	Image                   *string
 	DockerfilePath          *string
 	DockerfileContext       *string
-	Database                *string
 	CustomDefinitionVersion *string
-	DatabaseConfig          *map[string]interface{}
-	DatabaseVersion         *string
+	DatabaseConfig          *schema.DatabaseConfig
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -81,21 +87,26 @@ func (self *ServiceRepository) CreateConfig(
 		return nil, fmt.Errorf("builder is missing, but required")
 	}
 
+	// Get service
+	service, err := db.Service.Get(ctx, input.ServiceID)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get high level icon
 	var icon string
-	if input.Database != nil {
-		icon = *input.Database
+	if service.Database != nil {
+		icon = *service.Database
 	} else if input.Framework != nil {
 		icon = string(*input.Framework)
 	} else if input.Provider != nil {
 		icon = string(*input.Provider)
 	} else {
-		icon = string(input.ServiceType)
+		icon = string(service.Type)
 	}
 
 	c := db.ServiceConfig.Create().
 		SetServiceID(input.ServiceID).
-		SetType(input.ServiceType).
 		SetBuilder(*input.Builder).
 		SetIcon(icon).
 		SetNillableRailpackProvider(input.Provider).
@@ -104,16 +115,14 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableReplicas(input.Replicas).
 		SetNillableAutoDeploy(input.AutoDeploy).
 		SetNillableRunCommand(input.RunCommand).
-		SetNillablePublic(input.Public).
+		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
 		SetNillableDockerfilePath(input.DockerfilePath).
 		SetNillableDockerfileContext(input.DockerfileContext).
-		SetNillableDatabase(input.Database).
-		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
-		SetNillableDatabaseVersion(input.DatabaseVersion)
+		SetNillableDefinitionVersion(input.CustomDefinitionVersion)
 
 	if input.DatabaseConfig != nil {
-		c.SetDatabaseConfig(*input.DatabaseConfig)
+		c.SetDatabaseConfig(input.DatabaseConfig)
 	}
 
 	if len(input.Ports) > 0 {
@@ -164,16 +173,12 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableReplicas(input.Replicas).
 		SetNillableAutoDeploy(input.AutoDeploy).
 		SetNillableRunCommand(input.RunCommand).
-		SetNillablePublic(input.Public).
+		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion)
 
 	if input.DatabaseConfig != nil {
-		upd.SetDatabaseConfig(*input.DatabaseConfig)
-	}
-
-	if input.DatabaseVersion != nil {
-		upd.SetDatabaseVersion(*input.DatabaseVersion)
+		upd.SetDatabaseConfig(input.DatabaseConfig)
 	}
 
 	if input.DockerfilePath != nil {

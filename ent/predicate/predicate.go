@@ -42,6 +42,9 @@ type Project func(*sql.Selector)
 // Registry is the predicate function for registry builders.
 type Registry func(*sql.Selector)
 
+// S3 is the predicate function for s3 builders.
+type S3 func(*sql.Selector)
+
 // Service is the predicate function for service builders.
 type Service func(*sql.Selector)
 

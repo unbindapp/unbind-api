@@ -62,12 +62,6 @@ func (scc *ServiceConfigCreate) SetServiceID(u uuid.UUID) *ServiceConfigCreate {
 	return scc
 }
 
-// SetType sets the "type" field.
-func (scc *ServiceConfigCreate) SetType(st schema.ServiceType) *ServiceConfigCreate {
-	scc.mutation.SetType(st)
-	return scc
-}
-
 // SetBuilder sets the "builder" field.
 func (scc *ServiceConfigCreate) SetBuilder(sb schema.ServiceBuilder) *ServiceConfigCreate {
 	scc.mutation.SetBuilder(sb)
@@ -77,54 +71,6 @@ func (scc *ServiceConfigCreate) SetBuilder(sb schema.ServiceBuilder) *ServiceCon
 // SetIcon sets the "icon" field.
 func (scc *ServiceConfigCreate) SetIcon(s string) *ServiceConfigCreate {
 	scc.mutation.SetIcon(s)
-	return scc
-}
-
-// SetDatabase sets the "database" field.
-func (scc *ServiceConfigCreate) SetDatabase(s string) *ServiceConfigCreate {
-	scc.mutation.SetDatabase(s)
-	return scc
-}
-
-// SetNillableDatabase sets the "database" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableDatabase(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetDatabase(*s)
-	}
-	return scc
-}
-
-// SetDefinitionVersion sets the "definition_version" field.
-func (scc *ServiceConfigCreate) SetDefinitionVersion(s string) *ServiceConfigCreate {
-	scc.mutation.SetDefinitionVersion(s)
-	return scc
-}
-
-// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableDefinitionVersion(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetDefinitionVersion(*s)
-	}
-	return scc
-}
-
-// SetDatabaseConfig sets the "database_config" field.
-func (scc *ServiceConfigCreate) SetDatabaseConfig(m map[string]interface{}) *ServiceConfigCreate {
-	scc.mutation.SetDatabaseConfig(m)
-	return scc
-}
-
-// SetDatabaseVersion sets the "database_version" field.
-func (scc *ServiceConfigCreate) SetDatabaseVersion(s string) *ServiceConfigCreate {
-	scc.mutation.SetDatabaseVersion(s)
-	return scc
-}
-
-// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableDatabaseVersion(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetDatabaseVersion(*s)
-	}
 	return scc
 }
 
@@ -252,16 +198,16 @@ func (scc *ServiceConfigCreate) SetNillableRunCommand(s *string) *ServiceConfigC
 	return scc
 }
 
-// SetPublic sets the "public" field.
-func (scc *ServiceConfigCreate) SetPublic(b bool) *ServiceConfigCreate {
-	scc.mutation.SetPublic(b)
+// SetIsPublic sets the "is_public" field.
+func (scc *ServiceConfigCreate) SetIsPublic(b bool) *ServiceConfigCreate {
+	scc.mutation.SetIsPublic(b)
 	return scc
 }
 
-// SetNillablePublic sets the "public" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillablePublic(b *bool) *ServiceConfigCreate {
+// SetNillableIsPublic sets the "is_public" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableIsPublic(b *bool) *ServiceConfigCreate {
 	if b != nil {
-		scc.SetPublic(*b)
+		scc.SetIsPublic(*b)
 	}
 	return scc
 }
@@ -277,6 +223,26 @@ func (scc *ServiceConfigCreate) SetNillableImage(s *string) *ServiceConfigCreate
 	if s != nil {
 		scc.SetImage(*s)
 	}
+	return scc
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (scc *ServiceConfigCreate) SetDefinitionVersion(s string) *ServiceConfigCreate {
+	scc.mutation.SetDefinitionVersion(s)
+	return scc
+}
+
+// SetNillableDefinitionVersion sets the "definition_version" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDefinitionVersion(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetDefinitionVersion(*s)
+	}
+	return scc
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (scc *ServiceConfigCreate) SetDatabaseConfig(sc *schema.DatabaseConfig) *ServiceConfigCreate {
+	scc.mutation.SetDatabaseConfig(sc)
 	return scc
 }
 
@@ -350,9 +316,9 @@ func (scc *ServiceConfigCreate) defaults() {
 		v := serviceconfig.DefaultAutoDeploy
 		scc.mutation.SetAutoDeploy(v)
 	}
-	if _, ok := scc.mutation.Public(); !ok {
-		v := serviceconfig.DefaultPublic
-		scc.mutation.SetPublic(v)
+	if _, ok := scc.mutation.IsPublic(); !ok {
+		v := serviceconfig.DefaultIsPublic
+		scc.mutation.SetIsPublic(v)
 	}
 	if _, ok := scc.mutation.ID(); !ok {
 		v := serviceconfig.DefaultID()
@@ -370,14 +336,6 @@ func (scc *ServiceConfigCreate) check() error {
 	}
 	if _, ok := scc.mutation.ServiceID(); !ok {
 		return &ValidationError{Name: "service_id", err: errors.New(`ent: missing required field "ServiceConfig.service_id"`)}
-	}
-	if _, ok := scc.mutation.GetType(); !ok {
-		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "ServiceConfig.type"`)}
-	}
-	if v, ok := scc.mutation.GetType(); ok {
-		if err := serviceconfig.TypeValidator(v); err != nil {
-			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.type": %w`, err)}
-		}
 	}
 	if _, ok := scc.mutation.Builder(); !ok {
 		return &ValidationError{Name: "builder", err: errors.New(`ent: missing required field "ServiceConfig.builder"`)}
@@ -406,8 +364,8 @@ func (scc *ServiceConfigCreate) check() error {
 	if _, ok := scc.mutation.AutoDeploy(); !ok {
 		return &ValidationError{Name: "auto_deploy", err: errors.New(`ent: missing required field "ServiceConfig.auto_deploy"`)}
 	}
-	if _, ok := scc.mutation.Public(); !ok {
-		return &ValidationError{Name: "public", err: errors.New(`ent: missing required field "ServiceConfig.public"`)}
+	if _, ok := scc.mutation.IsPublic(); !ok {
+		return &ValidationError{Name: "is_public", err: errors.New(`ent: missing required field "ServiceConfig.is_public"`)}
 	}
 	if len(scc.mutation.ServiceIDs()) == 0 {
 		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "ServiceConfig.service"`)}
@@ -456,10 +414,6 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if value, ok := scc.mutation.GetType(); ok {
-		_spec.SetField(serviceconfig.FieldType, field.TypeEnum, value)
-		_node.Type = value
-	}
 	if value, ok := scc.mutation.Builder(); ok {
 		_spec.SetField(serviceconfig.FieldBuilder, field.TypeEnum, value)
 		_node.Builder = value
@@ -467,22 +421,6 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.Icon(); ok {
 		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
 		_node.Icon = value
-	}
-	if value, ok := scc.mutation.Database(); ok {
-		_spec.SetField(serviceconfig.FieldDatabase, field.TypeString, value)
-		_node.Database = &value
-	}
-	if value, ok := scc.mutation.DefinitionVersion(); ok {
-		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
-		_node.DefinitionVersion = &value
-	}
-	if value, ok := scc.mutation.DatabaseConfig(); ok {
-		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
-		_node.DatabaseConfig = value
-	}
-	if value, ok := scc.mutation.DatabaseVersion(); ok {
-		_spec.SetField(serviceconfig.FieldDatabaseVersion, field.TypeString, value)
-		_node.DatabaseVersion = &value
 	}
 	if value, ok := scc.mutation.DockerfilePath(); ok {
 		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
@@ -524,13 +462,21 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldRunCommand, field.TypeString, value)
 		_node.RunCommand = &value
 	}
-	if value, ok := scc.mutation.Public(); ok {
-		_spec.SetField(serviceconfig.FieldPublic, field.TypeBool, value)
-		_node.Public = value
+	if value, ok := scc.mutation.IsPublic(); ok {
+		_spec.SetField(serviceconfig.FieldIsPublic, field.TypeBool, value)
+		_node.IsPublic = value
 	}
 	if value, ok := scc.mutation.Image(); ok {
 		_spec.SetField(serviceconfig.FieldImage, field.TypeString, value)
 		_node.Image = value
+	}
+	if value, ok := scc.mutation.DefinitionVersion(); ok {
+		_spec.SetField(serviceconfig.FieldDefinitionVersion, field.TypeString, value)
+		_node.DefinitionVersion = &value
+	}
+	if value, ok := scc.mutation.DatabaseConfig(); ok {
+		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
+		_node.DatabaseConfig = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -625,18 +571,6 @@ func (u *ServiceConfigUpsert) UpdateServiceID() *ServiceConfigUpsert {
 	return u
 }
 
-// SetType sets the "type" field.
-func (u *ServiceConfigUpsert) SetType(v schema.ServiceType) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldType, v)
-	return u
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateType() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldType)
-	return u
-}
-
 // SetBuilder sets the "builder" field.
 func (u *ServiceConfigUpsert) SetBuilder(v schema.ServiceBuilder) *ServiceConfigUpsert {
 	u.Set(serviceconfig.FieldBuilder, v)
@@ -658,78 +592,6 @@ func (u *ServiceConfigUpsert) SetIcon(v string) *ServiceConfigUpsert {
 // UpdateIcon sets the "icon" field to the value that was provided on create.
 func (u *ServiceConfigUpsert) UpdateIcon() *ServiceConfigUpsert {
 	u.SetExcluded(serviceconfig.FieldIcon)
-	return u
-}
-
-// SetDatabase sets the "database" field.
-func (u *ServiceConfigUpsert) SetDatabase(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDatabase, v)
-	return u
-}
-
-// UpdateDatabase sets the "database" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDatabase() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDatabase)
-	return u
-}
-
-// ClearDatabase clears the value of the "database" field.
-func (u *ServiceConfigUpsert) ClearDatabase() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDatabase)
-	return u
-}
-
-// SetDefinitionVersion sets the "definition_version" field.
-func (u *ServiceConfigUpsert) SetDefinitionVersion(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDefinitionVersion, v)
-	return u
-}
-
-// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDefinitionVersion() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDefinitionVersion)
-	return u
-}
-
-// ClearDefinitionVersion clears the value of the "definition_version" field.
-func (u *ServiceConfigUpsert) ClearDefinitionVersion() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDefinitionVersion)
-	return u
-}
-
-// SetDatabaseConfig sets the "database_config" field.
-func (u *ServiceConfigUpsert) SetDatabaseConfig(v map[string]interface{}) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDatabaseConfig, v)
-	return u
-}
-
-// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDatabaseConfig() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDatabaseConfig)
-	return u
-}
-
-// ClearDatabaseConfig clears the value of the "database_config" field.
-func (u *ServiceConfigUpsert) ClearDatabaseConfig() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDatabaseConfig)
-	return u
-}
-
-// SetDatabaseVersion sets the "database_version" field.
-func (u *ServiceConfigUpsert) SetDatabaseVersion(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDatabaseVersion, v)
-	return u
-}
-
-// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDatabaseVersion() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDatabaseVersion)
-	return u
-}
-
-// ClearDatabaseVersion clears the value of the "database_version" field.
-func (u *ServiceConfigUpsert) ClearDatabaseVersion() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDatabaseVersion)
 	return u
 }
 
@@ -907,15 +769,15 @@ func (u *ServiceConfigUpsert) ClearRunCommand() *ServiceConfigUpsert {
 	return u
 }
 
-// SetPublic sets the "public" field.
-func (u *ServiceConfigUpsert) SetPublic(v bool) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldPublic, v)
+// SetIsPublic sets the "is_public" field.
+func (u *ServiceConfigUpsert) SetIsPublic(v bool) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldIsPublic, v)
 	return u
 }
 
-// UpdatePublic sets the "public" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdatePublic() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldPublic)
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateIsPublic() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldIsPublic)
 	return u
 }
 
@@ -934,6 +796,42 @@ func (u *ServiceConfigUpsert) UpdateImage() *ServiceConfigUpsert {
 // ClearImage clears the value of the "image" field.
 func (u *ServiceConfigUpsert) ClearImage() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldImage)
+	return u
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (u *ServiceConfigUpsert) SetDefinitionVersion(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDefinitionVersion, v)
+	return u
+}
+
+// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDefinitionVersion() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDefinitionVersion)
+	return u
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (u *ServiceConfigUpsert) ClearDefinitionVersion() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDefinitionVersion)
+	return u
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (u *ServiceConfigUpsert) SetDatabaseConfig(v *schema.DatabaseConfig) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDatabaseConfig, v)
+	return u
+}
+
+// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDatabaseConfig() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDatabaseConfig)
+	return u
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (u *ServiceConfigUpsert) ClearDatabaseConfig() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDatabaseConfig)
 	return u
 }
 
@@ -1016,20 +914,6 @@ func (u *ServiceConfigUpsertOne) UpdateServiceID() *ServiceConfigUpsertOne {
 	})
 }
 
-// SetType sets the "type" field.
-func (u *ServiceConfigUpsertOne) SetType(v schema.ServiceType) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateType() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateType()
-	})
-}
-
 // SetBuilder sets the "builder" field.
 func (u *ServiceConfigUpsertOne) SetBuilder(v schema.ServiceBuilder) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
@@ -1055,90 +939,6 @@ func (u *ServiceConfigUpsertOne) SetIcon(v string) *ServiceConfigUpsertOne {
 func (u *ServiceConfigUpsertOne) UpdateIcon() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateIcon()
-	})
-}
-
-// SetDatabase sets the "database" field.
-func (u *ServiceConfigUpsertOne) SetDatabase(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDatabase(v)
-	})
-}
-
-// UpdateDatabase sets the "database" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDatabase() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDatabase()
-	})
-}
-
-// ClearDatabase clears the value of the "database" field.
-func (u *ServiceConfigUpsertOne) ClearDatabase() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDatabase()
-	})
-}
-
-// SetDefinitionVersion sets the "definition_version" field.
-func (u *ServiceConfigUpsertOne) SetDefinitionVersion(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDefinitionVersion(v)
-	})
-}
-
-// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDefinitionVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDefinitionVersion()
-	})
-}
-
-// ClearDefinitionVersion clears the value of the "definition_version" field.
-func (u *ServiceConfigUpsertOne) ClearDefinitionVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDefinitionVersion()
-	})
-}
-
-// SetDatabaseConfig sets the "database_config" field.
-func (u *ServiceConfigUpsertOne) SetDatabaseConfig(v map[string]interface{}) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDatabaseConfig(v)
-	})
-}
-
-// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDatabaseConfig() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDatabaseConfig()
-	})
-}
-
-// ClearDatabaseConfig clears the value of the "database_config" field.
-func (u *ServiceConfigUpsertOne) ClearDatabaseConfig() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDatabaseConfig()
-	})
-}
-
-// SetDatabaseVersion sets the "database_version" field.
-func (u *ServiceConfigUpsertOne) SetDatabaseVersion(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDatabaseVersion(v)
-	})
-}
-
-// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDatabaseVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDatabaseVersion()
-	})
-}
-
-// ClearDatabaseVersion clears the value of the "database_version" field.
-func (u *ServiceConfigUpsertOne) ClearDatabaseVersion() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDatabaseVersion()
 	})
 }
 
@@ -1345,17 +1145,17 @@ func (u *ServiceConfigUpsertOne) ClearRunCommand() *ServiceConfigUpsertOne {
 	})
 }
 
-// SetPublic sets the "public" field.
-func (u *ServiceConfigUpsertOne) SetPublic(v bool) *ServiceConfigUpsertOne {
+// SetIsPublic sets the "is_public" field.
+func (u *ServiceConfigUpsertOne) SetIsPublic(v bool) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetPublic(v)
+		s.SetIsPublic(v)
 	})
 }
 
-// UpdatePublic sets the "public" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdatePublic() *ServiceConfigUpsertOne {
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateIsPublic() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdatePublic()
+		s.UpdateIsPublic()
 	})
 }
 
@@ -1377,6 +1177,48 @@ func (u *ServiceConfigUpsertOne) UpdateImage() *ServiceConfigUpsertOne {
 func (u *ServiceConfigUpsertOne) ClearImage() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearImage()
+	})
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (u *ServiceConfigUpsertOne) SetDefinitionVersion(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDefinitionVersion(v)
+	})
+}
+
+// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDefinitionVersion() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDefinitionVersion()
+	})
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (u *ServiceConfigUpsertOne) ClearDefinitionVersion() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDefinitionVersion()
+	})
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (u *ServiceConfigUpsertOne) SetDatabaseConfig(v *schema.DatabaseConfig) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabaseConfig(v)
+	})
+}
+
+// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDatabaseConfig() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabaseConfig()
+	})
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (u *ServiceConfigUpsertOne) ClearDatabaseConfig() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabaseConfig()
 	})
 }
 
@@ -1626,20 +1468,6 @@ func (u *ServiceConfigUpsertBulk) UpdateServiceID() *ServiceConfigUpsertBulk {
 	})
 }
 
-// SetType sets the "type" field.
-func (u *ServiceConfigUpsertBulk) SetType(v schema.ServiceType) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetType(v)
-	})
-}
-
-// UpdateType sets the "type" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateType() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateType()
-	})
-}
-
 // SetBuilder sets the "builder" field.
 func (u *ServiceConfigUpsertBulk) SetBuilder(v schema.ServiceBuilder) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
@@ -1665,90 +1493,6 @@ func (u *ServiceConfigUpsertBulk) SetIcon(v string) *ServiceConfigUpsertBulk {
 func (u *ServiceConfigUpsertBulk) UpdateIcon() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateIcon()
-	})
-}
-
-// SetDatabase sets the "database" field.
-func (u *ServiceConfigUpsertBulk) SetDatabase(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDatabase(v)
-	})
-}
-
-// UpdateDatabase sets the "database" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDatabase() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDatabase()
-	})
-}
-
-// ClearDatabase clears the value of the "database" field.
-func (u *ServiceConfigUpsertBulk) ClearDatabase() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDatabase()
-	})
-}
-
-// SetDefinitionVersion sets the "definition_version" field.
-func (u *ServiceConfigUpsertBulk) SetDefinitionVersion(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDefinitionVersion(v)
-	})
-}
-
-// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDefinitionVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDefinitionVersion()
-	})
-}
-
-// ClearDefinitionVersion clears the value of the "definition_version" field.
-func (u *ServiceConfigUpsertBulk) ClearDefinitionVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDefinitionVersion()
-	})
-}
-
-// SetDatabaseConfig sets the "database_config" field.
-func (u *ServiceConfigUpsertBulk) SetDatabaseConfig(v map[string]interface{}) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDatabaseConfig(v)
-	})
-}
-
-// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDatabaseConfig() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDatabaseConfig()
-	})
-}
-
-// ClearDatabaseConfig clears the value of the "database_config" field.
-func (u *ServiceConfigUpsertBulk) ClearDatabaseConfig() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDatabaseConfig()
-	})
-}
-
-// SetDatabaseVersion sets the "database_version" field.
-func (u *ServiceConfigUpsertBulk) SetDatabaseVersion(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDatabaseVersion(v)
-	})
-}
-
-// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDatabaseVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDatabaseVersion()
-	})
-}
-
-// ClearDatabaseVersion clears the value of the "database_version" field.
-func (u *ServiceConfigUpsertBulk) ClearDatabaseVersion() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDatabaseVersion()
 	})
 }
 
@@ -1955,17 +1699,17 @@ func (u *ServiceConfigUpsertBulk) ClearRunCommand() *ServiceConfigUpsertBulk {
 	})
 }
 
-// SetPublic sets the "public" field.
-func (u *ServiceConfigUpsertBulk) SetPublic(v bool) *ServiceConfigUpsertBulk {
+// SetIsPublic sets the "is_public" field.
+func (u *ServiceConfigUpsertBulk) SetIsPublic(v bool) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetPublic(v)
+		s.SetIsPublic(v)
 	})
 }
 
-// UpdatePublic sets the "public" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdatePublic() *ServiceConfigUpsertBulk {
+// UpdateIsPublic sets the "is_public" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateIsPublic() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdatePublic()
+		s.UpdateIsPublic()
 	})
 }
 
@@ -1987,6 +1731,48 @@ func (u *ServiceConfigUpsertBulk) UpdateImage() *ServiceConfigUpsertBulk {
 func (u *ServiceConfigUpsertBulk) ClearImage() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearImage()
+	})
+}
+
+// SetDefinitionVersion sets the "definition_version" field.
+func (u *ServiceConfigUpsertBulk) SetDefinitionVersion(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDefinitionVersion(v)
+	})
+}
+
+// UpdateDefinitionVersion sets the "definition_version" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDefinitionVersion() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDefinitionVersion()
+	})
+}
+
+// ClearDefinitionVersion clears the value of the "definition_version" field.
+func (u *ServiceConfigUpsertBulk) ClearDefinitionVersion() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDefinitionVersion()
+	})
+}
+
+// SetDatabaseConfig sets the "database_config" field.
+func (u *ServiceConfigUpsertBulk) SetDatabaseConfig(v *schema.DatabaseConfig) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetDatabaseConfig(v)
+	})
+}
+
+// UpdateDatabaseConfig sets the "database_config" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDatabaseConfig() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateDatabaseConfig()
+	})
+}
+
+// ClearDatabaseConfig clears the value of the "database_config" field.
+func (u *ServiceConfigUpsertBulk) ClearDatabaseConfig() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearDatabaseConfig()
 	})
 }
 

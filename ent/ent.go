@@ -24,6 +24,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/registry"
+	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
@@ -103,6 +104,7 @@ func checkColumn(table, column string) error {
 			permission.Table:         permission.ValidColumn,
 			project.Table:            project.ValidColumn,
 			registry.Table:           registry.ValidColumn,
+			s3.Table:                 s3.ValidColumn,
 			service.Table:            service.ValidColumn,
 			serviceconfig.Table:      serviceconfig.ValidColumn,
 			systemsetting.Table:      systemsetting.ValidColumn,

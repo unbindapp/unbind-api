@@ -10,7 +10,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
@@ -21,10 +20,10 @@ import (
 
 // UpdateServiceConfigInput defines the input for updating a service configuration
 type UpdateServiceInput struct {
-	TeamID        uuid.UUID `validate:"required,uuid4" required:"true" json:"team_id"`
-	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
-	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
-	ServiceID     uuid.UUID `validate:"required,uuid4" required:"true" json:"service_id"`
+	TeamID        uuid.UUID `format:"uuid" required:"true" json:"team_id"`
+	ProjectID     uuid.UUID `format:"uuid" required:"true" json:"project_id"`
+	EnvironmentID uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
+	ServiceID     uuid.UUID `format:"uuid" required:"true" json:"service_id"`
 	Name          *string   `required:"false" json:"name"`
 	Description   *string   `required:"false" json:"description"`
 
@@ -42,16 +41,11 @@ type UpdateServiceInput struct {
 	DockerfileContext *string                `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder - set empty string to reset to default"`
 
 	// Databases
-	DatabaseConfig *map[string]interface{} `json:"database_config,omitempty"`
+	DatabaseConfig *schema.DatabaseConfig `json:"database_config,omitempty"`
 }
 
 // UpdateService updates a service and its configuration
 func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID uuid.UUID, input *UpdateServiceInput) (*models.ServiceResponse, error) {
-	// Validate input
-	if err := validate.Validator().Struct(input); err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to admin service
@@ -81,26 +75,24 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
-	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDockerimage || service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase {
+	if service.Type == schema.ServiceTypeDockerimage || service.Type == schema.ServiceTypeDatabase {
 		if input.Builder != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update builder for docker image or database service")
 		}
 	}
 
 	// For database we don't want to set ports
-	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase {
+	if service.Type == schema.ServiceTypeDatabase {
 		input.Ports = nil
 	}
 
 	// For database we can't set version if deployed
-	if service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase && input.DatabaseConfig != nil && service.Edges.ServiceConfig.DatabaseVersion != nil {
+	if service.Type == schema.ServiceTypeDatabase && input.DatabaseConfig != nil && service.DatabaseVersion != nil {
 		hasDeployment := len(service.Edges.Deployments) > 0
 		if hasDeployment {
 			// See if theyre updating version
-			version, ok := (*input.DatabaseConfig)["version"]
-			if ok {
-				versionStr, _ := version.(string)
-				if versionStr != *service.Edges.ServiceConfig.DatabaseVersion {
+			if input.DatabaseConfig.Version != "" {
+				if input.DatabaseConfig.Version != *service.DatabaseVersion {
 					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update version for database service with existing deployment")
 				}
 			}
@@ -114,7 +106,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
-			input.Public != nil && *input.Public && len(input.Hosts) < 1 && service.Edges.ServiceConfig.Type != schema.ServiceTypeDatabase &&
+			input.Public != nil && *input.Public && len(input.Hosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
 			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
 
 			// Figure out ports

@@ -5,24 +5,16 @@ import (
 	"errors"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
-	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 )
 
 type UpdateProjectInput struct {
 	server.BaseAuthInput
-	Body struct {
-		TeamID               uuid.UUID  `json:"team_id" required:"true"`
-		ProjectID            uuid.UUID  `json:"project_id" required:"true"`
-		Name                 string     `json:"name" required:"false"`
-		Description          *string    `json:"description" required:"false"`
-		DefaultEnvironmentID *uuid.UUID `json:"default_environment_id" required:"false"`
-	}
+	Body models.UpdateProjectInput
 }
 
 type UpdateProjectResponse struct {
@@ -43,13 +35,7 @@ func (self *HandlerGroup) UpdateProject(ctx context.Context, input *UpdateProjec
 		return nil, huma.Error400BadRequest("Either display_name or description must be provided")
 	}
 
-	updatedProject, err := self.srv.ProjectService.UpdateProject(ctx, user.ID, &project_service.UpdateProjectInput{
-		TeamID:               input.Body.TeamID,
-		ProjectID:            input.Body.ProjectID,
-		Name:                 input.Body.Name,
-		Description:          input.Body.Description,
-		DefaultEnvironmentID: input.Body.DefaultEnvironmentID,
-	})
+	updatedProject, err := self.srv.ProjectService.UpdateProject(ctx, user.ID, &input.Body)
 	if err != nil {
 		if errors.Is(err, errdefs.ErrInvalidInput) {
 			return nil, huma.Error400BadRequest(err.Error())

@@ -3,11 +3,13 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
 const (
@@ -19,6 +21,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldType holds the string denoting the type field in the database.
+	FieldType = "type"
 	// FieldKubernetesName holds the string denoting the kubernetes_name field in the database.
 	FieldKubernetesName = "kubernetes_name"
 	// FieldName holds the string denoting the name field in the database.
@@ -27,6 +31,10 @@ const (
 	FieldDescription = "description"
 	// FieldEnvironmentID holds the string denoting the environment_id field in the database.
 	FieldEnvironmentID = "environment_id"
+	// FieldDatabase holds the string denoting the database field in the database.
+	FieldDatabase = "database"
+	// FieldDatabaseVersion holds the string denoting the database_version field in the database.
+	FieldDatabaseVersion = "database_version"
 	// FieldGithubInstallationID holds the string denoting the github_installation_id field in the database.
 	FieldGithubInstallationID = "github_installation_id"
 	// FieldGitRepositoryOwner holds the string denoting the git_repository_owner field in the database.
@@ -100,10 +108,13 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldType,
 	FieldKubernetesName,
 	FieldName,
 	FieldDescription,
 	FieldEnvironmentID,
+	FieldDatabase,
+	FieldDatabaseVersion,
 	FieldGithubInstallationID,
 	FieldGitRepositoryOwner,
 	FieldGitRepository,
@@ -134,6 +145,16 @@ var (
 	DefaultID func() uuid.UUID
 )
 
+// TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
+func TypeValidator(_type schema.ServiceType) error {
+	switch _type {
+	case "github", "docker-image", "database":
+		return nil
+	default:
+		return fmt.Errorf("service: invalid enum value for type field: %q", _type)
+	}
+}
+
 // OrderOption defines the ordering options for the Service queries.
 type OrderOption func(*sql.Selector)
 
@@ -150,6 +171,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByType orders the results by the type field.
+func ByType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldType, opts...).ToFunc()
 }
 
 // ByKubernetesName orders the results by the kubernetes_name field.
@@ -170,6 +196,16 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByEnvironmentID orders the results by the environment_id field.
 func ByEnvironmentID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEnvironmentID, opts...).ToFunc()
+}
+
+// ByDatabase orders the results by the database field.
+func ByDatabase(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDatabase, opts...).ToFunc()
+}
+
+// ByDatabaseVersion orders the results by the database_version field.
+func ByDatabaseVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDatabaseVersion, opts...).ToFunc()
 }
 
 // ByGithubInstallationID orders the results by the github_installation_id field.

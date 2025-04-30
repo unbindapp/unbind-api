@@ -14,7 +14,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
@@ -28,10 +27,10 @@ import (
 
 // CreateServiceInput defines the input for creating a new service
 type CreateServiceInput struct {
-	TeamID        uuid.UUID `validate:"required,uuid4" required:"true" json:"team_id"`
-	ProjectID     uuid.UUID `validate:"required,uuid4" required:"true" json:"project_id"`
-	EnvironmentID uuid.UUID `validate:"required,uuid4" required:"true" json:"environment_id"`
-	Name          string    `validate:"required" required:"true" json:"name"`
+	TeamID        uuid.UUID `format:"uuid" required:"true" json:"team_id"`
+	ProjectID     uuid.UUID `format:"uuid" required:"true" json:"project_id"`
+	EnvironmentID uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
+	Name          string    `required:"true" json:"name"`
 	Description   string    `json:"description,omitempty"`
 
 	// GitHub integration
@@ -40,11 +39,11 @@ type CreateServiceInput struct {
 	RepositoryName       *string `json:"repository_name,omitempty"`
 
 	// Configuration
-	Type              schema.ServiceType    `validate:"required" required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
-	Builder           schema.ServiceBuilder `validate:"required" required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
+	Type              schema.ServiceType    `required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
+	Builder           schema.ServiceBuilder `required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
 	Hosts             []v1.HostSpec         `json:"hosts,omitempty"`
 	Ports             []schema.PortSpec     `json:"ports,omitempty"`
-	Replicas          *int32                `validate:"omitempty,min=0,max=10" json:"replicas,omitempty"`
+	Replicas          *int32                `minimum:"0" maximum:"10" json:"replicas,omitempty"`
 	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand        *string               `json:"run_command,omitempty"`
 	Public            *bool                 `json:"public,omitempty"`
@@ -53,17 +52,12 @@ type CreateServiceInput struct {
 	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
 
 	// Databases (special case)
-	DatabaseType   *string                 `json:"database_type,omitempty"`
-	DatabaseConfig *map[string]interface{} `json:"database_config,omitempty"`
+	DatabaseType   *string                `json:"database_type,omitempty"`
+	DatabaseConfig *schema.DatabaseConfig `json:"database_config,omitempty"`
 }
 
 // CreateService creates a new service and its configuration
 func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *CreateServiceInput, bearerToken string) (*models.ServiceResponse, error) {
-	// Validate input
-	if err := validate.Validator().Struct(input); err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	var err error
 	var dbDefinition *databases.Definition
 	var dbVersion *string
@@ -109,10 +103,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		if input.DatabaseConfig != nil {
 			// check version
-			if version, ok := (*input.DatabaseConfig)["version"]; ok {
-				if versionStr, ok := version.(string); ok {
-					dbVersion = utils.ToPtr(versionStr)
-				}
+			if input.DatabaseConfig.Version != "" {
+				dbVersion = utils.ToPtr(input.DatabaseConfig.Version)
 			}
 		}
 
@@ -304,14 +296,19 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		// Create the service
 		createService, err := self.repo.Service().Create(ctx, tx,
-			kubernetesName,
-			input.Name,
-			input.Description,
-			input.EnvironmentID,
-			input.GitHubInstallationID,
-			input.RepositoryName,
-			gitOwnerName,
-			secret.Name)
+			&service_repo.CreateServiceInput{
+				KubernetesName:       kubernetesName,
+				ServiceType:          input.Type,
+				Name:                 input.Name,
+				Description:          input.Description,
+				EnvironmentID:        input.EnvironmentID,
+				GitHubInstallationID: input.GitHubInstallationID,
+				GitRepository:        input.RepositoryName,
+				GitRepositoryOwner:   gitOwnerName,
+				KubernetesSecret:     secret.Name,
+				Database:             input.DatabaseType,
+				DatabaseVersion:      dbVersion,
+			})
 		if err != nil {
 			return fmt.Errorf("failed to create service: %w", err)
 		}
@@ -320,7 +317,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		// Create the service config
 		createInput := &service_repo.MutateConfigInput{
 			ServiceID:               service.ID,
-			ServiceType:             input.Type,
 			Builder:                 utils.ToPtr(input.Builder),
 			Provider:                provider,
 			Framework:               framework,
@@ -334,10 +330,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Image:                   input.Image,
 			DockerfilePath:          input.DockerfilePath,
 			DockerfileContext:       input.DockerfileContext,
-			Database:                input.DatabaseType,
 			CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
 			DatabaseConfig:          input.DatabaseConfig,
-			DatabaseVersion:         dbVersion,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)
@@ -393,7 +387,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				},
 				{
 					Name:  "Service Type",
-					Value: string(service.Edges.ServiceConfig.Type),
+					Value: string(service.Type),
 				},
 				{
 					Name:  "Service Subtype",

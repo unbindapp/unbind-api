@@ -6,25 +6,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 type TeamUpdateInput struct {
-	ID          uuid.UUID `json:"id" validate:"required,uuid4"`
+	ID          uuid.UUID `json:"id" format:"uuid" required:"true"`
 	Name        string    `json:"name"`
 	Description *string   `json:"description"`
 }
 
 // UpdateTeam updates a specific team
 func (self *TeamService) UpdateTeam(ctx context.Context, userID uuid.UUID, input *TeamUpdateInput) (*models.TeamResponse, error) {
-	// Validate input
-	err := validate.Validator().Struct(input)
-	if err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	if input.Name == "" && input.Description == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "No fields to update")
 	}

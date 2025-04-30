@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
@@ -57,6 +58,12 @@ func (sc *ServiceCreate) SetNillableUpdatedAt(t *time.Time) *ServiceCreate {
 	return sc
 }
 
+// SetType sets the "type" field.
+func (sc *ServiceCreate) SetType(st schema.ServiceType) *ServiceCreate {
+	sc.mutation.SetType(st)
+	return sc
+}
+
 // SetKubernetesName sets the "kubernetes_name" field.
 func (sc *ServiceCreate) SetKubernetesName(s string) *ServiceCreate {
 	sc.mutation.SetKubernetesName(s)
@@ -86,6 +93,34 @@ func (sc *ServiceCreate) SetNillableDescription(s *string) *ServiceCreate {
 // SetEnvironmentID sets the "environment_id" field.
 func (sc *ServiceCreate) SetEnvironmentID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetEnvironmentID(u)
+	return sc
+}
+
+// SetDatabase sets the "database" field.
+func (sc *ServiceCreate) SetDatabase(s string) *ServiceCreate {
+	sc.mutation.SetDatabase(s)
+	return sc
+}
+
+// SetNillableDatabase sets the "database" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableDatabase(s *string) *ServiceCreate {
+	if s != nil {
+		sc.SetDatabase(*s)
+	}
+	return sc
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (sc *ServiceCreate) SetDatabaseVersion(s string) *ServiceCreate {
+	sc.mutation.SetDatabaseVersion(s)
+	return sc
+}
+
+// SetNillableDatabaseVersion sets the "database_version" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableDatabaseVersion(s *string) *ServiceCreate {
+	if s != nil {
+		sc.SetDatabaseVersion(*s)
+	}
 	return sc
 }
 
@@ -286,6 +321,14 @@ func (sc *ServiceCreate) check() error {
 	if _, ok := sc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Service.updated_at"`)}
 	}
+	if _, ok := sc.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Service.type"`)}
+	}
+	if v, ok := sc.mutation.GetType(); ok {
+		if err := service.TypeValidator(v); err != nil {
+			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Service.type": %w`, err)}
+		}
+	}
 	if _, ok := sc.mutation.KubernetesName(); !ok {
 		return &ValidationError{Name: "kubernetes_name", err: errors.New(`ent: missing required field "Service.kubernetes_name"`)}
 	}
@@ -350,6 +393,10 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := sc.mutation.GetType(); ok {
+		_spec.SetField(service.FieldType, field.TypeEnum, value)
+		_node.Type = value
+	}
 	if value, ok := sc.mutation.KubernetesName(); ok {
 		_spec.SetField(service.FieldKubernetesName, field.TypeString, value)
 		_node.KubernetesName = value
@@ -361,6 +408,14 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.Description(); ok {
 		_spec.SetField(service.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if value, ok := sc.mutation.Database(); ok {
+		_spec.SetField(service.FieldDatabase, field.TypeString, value)
+		_node.Database = &value
+	}
+	if value, ok := sc.mutation.DatabaseVersion(); ok {
+		_spec.SetField(service.FieldDatabaseVersion, field.TypeString, value)
+		_node.DatabaseVersion = &value
 	}
 	if value, ok := sc.mutation.GitRepositoryOwner(); ok {
 		_spec.SetField(service.FieldGitRepositoryOwner, field.TypeString, value)
@@ -537,6 +592,18 @@ func (u *ServiceUpsert) UpdateUpdatedAt() *ServiceUpsert {
 	return u
 }
 
+// SetType sets the "type" field.
+func (u *ServiceUpsert) SetType(v schema.ServiceType) *ServiceUpsert {
+	u.Set(service.FieldType, v)
+	return u
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateType() *ServiceUpsert {
+	u.SetExcluded(service.FieldType)
+	return u
+}
+
 // SetKubernetesName sets the "kubernetes_name" field.
 func (u *ServiceUpsert) SetKubernetesName(v string) *ServiceUpsert {
 	u.Set(service.FieldKubernetesName, v)
@@ -588,6 +655,42 @@ func (u *ServiceUpsert) SetEnvironmentID(v uuid.UUID) *ServiceUpsert {
 // UpdateEnvironmentID sets the "environment_id" field to the value that was provided on create.
 func (u *ServiceUpsert) UpdateEnvironmentID() *ServiceUpsert {
 	u.SetExcluded(service.FieldEnvironmentID)
+	return u
+}
+
+// SetDatabase sets the "database" field.
+func (u *ServiceUpsert) SetDatabase(v string) *ServiceUpsert {
+	u.Set(service.FieldDatabase, v)
+	return u
+}
+
+// UpdateDatabase sets the "database" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateDatabase() *ServiceUpsert {
+	u.SetExcluded(service.FieldDatabase)
+	return u
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (u *ServiceUpsert) ClearDatabase() *ServiceUpsert {
+	u.SetNull(service.FieldDatabase)
+	return u
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (u *ServiceUpsert) SetDatabaseVersion(v string) *ServiceUpsert {
+	u.Set(service.FieldDatabaseVersion, v)
+	return u
+}
+
+// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateDatabaseVersion() *ServiceUpsert {
+	u.SetExcluded(service.FieldDatabaseVersion)
+	return u
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (u *ServiceUpsert) ClearDatabaseVersion() *ServiceUpsert {
+	u.SetNull(service.FieldDatabaseVersion)
 	return u
 }
 
@@ -740,6 +843,20 @@ func (u *ServiceUpsertOne) UpdateUpdatedAt() *ServiceUpsertOne {
 	})
 }
 
+// SetType sets the "type" field.
+func (u *ServiceUpsertOne) SetType(v schema.ServiceType) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateType() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateType()
+	})
+}
+
 // SetKubernetesName sets the "kubernetes_name" field.
 func (u *ServiceUpsertOne) SetKubernetesName(v string) *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
@@ -800,6 +917,48 @@ func (u *ServiceUpsertOne) SetEnvironmentID(v uuid.UUID) *ServiceUpsertOne {
 func (u *ServiceUpsertOne) UpdateEnvironmentID() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateEnvironmentID()
+	})
+}
+
+// SetDatabase sets the "database" field.
+func (u *ServiceUpsertOne) SetDatabase(v string) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetDatabase(v)
+	})
+}
+
+// UpdateDatabase sets the "database" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateDatabase() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateDatabase()
+	})
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (u *ServiceUpsertOne) ClearDatabase() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearDatabase()
+	})
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (u *ServiceUpsertOne) SetDatabaseVersion(v string) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetDatabaseVersion(v)
+	})
+}
+
+// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateDatabaseVersion() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateDatabaseVersion()
+	})
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (u *ServiceUpsertOne) ClearDatabaseVersion() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearDatabaseVersion()
 	})
 }
 
@@ -1133,6 +1292,20 @@ func (u *ServiceUpsertBulk) UpdateUpdatedAt() *ServiceUpsertBulk {
 	})
 }
 
+// SetType sets the "type" field.
+func (u *ServiceUpsertBulk) SetType(v schema.ServiceType) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetType(v)
+	})
+}
+
+// UpdateType sets the "type" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateType() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateType()
+	})
+}
+
 // SetKubernetesName sets the "kubernetes_name" field.
 func (u *ServiceUpsertBulk) SetKubernetesName(v string) *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
@@ -1193,6 +1366,48 @@ func (u *ServiceUpsertBulk) SetEnvironmentID(v uuid.UUID) *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) UpdateEnvironmentID() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateEnvironmentID()
+	})
+}
+
+// SetDatabase sets the "database" field.
+func (u *ServiceUpsertBulk) SetDatabase(v string) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetDatabase(v)
+	})
+}
+
+// UpdateDatabase sets the "database" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateDatabase() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateDatabase()
+	})
+}
+
+// ClearDatabase clears the value of the "database" field.
+func (u *ServiceUpsertBulk) ClearDatabase() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearDatabase()
+	})
+}
+
+// SetDatabaseVersion sets the "database_version" field.
+func (u *ServiceUpsertBulk) SetDatabaseVersion(v string) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetDatabaseVersion(v)
+	})
+}
+
+// UpdateDatabaseVersion sets the "database_version" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateDatabaseVersion() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateDatabaseVersion()
+	})
+}
+
+// ClearDatabaseVersion clears the value of the "database_version" field.
+func (u *ServiceUpsertBulk) ClearDatabaseVersion() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearDatabaseVersion()
 	})
 }
 

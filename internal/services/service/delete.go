@@ -116,7 +116,7 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 
 		data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 			Name:  "Type",
-			Value: string(service.Edges.ServiceConfig.Type),
+			Value: string(service.Type),
 		})
 		data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 			Name:  "Subtype",

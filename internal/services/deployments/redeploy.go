@@ -9,7 +9,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/internal/common/validate"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -36,10 +35,6 @@ func (self *DeploymentService) resolveReferences(ctx context.Context, service *e
 }
 
 func (self *DeploymentService) CreateRedeployment(ctx context.Context, requesterUserId uuid.UUID, input *models.RedeployExistingDeploymentInput) (*models.DeploymentResponse, error) {
-	if err := validate.Validator().Struct(input); err != nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-	}
-
 	// Editor can create deployments
 	if err := self.repo.Permissions().Check(ctx, requesterUserId, []permissions_repo.PermissionCheck{
 		{
@@ -99,7 +94,7 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 		return nil, err
 	}
 
-	if (service.Edges.ServiceConfig.Type == schema.ServiceTypeDockerimage || service.Edges.ServiceConfig.Type == schema.ServiceTypeDatabase) && deployment.ResourceDefinition != nil {
+	if (service.Type == schema.ServiceTypeDockerimage || service.Type == schema.ServiceTypeDatabase) && deployment.ResourceDefinition != nil {
 		deployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
 		envVars, err := self.resolveReferences(ctx, service)
 		if err != nil {
@@ -132,7 +127,7 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	}
 
 	// If we ended up here not as a git service we failed
-	if service.Edges.ServiceConfig.Type != schema.ServiceTypeGithub || deployment.CommitSha == nil {
+	if service.Type != schema.ServiceTypeGithub || deployment.CommitSha == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Unable to re-deploy service")
 	}
 
