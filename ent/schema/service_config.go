@@ -80,7 +80,7 @@ func (u Protocol) Schema(r huma.Registry) *huma.Schema {
 }
 
 type DatabaseConfig struct {
-	Version string `json:"version" description:"Version of the database"`
+	Version string `json:"version,omitempty" required:"false" description:"Version of the database"`
 }
 
 func (self *DatabaseConfig) AsMap() map[string]interface{} {
