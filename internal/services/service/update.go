@@ -41,11 +41,13 @@ type UpdateServiceInput struct {
 	DockerfileContext *string                `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder - set empty string to reset to default"`
 
 	// Databases
-	DatabaseConfig *schema.DatabaseConfig `json:"database_config,omitempty"`
+	DatabaseConfig   *schema.DatabaseConfig `json:"database_config,omitempty"`
+	S3BackupSourceID *uuid.UUID             `json:"s3_backup_source_id,omitempty" format:"uuid"`
+	S3BackupBucket   *string                `json:"s3_backup_bucket,omitempty"`
 }
 
 // UpdateService updates a service and its configuration
-func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID uuid.UUID, input *UpdateServiceInput) (*models.ServiceResponse, error) {
+func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *UpdateServiceInput) (*models.ServiceResponse, error) {
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to admin service
@@ -99,6 +101,29 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 	}
 
+	// Create kubernetes client
+	client, err := self.k8s.CreateClientWithToken(bearerToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify backup sources (for databases)
+	// Make sure we can read and write to the S3 bucket provided
+	if service.Type == schema.ServiceTypeDatabase && input.S3BackupSourceID != nil && input.S3BackupBucket != nil {
+		// Check if the S3 source exists
+		s3Source, err := self.repo.S3().GetByID(ctx, *input.S3BackupSourceID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 source not found")
+			}
+			return nil, err
+		}
+
+		if err := self.verifyS3Access(ctx, s3Source, *input.S3BackupBucket, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, client); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Update the service
 		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.Name, input.Description); err != nil {
@@ -145,6 +170,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			DockerfilePath:    input.DockerfilePath,
 			DockerfileContext: input.DockerfileContext,
 			DatabaseConfig:    input.DatabaseConfig,
+			S3BackupSourceID:  input.S3BackupSourceID,
+			S3BackupBucket:    input.S3BackupBucket,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)

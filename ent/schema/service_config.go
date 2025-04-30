@@ -130,6 +130,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		// Database
 		field.String("definition_version").Optional().Nillable().Comment("Version of the database custom resource definition"),
 		field.JSON("database_config", &DatabaseConfig{}).Optional().Comment("Database configuration for the service"),
+		field.UUID("s3_backup_source_id", uuid.UUID{}).Optional().Nillable().Comment("S3 bucket to backup to"),
+		field.String("s3_backup_bucket").Optional().Nillable().Comment("S3 bucket to backup to"),
 	}
 }
 
@@ -137,6 +139,8 @@ func (ServiceConfig) Fields() []ent.Field {
 func (ServiceConfig) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("service", Service.Type).Ref("service_config").Field("service_id").Unique().Required(),
+		// O2M to backup sources
+		edge.From("s3_backup_sources", S3.Type).Ref("service_backup_source").Field("s3_backup_source_id").Unique(),
 	}
 }
 

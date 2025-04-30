@@ -40,6 +40,8 @@ func (S3) Edges() []ent.Edge {
 	return []ent.Edge{
 		// O2M from team
 		edge.From("team", Team.Type).Ref("s3_sources").Field("team_id").Unique().Required(),
+		// M2O from service_configs
+		edge.To("service_backup_source", ServiceConfig.Type),
 	}
 }
 

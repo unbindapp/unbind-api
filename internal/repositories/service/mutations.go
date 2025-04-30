@@ -71,6 +71,8 @@ type MutateConfigInput struct {
 	DockerfileContext       *string
 	CustomDefinitionVersion *string
 	DatabaseConfig          *schema.DatabaseConfig
+	S3BackupSourceID        *uuid.UUID
+	S3BackupBucket          *string
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -119,7 +121,9 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableImage(input.Image).
 		SetNillableDockerfilePath(input.DockerfilePath).
 		SetNillableDockerfileContext(input.DockerfileContext).
-		SetNillableDefinitionVersion(input.CustomDefinitionVersion)
+		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
+		SetNillableS3BackupSourceID(input.S3BackupSourceID).
+		SetNillableS3BackupBucket(input.S3BackupBucket)
 
 	if input.DatabaseConfig != nil {
 		c.SetDatabaseConfig(input.DatabaseConfig)
@@ -175,7 +179,16 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableRunCommand(input.RunCommand).
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
-		SetNillableDefinitionVersion(input.CustomDefinitionVersion)
+		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
+		SetNillableS3BackupSourceID(input.S3BackupSourceID)
+
+	if input.S3BackupBucket != nil {
+		if *input.S3BackupBucket == "" {
+			upd.ClearS3BackupBucket()
+		} else {
+			upd.SetS3BackupBucket(*input.S3BackupBucket)
+		}
+	}
 
 	if input.DatabaseConfig != nil {
 		upd.SetDatabaseConfig(input.DatabaseConfig)

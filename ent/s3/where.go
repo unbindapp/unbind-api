@@ -489,6 +489,29 @@ func HasTeamWith(preds ...predicate.Team) predicate.S3 {
 	})
 }
 
+// HasServiceBackupSource applies the HasEdge predicate on the "service_backup_source" edge.
+func HasServiceBackupSource() predicate.S3 {
+	return predicate.S3(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ServiceBackupSourceTable, ServiceBackupSourceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasServiceBackupSourceWith applies the HasEdge predicate on the "service_backup_source" edge with a given conditions (other predicates).
+func HasServiceBackupSourceWith(preds ...predicate.ServiceConfig) predicate.S3 {
+	return predicate.S3(func(s *sql.Selector) {
+		step := newServiceBackupSourceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.S3) predicate.S3 {
 	return predicate.S3(sql.AndPredicates(predicates...))

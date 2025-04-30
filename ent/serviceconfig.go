@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
@@ -62,6 +63,10 @@ type ServiceConfig struct {
 	DefinitionVersion *string `json:"definition_version,omitempty"`
 	// Database configuration for the service
 	DatabaseConfig *schema.DatabaseConfig `json:"database_config,omitempty"`
+	// S3 bucket to backup to
+	S3BackupSourceID *uuid.UUID `json:"s3_backup_source_id,omitempty"`
+	// S3 bucket to backup to
+	S3BackupBucket *string `json:"s3_backup_bucket,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -72,9 +77,11 @@ type ServiceConfig struct {
 type ServiceConfigEdges struct {
 	// Service holds the value of the service edge.
 	Service *Service `json:"service,omitempty"`
+	// S3BackupSources holds the value of the s3_backup_sources edge.
+	S3BackupSources *S3 `json:"s3_backup_sources,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // ServiceOrErr returns the Service value or an error if the edge
@@ -88,18 +95,31 @@ func (e ServiceConfigEdges) ServiceOrErr() (*Service, error) {
 	return nil, &NotLoadedError{edge: "service"}
 }
 
+// S3BackupSourcesOrErr returns the S3BackupSources value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ServiceConfigEdges) S3BackupSourcesOrErr() (*S3, error) {
+	if e.S3BackupSources != nil {
+		return e.S3BackupSources, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: s3.Label}
+	}
+	return nil, &NotLoadedError{edge: "s3_backup_sources"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case serviceconfig.FieldS3BackupSourceID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig:
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion:
+		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -253,6 +273,20 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field database_config: %w", err)
 				}
 			}
+		case serviceconfig.FieldS3BackupSourceID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field s3_backup_source_id", values[i])
+			} else if value.Valid {
+				sc.S3BackupSourceID = new(uuid.UUID)
+				*sc.S3BackupSourceID = *value.S.(*uuid.UUID)
+			}
+		case serviceconfig.FieldS3BackupBucket:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field s3_backup_bucket", values[i])
+			} else if value.Valid {
+				sc.S3BackupBucket = new(string)
+				*sc.S3BackupBucket = value.String
+			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
 		}
@@ -269,6 +303,11 @@ func (sc *ServiceConfig) Value(name string) (ent.Value, error) {
 // QueryService queries the "service" edge of the ServiceConfig entity.
 func (sc *ServiceConfig) QueryService() *ServiceQuery {
 	return NewServiceConfigClient(sc.config).QueryService(sc)
+}
+
+// QueryS3BackupSources queries the "s3_backup_sources" edge of the ServiceConfig entity.
+func (sc *ServiceConfig) QueryS3BackupSources() *S3Query {
+	return NewServiceConfigClient(sc.config).QueryS3BackupSources(sc)
 }
 
 // Update returns a builder for updating this ServiceConfig.
@@ -364,6 +403,16 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("database_config=")
 	builder.WriteString(fmt.Sprintf("%v", sc.DatabaseConfig))
+	builder.WriteString(", ")
+	if v := sc.S3BackupSourceID; v != nil {
+		builder.WriteString("s3_backup_source_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := sc.S3BackupBucket; v != nil {
+		builder.WriteString("s3_backup_bucket=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

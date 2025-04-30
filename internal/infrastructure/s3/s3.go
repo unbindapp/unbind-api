@@ -78,7 +78,7 @@ func (c *S3Client) ProbeAnyBucketRW(ctx context.Context) error {
 	}
 
 	for _, b := range lbOut.Buckets {
-		if err := c.probeBucketRW(ctx, aws.ToString(b.Name)); err == nil {
+		if err := c.ProbeBucketRW(ctx, aws.ToString(b.Name)); err == nil {
 			return nil // success on this bucket
 		}
 	}
@@ -87,7 +87,7 @@ func (c *S3Client) ProbeAnyBucketRW(ctx context.Context) error {
 }
 
 // probeBucketRW writes → heads → deletes a tiny object in one bucket.
-func (c *S3Client) probeBucketRW(ctx context.Context, bucket string) error {
+func (c *S3Client) ProbeBucketRW(ctx context.Context, bucket string) error {
 	key := fmt.Sprintf(".probe-%s", uuid.NewString())
 
 	// Put (write)

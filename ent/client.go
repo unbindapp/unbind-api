@@ -2358,6 +2358,22 @@ func (c *S3Client) QueryTeam(s *S3) *TeamQuery {
 	return query
 }
 
+// QueryServiceBackupSource queries the service_backup_source edge of a S3.
+func (c *S3Client) QueryServiceBackupSource(s *S3) *ServiceConfigQuery {
+	query := (&ServiceConfigClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(s3.Table, s3.FieldID, id),
+			sqlgraph.To(serviceconfig.Table, serviceconfig.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, s3.ServiceBackupSourceTable, s3.ServiceBackupSourceColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *S3Client) Hooks() []Hook {
 	return c.hooks.S3
@@ -2729,6 +2745,22 @@ func (c *ServiceConfigClient) QueryService(sc *ServiceConfig) *ServiceQuery {
 			sqlgraph.From(serviceconfig.Table, serviceconfig.FieldID, id),
 			sqlgraph.To(service.Table, service.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, true, serviceconfig.ServiceTable, serviceconfig.ServiceColumn),
+		)
+		fromV = sqlgraph.Neighbors(sc.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryS3BackupSources queries the s3_backup_sources edge of a ServiceConfig.
+func (c *ServiceConfigClient) QueryS3BackupSources(sc *ServiceConfig) *S3Query {
+	query := (&S3Client{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sc.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(serviceconfig.Table, serviceconfig.FieldID, id),
+			sqlgraph.To(s3.Table, s3.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, serviceconfig.S3BackupSourcesTable, serviceconfig.S3BackupSourcesColumn),
 		)
 		fromV = sqlgraph.Neighbors(sc.driver.Dialect(), step)
 		return fromV, nil

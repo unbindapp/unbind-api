@@ -57,17 +57,43 @@ func TestFetchDatabase(t *testing.T) {
 		assert.Contains(t, versionProp.Enum, "17", "Postgres version enum should contain '17'")
 	}
 
+	// Check for dockerImage property
+	dockerImageProp, hasDockerImage := database.Schema.Properties["dockerImage"]
+	assert.True(t, hasDockerImage, "Postgres schema should have a 'dockerImage' property")
+	if hasDockerImage {
+		assert.Equal(t, "string", dockerImageProp.Type)
+		assert.Equal(t, "Spilo image version", dockerImageProp.Description)
+		assert.Equal(t, "unbindapp/spilo:17", dockerImageProp.Default)
+	}
+
+	// Check s3 property
 	s3Prop, hasS3 := database.Schema.Properties["s3"]
 	assert.True(t, hasS3, "Postgres schema should have an 's3' property (from s3Schema import)")
 	if hasS3 {
 		assert.Equal(t, "object", s3Prop.Type)
-		assert.Contains(t, s3Prop.Properties, "bucketName")
+		assert.Contains(t, s3Prop.Properties, "bucket")
 		assert.Contains(t, s3Prop.Properties, "region")
 		assert.Contains(t, s3Prop.Properties, "enabled")
+		assert.Contains(t, s3Prop.Properties, "backupRetention")
+		assert.Contains(t, s3Prop.Properties, "backupSchedule")
+		assert.Contains(t, s3Prop.Properties, "backupPrefix")
 	}
 
+	// Check restore property
+	restoreProp, hasRestore := database.Schema.Properties["restore"]
+	assert.True(t, hasRestore, "Postgres schema should have a 'restore' property (from restoreSchema import)")
+	if hasRestore {
+		assert.Equal(t, "object", restoreProp.Type)
+		assert.Contains(t, restoreProp.Properties, "bucket")
+		assert.Contains(t, restoreProp.Properties, "region")
+		assert.Contains(t, restoreProp.Properties, "enabled")
+		assert.Contains(t, restoreProp.Properties, "cluster")
+		assert.Contains(t, restoreProp.Properties, "backupPrefix")
+	}
+
+	// Check labels property with updated labelsSchema reference
 	labelsProp, hasLabels := database.Schema.Properties["labels"]
-	assert.True(t, hasLabels, "Postgres Schema should have a 'labels' property (from labels import)")
+	assert.True(t, hasLabels, "Postgres Schema should have a 'labels' property (from labelsSchema import)")
 	if hasLabels {
 		assert.Equal(t, "object", labelsProp.Type)
 		assert.NotNil(t, labelsProp.AdditionalProperties)
@@ -76,10 +102,12 @@ func TestFetchDatabase(t *testing.T) {
 		}
 	}
 
+	// Check environment property
 	envProp, hasEnv := database.Schema.Properties["environment"]
 	assert.True(t, hasEnv, "Postgres schema should have an 'environment' property")
 	if hasEnv {
 		assert.Equal(t, "object", envProp.Type)
+		assert.Equal(t, "Environment variables to be set in the PostgreSQL container", envProp.Description)
 		assert.NotNil(t, envProp.AdditionalProperties)
 		if envProp.AdditionalProperties != nil {
 			assert.Equal(t, "string", envProp.AdditionalProperties.Type)
@@ -89,6 +117,7 @@ func TestFetchDatabase(t *testing.T) {
 		assert.Empty(t, envProp.Default)                            // Check it's empty
 	}
 
+	// Check common property
 	commonProp, hasCommon := database.Schema.Properties["common"]
 	assert.True(t, hasCommon, "Postgres schema should have a 'common' property (from base import)")
 	if hasCommon {
@@ -148,10 +177,6 @@ func TestFetchDatabase_Redis(t *testing.T) {
 	// Print the schema properties for debugging
 	t.Logf("Redis Schema properties: %+v", database.Schema.Properties)
 
-	// Check Redis specific schema properties (now without chartVersion)
-	_, hasChartVersion := database.Schema.Properties["chartVersion"]
-	assert.False(t, hasChartVersion, "Redis Schema should NOT have a 'chartVersion' property as it's moved to top-level chart")
-
 	// Check if common exists (resolved import)
 	commonProp, hasCommon := database.Schema.Properties["common"]
 	assert.True(t, hasCommon, "Redis Schema should have a 'common' property (from base import)")
@@ -168,13 +193,13 @@ func TestFetchDatabase_Redis(t *testing.T) {
 		}
 	}
 
-	// Check if labels exists (resolved import)
+	// Check if labels exists (resolved import with updated alias)
 	labelsProp, hasLabels := database.Schema.Properties["labels"]
 	assert.True(t, hasLabels, "Redis Schema should have a 'labels' property (from labelsSchema import)")
 	if hasLabels {
 		t.Logf("Labels property: %+v", labelsProp)
 		assert.Equal(t, "object", labelsProp.Type)
-		assert.Equal(t, "Custom labels to add to the resource", labelsProp.Description) // Description from mock common/labels.yaml
+		assert.Equal(t, "Custom labels to add to the resource", labelsProp.Description)
 		assert.NotNil(t, labelsProp.AdditionalProperties, "Labels property should have additionalProperties")
 		if labelsProp.AdditionalProperties != nil {
 			assert.Equal(t, "string", labelsProp.AdditionalProperties.Type, "Labels additionalProperties should be of type string")
@@ -198,6 +223,75 @@ func TestFetchDatabase_Redis(t *testing.T) {
 		assert.Equal(t, "string", secretKeyProp.Type)
 		assert.Equal(t, "Key within the secret containing the password", secretKeyProp.Description)
 		assert.Equal(t, "redis-password", secretKeyProp.Default)
+	}
+}
+
+func TestPostgresRestoreSchema(t *testing.T) {
+	// Setup mock server
+	server := setupMockServer()
+	defer server.Close()
+
+	// Override the base URL constant for testing
+	originalBaseURL := BaseDatabaseURL
+	BaseDatabaseURL = server.URL + "/%s"
+	defer func() {
+		BaseDatabaseURL = originalBaseURL
+	}()
+
+	// Create provider
+	provider := NewDatabaseProvider()
+
+	// Test FetchDatabase for Postgres
+	ctx := context.Background()
+	database, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "postgres")
+
+	// Ensure we got a valid response
+	require.NoError(t, err)
+	assert.NotNil(t, database)
+
+	// Check specifically for the restore schema
+	restoreProp, hasRestore := database.Schema.Properties["restore"]
+	assert.True(t, hasRestore, "Postgres schema should have a 'restore' property (from restoreSchema import)")
+
+	if hasRestore {
+		t.Logf("Restore schema properties: %+v", restoreProp.Properties)
+
+		// Check required properties
+		assert.Equal(t, "object", restoreProp.Type)
+		assert.Equal(t, "Options for seeding a fresh database from an existing backup", restoreProp.Description)
+
+		// Check enabled property
+		enabledProp, hasEnabled := restoreProp.Properties["enabled"]
+		assert.True(t, hasEnabled, "Restore schema should have 'enabled' property")
+		if hasEnabled {
+			assert.Equal(t, "boolean", enabledProp.Type)
+			assert.Equal(t, "Turn *on* clone/restore logic", enabledProp.Description)
+			assert.Equal(t, false, enabledProp.Default)
+		}
+
+		// Check bucket property
+		bucketProp, hasBucket := restoreProp.Properties["bucket"]
+		assert.True(t, hasBucket, "Restore schema should have 'bucket' property")
+		if hasBucket {
+			assert.Equal(t, "string", bucketProp.Type)
+			assert.Equal(t, "S3 bucket that holds the base-backups/WAL to restore from", bucketProp.Description)
+		}
+
+		// Check cluster property
+		clusterProp, hasCluster := restoreProp.Properties["cluster"]
+		assert.True(t, hasCluster, "Restore schema should have 'cluster' property")
+		if hasCluster {
+			assert.Equal(t, "string", clusterProp.Type)
+			assert.Equal(t, "Name of the cluster to restore from", clusterProp.Description)
+		}
+
+		// Check S3 credentials properties
+		assert.Contains(t, restoreProp.Properties, "endpoint")
+		assert.Contains(t, restoreProp.Properties, "region")
+		assert.Contains(t, restoreProp.Properties, "secretName")
+		assert.Contains(t, restoreProp.Properties, "accessKey")
+		assert.Contains(t, restoreProp.Properties, "secretKey")
+		assert.Contains(t, restoreProp.Properties, "backupPrefix")
 	}
 }
 
@@ -322,18 +416,24 @@ type: "postgres-operator"
 version: "1.0.0"
 port: 5432
 imports:
-  - path: "../../common/s3-schema.yaml"
-    as: s3Schema
-  - path: "../../common/labels.yaml"
-    as: labels # Using 'labels' as alias
   - path: "../../common/base.yaml"
     as: base
+  - path: "../../common/s3-schema.yaml"
+    as: s3Schema
+  - path: "../../common/restore-schema.yaml"
+    as: restoreSchema
+  - path: "../../common/labels.yaml"
+    as: labelsSchema
 schema:
   properties:
     common:
       $ref: "#/imports/base"
     labels:
-      $ref: "#/imports/labels" # Referencing 'labels' alias
+      $ref: "#/imports/labelsSchema"
+    dockerImage:
+      type: "string"
+      description: "Spilo image version"
+      default: "unbindapp/spilo:17"
     version:
       type: "string"
       description: "PostgreSQL version"
@@ -341,6 +441,8 @@ schema:
       enum: ["14", "15", "16", "17"]
     s3:
       $ref: "#/imports/s3Schema"
+    restore:
+      $ref: "#/imports/restoreSchema"
     environment:
       type: "object"
       description: "Environment variables to be set in the PostgreSQL container"
@@ -361,9 +463,9 @@ spec:
   teamId: "unbind"
   postgresql:
     version: "{{ .parameters.version }}"
-  numberOfInstances: {{ .parameters.common.replicas }} # Changed from .parameters.replicas
+  numberOfInstances: {{ .parameters.common.replicas }}
   volume:
-    size: "{{ .parameters.common.storage }}" # Changed from .parameters.storage
+    size: "{{ .parameters.common.storage }}"
   env: []`)) // Simplified env for brevity
 			return
 		}
@@ -373,7 +475,7 @@ spec:
 		redisDefinitionPath := "/v0.1/definitions/databases/redis/definition.yaml"
 		if r.URL.Path == redisMetadataPath {
 			w.WriteHeader(http.StatusOK)
-			// Updated Redis metadata with chart info at top level
+			// Keep Redis metadata unchanged
 			w.Write([]byte(`name: "Redis"
 description: "Standard Redis installation using bitnami helm chart."
 type: "helm"
@@ -407,7 +509,7 @@ schema:
 		}
 		if r.URL.Path == redisDefinitionPath {
 			w.WriteHeader(http.StatusOK)
-			// Use the latest definition provided previously
+			// Keep Redis definition unchanged
 			w.Write([]byte(`
 # definition.yaml for Redis (using Bitnami Helm Chart)
 # Conditionally configures Standalone vs Replication based on replica count.
@@ -456,10 +558,11 @@ auth:
 			return
 		}
 
-		// --- Serve Common Files (used by both Redis and potentially others) ---
+		// --- Serve Common Files (used by both Redis and Postgres) ---
 		basePath := "/v0.1/definitions/common/base.yaml"
 		labelsPath := "/v0.1/definitions/common/labels.yaml"
 		s3SchemaPath := "/v0.1/definitions/common/s3-schema.yaml"
+		restoreSchemaPath := "/v0.1/definitions/common/restore-schema.yaml"
 
 		if r.URL.Path == basePath {
 			w.WriteHeader(http.StatusOK)
@@ -483,17 +586,44 @@ properties:
 		if r.URL.Path == labelsPath {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
-description: "Custom labels to add to the resource" # Generic description
+description: "Custom labels to add to the resource" 
 additionalProperties: {type: "string"}
 default: {}`)) // Compacted
 			return
 		}
-		if r.URL.Path == s3SchemaPath { // Keep for postgres test
+		if r.URL.Path == s3SchemaPath {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 description: "S3 configuration"
-properties: { bucketName: {type: "string"}, region: {type: "string", default: "us-east-1"}, enabled: {type: "boolean", default: false} }
-required: [bucketName]`)) // Compacted
+properties: 
+  enabled: {type: "boolean", description: "Enable S3 backups", default: false}
+  bucket: {type: "string", description: "S3 bucket name"}
+  endpoint: {type: "string", description: "S3 endpoint URL", default: "https://s3.amazonaws.com"}
+  region: {type: "string", description: "S3 region", default: ""}
+  secretName: {type: "string", description: "Name of the secret that contains the S3 credentials", default: ""}
+  accessKey: {type: "string", description: "S3 access key from the secret", default: "access_key_id"}
+  secretKey: {type: "string", description: "S3 secret key from the secret", default: "secret_key"}
+  backupRetention: {type: "integer", description: "Number of backups to retain", default: 2}
+  backupSchedule: {type: "string", description: "Cron schedule for backups", default: "5 5 * * *"}
+  backupPrefix: {type: "string", description: "Optional prefix for backup files", default: ""}
+required: ["enabled", "bucket", "endpoint", "region", "secretName"]`)) // Compacted
+			return
+		}
+		if r.URL.Path == restoreSchemaPath {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`type: "object"
+description: "Options for seeding a fresh database from an existing backup"
+properties:
+  enabled: {type: "boolean", description: "Turn *on* clone/restore logic", default: false}
+  bucket: {type: "string", description: "S3 bucket that holds the base-backups/WAL to restore from"}
+  endpoint: {type: "string", description: "S3 endpoint URL", default: "https://s3.amazonaws.com"}
+  region: {type: "string", description: "S3 region", default: ""}
+  secretName: {type: "string", description: "Name of the secret that contains the S3 credentials", default: ""}
+  accessKey: {type: "string", description: "S3 access key from the secret", default: "access_key_id"}
+  secretKey: {type: "string", description: "S3 secret key from the secret", default: "secret_key"}
+  backupPrefix: {type: "string", description: "Optional prefix for backup files", default: ""}
+  cluster: {type: "string", description: "Name of the cluster to restore from"}
+required: ["enabled", "bucket", "endpoint", "region", "secretName", "cluster"]`)) // Compacted
 			return
 		}
 

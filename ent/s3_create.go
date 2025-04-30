@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/s3"
+	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 )
 
@@ -114,6 +115,21 @@ func (s *S3Create) SetNillableID(u *uuid.UUID) *S3Create {
 // SetTeam sets the "team" edge to the Team entity.
 func (s *S3Create) SetTeam(t *Team) *S3Create {
 	return s.SetTeamID(t.ID)
+}
+
+// AddServiceBackupSourceIDs adds the "service_backup_source" edge to the ServiceConfig entity by IDs.
+func (s *S3Create) AddServiceBackupSourceIDs(ids ...uuid.UUID) *S3Create {
+	s.mutation.AddServiceBackupSourceIDs(ids...)
+	return s
+}
+
+// AddServiceBackupSource adds the "service_backup_source" edges to the ServiceConfig entity.
+func (s *S3Create) AddServiceBackupSource(v ...*ServiceConfig) *S3Create {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return s.AddServiceBackupSourceIDs(ids...)
 }
 
 // Mutation returns the S3Mutation object of the builder.
@@ -282,6 +298,22 @@ func (s *S3Create) createSpec() (*S3, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.TeamID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := s.mutation.ServiceBackupSourceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

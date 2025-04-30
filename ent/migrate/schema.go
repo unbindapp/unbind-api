@@ -378,6 +378,8 @@ var (
 		{Name: "image", Type: field.TypeString, Nullable: true},
 		{Name: "definition_version", Type: field.TypeString, Nullable: true},
 		{Name: "database_config", Type: field.TypeJSON, Nullable: true},
+		{Name: "s3_backup_bucket", Type: field.TypeString, Nullable: true},
+		{Name: "s3_backup_source_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID, Unique: true},
 	}
 	// ServiceConfigsTable holds the schema information for the "service_configs" table.
@@ -387,8 +389,14 @@ var (
 		PrimaryKey: []*schema.Column{ServiceConfigsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
+				Symbol:     "service_configs_s3_sources_service_backup_source",
+				Columns:    []*schema.Column{ServiceConfigsColumns[20]},
+				RefColumns: []*schema.Column{S3SourcesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[19]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[21]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -660,7 +668,8 @@ func init() {
 	ServicesTable.Annotation = &entsql.Annotation{
 		Table: "services",
 	}
-	ServiceConfigsTable.ForeignKeys[0].RefTable = ServicesTable
+	ServiceConfigsTable.ForeignKeys[0].RefTable = S3SourcesTable
+	ServiceConfigsTable.ForeignKeys[1].RefTable = ServicesTable
 	ServiceConfigsTable.Annotation = &entsql.Annotation{
 		Table: "service_configs",
 	}

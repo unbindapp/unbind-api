@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
@@ -246,6 +247,34 @@ func (scc *ServiceConfigCreate) SetDatabaseConfig(sc *schema.DatabaseConfig) *Se
 	return scc
 }
 
+// SetS3BackupSourceID sets the "s3_backup_source_id" field.
+func (scc *ServiceConfigCreate) SetS3BackupSourceID(u uuid.UUID) *ServiceConfigCreate {
+	scc.mutation.SetS3BackupSourceID(u)
+	return scc
+}
+
+// SetNillableS3BackupSourceID sets the "s3_backup_source_id" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableS3BackupSourceID(u *uuid.UUID) *ServiceConfigCreate {
+	if u != nil {
+		scc.SetS3BackupSourceID(*u)
+	}
+	return scc
+}
+
+// SetS3BackupBucket sets the "s3_backup_bucket" field.
+func (scc *ServiceConfigCreate) SetS3BackupBucket(s string) *ServiceConfigCreate {
+	scc.mutation.SetS3BackupBucket(s)
+	return scc
+}
+
+// SetNillableS3BackupBucket sets the "s3_backup_bucket" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableS3BackupBucket(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetS3BackupBucket(*s)
+	}
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -263,6 +292,25 @@ func (scc *ServiceConfigCreate) SetNillableID(u *uuid.UUID) *ServiceConfigCreate
 // SetService sets the "service" edge to the Service entity.
 func (scc *ServiceConfigCreate) SetService(s *Service) *ServiceConfigCreate {
 	return scc.SetServiceID(s.ID)
+}
+
+// SetS3BackupSourcesID sets the "s3_backup_sources" edge to the S3 entity by ID.
+func (scc *ServiceConfigCreate) SetS3BackupSourcesID(id uuid.UUID) *ServiceConfigCreate {
+	scc.mutation.SetS3BackupSourcesID(id)
+	return scc
+}
+
+// SetNillableS3BackupSourcesID sets the "s3_backup_sources" edge to the S3 entity by ID if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableS3BackupSourcesID(id *uuid.UUID) *ServiceConfigCreate {
+	if id != nil {
+		scc = scc.SetS3BackupSourcesID(*id)
+	}
+	return scc
+}
+
+// SetS3BackupSources sets the "s3_backup_sources" edge to the S3 entity.
+func (scc *ServiceConfigCreate) SetS3BackupSources(s *S3) *ServiceConfigCreate {
+	return scc.SetS3BackupSourcesID(s.ID)
 }
 
 // Mutation returns the ServiceConfigMutation object of the builder.
@@ -478,6 +526,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldDatabaseConfig, field.TypeJSON, value)
 		_node.DatabaseConfig = value
 	}
+	if value, ok := scc.mutation.S3BackupBucket(); ok {
+		_spec.SetField(serviceconfig.FieldS3BackupBucket, field.TypeString, value)
+		_node.S3BackupBucket = &value
+	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -493,6 +545,23 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.ServiceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := scc.mutation.S3BackupSourcesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   serviceconfig.S3BackupSourcesTable,
+			Columns: []string{serviceconfig.S3BackupSourcesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.S3BackupSourceID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -832,6 +901,42 @@ func (u *ServiceConfigUpsert) UpdateDatabaseConfig() *ServiceConfigUpsert {
 // ClearDatabaseConfig clears the value of the "database_config" field.
 func (u *ServiceConfigUpsert) ClearDatabaseConfig() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldDatabaseConfig)
+	return u
+}
+
+// SetS3BackupSourceID sets the "s3_backup_source_id" field.
+func (u *ServiceConfigUpsert) SetS3BackupSourceID(v uuid.UUID) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldS3BackupSourceID, v)
+	return u
+}
+
+// UpdateS3BackupSourceID sets the "s3_backup_source_id" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateS3BackupSourceID() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldS3BackupSourceID)
+	return u
+}
+
+// ClearS3BackupSourceID clears the value of the "s3_backup_source_id" field.
+func (u *ServiceConfigUpsert) ClearS3BackupSourceID() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldS3BackupSourceID)
+	return u
+}
+
+// SetS3BackupBucket sets the "s3_backup_bucket" field.
+func (u *ServiceConfigUpsert) SetS3BackupBucket(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldS3BackupBucket, v)
+	return u
+}
+
+// UpdateS3BackupBucket sets the "s3_backup_bucket" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateS3BackupBucket() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldS3BackupBucket)
+	return u
+}
+
+// ClearS3BackupBucket clears the value of the "s3_backup_bucket" field.
+func (u *ServiceConfigUpsert) ClearS3BackupBucket() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldS3BackupBucket)
 	return u
 }
 
@@ -1219,6 +1324,48 @@ func (u *ServiceConfigUpsertOne) UpdateDatabaseConfig() *ServiceConfigUpsertOne 
 func (u *ServiceConfigUpsertOne) ClearDatabaseConfig() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearDatabaseConfig()
+	})
+}
+
+// SetS3BackupSourceID sets the "s3_backup_source_id" field.
+func (u *ServiceConfigUpsertOne) SetS3BackupSourceID(v uuid.UUID) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetS3BackupSourceID(v)
+	})
+}
+
+// UpdateS3BackupSourceID sets the "s3_backup_source_id" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateS3BackupSourceID() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateS3BackupSourceID()
+	})
+}
+
+// ClearS3BackupSourceID clears the value of the "s3_backup_source_id" field.
+func (u *ServiceConfigUpsertOne) ClearS3BackupSourceID() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearS3BackupSourceID()
+	})
+}
+
+// SetS3BackupBucket sets the "s3_backup_bucket" field.
+func (u *ServiceConfigUpsertOne) SetS3BackupBucket(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetS3BackupBucket(v)
+	})
+}
+
+// UpdateS3BackupBucket sets the "s3_backup_bucket" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateS3BackupBucket() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateS3BackupBucket()
+	})
+}
+
+// ClearS3BackupBucket clears the value of the "s3_backup_bucket" field.
+func (u *ServiceConfigUpsertOne) ClearS3BackupBucket() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearS3BackupBucket()
 	})
 }
 
@@ -1773,6 +1920,48 @@ func (u *ServiceConfigUpsertBulk) UpdateDatabaseConfig() *ServiceConfigUpsertBul
 func (u *ServiceConfigUpsertBulk) ClearDatabaseConfig() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearDatabaseConfig()
+	})
+}
+
+// SetS3BackupSourceID sets the "s3_backup_source_id" field.
+func (u *ServiceConfigUpsertBulk) SetS3BackupSourceID(v uuid.UUID) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetS3BackupSourceID(v)
+	})
+}
+
+// UpdateS3BackupSourceID sets the "s3_backup_source_id" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateS3BackupSourceID() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateS3BackupSourceID()
+	})
+}
+
+// ClearS3BackupSourceID clears the value of the "s3_backup_source_id" field.
+func (u *ServiceConfigUpsertBulk) ClearS3BackupSourceID() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearS3BackupSourceID()
+	})
+}
+
+// SetS3BackupBucket sets the "s3_backup_bucket" field.
+func (u *ServiceConfigUpsertBulk) SetS3BackupBucket(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetS3BackupBucket(v)
+	})
+}
+
+// UpdateS3BackupBucket sets the "s3_backup_bucket" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateS3BackupBucket() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateS3BackupBucket()
+	})
+}
+
+// ClearS3BackupBucket clears the value of the "s3_backup_bucket" field.
+func (u *ServiceConfigUpsertBulk) ClearS3BackupBucket() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearS3BackupBucket()
 	})
 }
 

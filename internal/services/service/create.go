@@ -52,8 +52,10 @@ type CreateServiceInput struct {
 	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
 
 	// Databases (special case)
-	DatabaseType   *string                `json:"database_type,omitempty"`
-	DatabaseConfig *schema.DatabaseConfig `json:"database_config,omitempty"`
+	DatabaseType     *string                `json:"database_type,omitempty"`
+	DatabaseConfig   *schema.DatabaseConfig `json:"database_config,omitempty"`
+	S3BackupSourceID *uuid.UUID             `json:"s3_backup_source_id,omitempty" format:"uuid"`
+	S3BackupBucket   *string                `json:"s3_backup_bucket,omitempty"`
 }
 
 // CreateService creates a new service and its configuration
@@ -231,6 +233,23 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, err
 	}
 
+	// Verify backup sources (for databases)
+	// Make sure we can read and write to the S3 bucket provided
+	if input.Type == schema.ServiceTypeDatabase && input.S3BackupSourceID != nil && input.S3BackupBucket != nil {
+		// Check if the S3 source exists
+		s3Source, err := self.repo.S3().GetByID(ctx, *input.S3BackupSourceID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 source not found")
+			}
+			return nil, err
+		}
+
+		if err := self.verifyS3Access(ctx, s3Source, *input.S3BackupBucket, project.Edges.Team.Namespace, client); err != nil {
+			return nil, err
+		}
+	}
+
 	// Create service and config in a transaction
 	var service *ent.Service
 	var serviceConfig *ent.ServiceConfig
@@ -332,6 +351,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			DockerfileContext:       input.DockerfileContext,
 			CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
 			DatabaseConfig:          input.DatabaseConfig,
+			S3BackupSourceID:        input.S3BackupSourceID,
+			S3BackupBucket:          input.S3BackupBucket,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

@@ -12,6 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/s3"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
@@ -19,6 +20,7 @@ import (
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Integrate service management with internal permissions and kubernetes RBAC
@@ -111,4 +113,38 @@ func (self *ServiceService) generateWildcardHost(ctx context.Context, tx reposit
 		Path: "/",
 		Port: utils.ToPtr(ports[0].Port),
 	}, nil
+}
+
+func (self *ServiceService) verifyS3Access(ctx context.Context, s3Source *ent.S3, bucket string, namespace string, client *kubernetes.Clientset) error {
+	// Retrieve secret from kubernetes
+	secret, err := self.k8s.GetSecret(ctx, s3Source.KubernetesSecret, namespace, client)
+	if err != nil {
+		return err
+	}
+	accessKeyId := string(secret.Data["access_key_id"])
+	secretKey := string(secret.Data["secret_key"])
+	if accessKeyId == "" || secretKey == "" {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
+			"S3 source secret is missing access key or secret key")
+	}
+
+	s3Client, err := s3.NewS3Client(
+		ctx,
+		s3Source.Endpoint,
+		s3Source.Region,
+		accessKeyId,
+		secretKey,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Probe the bucket
+	err = s3Client.ProbeBucketRW(ctx, bucket)
+	if err != nil {
+		// s3 client already transforms into API handler compatible errors
+		return err
+	}
+
+	return nil
 }
