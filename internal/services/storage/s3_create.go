@@ -101,5 +101,5 @@ func (self *StorageService) CreateS3StorageBackend(ctx context.Context, requeste
 		return nil, err
 	}
 
-	return models.TransformS3Entity(s3, input.AccessKeyID, input.SecretKey), nil
+	return models.TransformS3Entity(s3, input.AccessKeyID, input.SecretKey, nil), nil
 }

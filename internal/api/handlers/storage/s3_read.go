@@ -13,8 +13,9 @@ import (
 
 type GetS3SourceByIDInput struct {
 	server.BaseAuthInput
-	ID     uuid.UUID `query:"id" format:"uuid" required:"true"`
-	TeamID uuid.UUID `query:"team_id" format:"uuid" required:"true"`
+	ID          uuid.UUID `query:"id" format:"uuid" required:"true"`
+	TeamID      uuid.UUID `query:"team_id" format:"uuid" required:"true"`
+	WithBuckets bool      `query:"with_buckets"`
 }
 
 type GetS3SourceByIDOutput struct {
@@ -38,6 +39,7 @@ func (self *HandlerGroup) GetS3SourceByID(ctx context.Context, input *GetS3Sourc
 		bearerToken,
 		input.TeamID,
 		input.ID,
+		input.WithBuckets,
 	)
 	if err != nil {
 		return nil, self.handleErr(err)
@@ -50,7 +52,8 @@ func (self *HandlerGroup) GetS3SourceByID(ctx context.Context, input *GetS3Sourc
 
 type ListS3SourceInput struct {
 	server.BaseAuthInput
-	TeamID uuid.UUID `query:"team_id" format:"uuid" required:"true"`
+	TeamID      uuid.UUID `query:"team_id" format:"uuid" required:"true"`
+	WithBuckets bool      `query:"with_buckets"`
 }
 
 type ListS3SourceOutput struct {
@@ -73,6 +76,7 @@ func (self *HandlerGroup) ListS3Source(ctx context.Context, input *ListS3SourceI
 		user.ID,
 		bearerToken,
 		input.TeamID,
+		input.WithBuckets,
 	)
 	if err != nil {
 		return nil, self.handleErr(err)
