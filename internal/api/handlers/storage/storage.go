@@ -23,6 +23,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "test-s3-access",
+			Summary:     "Test S3 Access",
+			Description: "Test S3 access with the provided credentials.",
+			Path:        "/s3/test",
+			Method:      http.MethodPost,
+		},
+		handlers.TestS3Access,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "create-s3-source",
 			Summary:     "Create S3 Source",
 			Description: "Create an S3 source to be used for backups, etc.",
