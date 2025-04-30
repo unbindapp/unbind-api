@@ -158,7 +158,7 @@ func RailpackProviderValidator(rp enum.Provider) error {
 // RailpackFrameworkValidator is a validator for the "railpack_framework" field enum values. It is called by the builders before save.
 func RailpackFrameworkValidator(rf enum.Framework) error {
 	switch rf {
-	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "rocket", "unknown":
+	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "sveltekit", "svelte", "solid", "hono", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "rocket", "unknown":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for railpack_framework field: %q", rf)
