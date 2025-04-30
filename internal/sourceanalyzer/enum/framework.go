@@ -98,14 +98,18 @@ type Framework string
 
 const (
 	// * node frameworks
-	Next    Framework = "next"
-	Astro   Framework = "astro"
-	Vite    Framework = "vite"
-	CRA     Framework = "cra"
-	Angular Framework = "angular"
-	Remix   Framework = "remix"
-	Bun     Framework = "bun"
-	Express Framework = "express"
+	Next      Framework = "next"
+	Astro     Framework = "astro"
+	Vite      Framework = "vite"
+	CRA       Framework = "cra"
+	Angular   Framework = "angular"
+	Remix     Framework = "remix"
+	Bun       Framework = "bun"
+	Express   Framework = "express"
+	Sveltekit Framework = "sveltekit"
+	Svelte    Framework = "svelte"
+	Solid     Framework = "solid"
+	Hono      Framework = "hono"
 	// * python frameworks
 	PythonFramework Framework = "python" // Sometimes detected as a framework
 	Django          Framework = "django"
@@ -127,7 +131,7 @@ const (
 )
 
 var allFrameworks = []Framework{
-	Next, Astro, Vite, CRA, Angular, Remix, Bun, Express,
+	Next, Astro, Vite, CRA, Angular, Remix, Bun, Express, Sveltekit, Svelte, Solid, Hono,
 	PythonFramework, Django, Flask, FastAPI, FastHTML,
 	Gin,
 	SpringBoot,

@@ -3,7 +3,6 @@ package storage_service
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -66,7 +65,7 @@ func (self *StorageService) GetS3StorageByID(ctx context.Context, requesterUserI
 
 	accessKey := string(secret.Data["access_key_id"])
 	secretKey := string(secret.Data["secret_key"])
-	buckets := []types.Bucket{}
+	buckets := []*models.S3Bucket{}
 
 	if withBuckets {
 		s3client, err := s3.NewS3Client(
@@ -133,7 +132,7 @@ func (self *StorageService) ListS3StorageBackends(ctx context.Context, requester
 	// Create credential map
 	accessKeyMap := make(map[uuid.UUID]string)
 	secretKeyMap := make(map[uuid.UUID]string)
-	bucketsMap := make(map[uuid.UUID][]types.Bucket)
+	bucketsMap := make(map[uuid.UUID][]*models.S3Bucket)
 	for _, s3Source := range s3Sources {
 		// Get the secret
 		secret, err := self.k8s.GetSecret(ctx, s3Source.KubernetesSecret, team.Namespace, client)

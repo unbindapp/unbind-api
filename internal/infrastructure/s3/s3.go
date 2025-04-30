@@ -11,11 +11,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // S3Client provides methods to interact with S3-compatible storage.
@@ -55,12 +55,12 @@ func NewS3Client(ctx context.Context, endpoint, region, accessKeyID, secretKey s
 }
 
 // ListBuckets lists all S3 buckets in the configured account.
-func (c *S3Client) ListBuckets(ctx context.Context) ([]types.Bucket, error) {
+func (c *S3Client) ListBuckets(ctx context.Context) ([]*models.S3Bucket, error) {
 	buckets, err := c.client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list buckets: %w", err)
 	}
-	return buckets.Buckets, nil
+	return models.TransformBucketEntities(buckets.Buckets), nil
 }
 
 // ProbeAnyBucketRW tries to write + read a probe object in the first bucket the
