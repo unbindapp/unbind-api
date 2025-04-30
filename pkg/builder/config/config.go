@@ -57,6 +57,7 @@ type Config struct {
 	ServiceDockerfilePath    string                `env:"SERVICE_DOCKERFILE_PATH"`    // Path to Dockerfile in the repo (optional)
 	ServiceDockerfileContext string                `env:"SERVICE_DOCKERFILE_CONTEXT"` // Path to Dockerfile context in the repo (optional)
 	ServiceImage             string                `env:"SERVICE_IMAGE"`              // Custom image if not building from git
+	ServiceRunCommand        string                `env:"SERVICE_RUN_COMMAND"`        // Command to run the service
 	// Database data
 	ServiceDatabaseType              string `env:"SERVICE_DATABASE_TYPE"`
 	ServiceDatabaseDefinitionVersion string `env:"SERVICE_DATABASE_USD_VERSION"`

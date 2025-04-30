@@ -273,7 +273,9 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_HOSTS"] = string(marshalled)
 	}
 
-	// ! TODO - we need to support the custom run commands, the operator supports it
+	if service.Edges.ServiceConfig.RunCommand != nil {
+		env["SERVICE_RUN_COMMAND"] = *service.Edges.ServiceConfig.RunCommand
+	}
 
 	return env, nil
 }

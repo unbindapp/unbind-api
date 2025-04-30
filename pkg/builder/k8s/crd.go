@@ -8,6 +8,7 @@ import (
 
 	// Import the operator API package
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,6 +49,7 @@ type ServiceParams struct {
 	Public           *bool
 	Replicas         *int32
 	ImagePullSecrets []string
+	RunCommand       string
 
 	// Database
 	DatabaseType          string
@@ -105,6 +107,10 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 	service.Spec.Config = v1.ServiceConfigSpec{
 		GitBranch: params.GitRef,
 		Image:     params.Image,
+	}
+
+	if params.RunCommand != "" {
+		service.Spec.Config.RunCommand = utils.ToPtr(params.RunCommand)
 	}
 
 	// Add host configuration if provided
@@ -194,6 +200,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		Ports:            self.builderConfig.Ports,
 		Public:           self.builderConfig.ServicePublic,
 		Replicas:         self.builderConfig.ServiceReplicas,
+		RunCommand:       self.builderConfig.ServiceRunCommand,
 		EnvVars:          envVars,
 		// Template
 		DatabaseConfig:        dbConfig,
