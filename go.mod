@@ -201,6 +201,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/tdewolff/parse/v2 v2.7.23
 	github.com/unbindapp/unbind-operator v0.0.0-20250418191739-59635e6a325c
 	github.com/valkey-io/valkey-go/valkeycompat v1.0.56
 	github.com/vburenin/ifacemaker v1.2.1 // indirect

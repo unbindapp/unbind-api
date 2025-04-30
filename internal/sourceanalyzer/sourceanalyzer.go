@@ -11,6 +11,7 @@ import (
 	"github.com/railwayapp/railpack/core/providers"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
+	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/portdetector"
 )
 
 // The root result
@@ -54,15 +55,14 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 
 	detectedProvider := enum.ParseProvider([]string{strings.ToLower(detectedProviderName)})
 	detectedFramework := enum.DetectFramework(detectedProvider, ctx)
-	detectedPort := inferPortFromFramework(detectedFramework)
 
-	// Railpack only returns gin, so see if this is a web API or not
-	if detectedProvider == enum.Go && detectedFramework == enum.UnknownFramework {
-		if hasListenAndServe(sourceDir) {
-			port := 8080
-			detectedPort = &port
-		}
+	// Detect port
+	detector := &portdetector.PortDetector{
+		Provider:  detectedProvider,
+		SourceDir: sourceDir,
 	}
+
+	detectedPort, _ := detector.DetectPort()
 
 	// Check for express as railpack doesn't return it
 	if detectedProvider == enum.Node && detectedFramework == enum.UnknownFramework {
