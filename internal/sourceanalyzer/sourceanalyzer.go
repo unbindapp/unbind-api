@@ -56,6 +56,13 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 	detectedProvider := enum.ParseProvider([]string{strings.ToLower(detectedProviderName)})
 	detectedFramework := enum.DetectFramework(detectedProvider, ctx)
 
+	// Check for express as railpack doesn't return it
+	if detectedProvider == enum.Node && detectedFramework == enum.UnknownFramework {
+		if isExpressApp(sourceDir) {
+			detectedFramework = enum.Express
+		}
+	}
+
 	// Detect port
 	detector := &portdetector.PortDetector{
 		Provider:  detectedProvider,
@@ -64,15 +71,6 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 	}
 
 	detectedPort, _ := detector.DetectPort()
-
-	// Check for express as railpack doesn't return it
-	if detectedProvider == enum.Node && detectedFramework == enum.UnknownFramework {
-		if isExpressApp(sourceDir) {
-			port := 3000
-			detectedPort = &port
-			detectedFramework = enum.Express
-		}
-	}
 
 	return &AnalysisResult{
 		Provider:  detectedProvider,
