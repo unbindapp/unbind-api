@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/ent/webhook"
@@ -120,6 +121,21 @@ func (tc *TeamCreate) AddProjects(p ...*Project) *TeamCreate {
 		ids[i] = p[i].ID
 	}
 	return tc.AddProjectIDs(ids...)
+}
+
+// AddS3SourceIDs adds the "s3_sources" edge to the S3 entity by IDs.
+func (tc *TeamCreate) AddS3SourceIDs(ids ...uuid.UUID) *TeamCreate {
+	tc.mutation.AddS3SourceIDs(ids...)
+	return tc
+}
+
+// AddS3Sources adds the "s3_sources" edges to the S3 entity.
+func (tc *TeamCreate) AddS3Sources(s ...*S3) *TeamCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return tc.AddS3SourceIDs(ids...)
 }
 
 // AddMemberIDs adds the "members" edge to the User entity by IDs.
@@ -299,6 +315,22 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.S3SourcesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.S3SourcesTable,
+			Columns: []string{team.S3SourcesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

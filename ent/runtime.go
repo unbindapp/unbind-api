@@ -310,8 +310,12 @@ func init() {
 	s3.DefaultUpdatedAt = s3DescUpdatedAt.Default.(func() time.Time)
 	// s3.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	s3.UpdateDefaultUpdatedAt = s3DescUpdatedAt.UpdateDefault.(func() time.Time)
+	// s3DescName is the schema descriptor for name field.
+	s3DescName := s3Fields[0].Descriptor()
+	// s3.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	s3.NameValidator = s3DescName.Validators[0].(func(string) error)
 	// s3DescForcePathStyle is the schema descriptor for force_path_style field.
-	s3DescForcePathStyle := s3Fields[2].Descriptor()
+	s3DescForcePathStyle := s3Fields[3].Descriptor()
 	// s3.DefaultForcePathStyle holds the default value on creation for the force_path_style field.
 	s3.DefaultForcePathStyle = s3DescForcePathStyle.Default.(bool)
 	// s3DescID is the schema descriptor for id field.

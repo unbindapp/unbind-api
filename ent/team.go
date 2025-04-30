@@ -43,13 +43,15 @@ type Team struct {
 type TeamEdges struct {
 	// Projects holds the value of the projects edge.
 	Projects []*Project `json:"projects,omitempty"`
+	// S3Sources holds the value of the s3_sources edge.
+	S3Sources []*S3 `json:"s3_sources,omitempty"`
 	// Members holds the value of the members edge.
 	Members []*User `json:"members,omitempty"`
 	// TeamWebhooks holds the value of the team_webhooks edge.
 	TeamWebhooks []*Webhook `json:"team_webhooks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // ProjectsOrErr returns the Projects value or an error if the edge
@@ -61,10 +63,19 @@ func (e TeamEdges) ProjectsOrErr() ([]*Project, error) {
 	return nil, &NotLoadedError{edge: "projects"}
 }
 
+// S3SourcesOrErr returns the S3Sources value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) S3SourcesOrErr() ([]*S3, error) {
+	if e.loadedTypes[1] {
+		return e.S3Sources, nil
+	}
+	return nil, &NotLoadedError{edge: "s3_sources"}
+}
+
 // MembersOrErr returns the Members value or an error if the edge
 // was not loaded in eager-loading.
 func (e TeamEdges) MembersOrErr() ([]*User, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Members, nil
 	}
 	return nil, &NotLoadedError{edge: "members"}
@@ -73,7 +84,7 @@ func (e TeamEdges) MembersOrErr() ([]*User, error) {
 // TeamWebhooksOrErr returns the TeamWebhooks value or an error if the edge
 // was not loaded in eager-loading.
 func (e TeamEdges) TeamWebhooksOrErr() ([]*Webhook, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.TeamWebhooks, nil
 	}
 	return nil, &NotLoadedError{edge: "team_webhooks"}
@@ -170,6 +181,11 @@ func (t *Team) Value(name string) (ent.Value, error) {
 // QueryProjects queries the "projects" edge of the Team entity.
 func (t *Team) QueryProjects() *ProjectQuery {
 	return NewTeamClient(t.config).QueryProjects(t)
+}
+
+// QueryS3Sources queries the "s3_sources" edge of the Team entity.
+func (t *Team) QueryS3Sources() *S3Query {
+	return NewTeamClient(t.config).QueryS3Sources(t)
 }
 
 // QueryMembers queries the "members" edge of the Team entity.

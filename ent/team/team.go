@@ -31,6 +31,8 @@ const (
 	FieldDescription = "description"
 	// EdgeProjects holds the string denoting the projects edge name in mutations.
 	EdgeProjects = "projects"
+	// EdgeS3Sources holds the string denoting the s3_sources edge name in mutations.
+	EdgeS3Sources = "s3_sources"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
 	EdgeMembers = "members"
 	// EdgeTeamWebhooks holds the string denoting the team_webhooks edge name in mutations.
@@ -44,6 +46,13 @@ const (
 	ProjectsInverseTable = "projects"
 	// ProjectsColumn is the table column denoting the projects relation/edge.
 	ProjectsColumn = "team_id"
+	// S3SourcesTable is the table that holds the s3_sources relation/edge.
+	S3SourcesTable = "s3_sources"
+	// S3SourcesInverseTable is the table name for the S3 entity.
+	// It exists in this package in order to avoid circular dependency with the "s3" package.
+	S3SourcesInverseTable = "s3_sources"
+	// S3SourcesColumn is the table column denoting the s3_sources relation/edge.
+	S3SourcesColumn = "team_id"
 	// MembersTable is the table that holds the members relation/edge. The primary key declared below.
 	MembersTable = "user_teams"
 	// MembersInverseTable is the table name for the User entity.
@@ -156,6 +165,20 @@ func ByProjects(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByS3SourcesCount orders the results by s3_sources count.
+func ByS3SourcesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newS3SourcesStep(), opts...)
+	}
+}
+
+// ByS3Sources orders the results by s3_sources terms.
+func ByS3Sources(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newS3SourcesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByMembersCount orders the results by members count.
 func ByMembersCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -188,6 +211,13 @@ func newProjectsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProjectsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ProjectsTable, ProjectsColumn),
+	)
+}
+func newS3SourcesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(S3SourcesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, S3SourcesTable, S3SourcesColumn),
 	)
 }
 func newMembersStep() *sqlgraph.Step {

@@ -292,16 +292,26 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
 		{Name: "endpoint", Type: field.TypeString},
 		{Name: "region", Type: field.TypeString},
 		{Name: "force_path_style", Type: field.TypeBool, Default: true},
 		{Name: "kubernetes_secret", Type: field.TypeString},
+		{Name: "team_id", Type: field.TypeUUID},
 	}
 	// S3SourcesTable holds the schema information for the "s3_sources" table.
 	S3SourcesTable = &schema.Table{
 		Name:       "s3_sources",
 		Columns:    S3SourcesColumns,
 		PrimaryKey: []*schema.Column{S3SourcesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "s3_sources_teams_s3_sources",
+				Columns:    []*schema.Column{S3SourcesColumns[8]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// ServicesColumns holds the columns for the "services" table.
 	ServicesColumns = []*schema.Column{
@@ -640,6 +650,7 @@ func init() {
 	RegistriesTable.Annotation = &entsql.Annotation{
 		Table: "registries",
 	}
+	S3SourcesTable.ForeignKeys[0].RefTable = TeamsTable
 	S3SourcesTable.Annotation = &entsql.Annotation{
 		Table: "s3_sources",
 	}

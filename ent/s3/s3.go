@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -18,6 +19,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// FieldEndpoint holds the string denoting the endpoint field in the database.
 	FieldEndpoint = "endpoint"
 	// FieldRegion holds the string denoting the region field in the database.
@@ -26,8 +29,19 @@ const (
 	FieldForcePathStyle = "force_path_style"
 	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
 	FieldKubernetesSecret = "kubernetes_secret"
+	// FieldTeamID holds the string denoting the team_id field in the database.
+	FieldTeamID = "team_id"
+	// EdgeTeam holds the string denoting the team edge name in mutations.
+	EdgeTeam = "team"
 	// Table holds the table name of the s3 in the database.
 	Table = "s3_sources"
+	// TeamTable is the table that holds the team relation/edge.
+	TeamTable = "s3_sources"
+	// TeamInverseTable is the table name for the Team entity.
+	// It exists in this package in order to avoid circular dependency with the "team" package.
+	TeamInverseTable = "teams"
+	// TeamColumn is the table column denoting the team relation/edge.
+	TeamColumn = "team_id"
 )
 
 // Columns holds all SQL columns for s3 fields.
@@ -35,10 +49,12 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldName,
 	FieldEndpoint,
 	FieldRegion,
 	FieldForcePathStyle,
 	FieldKubernetesSecret,
+	FieldTeamID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -58,6 +74,8 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
 	// DefaultForcePathStyle holds the default value on creation for the "force_path_style" field.
 	DefaultForcePathStyle bool
 	// DefaultID holds the default value on creation for the "id" field.
@@ -82,6 +100,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
 // ByEndpoint orders the results by the endpoint field.
 func ByEndpoint(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEndpoint, opts...).ToFunc()
@@ -100,4 +123,23 @@ func ByForcePathStyle(opts ...sql.OrderTermOption) OrderOption {
 // ByKubernetesSecret orders the results by the kubernetes_secret field.
 func ByKubernetesSecret(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldKubernetesSecret, opts...).ToFunc()
+}
+
+// ByTeamID orders the results by the team_id field.
+func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
+}
+
+// ByTeamField orders the results by team field.
+func ByTeamField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTeamStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newTeamStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TeamInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
+	)
 }

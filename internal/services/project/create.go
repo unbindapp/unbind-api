@@ -17,9 +17,9 @@ import (
 )
 
 type CreateProjectInput struct {
-	TeamID      uuid.UUID `format:"uuid" required:"true"`
-	Name        string    `format:"uuid" required:"true"`
-	Description *string
+	TeamID      uuid.UUID `json:"team_id" format:"uuid" required:"true"`
+	Name        string    `json:"name" required:"true"`
+	Description *string   `json:"description" required:"false"`
 }
 
 func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID uuid.UUID, input *CreateProjectInput, bearerToken string) (*models.ProjectResponse, error) {
@@ -56,16 +56,16 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 	var project *ent.Project
 	var environment *ent.Environment
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
-		// Create secret for this project
-		secret, _, err := self.k8s.GetOrCreateSecret(ctx, input.Name, team.Namespace, client)
-		if err != nil {
-			return err
-		}
-
 		// Create a unique name
 		kubernetesName, err := utils.GenerateSlug(input.Name)
 		if err != nil {
 			log.Errorf("Failed to generate kubernetes name for project %s: %v", input.Name, err)
+			return err
+		}
+
+		// Create secret for this project
+		secret, _, err := self.k8s.GetOrCreateSecret(ctx, kubernetesName, team.Namespace, client)
+		if err != nil {
 			return err
 		}
 

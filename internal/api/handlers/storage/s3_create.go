@@ -1,4 +1,4 @@
-package projects_handler
+package storage_handler
 
 import (
 	"context"
@@ -8,21 +8,20 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
-	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 )
 
-type CreateProjectInput struct {
+type CreateS3Input struct {
 	server.BaseAuthInput
-	Body *project_service.CreateProjectInput
+	Body *models.S3BackendCreateInput
 }
 
-type CreateProjectResponse struct {
+type CreateS3Output struct {
 	Body struct {
-		Data *models.ProjectResponse `json:"data"`
+		Data *models.S3Response `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjectInput) (*CreateProjectResponse, error) {
+func (self *HandlerGroup) CreateS3(ctx context.Context, input *CreateS3Input) (*CreateS3Output, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -31,12 +30,17 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	createdProject, err := self.srv.ProjectService.CreateProject(ctx, user.ID, input.Body, bearerToken)
+	s3source, err := self.srv.StorageService.CreateS3StorageBackend(
+		ctx,
+		user.ID,
+		bearerToken,
+		input.Body,
+	)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}
 
-	resp := &CreateProjectResponse{}
-	resp.Body.Data = createdProject
+	resp := &CreateS3Output{}
+	resp.Body.Data = s3source
 	return resp, nil
 }

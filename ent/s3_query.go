@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/s3"
+	"github.com/unbindapp/unbind-api/ent/team"
 )
 
 // S3Query is the builder for querying S3 entities.
@@ -23,6 +24,7 @@ type S3Query struct {
 	order      []s3.OrderOption
 	inters     []Interceptor
 	predicates []predicate.S3
+	withTeam   *TeamQuery
 	modifiers  []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -58,6 +60,28 @@ func (s *S3Query) Unique(unique bool) *S3Query {
 func (s *S3Query) Order(o ...s3.OrderOption) *S3Query {
 	s.order = append(s.order, o...)
 	return s
+}
+
+// QueryTeam chains the current query on the "team" edge.
+func (s *S3Query) QueryTeam() *TeamQuery {
+	query := (&TeamClient{config: s.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := s.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := s.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(s3.Table, s3.FieldID, selector),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, s3.TeamTable, s3.TeamColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(s.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first S3 entity from the query.
@@ -252,11 +276,23 @@ func (s *S3Query) Clone() *S3Query {
 		order:      append([]s3.OrderOption{}, s.order...),
 		inters:     append([]Interceptor{}, s.inters...),
 		predicates: append([]predicate.S3{}, s.predicates...),
+		withTeam:   s.withTeam.Clone(),
 		// clone intermediate query.
 		sql:       s.sql.Clone(),
 		path:      s.path,
 		modifiers: append([]func(*sql.Selector){}, s.modifiers...),
 	}
+}
+
+// WithTeam tells the query-builder to eager-load the nodes that are connected to
+// the "team" edge. The optional arguments are used to configure the query builder of the edge.
+func (s *S3Query) WithTeam(opts ...func(*TeamQuery)) *S3Query {
+	query := (&TeamClient{config: s.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	s.withTeam = query
+	return s
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -335,8 +371,11 @@ func (s *S3Query) prepareQuery(ctx context.Context) error {
 
 func (s *S3Query) sqlAll(ctx context.Context, hooks ...queryHook) ([]*S3, error) {
 	var (
-		nodes = []*S3{}
-		_spec = s.querySpec()
+		nodes       = []*S3{}
+		_spec       = s.querySpec()
+		loadedTypes = [1]bool{
+			s.withTeam != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*S3).scanValues(nil, columns)
@@ -344,6 +383,7 @@ func (s *S3Query) sqlAll(ctx context.Context, hooks ...queryHook) ([]*S3, error)
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &S3{config: s.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if len(s.modifiers) > 0 {
@@ -358,7 +398,43 @@ func (s *S3Query) sqlAll(ctx context.Context, hooks ...queryHook) ([]*S3, error)
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := s.withTeam; query != nil {
+		if err := s.loadTeam(ctx, query, nodes, nil,
+			func(n *S3, e *Team) { n.Edges.Team = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (s *S3Query) loadTeam(ctx context.Context, query *TeamQuery, nodes []*S3, init func(*S3), assign func(*S3, *Team)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*S3)
+	for i := range nodes {
+		fk := nodes[i].TeamID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(team.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (s *S3Query) sqlCount(ctx context.Context) (int, error) {
@@ -388,6 +464,9 @@ func (s *S3Query) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != s3.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if s.withTeam != nil {
+			_spec.Node.AddColumnOnce(s3.FieldTeamID)
 		}
 	}
 	if ps := s.predicates; len(ps) > 0 {

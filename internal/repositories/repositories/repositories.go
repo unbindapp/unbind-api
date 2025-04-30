@@ -13,6 +13,7 @@ import (
 	oauth_repo "github.com/unbindapp/unbind-api/internal/repositories/oauth"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	project_repo "github.com/unbindapp/unbind-api/internal/repositories/project"
+	s3_repo "github.com/unbindapp/unbind-api/internal/repositories/s3"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
@@ -41,6 +42,7 @@ type Repositories struct {
 	webhooks    webhook_repo.WebhookRepositoryInterface
 	variables   variable_repo.VariableRepositoryInterface
 	bootstrap   bootstrap_repo.BootstrapRepositoryInterface
+	s3          s3_repo.S3RepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -60,6 +62,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	webhooksRepo := webhook_repo.NewWebhookRepository(db)
 	variablesRepo := variable_repo.NewVariableRepository(db)
 	bootstrapRepo := bootstrap_repo.NewBootstrapRepository(db)
+	s3Repo := s3_repo.NewS3Repository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -77,6 +80,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		webhooks:    webhooksRepo,
 		variables:   variablesRepo,
 		bootstrap:   bootstrapRepo,
+		s3:          s3Repo,
 	}
 }
 
@@ -153,6 +157,11 @@ func (r *Repositories) Variables() variable_repo.VariableRepositoryInterface {
 // Bootstrap returns the Bootstrap repository
 func (r *Repositories) Bootstrap() bootstrap_repo.BootstrapRepositoryInterface {
 	return r.bootstrap
+}
+
+// S3 returns the S3 repository
+func (r *Repositories) S3() s3_repo.S3RepositoryInterface {
+	return r.s3
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {

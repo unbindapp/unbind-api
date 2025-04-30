@@ -9808,11 +9808,14 @@ type S3Mutation struct {
 	id                *uuid.UUID
 	created_at        *time.Time
 	updated_at        *time.Time
+	name              *string
 	endpoint          *string
 	region            *string
 	force_path_style  *bool
 	kubernetes_secret *string
 	clearedFields     map[string]struct{}
+	team              *uuid.UUID
+	clearedteam       bool
 	done              bool
 	oldValue          func(context.Context) (*S3, error)
 	predicates        []predicate.S3
@@ -9994,6 +9997,42 @@ func (m *S3Mutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetName sets the "name" field.
+func (m *S3Mutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *S3Mutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the S3 entity.
+// If the S3 object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *S3Mutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *S3Mutation) ResetName() {
+	m.name = nil
+}
+
 // SetEndpoint sets the "endpoint" field.
 func (m *S3Mutation) SetEndpoint(s string) {
 	m.endpoint = &s
@@ -10138,6 +10177,69 @@ func (m *S3Mutation) ResetKubernetesSecret() {
 	m.kubernetes_secret = nil
 }
 
+// SetTeamID sets the "team_id" field.
+func (m *S3Mutation) SetTeamID(u uuid.UUID) {
+	m.team = &u
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *S3Mutation) TeamID() (r uuid.UUID, exists bool) {
+	v := m.team
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the S3 entity.
+// If the S3 object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *S3Mutation) OldTeamID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *S3Mutation) ResetTeamID() {
+	m.team = nil
+}
+
+// ClearTeam clears the "team" edge to the Team entity.
+func (m *S3Mutation) ClearTeam() {
+	m.clearedteam = true
+	m.clearedFields[s3.FieldTeamID] = struct{}{}
+}
+
+// TeamCleared reports if the "team" edge to the Team entity was cleared.
+func (m *S3Mutation) TeamCleared() bool {
+	return m.clearedteam
+}
+
+// TeamIDs returns the "team" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TeamID instead. It exists only for internal usage by the builders.
+func (m *S3Mutation) TeamIDs() (ids []uuid.UUID) {
+	if id := m.team; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTeam resets all changes to the "team" edge.
+func (m *S3Mutation) ResetTeam() {
+	m.team = nil
+	m.clearedteam = false
+}
+
 // Where appends a list predicates to the S3Mutation builder.
 func (m *S3Mutation) Where(ps ...predicate.S3) {
 	m.predicates = append(m.predicates, ps...)
@@ -10172,12 +10274,15 @@ func (m *S3Mutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *S3Mutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 8)
 	if m.created_at != nil {
 		fields = append(fields, s3.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, s3.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, s3.FieldName)
 	}
 	if m.endpoint != nil {
 		fields = append(fields, s3.FieldEndpoint)
@@ -10191,6 +10296,9 @@ func (m *S3Mutation) Fields() []string {
 	if m.kubernetes_secret != nil {
 		fields = append(fields, s3.FieldKubernetesSecret)
 	}
+	if m.team != nil {
+		fields = append(fields, s3.FieldTeamID)
+	}
 	return fields
 }
 
@@ -10203,6 +10311,8 @@ func (m *S3Mutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case s3.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case s3.FieldName:
+		return m.Name()
 	case s3.FieldEndpoint:
 		return m.Endpoint()
 	case s3.FieldRegion:
@@ -10211,6 +10321,8 @@ func (m *S3Mutation) Field(name string) (ent.Value, bool) {
 		return m.ForcePathStyle()
 	case s3.FieldKubernetesSecret:
 		return m.KubernetesSecret()
+	case s3.FieldTeamID:
+		return m.TeamID()
 	}
 	return nil, false
 }
@@ -10224,6 +10336,8 @@ func (m *S3Mutation) OldField(ctx context.Context, name string) (ent.Value, erro
 		return m.OldCreatedAt(ctx)
 	case s3.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case s3.FieldName:
+		return m.OldName(ctx)
 	case s3.FieldEndpoint:
 		return m.OldEndpoint(ctx)
 	case s3.FieldRegion:
@@ -10232,6 +10346,8 @@ func (m *S3Mutation) OldField(ctx context.Context, name string) (ent.Value, erro
 		return m.OldForcePathStyle(ctx)
 	case s3.FieldKubernetesSecret:
 		return m.OldKubernetesSecret(ctx)
+	case s3.FieldTeamID:
+		return m.OldTeamID(ctx)
 	}
 	return nil, fmt.Errorf("unknown S3 field %s", name)
 }
@@ -10254,6 +10370,13 @@ func (m *S3Mutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case s3.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
 		return nil
 	case s3.FieldEndpoint:
 		v, ok := value.(string)
@@ -10282,6 +10405,13 @@ func (m *S3Mutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetKubernetesSecret(v)
+		return nil
+	case s3.FieldTeamID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
 		return nil
 	}
 	return fmt.Errorf("unknown S3 field %s", name)
@@ -10338,6 +10468,9 @@ func (m *S3Mutation) ResetField(name string) error {
 	case s3.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
+	case s3.FieldName:
+		m.ResetName()
+		return nil
 	case s3.FieldEndpoint:
 		m.ResetEndpoint()
 		return nil
@@ -10350,25 +10483,37 @@ func (m *S3Mutation) ResetField(name string) error {
 	case s3.FieldKubernetesSecret:
 		m.ResetKubernetesSecret()
 		return nil
+	case s3.FieldTeamID:
+		m.ResetTeamID()
+		return nil
 	}
 	return fmt.Errorf("unknown S3 field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *S3Mutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.team != nil {
+		edges = append(edges, s3.EdgeTeam)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *S3Mutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case s3.EdgeTeam:
+		if id := m.team; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *S3Mutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -10380,25 +10525,42 @@ func (m *S3Mutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *S3Mutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedteam {
+		edges = append(edges, s3.EdgeTeam)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *S3Mutation) EdgeCleared(name string) bool {
+	switch name {
+	case s3.EdgeTeam:
+		return m.clearedteam
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *S3Mutation) ClearEdge(name string) error {
+	switch name {
+	case s3.EdgeTeam:
+		m.ClearTeam()
+		return nil
+	}
 	return fmt.Errorf("unknown S3 unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *S3Mutation) ResetEdge(name string) error {
+	switch name {
+	case s3.EdgeTeam:
+		m.ResetTeam()
+		return nil
+	}
 	return fmt.Errorf("unknown S3 edge %s", name)
 }
 
@@ -14140,6 +14302,9 @@ type TeamMutation struct {
 	projects             map[uuid.UUID]struct{}
 	removedprojects      map[uuid.UUID]struct{}
 	clearedprojects      bool
+	s3_sources           map[uuid.UUID]struct{}
+	removeds3_sources    map[uuid.UUID]struct{}
+	cleareds3_sources    bool
 	members              map[uuid.UUID]struct{}
 	removedmembers       map[uuid.UUID]struct{}
 	clearedmembers       bool
@@ -14574,6 +14739,60 @@ func (m *TeamMutation) ResetProjects() {
 	m.removedprojects = nil
 }
 
+// AddS3SourceIDs adds the "s3_sources" edge to the S3 entity by ids.
+func (m *TeamMutation) AddS3SourceIDs(ids ...uuid.UUID) {
+	if m.s3_sources == nil {
+		m.s3_sources = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.s3_sources[ids[i]] = struct{}{}
+	}
+}
+
+// ClearS3Sources clears the "s3_sources" edge to the S3 entity.
+func (m *TeamMutation) ClearS3Sources() {
+	m.cleareds3_sources = true
+}
+
+// S3SourcesCleared reports if the "s3_sources" edge to the S3 entity was cleared.
+func (m *TeamMutation) S3SourcesCleared() bool {
+	return m.cleareds3_sources
+}
+
+// RemoveS3SourceIDs removes the "s3_sources" edge to the S3 entity by IDs.
+func (m *TeamMutation) RemoveS3SourceIDs(ids ...uuid.UUID) {
+	if m.removeds3_sources == nil {
+		m.removeds3_sources = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.s3_sources, ids[i])
+		m.removeds3_sources[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedS3Sources returns the removed IDs of the "s3_sources" edge to the S3 entity.
+func (m *TeamMutation) RemovedS3SourcesIDs() (ids []uuid.UUID) {
+	for id := range m.removeds3_sources {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// S3SourcesIDs returns the "s3_sources" edge IDs in the mutation.
+func (m *TeamMutation) S3SourcesIDs() (ids []uuid.UUID) {
+	for id := range m.s3_sources {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetS3Sources resets all changes to the "s3_sources" edge.
+func (m *TeamMutation) ResetS3Sources() {
+	m.s3_sources = nil
+	m.cleareds3_sources = false
+	m.removeds3_sources = nil
+}
+
 // AddMemberIDs adds the "members" edge to the User entity by ids.
 func (m *TeamMutation) AddMemberIDs(ids ...uuid.UUID) {
 	if m.members == nil {
@@ -14926,9 +15145,12 @@ func (m *TeamMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TeamMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.projects != nil {
 		edges = append(edges, team.EdgeProjects)
+	}
+	if m.s3_sources != nil {
+		edges = append(edges, team.EdgeS3Sources)
 	}
 	if m.members != nil {
 		edges = append(edges, team.EdgeMembers)
@@ -14946,6 +15168,12 @@ func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 	case team.EdgeProjects:
 		ids := make([]ent.Value, 0, len(m.projects))
 		for id := range m.projects {
+			ids = append(ids, id)
+		}
+		return ids
+	case team.EdgeS3Sources:
+		ids := make([]ent.Value, 0, len(m.s3_sources))
+		for id := range m.s3_sources {
 			ids = append(ids, id)
 		}
 		return ids
@@ -14967,9 +15195,12 @@ func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TeamMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedprojects != nil {
 		edges = append(edges, team.EdgeProjects)
+	}
+	if m.removeds3_sources != nil {
+		edges = append(edges, team.EdgeS3Sources)
 	}
 	if m.removedmembers != nil {
 		edges = append(edges, team.EdgeMembers)
@@ -14987,6 +15218,12 @@ func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 	case team.EdgeProjects:
 		ids := make([]ent.Value, 0, len(m.removedprojects))
 		for id := range m.removedprojects {
+			ids = append(ids, id)
+		}
+		return ids
+	case team.EdgeS3Sources:
+		ids := make([]ent.Value, 0, len(m.removeds3_sources))
+		for id := range m.removeds3_sources {
 			ids = append(ids, id)
 		}
 		return ids
@@ -15008,9 +15245,12 @@ func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TeamMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedprojects {
 		edges = append(edges, team.EdgeProjects)
+	}
+	if m.cleareds3_sources {
+		edges = append(edges, team.EdgeS3Sources)
 	}
 	if m.clearedmembers {
 		edges = append(edges, team.EdgeMembers)
@@ -15027,6 +15267,8 @@ func (m *TeamMutation) EdgeCleared(name string) bool {
 	switch name {
 	case team.EdgeProjects:
 		return m.clearedprojects
+	case team.EdgeS3Sources:
+		return m.cleareds3_sources
 	case team.EdgeMembers:
 		return m.clearedmembers
 	case team.EdgeTeamWebhooks:
@@ -15049,6 +15291,9 @@ func (m *TeamMutation) ResetEdge(name string) error {
 	switch name {
 	case team.EdgeProjects:
 		m.ResetProjects()
+		return nil
+	case team.EdgeS3Sources:
+		m.ResetS3Sources()
 		return nil
 	case team.EdgeMembers:
 		m.ResetMembers()

@@ -27,6 +27,7 @@ import (
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
 	setup_handler "github.com/unbindapp/unbind-api/internal/api/handlers/setup"
+	storage_handler "github.com/unbindapp/unbind-api/internal/api/handlers/storage"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
 	unbindwebhooks_handler "github.com/unbindapp/unbind-api/internal/api/handlers/unbindwebhooks"
@@ -54,6 +55,7 @@ import (
 	metric_service "github.com/unbindapp/unbind-api/internal/services/metrics"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
+	storage_service "github.com/unbindapp/unbind-api/internal/services/storage"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
@@ -194,6 +196,7 @@ func startAPI(cfg *config.Config) {
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
 	metricsService := metric_service.NewMetricService(promClient, repo)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
+	storageService := storage_service.NewStorageService(cfg, repo, kubeClient)
 
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 
@@ -233,6 +236,7 @@ func startAPI(cfg *config.Config) {
 		WebhooksService:      webhooksService,
 		InstanceService:      instanceService,
 		VariablesService:     variableService,
+		StorageService:       storageService,
 	}
 
 	// New chi router
@@ -432,6 +436,15 @@ func startAPI(cfg *config.Config) {
 			next(op)
 		})
 		instances_handler.RegisterHandlers(srvImpl, instancesGroup)
+
+		// /storage group
+		storageGroup := huma.NewGroup(api, "/storage")
+		storageGroup.UseMiddleware(mw.Authenticate)
+		storageGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Storage"}
+			next(op)
+		})
+		storage_handler.RegisterHandlers(srvImpl, storageGroup)
 	})
 
 	// Start the server

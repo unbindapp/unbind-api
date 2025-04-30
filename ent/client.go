@@ -2342,6 +2342,22 @@ func (c *S3Client) GetX(ctx context.Context, id uuid.UUID) *S3 {
 	return obj
 }
 
+// QueryTeam queries the team edge of a S3.
+func (c *S3Client) QueryTeam(s *S3) *TeamQuery {
+	query := (&TeamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(s3.Table, s3.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, s3.TeamTable, s3.TeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *S3Client) Hooks() []Hook {
 	return c.hooks.S3
@@ -2995,6 +3011,22 @@ func (c *TeamClient) QueryProjects(t *Team) *ProjectQuery {
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(project.Table, project.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, team.ProjectsTable, team.ProjectsColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryS3Sources queries the s3_sources edge of a Team.
+func (c *TeamClient) QueryS3Sources(t *Team) *S3Query {
+	query := (&S3Client{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(s3.Table, s3.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.S3SourcesTable, team.S3SourcesColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

@@ -4,7 +4,9 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 )
 
@@ -24,16 +26,21 @@ func (S3) Mixin() []ent.Mixin {
 // Fields of the S3.
 func (S3) Fields() []ent.Field {
 	return []ent.Field{
+		field.String("name").NotEmpty(),
 		field.String("endpoint"),
 		field.String("region"),
 		field.Bool("force_path_style").Default(true),
 		field.String("kubernetes_secret"),
+		field.UUID("team_id", uuid.UUID{}),
 	}
 }
 
 // Edges of the S3.
 func (S3) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		// O2M from team
+		edge.From("team", Team.Type).Ref("s3_sources").Field("team_id").Unique().Required(),
+	}
 }
 
 // Annotations of the S3

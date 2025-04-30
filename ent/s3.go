@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/s3"
+	"github.com/unbindapp/unbind-api/ent/team"
 )
 
 // S3 is the model entity for the S3 schema.
@@ -23,6 +24,8 @@ type S3 struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
 	// Endpoint holds the value of the "endpoint" field.
 	Endpoint string `json:"endpoint,omitempty"`
 	// Region holds the value of the "region" field.
@@ -31,7 +34,32 @@ type S3 struct {
 	ForcePathStyle bool `json:"force_path_style,omitempty"`
 	// KubernetesSecret holds the value of the "kubernetes_secret" field.
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
-	selectValues     sql.SelectValues
+	// TeamID holds the value of the "team_id" field.
+	TeamID uuid.UUID `json:"team_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the S3Query when eager-loading is set.
+	Edges        S3Edges `json:"edges"`
+	selectValues sql.SelectValues
+}
+
+// S3Edges holds the relations/edges for other nodes in the graph.
+type S3Edges struct {
+	// Team holds the value of the team edge.
+	Team *Team `json:"team,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// TeamOrErr returns the Team value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e S3Edges) TeamOrErr() (*Team, error) {
+	if e.Team != nil {
+		return e.Team, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: team.Label}
+	}
+	return nil, &NotLoadedError{edge: "team"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -41,11 +69,11 @@ func (*S3) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case s3.FieldForcePathStyle:
 			values[i] = new(sql.NullBool)
-		case s3.FieldEndpoint, s3.FieldRegion, s3.FieldKubernetesSecret:
+		case s3.FieldName, s3.FieldEndpoint, s3.FieldRegion, s3.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case s3.FieldCreatedAt, s3.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case s3.FieldID:
+		case s3.FieldID, s3.FieldTeamID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -80,6 +108,12 @@ func (s *S3) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.UpdatedAt = value.Time
 			}
+		case s3.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				s.Name = value.String
+			}
 		case s3.FieldEndpoint:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field endpoint", values[i])
@@ -104,6 +138,12 @@ func (s *S3) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.KubernetesSecret = value.String
 			}
+		case s3.FieldTeamID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value != nil {
+				s.TeamID = *value
+			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -115,6 +155,11 @@ func (s *S3) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (s *S3) Value(name string) (ent.Value, error) {
 	return s.selectValues.Get(name)
+}
+
+// QueryTeam queries the "team" edge of the S3 entity.
+func (s *S3) QueryTeam() *TeamQuery {
+	return NewS3Client(s.config).QueryTeam(s)
 }
 
 // Update returns a builder for updating this S3.
@@ -146,6 +191,9 @@ func (s *S3) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(s.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(s.Name)
+	builder.WriteString(", ")
 	builder.WriteString("endpoint=")
 	builder.WriteString(s.Endpoint)
 	builder.WriteString(", ")
@@ -157,6 +205,9 @@ func (s *S3) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("kubernetes_secret=")
 	builder.WriteString(s.KubernetesSecret)
+	builder.WriteString(", ")
+	builder.WriteString("team_id=")
+	builder.WriteString(fmt.Sprintf("%v", s.TeamID))
 	builder.WriteByte(')')
 	return builder.String()
 }

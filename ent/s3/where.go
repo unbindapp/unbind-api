@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 )
@@ -65,6 +66,11 @@ func UpdatedAt(v time.Time) predicate.S3 {
 	return predicate.S3(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.S3 {
+	return predicate.S3(sql.FieldEQ(FieldName, v))
+}
+
 // Endpoint applies equality check predicate on the "endpoint" field. It's identical to EndpointEQ.
 func Endpoint(v string) predicate.S3 {
 	return predicate.S3(sql.FieldEQ(FieldEndpoint, v))
@@ -83,6 +89,11 @@ func ForcePathStyle(v bool) predicate.S3 {
 // KubernetesSecret applies equality check predicate on the "kubernetes_secret" field. It's identical to KubernetesSecretEQ.
 func KubernetesSecret(v string) predicate.S3 {
 	return predicate.S3(sql.FieldEQ(FieldKubernetesSecret, v))
+}
+
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v uuid.UUID) predicate.S3 {
+	return predicate.S3(sql.FieldEQ(FieldTeamID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -163,6 +174,71 @@ func UpdatedAtLT(v time.Time) predicate.S3 {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.S3 {
 	return predicate.S3(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.S3 {
+	return predicate.S3(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.S3 {
+	return predicate.S3(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.S3 {
+	return predicate.S3(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.S3 {
+	return predicate.S3(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.S3 {
+	return predicate.S3(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.S3 {
+	return predicate.S3(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.S3 {
+	return predicate.S3(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.S3 {
+	return predicate.S3(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.S3 {
+	return predicate.S3(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.S3 {
+	return predicate.S3(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.S3 {
+	return predicate.S3(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.S3 {
+	return predicate.S3(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.S3 {
+	return predicate.S3(sql.FieldContainsFold(FieldName, v))
 }
 
 // EndpointEQ applies the EQ predicate on the "endpoint" field.
@@ -368,6 +444,49 @@ func KubernetesSecretEqualFold(v string) predicate.S3 {
 // KubernetesSecretContainsFold applies the ContainsFold predicate on the "kubernetes_secret" field.
 func KubernetesSecretContainsFold(v string) predicate.S3 {
 	return predicate.S3(sql.FieldContainsFold(FieldKubernetesSecret, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v uuid.UUID) predicate.S3 {
+	return predicate.S3(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v uuid.UUID) predicate.S3 {
+	return predicate.S3(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...uuid.UUID) predicate.S3 {
+	return predicate.S3(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...uuid.UUID) predicate.S3 {
+	return predicate.S3(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// HasTeam applies the HasEdge predicate on the "team" edge.
+func HasTeam() predicate.S3 {
+	return predicate.S3(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTeamWith applies the HasEdge predicate on the "team" edge with a given conditions (other predicates).
+func HasTeamWith(preds ...predicate.Team) predicate.S3 {
+	return predicate.S3(func(s *sql.Selector) {
+		step := newTeamStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

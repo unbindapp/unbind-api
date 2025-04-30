@@ -19,6 +19,7 @@ import (
 	metric_service "github.com/unbindapp/unbind-api/internal/services/metrics"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
+	storage_service "github.com/unbindapp/unbind-api/internal/services/storage"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
@@ -59,6 +60,7 @@ type Server struct {
 	WebhooksService    *webhooks_service.WebhooksService
 	InstanceService    *instance_service.InstanceService
 	VariablesService   *variables_service.VariablesService
+	StorageService     *storage_service.StorageService
 }
 
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {

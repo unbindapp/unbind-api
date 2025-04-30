@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/s3"
+	"github.com/unbindapp/unbind-api/ent/team"
 )
 
 // S3Update is the builder for updating S3 entities.
@@ -32,6 +34,20 @@ func (s *S3Update) Where(ps ...predicate.S3) *S3Update {
 // SetUpdatedAt sets the "updated_at" field.
 func (s *S3Update) SetUpdatedAt(t time.Time) *S3Update {
 	s.mutation.SetUpdatedAt(t)
+	return s
+}
+
+// SetName sets the "name" field.
+func (s *S3Update) SetName(value string) *S3Update {
+	s.mutation.SetName(value)
+	return s
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (s *S3Update) SetNillableName(value *string) *S3Update {
+	if value != nil {
+		s.SetName(*value)
+	}
 	return s
 }
 
@@ -91,9 +107,34 @@ func (s *S3Update) SetNillableKubernetesSecret(value *string) *S3Update {
 	return s
 }
 
+// SetTeamID sets the "team_id" field.
+func (s *S3Update) SetTeamID(u uuid.UUID) *S3Update {
+	s.mutation.SetTeamID(u)
+	return s
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (s *S3Update) SetNillableTeamID(u *uuid.UUID) *S3Update {
+	if u != nil {
+		s.SetTeamID(*u)
+	}
+	return s
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (s *S3Update) SetTeam(t *Team) *S3Update {
+	return s.SetTeamID(t.ID)
+}
+
 // Mutation returns the S3Mutation object of the builder.
 func (s *S3Update) Mutation() *S3Mutation {
 	return s.mutation
+}
+
+// ClearTeam clears the "team" edge to the Team entity.
+func (s *S3Update) ClearTeam() *S3Update {
+	s.mutation.ClearTeam()
+	return s
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -132,6 +173,19 @@ func (s *S3Update) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (s *S3Update) check() error {
+	if v, ok := s.mutation.Name(); ok {
+		if err := s3.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "S3.name": %w`, err)}
+		}
+	}
+	if s.mutation.TeamCleared() && len(s.mutation.TeamIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "S3.team"`)
+	}
+	return nil
+}
+
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
 func (s *S3Update) Modify(modifiers ...func(u *sql.UpdateBuilder)) *S3Update {
 	s.modifiers = append(s.modifiers, modifiers...)
@@ -139,6 +193,9 @@ func (s *S3Update) Modify(modifiers ...func(u *sql.UpdateBuilder)) *S3Update {
 }
 
 func (s *S3Update) sqlSave(ctx context.Context) (n int, err error) {
+	if err := s.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(s3.Table, s3.Columns, sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID))
 	if ps := s.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -149,6 +206,9 @@ func (s *S3Update) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := s.mutation.UpdatedAt(); ok {
 		_spec.SetField(s3.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := s.mutation.Name(); ok {
+		_spec.SetField(s3.FieldName, field.TypeString, value)
 	}
 	if value, ok := s.mutation.Endpoint(); ok {
 		_spec.SetField(s3.FieldEndpoint, field.TypeString, value)
@@ -161,6 +221,35 @@ func (s *S3Update) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := s.mutation.KubernetesSecret(); ok {
 		_spec.SetField(s3.FieldKubernetesSecret, field.TypeString, value)
+	}
+	if s.mutation.TeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   s3.TeamTable,
+			Columns: []string{s3.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := s.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   s3.TeamTable,
+			Columns: []string{s3.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(s.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, s.driver, _spec); err != nil {
@@ -187,6 +276,20 @@ type S3UpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (so *S3UpdateOne) SetUpdatedAt(t time.Time) *S3UpdateOne {
 	so.mutation.SetUpdatedAt(t)
+	return so
+}
+
+// SetName sets the "name" field.
+func (so *S3UpdateOne) SetName(s string) *S3UpdateOne {
+	so.mutation.SetName(s)
+	return so
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (so *S3UpdateOne) SetNillableName(s *string) *S3UpdateOne {
+	if s != nil {
+		so.SetName(*s)
+	}
 	return so
 }
 
@@ -246,9 +349,34 @@ func (so *S3UpdateOne) SetNillableKubernetesSecret(s *string) *S3UpdateOne {
 	return so
 }
 
+// SetTeamID sets the "team_id" field.
+func (so *S3UpdateOne) SetTeamID(u uuid.UUID) *S3UpdateOne {
+	so.mutation.SetTeamID(u)
+	return so
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (so *S3UpdateOne) SetNillableTeamID(u *uuid.UUID) *S3UpdateOne {
+	if u != nil {
+		so.SetTeamID(*u)
+	}
+	return so
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (so *S3UpdateOne) SetTeam(t *Team) *S3UpdateOne {
+	return so.SetTeamID(t.ID)
+}
+
 // Mutation returns the S3Mutation object of the builder.
 func (so *S3UpdateOne) Mutation() *S3Mutation {
 	return so.mutation
+}
+
+// ClearTeam clears the "team" edge to the Team entity.
+func (so *S3UpdateOne) ClearTeam() *S3UpdateOne {
+	so.mutation.ClearTeam()
+	return so
 }
 
 // Where appends a list predicates to the S3Update builder.
@@ -300,6 +428,19 @@ func (so *S3UpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (so *S3UpdateOne) check() error {
+	if v, ok := so.mutation.Name(); ok {
+		if err := s3.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "S3.name": %w`, err)}
+		}
+	}
+	if so.mutation.TeamCleared() && len(so.mutation.TeamIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "S3.team"`)
+	}
+	return nil
+}
+
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
 func (so *S3UpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *S3UpdateOne {
 	so.modifiers = append(so.modifiers, modifiers...)
@@ -307,6 +448,9 @@ func (so *S3UpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *S3Update
 }
 
 func (so *S3UpdateOne) sqlSave(ctx context.Context) (_node *S3, err error) {
+	if err := so.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(s3.Table, s3.Columns, sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID))
 	id, ok := so.mutation.ID()
 	if !ok {
@@ -335,6 +479,9 @@ func (so *S3UpdateOne) sqlSave(ctx context.Context) (_node *S3, err error) {
 	if value, ok := so.mutation.UpdatedAt(); ok {
 		_spec.SetField(s3.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if value, ok := so.mutation.Name(); ok {
+		_spec.SetField(s3.FieldName, field.TypeString, value)
+	}
 	if value, ok := so.mutation.Endpoint(); ok {
 		_spec.SetField(s3.FieldEndpoint, field.TypeString, value)
 	}
@@ -346,6 +493,35 @@ func (so *S3UpdateOne) sqlSave(ctx context.Context) (_node *S3, err error) {
 	}
 	if value, ok := so.mutation.KubernetesSecret(); ok {
 		_spec.SetField(s3.FieldKubernetesSecret, field.TypeString, value)
+	}
+	if so.mutation.TeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   s3.TeamTable,
+			Columns: []string{s3.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := so.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   s3.TeamTable,
+			Columns: []string{s3.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_spec.AddModifiers(so.modifiers...)
 	_node = &S3{config: so.config}

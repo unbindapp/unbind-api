@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/ent/webhook"
@@ -28,6 +29,7 @@ type TeamQuery struct {
 	inters           []Interceptor
 	predicates       []predicate.Team
 	withProjects     *ProjectQuery
+	withS3Sources    *S3Query
 	withMembers      *UserQuery
 	withTeamWebhooks *WebhookQuery
 	modifiers        []func(*sql.Selector)
@@ -82,6 +84,28 @@ func (tq *TeamQuery) QueryProjects() *ProjectQuery {
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(project.Table, project.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, team.ProjectsTable, team.ProjectsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryS3Sources chains the current query on the "s3_sources" edge.
+func (tq *TeamQuery) QueryS3Sources() *S3Query {
+	query := (&S3Client{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, selector),
+			sqlgraph.To(s3.Table, s3.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.S3SourcesTable, team.S3SourcesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -326,6 +350,7 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 		inters:           append([]Interceptor{}, tq.inters...),
 		predicates:       append([]predicate.Team{}, tq.predicates...),
 		withProjects:     tq.withProjects.Clone(),
+		withS3Sources:    tq.withS3Sources.Clone(),
 		withMembers:      tq.withMembers.Clone(),
 		withTeamWebhooks: tq.withTeamWebhooks.Clone(),
 		// clone intermediate query.
@@ -343,6 +368,17 @@ func (tq *TeamQuery) WithProjects(opts ...func(*ProjectQuery)) *TeamQuery {
 		opt(query)
 	}
 	tq.withProjects = query
+	return tq
+}
+
+// WithS3Sources tells the query-builder to eager-load the nodes that are connected to
+// the "s3_sources" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithS3Sources(opts ...func(*S3Query)) *TeamQuery {
+	query := (&S3Client{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withS3Sources = query
 	return tq
 }
 
@@ -446,8 +482,9 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 	var (
 		nodes       = []*Team{}
 		_spec       = tq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			tq.withProjects != nil,
+			tq.withS3Sources != nil,
 			tq.withMembers != nil,
 			tq.withTeamWebhooks != nil,
 		}
@@ -477,6 +514,13 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 		if err := tq.loadProjects(ctx, query, nodes,
 			func(n *Team) { n.Edges.Projects = []*Project{} },
 			func(n *Team, e *Project) { n.Edges.Projects = append(n.Edges.Projects, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withS3Sources; query != nil {
+		if err := tq.loadS3Sources(ctx, query, nodes,
+			func(n *Team) { n.Edges.S3Sources = []*S3{} },
+			func(n *Team, e *S3) { n.Edges.S3Sources = append(n.Edges.S3Sources, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -512,6 +556,36 @@ func (tq *TeamQuery) loadProjects(ctx context.Context, query *ProjectQuery, node
 	}
 	query.Where(predicate.Project(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.ProjectsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TeamID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (tq *TeamQuery) loadS3Sources(ctx context.Context, query *S3Query, nodes []*Team, init func(*Team), assign func(*Team, *S3)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Team)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(s3.FieldTeamID)
+	}
+	query.Where(predicate.S3(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(team.S3SourcesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -15,6 +15,7 @@ import (
 	oauth_repo "github.com/unbindapp/unbind-api/internal/repositories/oauth"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	project_repo "github.com/unbindapp/unbind-api/internal/repositories/project"
+	s3_repo "github.com/unbindapp/unbind-api/internal/repositories/s3"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
@@ -55,5 +56,7 @@ type RepositoriesInterface interface {
 	Variables() variable_repo.VariableRepositoryInterface
 	// Bootstrap returns the Bootstrap repository
 	Bootstrap() bootstrap_repo.BootstrapRepositoryInterface
+	// S3 returns the S3 repository
+	S3() s3_repo.S3RepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

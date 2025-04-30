@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/s3"
+	"github.com/unbindapp/unbind-api/ent/team"
 )
 
 // S3Create is the builder for creating a S3 entity.
@@ -52,6 +53,12 @@ func (s *S3Create) SetNillableUpdatedAt(t *time.Time) *S3Create {
 	return s
 }
 
+// SetName sets the "name" field.
+func (s *S3Create) SetName(value string) *S3Create {
+	s.mutation.SetName(value)
+	return s
+}
+
 // SetEndpoint sets the "endpoint" field.
 func (s *S3Create) SetEndpoint(value string) *S3Create {
 	s.mutation.SetEndpoint(value)
@@ -84,6 +91,12 @@ func (s *S3Create) SetKubernetesSecret(value string) *S3Create {
 	return s
 }
 
+// SetTeamID sets the "team_id" field.
+func (s *S3Create) SetTeamID(u uuid.UUID) *S3Create {
+	s.mutation.SetTeamID(u)
+	return s
+}
+
 // SetID sets the "id" field.
 func (s *S3Create) SetID(u uuid.UUID) *S3Create {
 	s.mutation.SetID(u)
@@ -96,6 +109,11 @@ func (s *S3Create) SetNillableID(u *uuid.UUID) *S3Create {
 		s.SetID(*u)
 	}
 	return s
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (s *S3Create) SetTeam(t *Team) *S3Create {
+	return s.SetTeamID(t.ID)
 }
 
 // Mutation returns the S3Mutation object of the builder.
@@ -159,6 +177,14 @@ func (s *S3Create) check() error {
 	if _, ok := s.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "S3.updated_at"`)}
 	}
+	if _, ok := s.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "S3.name"`)}
+	}
+	if v, ok := s.mutation.Name(); ok {
+		if err := s3.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "S3.name": %w`, err)}
+		}
+	}
 	if _, ok := s.mutation.Endpoint(); !ok {
 		return &ValidationError{Name: "endpoint", err: errors.New(`ent: missing required field "S3.endpoint"`)}
 	}
@@ -170,6 +196,12 @@ func (s *S3Create) check() error {
 	}
 	if _, ok := s.mutation.KubernetesSecret(); !ok {
 		return &ValidationError{Name: "kubernetes_secret", err: errors.New(`ent: missing required field "S3.kubernetes_secret"`)}
+	}
+	if _, ok := s.mutation.TeamID(); !ok {
+		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "S3.team_id"`)}
+	}
+	if len(s.mutation.TeamIDs()) == 0 {
+		return &ValidationError{Name: "team", err: errors.New(`ent: missing required edge "S3.team"`)}
 	}
 	return nil
 }
@@ -215,6 +247,10 @@ func (s *S3Create) createSpec() (*S3, *sqlgraph.CreateSpec) {
 		_spec.SetField(s3.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if value, ok := s.mutation.Name(); ok {
+		_spec.SetField(s3.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
 	if value, ok := s.mutation.Endpoint(); ok {
 		_spec.SetField(s3.FieldEndpoint, field.TypeString, value)
 		_node.Endpoint = value
@@ -230,6 +266,23 @@ func (s *S3Create) createSpec() (*S3, *sqlgraph.CreateSpec) {
 	if value, ok := s.mutation.KubernetesSecret(); ok {
 		_spec.SetField(s3.FieldKubernetesSecret, field.TypeString, value)
 		_node.KubernetesSecret = value
+	}
+	if nodes := s.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   s3.TeamTable,
+			Columns: []string{s3.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.TeamID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -295,6 +348,18 @@ func (u *S3Upsert) UpdateUpdatedAt() *S3Upsert {
 	return u
 }
 
+// SetName sets the "name" field.
+func (u *S3Upsert) SetName(v string) *S3Upsert {
+	u.Set(s3.FieldName, v)
+	return u
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *S3Upsert) UpdateName() *S3Upsert {
+	u.SetExcluded(s3.FieldName)
+	return u
+}
+
 // SetEndpoint sets the "endpoint" field.
 func (u *S3Upsert) SetEndpoint(v string) *S3Upsert {
 	u.Set(s3.FieldEndpoint, v)
@@ -340,6 +405,18 @@ func (u *S3Upsert) SetKubernetesSecret(v string) *S3Upsert {
 // UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
 func (u *S3Upsert) UpdateKubernetesSecret() *S3Upsert {
 	u.SetExcluded(s3.FieldKubernetesSecret)
+	return u
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *S3Upsert) SetTeamID(v uuid.UUID) *S3Upsert {
+	u.Set(s3.FieldTeamID, v)
+	return u
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *S3Upsert) UpdateTeamID() *S3Upsert {
+	u.SetExcluded(s3.FieldTeamID)
 	return u
 }
 
@@ -408,6 +485,20 @@ func (u *S3UpsertOne) UpdateUpdatedAt() *S3UpsertOne {
 	})
 }
 
+// SetName sets the "name" field.
+func (u *S3UpsertOne) SetName(v string) *S3UpsertOne {
+	return u.Update(func(s *S3Upsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *S3UpsertOne) UpdateName() *S3UpsertOne {
+	return u.Update(func(s *S3Upsert) {
+		s.UpdateName()
+	})
+}
+
 // SetEndpoint sets the "endpoint" field.
 func (u *S3UpsertOne) SetEndpoint(v string) *S3UpsertOne {
 	return u.Update(func(s *S3Upsert) {
@@ -461,6 +552,20 @@ func (u *S3UpsertOne) SetKubernetesSecret(v string) *S3UpsertOne {
 func (u *S3UpsertOne) UpdateKubernetesSecret() *S3UpsertOne {
 	return u.Update(func(s *S3Upsert) {
 		s.UpdateKubernetesSecret()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *S3UpsertOne) SetTeamID(v uuid.UUID) *S3UpsertOne {
+	return u.Update(func(s *S3Upsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *S3UpsertOne) UpdateTeamID() *S3UpsertOne {
+	return u.Update(func(s *S3Upsert) {
+		s.UpdateTeamID()
 	})
 }
 
@@ -696,6 +801,20 @@ func (u *S3UpsertBulk) UpdateUpdatedAt() *S3UpsertBulk {
 	})
 }
 
+// SetName sets the "name" field.
+func (u *S3UpsertBulk) SetName(v string) *S3UpsertBulk {
+	return u.Update(func(s *S3Upsert) {
+		s.SetName(v)
+	})
+}
+
+// UpdateName sets the "name" field to the value that was provided on create.
+func (u *S3UpsertBulk) UpdateName() *S3UpsertBulk {
+	return u.Update(func(s *S3Upsert) {
+		s.UpdateName()
+	})
+}
+
 // SetEndpoint sets the "endpoint" field.
 func (u *S3UpsertBulk) SetEndpoint(v string) *S3UpsertBulk {
 	return u.Update(func(s *S3Upsert) {
@@ -749,6 +868,20 @@ func (u *S3UpsertBulk) SetKubernetesSecret(v string) *S3UpsertBulk {
 func (u *S3UpsertBulk) UpdateKubernetesSecret() *S3UpsertBulk {
 	return u.Update(func(s *S3Upsert) {
 		s.UpdateKubernetesSecret()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *S3UpsertBulk) SetTeamID(v uuid.UUID) *S3UpsertBulk {
+	return u.Update(func(s *S3Upsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *S3UpsertBulk) UpdateTeamID() *S3UpsertBulk {
+	return u.Update(func(s *S3Upsert) {
+		s.UpdateTeamID()
 	})
 }
 
