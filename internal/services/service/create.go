@@ -46,7 +46,7 @@ type CreateServiceInput struct {
 	Replicas          *int32                `minimum:"0" maximum:"10" json:"replicas,omitempty"`
 	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`
 	RunCommand        *string               `json:"run_command,omitempty"`
-	Public            *bool                 `json:"public,omitempty"`
+	IsPublic          *bool                 `json:"is_public,omitempty"`
 	Image             *string               `json:"image,omitempty"`
 	DockerfilePath    *string               `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder"`
 	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
@@ -240,7 +240,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		var framework *enum.Framework
 		hosts := input.Hosts
 		ports := input.Ports
-		public := input.Public
+		isPublic := input.IsPublic
 		if analysisResult != nil {
 			// Service core information
 			if analysisResult.Provider != enum.UnknownProvider {
@@ -264,17 +264,17 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return err
 		}
 
-		if len(ports) > 0 && input.Public == nil {
-			public = utils.ToPtr(true)
+		if len(ports) > 0 && input.IsPublic == nil {
+			isPublic = utils.ToPtr(true)
 		}
 
-		if len(hosts) == 0 && input.Public != nil && *public && input.Type != schema.ServiceTypeDatabase && len(ports) > 0 {
+		if len(hosts) == 0 && input.IsPublic != nil && *isPublic && input.Type != schema.ServiceTypeDatabase && len(ports) > 0 {
 			generatedHost, err := self.generateWildcardHost(ctx, tx, kubernetesName, ports)
 			if err != nil {
 				return fmt.Errorf("failed to generate wildcard host: %w", err)
 			}
 			if generatedHost == nil {
-				public = utils.ToPtr(false)
+				isPublic = utils.ToPtr(false)
 			} else {
 				hosts = append(hosts, *generatedHost)
 			}
@@ -326,7 +326,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Replicas:                input.Replicas,
 			AutoDeploy:              input.AutoDeploy,
 			RunCommand:              input.RunCommand,
-			Public:                  public,
+			Public:                  isPublic,
 			Image:                   input.Image,
 			DockerfilePath:          input.DockerfilePath,
 			DockerfileContext:       input.DockerfileContext,
