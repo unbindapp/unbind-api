@@ -240,7 +240,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		var framework *enum.Framework
 		hosts := input.Hosts
 		ports := input.Ports
-		public := input.IsPublic
+		isPublic := input.IsPublic
 		if analysisResult != nil {
 			// Service core information
 			if analysisResult.Provider != enum.UnknownProvider {
@@ -265,16 +265,16 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(ports) > 0 && input.IsPublic == nil {
-			public = utils.ToPtr(true)
+			isPublic = utils.ToPtr(true)
 		}
 
-		if len(hosts) == 0 && input.IsPublic != nil && *public && input.Type != schema.ServiceTypeDatabase && len(ports) > 0 {
+		if len(hosts) == 0 && input.IsPublic != nil && *isPublic && input.Type != schema.ServiceTypeDatabase && len(ports) > 0 {
 			generatedHost, err := self.generateWildcardHost(ctx, tx, kubernetesName, ports)
 			if err != nil {
 				return fmt.Errorf("failed to generate wildcard host: %w", err)
 			}
 			if generatedHost == nil {
-				public = utils.ToPtr(false)
+				isPublic = utils.ToPtr(false)
 			} else {
 				hosts = append(hosts, *generatedHost)
 			}
@@ -326,7 +326,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Replicas:                input.Replicas,
 			AutoDeploy:              input.AutoDeploy,
 			RunCommand:              input.RunCommand,
-			Public:                  public,
+			Public:                  isPublic,
 			Image:                   input.Image,
 			DockerfilePath:          input.DockerfilePath,
 			DockerfileContext:       input.DockerfileContext,

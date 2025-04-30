@@ -35,7 +35,7 @@ type UpdateServiceInput struct {
 	Replicas          *int32                 `json:"replicas,omitempty" required:"false"`
 	AutoDeploy        *bool                  `json:"auto_deploy,omitempty" required:"false"`
 	RunCommand        *string                `json:"run_command,omitempty" required:"false"`
-	Public            *bool                  `json:"public,omitempty" required:"false"`
+	IsPublic          *bool                  `json:"is_public,omitempty" required:"false"`
 	Image             *string                `json:"image,omitempty" required:"false"`
 	DockerfilePath    *string                `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder - set empty string to reset to default"`
 	DockerfileContext *string                `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder - set empty string to reset to default"`
@@ -106,7 +106,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
-			input.Public != nil && *input.Public && len(input.Hosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
+			input.IsPublic != nil && *input.IsPublic && len(input.Hosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
 			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
 
 			// Figure out ports
@@ -124,7 +124,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 				return fmt.Errorf("failed to generate wildcard host: %w", err)
 			}
 			if generatedHost == nil {
-				input.Public = utils.ToPtr(false)
+				input.IsPublic = utils.ToPtr(false)
 			} else {
 				input.Hosts = append(input.Hosts, *generatedHost)
 			}
@@ -140,7 +140,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			Replicas:          input.Replicas,
 			AutoDeploy:        input.AutoDeploy,
 			RunCommand:        input.RunCommand,
-			Public:            input.Public,
+			Public:            input.IsPublic,
 			Image:             input.Image,
 			DockerfilePath:    input.DockerfilePath,
 			DockerfileContext: input.DockerfileContext,
@@ -270,10 +270,10 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			})
 		}
 
-		if input.Public != nil {
+		if input.IsPublic != nil {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 				Name:  "Public",
-				Value: fmt.Sprintf("%t", *input.Public),
+				Value: fmt.Sprintf("%t", *input.IsPublic),
 			})
 		}
 
