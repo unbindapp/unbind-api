@@ -31,6 +31,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.CreateS3,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "list-s3-sources",
+			Summary:     "List S3 Sources",
+			Description: "List all S3 sources for a team.",
+			Path:        "/s3/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListS3Source,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

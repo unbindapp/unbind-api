@@ -13,4 +13,5 @@ import (
 // S3RepositoryInterface ...
 type S3RepositoryInterface interface {
 	Create(ctx context.Context, tx repository.TxInterface, teamID uuid.UUID, name, endpoint, region, kubernetesSecret string) (*ent.S3, error)
+	GetByTeam(ctx context.Context, teamID uuid.UUID) ([]*ent.S3, error)
 }
