@@ -99,10 +99,6 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	// Validate credentials against your repository
 	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 
-	// log user object
-	log.Infof("User object: %v\n", user)
-	log.Infof("Error: %v\n", err)
-
 	if err != nil {
 		loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{
 			"client_id":     clientID,
@@ -123,13 +119,17 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	log.Infof(("Before doule submission check"))
+
 	// Validate state to prevent double submission
 	if _, err := self.StringCache.Getdel(self.Ctx, pageKey); err != nil {
 		if err == valkey.Nil {
+			log.Infof("err == valkey.Nil")
 			// Return ok empty status
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+		log.Infof("Error getting state from cache")
 		log.Error("Error validating request: ", err)
 		http.Error(w, "Error validating request", http.StatusInternalServerError)
 		return
