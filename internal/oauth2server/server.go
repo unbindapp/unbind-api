@@ -56,7 +56,7 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 
 		isAllowedUrl := slices.Contains(allowedUrls, signInBaseURL)
 		if !isAllowedUrl {
-			return "", fmt.Errorf("invalid host: %s", host)
+			return "", fmt.Errorf("Url not allowed: %s", signInBaseURL)
 		}
 
 		baseURL, err = utils.JoinURLPaths(signInBaseURL, "sign-in")
