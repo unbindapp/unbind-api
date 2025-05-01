@@ -95,9 +95,6 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	scope := r.Form.Get("scope")
 	pageKey := r.Form.Get("page_key")
 
-	// log all form values
-	log.Infof("Form values: %v", r.Form)
-
 	// Validate credentials against your repository
 	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 

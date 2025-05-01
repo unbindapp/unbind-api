@@ -23,9 +23,6 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	scope := r.Form.Get("scope")
 	userID := r.Form.Get("user_id")
 
-	// log all form values
-	log.Infof("Form values: %v", r.Form)
-
 	// Validate client_id is present
 	if clientID == "" {
 		http.Error(w, "Missing client_id parameter", http.StatusBadRequest)
