@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
@@ -40,6 +41,7 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 		signInBaseURL := self.Cfg.ExternalUIUrl
 
 		initiatingURL := queryParams["initiating_url"]
+		log.Info("initiating_url: ", initiatingURL)
 		if slices.Contains(allowedUrls, initiatingURL) {
 			signInBaseURL = initiatingURL
 		}
