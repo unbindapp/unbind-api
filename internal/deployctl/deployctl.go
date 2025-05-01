@@ -181,6 +181,20 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_DATABASE_TYPE"] = *service.Database
 		env["SERVICE_DATABASE_USD_VERSION"] = *service.Edges.ServiceConfig.DefinitionVersion
 		env["SERVICE_DATABASE_CONFIG"] = string(marshalledConfig)
+
+		// Pass S3 backup stuff
+		if service.Edges.ServiceConfig.S3BackupBucket != nil && service.Edges.ServiceConfig.S3BackupSourceID != nil {
+			// Get S3 source
+			s3Source, err := self.repo.S3().GetByID(ctx, *service.Edges.ServiceConfig.S3BackupSourceID)
+			if err != nil {
+				return nil, err
+			}
+
+			env["SERVICE_DATABASE_BACKUP_BUCKET"] = *service.Edges.ServiceConfig.S3BackupBucket
+			env["SERVICE_DATABASE_BACKUP_REGION"] = s3Source.Region
+			env["SERVICE_DATABASE_BACKUP_ENDPOINT"] = s3Source.Endpoint
+			env["SERVICE_DATABASE_BACKUP_SECRET_NAME"] = s3Source.KubernetesSecret
+		}
 	}
 
 	// Add docker image override

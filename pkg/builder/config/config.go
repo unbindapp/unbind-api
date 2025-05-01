@@ -62,6 +62,10 @@ type Config struct {
 	ServiceDatabaseType              string `env:"SERVICE_DATABASE_TYPE"`
 	ServiceDatabaseDefinitionVersion string `env:"SERVICE_DATABASE_USD_VERSION"`
 	ServiceDatabaseConfig            string `env:"SERVICE_DATABASE_CONFIG"`
+	ServiceDatabaseBackupBucket      string `env:"SERVICE_DATABASE_BACKUP_BUCKET"`
+	ServiceDatabaseBackupRegion      string `env:"SERVICE_DATABASE_BACKUP_REGION"`
+	ServiceDatabaseBackupEndpoint    string `env:"SERVICE_DATABASE_BACKUP_ENDPOINT"`
+	ServiceDatabaseBackupSecretName  string `env:"SERVICE_DATABASE_BACKUP_SECRET_NAME"`
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

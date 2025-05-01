@@ -55,6 +55,7 @@ type ServiceParams struct {
 	DatabaseType          string
 	DatabaseUSDVersionRef string
 	DatabaseConfig        runtime.RawExtension
+	BackupConfig          *v1.S3ConfigSpec
 }
 
 // CreateServiceObject creates a new v1.Service object with the provided parameters
@@ -140,6 +141,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			Type:                params.DatabaseType,
 			DatabaseSpecVersion: params.DatabaseUSDVersionRef,
 			Config:              params.DatabaseConfig,
+			S3BackupConfig:      params.BackupConfig,
 		}
 	}
 
@@ -208,6 +210,18 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		DatabaseUSDVersionRef: self.builderConfig.ServiceDatabaseDefinitionVersion,
 		// ImagePullSecrets
 		ImagePullSecrets: strings.Split(self.builderConfig.ImagePullSecrets, ","),
+	}
+
+	if self.builderConfig.ServiceDatabaseBackupSecretName != "" &&
+		self.builderConfig.ServiceDatabaseBackupBucket != "" &&
+		self.builderConfig.ServiceDatabaseBackupRegion != "" &&
+		self.builderConfig.ServiceDatabaseBackupEndpoint != "" {
+		params.BackupConfig = &v1.S3ConfigSpec{
+			SecretName: self.builderConfig.ServiceDatabaseBackupSecretName,
+			Bucket:     self.builderConfig.ServiceDatabaseBackupBucket,
+			Region:     self.builderConfig.ServiceDatabaseBackupRegion,
+			Endpoint:   self.builderConfig.ServiceDatabaseBackupEndpoint,
+		}
 	}
 
 	// Set GitHub installation ID if provided
