@@ -22,6 +22,9 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	state := r.Form.Get("state")
 	scope := r.Form.Get("scope")
 	userID := r.Form.Get("user_id")
+	email := r.Form.Get("email")
+	log.Infof("---AUTHORIZE REQUEST ---")
+	log.Infof("client_id=%s, redirect_uri=%s, response_type=%s, state=%s, scope=%s, user_id=%s, email=%s\n", clientID, redirectURI, responseType, state, scope, userID, email)
 
 	// Validate client_id is present
 	if clientID == "" {
