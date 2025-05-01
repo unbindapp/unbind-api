@@ -56,6 +56,7 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 	} else {
 		baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
 	}
+
 	if err != nil {
 		return "", err
 	}
