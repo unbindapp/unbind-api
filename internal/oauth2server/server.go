@@ -35,7 +35,7 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 	var err error
 	if redirectType == RedirectLogin {
 		// self.Cfg.ExternalUIUrl
-		baseURL, err = utils.JoinURLPaths("http://localhost:3000", "sign-in")
+		baseURL, err = utils.JoinURLPaths("http://localhost:3000", "api-internal", "auth-internal", "sign-in")
 	} else {
 		baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
 	}
