@@ -56,7 +56,7 @@ type Config struct {
 	// kube-oidc-proxy
 	KubeProxyURL string `env:"KUBE_PROXY_URL" envDefault:"https://kube-oidc-proxy.unbind-system.svc.cluster.local:443"`
 	// Builder
-	BuildImage string `env:"BUILD_IMAGE" envDefault:"unbindapp/unbind-builder:master-14117576548"`
+	BuildImage string `env:"BUILD_IMAGE" envDefault:"unbindapp/unbind-builder:latest"`
 	// Registry specific
 	BootstrapContainerRegistryHost     string `env:"BOOTSTRAP_CONTAINER_REGISTRY_HOST"`
 	BootstrapContainerRegistryUser     string `env:"BOOTSTRAP_CONTAINER_REGISTRY_USER"`
