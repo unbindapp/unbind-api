@@ -101,6 +101,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 
 	// log user object
 	log.Infof("User object: %v\n", user)
+	log.Infof("Error: %v\n", err)
 
 	if err != nil {
 		loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{
