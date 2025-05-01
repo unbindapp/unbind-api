@@ -102,24 +102,13 @@ var urlEncodedFormat = huma.Format{
 	},
 }
 
-func init() {
-	// Add the x-www-form-urlencoded format to Huma.
-	// This is how Huma's COBR package does it, but you could also update your `huma.Config` in `main`, like so:
-	//
-	//	config := huma.DefaultConfig()
-	//	config.Formats["application/x-www-form-urlencoded"] = urlEncodedFormat
-	//	config.Formats["x-www-form-urlencoded"] = urlEncodedFormat
-	huma.DefaultFormats["application/x-www-form-urlencoded"] = urlEncodedFormat
-	huma.DefaultFormats["x-www-form-urlencoded"] = urlEncodedFormat
-}
-
 func NewHumaConfig(title, version string) huma.Config {
 	schemaPrefix := "#/components/schemas/"
 	schemasPath := "/schemas"
 
 	registry := huma.NewMapRegistry(schemaPrefix, huma.DefaultSchemaNamer)
 
-	return huma.Config{
+	cfg := huma.Config{
 		OpenAPI: &huma.OpenAPI{
 			OpenAPI: "3.1.0",
 			Info: &huma.Info{
@@ -149,6 +138,10 @@ func NewHumaConfig(title, version string) huma.Config {
 		// 	},
 		// },
 	}
+	cfg.Formats["application/x-www-form-urlencoded"] = urlEncodedFormat
+	cfg.Formats["x-www-form-urlencoded"] = urlEncodedFormat
+
+	return cfg
 }
 
 func startAPI(cfg *config.Config) {

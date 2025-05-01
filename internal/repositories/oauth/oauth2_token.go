@@ -11,6 +11,20 @@ import (
 )
 
 func (self *OauthRepository) CreateToken(ctx context.Context, accessToken, refreshToken, clientID, scope string, expiresAt time.Time, user *ent.User) (*ent.Oauth2Token, error) {
+	// Set bootstrap flag if not present
+	_, err := self.base.DB.Bootstrap.Query().First(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			// Create bootstrap entry
+			_, err = self.base.DB.Bootstrap.Create().SetIsBootstrapped(true).Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+
 	return self.base.DB.Oauth2Token.Create().SetAccessToken(accessToken).SetRefreshToken(refreshToken).SetClientID(clientID).SetExpiresAt(expiresAt).SetScope(scope).SetUser(user).Save(ctx)
 }
 

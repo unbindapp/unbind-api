@@ -9,7 +9,8 @@ import (
 )
 
 type SetupData struct {
-	IsBootstrapped bool `json:"is_bootstrapped"`
+	IsBootstrapped     bool `json:"is_bootstrapped"`
+	IsFirstUserCreated bool `json:"is_first_user_created"`
 }
 
 type SetupStatusResponse struct {
@@ -22,13 +23,14 @@ func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInpu
 	if self.setupDone {
 		resp := &SetupStatusResponse{}
 		resp.Body.Data = &SetupData{
-			IsBootstrapped: true,
+			IsFirstUserCreated: true,
+			IsBootstrapped:     true,
 		}
 		return resp, nil
 	}
 
 	// Get bootstrapped
-	bootstrapped, err := self.srv.Repository.Bootstrap().IsBootstrapped(ctx, nil)
+	userExists, bootstrapped, err := self.srv.Repository.Bootstrap().IsBootstrapped(ctx, nil)
 	if err != nil {
 		log.Error("Error checking if bootstrapped", "err", err)
 		return nil, huma.Error500InternalServerError("Error checking if bootstrapped")
@@ -40,7 +42,8 @@ func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInpu
 
 	resp := &SetupStatusResponse{}
 	resp.Body.Data = &SetupData{
-		IsBootstrapped: bootstrapped,
+		IsFirstUserCreated: userExists,
+		IsBootstrapped:     bootstrapped,
 	}
 	return resp, nil
 }

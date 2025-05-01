@@ -13,5 +13,5 @@ import (
 type BootstrapRepositoryInterface interface {
 	// Create initial bootstrap user, added to all groups
 	CreateUser(ctx context.Context, email, password string) (user *ent.User, err error)
-	IsBootstrapped(ctx context.Context, tx repository.TxInterface) (bool, error)
+	IsBootstrapped(ctx context.Context, tx repository.TxInterface) (userExists bool, isBootstrapped bool, err error)
 }

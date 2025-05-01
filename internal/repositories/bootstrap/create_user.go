@@ -14,11 +14,11 @@ import (
 func (self *BootstrapRepository) CreateUser(ctx context.Context, email, password string) (user *ent.User, err error) {
 	if err := self.base.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Check if bootstrapped
-		bootstrapped, err := self.IsBootstrapped(ctx, tx)
+		userExists, bootstrapped, err := self.IsBootstrapped(ctx, tx)
 		if err != nil {
 			return err
 		}
-		if bootstrapped {
+		if bootstrapped || userExists {
 			return errdefs.ErrAlreadyBootstrapped
 		}
 
@@ -51,14 +51,6 @@ func (self *BootstrapRepository) CreateUser(ctx context.Context, email, password
 			Save(ctx)
 		if err != nil {
 			log.Errorf("Error adding user to groups: %v\n", err)
-			return err
-		}
-
-		// Set bootstrapped
-		_, err = tx.Client().Bootstrap.Create().
-			SetIsBootstrapped(true).Save(ctx)
-		if err != nil {
-			log.Errorf("Error setting bootstrapped: %v\n", err)
 			return err
 		}
 
