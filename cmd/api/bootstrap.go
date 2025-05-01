@@ -242,7 +242,7 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 
 	if err := self.repos.WithTx(ctx, func(tx repository.TxInterface) error {
 		db := tx.Client()
-		_, err = db.Team.Create().
+		team, err := db.Team.Create().
 			SetKubernetesName(kubernetesName).
 			SetName(name).
 			SetNamespace(kubernetesName).
@@ -262,9 +262,53 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 		}
 
 		// Create secret to associate with the name
-		_, _, err := self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
+		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
 		if err != nil {
 			return fmt.Errorf("error creating secret: %v", err)
+		}
+
+		// * Create first Project
+		name = "Default Project"
+		kubernetesName, err = utils.GenerateSlug(name)
+		if err != nil {
+			return fmt.Errorf("failed to generate slug for project name: %w", err)
+		}
+		project, err := db.Project.Create().
+			SetKubernetesName(kubernetesName).
+			SetName(name).
+			SetTeamID(team.ID).
+			SetKubernetesSecret(kubernetesName).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("error creating project: %v", err)
+		}
+		// Create secret to associate with the name
+		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
+		if err != nil {
+			return fmt.Errorf("error creating project secret: %v", err)
+		}
+
+		// * Create first environment
+		name = "Production"
+		kubernetesName, err = utils.GenerateSlug(name)
+		if err != nil {
+			return fmt.Errorf("failed to generate slug for environment name: %w", err)
+		}
+
+		_, err = db.Environment.Create().
+			SetKubernetesName(kubernetesName).
+			SetName(name).
+			SetProjectID(project.ID).
+			SetKubernetesSecret(kubernetesName).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("error creating environment: %v", err)
+		}
+
+		// Create secret to associate with the name
+		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
+		if err != nil {
+			return fmt.Errorf("error creating environment secret: %v", err)
 		}
 
 		return nil
