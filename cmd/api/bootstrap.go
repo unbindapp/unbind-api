@@ -401,15 +401,26 @@ func (self *Bootstrapper) syncK8sRBAC(ctx context.Context) error {
 	rbacManager := k8s.NewRBACManager(self.repos, self.kubeClient)
 
 	// Get all groups
-	groups, err := self.repos.Ent().Group.Query().All(ctx)
+	groups, err := self.repos.Ent().Group.Query().WithPermissions().All(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to query groups: %w", err)
 	}
 
 	for _, group := range groups {
-		err := rbacManager.SyncGroupToK8s(ctx, group)
-		if err != nil {
-			return fmt.Errorf("failed to sync group %s to k8s: %w", group.Name, err)
+		hasK8sAccess := false
+		for _, p := range group.Edges.Permissions {
+			// ! Only managing teams this way
+			if p.ResourceType == schema.ResourceTypeTeam {
+				hasK8sAccess = true
+				break
+			}
+		}
+
+		if hasK8sAccess {
+			err := rbacManager.SyncGroupToK8s(ctx, group)
+			if err != nil {
+				return fmt.Errorf("failed to sync group %s to k8s: %w", group.Name, err)
+			}
 		}
 	}
 
