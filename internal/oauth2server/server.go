@@ -33,7 +33,10 @@ const (
 func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryParams map[string]string) (string, error) {
 	var baseURL string
 	var err error
-	allowedUrls := []string{"http://localhost:3000", self.Cfg.ExternalUIUrl}
+	allowedUrls := []string{self.Cfg.ExternalUIUrl}
+	if self.Cfg.InjectDevOrigins {
+		allowedUrls = append(allowedUrls, "http://localhost:3000")
+	}
 
 	if redirectType == RedirectLogin {
 		initiatingURL := queryParams["initiating_url"]

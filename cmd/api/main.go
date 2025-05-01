@@ -242,13 +242,19 @@ func startAPI(cfg *config.Config) {
 	// New chi router
 	r := chi.NewRouter()
 
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{
+	allowedOrigins := []string{
+		cfg.ExternalUIUrl,
+	}
+
+	if cfg.InjectDevOrigins {
+		allowedOrigins = append(allowedOrigins, []string{
 			"http://localhost:3000",
-			"https://app.unbind.app",
 			"*.unbind.app",
-			cfg.ExternalUIUrl,
-		},
+		}...)
+	}
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: allowedOrigins,
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},

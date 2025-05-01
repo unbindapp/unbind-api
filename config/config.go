@@ -69,6 +69,8 @@ type Config struct {
 	PrometheusEndpoint string `env:"PROMETHEUS_ENDPOINT" envDefault:"http://kube-prometheus-stack-prometheus.monitoring:9090"`
 	// Oauth
 	DexConnectorSecret string `env:"DEX_CONNECTOR_SECRET" envDefault:"dex-secret"`
+	// Dev origins will inject localhost:3000 into cors, etc.
+	AllowDevOrigins bool `env:"ALLOW_DEV_ORIGINS" envDefault:"false"`
 	// ! TODO - remove me some day, for bypassing oauth
 	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
 }
