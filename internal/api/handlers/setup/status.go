@@ -22,7 +22,7 @@ func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInpu
 	if self.setupDone {
 		resp := &SetupStatusResponse{}
 		resp.Body.Data = &SetupData{
-			Bootstrapped: true,
+			IsBootstrapped: true,
 		}
 		return resp, nil
 	}
