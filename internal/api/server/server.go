@@ -26,6 +26,7 @@ import (
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
+	"golang.org/x/oauth2"
 )
 
 // EmptyInput can be used when no input is needed.
@@ -53,6 +54,7 @@ type Server struct {
 	DeploymentController *deployctl.DeploymentController
 	DatabaseProvider     *databases.DatabaseProvider
 	DNSChecker           *utils.DNSChecker
+	OauthConfig          *oauth2.Config
 	// Services
 	TeamService        *team_service.TeamService
 	ProjectService     *project_service.ProjectService

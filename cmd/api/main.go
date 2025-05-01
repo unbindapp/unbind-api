@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -66,6 +67,7 @@ import (
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"golang.org/x/oauth2"
 )
 
 var decoder = schema.NewDecoder()
@@ -240,6 +242,19 @@ func startAPI(cfg *config.Config) {
 
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 
+	// Create OAuth2 config
+
+	oauthConfig := &oauth2.Config{
+		ClientID:     cfg.DexClientID,
+		ClientSecret: cfg.DexClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  cfg.DexIssuerUrlExternal + "/auth",
+			TokenURL: cfg.DexIssuerURL + "/token",
+		},
+		RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalAPIURL),
+		Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
+	}
+
 	// Implementation
 	srvImpl := &server.Server{
 		KubeClient:           kubeClient,
@@ -263,6 +278,7 @@ func startAPI(cfg *config.Config) {
 		InstanceService:      instanceService,
 		VariablesService:     variableService,
 		StorageService:       storageService,
+		OauthConfig:          oauthConfig,
 	}
 
 	// New chi router

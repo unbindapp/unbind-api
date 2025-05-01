@@ -25,5 +25,18 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 			Path:        "/login",
 			Method:      http.MethodPost,
 		},
-		handlers.LoginSubmit)
+		handlers.LoginSubmit,
+	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "callback",
+			Summary:     "Callback",
+			Description: "Callback",
+			Path:        "/callback",
+			Method:      http.MethodGet,
+		},
+		handlers.Callback,
+	)
 }
