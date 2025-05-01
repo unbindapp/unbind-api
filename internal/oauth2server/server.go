@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
@@ -37,11 +36,35 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 	allowedUrls := []string{"http://localhost:3000", self.Cfg.ExternalUIUrl}
 
 	if redirectType == RedirectLogin {
-		signInBaseURL := self.Cfg.ExternalUIUrl
-		log.Infof("signInBaseURL: %s", signInBaseURL)
-		log.Infof("Allowed URLs: %v", allowedUrls)
+		initiatingURL := queryParams["initiating_url"]
+		if initiatingURL == "" {
+			initiatingURL, _ = utils.JoinURLPaths(self.Cfg.ExternalUIUrl, "/sign-in")
+		}
+		// Verify that initatingURL is in the allowed URLs
+		initiatingURLBase, err := url.Parse(initiatingURL)
+		if err != nil {
+			// Invalid URL, default to safe option
+			initiatingURL, _ = utils.JoinURLPaths(self.Cfg.ExternalUIUrl, "/sign-in")
+		} else {
+			// Extract base URL (scheme + host)
+			initiatingURLBaseStr := fmt.Sprintf("%s://%s", initiatingURLBase.Scheme, initiatingURLBase.Host)
 
-		baseURL, err = utils.JoinURLPaths(signInBaseURL, "sign-in")
+			// Check if base URL is in allowed list
+			isAllowed := false
+			for _, allowedURL := range allowedUrls {
+				if initiatingURLBaseStr == allowedURL {
+					isAllowed = true
+					break
+				}
+			}
+
+			// If not allowed, default to safe option
+			if !isAllowed {
+				initiatingURL, _ = utils.JoinURLPaths(self.Cfg.ExternalUIUrl, "/sign-in")
+			}
+		}
+
+		baseURL = initiatingURL
 	} else {
 		baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
 	}
