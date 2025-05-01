@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
@@ -35,6 +36,12 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 	var baseURL string
 	var err error
 	allowedUrls := []string{"http://localhost:3000", self.Cfg.ExternalUIUrl}
+
+	// log request url
+	if requestUrl == nil {
+		return "", fmt.Errorf("Request URL is nil")
+	}
+	log.Infof("Request URL: %s", requestUrl.String())
 
 	if redirectType == RedirectLogin {
 		// Check if the request URL host is in the allowed hosts
