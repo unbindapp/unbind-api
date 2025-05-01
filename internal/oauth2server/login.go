@@ -99,6 +99,9 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	// Validate credentials against your repository
 	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 
+	// log user object
+	log.Infof("User object: %v\n", user)
+
 	if err != nil {
 		loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{
 			"client_id":     clientID,
@@ -130,6 +133,8 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Error validating request", http.StatusInternalServerError)
 		return
 	}
+
+	log.Infof("After validation")
 
 	// Authentication succeeded - redirect back to authorize endpoint with user info
 	authorizeURL, err := self.BuildOauthRedirect(RedirectAuthorize, map[string]string{
