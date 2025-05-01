@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -46,6 +47,15 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 
 	// Delete kubernetes resources, db resource
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		// Make sure this isn't the only environment in the project
+		projectEnvs, err := self.repo.Environment().GetForProject(ctx, tx, projectID)
+		if err != nil {
+			return err
+		}
+		if len(projectEnvs) <= 1 {
+			return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot delete the last environment in a project")
+		}
+
 		// Delete services
 		for _, service := range services {
 			// Cancel deployments
