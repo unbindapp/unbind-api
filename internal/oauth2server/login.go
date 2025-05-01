@@ -35,9 +35,6 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 	state := r.URL.Query().Get("state")
 	scope := r.URL.Query().Get("scope")
 	errorParam := r.URL.Query().Get("error")
-	email := r.URL.Query().Get("email")
-	log.Infof("---LOGIN PAGE REQUEST ---")
-	log.Infof("client_id=%s, redirect_uri=%s, response_type=%s, state=%s, scope=%s, error=%s, email=%s\n", clientID, redirectURI, responseType, state, scope, errorParam, email)
 	// Unique key specific to the rendered form
 	pageKey := uuid.NewString()
 	loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{})

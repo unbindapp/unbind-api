@@ -31,14 +31,19 @@ const (
 )
 
 func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryParams map[string]string) (string, error) {
-	// Build base URL by joining paths
-	baseUrl, err := utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
+	var baseURL string
+	var err error
+	if redirectType == RedirectLogin {
+		baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalUIUrl, "api-internal", "auth-internal", "sign-in")
+	} else {
+		baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
+	}
 	if err != nil {
 		return "", err
 	}
 
 	// Create URL object to properly handle query parameter encoding
-	u, err := url.Parse(baseUrl)
+	u, err := url.Parse(baseURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse base URL: %w", err)
 	}
