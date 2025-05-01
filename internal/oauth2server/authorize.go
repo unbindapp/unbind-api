@@ -22,6 +22,8 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	state := r.Form.Get("state")
 	scope := r.Form.Get("scope")
 	userID := r.Form.Get("user_id")
+	initatingURL := r.Form.Get("initiating_url")
+	log.Infof("Initiating URL: %s\n", initatingURL)
 
 	// Validate client_id is present
 	if clientID == "" {
