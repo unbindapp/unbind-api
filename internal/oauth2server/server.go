@@ -36,12 +36,28 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 	var err error
 	allowedUrls := []string{"http://localhost:3000", self.Cfg.ExternalUIUrl}
 
-	if redirectType == RedirectLogin {
-		signInBaseURL := self.Cfg.ExternalUIUrl
-		log.Infof("signInBaseURL: %s", signInBaseURL)
-		log.Infof("Allowed URLs: %v", allowedUrls)
+	redirectURI := queryParams["redirect_uri"]
+	parsed, err := url.Parse(redirectURI)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse redirect URI: %w", err)
+	}
+	// Strip legacySignin query param eter from redirect URI
+	legacySignin := parsed.Query().Get("legacySignin") == "true"
+	parsed.Query().Del("legacySignin")
+	// Re-assemlbe the redirect URI without the legacySignin parameter
+	redirectURI = parsed.String()
+	queryParams["redirect_uri"] = redirectURI
 
-		baseURL, err = utils.JoinURLPaths(signInBaseURL, "sign-in")
+	if redirectType == RedirectLogin {
+		if legacySignin {
+			baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
+		} else {
+			signInBaseURL := self.Cfg.ExternalUIUrl
+			log.Infof("signInBaseURL: %s", signInBaseURL)
+			log.Infof("Allowed URLs: %v", allowedUrls)
+
+			baseURL, err = utils.JoinURLPaths(signInBaseURL, "sign-in")
+		}
 	} else {
 		baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
 	}
