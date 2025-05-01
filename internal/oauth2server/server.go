@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"net/url"
-	"slices"
 
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
@@ -39,12 +38,8 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 
 	if redirectType == RedirectLogin {
 		signInBaseURL := self.Cfg.ExternalUIUrl
-
-		initiatingURL := queryParams["initiating_url"]
-		log.Info("initiating_url: ", initiatingURL)
-		if slices.Contains(allowedUrls, initiatingURL) {
-			signInBaseURL = initiatingURL
-		}
+		log.Infof("signInBaseURL: %s", signInBaseURL)
+		log.Infof("Allowed URLs: %v", allowedUrls)
 
 		baseURL, err = utils.JoinURLPaths(signInBaseURL, "sign-in")
 	} else {

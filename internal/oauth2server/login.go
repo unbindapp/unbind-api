@@ -94,21 +94,19 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	state := r.Form.Get("state")
 	scope := r.Form.Get("scope")
 	pageKey := r.Form.Get("page_key")
-	initiatingURL := r.Form.Get("initiating_url")
 
 	// Validate credentials against your repository
 	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 
 	if err != nil {
 		loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{
-			"client_id":      clientID,
-			"redirect_uri":   redirectURI,
-			"response_type":  responseType,
-			"state":          state,
-			"scope":          scope,
-			"error":          "invalid_credentials",
-			"page_key":       pageKey,
-			"initiating_url": initiatingURL,
+			"client_id":     clientID,
+			"redirect_uri":  redirectURI,
+			"response_type": responseType,
+			"state":         state,
+			"scope":         scope,
+			"error":         "invalid_credentials",
+			"page_key":      pageKey,
 		})
 		if err != nil {
 			log.Errorf("Error building login URL: %v\n", err)
