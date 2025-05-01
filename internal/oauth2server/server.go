@@ -37,17 +37,20 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 	var err error
 	allowedUrls := []string{"http://localhost:3000", self.Cfg.ExternalUIUrl}
 
-	// log request url
-	if requestUrl == nil {
-		return "", fmt.Errorf("Request URL is nil")
-	}
-	log.Infof("Request URL: %s", requestUrl.String())
-
 	if redirectType == RedirectLogin {
+		// log request url
+		if requestUrl == nil {
+			return "", fmt.Errorf("Request URL is nil")
+		}
+		log.Infof("Request URL: %s", requestUrl.String())
 		// Check if the request URL host is in the allowed hosts
 		host := requestUrl.Hostname()
 		protocol := requestUrl.Scheme
 		port := requestUrl.Port()
+
+		log.Infof("Host: %s", host)
+		log.Infof("Protocol: %s", protocol)
+		log.Infof("Port: %s", port)
 
 		signInBaseURL := fmt.Sprintf("%s://%s", protocol, host)
 		if port != "" {
