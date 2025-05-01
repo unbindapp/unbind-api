@@ -19,6 +19,14 @@ type SetupStatusResponse struct {
 }
 
 func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInput) (*SetupStatusResponse, error) {
+	if self.setupDone {
+		resp := &SetupStatusResponse{}
+		resp.Body.Data = &SetupData{
+			Bootstrapped: true,
+		}
+		return resp, nil
+	}
+
 	// Get bootstrapped
 	bootstrapped, err := self.srv.Repository.Bootstrap().IsBootstrapped(ctx, nil)
 	if err != nil {
@@ -26,10 +34,13 @@ func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInpu
 		return nil, huma.Error500InternalServerError("Error checking if bootstrapped")
 	}
 
+	if bootstrapped {
+		self.setupDone = true
+	}
+
 	resp := &SetupStatusResponse{}
 	resp.Body.Data = &SetupData{
 		IsBootstrapped: bootstrapped,
 	}
 	return resp, nil
-
 }
