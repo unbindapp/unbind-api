@@ -9,7 +9,7 @@ import (
 )
 
 type SetupData struct {
-	NeedsSetup bool `json:"needs_setup"`
+	Bootstrapped bool `json:"bootstrapped"`
 }
 
 type SetupStatusResponse struct {
@@ -22,7 +22,7 @@ func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInpu
 	if self.setupDone {
 		resp := &SetupStatusResponse{}
 		resp.Body.Data = &SetupData{
-			NeedsSetup: false,
+			Bootstrapped: true,
 		}
 		return resp, nil
 	}
@@ -40,7 +40,7 @@ func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInpu
 
 	resp := &SetupStatusResponse{}
 	resp.Body.Data = &SetupData{
-		NeedsSetup: !bootstrapped,
+		Bootstrapped: bootstrapped,
 	}
 	return resp, nil
 }
