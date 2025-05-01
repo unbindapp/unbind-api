@@ -22,6 +22,7 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	state := r.Form.Get("state")
 	scope := r.Form.Get("scope")
 	userID := r.Form.Get("user_id")
+	initiatingURL := r.Form.Get(("initiating_url"))
 
 	// Validate client_id is present
 	if clientID == "" {
@@ -33,12 +34,13 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	if userID == "" {
 		// User not authenticated, redirect to login
 		loginURL, err := s.BuildOauthRedirect(RedirectLogin, map[string]string{
-			"client_id":     clientID,
-			"redirect_uri":  redirectURI,
-			"response_type": responseType,
-			"state":         state,
-			"scope":         scope,
-		}, r.URL)
+			"client_id":      clientID,
+			"redirect_uri":   redirectURI,
+			"response_type":  responseType,
+			"state":          state,
+			"scope":          scope,
+			"initiating_url": initiatingURL,
+		})
 		if err != nil {
 			log.Errorf("Error building login URL: %v\n", err)
 			http.Error(w, fmt.Sprintf("Error building login URL: %v", err), http.StatusInternalServerError)

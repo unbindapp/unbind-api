@@ -36,7 +36,7 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 	errorParam := r.URL.Query().Get("error")
 	// Unique key specific to the rendered form
 	pageKey := uuid.NewString()
-	loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{}, r.URL)
+	loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{})
 	if err != nil {
 		log.Errorf("Error building login URL: %v\n", err)
 		http.Error(w, fmt.Sprintf("Error building login URL: %v", err), http.StatusInternalServerError)
@@ -94,20 +94,22 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	state := r.Form.Get("state")
 	scope := r.Form.Get("scope")
 	pageKey := r.Form.Get("page_key")
+	initiatingURL := r.Form.Get("initiating_url")
 
 	// Validate credentials against your repository
 	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 
 	if err != nil {
 		loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{
-			"client_id":     clientID,
-			"redirect_uri":  redirectURI,
-			"response_type": responseType,
-			"state":         state,
-			"scope":         scope,
-			"error":         "invalid_credentials",
-			"page_key":      pageKey,
-		}, r.URL)
+			"client_id":      clientID,
+			"redirect_uri":   redirectURI,
+			"response_type":  responseType,
+			"state":          state,
+			"scope":          scope,
+			"error":          "invalid_credentials",
+			"page_key":       pageKey,
+			"initiating_url": initiatingURL,
+		})
 		if err != nil {
 			log.Errorf("Error building login URL: %v\n", err)
 			http.Error(w, fmt.Sprintf("Error building login URL: %v", err), http.StatusInternalServerError)
@@ -138,7 +140,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		"state":         state,
 		"scope":         scope,
 		"user_id":       user.Email,
-	}, r.URL)
+	})
 
 	if err != nil {
 		log.Errorf("Error building authorize URL: %v\n", err)

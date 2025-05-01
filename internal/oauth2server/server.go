@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
-	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
@@ -32,34 +31,17 @@ const (
 	RedirectAuthorize RedirectType = "authorize"
 )
 
-func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryParams map[string]string, requestUrl *url.URL) (string, error) {
+func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryParams map[string]string) (string, error) {
 	var baseURL string
 	var err error
 	allowedUrls := []string{"http://localhost:3000", self.Cfg.ExternalUIUrl}
 
 	if redirectType == RedirectLogin {
-		// log request url
-		if requestUrl == nil {
-			return "", fmt.Errorf("Request URL is nil")
-		}
-		log.Infof("Request URL: %s", requestUrl.String())
-		// Check if the request URL host is in the allowed hosts
-		host := requestUrl.Hostname()
-		protocol := requestUrl.Scheme
-		port := requestUrl.Port()
+		signInBaseURL := self.Cfg.ExternalUIUrl
 
-		log.Infof("Host: %s", host)
-		log.Infof("Protocol: %s", protocol)
-		log.Infof("Port: %s", port)
-
-		signInBaseURL := fmt.Sprintf("%s://%s", protocol, host)
-		if port != "" {
-			signInBaseURL += ":" + port
-		}
-
-		isAllowedUrl := slices.Contains(allowedUrls, signInBaseURL)
-		if !isAllowedUrl {
-			return "", fmt.Errorf("Url not allowed: %s", signInBaseURL)
+		initiatingURL := queryParams["initiating_url"]
+		if slices.Contains(allowedUrls, initiatingURL) {
+			signInBaseURL = initiatingURL
 		}
 
 		baseURL, err = utils.JoinURLPaths(signInBaseURL, "sign-in")
