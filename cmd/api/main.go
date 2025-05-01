@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,13 +15,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/go-co-op/gocron/v2"
+	"github.com/gorilla/schema"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
+	auth_handler "github.com/unbindapp/unbind-api/internal/api/handlers/auth"
 	deployments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/deployments"
 	environments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/environments"
 	github_handler "github.com/unbindapp/unbind-api/internal/api/handlers/github"
 	instances_handler "github.com/unbindapp/unbind-api/internal/api/handlers/instances"
-	logintmp_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logintmp"
 	logs_handler "github.com/unbindapp/unbind-api/internal/api/handlers/logs"
 	metrics_handler "github.com/unbindapp/unbind-api/internal/api/handlers/metrics"
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
@@ -65,8 +66,52 @@ import (
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"golang.org/x/oauth2"
 )
+
+var decoder = schema.NewDecoder()
+
+var urlEncodedFormat = huma.Format{
+	Marshal: nil,
+	Unmarshal: func(data []byte, v any) error {
+		values, err := url.ParseQuery(string(data))
+		if err != nil {
+			return err
+		}
+
+		// WARNING: Dirty workaround!
+		// During validation, Huma first parses the body into []any, map[string]any or equivalent for easy validation,
+		// before parsing it into the target struct.
+		// However, gorilla/schema requires a struct for decoding, so we need to map `url.Values` to a
+		// `map[string]any` if this happens.
+		// See: https://github.com/danielgtaylor/huma/blob/main/huma.go#L1264
+		if vPtr, ok := v.(*interface{}); ok {
+			m := map[string]any{}
+			for k, v := range values {
+				if len(v) > 1 {
+					m[k] = v
+				} else if len(v) == 1 {
+					m[k] = v[0]
+				}
+			}
+			*vPtr = m
+			return nil
+		}
+
+		// `v` is a struct, try decode normally
+		return decoder.Decode(v, values)
+	},
+}
+
+func init() {
+	// Add the x-www-form-urlencoded format to Huma.
+	// This is how Huma's COBR package does it, but you could also update your `huma.Config` in `main`, like so:
+	//
+	//	config := huma.DefaultConfig()
+	//	config.Formats["application/x-www-form-urlencoded"] = urlEncodedFormat
+	//	config.Formats["x-www-form-urlencoded"] = urlEncodedFormat
+	huma.DefaultFormats["application/x-www-form-urlencoded"] = urlEncodedFormat
+	huma.DefaultFormats["x-www-form-urlencoded"] = urlEncodedFormat
+}
 
 func NewHumaConfig(title, version string) huma.Config {
 	schemaPrefix := "#/components/schemas/"
@@ -169,14 +214,16 @@ func startAPI(cfg *config.Config) {
 	dbProvider := databases.NewDatabaseProvider()
 
 	// Bootstrap
-	bootstrapper := &Bootstrapper{
-		cfg:                     cfg,
-		kubeClient:              kubeClient,
-		repos:                   repo,
-		buildkitSettingsManager: buildkitSettings,
-	}
-	if err := bootstrapper.Sync(ctx); err != nil {
-		log.Errorf("Failed to sync system settings: %v", err)
+	if !cfg.SkipBootstrap {
+		bootstrapper := &Bootstrapper{
+			cfg:                     cfg,
+			kubeClient:              kubeClient,
+			repos:                   repo,
+			buildkitSettingsManager: buildkitSettings,
+		}
+		if err := bootstrapper.Sync(ctx); err != nil {
+			log.Errorf("Failed to sync system settings: %v", err)
+		}
 	}
 
 	// Create webhook service
@@ -200,25 +247,11 @@ func startAPI(cfg *config.Config) {
 
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 
-	// Create OAuth2 config
-	oauthConfig := &oauth2.Config{
-		ClientID:     cfg.DexClientID,
-		ClientSecret: cfg.DexClientSecret,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  cfg.DexIssuerUrlExternal + "/auth",
-			TokenURL: cfg.DexIssuerURL + "/token",
-		},
-		// ! TODO - adjust redirect when necessary
-		RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalAPIURL),
-		Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
-	}
-
 	// Implementation
 	srvImpl := &server.Server{
 		KubeClient:           kubeClient,
 		Cfg:                  cfg,
 		Repository:           repo,
-		OauthConfig:          oauthConfig,
 		GithubClient:         githubClient,
 		StringCache:          stringCache,
 		HttpClient:           &http.Client{},
@@ -318,7 +351,7 @@ func startAPI(cfg *config.Config) {
 			op.Tags = []string{"Auth"}
 			next(op)
 		})
-		logintmp_handler.RegisterHandlers(srvImpl, authGroup)
+		auth_handler.RegisterHandlers(srvImpl, authGroup)
 
 		// /system group
 		systemGroup := huma.NewGroup(api, "/system")

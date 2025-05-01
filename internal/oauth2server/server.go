@@ -30,24 +30,24 @@ const (
 	RedirectAuthorize RedirectType = "authorize"
 )
 
-func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryParams map[string]string) (string, error) {
+func BuildOauthRedirect(cfg *config.Config, redirectType RedirectType, queryParams map[string]string) (string, error) {
 	var baseURL string
 	var err error
-	allowedUrls := []string{self.Cfg.ExternalUIUrl}
-	if self.Cfg.InjectDevOrigins {
+	allowedUrls := []string{cfg.ExternalUIUrl}
+	if cfg.InjectDevOrigins {
 		allowedUrls = append(allowedUrls, "http://localhost:3000")
 	}
 
 	if redirectType == RedirectLogin {
 		initiatingURL := queryParams["initiating_url"]
 		if initiatingURL == "" {
-			initiatingURL, _ = utils.JoinURLPaths(self.Cfg.ExternalUIUrl, "/sign-in")
+			initiatingURL, _ = utils.JoinURLPaths(cfg.ExternalUIUrl, "/sign-in")
 		}
 		// Verify that initatingURL is in the allowed URLs
 		initiatingURLBase, err := url.Parse(initiatingURL)
 		if err != nil {
 			// Invalid URL, default to safe option
-			initiatingURL, _ = utils.JoinURLPaths(self.Cfg.ExternalUIUrl, "/sign-in")
+			initiatingURL, _ = utils.JoinURLPaths(cfg.ExternalUIUrl, "/sign-in")
 		} else {
 			// Extract base URL (scheme + host)
 			initiatingURLBaseStr := fmt.Sprintf("%s://%s", initiatingURLBase.Scheme, initiatingURLBase.Host)
@@ -63,13 +63,13 @@ func (self *Oauth2Server) BuildOauthRedirect(redirectType RedirectType, queryPar
 
 			// If not allowed, default to safe option
 			if !isAllowed {
-				initiatingURL, _ = utils.JoinURLPaths(self.Cfg.ExternalUIUrl, "/sign-in")
+				initiatingURL, _ = utils.JoinURLPaths(cfg.ExternalUIUrl, "/sign-in")
 			}
 		}
 
 		baseURL = initiatingURL
 	} else {
-		baseURL, err = utils.JoinURLPaths(self.Cfg.ExternalOauth2URL, string(redirectType))
+		baseURL, err = utils.JoinURLPaths(cfg.ExternalOauth2URL, string(redirectType))
 	}
 
 	if err != nil {

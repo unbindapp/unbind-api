@@ -8,7 +8,7 @@ import (
 )
 
 // HandleAuthorize handles the OAuth2 authorization request
-func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
+func (self *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	// Parse the request to get the client_id
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Failed to parse request", http.StatusBadRequest)
@@ -33,7 +33,7 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	// Check if user is authenticated
 	if userID == "" {
 		// User not authenticated, redirect to login
-		loginURL, err := s.BuildOauthRedirect(RedirectLogin, map[string]string{
+		loginURL, err := BuildOauthRedirect(self.Cfg, RedirectLogin, map[string]string{
 			"client_id":      clientID,
 			"redirect_uri":   redirectURI,
 			"response_type":  responseType,
@@ -51,12 +51,12 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set the user authorization handler to use our user ID
-	s.Srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
+	self.Srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
 		return userID, nil
 	})
 
 	// Handle the authorization request
-	err := s.Srv.HandleAuthorizeRequest(w, r)
+	err := self.Srv.HandleAuthorizeRequest(w, r)
 	if err != nil {
 		log.Errorf("Error handling authorize request: %v\n", err)
 		http.Error(w, fmt.Sprintf("Authorization error: %v", err), http.StatusBadRequest)

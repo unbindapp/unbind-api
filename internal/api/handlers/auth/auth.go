@@ -1,4 +1,4 @@
-package logintmp_handler
+package auth_handler
 
 import (
 	"net/http"
@@ -10,8 +10,6 @@ import (
 type HandlerGroup struct {
 	srv *server.Server
 }
-
-// ! TODO - get rid of this one, it's just for early temporary oauth testing
 
 func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	handlers := &HandlerGroup{
@@ -25,18 +23,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 			Summary:     "Login",
 			Description: "Login",
 			Path:        "/login",
-			Method:      http.MethodGet,
+			Method:      http.MethodPost,
 		},
-		handlers.Login)
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "callback",
-			Summary:     "Callback",
-			Description: "Callback",
-			Path:        "/callback",
-			Method:      http.MethodGet,
-		},
-		handlers.Callback,
-	)
+		handlers.LoginSubmit)
 }

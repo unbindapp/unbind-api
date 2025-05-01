@@ -26,7 +26,6 @@ import (
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
-	"golang.org/x/oauth2"
 )
 
 // EmptyInput can be used when no input is needed.
@@ -47,7 +46,6 @@ type DeletedResponse struct {
 type Server struct {
 	KubeClient           *k8s.KubeClient
 	Cfg                  *config.Config
-	OauthConfig          *oauth2.Config
 	GithubClient         *github.GithubClient
 	Repository           repositories.RepositoriesInterface
 	StringCache          *cache.ValkeyCache[string]

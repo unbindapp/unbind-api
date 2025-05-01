@@ -36,7 +36,7 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 	errorParam := r.URL.Query().Get("error")
 	// Unique key specific to the rendered form
 	pageKey := uuid.NewString()
-	loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{})
+	loginURL, err := BuildOauthRedirect(self.Cfg, RedirectLogin, map[string]string{})
 	if err != nil {
 		log.Errorf("Error building login URL: %v\n", err)
 		http.Error(w, fmt.Sprintf("Error building login URL: %v", err), http.StatusInternalServerError)
@@ -100,7 +100,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	user, err := self.Repository.User().Authenticate(r.Context(), username, password)
 
 	if err != nil {
-		loginURL, err := self.BuildOauthRedirect(RedirectLogin, map[string]string{
+		loginURL, err := BuildOauthRedirect(self.Cfg, RedirectLogin, map[string]string{
 			"client_id":      clientID,
 			"redirect_uri":   redirectURI,
 			"response_type":  responseType,
@@ -133,7 +133,7 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 	} */
 
 	// Authentication succeeded - redirect back to authorize endpoint with user info
-	authorizeURL, err := self.BuildOauthRedirect(RedirectAuthorize, map[string]string{
+	authorizeURL, err := BuildOauthRedirect(self.Cfg, RedirectAuthorize, map[string]string{
 		"client_id":      clientID,
 		"redirect_uri":   redirectURI,
 		"response_type":  responseType,
