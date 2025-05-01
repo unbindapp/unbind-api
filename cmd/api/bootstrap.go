@@ -268,7 +268,7 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 		}
 
 		// * Create first Project
-		name = "Default Project"
+		name = "First Project"
 		kubernetesName, err = utils.GenerateSlug(name)
 		if err != nil {
 			return fmt.Errorf("failed to generate slug for project name: %w", err)
