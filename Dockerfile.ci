@@ -1,7 +1,6 @@
 # Docker file for github actions CI build
 FROM stablecog/ubuntu:22.04
 
-COPY ./internal/oauth2server/template/* /app/template/
 COPY ./cmd/api/api /app/api
 COPY ./cmd/oauth2server/oauth2server /app/oauth2server
 COPY ./cmd/cli/cli /app/cli
