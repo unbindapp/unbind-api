@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/valkey-io/valkey-go"
 )
 
 // LoginPageData holds the data to be passed to the login template
@@ -119,23 +118,17 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	log.Infof(("Before doule submission check"))
-
-	// Validate state to prevent double submission
-	if _, err := self.StringCache.Getdel(self.Ctx, pageKey); err != nil {
+	// TO-DO: Removed for now: Validate state to prevent double submission
+	/* if _, err := self.StringCache.Getdel(self.Ctx, pageKey); err != nil {
 		if err == valkey.Nil {
-			log.Infof("err == valkey.Nil")
 			// Return ok empty status
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		log.Infof("Error getting state from cache")
 		log.Error("Error validating request: ", err)
 		http.Error(w, "Error validating request", http.StatusInternalServerError)
 		return
-	}
-
-	log.Infof("After validation")
+	} */
 
 	// Authentication succeeded - redirect back to authorize endpoint with user info
 	authorizeURL, err := self.BuildOauthRedirect(RedirectAuthorize, map[string]string{
@@ -146,8 +139,6 @@ func (self *Oauth2Server) HandleLoginSubmit(w http.ResponseWriter, r *http.Reque
 		"scope":         scope,
 		"user_id":       user.Email,
 	})
-
-	log.Info("Redirecting to authorize URL: ", authorizeURL)
 
 	if err != nil {
 		log.Errorf("Error building authorize URL: %v\n", err)
