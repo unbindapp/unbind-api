@@ -38,7 +38,7 @@ func (s *Oauth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 			"response_type": responseType,
 			"state":         state,
 			"scope":         scope,
-		})
+		}, r.URL)
 		if err != nil {
 			log.Errorf("Error building login URL: %v\n", err)
 			http.Error(w, fmt.Sprintf("Error building login URL: %v", err), http.StatusInternalServerError)
