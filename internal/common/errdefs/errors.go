@@ -9,6 +9,7 @@ type ErrorType int
 
 // Errors
 var (
+	ErrAlreadyBootstrapped = errors.New("already bootstrapped")
 	// Permissions
 	ErrUnauthorized       = errors.New("unauthorized")
 	ErrGroupAlreadyExists = errors.New("group name already exists")

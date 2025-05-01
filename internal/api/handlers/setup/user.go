@@ -2,8 +2,10 @@ package setup_handler
 
 import (
 	"context"
+	"errors"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
@@ -25,6 +27,10 @@ type CreateUserResponse struct {
 }
 
 func (self *HandlerGroup) CreateUser(ctx context.Context, input *CreateUserInput) (*CreateUserResponse, error) {
+	if self.setupDone {
+		return nil, huma.Error400BadRequest("Already setup")
+	}
+
 	// Create user
 	user, err := self.srv.Repository.Bootstrap().CreateUser(
 		ctx,
@@ -32,6 +38,9 @@ func (self *HandlerGroup) CreateUser(ctx context.Context, input *CreateUserInput
 		input.Body.Password,
 	)
 	if err != nil {
+		if errors.Is(err, errdefs.ErrAlreadyBootstrapped) {
+			return nil, huma.Error400BadRequest("Already setup")
+		}
 		log.Error("Error creating user", "err", err)
 		return nil, huma.Error500InternalServerError("Error creating user")
 	}

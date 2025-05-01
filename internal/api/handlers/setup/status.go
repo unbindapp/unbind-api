@@ -9,7 +9,7 @@ import (
 )
 
 type SetupData struct {
-	IsSetup bool `json:"is_setup"`
+	NeedsSetup bool `json:"needs_setup"`
 }
 
 type SetupStatusResponse struct {
@@ -19,6 +19,14 @@ type SetupStatusResponse struct {
 }
 
 func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInput) (*SetupStatusResponse, error) {
+	if self.setupDone {
+		resp := &SetupStatusResponse{}
+		resp.Body.Data = &SetupData{
+			NeedsSetup: false,
+		}
+		return resp, nil
+	}
+
 	// Get bootstrapped
 	bootstrapped, err := self.srv.Repository.Bootstrap().IsBootstrapped(ctx, nil)
 	if err != nil {
@@ -26,10 +34,13 @@ func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInpu
 		return nil, huma.Error500InternalServerError("Error checking if bootstrapped")
 	}
 
+	if bootstrapped {
+		self.setupDone = true
+	}
+
 	resp := &SetupStatusResponse{}
 	resp.Body.Data = &SetupData{
-		IsSetup: bootstrapped,
+		NeedsSetup: !bootstrapped,
 	}
 	return resp, nil
-
 }

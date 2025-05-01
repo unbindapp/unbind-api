@@ -2,9 +2,9 @@ package bootstrap_repo
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"golang.org/x/crypto/bcrypt"
@@ -19,7 +19,7 @@ func (self *BootstrapRepository) CreateUser(ctx context.Context, email, password
 			return err
 		}
 		if bootstrapped {
-			return fmt.Errorf("bootstrapped")
+			return errdefs.ErrAlreadyBootstrapped
 		}
 
 		// Hash the password

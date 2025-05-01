@@ -209,7 +209,7 @@ func startAPI(cfg *config.Config) {
 			TokenURL: cfg.DexIssuerURL + "/token",
 		},
 		// ! TODO - adjust redirect when necessary
-		RedirectURL: fmt.Sprintf("%s/auth/callback?legacySignin=true", cfg.ExternalAPIURL),
+		RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalAPIURL),
 		Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
 	}
 
