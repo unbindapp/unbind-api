@@ -224,8 +224,6 @@ func StartOauth2Server(cfg *config.Config) {
 		r.Post("/token", oauth2Srv.HandleToken)
 		r.Get("/authorize", oauth2Srv.HandleAuthorize)
 		r.Get("/userinfo", oauth2Srv.HandleUserinfo)
-		r.Get("/login", oauth2Srv.HandleLoginPage)
-		r.Post("/login", oauth2Srv.HandleLoginSubmit)
 		r.Get("/.well-known/openid-configuration", oauth2Srv.HandleOpenIDConfiguration)
 		r.Get("/.well-known/jwks.json", oauth2Srv.HandleJWKS)
 	})
