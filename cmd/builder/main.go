@@ -21,7 +21,6 @@ import (
 	"github.com/unbindapp/unbind-api/pkg/builder/config"
 	"github.com/unbindapp/unbind-api/pkg/builder/k8s"
 	_ "go.uber.org/automaxprocs"
-	"gopkg.in/yaml.v2"
 )
 
 func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksService *webhooks_service.WebhooksService, tx repository.TxInterface, repo *repositories.Repositories, deploymentID uuid.UUID) error {
@@ -324,7 +323,7 @@ func main() {
 	}
 
 	// Deploy to kubernetes with context
-	createdCRD, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv)
+	_, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv)
 	if err != nil {
 		if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to deploy image %v", err), cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)
@@ -360,12 +359,5 @@ func main() {
 		log.Fatalf("Failed to update deployment metadata: %v", err)
 	}
 
-	// Pretty print the CRD as YAML
-	crdYAML, err := yaml.Marshal(createdCRD)
-	if err != nil {
-		log.Errorf("Failed to marshal CRD to YAML: %v", err)
-		log.Infof("Created CRD: %v", createdCRD) // Fallback to default printing
-	} else {
-		log.Infof("Created CRD:\n%s", string(crdYAML))
-	}
+	log.Infof("Deployment successful, deployment ID: %s", cfg.ServiceDeploymentID.String())
 }
