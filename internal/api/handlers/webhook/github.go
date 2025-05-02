@@ -303,11 +303,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 					continue
 				}
 				tagName := strings.TrimPrefix(ref, "refs/tags/")
-				matched, err := utils.MatchPattern(*config.GitTag, tagName)
-				if err != nil {
-					log.Error("Error matching tag pattern", "pattern", *config.GitTag, "tag", tagName, "err", err)
-					continue
-				}
+				matched := utils.MatchesGlobPattern(tagName, *config.GitTag)
 				if matched {
 					servicesToBuild = append(servicesToBuild, service)
 				}
