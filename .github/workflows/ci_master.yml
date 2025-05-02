@@ -76,19 +76,19 @@ jobs:
 
       - name: Build GO Server Binary
         run: |
-          cd cmd/api && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./api && cd ../..
+          cd cmd/api && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\"" -o ./api && cd ../..
 
       - name: Build Oauth Server Binary
         run: |
-          cd cmd/oauth2server && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./oauth2server && cd ../..
+          cd cmd/oauth2server && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\"" -o ./oauth2server && cd ../..
 
       - name: Build CLI Binary
         run: |
-          cd cmd/cli && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./cli && cd ../..
+          cd cmd/cli && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\"" -o ./cli && cd ../..
 
       - name: Build Builder Binary
         run: |
-          cd cmd/builder && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./builder && cd ../..
+          cd cmd/builder && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\"" -o ./builder && cd ../..
 
       - name: Build and push image
         if: success()
