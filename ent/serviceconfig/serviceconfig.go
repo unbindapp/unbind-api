@@ -38,6 +38,8 @@ const (
 	FieldRailpackFramework = "railpack_framework"
 	// FieldGitBranch holds the string denoting the git_branch field in the database.
 	FieldGitBranch = "git_branch"
+	// FieldGitTag holds the string denoting the git_tag field in the database.
+	FieldGitTag = "git_tag"
 	// FieldHosts holds the string denoting the hosts field in the database.
 	FieldHosts = "hosts"
 	// FieldPorts holds the string denoting the ports field in the database.
@@ -95,6 +97,7 @@ var Columns = []string{
 	FieldRailpackProvider,
 	FieldRailpackFramework,
 	FieldGitBranch,
+	FieldGitTag,
 	FieldHosts,
 	FieldPorts,
 	FieldReplicas,
@@ -221,6 +224,11 @@ func ByRailpackFramework(opts ...sql.OrderTermOption) OrderOption {
 // ByGitBranch orders the results by the git_branch field.
 func ByGitBranch(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGitBranch, opts...).ToFunc()
+}
+
+// ByGitTag orders the results by the git_tag field.
+func ByGitTag(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGitTag, opts...).ToFunc()
 }
 
 // ByReplicas orders the results by the replicas field.

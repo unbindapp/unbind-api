@@ -93,6 +93,11 @@ func GitBranch(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldGitBranch, v))
 }
 
+// GitTag applies equality check predicate on the "git_tag" field. It's identical to GitTagEQ.
+func GitTag(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldGitTag, v))
+}
+
 // Replicas applies equality check predicate on the "replicas" field. It's identical to ReplicasEQ.
 func Replicas(v int32) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldReplicas, v))
@@ -631,6 +636,81 @@ func GitBranchEqualFold(v string) predicate.ServiceConfig {
 // GitBranchContainsFold applies the ContainsFold predicate on the "git_branch" field.
 func GitBranchContainsFold(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldContainsFold(FieldGitBranch, v))
+}
+
+// GitTagEQ applies the EQ predicate on the "git_tag" field.
+func GitTagEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldGitTag, v))
+}
+
+// GitTagNEQ applies the NEQ predicate on the "git_tag" field.
+func GitTagNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldGitTag, v))
+}
+
+// GitTagIn applies the In predicate on the "git_tag" field.
+func GitTagIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldGitTag, vs...))
+}
+
+// GitTagNotIn applies the NotIn predicate on the "git_tag" field.
+func GitTagNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldGitTag, vs...))
+}
+
+// GitTagGT applies the GT predicate on the "git_tag" field.
+func GitTagGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldGitTag, v))
+}
+
+// GitTagGTE applies the GTE predicate on the "git_tag" field.
+func GitTagGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldGitTag, v))
+}
+
+// GitTagLT applies the LT predicate on the "git_tag" field.
+func GitTagLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldGitTag, v))
+}
+
+// GitTagLTE applies the LTE predicate on the "git_tag" field.
+func GitTagLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldGitTag, v))
+}
+
+// GitTagContains applies the Contains predicate on the "git_tag" field.
+func GitTagContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldGitTag, v))
+}
+
+// GitTagHasPrefix applies the HasPrefix predicate on the "git_tag" field.
+func GitTagHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldGitTag, v))
+}
+
+// GitTagHasSuffix applies the HasSuffix predicate on the "git_tag" field.
+func GitTagHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldGitTag, v))
+}
+
+// GitTagIsNil applies the IsNil predicate on the "git_tag" field.
+func GitTagIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldGitTag))
+}
+
+// GitTagNotNil applies the NotNil predicate on the "git_tag" field.
+func GitTagNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldGitTag))
+}
+
+// GitTagEqualFold applies the EqualFold predicate on the "git_tag" field.
+func GitTagEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldGitTag, v))
+}
+
+// GitTagContainsFold applies the ContainsFold predicate on the "git_tag" field.
+func GitTagContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldGitTag, v))
 }
 
 // HostsIsNil applies the IsNil predicate on the "hosts" field.

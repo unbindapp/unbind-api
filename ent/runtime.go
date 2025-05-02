@@ -365,15 +365,15 @@ func init() {
 	// serviceconfig.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	serviceconfig.UpdateDefaultUpdatedAt = serviceconfigDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// serviceconfigDescReplicas is the schema descriptor for replicas field.
-	serviceconfigDescReplicas := serviceconfigFields[10].Descriptor()
+	serviceconfigDescReplicas := serviceconfigFields[11].Descriptor()
 	// serviceconfig.DefaultReplicas holds the default value on creation for the replicas field.
 	serviceconfig.DefaultReplicas = serviceconfigDescReplicas.Default.(int32)
 	// serviceconfigDescAutoDeploy is the schema descriptor for auto_deploy field.
-	serviceconfigDescAutoDeploy := serviceconfigFields[11].Descriptor()
+	serviceconfigDescAutoDeploy := serviceconfigFields[12].Descriptor()
 	// serviceconfig.DefaultAutoDeploy holds the default value on creation for the auto_deploy field.
 	serviceconfig.DefaultAutoDeploy = serviceconfigDescAutoDeploy.Default.(bool)
 	// serviceconfigDescIsPublic is the schema descriptor for is_public field.
-	serviceconfigDescIsPublic := serviceconfigFields[13].Descriptor()
+	serviceconfigDescIsPublic := serviceconfigFields[14].Descriptor()
 	// serviceconfig.DefaultIsPublic holds the default value on creation for the is_public field.
 	serviceconfig.DefaultIsPublic = serviceconfigDescIsPublic.Default.(bool)
 	// serviceconfigDescID is the schema descriptor for id field.

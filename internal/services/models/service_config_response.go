@@ -9,6 +9,7 @@ import (
 // ServiceConfigResponse defines the configuration response for a service
 type ServiceConfigResponse struct {
 	GitBranch  *string               `json:"git_branch,omitempty"`
+	GitTag     *string               `json:"git_tag,omitempty"`
 	Builder    schema.ServiceBuilder `json:"builder"`
 	Icon       string                `json:"icon"`
 	Host       []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
@@ -26,6 +27,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 	if entity != nil {
 		response = &ServiceConfigResponse{
 			GitBranch:  entity.GitBranch,
+			GitTag:     entity.GitTag,
 			Builder:    entity.Builder,
 			Icon:       entity.Icon,
 			Host:       entity.Hosts,

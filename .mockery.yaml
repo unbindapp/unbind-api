@@ -15,6 +15,33 @@ packages:
           filename: tx_mock.go
           mockName: TxMock
           outpkg: mocks_repository_tx
+  github.com/unbindapp/unbind-api/internal/repositories/bootstrap:
+    config:
+      dir: ./mocks/repository/bootstrap
+    interfaces:
+      BootstrapRepositoryInterface:
+        config:
+          filename: bootstrap_repository_mock.go
+          mockName: BootstrapRepositoryMock
+          outpkg: mocks_repository_bootstrap
+  github.com/unbindapp/unbind-api/internal/repositories/deployment:
+    config:
+      dir: ./mocks/repository/deployment
+    interfaces:
+      DeploymentRepositoryInterface:
+        config:
+          filename: deployment_repository_mock.go
+          mockName: DeploymentRepositoryMock
+          outpkg: mocks_repository_deployment
+  github.com/unbindapp/unbind-api/internal/repositories/environment:
+    config:
+      dir: ./mocks/repository/environment
+    interfaces:
+      EnvironmentRepositoryInterface:
+        config:
+          filename: environment_repository_mock.go
+          mockName: EnvironmentRepositoryMock
+          outpkg: mocks_repository_environment
   github.com/unbindapp/unbind-api/internal/repositories/github:
     config:
       dir: ./mocks/repository/github
@@ -24,15 +51,15 @@ packages:
           filename: github_repository_mock.go
           mockName: GithubRepositoryMock
           outpkg: mocks_repository_github
-  github.com/unbindapp/unbind-api/internal/repositories/user:
+  github.com/unbindapp/unbind-api/internal/repositories/group:
     config:
-      dir: ./mocks/repository/user
+      dir: ./mocks/repository/group
     interfaces:
-      UserRepositoryInterface:
+      GroupRepositoryInterface:
         config:
-          filename: user_repository_mock.go
-          mockName: UserRepositoryMock
-          outpkg: mocks_repository_user
+          filename: group_repository_mock.go
+          mockName: GroupRepositoryMock
+          outpkg: mocks_repository_group
   github.com/unbindapp/unbind-api/internal/repositories/oauth:
     config:
       dir: ./mocks/repository/oauth
@@ -42,6 +69,87 @@ packages:
           filename: oauth_repository_mock.go
           mockName: OauthRepositoryMock
           outpkg: mocks_repository_oauth
+  github.com/unbindapp/unbind-api/internal/repositories/permissions:
+    config:
+      dir: ./mocks/repository/permissions
+    interfaces:
+      PermissionsRepositoryInterface:
+        config:
+          filename: permissions_repository_mock.go
+          mockName: PermissionsRepositoryMock
+          outpkg: mocks_repository_permissions
+  github.com/unbindapp/unbind-api/internal/repositories/project:
+    config:
+      dir: ./mocks/repository/project
+    interfaces:
+      ProjectRepositoryInterface:
+        config:
+          filename: project_repository_mock.go
+          mockName: ProjectRepositoryMock
+          outpkg: mocks_repository_project
+  github.com/unbindapp/unbind-api/internal/repositories/s3:
+    config:
+      dir: ./mocks/repository/s3
+    interfaces:
+      S3RepositoryInterface:
+        config:
+          filename: s3_repository_mock.go
+          mockName: S3RepositoryMock
+          outpkg: mocks_repository_s3
+  github.com/unbindapp/unbind-api/internal/repositories/service:
+    config:
+      dir: ./mocks/repository/service
+    interfaces:
+      ServiceRepositoryInterface:
+        config:
+          filename: service_repository_mock.go
+          mockName: ServiceRepositoryMock
+          outpkg: mocks_repository_service
+  github.com/unbindapp/unbind-api/internal/repositories/system:
+    config:
+      dir: ./mocks/repository/system
+    interfaces:
+      SystemRepositoryInterface:
+        config:
+          filename: system_repository_mock.go
+          mockName: SystemRepositoryMock
+          outpkg: mocks_repository_system
+  github.com/unbindapp/unbind-api/internal/repositories/team:
+    config:
+      dir: ./mocks/repository/team
+    interfaces:
+      TeamRepositoryInterface:
+        config:
+          filename: team_repository_mock.go
+          mockName: TeamRepositoryMock
+          outpkg: mocks_repository_team
+  github.com/unbindapp/unbind-api/internal/repositories/user:
+    config:
+      dir: ./mocks/repository/user
+    interfaces:
+      UserRepositoryInterface:
+        config:
+          filename: user_repository_mock.go
+          mockName: UserRepositoryMock
+          outpkg: mocks_repository_user
+  github.com/unbindapp/unbind-api/internal/repositories/variables:
+    config:
+      dir: ./mocks/repository/variables
+    interfaces:
+      VariablesRepositoryInterface:
+        config:
+          filename: variables_repository_mock.go
+          mockName: VariablesRepositoryMock
+          outpkg: mocks_repository_variables
+  github.com/unbindapp/unbind-api/internal/repositories/webhook:
+    config:
+      dir: ./mocks/repository/webhook
+    interfaces:
+      WebhookRepositoryInterface:
+        config:
+          filename: webhook_repository_mock.go
+          mockName: WebhookRepositoryMock
+          outpkg: mocks_repository_webhook
   github.com/unbindapp/unbind-api/internal/infrastructure/database/repositories:
     config:
       dir: ./mocks/repositories

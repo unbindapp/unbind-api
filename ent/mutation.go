@@ -12210,6 +12210,7 @@ type ServiceConfigMutation struct {
 	railpack_provider        *enum.Provider
 	railpack_framework       *enum.Framework
 	git_branch               *string
+	git_tag                  *string
 	hosts                    *[]v1.HostSpec
 	appendhosts              []v1.HostSpec
 	ports                    *[]schema.PortSpec
@@ -12760,6 +12761,55 @@ func (m *ServiceConfigMutation) GitBranchCleared() bool {
 func (m *ServiceConfigMutation) ResetGitBranch() {
 	m.git_branch = nil
 	delete(m.clearedFields, serviceconfig.FieldGitBranch)
+}
+
+// SetGitTag sets the "git_tag" field.
+func (m *ServiceConfigMutation) SetGitTag(s string) {
+	m.git_tag = &s
+}
+
+// GitTag returns the value of the "git_tag" field in the mutation.
+func (m *ServiceConfigMutation) GitTag() (r string, exists bool) {
+	v := m.git_tag
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitTag returns the old "git_tag" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldGitTag(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitTag is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitTag requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitTag: %w", err)
+	}
+	return oldValue.GitTag, nil
+}
+
+// ClearGitTag clears the value of the "git_tag" field.
+func (m *ServiceConfigMutation) ClearGitTag() {
+	m.git_tag = nil
+	m.clearedFields[serviceconfig.FieldGitTag] = struct{}{}
+}
+
+// GitTagCleared returns if the "git_tag" field was cleared in this mutation.
+func (m *ServiceConfigMutation) GitTagCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldGitTag]
+	return ok
+}
+
+// ResetGitTag resets all changes to the "git_tag" field.
+func (m *ServiceConfigMutation) ResetGitTag() {
+	m.git_tag = nil
+	delete(m.clearedFields, serviceconfig.FieldGitTag)
 }
 
 // SetHosts sets the "hosts" field.
@@ -13415,7 +13465,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 22)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -13445,6 +13495,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	}
 	if m.git_branch != nil {
 		fields = append(fields, serviceconfig.FieldGitBranch)
+	}
+	if m.git_tag != nil {
+		fields = append(fields, serviceconfig.FieldGitTag)
 	}
 	if m.hosts != nil {
 		fields = append(fields, serviceconfig.FieldHosts)
@@ -13507,6 +13560,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.RailpackFramework()
 	case serviceconfig.FieldGitBranch:
 		return m.GitBranch()
+	case serviceconfig.FieldGitTag:
+		return m.GitTag()
 	case serviceconfig.FieldHosts:
 		return m.Hosts()
 	case serviceconfig.FieldPorts:
@@ -13558,6 +13613,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldRailpackFramework(ctx)
 	case serviceconfig.FieldGitBranch:
 		return m.OldGitBranch(ctx)
+	case serviceconfig.FieldGitTag:
+		return m.OldGitTag(ctx)
 	case serviceconfig.FieldHosts:
 		return m.OldHosts(ctx)
 	case serviceconfig.FieldPorts:
@@ -13658,6 +13715,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGitBranch(v)
+		return nil
+	case serviceconfig.FieldGitTag:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitTag(v)
 		return nil
 	case serviceconfig.FieldHosts:
 		v, ok := value.([]v1.HostSpec)
@@ -13796,6 +13860,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldGitBranch) {
 		fields = append(fields, serviceconfig.FieldGitBranch)
 	}
+	if m.FieldCleared(serviceconfig.FieldGitTag) {
+		fields = append(fields, serviceconfig.FieldGitTag)
+	}
 	if m.FieldCleared(serviceconfig.FieldHosts) {
 		fields = append(fields, serviceconfig.FieldHosts)
 	}
@@ -13848,6 +13915,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldGitBranch:
 		m.ClearGitBranch()
+		return nil
+	case serviceconfig.FieldGitTag:
+		m.ClearGitTag()
 		return nil
 	case serviceconfig.FieldHosts:
 		m.ClearHosts()
@@ -13910,6 +13980,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldGitBranch:
 		m.ResetGitBranch()
+		return nil
+	case serviceconfig.FieldGitTag:
+		m.ResetGitTag()
 		return nil
 	case serviceconfig.FieldHosts:
 		m.ResetHosts()

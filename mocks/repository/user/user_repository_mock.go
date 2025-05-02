@@ -143,6 +143,65 @@ func (_c *UserRepositoryMock_GetByEmail_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// GetByID provides a mock function with given fields: ctx, id
+func (_m *UserRepositoryMock) GetByID(ctx context.Context, id uuid.UUID) (*ent.User, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByID")
+	}
+
+	var r0 *ent.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*ent.User, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *ent.User); ok {
+		r0 = rf(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ent.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UserRepositoryMock_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type UserRepositoryMock_GetByID_Call struct {
+	*mock.Call
+}
+
+// GetByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *UserRepositoryMock_Expecter) GetByID(ctx interface{}, id interface{}) *UserRepositoryMock_GetByID_Call {
+	return &UserRepositoryMock_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
+}
+
+func (_c *UserRepositoryMock_GetByID_Call) Run(run func(ctx context.Context, id uuid.UUID)) *UserRepositoryMock_GetByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *UserRepositoryMock_GetByID_Call) Return(_a0 *ent.User, _a1 error) *UserRepositoryMock_GetByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *UserRepositoryMock_GetByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*ent.User, error)) *UserRepositoryMock_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetGroups provides a mock function with given fields: ctx, userID
 func (_m *UserRepositoryMock) GetGroups(ctx context.Context, userID uuid.UUID) ([]*ent.Group, error) {
 	ret := _m.Called(ctx, userID)
@@ -257,63 +316,6 @@ func (_c *UserRepositoryMock_GetOrCreate_Call) Return(_a0 *ent.User, _a1 error) 
 }
 
 func (_c *UserRepositoryMock_GetOrCreate_Call) RunAndReturn(run func(context.Context, string) (*ent.User, error)) *UserRepositoryMock_GetOrCreate_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// IsSuperUser provides a mock function with given fields: ctx, userID
-func (_m *UserRepositoryMock) IsSuperUser(ctx context.Context, userID uuid.UUID) (bool, error) {
-	ret := _m.Called(ctx, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IsSuperUser")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (bool, error)); ok {
-		return rf(ctx, userID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) bool); ok {
-		r0 = rf(ctx, userID)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UserRepositoryMock_IsSuperUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsSuperUser'
-type UserRepositoryMock_IsSuperUser_Call struct {
-	*mock.Call
-}
-
-// IsSuperUser is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID uuid.UUID
-func (_e *UserRepositoryMock_Expecter) IsSuperUser(ctx interface{}, userID interface{}) *UserRepositoryMock_IsSuperUser_Call {
-	return &UserRepositoryMock_IsSuperUser_Call{Call: _e.mock.On("IsSuperUser", ctx, userID)}
-}
-
-func (_c *UserRepositoryMock_IsSuperUser_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *UserRepositoryMock_IsSuperUser_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *UserRepositoryMock_IsSuperUser_Call) Return(_a0 bool, _a1 error) *UserRepositoryMock_IsSuperUser_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *UserRepositoryMock_IsSuperUser_Call) RunAndReturn(run func(context.Context, uuid.UUID) (bool, error)) *UserRepositoryMock_IsSuperUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

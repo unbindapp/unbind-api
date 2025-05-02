@@ -45,6 +45,8 @@ type ServiceConfig struct {
 	RailpackFramework *enum.Framework `json:"railpack_framework,omitempty"`
 	// Branch to build from
 	GitBranch *string `json:"git_branch,omitempty"`
+	// Tag to build from, supports glob patterns
+	GitTag *string `json:"git_tag,omitempty"`
 	// External domains and paths for the service
 	Hosts []v1.HostSpec `json:"hosts,omitempty"`
 	// Container ports to expose
@@ -119,7 +121,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket:
+		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -210,6 +212,13 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.GitBranch = new(string)
 				*sc.GitBranch = value.String
+			}
+		case serviceconfig.FieldGitTag:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field git_tag", values[i])
+			} else if value.Valid {
+				sc.GitTag = new(string)
+				*sc.GitTag = value.String
 			}
 		case serviceconfig.FieldHosts:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -370,6 +379,11 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	if v := sc.GitBranch; v != nil {
 		builder.WriteString("git_branch=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := sc.GitTag; v != nil {
+		builder.WriteString("git_tag=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

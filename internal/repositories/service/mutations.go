@@ -60,6 +60,7 @@ type MutateConfigInput struct {
 	Provider                *enum.Provider
 	Framework               *enum.Framework
 	GitBranch               *string
+	GitTag                  *string
 	Ports                   []schema.PortSpec
 	Hosts                   []v1.HostSpec
 	Replicas                *int32
@@ -173,7 +174,6 @@ func (self *ServiceRepository) UpdateConfig(
 	upd := db.ServiceConfig.Update().
 		Where(serviceconfig.ServiceID(input.ServiceID)).
 		SetNillableBuilder(input.Builder).
-		SetNillableGitBranch(input.GitBranch).
 		SetNillableReplicas(input.Replicas).
 		SetNillableAutoDeploy(input.AutoDeploy).
 		SetNillableRunCommand(input.RunCommand).
@@ -181,6 +181,21 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableImage(input.Image).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
 		SetNillableS3BackupSourceID(input.S3BackupSourceID)
+
+	if input.GitBranch != nil {
+		if *input.GitBranch == "" {
+			upd.ClearGitBranch()
+		} else {
+			upd.SetGitBranch(*input.GitBranch)
+		}
+	}
+	if input.GitTag != nil {
+		if *input.GitTag == "" {
+			upd.ClearGitTag()
+		} else {
+			upd.SetGitTag(*input.GitTag)
+		}
+	}
 
 	if input.S3BackupBucket != nil {
 		if *input.S3BackupBucket == "" {

@@ -29,6 +29,7 @@ type UpdateServiceInput struct {
 
 	// Configuration
 	GitBranch         *string                `json:"git_branch,omitempty" required:"false"`
+	GitTag            *string                `json:"git_tag,omitempty" required:"false" doc:"Tag to build from, supports glob patterns"`
 	Builder           *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
 	Hosts             []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
 	Ports             []schema.PortSpec      `json:"ports,omitempty" required:"false"`
@@ -48,6 +49,13 @@ type UpdateServiceInput struct {
 
 // UpdateService updates a service and its configuration
 func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *UpdateServiceInput) (*models.ServiceResponse, error) {
+	// Verify tag if present
+	if input.GitTag != nil {
+		if !utils.IsValidGlobPattern(*input.GitTag) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid git tag")
+		}
+	}
+
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Has permission to admin service
@@ -160,6 +168,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			ServiceID:         input.ServiceID,
 			Builder:           input.Builder,
 			GitBranch:         input.GitBranch,
+			GitTag:            input.GitTag,
 			Ports:             input.Ports,
 			Hosts:             input.Hosts,
 			Replicas:          input.Replicas,

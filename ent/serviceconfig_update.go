@@ -184,6 +184,26 @@ func (scu *ServiceConfigUpdate) ClearGitBranch() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetGitTag sets the "git_tag" field.
+func (scu *ServiceConfigUpdate) SetGitTag(s string) *ServiceConfigUpdate {
+	scu.mutation.SetGitTag(s)
+	return scu
+}
+
+// SetNillableGitTag sets the "git_tag" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableGitTag(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetGitTag(*s)
+	}
+	return scu
+}
+
+// ClearGitTag clears the value of the "git_tag" field.
+func (scu *ServiceConfigUpdate) ClearGitTag() *ServiceConfigUpdate {
+	scu.mutation.ClearGitTag()
+	return scu
+}
+
 // SetHosts sets the "hosts" field.
 func (scu *ServiceConfigUpdate) SetHosts(vs []v1.HostSpec) *ServiceConfigUpdate {
 	scu.mutation.SetHosts(vs)
@@ -538,6 +558,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if scu.mutation.GitBranchCleared() {
 		_spec.ClearField(serviceconfig.FieldGitBranch, field.TypeString)
 	}
+	if value, ok := scu.mutation.GitTag(); ok {
+		_spec.SetField(serviceconfig.FieldGitTag, field.TypeString, value)
+	}
+	if scu.mutation.GitTagCleared() {
+		_spec.ClearField(serviceconfig.FieldGitTag, field.TypeString)
+	}
 	if value, ok := scu.mutation.Hosts(); ok {
 		_spec.SetField(serviceconfig.FieldHosts, field.TypeJSON, value)
 	}
@@ -827,6 +853,26 @@ func (scuo *ServiceConfigUpdateOne) SetNillableGitBranch(s *string) *ServiceConf
 // ClearGitBranch clears the value of the "git_branch" field.
 func (scuo *ServiceConfigUpdateOne) ClearGitBranch() *ServiceConfigUpdateOne {
 	scuo.mutation.ClearGitBranch()
+	return scuo
+}
+
+// SetGitTag sets the "git_tag" field.
+func (scuo *ServiceConfigUpdateOne) SetGitTag(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetGitTag(s)
+	return scuo
+}
+
+// SetNillableGitTag sets the "git_tag" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableGitTag(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetGitTag(*s)
+	}
+	return scuo
+}
+
+// ClearGitTag clears the value of the "git_tag" field.
+func (scuo *ServiceConfigUpdateOne) ClearGitTag() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearGitTag()
 	return scuo
 }
 
@@ -1213,6 +1259,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.GitBranchCleared() {
 		_spec.ClearField(serviceconfig.FieldGitBranch, field.TypeString)
+	}
+	if value, ok := scuo.mutation.GitTag(); ok {
+		_spec.SetField(serviceconfig.FieldGitTag, field.TypeString, value)
+	}
+	if scuo.mutation.GitTagCleared() {
+		_spec.ClearField(serviceconfig.FieldGitTag, field.TypeString)
 	}
 	if value, ok := scuo.mutation.Hosts(); ok {
 		_spec.SetField(serviceconfig.FieldHosts, field.TypeJSON, value)

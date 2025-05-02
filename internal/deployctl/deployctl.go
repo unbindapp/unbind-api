@@ -107,8 +107,8 @@ func (self *DeploymentController) startStatusSynchronizer() {
 	}
 }
 
-// Populate build environment
-func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID) (map[string]string, error) {
+// Populate build environment, take tag separately so we can use it to build from tag
+func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string) (map[string]string, error) {
 	// Get the service
 	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
@@ -214,8 +214,8 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 
 	// Add Github fields
 	if service.GithubInstallationID != nil {
-		if service.GitRepository == nil || service.Edges.ServiceConfig.GitBranch == nil {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Missing required fields for Github service - doesn't have repository or git branch")
+		if service.GitRepository == nil || (service.Edges.ServiceConfig.GitBranch == nil && service.Edges.ServiceConfig.GitTag == nil) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Missing required fields for Github service - doesn't have repository or git branch/tag")
 		}
 		// Get private key for the service's github app.
 		// ! TODO - we can probably reduce these queries
@@ -250,11 +250,18 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 
 		env["GITHUB_REPO_URL"] = cloneUrl
 
-		ref := *service.Edges.ServiceConfig.GitBranch
-		if !strings.HasPrefix(ref, "refs/head") {
-			ref = "refs/heads/" + ref
+		if gitTag != nil {
+			if !strings.HasPrefix(*gitTag, "refs/tags/") {
+				*gitTag = "refs/tags/" + *gitTag
+			}
+			env["GIT_REF"] = *gitTag
+		} else {
+			ref := *service.Edges.ServiceConfig.GitBranch
+			if !strings.HasPrefix(ref, "refs/head") {
+				ref = "refs/heads/" + ref
+			}
+			env["GIT_REF"] = ref
 		}
-		env["GIT_REF"] = ref
 	}
 
 	if service.Edges.ServiceConfig.RailpackProvider != nil {

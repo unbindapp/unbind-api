@@ -296,6 +296,25 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 		servicesToBuild := make([]*ent.Service, 0)
 		for _, service := range services {
 			config := service.Edges.ServiceConfig
+
+			// Handle tag pushes
+			if strings.HasPrefix(ref, "refs/tags/") {
+				if config.GitTag == nil {
+					continue
+				}
+				tagName := strings.TrimPrefix(ref, "refs/tags/")
+				matched, err := utils.MatchPattern(*config.GitTag, tagName)
+				if err != nil {
+					log.Error("Error matching tag pattern", "pattern", *config.GitTag, "tag", tagName, "err", err)
+					continue
+				}
+				if matched {
+					servicesToBuild = append(servicesToBuild, service)
+				}
+				continue
+			}
+
+			// Handle branch pushes
 			var refToBuild *string
 			if config.GitBranch != nil {
 				if !strings.Contains(*config.GitBranch, "refs/heads/") {
@@ -313,6 +332,13 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			return &GithubWebhookOutput{}, nil
 		}
 
+		// Get the tag name if this is a tag push
+		var tagName *string
+		if strings.HasPrefix(ref, "refs/tags/") {
+			tag := strings.TrimPrefix(ref, "refs/tags/")
+			tagName = &tag
+		}
+
 		// Trigger builds for each service
 		for _, service := range servicesToBuild {
 			if !service.Edges.ServiceConfig.AutoDeploy {
@@ -320,7 +346,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				continue
 			}
 
-			env, err := self.srv.DeploymentController.PopulateBuildEnvironment(ctx, service.ID)
+			env, err := self.srv.DeploymentController.PopulateBuildEnvironment(ctx, service.ID, tagName)
 			if err != nil {
 				log.Error("Error populating build environment", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to populate build environment")

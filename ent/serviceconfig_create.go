@@ -145,6 +145,20 @@ func (scc *ServiceConfigCreate) SetNillableGitBranch(s *string) *ServiceConfigCr
 	return scc
 }
 
+// SetGitTag sets the "git_tag" field.
+func (scc *ServiceConfigCreate) SetGitTag(s string) *ServiceConfigCreate {
+	scc.mutation.SetGitTag(s)
+	return scc
+}
+
+// SetNillableGitTag sets the "git_tag" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableGitTag(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetGitTag(*s)
+	}
+	return scc
+}
+
 // SetHosts sets the "hosts" field.
 func (scc *ServiceConfigCreate) SetHosts(vs []v1.HostSpec) *ServiceConfigCreate {
 	scc.mutation.SetHosts(vs)
@@ -490,6 +504,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldGitBranch, field.TypeString, value)
 		_node.GitBranch = &value
 	}
+	if value, ok := scc.mutation.GitTag(); ok {
+		_spec.SetField(serviceconfig.FieldGitTag, field.TypeString, value)
+		_node.GitTag = &value
+	}
 	if value, ok := scc.mutation.Hosts(); ok {
 		_spec.SetField(serviceconfig.FieldHosts, field.TypeJSON, value)
 		_node.Hosts = value
@@ -751,6 +769,24 @@ func (u *ServiceConfigUpsert) UpdateGitBranch() *ServiceConfigUpsert {
 // ClearGitBranch clears the value of the "git_branch" field.
 func (u *ServiceConfigUpsert) ClearGitBranch() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldGitBranch)
+	return u
+}
+
+// SetGitTag sets the "git_tag" field.
+func (u *ServiceConfigUpsert) SetGitTag(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldGitTag, v)
+	return u
+}
+
+// UpdateGitTag sets the "git_tag" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateGitTag() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldGitTag)
+	return u
+}
+
+// ClearGitTag clears the value of the "git_tag" field.
+func (u *ServiceConfigUpsert) ClearGitTag() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldGitTag)
 	return u
 }
 
@@ -1149,6 +1185,27 @@ func (u *ServiceConfigUpsertOne) UpdateGitBranch() *ServiceConfigUpsertOne {
 func (u *ServiceConfigUpsertOne) ClearGitBranch() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearGitBranch()
+	})
+}
+
+// SetGitTag sets the "git_tag" field.
+func (u *ServiceConfigUpsertOne) SetGitTag(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetGitTag(v)
+	})
+}
+
+// UpdateGitTag sets the "git_tag" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateGitTag() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateGitTag()
+	})
+}
+
+// ClearGitTag clears the value of the "git_tag" field.
+func (u *ServiceConfigUpsertOne) ClearGitTag() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearGitTag()
 	})
 }
 
@@ -1745,6 +1802,27 @@ func (u *ServiceConfigUpsertBulk) UpdateGitBranch() *ServiceConfigUpsertBulk {
 func (u *ServiceConfigUpsertBulk) ClearGitBranch() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearGitBranch()
+	})
+}
+
+// SetGitTag sets the "git_tag" field.
+func (u *ServiceConfigUpsertBulk) SetGitTag(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetGitTag(v)
+	})
+}
+
+// UpdateGitTag sets the "git_tag" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateGitTag() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateGitTag()
+	})
+}
+
+// ClearGitTag clears the value of the "git_tag" field.
+func (u *ServiceConfigUpsertBulk) ClearGitTag() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearGitTag()
 	})
 }
 

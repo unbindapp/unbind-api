@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	charmLog "github.com/charmbracelet/log"
 	"github.com/go-git/go-git/v5"
@@ -48,7 +49,17 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 		// Standard branch-based shallow clone
 		cloneOptions.Depth = 1
 		cloneOptions.SingleBranch = true
-		cloneOptions.ReferenceName = plumbing.ReferenceName(refName)
+
+		// Handle different types of references
+		if strings.HasPrefix(refName, "refs/tags/") {
+			// For tags, we need to fetch the tag
+			cloneOptions.Depth = 0 // Full clone for tags
+			cloneOptions.SingleBranch = false
+			cloneOptions.ReferenceName = plumbing.ReferenceName(refName)
+		} else {
+			// For branches and other refs
+			cloneOptions.ReferenceName = plumbing.ReferenceName(refName)
+		}
 	}
 
 	repo, err := git.PlainClone(tmpDir, false, cloneOptions)
@@ -81,6 +92,27 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to checkout commit %s: %v", commitSHA, err)
+		}
+	} else if strings.HasPrefix(refName, "refs/tags/") {
+		// For tags, we need to ensure we're on the correct tag
+		worktree, err := repo.Worktree()
+		if err != nil {
+			return "", fmt.Errorf("failed to get worktree: %v", err)
+		}
+
+		// Get the tag reference
+		tagName := strings.TrimPrefix(refName, "refs/tags/")
+		tag, err := repo.Tag(tagName)
+		if err != nil {
+			return "", fmt.Errorf("failed to get tag %s: %v", tagName, err)
+		}
+
+		// Checkout the tag
+		err = worktree.Checkout(&git.CheckoutOptions{
+			Hash: tag.Hash(),
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to checkout tag %s: %v", tagName, err)
 		}
 	}
 

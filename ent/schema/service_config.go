@@ -119,6 +119,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.Enum("railpack_framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
 		// Branch to build from (git)
 		field.String("git_branch").Optional().Nillable().Comment("Branch to build from"),
+		field.String("git_tag").Optional().Nillable().Comment("Tag to build from, supports glob patterns"),
 		// Generic CRD configuration
 		field.JSON("hosts", []v1.HostSpec{}).Optional().Comment("External domains and paths for the service"),
 		field.JSON("ports", []PortSpec{}).Optional().Comment("Container ports to expose"),
