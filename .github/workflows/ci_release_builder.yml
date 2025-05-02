@@ -1,9 +1,7 @@
 name: Build builder image for release
-
 on:
   repository_dispatch:
     types: [build-release]
-
 jobs:
   build:
     name: 🔨 Build Binaries and Docker Image
@@ -21,25 +19,20 @@ jobs:
       GITHUB_RUN_ID: ${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Go with cache
         uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Login to registry
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Build Builder Binary
         run: |
           cd cmd/builder && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }}" -o ./builder && cd ../..
-
       - name: Build and push builder image
         if: success()
         uses: docker/build-push-action@v5
@@ -50,7 +43,6 @@ jobs:
           push: true
           file: ./Dockerfile.ci-builder
           tags: unbindapp/unbind-builder:${{ github.event.client_payload.version }}-${{ matrix.arch }}
-
   create_manifest:
     name: 📦 Create Multi-Arch Manifest
     runs-on: ubuntu-24.04
@@ -63,14 +55,26 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Create and push manifest
         run: |
-          docker manifest create unbindapp/unbind-builder:${{ github.event.client_payload.version }}  \
+          docker manifest create unbindapp/unbind-builder:${{ github.event.client_payload.version }} \
             --amend unbindapp/unbind-builder:${{ github.event.client_payload.version }}-amd64 \
             --amend unbindapp/unbind-builder:${{ github.event.client_payload.version }}-arm64
-
-          docker manifest annotate --arch amd64 --os linux unbindapp/unbind-builder:${{ github.event.client_payload.version }}  unbindapp/unbind-builder:${{ github.event.client_payload.version }}-amd64
-          docker manifest annotate --arch arm64 --os linux unbindapp/unbind-builder:${{ github.event.client_payload.version }}  unbindapp/unbind-builder:${{ github.event.client_payload.version }}-arm64
-
+          docker manifest annotate --arch amd64 --os linux unbindapp/unbind-builder:${{ github.event.client_payload.version }} unbindapp/unbind-builder:${{ github.event.client_payload.version }}-amd64
+          docker manifest annotate --arch arm64 --os linux unbindapp/unbind-builder:${{ github.event.client_payload.version }} unbindapp/unbind-builder:${{ github.event.client_payload.version }}-arm64
           docker manifest push unbindapp/unbind-builder:${{ github.event.client_payload.version }}
+
+      # Notify meta repo that the builder image is ready
+      - name: Notify meta repo that the builder image is ready
+        if: success()
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          repository: unbindapp/meta-release-repo
+          event-type: image-ready
+          client-payload: |
+            {
+              "component": "builder",
+              "version": "${{ github.event.client_payload.version }}",
+              "release_id": "${{ github.event.client_payload.release_id }}"
+            }
