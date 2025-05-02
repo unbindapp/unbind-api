@@ -5,9 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"net/url"
+	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -17,6 +22,36 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
+
+func NewHttpClient() aws.HTTPClient {
+	return awshttp.NewBuildableClient().
+		WithTimeout(5 * time.Second).
+		WithDialerOptions(func(d *net.Dialer) {
+			d.Timeout = 2 * time.Second
+			d.KeepAlive = 30 * time.Second
+		}).
+		WithTransportOptions(func(t *http.Transport) {
+			t.TLSHandshakeTimeout = 2 * time.Second
+			t.ResponseHeaderTimeout = 3 * time.Second
+			t.MaxIdleConns = 100
+			t.MaxIdleConnsPerHost = 10
+			t.IdleConnTimeout = 60 * time.Second
+		}).
+		Freeze()
+}
+
+var (
+	onceHTTP sync.Once
+	httpFast aws.HTTPClient
+)
+
+func fastHTTP() aws.HTTPClient {
+	onceHTTP.Do(func() {
+		fast := NewHttpClient() //build once
+		httpFast = fast
+	})
+	return httpFast
+}
 
 // S3Client provides methods to interact with S3-compatible storage.
 type S3Client struct {
@@ -40,6 +75,7 @@ func NewS3Client(ctx context.Context, endpoint, region, accessKeyID, secretKey s
 		// From R2 docs
 		config.WithRequestChecksumCalculation(0),
 		config.WithResponseChecksumValidation(0),
+		config.WithHTTPClient(fastHTTP()),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
