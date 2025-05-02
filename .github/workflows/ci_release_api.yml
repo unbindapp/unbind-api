@@ -2,6 +2,11 @@ name: Build API image for release
 on:
   repository_dispatch:
     types: [build-release]
+
+concurrency:
+  group: ${{ github.event.client_payload.version }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: 🔨 Build Binaries and Docker Image
