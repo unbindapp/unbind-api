@@ -10,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func (self *DeploymentRepository) Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error) {
@@ -116,6 +117,11 @@ func (self *DeploymentRepository) AttachDeploymentMetadata(ctx context.Context, 
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
+	}
+
+	// Prune any sensitive data
+	if resourceDefinition != nil {
+		resourceDefinition.Spec.EnvVars = []corev1.EnvVar{}
 	}
 
 	return db.Deployment.UpdateOneID(deploymentID).
