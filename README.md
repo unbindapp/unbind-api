@@ -54,3 +54,11 @@ Bootsrap superuser:
 /app/cli group:grant-permission --group-name=superuser --resource-type=team --resource-id="*" --action=admin
 /app/cli sync:group-to-k8s
 ```
+
+## Migrations
+
+1. Make schema change in `./ent/schema`
+2. Re-generate `go generate ./ent/...`
+3. Make a versioned migration `make migrate NAME=your_migration_name`
+
+If you edit a migration sql file manually, be sure to re-generate the checksum `make migrate-checksum`

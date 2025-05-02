@@ -44,10 +44,6 @@ func NewCLI(cfg *config.Config) *cli {
 	if err != nil {
 		log.Fatalf("Failed to create ent client: %v", err)
 	}
-	log.Info("🦋 Running migrations...")
-	if err := db.Schema.Create(context.TODO()); err != nil {
-		log.Fatal("Failed to run migrations", "err", err)
-	}
 	repo := repositories.NewRepositories(db)
 
 	kubeClient := k8s.NewKubeClient(cfg)

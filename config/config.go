@@ -16,6 +16,7 @@ type ConfigInterface interface {
 	GetPostgresUser() string
 	GetPostgresPassword() string
 	GetPostgresDB() string
+	GetPostgresSSLMode() string
 	GetKubeConfig() string
 	GetBuildImage() string
 	GetSystemNamespace() string
@@ -44,6 +45,7 @@ type Config struct {
 	PostgresUser     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	PostgresPassword string `env:"POSTGRES_PASSWORD" envDefault:"postgres"`
 	PostgresDB       string `env:"POSTGRES_DB" envDefault:"unbind"`
+	PostgresSSLMode  string `env:"POSTGRES_SSL_MODE" envDefault:"disable"`
 	// Valkey (redis)
 	ValkeyURL string `env:"VALKEY_URL" envDefault:"localhost:6379"`
 	// Dex (OIDC provider)
@@ -94,6 +96,10 @@ func (self *Config) GetPostgresPassword() string {
 
 func (self *Config) GetPostgresDB() string {
 	return self.PostgresDB
+}
+
+func (self *Config) GetPostgresSSLMode() string {
+	return self.PostgresSSLMode
 }
 
 func (self *Config) GetKubeConfig() string {

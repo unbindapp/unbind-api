@@ -21,10 +21,11 @@ type PostgresConn struct {
 	Password string
 	User     string
 	DBName   string
+	SSLMode  string
 }
 
 func (c *PostgresConn) DSN() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s", c.User, c.Password, c.Host, c.Port, c.DBName)
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", c.User, c.Password, c.Host, c.Port, c.DBName, c.SSLMode)
 }
 
 func (c *PostgresConn) Dialect() string {
@@ -73,5 +74,6 @@ func GetSqlDbConn(cfg config.ConfigInterface, mock bool) (SqlDBConn, error) {
 		Password: postgresPassword,
 		User:     postgresUser,
 		DBName:   postgresDb,
+		SSLMode:  cfg.GetPostgresSSLMode(),
 	}, nil
 }

@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -16,6 +18,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/go-co-op/gocron/v2"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/gorilla/schema"
 	"github.com/joho/godotenv"
 	"github.com/unbindapp/unbind-api/config"
@@ -179,9 +184,28 @@ func startAPI(cfg *config.Config) {
 		log.Fatalf("Failed to create ent client: %v", err)
 	}
 	log.Info("🦋 Running migrations...")
-	if err := db.Schema.Create(ctx); err != nil {
-		log.Fatal("Failed to run migrations", "err", err)
+
+	// Auto-apply migrations from migrations directory
+	migrationDir := "/app/migrations"
+	if _, err := os.Stat(migrationDir); err != nil {
+		_, thisFile, _, _ := runtime.Caller(0)
+		migrationDir = filepath.Join(filepath.Dir(thisFile), "../../ent/migrate/migrations")
+		if _, err := os.Stat(migrationDir); err != nil {
+			log.Fatalf("Migrations directory not found: %v", err)
+		}
 	}
+	m, err := migrate.New(
+		fmt.Sprintf("file://%s", migrationDir),
+		dbConnInfo.DSN(),
+	)
+	if err != nil {
+		log.Fatalf("Failed to create migration instance: %v", err)
+	}
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to apply migrations: %v", err)
+	}
+	log.Info("🦋 Migrations applied successfully")
+
 	repo := repositories.NewRepositories(db)
 
 	// Create kubernetes client

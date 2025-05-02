@@ -35,6 +35,7 @@ type Config struct {
 	PostgresUser     string `env:"POSTGRES_USER" envDefault:"postgres"`
 	PostgresPassword string `env:"POSTGRES_PASSWORD" envDefault:"postgres"`
 	PostgresDB       string `env:"POSTGRES_DB" envDefault:"unbind"`
+	PostgresSSLMode  string `env:"POSTGRES_SSL_MODE" envDefault:"disable"`
 	// Buildkitd host
 	BuildkitHost string `env:"BUILDKIT_HOST" envDefault:"tcp://buildkitd.unbind-system:1234"`
 	// Deployment namespace (kubernetes)
@@ -101,6 +102,10 @@ func (self *Config) GetPostgresPassword() string {
 
 func (self *Config) GetPostgresDB() string {
 	return self.PostgresDB
+}
+
+func (self *Config) GetPostgresSSLMode() string {
+	return self.PostgresSSLMode
 }
 
 func (self *Config) GetKubeConfig() string {
