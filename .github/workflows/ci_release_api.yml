@@ -38,15 +38,15 @@ jobs:
 
       - name: Build GO Server Binary
         run: |
-          cd cmd/api && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }} -X main.BuildImage=${{ github.event.client_payload.builder_image }}  -o ./api && cd ../..
+          cd cmd/api && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }} -X main.BuildImage=${{ github.event.client_payload.builder_image }}"  -o ./api && cd ../..
 
       - name: Build Oauth Server Binary
         run: |
-          cd cmd/oauth2server && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }} -o ./oauth2server && cd ../..
+          cd cmd/oauth2server && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }}" -o ./oauth2server && cd ../..
 
       - name: Build CLI Binary
         run: |
-          cd cmd/cli && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }} -o ./cli && cd ../..
+          cd cmd/cli && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }}" -o ./cli && cd ../..
 
       - name: Build and push image
         if: success()

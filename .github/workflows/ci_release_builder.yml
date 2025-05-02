@@ -38,7 +38,7 @@ jobs:
 
       - name: Build Builder Binary
         run: |
-          cd cmd/builder && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }} -o ./builder && cd ../..
+          cd cmd/builder && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ github.event.client_payload.version }}" -o ./builder && cd ../..
 
       - name: Build and push builder image
         if: success()
