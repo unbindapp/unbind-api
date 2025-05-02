@@ -49,14 +49,14 @@ func (self *StorageService) CreateS3StorageBackend(ctx context.Context, requeste
 		input.SecretKey,
 	)
 	if err != nil {
-		return nil, err
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
 	// Probe any bucket
 	err = s3Client.ProbeAnyBucketRW(ctx)
 	if err != nil {
 		// May be invalid credentials, etc.
-		return nil, err
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
 	// Create kubernetes client

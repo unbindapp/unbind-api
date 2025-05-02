@@ -45,6 +45,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "update-s3-source",
+			Summary:     "Update S3 Source",
+			Description: "Update an S3 source.",
+			Path:        "/s3/update",
+			Method:      http.MethodPost,
+		},
+		handlers.UpdateS3Source,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "get-s3-source-by-id",
 			Summary:     "Get S3 Source by ID",
 			Description: "Get S3 source by ID.",
