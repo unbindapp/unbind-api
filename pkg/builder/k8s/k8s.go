@@ -15,7 +15,7 @@ type K8SClient struct {
 
 func NewK8SClient(cfg config.ConfigInterface, builderConfig *builderConfig.Config) *K8SClient {
 	// Get client
-	kubeClient := k8s.NewKubeClient(cfg)
+	kubeClient := k8s.NewKubeClient(cfg, "")
 
 	return &K8SClient{
 		config:        cfg,

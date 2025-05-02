@@ -75,8 +75,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
-var decoder = schema.NewDecoder()
+var Version = "development"
+var BuildImage = "unbindapp/unbind-builder:latest"
 
+// Adding a format for form data
+var decoder = schema.NewDecoder()
 var urlEncodedFormat = huma.Format{
 	Marshal: nil,
 	Unmarshal: func(data []byte, v any) error {
@@ -209,7 +212,7 @@ func startAPI(cfg *config.Config) {
 	repo := repositories.NewRepositories(db)
 
 	// Create kubernetes client
-	kubeClient := k8s.NewKubeClient(cfg)
+	kubeClient := k8s.NewKubeClient(cfg, BuildImage)
 
 	// Create github client
 	githubClient := github.NewGithubClient(cfg.GithubURL, cfg)
@@ -591,6 +594,7 @@ func startAPI(cfg *config.Config) {
 }
 
 func main() {
+	log.Infof("Starting Unbind API version %s", Version)
 	// Load environment variables from .env file
 	err := godotenv.Overload()
 	if err != nil {

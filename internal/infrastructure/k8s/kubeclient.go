@@ -15,13 +15,14 @@ import (
 
 type KubeClient struct {
 	config     config.ConfigInterface
+	buildImage string
 	client     *dynamic.DynamicClient
 	clientset  *kubernetes.Clientset
 	dnsChecker *utils.DNSChecker
 	httpClient *http.Client
 }
 
-func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
+func NewKubeClient(cfg config.ConfigInterface, buildImage string) *KubeClient {
 	var kubeConfig *rest.Config
 	var err error
 

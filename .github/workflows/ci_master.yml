@@ -76,19 +76,19 @@ jobs:
 
       - name: Build GO Server Binary
         run: |
-          cd cmd/api && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -X main.BuildStart=${{ needs.setup_env.outputs.build_start }}" -o ./api && cd ../..
+          cd cmd/api && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./api && cd ../..
 
       - name: Build Oauth Server Binary
         run: |
-          cd cmd/oauth2server && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -X main.BuildStart=${{ needs.setup_env.outputs.build_start }}" -o ./oauth2server && cd ../..
+          cd cmd/oauth2server && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./oauth2server && cd ../..
 
       - name: Build CLI Binary
         run: |
-          cd cmd/cli && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -X main.BuildStart=${{ needs.setup_env.outputs.build_start }}" -o ./cli && cd ../..
+          cd cmd/cli && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./cli && cd ../..
 
       - name: Build Builder Binary
         run: |
-          cd cmd/builder && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -X main.BuildStart=${{ needs.setup_env.outputs.build_start }}" -o ./builder && cd ../..
+          cd cmd/builder && CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -ldflags "-s -w -X main.Version=${{ needs.setup_env.outputs.short_sha }} -X \"main.CommitMsg=${{ needs.setup_env.outputs.commit_msg }}\" -o ./builder && cd ../..
 
       - name: Build and push image
         if: success()
@@ -138,8 +138,10 @@ jobs:
 
           # Also tag as latest
           docker manifest create unbindapp/unbind-api:latest \
+            --amend unbindapp/unbind-api:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-amd64 \
             --amend unbindapp/unbind-api:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-arm64
             
+          docker manifest annotate --arch amd64 --os linux unbindapp/unbind-api:latest unbindapp/unbind-api:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-amd64
           docker manifest annotate --arch arm64 --os linux unbindapp/unbind-api:latest unbindapp/unbind-api:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-arm64
 
           docker manifest push unbindapp/unbind-api:latest
@@ -148,16 +150,20 @@ jobs:
         run: |
           # Create a new manifest for the builder image
           docker manifest create unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }} \
+            --amend unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-amd64 \
             --amend unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-arm64
 
+          docker manifest annotate --arch amd64 --os linux unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }} unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-amd64
           docker manifest annotate --arch arm64 --os linux unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }} unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-arm64
 
           docker manifest push unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}
 
           # Also tag as latest
           docker manifest create unbindapp/unbind-builder:latest \
+            --amend unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-amd64 \
             --amend unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-arm64
             
+          docker manifest annotate --arch amd64 --os linux unbindapp/unbind-builder:latest unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-amd64
           docker manifest annotate --arch arm64 --os linux unbindapp/unbind-builder:latest unbindapp/unbind-builder:${{ needs.setup_env.outputs.branch_name }}-${{ env.GITHUB_RUN_ID }}-arm64
 
           docker manifest push unbindapp/unbind-builder:latest

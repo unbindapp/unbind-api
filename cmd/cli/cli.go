@@ -25,6 +25,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+var Version = "development"
+
 type cli struct {
 	cfg          *config.Config
 	repository   repositories.RepositoriesInterface
@@ -46,7 +48,7 @@ func NewCLI(cfg *config.Config) *cli {
 	}
 	repo := repositories.NewRepositories(db)
 
-	kubeClient := k8s.NewKubeClient(cfg)
+	kubeClient := k8s.NewKubeClient(cfg, "")
 	rbacManager := k8s.NewRBACManager(repo, kubeClient)
 
 	return &cli{
@@ -59,6 +61,11 @@ func NewCLI(cfg *config.Config) *cli {
 		rbacManager: rbacManager,
 		k8s:         kubeClient,
 	}
+}
+
+// List version
+func (self *cli) version() {
+	fmt.Println("Unbind version:", Version)
 }
 
 // List all users in the database

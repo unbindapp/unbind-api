@@ -18,7 +18,6 @@ type ConfigInterface interface {
 	GetPostgresDB() string
 	GetPostgresSSLMode() string
 	GetKubeConfig() string
-	GetBuildImage() string
 	GetSystemNamespace() string
 	GetKubeProxyURL() string
 	GetBuildkitHost() string
@@ -57,8 +56,6 @@ type Config struct {
 	KubeConfig string `env:"KUBECONFIG"`
 	// kube-oidc-proxy
 	KubeProxyURL string `env:"KUBE_PROXY_URL" envDefault:"https://kube-oidc-proxy.unbind-system.svc.cluster.local:443"`
-	// Builder
-	BuildImage string `env:"BUILD_IMAGE" envDefault:"unbindapp/unbind-builder:latest"`
 	// Registry specific
 	BootstrapContainerRegistryHost     string `env:"BOOTSTRAP_CONTAINER_REGISTRY_HOST"`
 	BootstrapContainerRegistryUser     string `env:"BOOTSTRAP_CONTAINER_REGISTRY_USER"`
@@ -104,10 +101,6 @@ func (self *Config) GetPostgresSSLMode() string {
 
 func (self *Config) GetKubeConfig() string {
 	return self.KubeConfig
-}
-
-func (self *Config) GetBuildImage() string {
-	return self.BuildImage
 }
 
 func (self *Config) GetSystemNamespace() string {

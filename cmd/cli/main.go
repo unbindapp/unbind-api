@@ -80,6 +80,7 @@ func main() {
 	teamCreateFlagSet := flag.NewFlagSet("team:create", flag.ExitOnError)
 	syncGroupToK8sFlagSet := flag.NewFlagSet("sync:group-to-k8s", flag.ExitOnError)
 	syncK8sSecretsFlagSet := flag.NewFlagSet("sync:k8s-secrets", flag.ExitOnError)
+	versionFlagSet := flag.NewFlagSet("version", flag.ExitOnError)
 	helpFlagSet := flag.NewFlagSet("help", flag.ExitOnError)
 
 	// Define flag variables
@@ -236,6 +237,14 @@ func main() {
 		Handler:     cli.syncSecrets,
 	}
 
+	// Version command
+	versionCmd := &Command{
+		Name:        "version",
+		Description: "Show the version of the CLI",
+		FlagSet:     versionFlagSet,
+		Handler:     cli.version,
+	}
+
 	allCommands := []*Command{
 		userListCmd,
 		userCreateCmd,
@@ -247,6 +256,7 @@ func main() {
 		teamCreateCmd,
 		syncGroupToK8sCmd,
 		syncK8sSecretsCmd,
+		versionCmd,
 	}
 
 	// Help command

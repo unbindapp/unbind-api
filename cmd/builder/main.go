@@ -23,6 +23,8 @@ import (
 	_ "go.uber.org/automaxprocs"
 )
 
+var Version = "development"
+
 func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksService *webhooks_service.WebhooksService, tx repository.TxInterface, repo *repositories.Repositories, deploymentID uuid.UUID) error {
 	_, err := repo.Deployment().MarkSucceeded(ctx, tx, deploymentID, time.Now())
 	if err != nil {
@@ -147,7 +149,7 @@ func main() {
 	cfg := config.NewConfig()
 	os.Setenv("BUILDKIT_HOST", cfg.BuildkitHost)
 
-	log.Infof("Starting build...")
+	log.Infof("Unbind builder %s...", Version)
 	log.Info("--------------")
 	log.Infof("Input Parameters:")
 	log.Infof(" - Service name: %s", cfg.ServiceName)

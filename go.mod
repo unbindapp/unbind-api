@@ -249,4 +249,7 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
-tool github.com/vburenin/ifacemaker
+tool (
+	github.com/fergusstrange/embedded-postgres
+	github.com/vburenin/ifacemaker
+)
