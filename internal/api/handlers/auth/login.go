@@ -36,7 +36,26 @@ func (h *HandlerGroup) LoginSubmit(
 	user, err := h.srv.Repository.User().
 		Authenticate(ctx, input.Body.Username, input.Body.Password)
 	if err != nil {
-		return nil, huma.Error401Unauthorized("invalid credentials")
+		redirectUrl, err := oauth2server.BuildOauthRedirect(
+			h.srv.Cfg, oauth2server.RedirectLogin,
+			map[string]string{
+				"client_id":      input.Body.ClientID,
+				"redirect_uri":   input.Body.RedirectURI,
+				"response_type":  input.Body.ResponseType,
+				"state":          input.Body.State,
+				"scope":          input.Body.Scope,
+				"page_key":       input.Body.PageKey,
+				"initiating_url": input.Body.InitiatingURL,
+				"error":          "invalid_credentials",
+			})
+		if err != nil {
+			return nil, huma.Error500InternalServerError(
+				"could not create login redirect", err)
+		}
+		return &LoginSubmitResponse{
+			Status:   http.StatusFound,
+			Location: redirectUrl,
+		}, nil
 	}
 
 	authorizeURL, err := oauth2server.BuildOauthRedirect(
