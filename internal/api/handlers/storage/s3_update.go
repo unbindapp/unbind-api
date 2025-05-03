@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-type UpdateS3SourceInput struct {
+type UpdateS3EndpointInput struct {
 	server.BaseAuthInput
 	Body struct {
 		ID          uuid.UUID `json:"id" format:"uuid" required:"true"`
@@ -22,13 +22,13 @@ type UpdateS3SourceInput struct {
 	}
 }
 
-type UpdateS3SourceResponse struct {
+type UpdateS3EndpointResponse struct {
 	Body struct {
 		Data *models.S3Response `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) UpdateS3Source(ctx context.Context, input *UpdateS3SourceInput) (*UpdateS3SourceResponse, error) {
+func (self *HandlerGroup) UpdateS3Endpoint(ctx context.Context, input *UpdateS3EndpointInput) (*UpdateS3EndpointResponse, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -37,7 +37,7 @@ func (self *HandlerGroup) UpdateS3Source(ctx context.Context, input *UpdateS3Sou
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	source, err := self.srv.StorageService.UpdateS3Storage(
+	endpoint, err := self.srv.StorageService.UpdateS3Storage(
 		ctx,
 		user.ID,
 		bearerToken,
@@ -51,7 +51,7 @@ func (self *HandlerGroup) UpdateS3Source(ctx context.Context, input *UpdateS3Sou
 		return nil, self.handleErr(err)
 	}
 
-	resp := &UpdateS3SourceResponse{}
-	resp.Body.Data = source
+	resp := &UpdateS3EndpointResponse{}
+	resp.Body.Data = endpoint
 	return resp, nil
 }

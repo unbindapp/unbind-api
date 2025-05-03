@@ -11,20 +11,20 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-type GetS3SourceByIDInput struct {
+type GetS3EndpointByIDInput struct {
 	server.BaseAuthInput
 	ID          uuid.UUID `query:"id" format:"uuid" required:"true"`
 	TeamID      uuid.UUID `query:"team_id" format:"uuid" required:"true"`
 	WithBuckets bool      `query:"with_buckets"`
 }
 
-type GetS3SourceByIDOutput struct {
+type GetS3EndpointByIDOutput struct {
 	Body struct {
 		Data *models.S3Response `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) GetS3SourceByID(ctx context.Context, input *GetS3SourceByIDInput) (*GetS3SourceByIDOutput, error) {
+func (self *HandlerGroup) GetS3EndpointByID(ctx context.Context, input *GetS3EndpointByIDInput) (*GetS3EndpointByIDOutput, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -33,7 +33,7 @@ func (self *HandlerGroup) GetS3SourceByID(ctx context.Context, input *GetS3Sourc
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	s3Source, err := self.srv.StorageService.GetS3StorageByID(
+	s3Endpoint, err := self.srv.StorageService.GetS3StorageByID(
 		ctx,
 		user.ID,
 		bearerToken,
@@ -45,24 +45,24 @@ func (self *HandlerGroup) GetS3SourceByID(ctx context.Context, input *GetS3Sourc
 		return nil, self.handleErr(err)
 	}
 
-	resp := &GetS3SourceByIDOutput{}
-	resp.Body.Data = s3Source
+	resp := &GetS3EndpointByIDOutput{}
+	resp.Body.Data = s3Endpoint
 	return resp, nil
 }
 
-type ListS3SourceInput struct {
+type ListS3EndpointInput struct {
 	server.BaseAuthInput
 	TeamID      uuid.UUID `query:"team_id" format:"uuid" required:"true"`
 	WithBuckets bool      `query:"with_buckets"`
 }
 
-type ListS3SourceOutput struct {
+type ListS3EndpointOutput struct {
 	Body struct {
 		Data []*models.S3Response `json:"data" nullable:"false"`
 	}
 }
 
-func (self *HandlerGroup) ListS3Source(ctx context.Context, input *ListS3SourceInput) (*ListS3SourceOutput, error) {
+func (self *HandlerGroup) ListS3Endpoint(ctx context.Context, input *ListS3EndpointInput) (*ListS3EndpointOutput, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -71,7 +71,7 @@ func (self *HandlerGroup) ListS3Source(ctx context.Context, input *ListS3SourceI
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	s3Sources, err := self.srv.StorageService.ListS3StorageBackends(
+	s3Endpoints, err := self.srv.StorageService.ListS3StorageBackends(
 		ctx,
 		user.ID,
 		bearerToken,
@@ -82,7 +82,7 @@ func (self *HandlerGroup) ListS3Source(ctx context.Context, input *ListS3SourceI
 		return nil, self.handleErr(err)
 	}
 
-	resp := &ListS3SourceOutput{}
-	resp.Body.Data = s3Sources
+	resp := &ListS3EndpointOutput{}
+	resp.Body.Data = s3Endpoints
 	return resp, nil
 }
