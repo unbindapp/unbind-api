@@ -126,14 +126,10 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 		return models.TransformDeploymentEntity(newDeployment), nil
 	}
 
-	// If we ended up here not as a git service we failed
-	if service.Type != schema.ServiceTypeGithub || deployment.CommitSha == nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Unable to re-deploy service")
-	}
-
 	// Build a full deployment
 	// Get git information if applicable
 	var commitMessage string
+	var commitSha string
 
 	if deployment.CommitMessage != nil {
 		commitMessage = *deployment.CommitMessage
@@ -144,13 +140,17 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	if err != nil {
 		return nil, err
 	}
-	env["CHECKOUT_COMMIT_SHA"] = *deployment.CommitSha
+
+	if deployment.CommitSha != nil {
+		commitSha = *deployment.CommitSha
+		env["CHECKOUT_COMMIT_SHA"] = commitSha
+	}
 
 	job, err := self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
 		ServiceID:     input.ServiceID,
 		Environment:   env,
 		Source:        schema.DeploymentSourceManual,
-		CommitSHA:     *deployment.CommitSha,
+		CommitSHA:     commitSha,
 		CommitMessage: commitMessage,
 		Committer:     deployment.CommitAuthor,
 	})
