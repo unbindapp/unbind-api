@@ -2358,15 +2358,15 @@ func (c *S3Client) QueryTeam(s *S3) *TeamQuery {
 	return query
 }
 
-// QueryServiceBackupSource queries the service_backup_source edge of a S3.
-func (c *S3Client) QueryServiceBackupSource(s *S3) *ServiceConfigQuery {
+// QueryServiceBackupEndpoint queries the service_backup_endpoint edge of a S3.
+func (c *S3Client) QueryServiceBackupEndpoint(s *S3) *ServiceConfigQuery {
 	query := (&ServiceConfigClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := s.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(s3.Table, s3.FieldID, id),
 			sqlgraph.To(serviceconfig.Table, serviceconfig.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, s3.ServiceBackupSourceTable, s3.ServiceBackupSourceColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, s3.ServiceBackupEndpointTable, s3.ServiceBackupEndpointColumn),
 		)
 		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
 		return fromV, nil
@@ -2752,15 +2752,15 @@ func (c *ServiceConfigClient) QueryService(sc *ServiceConfig) *ServiceQuery {
 	return query
 }
 
-// QueryS3BackupSources queries the s3_backup_sources edge of a ServiceConfig.
-func (c *ServiceConfigClient) QueryS3BackupSources(sc *ServiceConfig) *S3Query {
+// QueryS3BackupEndpoint queries the s3_backup_endpoint edge of a ServiceConfig.
+func (c *ServiceConfigClient) QueryS3BackupEndpoint(sc *ServiceConfig) *S3Query {
 	query := (&S3Client{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := sc.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(serviceconfig.Table, serviceconfig.FieldID, id),
 			sqlgraph.To(s3.Table, s3.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, serviceconfig.S3BackupSourcesTable, serviceconfig.S3BackupSourcesColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, serviceconfig.S3BackupEndpointTable, serviceconfig.S3BackupEndpointColumn),
 		)
 		fromV = sqlgraph.Neighbors(sc.driver.Dialect(), step)
 		return fromV, nil
@@ -3050,15 +3050,15 @@ func (c *TeamClient) QueryProjects(t *Team) *ProjectQuery {
 	return query
 }
 
-// QueryS3Sources queries the s3_sources edge of a Team.
-func (c *TeamClient) QueryS3Sources(t *Team) *S3Query {
+// QueryS3Endpoints queries the s3_endpoints edge of a Team.
+func (c *TeamClient) QueryS3Endpoints(t *Team) *S3Query {
 	query := (&S3Client{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(s3.Table, s3.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, team.S3SourcesTable, team.S3SourcesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.S3EndpointsTable, team.S3EndpointsColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

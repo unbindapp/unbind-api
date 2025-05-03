@@ -22,13 +22,13 @@ import (
 // S3Query is the builder for querying S3 entities.
 type S3Query struct {
 	config
-	ctx                     *QueryContext
-	order                   []s3.OrderOption
-	inters                  []Interceptor
-	predicates              []predicate.S3
-	withTeam                *TeamQuery
-	withServiceBackupSource *ServiceConfigQuery
-	modifiers               []func(*sql.Selector)
+	ctx                       *QueryContext
+	order                     []s3.OrderOption
+	inters                    []Interceptor
+	predicates                []predicate.S3
+	withTeam                  *TeamQuery
+	withServiceBackupEndpoint *ServiceConfigQuery
+	modifiers                 []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -87,8 +87,8 @@ func (s *S3Query) QueryTeam() *TeamQuery {
 	return query
 }
 
-// QueryServiceBackupSource chains the current query on the "service_backup_source" edge.
-func (s *S3Query) QueryServiceBackupSource() *ServiceConfigQuery {
+// QueryServiceBackupEndpoint chains the current query on the "service_backup_endpoint" edge.
+func (s *S3Query) QueryServiceBackupEndpoint() *ServiceConfigQuery {
 	query := (&ServiceConfigClient{config: s.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := s.prepareQuery(ctx); err != nil {
@@ -101,7 +101,7 @@ func (s *S3Query) QueryServiceBackupSource() *ServiceConfigQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(s3.Table, s3.FieldID, selector),
 			sqlgraph.To(serviceconfig.Table, serviceconfig.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, s3.ServiceBackupSourceTable, s3.ServiceBackupSourceColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, s3.ServiceBackupEndpointTable, s3.ServiceBackupEndpointColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(s.driver.Dialect(), step)
 		return fromU, nil
@@ -296,13 +296,13 @@ func (s *S3Query) Clone() *S3Query {
 		return nil
 	}
 	return &S3Query{
-		config:                  s.config,
-		ctx:                     s.ctx.Clone(),
-		order:                   append([]s3.OrderOption{}, s.order...),
-		inters:                  append([]Interceptor{}, s.inters...),
-		predicates:              append([]predicate.S3{}, s.predicates...),
-		withTeam:                s.withTeam.Clone(),
-		withServiceBackupSource: s.withServiceBackupSource.Clone(),
+		config:                    s.config,
+		ctx:                       s.ctx.Clone(),
+		order:                     append([]s3.OrderOption{}, s.order...),
+		inters:                    append([]Interceptor{}, s.inters...),
+		predicates:                append([]predicate.S3{}, s.predicates...),
+		withTeam:                  s.withTeam.Clone(),
+		withServiceBackupEndpoint: s.withServiceBackupEndpoint.Clone(),
 		// clone intermediate query.
 		sql:       s.sql.Clone(),
 		path:      s.path,
@@ -321,14 +321,14 @@ func (s *S3Query) WithTeam(opts ...func(*TeamQuery)) *S3Query {
 	return s
 }
 
-// WithServiceBackupSource tells the query-builder to eager-load the nodes that are connected to
-// the "service_backup_source" edge. The optional arguments are used to configure the query builder of the edge.
-func (s *S3Query) WithServiceBackupSource(opts ...func(*ServiceConfigQuery)) *S3Query {
+// WithServiceBackupEndpoint tells the query-builder to eager-load the nodes that are connected to
+// the "service_backup_endpoint" edge. The optional arguments are used to configure the query builder of the edge.
+func (s *S3Query) WithServiceBackupEndpoint(opts ...func(*ServiceConfigQuery)) *S3Query {
 	query := (&ServiceConfigClient{config: s.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	s.withServiceBackupSource = query
+	s.withServiceBackupEndpoint = query
 	return s
 }
 
@@ -412,7 +412,7 @@ func (s *S3Query) sqlAll(ctx context.Context, hooks ...queryHook) ([]*S3, error)
 		_spec       = s.querySpec()
 		loadedTypes = [2]bool{
 			s.withTeam != nil,
-			s.withServiceBackupSource != nil,
+			s.withServiceBackupEndpoint != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,10 +442,12 @@ func (s *S3Query) sqlAll(ctx context.Context, hooks ...queryHook) ([]*S3, error)
 			return nil, err
 		}
 	}
-	if query := s.withServiceBackupSource; query != nil {
-		if err := s.loadServiceBackupSource(ctx, query, nodes,
-			func(n *S3) { n.Edges.ServiceBackupSource = []*ServiceConfig{} },
-			func(n *S3, e *ServiceConfig) { n.Edges.ServiceBackupSource = append(n.Edges.ServiceBackupSource, e) }); err != nil {
+	if query := s.withServiceBackupEndpoint; query != nil {
+		if err := s.loadServiceBackupEndpoint(ctx, query, nodes,
+			func(n *S3) { n.Edges.ServiceBackupEndpoint = []*ServiceConfig{} },
+			func(n *S3, e *ServiceConfig) {
+				n.Edges.ServiceBackupEndpoint = append(n.Edges.ServiceBackupEndpoint, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -481,7 +483,7 @@ func (s *S3Query) loadTeam(ctx context.Context, query *TeamQuery, nodes []*S3, i
 	}
 	return nil
 }
-func (s *S3Query) loadServiceBackupSource(ctx context.Context, query *ServiceConfigQuery, nodes []*S3, init func(*S3), assign func(*S3, *ServiceConfig)) error {
+func (s *S3Query) loadServiceBackupEndpoint(ctx context.Context, query *ServiceConfigQuery, nodes []*S3, init func(*S3), assign func(*S3, *ServiceConfig)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*S3)
 	for i := range nodes {
@@ -492,23 +494,23 @@ func (s *S3Query) loadServiceBackupSource(ctx context.Context, query *ServiceCon
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(serviceconfig.FieldS3BackupSourceID)
+		query.ctx.AppendFieldOnce(serviceconfig.FieldS3BackupEndpointID)
 	}
 	query.Where(predicate.ServiceConfig(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(s3.ServiceBackupSourceColumn), fks...))
+		s.Where(sql.InValues(s.C(s3.ServiceBackupEndpointColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.S3BackupSourceID
+		fk := n.S3BackupEndpointID
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "s3_backup_source_id" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "s3_backup_endpoint_id" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "s3_backup_source_id" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "s3_backup_endpoint_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

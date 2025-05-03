@@ -183,9 +183,9 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_DATABASE_CONFIG"] = string(marshalledConfig)
 
 		// Pass S3 backup stuff
-		if service.Edges.ServiceConfig.S3BackupBucket != nil && service.Edges.ServiceConfig.S3BackupSourceID != nil {
+		if service.Edges.ServiceConfig.S3BackupBucket != nil && service.Edges.ServiceConfig.S3BackupEndpointID != nil {
 			// Get S3 source
-			s3Source, err := self.repo.S3().GetByID(ctx, *service.Edges.ServiceConfig.S3BackupSourceID)
+			s3Source, err := self.repo.S3().GetByID(ctx, *service.Edges.ServiceConfig.S3BackupEndpointID)
 			if err != nil {
 				return nil, err
 			}

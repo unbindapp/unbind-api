@@ -21,8 +21,8 @@ type ServiceConfigResponse struct {
 	IsPublic   bool                  `json:"is_public"`
 	Image      string                `json:"image,omitempty"`
 	// For backups
-	S3BackupSourceID *uuid.UUID `json:"s3_backup_source_id,omitempty"`
-	S3BackupBucket   *string    `json:"s3_backup_bucket,omitempty"`
+	S3BackupEndpointID *uuid.UUID `json:"s3_backup_endpoint_id,omitempty"`
+	S3BackupBucket     *string    `json:"s3_backup_bucket,omitempty"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -30,19 +30,19 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 	response := &ServiceConfigResponse{}
 	if entity != nil {
 		response = &ServiceConfigResponse{
-			GitBranch:        entity.GitBranch,
-			GitTag:           entity.GitTag,
-			Builder:          entity.Builder,
-			Icon:             entity.Icon,
-			Host:             entity.Hosts,
-			Port:             entity.Ports,
-			Replicas:         entity.Replicas,
-			AutoDeploy:       entity.AutoDeploy,
-			RunCommand:       entity.RunCommand,
-			IsPublic:         entity.IsPublic,
-			Image:            entity.Image,
-			S3BackupSourceID: entity.S3BackupSourceID,
-			S3BackupBucket:   entity.S3BackupBucket,
+			GitBranch:          entity.GitBranch,
+			GitTag:             entity.GitTag,
+			Builder:            entity.Builder,
+			Icon:               entity.Icon,
+			Host:               entity.Hosts,
+			Port:               entity.Ports,
+			Replicas:           entity.Replicas,
+			AutoDeploy:         entity.AutoDeploy,
+			RunCommand:         entity.RunCommand,
+			IsPublic:           entity.IsPublic,
+			Image:              entity.Image,
+			S3BackupEndpointID: entity.S3BackupEndpointID,
+			S3BackupBucket:     entity.S3BackupBucket,
 		}
 	}
 	return response

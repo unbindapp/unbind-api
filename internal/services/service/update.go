@@ -42,9 +42,9 @@ type UpdateServiceInput struct {
 	DockerfileContext *string                `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder - set empty string to reset to default"`
 
 	// Databases
-	DatabaseConfig   *schema.DatabaseConfig `json:"database_config,omitempty"`
-	S3BackupSourceID *uuid.UUID             `json:"s3_backup_source_id,omitempty" format:"uuid"`
-	S3BackupBucket   *string                `json:"s3_backup_bucket,omitempty"`
+	DatabaseConfig     *schema.DatabaseConfig `json:"database_config,omitempty"`
+	S3BackupEndpointID *uuid.UUID             `json:"s3_backup_endpoint_id,omitempty" format:"uuid"`
+	S3BackupBucket     *string                `json:"s3_backup_bucket,omitempty"`
 }
 
 // UpdateService updates a service and its configuration
@@ -117,12 +117,12 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 	// Verify backup sources (for databases)
 	// Make sure we can read and write to the S3 bucket provided
-	if service.Type == schema.ServiceTypeDatabase && input.S3BackupSourceID != nil && input.S3BackupBucket != nil {
+	if service.Type == schema.ServiceTypeDatabase && input.S3BackupEndpointID != nil && input.S3BackupBucket != nil {
 		// Check if the S3 source exists
-		s3Source, err := self.repo.S3().GetByID(ctx, *input.S3BackupSourceID)
+		s3Source, err := self.repo.S3().GetByID(ctx, *input.S3BackupEndpointID)
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 source not found")
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 endpoint not found")
 			}
 			return nil, err
 		}
@@ -165,22 +165,22 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 		// Update the service config
 		updateInput := &service_repo.MutateConfigInput{
-			ServiceID:         input.ServiceID,
-			Builder:           input.Builder,
-			GitBranch:         input.GitBranch,
-			GitTag:            input.GitTag,
-			Ports:             input.Ports,
-			Hosts:             input.Hosts,
-			Replicas:          input.Replicas,
-			AutoDeploy:        input.AutoDeploy,
-			RunCommand:        input.RunCommand,
-			Public:            input.IsPublic,
-			Image:             input.Image,
-			DockerfilePath:    input.DockerfilePath,
-			DockerfileContext: input.DockerfileContext,
-			DatabaseConfig:    input.DatabaseConfig,
-			S3BackupSourceID:  input.S3BackupSourceID,
-			S3BackupBucket:    input.S3BackupBucket,
+			ServiceID:          input.ServiceID,
+			Builder:            input.Builder,
+			GitBranch:          input.GitBranch,
+			GitTag:             input.GitTag,
+			Ports:              input.Ports,
+			Hosts:              input.Hosts,
+			Replicas:           input.Replicas,
+			AutoDeploy:         input.AutoDeploy,
+			RunCommand:         input.RunCommand,
+			Public:             input.IsPublic,
+			Image:              input.Image,
+			DockerfilePath:     input.DockerfilePath,
+			DockerfileContext:  input.DockerfileContext,
+			DatabaseConfig:     input.DatabaseConfig,
+			S3BackupEndpointID: input.S3BackupEndpointID,
+			S3BackupBucket:     input.S3BackupBucket,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)

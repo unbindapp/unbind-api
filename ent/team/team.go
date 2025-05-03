@@ -31,8 +31,8 @@ const (
 	FieldDescription = "description"
 	// EdgeProjects holds the string denoting the projects edge name in mutations.
 	EdgeProjects = "projects"
-	// EdgeS3Sources holds the string denoting the s3_sources edge name in mutations.
-	EdgeS3Sources = "s3_sources"
+	// EdgeS3Endpoints holds the string denoting the s3_endpoints edge name in mutations.
+	EdgeS3Endpoints = "s3_endpoints"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
 	EdgeMembers = "members"
 	// EdgeTeamWebhooks holds the string denoting the team_webhooks edge name in mutations.
@@ -46,13 +46,13 @@ const (
 	ProjectsInverseTable = "projects"
 	// ProjectsColumn is the table column denoting the projects relation/edge.
 	ProjectsColumn = "team_id"
-	// S3SourcesTable is the table that holds the s3_sources relation/edge.
-	S3SourcesTable = "s3_sources"
-	// S3SourcesInverseTable is the table name for the S3 entity.
+	// S3EndpointsTable is the table that holds the s3_endpoints relation/edge.
+	S3EndpointsTable = "s3_endpoints"
+	// S3EndpointsInverseTable is the table name for the S3 entity.
 	// It exists in this package in order to avoid circular dependency with the "s3" package.
-	S3SourcesInverseTable = "s3_sources"
-	// S3SourcesColumn is the table column denoting the s3_sources relation/edge.
-	S3SourcesColumn = "team_id"
+	S3EndpointsInverseTable = "s3_endpoints"
+	// S3EndpointsColumn is the table column denoting the s3_endpoints relation/edge.
+	S3EndpointsColumn = "team_id"
 	// MembersTable is the table that holds the members relation/edge. The primary key declared below.
 	MembersTable = "user_teams"
 	// MembersInverseTable is the table name for the User entity.
@@ -165,17 +165,17 @@ func ByProjects(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByS3SourcesCount orders the results by s3_sources count.
-func ByS3SourcesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByS3EndpointsCount orders the results by s3_endpoints count.
+func ByS3EndpointsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newS3SourcesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newS3EndpointsStep(), opts...)
 	}
 }
 
-// ByS3Sources orders the results by s3_sources terms.
-func ByS3Sources(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByS3Endpoints orders the results by s3_endpoints terms.
+func ByS3Endpoints(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newS3SourcesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newS3EndpointsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -213,11 +213,11 @@ func newProjectsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, ProjectsTable, ProjectsColumn),
 	)
 }
-func newS3SourcesStep() *sqlgraph.Step {
+func newS3EndpointsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(S3SourcesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, S3SourcesTable, S3SourcesColumn),
+		sqlgraph.To(S3EndpointsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, S3EndpointsTable, S3EndpointsColumn),
 	)
 }
 func newMembersStep() *sqlgraph.Step {

@@ -123,19 +123,19 @@ func (tc *TeamCreate) AddProjects(p ...*Project) *TeamCreate {
 	return tc.AddProjectIDs(ids...)
 }
 
-// AddS3SourceIDs adds the "s3_sources" edge to the S3 entity by IDs.
-func (tc *TeamCreate) AddS3SourceIDs(ids ...uuid.UUID) *TeamCreate {
-	tc.mutation.AddS3SourceIDs(ids...)
+// AddS3EndpointIDs adds the "s3_endpoints" edge to the S3 entity by IDs.
+func (tc *TeamCreate) AddS3EndpointIDs(ids ...uuid.UUID) *TeamCreate {
+	tc.mutation.AddS3EndpointIDs(ids...)
 	return tc
 }
 
-// AddS3Sources adds the "s3_sources" edges to the S3 entity.
-func (tc *TeamCreate) AddS3Sources(s ...*S3) *TeamCreate {
+// AddS3Endpoints adds the "s3_endpoints" edges to the S3 entity.
+func (tc *TeamCreate) AddS3Endpoints(s ...*S3) *TeamCreate {
 	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
-	return tc.AddS3SourceIDs(ids...)
+	return tc.AddS3EndpointIDs(ids...)
 }
 
 // AddMemberIDs adds the "members" edge to the User entity by IDs.
@@ -322,12 +322,12 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := tc.mutation.S3SourcesIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.S3EndpointsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   team.S3SourcesTable,
-			Columns: []string{team.S3SourcesColumn},
+			Table:   team.S3EndpointsTable,
+			Columns: []string{team.S3EndpointsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),

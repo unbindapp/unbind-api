@@ -39,9 +39,9 @@ func (S3) Fields() []ent.Field {
 func (S3) Edges() []ent.Edge {
 	return []ent.Edge{
 		// O2M from team
-		edge.From("team", Team.Type).Ref("s3_sources").Field("team_id").Unique().Required(),
+		edge.From("team", Team.Type).Ref("s3_endpoints").Field("team_id").Unique().Required(),
 		// M2O from service_configs
-		edge.To("service_backup_source", ServiceConfig.Type),
+		edge.To("service_backup_endpoint", ServiceConfig.Type),
 	}
 }
 
@@ -49,7 +49,7 @@ func (S3) Edges() []ent.Edge {
 func (S3) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entsql.Annotation{
-			Table: "s3_sources",
+			Table: "s3_endpoints",
 		},
 	}
 }

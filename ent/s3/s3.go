@@ -33,24 +33,24 @@ const (
 	FieldTeamID = "team_id"
 	// EdgeTeam holds the string denoting the team edge name in mutations.
 	EdgeTeam = "team"
-	// EdgeServiceBackupSource holds the string denoting the service_backup_source edge name in mutations.
-	EdgeServiceBackupSource = "service_backup_source"
+	// EdgeServiceBackupEndpoint holds the string denoting the service_backup_endpoint edge name in mutations.
+	EdgeServiceBackupEndpoint = "service_backup_endpoint"
 	// Table holds the table name of the s3 in the database.
-	Table = "s3_sources"
+	Table = "s3_endpoints"
 	// TeamTable is the table that holds the team relation/edge.
-	TeamTable = "s3_sources"
+	TeamTable = "s3_endpoints"
 	// TeamInverseTable is the table name for the Team entity.
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	TeamInverseTable = "teams"
 	// TeamColumn is the table column denoting the team relation/edge.
 	TeamColumn = "team_id"
-	// ServiceBackupSourceTable is the table that holds the service_backup_source relation/edge.
-	ServiceBackupSourceTable = "service_configs"
-	// ServiceBackupSourceInverseTable is the table name for the ServiceConfig entity.
+	// ServiceBackupEndpointTable is the table that holds the service_backup_endpoint relation/edge.
+	ServiceBackupEndpointTable = "service_configs"
+	// ServiceBackupEndpointInverseTable is the table name for the ServiceConfig entity.
 	// It exists in this package in order to avoid circular dependency with the "serviceconfig" package.
-	ServiceBackupSourceInverseTable = "service_configs"
-	// ServiceBackupSourceColumn is the table column denoting the service_backup_source relation/edge.
-	ServiceBackupSourceColumn = "s3_backup_source_id"
+	ServiceBackupEndpointInverseTable = "service_configs"
+	// ServiceBackupEndpointColumn is the table column denoting the service_backup_endpoint relation/edge.
+	ServiceBackupEndpointColumn = "s3_backup_endpoint_id"
 )
 
 // Columns holds all SQL columns for s3 fields.
@@ -146,17 +146,17 @@ func ByTeamField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByServiceBackupSourceCount orders the results by service_backup_source count.
-func ByServiceBackupSourceCount(opts ...sql.OrderTermOption) OrderOption {
+// ByServiceBackupEndpointCount orders the results by service_backup_endpoint count.
+func ByServiceBackupEndpointCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newServiceBackupSourceStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newServiceBackupEndpointStep(), opts...)
 	}
 }
 
-// ByServiceBackupSource orders the results by service_backup_source terms.
-func ByServiceBackupSource(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByServiceBackupEndpoint orders the results by service_backup_endpoint terms.
+func ByServiceBackupEndpoint(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newServiceBackupSourceStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newServiceBackupEndpointStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newTeamStep() *sqlgraph.Step {
@@ -166,10 +166,10 @@ func newTeamStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
 	)
 }
-func newServiceBackupSourceStep() *sqlgraph.Step {
+func newServiceBackupEndpointStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ServiceBackupSourceInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, ServiceBackupSourceTable, ServiceBackupSourceColumn),
+		sqlgraph.To(ServiceBackupEndpointInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ServiceBackupEndpointTable, ServiceBackupEndpointColumn),
 	)
 }

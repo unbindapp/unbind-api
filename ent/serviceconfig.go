@@ -65,8 +65,8 @@ type ServiceConfig struct {
 	DefinitionVersion *string `json:"definition_version,omitempty"`
 	// Database configuration for the service
 	DatabaseConfig *schema.DatabaseConfig `json:"database_config,omitempty"`
-	// S3 bucket to backup to
-	S3BackupSourceID *uuid.UUID `json:"s3_backup_source_id,omitempty"`
+	// S3 endpoint backup to
+	S3BackupEndpointID *uuid.UUID `json:"s3_backup_endpoint_id,omitempty"`
 	// S3 bucket to backup to
 	S3BackupBucket *string `json:"s3_backup_bucket,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -79,8 +79,8 @@ type ServiceConfig struct {
 type ServiceConfigEdges struct {
 	// Service holds the value of the service edge.
 	Service *Service `json:"service,omitempty"`
-	// S3BackupSources holds the value of the s3_backup_sources edge.
-	S3BackupSources *S3 `json:"s3_backup_sources,omitempty"`
+	// S3BackupEndpoint holds the value of the s3_backup_endpoint edge.
+	S3BackupEndpoint *S3 `json:"s3_backup_endpoint,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -97,15 +97,15 @@ func (e ServiceConfigEdges) ServiceOrErr() (*Service, error) {
 	return nil, &NotLoadedError{edge: "service"}
 }
 
-// S3BackupSourcesOrErr returns the S3BackupSources value or an error if the edge
+// S3BackupEndpointOrErr returns the S3BackupEndpoint value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e ServiceConfigEdges) S3BackupSourcesOrErr() (*S3, error) {
-	if e.S3BackupSources != nil {
-		return e.S3BackupSources, nil
+func (e ServiceConfigEdges) S3BackupEndpointOrErr() (*S3, error) {
+	if e.S3BackupEndpoint != nil {
+		return e.S3BackupEndpoint, nil
 	} else if e.loadedTypes[1] {
 		return nil, &NotFoundError{label: s3.Label}
 	}
-	return nil, &NotLoadedError{edge: "s3_backup_sources"}
+	return nil, &NotLoadedError{edge: "s3_backup_endpoint"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -113,7 +113,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case serviceconfig.FieldS3BackupSourceID:
+		case serviceconfig.FieldS3BackupEndpointID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig:
 			values[i] = new([]byte)
@@ -282,12 +282,12 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field database_config: %w", err)
 				}
 			}
-		case serviceconfig.FieldS3BackupSourceID:
+		case serviceconfig.FieldS3BackupEndpointID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field s3_backup_source_id", values[i])
+				return fmt.Errorf("unexpected type %T for field s3_backup_endpoint_id", values[i])
 			} else if value.Valid {
-				sc.S3BackupSourceID = new(uuid.UUID)
-				*sc.S3BackupSourceID = *value.S.(*uuid.UUID)
+				sc.S3BackupEndpointID = new(uuid.UUID)
+				*sc.S3BackupEndpointID = *value.S.(*uuid.UUID)
 			}
 		case serviceconfig.FieldS3BackupBucket:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -314,9 +314,9 @@ func (sc *ServiceConfig) QueryService() *ServiceQuery {
 	return NewServiceConfigClient(sc.config).QueryService(sc)
 }
 
-// QueryS3BackupSources queries the "s3_backup_sources" edge of the ServiceConfig entity.
-func (sc *ServiceConfig) QueryS3BackupSources() *S3Query {
-	return NewServiceConfigClient(sc.config).QueryS3BackupSources(sc)
+// QueryS3BackupEndpoint queries the "s3_backup_endpoint" edge of the ServiceConfig entity.
+func (sc *ServiceConfig) QueryS3BackupEndpoint() *S3Query {
+	return NewServiceConfigClient(sc.config).QueryS3BackupEndpoint(sc)
 }
 
 // Update returns a builder for updating this ServiceConfig.
@@ -418,8 +418,8 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString("database_config=")
 	builder.WriteString(fmt.Sprintf("%v", sc.DatabaseConfig))
 	builder.WriteString(", ")
-	if v := sc.S3BackupSourceID; v != nil {
-		builder.WriteString("s3_backup_source_id=")
+	if v := sc.S3BackupEndpointID; v != nil {
+		builder.WriteString("s3_backup_endpoint_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")

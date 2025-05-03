@@ -72,7 +72,7 @@ type MutateConfigInput struct {
 	DockerfileContext       *string
 	CustomDefinitionVersion *string
 	DatabaseConfig          *schema.DatabaseConfig
-	S3BackupSourceID        *uuid.UUID
+	S3BackupEndpointID      *uuid.UUID
 	S3BackupBucket          *string
 }
 
@@ -123,7 +123,7 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableDockerfilePath(input.DockerfilePath).
 		SetNillableDockerfileContext(input.DockerfileContext).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
-		SetNillableS3BackupSourceID(input.S3BackupSourceID).
+		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
 		SetNillableS3BackupBucket(input.S3BackupBucket)
 
 	if input.DatabaseConfig != nil {
@@ -180,7 +180,7 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
-		SetNillableS3BackupSourceID(input.S3BackupSourceID)
+		SetNillableS3BackupEndpointID(input.S3BackupEndpointID)
 
 	if input.GitBranch != nil {
 		if *input.GitBranch == "" {
