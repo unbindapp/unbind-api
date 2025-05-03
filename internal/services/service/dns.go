@@ -2,10 +2,10 @@ package service_service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -27,7 +27,7 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 	}
 
 	// Verify inputs
-	_, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
+	env, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +36,10 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
 		return nil, err
+	}
+
+	if service.EnvironmentID != env.ID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
 	}
 
 	// Create kubernetes client
@@ -57,29 +61,6 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 
 	if err != nil {
 		return nil, err
-	}
-
-	if service.Database != nil {
-		for _, endpoint := range endpoints.Internal {
-			// ! TODO parse database commonly since this is repeated logic
-			switch *service.Database {
-			case "redis", "postgres":
-				// Get database password from secret
-				secret, err := self.k8s.GetSecret(ctx, service.KubernetesName, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, client)
-				if err != nil {
-					return nil, err
-				}
-				username := string(secret.Data["DATABASE_USERNAME"])
-				password := string(secret.Data["DATABASE_PASSWORD"])
-
-				if *service.Database == "redis" {
-					endpoint.DNS = fmt.Sprintf("redis://%s:%s@%s:%d", username, password, endpoint.DNS, 6379)
-				}
-				if *service.Database == "postgres" {
-					endpoint.DNS = fmt.Sprintf("postgresql://%s:%s@%s:%d/postgres?sslmode=disable", username, password, endpoint.DNS, 5432)
-				}
-			}
-		}
 	}
 
 	return endpoints, nil

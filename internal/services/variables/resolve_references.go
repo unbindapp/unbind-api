@@ -168,24 +168,9 @@ func (self *VariablesService) resolveInternalEndpointURL(ctx context.Context, cl
 	switch databaseType {
 	case "":
 		return fmt.Sprintf("http://%s:%d", endpoint.DNS, targetPort.Port), nil
-	case "redis", "postgres":
-		// Get database password from secret
-		secret, err := self.k8s.GetSecret(ctx, source.SourceKubernetesName, namespace, client)
-		if err != nil {
-			return "", err
-		}
-		username := string(secret.Data["DATABASE_USERNAME"])
-		password := string(secret.Data["DATABASE_PASSWORD"])
-
-		if databaseType == "redis" {
-			return fmt.Sprintf("redis://%s:%s@%s:%d", username, password, endpoint.DNS, targetPort.Port), nil
-		}
-		if databaseType == "postgres" {
-			return fmt.Sprintf("postgresql://%s:%s@%s:%d/postgres?sslmode=disable", username, password, endpoint.DNS, targetPort.Port), nil
-		}
+	default:
+		return fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port), nil
 	}
-
-	return fmt.Sprintf("http://%s:%d", endpoint.DNS, targetPort.Port), nil
 }
 
 // resolve reference template
