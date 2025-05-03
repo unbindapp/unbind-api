@@ -3,6 +3,7 @@ package k8s
 import (
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	builderConfig "github.com/unbindapp/unbind-api/pkg/builder/config"
 )
 
@@ -13,9 +14,9 @@ type K8SClient struct {
 	k8s           *k8s.KubeClient
 }
 
-func NewK8SClient(cfg config.ConfigInterface, builderConfig *builderConfig.Config) *K8SClient {
+func NewK8SClient(cfg config.ConfigInterface, builderConfig *builderConfig.Config, repo repositories.RepositoriesInterface) *K8SClient {
 	// Get client
-	kubeClient := k8s.NewKubeClient(cfg)
+	kubeClient := k8s.NewKubeClient(cfg, repo)
 
 	return &K8SClient{
 		config:        cfg,

@@ -234,7 +234,7 @@ func main() {
 	}()
 
 	builder := builders.NewBuilder(cfg)
-	k8s := k8s.NewK8SClient(cfg, cfg)
+	k8s := k8s.NewK8SClient(cfg, cfg, repo)
 
 	var dockerImg string
 	additionalEnv := make(map[string]string)

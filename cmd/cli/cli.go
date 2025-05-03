@@ -48,7 +48,7 @@ func NewCLI(cfg *config.Config) *cli {
 	}
 	repo := repositories.NewRepositories(db)
 
-	kubeClient := k8s.NewKubeClient(cfg)
+	kubeClient := k8s.NewKubeClient(cfg, repo)
 	rbacManager := k8s.NewRBACManager(repo, kubeClient)
 
 	return &cli{

@@ -212,7 +212,7 @@ func startAPI(cfg *config.Config) {
 	repo := repositories.NewRepositories(db)
 
 	// Create kubernetes client
-	kubeClient := k8s.NewKubeClient(cfg)
+	kubeClient := k8s.NewKubeClient(cfg, repo)
 
 	// Create github client
 	githubClient := github.NewGithubClient(cfg.GithubURL, cfg)
@@ -543,7 +543,8 @@ func startAPI(cfg *config.Config) {
 		log.Fatal("Failed to create scheduler", "err", err)
 	}
 
-	// Add a dummy job that logs a message every minute
+	// ! TODO - we should leverage valkey or something to prevent concurrent runs
+	// Clean up test DNS ingresses
 	_, err = scheduler.NewJob(
 		gocron.DurationJob(10*time.Minute),
 		gocron.NewTask(
@@ -557,8 +558,22 @@ func startAPI(cfg *config.Config) {
 		),
 	)
 	if err != nil {
-		log.Fatal("Failed to create scheduled job", "err", err)
+		log.Fatal("Failed to create ingress cleanup job", "err", err)
 	}
+
+	// Keep database variables in sync
+	_, err = scheduler.NewJob(
+		gocron.DurationJob(10*time.Minute),
+		gocron.NewTask(
+			func(ctx context.Context) {
+				log.Infof("Syncing database secrets.")
+				if err := kubeClient.SyncDatabaseSecrets(ctx); err != nil {
+					log.Error("Failed to sync database secrets", "err", err)
+				}
+			},
+			ctx,
+		),
+	)
 
 	// Start the scheduler
 	scheduler.Start()

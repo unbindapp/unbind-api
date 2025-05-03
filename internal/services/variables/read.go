@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -51,9 +52,17 @@ func (self *VariablesService) GetVariables(ctx context.Context, userID uuid.UUID
 	}
 
 	// Verify input
-	team, _, _, _, secretName, err := self.validateBaseInputs(ctx, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
+	team, _, _, service, secretName, err := self.validateBaseInputs(ctx, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
 	if err != nil {
 		return nil, err
+	}
+
+	if input.Type == schema.VariableReferenceSourceTypeService {
+		// Sync database secrets
+		err = self.k8s.SyncDatabaseSecretForService(ctx, service)
+		if err != nil {
+			log.Warnf("Failed to sync database secret for database service %s: %v", service.ID, err)
+		}
 	}
 
 	// Create kubernetes client

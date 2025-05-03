@@ -7,6 +7,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -19,9 +20,10 @@ type KubeClient struct {
 	clientset  *kubernetes.Clientset
 	dnsChecker *utils.DNSChecker
 	httpClient *http.Client
+	repo       repositories.RepositoriesInterface
 }
 
-func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
+func NewKubeClient(cfg config.ConfigInterface, repo repositories.RepositoriesInterface) *KubeClient {
 	var kubeConfig *rest.Config
 	var err error
 
@@ -57,6 +59,7 @@ func NewKubeClient(cfg config.ConfigInterface) *KubeClient {
 		httpClient: &http.Client{
 			Timeout: 1 * time.Second,
 		},
+		repo: repo,
 	}
 }
 

@@ -77,6 +77,22 @@ func (self *ServiceRepository) GetDatabaseType(ctx context.Context, serviceID uu
 	return *svc.Database, nil
 }
 
+func (self *ServiceRepository) GetDatabases(ctx context.Context) ([]*ent.Service, error) {
+	return self.base.DB.Service.Query().
+		Where(service.TypeEQ(schema.ServiceTypeDatabase)).
+		WithServiceConfig().
+		// Kinda janky we have to go all the way down to get the namespace
+		WithEnvironment(
+			func(eq *ent.EnvironmentQuery) {
+				eq.WithProject(func(pq *ent.ProjectQuery) {
+					pq.WithTeam()
+				})
+			},
+		).
+		Order(ent.Desc(service.FieldCreatedAt)).
+		All(ctx)
+}
+
 func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error) {
 	return self.base.DB.Service.Query().
 		Where(service.GithubInstallationIDEQ(installationID)).
