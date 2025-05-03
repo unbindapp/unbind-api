@@ -3,6 +3,7 @@ package storage_service
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -82,9 +83,26 @@ func (self *StorageService) CreateS3StorageBackend(ctx context.Context, requeste
 		}
 
 		// Store the credentials in the secret
+		// Aws config style
+		profile := "default"
+		region := strings.TrimSpace(input.Region)
+
+		// Build INI-formatted that is sometimes what stuff wants (like mysql operator)
+		credentialsFile := fmt.Sprintf(`[%s]
+aws_access_key_id = %s
+aws_secret_access_key = %s
+`, profile, input.AccessKeyID, input.SecretKey)
+
+		configFile := fmt.Sprintf(`[%s]
+region = %s
+output = json
+`, profile, region)
+
 		values := map[string][]byte{
 			"access_key_id": []byte(input.AccessKeyID),
 			"secret_key":    []byte(input.SecretKey),
+			"credentials":   []byte(credentialsFile),
+			"config":        []byte(configFile),
 		}
 		_, err = self.k8s.OverwriteSecretValues(ctx, secret.Name, team.Namespace, values, client)
 		if err != nil {

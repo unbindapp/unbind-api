@@ -2,6 +2,8 @@ package storage_service
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -74,6 +76,26 @@ func (self *StorageService) UpdateS3Storage(ctx context.Context, requesterUserID
 		}
 		if secretKey != nil {
 			secret.Data["secret_key"] = []byte(*secretKey)
+		}
+
+		// Aws config style
+		profile := "default"
+		region := strings.TrimSpace(s3Source.Region)
+
+		if accessKeyID != nil || secretKey != nil {
+			// Build INI-formatted that is sometimes what stuff wants (like mysql operator)
+			credentialsFile := fmt.Sprintf(`[%s]
+aws_access_key_id = %s
+aws_secret_access_key = %s
+`, profile, string(secret.Data["access_key_id"]), string(secret.Data["secret_key"]))
+
+			configFile := fmt.Sprintf(`[%s]
+region = %s
+output = json
+`, profile, region)
+
+			secret.Data["credentials"] = []byte(credentialsFile)
+			secret.Data["config"] = []byte(configFile)
 		}
 
 		// Test connectivity to the S3 backend
