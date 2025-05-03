@@ -90,6 +90,13 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 
 		// Remove from map
 		for _, secretKey := range keys {
+			// Don't allow deletion of special database keys
+			if service.Type == schema.ServiceTypeDatabase &&
+				(secretKey.Name == "DATABASE_USERNAME" ||
+					secretKey.Name == "DATABASE_PASSWORD" ||
+					secretKey.Name == "DATABASE_URL") {
+				continue
+			}
 			delete(secrets, secretKey.Name)
 		}
 
