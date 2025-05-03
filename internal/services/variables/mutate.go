@@ -100,6 +100,28 @@ func (self *VariablesService) UpdateVariables(
 
 		if behavior == models.VariableUpdateBehaviorOverwrite {
 			// make secrets
+			if service.Type == schema.ServiceTypeDatabase {
+				_, hasUsername := newVariables["DATABASE_USERNAME"]
+				_, hasPassword := newVariables["DATABASE_PASSWORD"]
+				_, hasURL := newVariables["DATABASE_URL"]
+				if !hasUsername || !hasPassword || !hasURL {
+					// Get existing secrets
+					existingSecrets, err := self.k8s.GetSecretMap(ctx, secretName, team.Namespace, client)
+					if err != nil {
+						return err
+					}
+
+					if !hasUsername {
+						newVariables["DATABASE_USERNAME"] = existingSecrets["DATABASE_USERNAME"]
+					}
+					if !hasPassword {
+						newVariables["DATABASE_PASSWORD"] = existingSecrets["DATABASE_PASSWORD"]
+					}
+					if !hasURL {
+						newVariables["DATABASE_URL"] = existingSecrets["DATABASE_URL"]
+					}
+				}
+			}
 			_, err = self.k8s.OverwriteSecretValues(ctx, secretName, team.Namespace, newVariables, client)
 			if err != nil {
 				return err
