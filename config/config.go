@@ -21,6 +21,7 @@ type ConfigInterface interface {
 	GetSystemNamespace() string
 	GetKubeProxyURL() string
 	GetBuildkitHost() string
+	GetBuildImage() string
 }
 
 type Config struct {
@@ -73,6 +74,8 @@ type Config struct {
 	// ! TODO - remove me some day, for bypassing oauth
 	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
 	SkipBootstrap    bool   `env:"SKIP_BOOTSTRAP" envDefault:"false"`
+	// Builder to pass around
+	BuildImage string
 }
 
 func (self *Config) GetPostgresHost() string {
@@ -113,6 +116,10 @@ func (self *Config) GetKubeProxyURL() string {
 
 func (self *Config) GetBuildkitHost() string {
 	return self.BuildkitHost
+}
+
+func (self *Config) GetBuildImage() string {
+	return self.BuildImage
 }
 
 // Parse environment variables into a Config struct

@@ -212,7 +212,7 @@ func startAPI(cfg *config.Config) {
 	repo := repositories.NewRepositories(db)
 
 	// Create kubernetes client
-	kubeClient := k8s.NewKubeClient(cfg, BuildImage)
+	kubeClient := k8s.NewKubeClient(cfg)
 
 	// Create github client
 	githubClient := github.NewGithubClient(cfg.GithubURL, cfg)
@@ -602,5 +602,6 @@ func main() {
 	}
 
 	cfg := config.NewConfig()
+	cfg.BuildImage = BuildImage
 	startAPI(cfg)
 }

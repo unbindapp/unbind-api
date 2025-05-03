@@ -60,7 +60,7 @@ func (self *KubeClient) CreateDeployment(ctx context.Context, deploymentID strin
 					Containers: []corev1.Container{
 						{
 							Name:  "build-container",
-							Image: self.buildImage,
+							Image: self.config.GetBuildImage(),
 							Command: []string{
 								"sh",
 								"-c",
