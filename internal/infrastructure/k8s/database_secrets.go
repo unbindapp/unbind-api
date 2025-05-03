@@ -87,9 +87,9 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	var url string
 	switch *service.Database {
 	case "postgres":
-		url = fmt.Sprintf("postgresql://%s:%s@%s:%d/postgres?sslmode=disable", username, password, service.KubernetesName, 5432)
+		url = fmt.Sprintf("postgresql://%s:%s@%s.%s:%d/postgres?sslmode=disable", username, password, service.KubernetesName, namespace, 5432)
 	case "redis":
-		url = fmt.Sprintf("redis://%s:%s@%s-headless:%d", "default", password, service.KubernetesName, 6379)
+		url = fmt.Sprintf("redis://%s:%s@%s-headless.%s:%d", "default", password, service.KubernetesName, namespace, 6379)
 	}
 
 	if existingUrl != url {
