@@ -239,13 +239,14 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to generate slug for team name: %w", err)
 	}
+	namespace := kubernetesName
 
 	if err := self.repos.WithTx(ctx, func(tx repository.TxInterface) error {
 		db := tx.Client()
 		team, err := db.Team.Create().
 			SetKubernetesName(kubernetesName).
 			SetName(name).
-			SetNamespace(kubernetesName).
+			SetNamespace(namespace).
 			SetKubernetesSecret(kubernetesName).Save(ctx)
 		if err != nil {
 			return fmt.Errorf("error creating team: %v", err)
@@ -262,7 +263,7 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 		}
 
 		// Create secret to associate with the name
-		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
+		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, namespace, self.kubeClient.GetInternalClient())
 		if err != nil {
 			return fmt.Errorf("error creating secret: %v", err)
 		}
@@ -283,7 +284,7 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 			return fmt.Errorf("error creating project: %v", err)
 		}
 		// Create secret to associate with the name
-		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
+		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, namespace, self.kubeClient.GetInternalClient())
 		if err != nil {
 			return fmt.Errorf("error creating project secret: %v", err)
 		}
@@ -306,7 +307,7 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 		}
 
 		// Create secret to associate with the name
-		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, kubernetesName, self.kubeClient.GetInternalClient())
+		_, _, err = self.kubeClient.GetOrCreateSecret(ctx, kubernetesName, namespace, self.kubeClient.GetInternalClient())
 		if err != nil {
 			return fmt.Errorf("error creating environment secret: %v", err)
 		}
