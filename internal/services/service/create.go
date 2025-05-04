@@ -402,7 +402,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 					Value: service.Name,
 				},
 				{
-					Name:  "Project & Environment",
+					Name:  "Project > Environment",
 					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 				{

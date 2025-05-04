@@ -63,7 +63,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 				Value: service.Name,
 			},
 			{
-				Name:  "Project & Environment",
+				Name:  "Project > Environment",
 				Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 			},
 		},
@@ -113,7 +113,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 				Value: service.Name,
 			},
 			{
-				Name:  "Project & Environment",
+				Name:  "Project > Environment",
 				Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 			},
 			{
@@ -207,7 +207,7 @@ func main() {
 					Value: service.Name,
 				},
 				{
-					Name:  "Project & Environment",
+					Name:  "Project > Environment",
 					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 			},
