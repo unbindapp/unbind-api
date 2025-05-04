@@ -410,6 +410,116 @@ func TestFetchDatabase_MySQL(t *testing.T) {
 	}
 }
 
+func TestFetchDatabase_MongoDB(t *testing.T) {
+	// Setup mock server
+	server := setupMockServer()
+	defer server.Close()
+
+	// Override the base URL constant for testing
+	originalBaseURL := BaseDatabaseURL
+	BaseDatabaseURL = server.URL + "/%s"
+	defer func() {
+		BaseDatabaseURL = originalBaseURL
+	}()
+
+	// Create provider
+	provider := NewDatabaseProvider()
+
+	// Test FetchDatabase for MongoDB
+	ctx := context.Background()
+	database, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "mongodb-operator")
+
+	// Log the result for debugging
+	t.Logf("MongoDB Database result: %+v", database)
+	if err != nil {
+		t.Logf("Error: %v", err)
+	}
+
+	// --- Assertions for MongoDB ---
+	require.NoError(t, err)
+	assert.NotNil(t, database)
+	assert.Equal(t, "MongoDB Database", database.Name)
+	assert.Equal(t, "Standard MongoDB database using MongoDB Community Operator", database.Description)
+	assert.Equal(t, "mongodb-operator", database.Type)
+	assert.Equal(t, "1.0.0", database.Version)
+	assert.Equal(t, 27017, database.Port)
+
+	assert.NotNil(t, database.Schema)
+	t.Logf("MongoDB Schema properties: %+v", database.Schema.Properties)
+
+	// Check version property
+	versionProp, hasVersion := database.Schema.Properties["version"]
+	assert.True(t, hasVersion, "MongoDB schema should have a 'version' property")
+	if hasVersion {
+		assert.Equal(t, "string", versionProp.Type)
+		assert.Equal(t, "MongoDB version", versionProp.Description)
+		assert.Equal(t, "7.0", versionProp.Default)
+		assert.Contains(t, versionProp.Enum, "6.0")
+		assert.Contains(t, versionProp.Enum, "7.0")
+	}
+
+	// Check common property
+	commonProp, hasCommon := database.Schema.Properties["common"]
+	assert.True(t, hasCommon, "MongoDB schema should have a 'common' property (from base import)")
+	if hasCommon {
+		assert.Equal(t, "object", commonProp.Type)
+		assert.Contains(t, commonProp.Properties, "replicas")
+		assert.Contains(t, commonProp.Properties, "storage")
+		assert.Contains(t, commonProp.Properties, "resources")
+	}
+
+	// Check labels property
+	labelsProp, hasLabels := database.Schema.Properties["labels"]
+	assert.True(t, hasLabels, "MongoDB schema should have a 'labels' property (from labelsSchema import)")
+	if hasLabels {
+		assert.Equal(t, "object", labelsProp.Type)
+		assert.NotNil(t, labelsProp.AdditionalProperties)
+		if labelsProp.AdditionalProperties != nil {
+			assert.Equal(t, "string", labelsProp.AdditionalProperties.Type)
+		}
+	}
+
+	// Check s3 property
+	s3Prop, hasS3 := database.Schema.Properties["s3"]
+	assert.True(t, hasS3, "MongoDB schema should have an 's3' property (from s3Schema import)")
+	if hasS3 {
+		assert.Equal(t, "object", s3Prop.Type)
+		assert.Contains(t, s3Prop.Properties, "bucket")
+		assert.Contains(t, s3Prop.Properties, "region")
+		assert.Contains(t, s3Prop.Properties, "enabled")
+		assert.Contains(t, s3Prop.Properties, "backupRetention")
+		assert.Contains(t, s3Prop.Properties, "backupSchedule")
+		assert.Contains(t, s3Prop.Properties, "backupPrefix")
+	}
+
+	// Check restore property
+	restoreProp, hasRestore := database.Schema.Properties["restore"]
+	assert.True(t, hasRestore, "MongoDB schema should have a 'restore' property (from restoreSchema import)")
+	if hasRestore {
+		assert.Equal(t, "object", restoreProp.Type)
+		assert.Contains(t, restoreProp.Properties, "bucket")
+		assert.Contains(t, restoreProp.Properties, "region")
+		assert.Contains(t, restoreProp.Properties, "enabled")
+		assert.Contains(t, restoreProp.Properties, "cluster")
+		assert.Contains(t, restoreProp.Properties, "backupPrefix")
+	}
+
+	// Check environment property
+	envProp, hasEnv := database.Schema.Properties["environment"]
+	assert.True(t, hasEnv, "MongoDB schema should have an 'environment' property")
+	if hasEnv {
+		assert.Equal(t, "object", envProp.Type)
+		assert.Equal(t, "Environment variables to be set in the MongoDB container", envProp.Description)
+		assert.NotNil(t, envProp.AdditionalProperties)
+		if envProp.AdditionalProperties != nil {
+			assert.Equal(t, "string", envProp.AdditionalProperties.Type)
+		}
+		assert.NotNil(t, envProp.Default)
+		assert.IsType(t, map[string]interface{}{}, envProp.Default)
+		assert.Empty(t, envProp.Default)
+	}
+}
+
 func TestFetchDatabaseErrors(t *testing.T) {
 	// Setup mock server with errors
 	server := setupErrorMockServer()
@@ -677,6 +787,8 @@ auth:
 		mysqlMetadataPath := "/v0.1/definitions/databases/mysql-operator/metadata.yaml"
 		mysqlDefinitionPath := "/v0.1/definitions/databases/mysql-operator/definition.yaml"
 		mysqlRestoreSchemaPath := "/v0.1/definitions/common/s3-restore-schema.yaml"
+		mongodbMetadataPath := "/v0.1/definitions/databases/mongodb-operator/metadata.yaml"
+		mongodbDefinitionPath := "/v0.1/definitions/databases/mongodb-operator/definition.yaml"
 
 		if r.URL.Path == mysqlMetadataPath {
 			w.WriteHeader(http.StatusOK)
@@ -848,6 +960,247 @@ spec:
       usePathStyle: true
     workVolume:
       emptyDir: {}
+{{- end }}`))
+			return
+		}
+
+		if r.URL.Path == mongodbMetadataPath {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`name: "MongoDB Database"
+description: "Standard MongoDB database using MongoDB Community Operator"
+type: "mongodb-operator"
+version: "1.0.0"
+port: 27017
+imports:
+  - path: "../../common/base.yaml"
+    as: base
+  - path: "../../common/s3-schema.yaml"
+    as: s3Schema
+  - path: "../../common/s3-restore-schema.yaml"
+    as: restoreSchema
+  - path: "../../common/labels.yaml"
+    as: labelsSchema
+schema:
+  properties:
+    common:
+      $ref: "#/imports/base"
+    labels:
+      $ref: "#/imports/labelsSchema"
+    version:
+      type: "string"
+      description: "MongoDB version"
+      default: "7.0"
+      enum: ["6.0", "7.0"]
+    s3:
+      $ref: "#/imports/s3Schema"
+    restore:
+      $ref: "#/imports/restoreSchema"
+    environment:
+      type: "object"
+      description: "Environment variables to be set in the MongoDB container"
+      additionalProperties:
+        type: "string"
+      default: {}`))
+			return
+		}
+
+		if r.URL.Path == mongodbDefinitionPath {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+  labels:
+    # Operator labels
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    # usd-specific labels
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+
+spec:
+  members: {{ .Parameters.common.replicas | default 1 }}
+  # Automatically select Standalone vs ReplicaSet based on replica count
+  type: {{ if gt (.Parameters.common.replicas | default 1) 1 }}ReplicaSet{{ else }}Standalone{{ end }}
+  version: {{ .Parameters.version | default "7.0" | quote }}
+  
+  security:
+    authentication:
+      modes: ["SCRAM"]
+      ignoreUnknownUsers: true
+
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongod
+              resources:
+                requests:
+                  cpu: {{ .Parameters.common.resources.requests.cpu | default "100m" }}
+                  memory: {{ .Parameters.common.resources.requests.memory | default "128Mi" }}
+                limits:
+                  cpu: {{ .Parameters.common.resources.limits.cpu | default "500m" }}
+                  memory: {{ .Parameters.common.resources.limits.memory | default "256Mi" }}
+              {{- if .Parameters.environment }}
+              env:
+                {{- range $key, $value := .Parameters.environment }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end }}
+              {{- end }}
+
+  additionalMongodConfig:
+    storage:
+      dbPath: /data/db
+      wiredTiger:
+        engineConfig:
+          cacheSizeGB: 0.25
+
+  # Configure storage correctly for Community Operator
+  storage:
+    wiredTiger:
+      engineConfig:
+        cacheSizeGB: 0.25
+    
+  # Set persistent storage options
+  persistent: true
+  podSpec:
+    persistence:
+      single:
+        storage: {{ .Parameters.common.storage | default "1Gi" }}
+
+{{- if .Parameters.common.exposeExternal }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Name }}-external
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 27017
+      targetPort: 27017
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+{{- end }}
+
+{{- if .Parameters.s3.enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Name }}-backup
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  schedule: {{ .Parameters.s3.backupSchedule | default "5 5 * * *" | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mongodump
+            image: mongo:{{ .Parameters.version | default "7.0" }}
+            command:
+            - /bin/sh
+            - -c
+            - |
+              mongodump --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local --out=/backup/$(date +%Y%m%d_%H%M%S) && \
+              aws s3 sync /backup s3://{{ .Parameters.s3.bucket }}/{{ .Parameters.s3.backupPrefix }}/backups/{{ .Name }} --endpoint-url={{ .Parameters.s3.endpoint }} --region={{ .Parameters.s3.region }} && \
+              find /backup -type d -mtime +{{ .Parameters.s3.backupRetention | default 2 }} -exec rm -rf {} \;
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Parameters.s3.secretName }}
+                  key: {{ .Parameters.s3.accessKey | default "access_key_id" }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Parameters.s3.secretName }}
+                  key: {{ .Parameters.s3.secretKey | default "secret_key" }}
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+          volumes:
+          - name: backup
+            emptyDir: {}
+          restartPolicy: OnFailure
+{{- end }}
+
+{{- if .Parameters.restore.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Name }}-restore
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: mongorestore
+        image: mongo:{{ .Parameters.version | default "7.0" }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          aws s3 sync s3://{{ .Parameters.restore.bucket }}/{{ .Parameters.restore.backupPrefix }}/backups/{{ .Parameters.restore.cluster }} /restore --endpoint-url={{ .Parameters.restore.endpoint }} --region={{ .Parameters.restore.region }} && \
+          mongorestore --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local /restore/$(ls -t /restore | head -n1)
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Parameters.restore.secretName }}
+              key: {{ .Parameters.restore.accessKey | default "access_key_id" }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Parameters.restore.secretName }}
+              key: {{ .Parameters.restore.secretKey | default "secret_key" }}
+        volumeMounts:
+        - name: restore
+          mountPath: /restore
+      volumes:
+      - name: restore
+        emptyDir: {}
+      restartPolicy: OnFailure
 {{- end }}`))
 			return
 		}

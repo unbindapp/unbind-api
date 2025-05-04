@@ -11,6 +11,7 @@ import (
 	mocov1beta2 "github.com/cybozu-go/moco/api/v1beta2"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	mdbv1 "github.com/mongodb/mongodb-kubernetes-operator/api/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -77,6 +78,14 @@ func NewDatabaseRenderer() *DatabaseRenderer {
 		Kind:    "BackupPolicy",
 	}
 	r.RegisterCRD(mocoBackupPolicyGVK, &mocov1beta2.BackupPolicy{})
+
+	// MongoDB operator CRD
+	mongoDBGVK := schema.GroupVersionKind{
+		Group:   "mongodbcommunity.mongodb.com",
+		Version: "v1",
+		Kind:    "MongoDBCommunity",
+	}
+	r.RegisterCRD(mongoDBGVK, &mdbv1.MongoDBCommunity{})
 
 	return r
 }

@@ -1292,10 +1292,6 @@ func TestMySQLRendering(t *testing.T) {
 							Type:        "string",
 							Description: "Name of the cluster to restore from",
 						},
-						"restorePoint": {
-							Type:        "string",
-							Description: "Point-in-time (RFC3339) to restore to. Leave blank to restore the latest backup.",
-						},
 					},
 				},
 				"environment": {
@@ -1327,115 +1323,189 @@ metadata:
     unbind/usd-type: {{ .Definition.Type | quote }}
     unbind/usd-version: {{ .Definition.Version | quote }}
     unbind/usd-category: databases
-{{- range $k, $v := $labels }}
+    {{- range $k, $v := .Parameters.labels }}
     {{ $k }}: {{ $v }}
-{{- end }}
+    {{- end }}
 
 spec:
-  replicas: {{ $common.replicas | default 1 }}
+  members: {{ $common.replicas | default 1 }}
+  # Automatically select Standalone vs ReplicaSet based on replica count
+  type: {{ if gt ($common.replicas | default 1) 1 }}ReplicaSet{{ else }}Standalone{{ end }}
+  version: {{ .Parameters.version | default "8.4.4" | quote }}
+  
+  security:
+    authentication:
+      modes: ["SCRAM"]
+      ignoreUnknownUsers: true
 
-  podTemplate:
-    metadata:
-      labels:
-        # Propagate custom labels to pods
-{{- range $k, $v := $labels }}
-        {{ $k }}: {{ $v }}
-{{- end }}
+  statefulSet:
     spec:
-      containers:
-        - name: mysqld
-          image: {{ printf "ghcr.io/cybozu-go/moco/mysql:%s" (.Parameters.version | default "8.4.4") | quote }}
-          resources:
-            requests:
-              cpu:    {{ $common.resources.requests.cpu | default "10m"   | quote }}
-              memory: {{ $common.resources.requests.memory | default "10Mi"  | quote }}
-            limits:
-              cpu:    {{ $common.resources.limits.cpu | default "500m"  | quote }}
-              memory: {{ $common.resources.limits.memory | default "256Mi" | quote }}
-{{- if .Parameters.environment }}
-          env:
-{{- range $k, $v := .Parameters.environment }}
-            - name: {{ $k }}
-              value: {{ $v | quote }}
-{{- end }}
-{{- end }}
-  volumeClaimTemplates:
-    - metadata:
-        name: mysql-data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        resources:
-          requests:
-            storage: {{ $common.storage | default "1Gi" | quote }}
-{{- if $s3.enabled }}
-  backupPolicyName: {{ .Name }}-backup
+      template:
+        spec:
+          containers:
+            - name: mysqld
+              resources:
+                requests:
+                  cpu: {{ $common.resources.requests.cpu | default "10m" }}
+                  memory: {{ $common.resources.requests.memory | default "128Mi" }}
+                limits:
+                  cpu: {{ $common.resources.limits.cpu | default "500m" }}
+                  memory: {{ $common.resources.limits.memory | default "256Mi" }}
+              {{- if .Parameters.environment }}
+              env:
+                {{- range $key, $value := .Parameters.environment }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end }}
+              {{- end }}
+
+  additionalMongodConfig:
+    storage:
+      dbPath: /data/db
+      wiredTiger:
+        engineConfig:
+          cacheSizeGB: 0.25
+
+  # Configure storage correctly for Community Operator
+  storage:
+    wiredTiger:
+      engineConfig:
+        cacheSizeGB: 0.25
+    
+  # Set persistent storage options
+  persistent: true
+  podSpec:
+    persistence:
+      single:
+        storage: {{ $common.storage | default "1Gi" }}
+
+{{- if $common.exposeExternal }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Name }}-external
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ .Name }}
 {{- end }}
 
-{{- if $restore.enabled }}
-  restore:
-    sourceName:      {{ $restore.cluster }}
-    sourceNamespace: {{ .Namespace }}
-    restorePoint: {{ $restore.restorePoint | default (timeFormat .RFC3339 now) | quote }}
-    jobConfig:
-      serviceAccountName: default
-      bucketConfig:
-        bucketName:   {{ $restore.bucket | default $s3.bucket | quote }}
-        endpointURL:  {{ $restore.endpoint | default $s3.endpoint | quote }}
-        region:       {{ $restore.region   | default $s3.region   | quote }}
-        usePathStyle: true
-      env:
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: {{ $restore.secretName }}
-              key:  {{ $restore.accessKey | default "access_key_id" }}
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ $restore.secretName }}
-              key:  {{ $restore.secretKey | default "secret_key" }}
-      workVolume:
-        emptyDir: {}
-{{- end }}
----
 {{- if $s3.enabled }}
-apiVersion: moco.cybozu.com/v1beta2
-kind: BackupPolicy
+---
+apiVersion: batch/v1
+kind: CronJob
 metadata:
   name: {{ .Name }}-backup
   namespace: {{ .Namespace }}
   labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ .Name }}
     unbind/usd-type: {{ .Definition.Type | quote }}
     unbind/usd-version: {{ .Definition.Version | quote }}
     unbind/usd-category: databases
-{{- range $k, $v := $labels }}
-    {{ $k }}: {{ $v }}
-{{- end }}
-
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
 spec:
   schedule: {{ $s3.backupSchedule | default "5 5 * * *" | quote }}
-  jobConfig:
-    serviceAccountName: default
-    env:
-      - name: AWS_ACCESS_KEY_ID
-        valueFrom:
-          secretKeyRef:
-            name: {{ $s3.secretName }}
-            key:  {{ $s3.accessKey | default "access_key_id" }}
-      - name: AWS_SECRET_ACCESS_KEY
-        valueFrom:
-          secretKeyRef:
-            name: {{ $s3.secretName }}
-            key:  {{ $s3.secretKey | default "secret_key" }}
-    bucketConfig:
-      bucketName:  {{ $s3.bucket | quote }}
-      endpointURL: {{ $s3.endpoint | quote }}
-      region:      {{ $s3.region   | quote }}
-      usePathStyle: true
-    workVolume:
-      emptyDir: {}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mysqldump
+            image: mongo:{{ .Parameters.version | default "8.4.4" }}
+            command:
+            - /bin/sh
+            - -c
+            - |
+              mysqldump --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local --out=/backup/$(date +%Y%m%d_%H%M%S) && \
+              aws s3 sync /backup s3://{{ $s3.bucket }}/{{ $s3.backupPrefix }}/backups/{{ .Name }} --endpoint-url={{ $s3.endpoint }} --region={{ $s3.region }} && \
+              find /backup -type d -mtime +{{ $s3.backupRetention | default 2 }} -exec rm -rf {} \;
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $s3.secretName }}
+                  key: {{ $s3.accessKey | default "access_key_id" }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $s3.secretName }}
+                  key: {{ $s3.secretKey | default "secret_key" }}
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+          volumes:
+          - name: backup
+            emptyDir: {}
+          restartPolicy: OnFailure
 {{- end }}
-`,
+
+{{- if $restore.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Name }}-restore
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: mongorestore
+        image: mongo:{{ .Parameters.version | default "8.4.4" }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          aws s3 sync s3://{{ $restore.bucket }}/{{ $restore.backupPrefix }}/backups/{{ $restore.cluster }} /restore --endpoint-url={{ $restore.endpoint }} --region={{ $restore.region }} && \
+          mongorestore --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local /restore/$(ls -t /restore | head -n1)
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ $restore.secretName }}
+              key: {{ $restore.accessKey | default "access_key_id" }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ $restore.secretName }}
+              key: {{ $restore.secretKey | default "secret_key" }}
+        volumeMounts:
+        - name: restore
+          mountPath: /restore
+      volumes:
+      - name: restore
+        emptyDir: {}
+      restartPolicy: OnFailure
+{{- end }}`,
 	}
 
 	// Create a renderer
@@ -1454,7 +1524,7 @@ spec:
 					"storage":  "10Gi",
 				},
 			},
-			Definition: Definition{ // Pass definition info to context
+			Definition: Definition{
 				Type:    mysqlTemplate.Type,
 				Version: mysqlTemplate.Version,
 			},
@@ -1470,18 +1540,21 @@ spec:
 		assert.Contains(t, result, "kind: MySQLCluster")
 		assert.Contains(t, result, "name: test-mysql")
 		assert.Contains(t, result, "namespace: test-ns")
-		assert.Contains(t, result, "replicas: 3")
-		assert.Contains(t, result, `image: "ghcr.io/cybozu-go/moco/mysql:8.4.4"`) // Default version
+		assert.Contains(t, result, "members: 3")
+		assert.Contains(t, result, "type: ReplicaSet")
+		assert.Contains(t, result, `version: "8.4.4"`)
 		assert.Contains(t, result, `storage: "10Gi"`)
-		assert.Contains(t, result, `cpu:    "10m"`)   // Corrected spacing
-		assert.Contains(t, result, `memory: "10Mi"`)  // Corrected spacing
-		assert.Contains(t, result, `cpu:    "500m"`)  // Corrected spacing
-		assert.Contains(t, result, `memory: "256Mi"`) // Corrected spacing
+		assert.Contains(t, result, `cpu: 10m`)
+		assert.Contains(t, result, `memory: 128Mi`)
+		assert.Contains(t, result, `cpu: 500m`)
+		assert.Contains(t, result, `memory: 256Mi`)
 
-		// BackupPolicy should not be present
-		assert.NotContains(t, result, "kind: BackupPolicy")
-		// Restore section should not be present
-		assert.NotContains(t, result, "restore:")
+		// External service should not be present
+		assert.NotContains(t, result, "kind: Service")
+		// Backup CronJob should not be present
+		assert.NotContains(t, result, "kind: CronJob")
+		// Restore Job should not be present
+		assert.NotContains(t, result, "kind: Job")
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
@@ -1517,23 +1590,24 @@ spec:
 
 		t.Log("MySQL S3 Backup Render Result:\n", result)
 
-		// Verify MySQLCluster has backupPolicyName
+		// Verify MySQLCluster object
 		assert.Contains(t, result, "kind: MySQLCluster")
-		assert.Contains(t, result, "backupPolicyName: test-mysql-backup-backup")
+		assert.Contains(t, result, "type: Standalone")
 
-		// Verify BackupPolicy object exists and has correct details
-		assert.Contains(t, result, "---")
-		assert.Contains(t, result, "kind: BackupPolicy")
+		// Verify CronJob for backup
+		assert.Contains(t, result, "kind: CronJob")
 		assert.Contains(t, result, "name: test-mysql-backup-backup")
-		assert.Contains(t, result, "namespace: backup-ns")
-		assert.Contains(t, result, `schedule: "5 5 * * *"`)              // Default schedule
-		assert.Contains(t, result, `bucketName:  "mysql-backup-bucket"`) // Corrected spacing
-		assert.Contains(t, result, `endpointURL: "https://minio.backup.com"`)
-		assert.Contains(t, result, `region:      "backup-region"`) // Corrected spacing
-		assert.Contains(t, result, "name: backup-s3-secret")       // Secret name in BackupPolicy env
+		assert.Contains(t, result, `schedule: "5 5 * * *"`)
+		assert.Contains(t, result, "mysqldump")
+		assert.Contains(t, result, "mysql-backup-bucket")
+		assert.Contains(t, result, "https://minio.backup.com")
+		assert.Contains(t, result, "backup-region")
+		assert.Contains(t, result, "name: backup-s3-secret")
 
-		// Restore should not be present
-		assert.NotContains(t, result, "restore:")
+		// External service should not be present
+		assert.NotContains(t, result, "kind: Service")
+		// Restore Job should not be present
+		assert.NotContains(t, result, "kind: Job")
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
@@ -1557,7 +1631,6 @@ spec:
 					"secretName": "restore-s3-secret",
 					"endpoint":   "https://minio.restore.com",
 					"region":     "restore-region",
-					// "restorePoint": "specific-time", // Optional
 				},
 			},
 			Definition: Definition{
@@ -1571,47 +1644,39 @@ spec:
 
 		t.Log("MySQL Restore Render Result:\n", result)
 
-		// Verify MySQLCluster has restore section
+		// Verify MySQLCluster object
 		assert.Contains(t, result, "kind: MySQLCluster")
-		assert.Contains(t, result, "restore:")
-		assert.Contains(t, result, "sourceName:      source-mysql-cluster")
-		assert.Contains(t, result, "sourceNamespace: restore-ns")
-		assert.Contains(t, result, `bucketName:   "restore-from-bucket"`)
-		assert.Contains(t, result, `endpointURL:  "https://minio.restore.com"`)
-		assert.Contains(t, result, `region:       "restore-region"`)
-		assert.Contains(t, result, "name: restore-s3-secret") // Secret name in restore env
-		// Check for default restorePoint (uses sprig now, format varies)
-		assert.Contains(t, result, "restorePoint:")
+		assert.Contains(t, result, "type: Standalone")
 
-		// BackupPolicy should not be present
-		assert.NotContains(t, result, "kind: BackupPolicy")
-		assert.NotContains(t, result, "backupPolicyName:")
+		// Verify Job for restore
+		assert.Contains(t, result, "kind: Job")
+		assert.Contains(t, result, "name: test-mysql-restore-restore")
+		assert.Contains(t, result, "mongorestore")
+		assert.Contains(t, result, "restore-from-bucket")
+		assert.Contains(t, result, "https://minio.restore.com")
+		assert.Contains(t, result, "restore-region")
+		assert.Contains(t, result, "name: restore-s3-secret")
+		assert.Contains(t, result, "source-mysql-cluster")
+
+		// External service should not be present
+		assert.NotContains(t, result, "kind: Service")
+		// Backup CronJob should not be present
+		assert.NotContains(t, result, "kind: CronJob")
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
-		assert.Len(t, objects, 1)
+		assert.Len(t, objects, 2)
 	})
 
-	t.Run("MySQL Rendering with Restore and S3 (Restore overrides bucket)", func(t *testing.T) {
+	t.Run("MySQL Rendering with External Service", func(t *testing.T) {
 		ctx := &RenderContext{
-			Name:      "test-mysql-restore-s3",
-			Namespace: "restore-s3-ns",
+			Name:      "test-mysql-external",
+			Namespace: "external-ns",
 			Parameters: map[string]interface{}{
-				"secretName": "mysql-creds-restore-s3",
 				"common": map[string]interface{}{
-					"replicas": 1,
-				},
-				"s3": map[string]interface{}{
-					"enabled":    true,
-					"bucket":     "backup-bucket-only",
-					"secretName": "backup-s3-secret-only",
-				},
-				"restore": map[string]interface{}{
-					"enabled":    true,
-					"cluster":    "source-mysql-cluster-again",
-					"bucket":     "restore-bucket-preferred", // Restore bucket takes precedence
-					"secretName": "restore-s3-secret-preferred",
+					"replicas":       1,
+					"exposeExternal": true,
 				},
 			},
 			Definition: Definition{
@@ -1623,21 +1688,22 @@ spec:
 		result, err := renderer.Render(mysqlTemplate, ctx)
 		require.NoError(t, err)
 
-		t.Log("MySQL Restore & S3 Render Result:\n", result)
+		t.Log("MySQL External Service Render Result:\n", result)
 
-		// Verify MySQLCluster has backupPolicyName and restore section
+		// Verify MySQLCluster object
 		assert.Contains(t, result, "kind: MySQLCluster")
-		assert.Contains(t, result, "backupPolicyName: test-mysql-restore-s3-backup")
-		assert.Contains(t, result, "restore:")
-		assert.Contains(t, result, "sourceName:      source-mysql-cluster-again")
-		// Check that restore bucket is used in restore section
-		assert.Contains(t, result, `bucketName:   "restore-bucket-preferred"`)
-		assert.Contains(t, result, "name: restore-s3-secret-preferred")
+		assert.Contains(t, result, "type: Standalone")
 
-		// Verify BackupPolicy uses S3 bucket
-		assert.Contains(t, result, "kind: BackupPolicy")
-		assert.Contains(t, result, `bucketName:  "backup-bucket-only"`)
-		assert.Contains(t, result, "name: backup-s3-secret-only")
+		// Verify Service for external access
+		assert.Contains(t, result, "kind: Service")
+		assert.Contains(t, result, "name: test-mysql-external-external")
+		assert.Contains(t, result, "type: LoadBalancer")
+		assert.Contains(t, result, "port: 3306")
+		assert.Contains(t, result, "targetPort: 3306")
+
+		// Backup and restore should not be present
+		assert.NotContains(t, result, "kind: CronJob")
+		assert.NotContains(t, result, "kind: Job")
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
@@ -1674,16 +1740,16 @@ spec:
 
 		t.Log("MySQL Custom Labels/Env Render Result:\n", result)
 
-		// Verify labels in MySQLCluster metadata and podTemplate metadata
+		// Verify labels in MySQLCluster metadata
 		assert.Contains(t, result, "kind: MySQLCluster")
-		assert.Contains(t, result, `app.kubernetes.io/component: database`) // Unquoted value in output
-		assert.Contains(t, result, `environment: staging`)                  // Unquoted value in output
+		assert.Contains(t, result, `app.kubernetes.io/component: database`)
+		assert.Contains(t, result, `environment: staging`)
 
-		// Verify environment variables in podTemplate container spec
-		assert.Contains(t, result, `name: MYSQL_MAX_CONNECTIONS`)         // Check name
-		assert.Contains(t, result, `value: "500"`)                        // Check value
-		assert.Contains(t, result, `name: MYSQL_INNODB_BUFFER_POOL_SIZE`) // Check name
-		assert.Contains(t, result, `value: "1G"`)                         // Check value
+		// Verify environment variables in container spec
+		assert.Contains(t, result, `name: MYSQL_MAX_CONNECTIONS`)
+		assert.Contains(t, result, `value: "500"`)
+		assert.Contains(t, result, `name: MYSQL_INNODB_BUFFER_POOL_SIZE`)
+		assert.Contains(t, result, `value: "1G"`)
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
@@ -1696,8 +1762,7 @@ spec:
 			Name:      "test-mysql-resources",
 			Namespace: "resource-ns",
 			Parameters: map[string]interface{}{
-				"secretName": "mysql-creds-resources",
-				"version":    "8.0.41", // Custom version
+				"version": "8.0.41", // Custom version
 				"common": map[string]interface{}{
 					"replicas": 2,
 					"storage":  "50Gi",
@@ -1726,14 +1791,693 @@ spec:
 
 		// Verify MySQLCluster object
 		assert.Contains(t, result, "kind: MySQLCluster")
-		assert.Contains(t, result, "replicas: 2")
-		assert.Contains(t, result, `image: "ghcr.io/cybozu-go/moco/mysql:8.0.41"`) // Custom version
+		assert.Contains(t, result, "members: 2")
+		assert.Contains(t, result, "type: ReplicaSet")
+		assert.Contains(t, result, `version: "8.0.41"`)
 		assert.Contains(t, result, `storage: "50Gi"`)
 		// Check custom resources
-		assert.Contains(t, result, `cpu:    "500m"`)  // Corrected spacing
-		assert.Contains(t, result, `memory: "1Gi"`)   // Corrected spacing
-		assert.Contains(t, result, `cpu:    "2000m"`) // Corrected spacing
-		assert.Contains(t, result, `memory: "4Gi"`)   // Corrected spacing
+		assert.Contains(t, result, `cpu: 500m`)
+		assert.Contains(t, result, `memory: 1Gi`)
+		assert.Contains(t, result, `cpu: 2000m`)
+		assert.Contains(t, result, `memory: 4Gi`)
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+}
+
+func TestMongoDBRendering(t *testing.T) {
+	// Create a sample MongoDB template
+	mongodbTemplate := &Definition{
+		Name:        "MongoDB Database",
+		Category:    DB_CATEGORY,
+		Port:        27017,
+		Description: "Standard MongoDB database using MongoDB Community Operator",
+		Type:        "mongodb-operator",
+		Version:     "1.0.0",
+		Schema: DefinitionParameterSchema{
+			Properties: map[string]ParameterProperty{
+				"common": {
+					Type: "object",
+					Properties: map[string]ParameterProperty{
+						"replicas": {
+							Type:        "integer",
+							Description: "Number of replicas",
+							Default:     1,
+							Minimum:     utils.ToPtr[float64](1),
+							Maximum:     utils.ToPtr[float64](5),
+						},
+						"storage": {
+							Type:        "string",
+							Description: "Storage size",
+							Default:     "1Gi",
+						},
+						"exposeExternal": {
+							Type:        "boolean",
+							Description: "Expose external service",
+							Default:     false,
+						},
+						"resources": {
+							Type:        "object",
+							Description: "Resource requirements",
+							Properties: map[string]ParameterProperty{
+								"requests": {
+									Type: "object",
+									Properties: map[string]ParameterProperty{
+										"cpu": {
+											Type:        "string",
+											Description: "CPU request",
+											Default:     "100m",
+										},
+										"memory": {
+											Type:        "string",
+											Description: "Memory request",
+											Default:     "128Mi",
+										},
+									},
+								},
+								"limits": {
+									Type: "object",
+									Properties: map[string]ParameterProperty{
+										"cpu": {
+											Type:        "string",
+											Description: "CPU limit",
+											Default:     "500m",
+										},
+										"memory": {
+											Type:        "string",
+											Description: "Memory limit",
+											Default:     "256Mi",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"labels": {
+					Type:        "object",
+					Description: "Custom labels to add to the MongoDB resource",
+					AdditionalProperties: &ParameterProperty{
+						Type: "string",
+					},
+				},
+				"version": {
+					Type:        "string",
+					Description: "MongoDB version",
+					Default:     "7.0",
+					Enum:        []string{"6.0", "7.0"},
+				},
+				"s3": {
+					Type: "object",
+					Properties: map[string]ParameterProperty{
+						"enabled": {
+							Type:        "boolean",
+							Description: "Enable S3 backups",
+							Default:     false,
+						},
+						"bucket": {
+							Type:        "string",
+							Description: "S3 bucket name",
+						},
+						"endpoint": {
+							Type:        "string",
+							Description: "S3 endpoint URL",
+							Default:     "https://s3.amazonaws.com",
+						},
+						"region": {
+							Type:        "string",
+							Description: "S3 region",
+							Default:     "",
+						},
+						"secretName": {
+							Type:        "string",
+							Description: "Name of the secret that contains the S3 credentials",
+							Default:     "",
+						},
+						"accessKey": {
+							Type:        "string",
+							Description: "S3 access key from the secret",
+							Default:     "access_key_id",
+						},
+						"secretKey": {
+							Type:        "string",
+							Description: "S3 secret key from the secret",
+							Default:     "secret_key",
+						},
+						"backupRetention": {
+							Type:        "integer",
+							Description: "Number of backups to retain",
+							Default:     2,
+						},
+						"backupSchedule": {
+							Type:        "string",
+							Description: "Cron schedule for backups",
+							Default:     "5 5 * * *",
+						},
+						"backupPrefix": {
+							Type:        "string",
+							Description: "Optional prefix for backup files",
+							Default:     "",
+						},
+					},
+				},
+				"restore": {
+					Type: "object",
+					Properties: map[string]ParameterProperty{
+						"enabled": {
+							Type:        "boolean",
+							Description: "Turn *on* clone/restore logic",
+							Default:     false,
+						},
+						"bucket": {
+							Type:        "string",
+							Description: "S3 bucket that holds the base-backups/WAL to restore from",
+						},
+						"endpoint": {
+							Type:        "string",
+							Description: "S3 endpoint URL",
+							Default:     "https://s3.amazonaws.com",
+						},
+						"region": {
+							Type:        "string",
+							Description: "S3 region",
+							Default:     "",
+						},
+						"secretName": {
+							Type:        "string",
+							Description: "Name of the secret that contains the S3 credentials",
+							Default:     "",
+						},
+						"accessKey": {
+							Type:        "string",
+							Description: "S3 access key from the secret",
+							Default:     "access_key_id",
+						},
+						"secretKey": {
+							Type:        "string",
+							Description: "S3 secret key from the secret",
+							Default:     "secret_key",
+						},
+						"backupPrefix": {
+							Type:        "string",
+							Description: "Optional prefix for backup files",
+							Default:     "",
+						},
+						"cluster": {
+							Type:        "string",
+							Description: "Name of the cluster to restore from",
+						},
+					},
+				},
+				"environment": {
+					Type:        "object",
+					Description: "Environment variables to be set in the MongoDB container",
+					AdditionalProperties: &ParameterProperty{
+						Type: "string",
+					},
+					Default: map[string]interface{}{},
+				},
+			},
+			Required: []string{"common"},
+		},
+		Content: `apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+  labels:
+    # Operator labels
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    # usd-specific labels
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+
+spec:
+  members: {{ .Parameters.common.replicas | default 1 }}
+  # Automatically select Standalone vs ReplicaSet based on replica count
+  type: {{ if gt (.Parameters.common.replicas | default 1) 1 }}ReplicaSet{{ else }}Standalone{{ end }}
+  version: {{ .Parameters.version | default "7.0" | quote }}
+  
+  security:
+    authentication:
+      modes: ["SCRAM"]
+      ignoreUnknownUsers: true
+
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongod
+              resources:
+                requests:
+                  cpu: {{ .Parameters.common.resources.requests.cpu | default "100m" }}
+                  memory: {{ .Parameters.common.resources.requests.memory | default "128Mi" }}
+                limits:
+                  cpu: {{ .Parameters.common.resources.limits.cpu | default "500m" }}
+                  memory: {{ .Parameters.common.resources.limits.memory | default "256Mi" }}
+              {{- if .Parameters.environment }}
+              env:
+                {{- range $key, $value := .Parameters.environment }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end }}
+              {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Parameters.common.storage | default "1Gi" | quote }}
+{{- if .Parameters.s3.enabled }}
+  backupPolicyName: {{ .Name }}-backup
+{{- end }}
+
+{{- if .Parameters.restore.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Name }}-restore
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: mongorestore
+        image: mongo:{{ .Parameters.version | default "7.0" }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          aws s3 sync s3://{{ .Parameters.restore.bucket }}/{{ .Parameters.restore.backupPrefix }}/backups/{{ .Parameters.restore.cluster }} /restore --endpoint-url={{ .Parameters.restore.endpoint }} --region={{ .Parameters.restore.region }} && \
+          mongorestore --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local /restore/$(ls -t /restore | head -n1)
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Parameters.restore.secretName }}
+              key: {{ .Parameters.restore.accessKey | default "access_key_id" }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Parameters.restore.secretName }}
+              key: {{ .Parameters.restore.secretKey | default "secret_key" }}
+        volumeMounts:
+        - name: restore
+          mountPath: /restore
+      volumes:
+      - name: restore
+        emptyDir: {}
+      restartPolicy: OnFailure
+{{- end }}
+---
+{{- if .Parameters.s3.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Name }}-backup
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+spec:
+  schedule: {{ .Parameters.s3.backupSchedule | default "5 5 * * *" | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: mongodump
+            image: mongo:{{ .Parameters.version | default "7.0" }}
+            command:
+            - /bin/sh
+            - -c
+            - |
+              mongodump --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local --out=/backup/$(date +%Y%m%d_%H%M%S) && \
+              aws s3 sync /backup s3://{{ .Parameters.s3.bucket }}/{{ .Parameters.s3.backupPrefix }}/backups/{{ .Name }} --endpoint-url={{ .Parameters.s3.endpoint }} --region={{ .Parameters.s3.region }} && \
+              find /backup -type d -mtime +{{ .Parameters.s3.backupRetention | default 2 }} -exec rm -rf {} \;
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Parameters.s3.secretName }}
+                  key: {{ .Parameters.s3.accessKey | default "access_key_id" }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Parameters.s3.secretName }}
+                  key: {{ .Parameters.s3.secretKey | default "secret_key" }}
+            volumeMounts:
+            - name: backup
+              mountPath: /backup
+          volumes:
+          - name: backup
+            emptyDir: {}
+          restartPolicy: OnFailure
+{{- end }}
+
+{{- if .Parameters.common.exposeExternal }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Name }}-external
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 27017
+      targetPort: 27017
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+{{- end }}`,
+	}
+
+	// Create a renderer
+	renderer := NewDatabaseRenderer()
+
+	t.Run("Basic MongoDB Rendering", func(t *testing.T) {
+		// Create render context with minimal parameters
+		ctx := &RenderContext{
+			Name:      "test-mongodb",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 3,
+				},
+			},
+			Definition: Definition{
+				Type:    "mongodb-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(mongodbTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("Basic MongoDB Render Result:\n", result)
+
+		// Verify MongoDBCommunity object
+		assert.Contains(t, result, "kind: MongoDBCommunity")
+		assert.Contains(t, result, "name: test-mongodb")
+		assert.Contains(t, result, "namespace: default")
+		assert.Contains(t, result, "members: 3")
+		assert.Contains(t, result, "type: ReplicaSet")
+		assert.Contains(t, result, `version: "7.0"`)
+		assert.Contains(t, result, `storage: "1Gi"`)
+		assert.Contains(t, result, `cpu: 100m`)
+		assert.Contains(t, result, `memory: 128Mi`)
+		assert.Contains(t, result, `cpu: 500m`)
+		assert.Contains(t, result, `memory: 256Mi`)
+
+		// External service should not be present
+		assert.NotContains(t, result, "kind: Service")
+		// Backup CronJob should not be present
+		assert.NotContains(t, result, "kind: CronJob")
+		// Restore Job should not be present
+		assert.NotContains(t, result, "kind: Job")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("MongoDB Rendering with S3 Backup", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mongodb-backup",
+			Namespace: "backup-ns",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"s3": map[string]interface{}{
+					"enabled":    true,
+					"bucket":     "mongodb-backup-bucket",
+					"secretName": "backup-s3-secret",
+					"endpoint":   "https://minio.backup.com",
+					"region":     "backup-region",
+				},
+			},
+			Definition: Definition{
+				Type:    "mongodb-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		result, err := renderer.Render(mongodbTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MongoDB S3 Backup Render Result:\n", result)
+
+		// Verify MongoDBCommunity object
+		assert.Contains(t, result, "kind: MongoDBCommunity")
+		assert.Contains(t, result, "type: Standalone")
+
+		// Verify CronJob for backup
+		assert.Contains(t, result, "kind: CronJob")
+		assert.Contains(t, result, "name: test-mongodb-backup-backup")
+		assert.Contains(t, result, `schedule: "5 5 * * *"`)
+		assert.Contains(t, result, "mongodump")
+		assert.Contains(t, result, "mongodb-backup-bucket")
+		assert.Contains(t, result, "https://minio.backup.com")
+		assert.Contains(t, result, "backup-region")
+		assert.Contains(t, result, "name: backup-s3-secret")
+
+		// External service should not be present
+		assert.NotContains(t, result, "kind: Service")
+		// Restore Job should not be present
+		assert.NotContains(t, result, "kind: Job")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 2)
+	})
+
+	t.Run("MongoDB Rendering with Restore", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mongodb-restore",
+			Namespace: "restore-ns",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"restore": map[string]interface{}{
+					"enabled":    true,
+					"cluster":    "source-mongodb-cluster",
+					"bucket":     "restore-from-bucket",
+					"secretName": "restore-s3-secret",
+					"endpoint":   "https://minio.restore.com",
+					"region":     "restore-region",
+				},
+			},
+			Definition: Definition{
+				Type:    "mongodb-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		result, err := renderer.Render(mongodbTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MongoDB Restore Render Result:\n", result)
+
+		// Verify MongoDBCommunity object
+		assert.Contains(t, result, "kind: MongoDBCommunity")
+		assert.Contains(t, result, "type: Standalone")
+
+		// Verify Job for restore
+		assert.Contains(t, result, "kind: Job")
+		assert.Contains(t, result, "name: test-mongodb-restore-restore")
+		assert.Contains(t, result, "mongorestore")
+		assert.Contains(t, result, "restore-from-bucket")
+		assert.Contains(t, result, "https://minio.restore.com")
+		assert.Contains(t, result, "restore-region")
+		assert.Contains(t, result, "name: restore-s3-secret")
+		assert.Contains(t, result, "source-mongodb-cluster")
+
+		// External service should not be present
+		assert.NotContains(t, result, "kind: Service")
+		// Backup CronJob should not be present
+		assert.NotContains(t, result, "kind: CronJob")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 2)
+	})
+
+	t.Run("MongoDB Rendering with External Service", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mongodb-external",
+			Namespace: "external-ns",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas":       1,
+					"exposeExternal": true,
+				},
+			},
+			Definition: Definition{
+				Type:    "mongodb-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		result, err := renderer.Render(mongodbTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MongoDB External Service Render Result:\n", result)
+
+		// Verify MongoDBCommunity object
+		assert.Contains(t, result, "kind: MongoDBCommunity")
+		assert.Contains(t, result, "type: Standalone")
+
+		// Verify Service for external access
+		assert.Contains(t, result, "kind: Service")
+		assert.Contains(t, result, "name: test-mongodb-external-external")
+		assert.Contains(t, result, "type: LoadBalancer")
+		assert.Contains(t, result, "port: 27017")
+		assert.Contains(t, result, "targetPort: 27017")
+
+		// Backup and restore should not be present
+		assert.NotContains(t, result, "kind: CronJob")
+		assert.NotContains(t, result, "kind: Job")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 2)
+	})
+
+	t.Run("MongoDB Rendering with Custom Labels and Env", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mongodb-custom",
+			Namespace: "custom-ns",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"labels": map[string]interface{}{
+					"app.kubernetes.io/component": "database",
+					"environment":                 "staging",
+				},
+				"environment": map[string]interface{}{
+					"MONGODB_MAX_CONNECTIONS":         "500",
+					"MONGODB_INNODB_BUFFER_POOL_SIZE": "1G",
+				},
+			},
+			Definition: Definition{
+				Type:    "mongodb-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		result, err := renderer.Render(mongodbTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MongoDB Custom Labels/Env Render Result:\n", result)
+
+		// Verify labels in MongoDBCommunity metadata
+		assert.Contains(t, result, "kind: MongoDBCommunity")
+		assert.Contains(t, result, `app.kubernetes.io/component: database`)
+		assert.Contains(t, result, `environment: staging`)
+
+		// Verify environment variables in container spec
+		assert.Contains(t, result, `name: MONGODB_MAX_CONNECTIONS`)
+		assert.Contains(t, result, `value: "500"`)
+		assert.Contains(t, result, `name: MONGODB_INNODB_BUFFER_POOL_SIZE`)
+		assert.Contains(t, result, `value: "1G"`)
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("MongoDB Rendering with Custom Resources and Version", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mongodb-resources",
+			Namespace: "resource-ns",
+			Parameters: map[string]interface{}{
+				"version": "7.0", // Custom version
+				"common": map[string]interface{}{
+					"replicas": 2,
+					"storage":  "5Gi",
+					"resources": map[string]interface{}{
+						"requests": map[string]interface{}{
+							"cpu":    "500m",
+							"memory": "1Gi",
+						},
+						"limits": map[string]interface{}{
+							"cpu":    "2000m",
+							"memory": "4Gi",
+						},
+					},
+				},
+			},
+			Definition: Definition{
+				Type:    "mongodb-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		result, err := renderer.Render(mongodbTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MongoDB Custom Resources/Version Render Result:\n", result)
+
+		// Verify MongoDBCommunity object
+		assert.Contains(t, result, "kind: MongoDBCommunity")
+		assert.Contains(t, result, "members: 2")
+		assert.Contains(t, result, "type: ReplicaSet")
+		assert.Contains(t, result, `version: "7.0"`)
+		assert.Contains(t, result, `storage: "5Gi"`)
+		// Check custom resources
+		assert.Contains(t, result, `cpu: 500m`)
+		assert.Contains(t, result, `memory: 1Gi`)
+		assert.Contains(t, result, `cpu: 2000m`)
+		assert.Contains(t, result, `memory: 4Gi`)
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)
