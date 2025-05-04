@@ -211,7 +211,7 @@ func main() {
 				},
 				{
 					Name:  "Project & Environment",
-					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name)
+					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 			},
 		}

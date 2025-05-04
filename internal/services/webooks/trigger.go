@@ -48,11 +48,11 @@ func (self *WebhookLevel) DecimalColor() *string {
 	case WebhookLevelDeploymentSucceeded:
 		return utils.ToPtr("7983737")
 	case WebhookLevelError:
-		return utils.ToPtr("9110797")
+		return utils.ToPtr("15692145")
 	case WebhookLevelWarning:
-		return utils.ToPtr("8396800")
+		return utils.ToPtr("13738823")
 	default:
-		return utils.ToPtr("802316") // Success
+		return utils.ToPtr("7983737") // Success
 	}
 }
 
