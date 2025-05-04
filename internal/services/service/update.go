@@ -260,20 +260,6 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			},
 		}
 
-		if input.Name != nil {
-			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
-				Name:  "Name",
-				Value: *input.Name,
-			})
-		}
-
-		if input.Description != nil {
-			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
-				Name:  "Description",
-				Value: *input.Description,
-			})
-		}
-
 		if input.GitBranch != nil {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 				Name:  "Git Branch",

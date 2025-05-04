@@ -110,18 +110,6 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 			},
 		}
 
-		if service.Description != "" {
-			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
-				Name:  "Description",
-				Value: service.Description,
-			})
-		}
-
-		data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
-			Name:  "Type",
-			Value: string(service.Type),
-		})
-
 		if err := self.webhookService.TriggerWebhooks(context.Background(), level, event, data); err != nil {
 			log.Errorf("Failed to trigger webhook %s: %v", event, err)
 		}
