@@ -92,9 +92,8 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 			return
 		}
 		data := webhooks_service.WebhookData{
-			Title:       "Service Deleted",
-			Url:         url,
-			Description: fmt.Sprintf("A service has been deleted in project %s by %s", project.Name, user.Email),
+			Title: "Service Deleted",
+			Url:   url,
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service",
@@ -103,6 +102,10 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 				{
 					Name:  "Project & Environment",
 					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
+				},
+				{
+					Name:  "Deleted By",
+					Value: user.Email,
 				},
 			},
 		}
