@@ -77,7 +77,7 @@ func (self *ProjectService) UpdateProject(ctx context.Context, requesterUserID u
 			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
 			return
 		}
-		data := webhooks_service.WebookData{
+		data := webhooks_service.WebhookData{
 			Title:       "Project Updated",
 			Url:         url,
 			Description: fmt.Sprintf("A project has been updated in team %s by %s", project.Edges.Team.Name, user.Email),

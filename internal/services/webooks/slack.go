@@ -13,7 +13,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-func (self *WebhooksService) sendSlackWebhook(level WebhookLevel, event schema.WebhookEvent, data WebookData, url string) error {
+func (self *WebhooksService) sendSlackWebhook(level WebhookLevel, event schema.WebhookEvent, data WebhookData, url string) error {
 	// Convert to slack format
 	fields := make([]*SlackField, len(data.Fields))
 	for i, entry := range data.Fields {

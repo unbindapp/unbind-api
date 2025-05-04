@@ -15,7 +15,7 @@ import (
 
 // Alternative implementation using pre-formatted text blocks with monospace fonts
 // to create a more visually distinctive notification similar to Discord embeds
-func (self *WebhooksService) sendTelegramWebhook(level WebhookLevel, event schema.WebhookEvent, data WebookData, botURL string) error {
+func (self *WebhooksService) sendTelegramWebhook(level WebhookLevel, event schema.WebhookEvent, data WebhookData, botURL string) error {
 	// Extract chat_id from the URL
 	parsedURL, err := url.Parse(botURL)
 	if err != nil {

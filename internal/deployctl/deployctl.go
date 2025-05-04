@@ -386,7 +386,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 	// Trigger webhook
 	go func() {
 		event := schema.WebhookEventDeploymentQueued
-		level := webhooks_service.WebhookLevelInfo
+		level := webhooks_service.WebhookLevelDeploymentQueued
 
 		// Get service with edges
 		service, err := self.repo.Service().GetByID(context.Background(), req.ServiceID)
@@ -405,7 +405,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		url := basePath + "?environment=" + service.EnvironmentID.String() +
 			"&service=" + service.ID.String() +
 			"&deployment=" + job.ID.String()
-		data := webhooks_service.WebookData{
+		data := webhooks_service.WebhookData{
 			Title:       "Deployment Queued",
 			Url:         url,
 			Description: fmt.Sprintf("A new deployment has been queued for %s", service.Name),
@@ -415,12 +415,8 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 					Value: string(service.Type),
 				},
 				{
-					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
-				},
-				{
-					Name:  "Builder",
-					Value: string(service.Edges.ServiceConfig.Builder),
+					Name:  "Project & Environment",
+					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 			},
 		}
@@ -488,7 +484,7 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 
 			// Construct URL
 			url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+jobID.String())
-			data := webhooks_service.WebookData{
+			data := webhooks_service.WebhookData{
 				Title:       "Deployment Cancelled",
 				Url:         url,
 				Description: fmt.Sprintf("A deployment has been cancelled for %s", service.Name),
@@ -498,12 +494,8 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 						Value: string(service.Type),
 					},
 					{
-						Name:  "Environment",
-						Value: service.Edges.Environment.Name,
-					},
-					{
-						Name:  "Builder",
-						Value: string(service.Edges.ServiceConfig.Builder),
+						Name:  "Project & Environment",
+						Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 					},
 				},
 			}

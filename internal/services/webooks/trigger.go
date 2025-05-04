@@ -13,7 +13,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-type WebookData struct {
+type WebhookData struct {
 	Title       string             `json:"title"`
 	Url         string             `json:"url"`
 	Description string             `json:"description"`
@@ -28,13 +28,25 @@ type WebhookDataField struct {
 type WebhookLevel string
 
 const (
-	WebhookLevelError   WebhookLevel = "error"
-	WebhookLevelWarning WebhookLevel = "warning"
-	WebhookLevelInfo    WebhookLevel = "info"
+	WebhookLevelError               WebhookLevel = "error"
+	WebhookLevelWarning             WebhookLevel = "warning"
+	WebhookLevelInfo                WebhookLevel = "info"
+	WebhookLevelDeploymentQueued    WebhookLevel = "queued"
+	WebhookLevelDeploymentBuilding  WebhookLevel = "building"
+	WebhookLevelDeploymentSucceeded WebhookLevel = "succeeded"
+	WebhookLevelDeploymentFailed    WebhookLevel = "failed"
 )
 
 func (self *WebhookLevel) DecimalColor() *string {
 	switch *self {
+	case WebhookLevelDeploymentQueued:
+		return utils.ToPtr("13738823")
+	case WebhookLevelDeploymentBuilding:
+		return utils.ToPtr("6724095")
+	case WebhookLevelDeploymentFailed:
+		return utils.ToPtr("15692145")
+	case WebhookLevelDeploymentSucceeded:
+		return utils.ToPtr("7983737")
 	case WebhookLevelError:
 		return utils.ToPtr("9110797")
 	case WebhookLevelWarning:
@@ -70,7 +82,7 @@ func (level WebhookLevel) Emoji() string {
 	return levelBar
 }
 
-func (self *WebhooksService) TriggerWebhooks(ctx context.Context, level WebhookLevel, event schema.WebhookEvent, message WebookData) error {
+func (self *WebhooksService) TriggerWebhooks(ctx context.Context, level WebhookLevel, event schema.WebhookEvent, message WebhookData) error {
 	// Get all webhooks matching event
 	webhooks, err := self.repo.Webhooks().GetWebhooksForEvent(ctx, event)
 	if err != nil {
@@ -146,5 +158,5 @@ func (self *WebhooksService) TriggerWebhooks(ctx context.Context, level WebhookL
 type DefaultPayload struct {
 	Level WebhookLevel        `json:"level"`
 	Event schema.WebhookEvent `json:"event"`
-	Data  WebookData          `json:"data"`
+	Data  WebhookData         `json:"data"`
 }

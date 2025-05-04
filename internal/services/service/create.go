@@ -393,7 +393,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
 			return
 		}
-		data := webhooks_service.WebookData{
+		data := webhooks_service.WebhookData{
 			Title:       "Service Created",
 			Url:         url,
 			Description: fmt.Sprintf("A new service has been created in project %s by %s", service.Edges.Environment.Edges.Project.Name, user.Email),
@@ -403,8 +403,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 					Value: service.Name,
 				},
 				{
-					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Name:  "Project & Environment",
+					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 				{
 					Name:  "Service Type",

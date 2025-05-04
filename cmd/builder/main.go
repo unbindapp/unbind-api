@@ -33,7 +33,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 
 	// Trigger webhook
 	event := schema.WebhookEventDeploymentSucceeded
-	level := webhooks_service.WebhookLevelInfo
+	level := webhooks_service.WebhookLevelDeploymentSucceeded
 
 	// Get service with edges
 	serviceID, _ := uuid.Parse(cfg.ServiceRef)
@@ -54,7 +54,7 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 		"&service=" + service.ID.String() +
 		"&deployment=" + cfg.ServiceDeploymentID.String()
 
-	data := webhooks_service.WebookData{
+	data := webhooks_service.WebhookData{
 		Title:       "Deployment Succeeded",
 		Url:         url,
 		Description: fmt.Sprintf("A deployment has succeeded for %s", service.Name),
@@ -64,12 +64,8 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 				Value: string(service.Type),
 			},
 			{
-				Name:  "Environment",
-				Value: service.Edges.Environment.Name,
-			},
-			{
-				Name:  "Builder",
-				Value: string(service.Edges.ServiceConfig.Builder),
+				Name:  "Project & Environment",
+				Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 			},
 		},
 	}
@@ -89,7 +85,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 
 	// Trigger webhook
 	event := schema.WebhookEventDeploymentFailed
-	level := webhooks_service.WebhookLevelError
+	level := webhooks_service.WebhookLevelDeploymentFailed
 
 	// Get service with edges
 	serviceID, _ := uuid.Parse(cfg.ServiceRef)
@@ -109,7 +105,7 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 	url := basePath + "?environment=" + service.EnvironmentID.String() +
 		"&service=" + service.ID.String() +
 		"&deployment=" + cfg.ServiceDeploymentID.String()
-	data := webhooks_service.WebookData{
+	data := webhooks_service.WebhookData{
 		Title:       "Deployment Failed",
 		Url:         url,
 		Description: fmt.Sprintf("A build has failed for %s", service.Name),
@@ -119,12 +115,8 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 				Value: string(service.Type),
 			},
 			{
-				Name:  "Environment",
-				Value: service.Edges.Environment.Name,
-			},
-			{
-				Name:  "Builder",
-				Value: string(service.Edges.ServiceConfig.Builder),
+				Name:  "Project & Environment",
+				Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 			},
 			{
 				Name:  "Error message",
@@ -196,7 +188,7 @@ func main() {
 	// Trigger webhook
 	go func() {
 		event := schema.WebhookEventDeploymentBuilding
-		level := webhooks_service.WebhookLevelInfo
+		level := webhooks_service.WebhookLevelDeploymentBuilding
 
 		// Get service with edges
 		serviceID, _ := uuid.Parse(cfg.ServiceRef)
@@ -208,7 +200,7 @@ func main() {
 
 		// Construct URL
 		url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
-		data := webhooks_service.WebookData{
+		data := webhooks_service.WebhookData{
 			Title:       "Deployment Building",
 			Url:         url,
 			Description: fmt.Sprintf("A build has started for %s", service.Name),
@@ -218,12 +210,8 @@ func main() {
 					Value: string(service.Type),
 				},
 				{
-					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
-				},
-				{
-					Name:  "Builder",
-					Value: string(service.Edges.ServiceConfig.Builder),
+					Name:  "Project & Environment",
+					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name)
 				},
 			},
 		}

@@ -120,7 +120,7 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
 			return
 		}
-		data := webhooks_service.WebookData{
+		data := webhooks_service.WebhookData{
 			Title:       "Project Created",
 			Url:         url,
 			Description: fmt.Sprintf("A new project has been created in team %s by %s", project.Edges.Team.Name, user.Email),

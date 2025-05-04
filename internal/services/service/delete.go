@@ -91,7 +91,7 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 			log.Errorf("Failed to get user %s: %v", requesterUserID.String(), err)
 			return
 		}
-		data := webhooks_service.WebookData{
+		data := webhooks_service.WebhookData{
 			Title:       "Service Deleted",
 			Url:         url,
 			Description: fmt.Sprintf("A service has been deleted in project %s by %s", project.Name, user.Email),
@@ -101,8 +101,8 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 					Value: service.Name,
 				},
 				{
-					Name:  "Environment",
-					Value: service.Edges.Environment.Name,
+					Name:  "Project & Environment",
+					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 			},
 		}
