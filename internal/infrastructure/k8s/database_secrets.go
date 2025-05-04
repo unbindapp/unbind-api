@@ -90,15 +90,20 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 		url = fmt.Sprintf("postgresql://%s:%s@%s.%s:%d/postgres?sslmode=disable", username, password, service.KubernetesName, namespace, 5432)
 	case "redis":
 		url = fmt.Sprintf("redis://%s:%s@%s-headless.%s:%d", "default", password, service.KubernetesName, namespace, 6379)
+	case "mysql":
+		url = fmt.Sprintf("mysql://%s:%s@moco-%s.%s:%d/%s", username, password, service.KubernetesName, namespace, 3306, "moco")
 	}
 
 	if existingUrl != url {
-		// Sync secret
-		_, err = self.UpsertSecretValues(ctx, secret.Name, namespace, map[string][]byte{
+		secrets := map[string][]byte{
 			"DATABASE_USERNAME": []byte(username),
 			"DATABASE_PASSWORD": []byte(password),
-			"DATABASE_URL":      []byte(url),
-		}, self.GetInternalClient())
+		}
+		if url != "" {
+			secrets["DATABASE_URL"] = []byte(url)
+		}
+		// Sync secret
+		_, err = self.UpsertSecretValues(ctx, secret.Name, namespace, secrets, self.GetInternalClient())
 		if err != nil {
 			return fmt.Errorf("failed to update secret %s in namespace %s: %w", secret.Name, namespace, err)
 		}
