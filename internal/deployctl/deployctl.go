@@ -406,13 +406,12 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 			"&service=" + service.ID.String() +
 			"&deployment=" + job.ID.String()
 		data := webhooks_service.WebhookData{
-			Title:       "Deployment Queued",
-			Url:         url,
-			Description: fmt.Sprintf("A new deployment has been queued for %s", service.Name),
+			Title: "Deployment Queued",
+			Url:   url,
 			Fields: []webhooks_service.WebhookDataField{
 				{
-					Name:  "Service Type",
-					Value: string(service.Type),
+					Name:  "Service",
+					Value: service.Name,
 				},
 				{
 					Name:  "Project & Environment",
@@ -485,13 +484,12 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 			// Construct URL
 			url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+jobID.String())
 			data := webhooks_service.WebhookData{
-				Title:       "Deployment Cancelled",
-				Url:         url,
-				Description: fmt.Sprintf("A deployment has been cancelled for %s", service.Name),
+				Title: "Deployment Cancelled",
+				Url:   url,
 				Fields: []webhooks_service.WebhookDataField{
 					{
-						Name:  "Service Type",
-						Value: string(service.Type),
+						Name:  "Service",
+						Value: service.Name,
 					},
 					{
 						Name:  "Project & Environment",

@@ -23,7 +23,7 @@ func (self *WebhooksService) sendDiscordWebhook(level WebhookLevel, event schema
 		Description: &data.Description,
 		Color:       level.DecimalColor(),
 		DiscordFooter: &DiscordFooter{
-			Text: utils.ToPtr(fmt.Sprintf("%s: %s", event, time.Now().Format(time.RFC1123))),
+			Text: utils.ToPtr(fmt.Sprintf("%s | %s", time.Now().Format(time.RFC1123), event)),
 		},
 	}
 	for i, entry := range data.Fields {

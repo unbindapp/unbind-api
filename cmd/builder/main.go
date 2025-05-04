@@ -55,13 +55,12 @@ func markDeploymentSuccessful(ctx context.Context, cfg *config.Config, webhooksS
 		"&deployment=" + cfg.ServiceDeploymentID.String()
 
 	data := webhooks_service.WebhookData{
-		Title:       "Deployment Succeeded",
-		Url:         url,
-		Description: fmt.Sprintf("A deployment has succeeded for %s", service.Name),
+		Title: "Deployment Succeeded",
+		Url:   url,
 		Fields: []webhooks_service.WebhookDataField{
 			{
-				Name:  "Service Type",
-				Value: string(service.Type),
+				Name:  "Service",
+				Value: service.Name,
 			},
 			{
 				Name:  "Project & Environment",
@@ -106,20 +105,19 @@ func markDeploymentFailed(ctx context.Context, cfg *config.Config, webhooksServi
 		"&service=" + service.ID.String() +
 		"&deployment=" + cfg.ServiceDeploymentID.String()
 	data := webhooks_service.WebhookData{
-		Title:       "Deployment Failed",
-		Url:         url,
-		Description: fmt.Sprintf("A build has failed for %s", service.Name),
+		Title: "Deployment Failed",
+		Url:   url,
 		Fields: []webhooks_service.WebhookDataField{
 			{
-				Name:  "Service Type",
-				Value: string(service.Type),
+				Name:  "Service",
+				Value: service.Name,
 			},
 			{
 				Name:  "Project & Environment",
 				Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 			},
 			{
-				Name:  "Error message",
+				Name:  "Error Message",
 				Value: reason,
 			},
 		},
@@ -201,13 +199,12 @@ func main() {
 		// Construct URL
 		url, _ := utils.JoinURLPaths(cfg.ExternalUIUrl, service.Edges.Environment.Edges.Project.Edges.Team.ID.String(), "project", service.Edges.Environment.Edges.Project.ID.String(), "?environment="+service.EnvironmentID.String(), "&service="+service.ID.String(), "&deployment="+cfg.ServiceDeploymentID.String())
 		data := webhooks_service.WebhookData{
-			Title:       "Deployment Building",
-			Url:         url,
-			Description: fmt.Sprintf("A build has started for %s", service.Name),
+			Title: "Deployment Building",
+			Url:   url,
 			Fields: []webhooks_service.WebhookDataField{
 				{
-					Name:  "Service Type",
-					Value: string(service.Type),
+					Name:  "Service",
+					Value: service.Name,
 				},
 				{
 					Name:  "Project & Environment",
