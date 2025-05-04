@@ -414,7 +414,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 					Value: service.Name,
 				},
 				{
-					Name:  "Project > Environment",
+					Name:  "Project & Environment",
 					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 			},
@@ -492,7 +492,7 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 						Value: service.Name,
 					},
 					{
-						Name:  "Project > Environment",
+						Name:  "Project & Environment",
 						Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 					},
 				},

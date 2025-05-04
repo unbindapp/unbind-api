@@ -100,7 +100,7 @@ func (self *ServiceService) DeleteServiceByID(ctx context.Context, requesterUser
 					Value: service.Name,
 				},
 				{
-					Name:  "Project > Environment",
+					Name:  "Project & Environment",
 					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
 				},
 				{
