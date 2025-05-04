@@ -840,9 +840,9 @@ commonLabels:
   unbind/usd-type: {{ .Definition.Type }}
   unbind/usd-version: {{ .Definition.Version }}
   unbind/usd-category: databases
-  {{- range $key, $value := .Parameters.labels }}
-  {{ $key }}: {{ $value }}
-  {{- end }}
+{{- range $k, $v := .Parameters.labels }}
+  {{ $k }}: {{ $v }}
+{{- end }}
 auth:
   enabled: true
   existingSecret: {{ .Parameters.secretName }}
@@ -1099,5 +1099,645 @@ replica:
 		objects, err := renderer.RenderToObjects(result)
 		require.NoError(t, err)
 		assert.Len(t, objects, 2)
+	})
+}
+
+func TestMySQLRendering(t *testing.T) {
+	// Create a sample MySQL template (MOCO)
+	mysqlTemplate := &Definition{
+		Name:        "MySQL Database",
+		Category:    DB_CATEGORY,
+		Port:        3306,
+		Description: "Standard MySQL database using Oracle MySQL Operator",
+		Type:        "mysql-operator",
+		Version:     "1.0.0",
+		Schema: DefinitionParameterSchema{
+			Properties: map[string]ParameterProperty{
+				"common": {
+					Type: "object",
+					Properties: map[string]ParameterProperty{
+						"namespace": {
+							Type:        "string",
+							Description: "Namespace for the database deployment",
+						},
+						"replicas": {
+							Type:        "integer",
+							Description: "Number of replicas",
+							Default:     1,
+							Minimum:     utils.ToPtr[float64](1),
+							Maximum:     utils.ToPtr[float64](5),
+						},
+						"storage": {
+							Type:        "string",
+							Description: "Storage size",
+							Default:     "1Gi",
+						},
+						"exposeExternal": {
+							Type:        "boolean",
+							Description: "Expose external service",
+							Default:     false,
+						},
+						"resources": {
+							Type:        "object",
+							Description: "Resource requirements",
+							Properties: map[string]ParameterProperty{
+								"requests": {
+									Type: "object",
+									Properties: map[string]ParameterProperty{
+										"cpu": {
+											Type:        "string",
+											Description: "CPU request",
+											Default:     "10m", // MOCO default
+										},
+										"memory": {
+											Type:        "string",
+											Description: "Memory request",
+											Default:     "10Mi", // MOCO default
+										},
+									},
+								},
+								"limits": {
+									Type: "object",
+									Properties: map[string]ParameterProperty{
+										"cpu": {
+											Type:        "string",
+											Description: "CPU limit",
+											Default:     "500m", // MOCO default
+										},
+										"memory": {
+											Type:        "string",
+											Description: "Memory limit",
+											Default:     "256Mi", // MOCO default
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"labels": {
+					Type:        "object",
+					Description: "Custom labels to add to the MySQL resource",
+					AdditionalProperties: &ParameterProperty{
+						Type: "string",
+					},
+				},
+				"secretName": {
+					Type:        "string",
+					Description: "Name of the secret to store MySQL credentials...",
+				},
+				"version": {
+					Type:        "string",
+					Description: "MySQL version",
+					Default:     "8.4.4",
+					Enum:        []string{"8.0.28", "8.0.39", "8.0.41", "8.4.4"},
+				},
+				"s3": {
+					Type: "object",
+					Properties: map[string]ParameterProperty{
+						"enabled": {
+							Type:        "boolean",
+							Description: "Enable S3 backups",
+							Default:     false,
+						},
+						"bucket": {
+							Type:        "string",
+							Description: "S3 bucket name",
+						},
+						"endpoint": {
+							Type:        "string",
+							Description: "S3 endpoint URL",
+							Default:     "https://s3.amazonaws.com",
+						},
+						"region": {
+							Type:        "string",
+							Description: "S3 region",
+							Default:     "",
+						},
+						"secretName": {
+							Type:        "string",
+							Description: "Name of the secret that contains the S3 credentials",
+							Default:     "",
+						},
+						"accessKey": {
+							Type:        "string",
+							Description: "S3 access key from the secret",
+							Default:     "access_key_id",
+						},
+						"secretKey": {
+							Type:        "string",
+							Description: "S3 secret key from the secret",
+							Default:     "secret_key",
+						},
+						"backupRetention": {
+							Type:        "integer",
+							Description: "Number of backups to retain",
+							Default:     2,
+						},
+						"backupSchedule": {
+							Type:        "string",
+							Description: "Cron schedule for backups",
+							Default:     "5 5 * * *",
+						},
+						"backupPrefix": {
+							Type:        "string",
+							Description: "Optional prefix for backup files",
+							Default:     "",
+						},
+					},
+				},
+				"restore": {
+					Type: "object",
+					Properties: map[string]ParameterProperty{
+						"enabled": {
+							Type:        "boolean",
+							Description: "Turn *on* clone/restore logic",
+							Default:     false,
+						},
+						"bucket": {
+							Type:        "string",
+							Description: "S3 bucket that holds the base-backups/WAL to restore from",
+						},
+						"endpoint": {
+							Type:        "string",
+							Description: "S3 endpoint URL",
+							Default:     "https://s3.amazonaws.com",
+						},
+						"region": {
+							Type:        "string",
+							Description: "S3 region",
+							Default:     "",
+						},
+						"secretName": {
+							Type:        "string",
+							Description: "Name of the secret that contains the S3 credentials",
+							Default:     "",
+						},
+						"accessKey": {
+							Type:        "string",
+							Description: "S3 access key from the secret",
+							Default:     "access_key_id",
+						},
+						"secretKey": {
+							Type:        "string",
+							Description: "S3 secret key from the secret",
+							Default:     "secret_key",
+						},
+						"backupPrefix": {
+							Type:        "string",
+							Description: "Optional prefix for backup files",
+							Default:     "",
+						},
+						"cluster": {
+							Type:        "string",
+							Description: "Name of the cluster to restore from",
+						},
+						"restorePoint": {
+							Type:        "string",
+							Description: "Point-in-time (RFC3339) to restore to. Leave blank to restore the latest backup.",
+						},
+					},
+				},
+				"environment": {
+					Type:        "object",
+					Description: "Environment variables to be set in the MySQL container",
+					AdditionalProperties: &ParameterProperty{
+						Type: "string",
+					},
+					Default: map[string]interface{}{},
+				},
+			},
+			Required: []string{"secretName"}, // Added secretName as required based on schema
+		},
+		Content: `{{- /* convenience helpers */ -}}
+{{- $common := .Parameters.common -}}
+{{- $s3     := .Parameters.s3 -}}
+{{- $restore:= .Parameters.restore -}}
+{{- $labels := .Parameters.labels | default dict -}}
+apiVersion: moco.cybozu.com/v1beta2
+kind: MySQLCluster
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+  labels:
+    # operator labels
+    app.kubernetes.io/name:  mysql
+    app.kubernetes.io/instance: {{ .Name }}
+    # usd-specific labels
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+{{- range $k, $v := $labels }}
+    {{ $k }}: {{ $v }}
+{{- end }}
+
+spec:
+  replicas: {{ $common.replicas | default 1 }}
+
+  podTemplate:
+    metadata:
+      labels:
+        # Propagate custom labels to pods
+{{- range $k, $v := $labels }}
+        {{ $k }}: {{ $v }}
+{{- end }}
+    spec:
+      containers:
+        - name: mysqld
+          image: {{ printf "ghcr.io/cybozu-go/moco/mysql:%s" (.Parameters.version | default "8.4.4") | quote }}
+          resources:
+            requests:
+              cpu:    {{ $common.resources.requests.cpu | default "10m"   | quote }}
+              memory: {{ $common.resources.requests.memory | default "10Mi"  | quote }}
+            limits:
+              cpu:    {{ $common.resources.limits.cpu | default "500m"  | quote }}
+              memory: {{ $common.resources.limits.memory | default "256Mi" | quote }}
+{{- if .Parameters.environment }}
+          env:
+{{- range $k, $v := .Parameters.environment }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+{{- end }}
+{{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ $common.storage | default "1Gi" | quote }}
+{{- if $s3.enabled }}
+  backupPolicyName: {{ .Name }}-backup
+{{- end }}
+
+{{- if $restore.enabled }}
+  restore:
+    sourceName:      {{ $restore.cluster }}
+    sourceNamespace: {{ .Namespace }}
+    restorePoint: {{ $restore.restorePoint | default (timeFormat .RFC3339 now) | quote }}
+    jobConfig:
+      serviceAccountName: default
+      bucketConfig:
+        bucketName:   {{ $restore.bucket | default $s3.bucket | quote }}
+        endpointURL:  {{ $restore.endpoint | default $s3.endpoint | quote }}
+        region:       {{ $restore.region   | default $s3.region   | quote }}
+        usePathStyle: true
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ $restore.secretName }}
+              key:  {{ $restore.accessKey | default "access_key_id" }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ $restore.secretName }}
+              key:  {{ $restore.secretKey | default "secret_key" }}
+      workVolume:
+        emptyDir: {}
+{{- end }}
+---
+{{- if $s3.enabled }}
+apiVersion: moco.cybozu.com/v1beta2
+kind: BackupPolicy
+metadata:
+  name: {{ .Name }}-backup
+  namespace: {{ .Namespace }}
+  labels:
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+{{- range $k, $v := $labels }}
+    {{ $k }}: {{ $v }}
+{{- end }}
+
+spec:
+  schedule: {{ $s3.backupSchedule | default "5 5 * * *" | quote }}
+  jobConfig:
+    serviceAccountName: default
+    env:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: {{ $s3.secretName }}
+            key:  {{ $s3.accessKey | default "access_key_id" }}
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ $s3.secretName }}
+            key:  {{ $s3.secretKey | default "secret_key" }}
+    bucketConfig:
+      bucketName:  {{ $s3.bucket | quote }}
+      endpointURL: {{ $s3.endpoint | quote }}
+      region:      {{ $s3.region   | quote }}
+      usePathStyle: true
+    workVolume:
+      emptyDir: {}
+{{- end }}
+`,
+	}
+
+	// Create a renderer
+	renderer := NewDatabaseRenderer()
+
+	t.Run("Basic MySQL Rendering", func(t *testing.T) {
+		// Create render context with minimal parameters
+		ctx := &RenderContext{
+			Name:      "test-mysql",
+			Namespace: "test-ns",
+			TeamID:    "team-moco", // Not directly used by MOCO template, but good practice
+			Parameters: map[string]interface{}{
+				"secretName": "mysql-creds", // Required parameter
+				"common": map[string]interface{}{
+					"replicas": 3,
+					"storage":  "10Gi",
+				},
+			},
+			Definition: Definition{ // Pass definition info to context
+				Type:    mysqlTemplate.Type,
+				Version: mysqlTemplate.Version,
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(mysqlTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("Basic MySQL Render Result:\n", result)
+
+		// Verify MySQLCluster object
+		assert.Contains(t, result, "kind: MySQLCluster")
+		assert.Contains(t, result, "name: test-mysql")
+		assert.Contains(t, result, "namespace: test-ns")
+		assert.Contains(t, result, "replicas: 3")
+		assert.Contains(t, result, `image: "ghcr.io/cybozu-go/moco/mysql:8.4.4"`) // Default version
+		assert.Contains(t, result, `storage: "10Gi"`)
+		assert.Contains(t, result, `cpu:    "10m"`)   // Corrected spacing
+		assert.Contains(t, result, `memory: "10Mi"`)  // Corrected spacing
+		assert.Contains(t, result, `cpu:    "500m"`)  // Corrected spacing
+		assert.Contains(t, result, `memory: "256Mi"`) // Corrected spacing
+
+		// BackupPolicy should not be present
+		assert.NotContains(t, result, "kind: BackupPolicy")
+		// Restore section should not be present
+		assert.NotContains(t, result, "restore:")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("MySQL Rendering with S3 Backup", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mysql-backup",
+			Namespace: "backup-ns",
+			Parameters: map[string]interface{}{
+				"secretName": "mysql-creds-backup",
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"s3": map[string]interface{}{
+					"enabled":    true,
+					"bucket":     "mysql-backup-bucket",
+					"secretName": "backup-s3-secret",
+					"endpoint":   "https://minio.backup.com",
+					"region":     "backup-region",
+				},
+			},
+			Definition: Definition{
+				Type:    mysqlTemplate.Type,
+				Version: mysqlTemplate.Version,
+			},
+		}
+
+		result, err := renderer.Render(mysqlTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MySQL S3 Backup Render Result:\n", result)
+
+		// Verify MySQLCluster has backupPolicyName
+		assert.Contains(t, result, "kind: MySQLCluster")
+		assert.Contains(t, result, "backupPolicyName: test-mysql-backup-backup")
+
+		// Verify BackupPolicy object exists and has correct details
+		assert.Contains(t, result, "---")
+		assert.Contains(t, result, "kind: BackupPolicy")
+		assert.Contains(t, result, "name: test-mysql-backup-backup")
+		assert.Contains(t, result, "namespace: backup-ns")
+		assert.Contains(t, result, `schedule: "5 5 * * *"`)              // Default schedule
+		assert.Contains(t, result, `bucketName:  "mysql-backup-bucket"`) // Corrected spacing
+		assert.Contains(t, result, `endpointURL: "https://minio.backup.com"`)
+		assert.Contains(t, result, `region:      "backup-region"`) // Corrected spacing
+		assert.Contains(t, result, "name: backup-s3-secret")       // Secret name in BackupPolicy env
+
+		// Restore should not be present
+		assert.NotContains(t, result, "restore:")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 2)
+	})
+
+	t.Run("MySQL Rendering with Restore", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mysql-restore",
+			Namespace: "restore-ns",
+			Parameters: map[string]interface{}{
+				"secretName": "mysql-creds-restore",
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"restore": map[string]interface{}{
+					"enabled":    true,
+					"cluster":    "source-mysql-cluster",
+					"bucket":     "restore-from-bucket",
+					"secretName": "restore-s3-secret",
+					"endpoint":   "https://minio.restore.com",
+					"region":     "restore-region",
+					// "restorePoint": "specific-time", // Optional
+				},
+			},
+			Definition: Definition{
+				Type:    mysqlTemplate.Type,
+				Version: mysqlTemplate.Version,
+			},
+		}
+
+		result, err := renderer.Render(mysqlTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MySQL Restore Render Result:\n", result)
+
+		// Verify MySQLCluster has restore section
+		assert.Contains(t, result, "kind: MySQLCluster")
+		assert.Contains(t, result, "restore:")
+		assert.Contains(t, result, "sourceName:      source-mysql-cluster")
+		assert.Contains(t, result, "sourceNamespace: restore-ns")
+		assert.Contains(t, result, `bucketName:   "restore-from-bucket"`)
+		assert.Contains(t, result, `endpointURL:  "https://minio.restore.com"`)
+		assert.Contains(t, result, `region:       "restore-region"`)
+		assert.Contains(t, result, "name: restore-s3-secret") // Secret name in restore env
+		// Check for default restorePoint (uses sprig now, format varies)
+		assert.Contains(t, result, "restorePoint:")
+
+		// BackupPolicy should not be present
+		assert.NotContains(t, result, "kind: BackupPolicy")
+		assert.NotContains(t, result, "backupPolicyName:")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("MySQL Rendering with Restore and S3 (Restore overrides bucket)", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mysql-restore-s3",
+			Namespace: "restore-s3-ns",
+			Parameters: map[string]interface{}{
+				"secretName": "mysql-creds-restore-s3",
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"s3": map[string]interface{}{
+					"enabled":    true,
+					"bucket":     "backup-bucket-only",
+					"secretName": "backup-s3-secret-only",
+				},
+				"restore": map[string]interface{}{
+					"enabled":    true,
+					"cluster":    "source-mysql-cluster-again",
+					"bucket":     "restore-bucket-preferred", // Restore bucket takes precedence
+					"secretName": "restore-s3-secret-preferred",
+				},
+			},
+			Definition: Definition{
+				Type:    mysqlTemplate.Type,
+				Version: mysqlTemplate.Version,
+			},
+		}
+
+		result, err := renderer.Render(mysqlTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MySQL Restore & S3 Render Result:\n", result)
+
+		// Verify MySQLCluster has backupPolicyName and restore section
+		assert.Contains(t, result, "kind: MySQLCluster")
+		assert.Contains(t, result, "backupPolicyName: test-mysql-restore-s3-backup")
+		assert.Contains(t, result, "restore:")
+		assert.Contains(t, result, "sourceName:      source-mysql-cluster-again")
+		// Check that restore bucket is used in restore section
+		assert.Contains(t, result, `bucketName:   "restore-bucket-preferred"`)
+		assert.Contains(t, result, "name: restore-s3-secret-preferred")
+
+		// Verify BackupPolicy uses S3 bucket
+		assert.Contains(t, result, "kind: BackupPolicy")
+		assert.Contains(t, result, `bucketName:  "backup-bucket-only"`)
+		assert.Contains(t, result, "name: backup-s3-secret-only")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 2)
+	})
+
+	t.Run("MySQL Rendering with Custom Labels and Env", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mysql-custom",
+			Namespace: "custom-ns",
+			Parameters: map[string]interface{}{
+				"secretName": "mysql-creds-custom",
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"labels": map[string]interface{}{
+					"app.kubernetes.io/component": "database",
+					"environment":                 "staging",
+				},
+				"environment": map[string]interface{}{
+					"MYSQL_MAX_CONNECTIONS":         "500",
+					"MYSQL_INNODB_BUFFER_POOL_SIZE": "1G",
+				},
+			},
+			Definition: Definition{
+				Type:    mysqlTemplate.Type,
+				Version: mysqlTemplate.Version,
+			},
+		}
+
+		result, err := renderer.Render(mysqlTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MySQL Custom Labels/Env Render Result:\n", result)
+
+		// Verify labels in MySQLCluster metadata and podTemplate metadata
+		assert.Contains(t, result, "kind: MySQLCluster")
+		assert.Contains(t, result, `app.kubernetes.io/component: database`) // Unquoted value in output
+		assert.Contains(t, result, `environment: staging`)                  // Unquoted value in output
+
+		// Verify environment variables in podTemplate container spec
+		assert.Contains(t, result, `name: MYSQL_MAX_CONNECTIONS`)         // Check name
+		assert.Contains(t, result, `value: "500"`)                        // Check value
+		assert.Contains(t, result, `name: MYSQL_INNODB_BUFFER_POOL_SIZE`) // Check name
+		assert.Contains(t, result, `value: "1G"`)                         // Check value
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("MySQL Rendering with Custom Resources and Version", func(t *testing.T) {
+		ctx := &RenderContext{
+			Name:      "test-mysql-resources",
+			Namespace: "resource-ns",
+			Parameters: map[string]interface{}{
+				"secretName": "mysql-creds-resources",
+				"version":    "8.0.41", // Custom version
+				"common": map[string]interface{}{
+					"replicas": 2,
+					"storage":  "50Gi",
+					"resources": map[string]interface{}{
+						"requests": map[string]interface{}{
+							"cpu":    "500m",
+							"memory": "1Gi",
+						},
+						"limits": map[string]interface{}{
+							"cpu":    "2000m",
+							"memory": "4Gi",
+						},
+					},
+				},
+			},
+			Definition: Definition{
+				Type:    mysqlTemplate.Type,
+				Version: mysqlTemplate.Version,
+			},
+		}
+
+		result, err := renderer.Render(mysqlTemplate, ctx)
+		require.NoError(t, err)
+
+		t.Log("MySQL Custom Resources/Version Render Result:\n", result)
+
+		// Verify MySQLCluster object
+		assert.Contains(t, result, "kind: MySQLCluster")
+		assert.Contains(t, result, "replicas: 2")
+		assert.Contains(t, result, `image: "ghcr.io/cybozu-go/moco/mysql:8.0.41"`) // Custom version
+		assert.Contains(t, result, `storage: "50Gi"`)
+		// Check custom resources
+		assert.Contains(t, result, `cpu:    "500m"`)  // Corrected spacing
+		assert.Contains(t, result, `memory: "1Gi"`)   // Corrected spacing
+		assert.Contains(t, result, `cpu:    "2000m"`) // Corrected spacing
+		assert.Contains(t, result, `memory: "4Gi"`)   // Corrected spacing
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
 	})
 }

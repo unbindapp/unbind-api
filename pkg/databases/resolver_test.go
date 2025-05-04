@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -295,6 +296,120 @@ func TestPostgresRestoreSchema(t *testing.T) {
 	}
 }
 
+func TestFetchDatabase_MySQL(t *testing.T) {
+	// Setup mock server
+	server := setupMockServer() // Ensure setupMockServer includes MySQL paths
+	defer server.Close()
+
+	// Override the base URL constant for testing
+	originalBaseURL := BaseDatabaseURL
+	BaseDatabaseURL = server.URL + "/%s"
+	defer func() {
+		BaseDatabaseURL = originalBaseURL
+	}()
+
+	// Create provider
+	provider := NewDatabaseProvider()
+
+	// Test FetchDatabase for MySQL
+	ctx := context.Background()
+	database, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "mysql-operator")
+
+	// Log the result for debugging
+	t.Logf("MySQL Database result: %+v", database)
+	if err != nil {
+		t.Logf("Error: %v", err)
+	}
+
+	// --- Assertions for MySQL ---
+	require.NoError(t, err)
+	assert.NotNil(t, database)
+	assert.Equal(t, "MySQL Database", database.Name)
+	assert.Equal(t, "Standard MySQL database using Oracle MySQL Operator", database.Description)
+	assert.Equal(t, "mysql-operator", database.Type)
+	assert.Equal(t, "1.0.0", database.Version)
+	assert.Equal(t, 3306, database.Port)
+	assert.NotNil(t, database.Schema)
+
+	t.Logf("MySQL Schema properties: %+v", database.Schema.Properties)
+
+	// Check common property (resolved import)
+	commonProp, hasCommon := database.Schema.Properties["common"]
+	assert.True(t, hasCommon, "MySQL schema should have a 'common' property (from base import)")
+	if hasCommon {
+		assert.Equal(t, "object", commonProp.Type)
+		assert.Contains(t, commonProp.Properties, "replicas")
+		assert.Contains(t, commonProp.Properties, "storage")
+		assert.Contains(t, commonProp.Properties, "resources")
+	}
+
+	// Check labels property (resolved import)
+	labelsProp, hasLabels := database.Schema.Properties["labels"]
+	assert.True(t, hasLabels, "MySQL Schema should have a 'labels' property (from labelsSchema import)")
+	if hasLabels {
+		assert.Equal(t, "object", labelsProp.Type)
+		assert.NotNil(t, labelsProp.AdditionalProperties)
+		if labelsProp.AdditionalProperties != nil {
+			assert.Equal(t, "string", labelsProp.AdditionalProperties.Type)
+		}
+	}
+
+	// Check s3 property (resolved import)
+	s3Prop, hasS3 := database.Schema.Properties["s3"]
+	assert.True(t, hasS3, "MySQL schema should have an 's3' property (from s3Schema import)")
+	if hasS3 {
+		assert.Equal(t, "object", s3Prop.Type)
+		assert.Contains(t, s3Prop.Properties, "bucket")
+		assert.Contains(t, s3Prop.Properties, "region")
+		assert.Contains(t, s3Prop.Properties, "enabled")
+		assert.Contains(t, s3Prop.Properties, "backupSchedule")
+	}
+
+	// Check restore property (resolved import)
+	restoreProp, hasRestore := database.Schema.Properties["restore"]
+	assert.True(t, hasRestore, "MySQL schema should have a 'restore' property (from restoreSchema import)")
+	if hasRestore {
+		assert.Equal(t, "object", restoreProp.Type)
+		assert.Contains(t, restoreProp.Properties, "bucket")
+		assert.Contains(t, restoreProp.Properties, "region")
+		assert.Contains(t, restoreProp.Properties, "enabled")
+		assert.Contains(t, restoreProp.Properties, "cluster")
+		assert.Contains(t, restoreProp.Properties, "restorePoint")
+	}
+
+	// Check secretName property
+	secretNameProp, hasSecretName := database.Schema.Properties["secretName"]
+	assert.True(t, hasSecretName, "MySQL schema should have a 'secretName' property")
+	if hasSecretName {
+		assert.Equal(t, "string", secretNameProp.Type)
+		assert.Equal(t, "Name of the secret to store MySQL credentials, should contain rootUser, rootPassword, maybe rootHost", secretNameProp.Description)
+	}
+
+	// Check version property
+	versionProp, hasVersion := database.Schema.Properties["version"]
+	assert.True(t, hasVersion, "MySQL schema should have a 'version' property")
+	if hasVersion {
+		assert.Equal(t, "string", versionProp.Type)
+		assert.Equal(t, "8.4.4", versionProp.Default)
+		assert.Contains(t, versionProp.Enum, "8.4.4")
+	}
+
+	// Check environment property
+	envProp, hasEnv := database.Schema.Properties["environment"]
+	assert.True(t, hasEnv, "MySQL schema should have an 'environment' property")
+	if hasEnv {
+		assert.Equal(t, "object", envProp.Type)
+		assert.Equal(t, "Environment variables to be set in the MySQL container", envProp.Description)
+		assert.NotNil(t, envProp.AdditionalProperties)
+		if envProp.AdditionalProperties != nil {
+			assert.Equal(t, "string", envProp.AdditionalProperties.Type)
+		}
+		assert.NotNil(t, envProp.Default)
+		assert.IsType(t, map[string]interface{}{}, envProp.Default)
+		assert.Empty(t, envProp.Default)
+	}
+}
+
 func TestFetchDatabaseErrors(t *testing.T) {
 	// Setup mock server with errors
 	server := setupErrorMockServer()
@@ -466,7 +581,7 @@ spec:
   numberOfInstances: {{ .parameters.common.replicas }}
   volume:
     size: "{{ .parameters.common.storage }}"
-  env: []`)) // Simplified env for brevity
+  env: []`))
 			return
 		}
 
@@ -554,62 +669,303 @@ auth:
     replicaCount: 0
     persistence: { enabled: false }
 {{- end }}
-`)) // Compacted YAML for brevity
+`))
 			return
 		}
 
-		// --- Serve Common Files (used by both Redis and Postgres) ---
+		// --- Serve MySQL Files ---
+		mysqlMetadataPath := "/v0.1/definitions/databases/mysql-operator/metadata.yaml"
+		mysqlDefinitionPath := "/v0.1/definitions/databases/mysql-operator/definition.yaml"
+		mysqlRestoreSchemaPath := "/v0.1/definitions/common/s3-restore-schema.yaml"
+
+		if r.URL.Path == mysqlMetadataPath {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`name: "MySQL Database"
+description: "Standard MySQL database using Oracle MySQL Operator"
+type: "mysql-operator"
+version: "1.0.0"
+port: 3306
+imports:
+  - path: "../../common/base.yaml"
+    as: base
+  - path: "../../common/s3-schema.yaml"
+    as: s3Schema
+  - path: "../../common/s3-restore-schema.yaml"
+    as: restoreSchema
+  - path: "../../common/labels.yaml"
+    as: labelsSchema
+schema:
+  properties:
+    common:
+      $ref: "#/imports/base"
+    labels:
+      $ref: "#/imports/labelsSchema"
+    secretName:
+      type: "string"
+      description: "Name of the secret to store MySQL credentials, should contain rootUser, rootPassword, maybe rootHost"
+    version:
+      type: "string"
+      description: "MySQL version"
+      default: "8.4.4"
+      enum: ["8.0.28", "8.0.39", "8.0.41", "8.4.4"]
+    s3:
+      $ref: "#/imports/s3Schema"
+    restore:
+      $ref: "#/imports/restoreSchema"
+    environment:
+      type: "object"
+      description: "Environment variables to be set in the MySQL container"
+      additionalProperties:
+        type: "string"
+      default: {}
+`))
+			return
+		}
+		if r.URL.Path == mysqlDefinitionPath {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{{- /* convenience helpers */ -}}
+{{- $common := .Parameters.common -}}
+{{- $s3     := .Parameters.s3 -}}
+{{- $restore:= .Parameters.restore -}}
+{{- $labels := .Parameters.labels | default dict -}}
+apiVersion: moco.cybozu.com/v1beta2
+kind: MySQLCluster
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+  labels:
+    # operator labels
+    app.kubernetes.io/name:  mysql
+    app.kubernetes.io/instance: {{ .Name }}
+    # usd-specific labels
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+{{- range $k, $v := $labels }}
+    {{ $k }}: {{ $v | quote }}
+{{- end }}
+
+spec:
+  replicas: {{ $common.replicas | default 1 }}
+
+  podTemplate:
+    metadata:
+      labels:
+        # Propagate custom labels to pods
+{{- range $k, $v := $labels }}
+        {{ $k }}: {{ $v | quote }}
+{{- end }}
+    spec:
+      containers:
+        - name: mysqld
+          image: {{ printf "ghcr.io/cybozu-go/moco/mysql:%s" (.Parameters.version | default "8.4.4") | quote }}
+          resources:
+            requests:
+              cpu:    {{ $common.resources.requests.cpu    | default "10m"   | quote }}
+              memory: {{ $common.resources.requests.memory | default "10Mi"  | quote }}
+            limits:
+              cpu:    {{ $common.resources.limits.cpu      | default "500m"  | quote }}
+              memory: {{ $common.resources.limits.memory   | default "256Mi" | quote }}
+{{- if .Parameters.environment }}
+          env:
+{{- range $k, $v := .Parameters.environment }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+{{- end }}
+{{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ $common.storage | default "1Gi" | quote }}
+{{- if $s3.enabled }}
+  backupPolicyName: {{ .Name }}-backup
+{{- end }}
+
+{{- if $restore.enabled }}
+  restore:
+    sourceName:      {{ $restore.cluster }}
+    sourceNamespace: {{ .Namespace }}
+    restorePoint: {{ $restore.restorePoint | default (timeFormat .RFC3339 now) | quote }}
+    jobConfig:
+      serviceAccountName: default
+      bucketConfig:
+        bucketName:   {{ $restore.bucket | default $s3.bucket | quote }}
+        endpointURL:  {{ $restore.endpoint | default $s3.endpoint | quote }}
+        region:       {{ $restore.region   | default $s3.region   | quote }}
+        usePathStyle: true
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ $restore.secretName }}
+              key:  {{ $restore.accessKey | default "access_key_id" }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ $restore.secretName }}
+              key:  {{ $restore.secretKey | default "secret_key" }}
+      workVolume:
+        emptyDir: {}
+{{- end }}
+---
+{{- if $s3.enabled }}
+apiVersion: moco.cybozu.com/v1beta2
+kind: BackupPolicy
+metadata:
+  name: {{ .Name }}-backup
+  namespace: {{ .Namespace }}
+  labels:
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+{{- range $k, $v := $labels }}
+    {{ $k }}: {{ $v | quote }}
+{{- end }}
+
+spec:
+  schedule: {{ $s3.backupSchedule | default "5 5 * * *" | quote }}
+  jobConfig:
+    serviceAccountName: default
+    env:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: {{ $s3.secretName }}
+            key:  {{ $s3.accessKey | default "access_key_id" }}
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ $s3.secretName }}
+            key:  {{ $s3.secretKey | default "secret_key" }}
+    bucketConfig:
+      bucketName:  {{ $s3.bucket | quote }}
+      endpointURL: {{ $s3.endpoint | quote }}
+      region:      {{ $s3.region   | quote }}
+      usePathStyle: true
+    workVolume:
+      emptyDir: {}
+{{- end }}`))
+			return
+		}
+
+		// --- Serve Common Files (used by Postgres, Redis, AND MySQL) ---
 		basePath := "/v0.1/definitions/common/base.yaml"
 		labelsPath := "/v0.1/definitions/common/labels.yaml"
 		s3SchemaPath := "/v0.1/definitions/common/s3-schema.yaml"
-		restoreSchemaPath := "/v0.1/definitions/common/restore-schema.yaml"
+		postgresRestoreSchemaPath := "/v0.1/definitions/common/restore-schema.yaml"
 
 		if r.URL.Path == basePath {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 description: "Common base configuration for databases"
 properties:
-  replicas: {type: "integer", description: "Number of replicas", default: 1, minimum: 1, maximum: 5}
-  storage: {type: "string", description: "Storage size", default: "1Gi"}
+  namespace:
+    type: "string"
+    description: "Namespace for the database deployment"
+  replicas:
+    type: "integer"
+    description: "Number of replicas"
+    default: 1
+    minimum: 1
+    maximum: 5
+  storage:
+    type: "string"
+    description: "Storage size"
+    default: "1Gi"
+  exposeExternal:
+    type: "boolean"
+    description: "Expose external service"
+    default: false
   resources:
     type: "object"
     description: "Resource requirements"
     properties:
       requests:
         type: "object"
-        properties: { cpu: {type: "string", default: "100m"}, memory: {type: "string", default: "128Mi"} }
+        properties:
+          cpu:
+            type: "string"
+            description: "CPU request"
+            default: "100m"
+          memory:
+            type: "string"
+            description: "Memory request"
+            default: "128Mi"
       limits:
         type: "object"
-        properties: { cpu: {type: "string", default: "500m"}, memory: {type: "string", default: "256Mi"} }`)) // Compacted
+        properties:
+          cpu:
+            type: "string"
+            description: "CPU limit"
+            default: "500m"
+          memory:
+            type: "string"
+            description: "Memory limit"
+            default: "256Mi"
+`))
 			return
 		}
 		if r.URL.Path == labelsPath {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
-description: "Custom labels to add to the resource" 
-additionalProperties: {type: "string"}
-default: {}`)) // Compacted
+description: "Custom labels to add to the resource"
+additionalProperties:
+  type: "string"
+default: {}`))
 			return
 		}
 		if r.URL.Path == s3SchemaPath {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 description: "S3 configuration"
-properties: 
-  enabled: {type: "boolean", description: "Enable S3 backups", default: false}
-  bucket: {type: "string", description: "S3 bucket name"}
-  endpoint: {type: "string", description: "S3 endpoint URL", default: "https://s3.amazonaws.com"}
-  region: {type: "string", description: "S3 region", default: ""}
-  secretName: {type: "string", description: "Name of the secret that contains the S3 credentials", default: ""}
-  accessKey: {type: "string", description: "S3 access key from the secret", default: "access_key_id"}
-  secretKey: {type: "string", description: "S3 secret key from the secret", default: "secret_key"}
-  backupRetention: {type: "integer", description: "Number of backups to retain", default: 2}
-  backupSchedule: {type: "string", description: "Cron schedule for backups", default: "5 5 * * *"}
-  backupPrefix: {type: "string", description: "Optional prefix for backup files", default: ""}
-required: ["enabled", "bucket", "endpoint", "region", "secretName"]`)) // Compacted
+properties:
+  enabled:
+    type: "boolean"
+    description: "Enable S3 backups"
+    default: false
+  bucket:
+    type: "string"
+    description: "S3 bucket name"
+  endpoint:
+    type: "string"
+    description: "S3 endpoint URL"
+    default: "https://s3.amazonaws.com"
+  region:
+    type: "string"
+    description: "S3 region"
+    default: ""
+  secretName:
+    type: "string"
+    description: "Name of the secret that contains the S3 credentials"
+    default: ""
+  accessKey:
+    type: "string"
+    description: "S3 access key from the secret"
+    default: "access_key_id"
+  secretKey:
+    type: "string"
+    description: "S3 secret key from the secret"
+    default: "secret_key"
+  backupRetention:
+    type: "integer"
+    description: "Number of backups to retain"
+    default: 2
+  backupSchedule:
+    type: "string"
+    description: "Cron schedule for backups"
+    default: "5 5 * * *"
+  backupPrefix:
+    type: "string"
+    description: "Optional prefix for backup files"
+    default: ""
+`))
 			return
 		}
-		if r.URL.Path == restoreSchemaPath {
+		if r.URL.Path == postgresRestoreSchemaPath {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`type: "object"
 description: "Options for seeding a fresh database from an existing backup"
@@ -623,7 +979,52 @@ properties:
   secretKey: {type: "string", description: "S3 secret key from the secret", default: "secret_key"}
   backupPrefix: {type: "string", description: "Optional prefix for backup files", default: ""}
   cluster: {type: "string", description: "Name of the cluster to restore from"}
-required: ["enabled", "bucket", "endpoint", "region", "secretName", "cluster"]`)) // Compacted
+`))
+			return
+		}
+		if r.URL.Path == mysqlRestoreSchemaPath {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`type: "object"
+description: "Options for seeding a fresh database from an existing backup"
+properties:
+  enabled:
+    type: "boolean"
+    description: "Turn *on* clone/restore logic"
+    default: false
+  bucket:
+    type: "string"
+    description: "S3 bucket that holds the base-backups/WAL to restore from"
+  endpoint:
+    type: "string"
+    description: "S3 endpoint URL"
+    default: "https://s3.amazonaws.com"
+  region:
+    type: "string"
+    description: "S3 region"
+    default: ""
+  secretName:
+    type: "string"
+    description: "Name of the secret that contains the S3 credentials"
+    default: ""
+  accessKey:
+    type: "string"
+    description: "S3 access key from the secret"
+    default: "access_key_id"
+  secretKey:
+    type: "string"
+    description: "S3 secret key from the secret"
+    default: "secret_key"
+  backupPrefix:
+    type: "string"
+    description: "Optional prefix for backup files"
+    default: ""
+  cluster:
+    type: "string"
+    description: "Name of the cluster to restore from"
+  restorePoint:
+    type: "string"
+    description: "Point-in-time (RFC3339) to restore to. Leave blank to restore the latest backup."
+`))
 			return
 		}
 
@@ -943,4 +1344,9 @@ schema:
 			w.Write([]byte("Not Found"))
 		}
 	}))
+}
+
+// Helper function to get current time in RFC3339 format for tests
+func getCurrentRFC3339Time() string {
+	return time.Now().UTC().Format(time.RFC3339)
 }

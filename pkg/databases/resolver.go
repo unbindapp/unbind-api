@@ -156,7 +156,7 @@ func convertToJSONCompatible(in interface{}) (interface{}, error) {
 // makeSchemaJSONSafe converts the whole DefinitionParameterSchema into a YAML
 // blob, loads it back as an arbitrary interface{}, runs convertToJSONCompatible
 // on that, then re-unmarshals it into the strongly typed struct.  That way we
-// don’t need to know which fields your ParameterProperty actually has.
+// don't need to know which fields your ParameterProperty actually has.
 func makeSchemaJSONSafe(
 	s DefinitionParameterSchema,
 ) (DefinitionParameterSchema, error) {

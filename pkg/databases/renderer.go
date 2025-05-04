@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/Masterminds/sprig/v3"
+	mocov1beta2 "github.com/cybozu-go/moco/api/v1beta2"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
@@ -61,6 +63,21 @@ func NewDatabaseRenderer() *DatabaseRenderer {
 	}
 	r.RegisterCRD(helmRepoGVK, &sourcev1.HelmRepository{})
 
+	mocoGVK := schema.GroupVersionKind{
+		Group:   "moco.cybozu.com",
+		Version: "v1beta2",
+		Kind:    "MySQLCluster",
+	}
+	r.RegisterCRD(mocoGVK, &mocov1beta2.MySQLCluster{})
+
+	// Moco backup policy
+	mocoBackupPolicyGVK := schema.GroupVersionKind{
+		Group:   "moco.cybozu.com",
+		Version: "v1beta2",
+		Kind:    "BackupPolicy",
+	}
+	r.RegisterCRD(mocoBackupPolicyGVK, &mocov1beta2.BackupPolicy{})
+
 	return r
 }
 
@@ -76,6 +93,9 @@ type RenderContext struct {
 
 	// Parameters from service
 	Parameters map[string]interface{}
+
+	// RFC3339 time format constant for templates
+	RFC3339 string
 }
 
 // Render renders a definition to YAML string that can be applied to Kubernetes
@@ -90,6 +110,9 @@ func (r *DatabaseRenderer) Render(unbindDefinition *Definition, context *RenderC
 	context.Definition.Type = unbindDefinition.Type
 	context.Definition.Port = unbindDefinition.Port
 
+	// Set RFC3339 constant for time formatting
+	context.RFC3339 = time.RFC3339
+
 	// Copy chart info if available
 	if unbindDefinition.Chart != nil {
 		context.Definition.Chart = unbindDefinition.Chart
@@ -102,7 +125,13 @@ func (r *DatabaseRenderer) Render(unbindDefinition *Definition, context *RenderC
 
 	// Process definition
 	var buf bytes.Buffer
-	tmpl, err := template.New("definition").Funcs(sprig.FuncMap()).Parse(unbindDefinition.Content)
+	funcMap := sprig.FuncMap()
+
+	// Add time-related functions
+	funcMap["timeFormat"] = func(format string, t time.Time) string {
+		return t.Format(format)
+	}
+	tmpl, err := template.New("definition").Funcs(funcMap).Parse(unbindDefinition.Content)
 	if err != nil {
 		return "", fmt.Errorf("definition parsing error: %w", err)
 	}
