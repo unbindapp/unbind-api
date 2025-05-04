@@ -242,9 +242,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			return
 		}
 		data := webhooks_service.WebhookData{
-			Title:       "Service Updated",
-			Url:         url,
-			Description: fmt.Sprintf("A service has been updated in project %s by %s", service.Edges.Environment.Edges.Project.Name, user.Email),
+			Title: "Service Updated",
+			Url:   url,
 			Fields: []webhooks_service.WebhookDataField{
 				{
 					Name:  "Service Name",
@@ -253,6 +252,10 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 				{
 					Name:  "Project & Environment",
 					Value: fmt.Sprintf("%s > %s", service.Edges.Environment.Edges.Project.Name, service.Edges.Environment.Name),
+				},
+				{
+					Name:  "Updated By",
+					Value: user.Email,
 				},
 			},
 		}
@@ -329,7 +332,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 		if len(service.Edges.ServiceConfig.Hosts) > 0 {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
-				Name:  "Service Host",
+				Name:  "Service URL",
 				Value: fmt.Sprintf("https://%s", service.Edges.ServiceConfig.Hosts[0].Host),
 			})
 		}

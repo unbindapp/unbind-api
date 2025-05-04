@@ -414,7 +414,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		if len(service.Edges.ServiceConfig.Hosts) > 0 {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
-				Name:  "Service Host",
+				Name:  "Service URL",
 				Value: fmt.Sprintf("https://%s", service.Edges.ServiceConfig.Hosts[0].Host),
 			})
 		}
