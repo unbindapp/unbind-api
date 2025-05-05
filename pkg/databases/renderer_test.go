@@ -2003,6 +2003,7 @@ func TestMongoDBRendering(t *testing.T) {
 			},
 			Required: []string{"common"},
 		},
+		// Corrected MongoDB Community Operator Template structure
 		Content: `apiVersion: mongodbcommunity.mongodb.com/v1
 kind: MongoDBCommunity
 metadata:
@@ -2025,18 +2026,42 @@ spec:
   # Automatically select Standalone vs ReplicaSet based on replica count
   type: {{ if gt (.Parameters.common.replicas | default 1) 1 }}ReplicaSet{{ else }}Standalone{{ end }}
   version: {{ .Parameters.version | default "7.0" | quote }}
-  
+
   security:
     authentication:
       modes: ["SCRAM"]
       ignoreUnknownUsers: true
+    # Note: TLS configuration would go here if needed
+
+  # Define users - assuming a default admin user for simplicity in the template
+  # Real templates might need more complex user handling based on params
+  users:
+    - name: admin
+      db: admin
+      passwordSecretRef: # Password should be managed externally via a secret
+        name: {{ .Name }}-admin-password # Example secret name convention
+      roles:
+        - name: root
+          db: admin
 
   statefulSet:
     spec:
+      # Volume Claim Template (Correct location inside statefulSet.spec)
+      volumeClaimTemplates:
+        - metadata:
+            name: data-volume # Commonly used name for data volume
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                # Use quote filter for storage size robustness
+                storage: {{ .Parameters.common.storage | default "1Gi" | quote }}
+
+      # Pod Template
       template:
         spec:
           containers:
-            - name: mongod
+            - name: mongod # Standard container name
               resources:
                 requests:
                   cpu: {{ .Parameters.common.resources.requests.cpu | default "100m" }}
@@ -2051,67 +2076,18 @@ spec:
                   value: {{ $value | quote }}
                 {{- end }}
               {{- end }}
-  volumeClaimTemplates:
-    - metadata:
-        name: mongodb-data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        resources:
-          requests:
-            storage: {{ .Parameters.common.storage | default "1Gi" | quote }}
-{{- if .Parameters.s3.enabled }}
-  backupPolicyName: {{ .Name }}-backup
-{{- end }}
+          # affinity, nodeSelector, tolerations etc. could be added here
 
-{{- if .Parameters.restore.enabled }}
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: {{ .Name }}-restore
-  namespace: {{ .Namespace }}
-  labels:
-    app.kubernetes.io/name: mongodb
-    app.kubernetes.io/instance: {{ .Name }}
-    unbind/usd-type: {{ .Definition.Type | quote }}
-    unbind/usd-version: {{ .Definition.Version | quote }}
-    unbind/usd-category: databases
-    {{- range $key, $value := .Parameters.labels }}
-    {{ $key }}: {{ $value }}
-    {{- end }}
-spec:
-  template:
-    spec:
-      containers:
-      - name: mongorestore
-        image: mongo:{{ .Parameters.version | default "7.0" }}
-        command:
-        - /bin/sh
-        - -c
-        - |
-          aws s3 sync s3://{{ .Parameters.restore.bucket }}/{{ .Parameters.restore.backupPrefix }}/backups/{{ .Parameters.restore.cluster }} /restore --endpoint-url={{ .Parameters.restore.endpoint }} --region={{ .Parameters.restore.region }} && \
-          mongorestore --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local /restore/$(ls -t /restore | head -n1)
-        env:
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Parameters.restore.secretName }}
-              key: {{ .Parameters.restore.accessKey | default "access_key_id" }}
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Parameters.restore.secretName }}
-              key: {{ .Parameters.restore.secretKey | default "secret_key" }}
-        volumeMounts:
-        - name: restore
-          mountPath: /restore
-      volumes:
-      - name: restore
-        emptyDir: {}
-      restartPolicy: OnFailure
-{{- end }}
----
+  # Mongod runtime tweaks (Optional)
+  additionalMongodConfig:
+    storage:
+      wiredTiger:
+        engineConfig:
+          cacheSizeGB: 0.25 # Example value
+
+{{/* --- Backup CronJob --- */}}
 {{- if .Parameters.s3.enabled }}
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -2140,8 +2116,9 @@ spec:
             - /bin/sh
             - -c
             - |
+              # Note: Add authentication args if needed
               mongodump --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local --out=/backup/$(date +%Y%m%d_%H%M%S) && \
-              aws s3 sync /backup s3://{{ .Parameters.s3.bucket }}/{{ .Parameters.s3.backupPrefix }}/backups/{{ .Name }} --endpoint-url={{ .Parameters.s3.endpoint }} --region={{ .Parameters.s3.region }} && \
+              aws s3 sync /backup s3://{{ .Parameters.s3.bucket }}/{{ .Parameters.s3.backupPrefix }}/backups/{{ .Name }} --endpoint-url={{ .Parameters.s3.endpoint }} {{ if .Parameters.s3.region }}--region={{ .Parameters.s3.region }}{{ end }} && \
               find /backup -type d -mtime +{{ .Parameters.s3.backupRetention | default 2 }} -exec rm -rf {} \;
             env:
             - name: AWS_ACCESS_KEY_ID
@@ -2163,6 +2140,57 @@ spec:
           restartPolicy: OnFailure
 {{- end }}
 
+{{/* --- Restore Job --- */}}
+{{- if .Parameters.restore.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Name }}-restore
+  namespace: {{ .Namespace }}
+  labels:
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: {{ .Name }}
+    unbind/usd-type: {{ .Definition.Type | quote }}
+    unbind/usd-version: {{ .Definition.Version | quote }}
+    unbind/usd-category: databases
+    {{- range $key, $value := .Parameters.labels }}
+    {{ $key }}: {{ $value }}
+    {{- end }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: mongorestore
+        image: mongo:{{ .Parameters.version | default "7.0" }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          aws s3 sync s3://{{ .Parameters.restore.bucket }}/{{ .Parameters.restore.backupPrefix }}/backups/{{ .Parameters.restore.cluster }} /restore --endpoint-url={{ .Parameters.restore.endpoint }} {{ if .Parameters.restore.region }}--region={{ .Parameters.restore.region }}{{ end }} && \
+          # Note: Add authentication args if needed
+          mongorestore --host={{ .Name }}-svc.{{ .Namespace }}.svc.cluster.local /restore/$(ls -t /restore | head -n1)
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Parameters.restore.secretName }}
+              key: {{ .Parameters.restore.accessKey | default "access_key_id" }}
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Parameters.restore.secretName }}
+              key: {{ .Parameters.restore.secretKey | default "secret_key" }}
+        volumeMounts:
+        - name: restore
+          mountPath: /restore
+      volumes:
+      - name: restore
+        emptyDir: {}
+      restartPolicy: OnFailure
+{{- end }}
+
+{{/* --- External Service --- */}}
 {{- if .Parameters.common.exposeExternal }}
 ---
 apiVersion: v1
@@ -2182,10 +2210,12 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 27017
-      targetPort: 27017
+    - port: {{ .Definition.Port | default 27017 }}
+      targetPort: {{ .Definition.Port | default 27017 }} # Should match the mongod container port
       protocol: TCP
   selector:
+    # Selector needs to match the labels on the MongoDB pods created by the StatefulSet
+    # Check the operator's pod labels, typically includes instance name
     app.kubernetes.io/name: mongodb
     app.kubernetes.io/instance: {{ .Name }}
 {{- end }}`,

@@ -11,6 +11,7 @@ import (
 	mocov1beta2 "github.com/cybozu-go/moco/api/v1beta2"
 	helmv2 "github.com/fluxcd/helm-controller/api/v2"
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
+	"github.com/google/uuid"
 	mdbv1 "github.com/mongodb/mongodb-kubernetes-operator/api/v1"
 	postgresv1 "github.com/zalando/postgres-operator/pkg/apis/acid.zalan.do/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -140,6 +141,21 @@ func (r *DatabaseRenderer) Render(unbindDefinition *Definition, context *RenderC
 	funcMap["timeFormat"] = func(format string, t time.Time) string {
 		return t.Format(format)
 	}
+
+	// Add secure password generation function using UUID
+	funcMap["generatePassword"] = func(length int) string {
+		// Generate a UUID and remove hyphens
+		pass := strings.ReplaceAll(uuid.New().String(), "-", "")
+
+		// If requested length is longer than UUID, concatenate multiple UUIDs
+		for len(pass) < length {
+			pass += strings.ReplaceAll(uuid.New().String(), "-", "")
+		}
+
+		// Trim to requested length
+		return pass[:length]
+	}
+
 	tmpl, err := template.New("definition").Funcs(funcMap).Parse(unbindDefinition.Content)
 	if err != nil {
 		return "", fmt.Errorf("definition parsing error: %w", err)
