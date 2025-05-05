@@ -1,4 +1,4 @@
-package logintmp_handler
+package auth_handler
 
 import (
 	"context"
