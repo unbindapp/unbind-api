@@ -34,6 +34,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "get-instance-health",
+			Summary:     "Get Instance Health",
+			Description: "Get the health/status of instances in a service",
+			Path:        "/health",
+			Method:      http.MethodGet,
+		},
+		handlers.GetInstanceHealth,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "restart-instances",
 			Summary:     "Restart Instances (Pods)",
 			Description: "Restart all instances (pods) for a service",

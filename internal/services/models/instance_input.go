@@ -34,8 +34,16 @@ func (u InstanceType) Schema(r huma.Registry) *huma.Schema {
 // InstanceStatusInput defines the query parameters for getting instance statuses
 type InstanceStatusInput struct {
 	Type          InstanceType `query:"type" required:"true"`
-	TeamID        uuid.UUID    `query:"team_id" required:"true"`
-	ProjectID     uuid.UUID    `query:"project_id" required:"false"`
-	EnvironmentID uuid.UUID    `query:"environment_id" required:"false"`
-	ServiceID     uuid.UUID    `query:"service_id" required:"false"`
+	TeamID        uuid.UUID    `query:"team_id" required:"true" format:"uuid"`
+	ProjectID     uuid.UUID    `query:"project_id" required:"false" format:"uuid"`
+	EnvironmentID uuid.UUID    `query:"environment_id" required:"false" format:"uuid"`
+	ServiceID     uuid.UUID    `query:"service_id" required:"false" format:"uuid"`
+}
+
+// InstanceHealthInput defines the query parameters for getting instance health for a service
+type InstanceHealthInput struct {
+	TeamID        uuid.UUID `query:"team_id" required:"true" format:"uuid"`
+	ProjectID     uuid.UUID `query:"project_id" required:"true" format:"uuid"`
+	EnvironmentID uuid.UUID `query:"environment_id" required:"true" format:"uuid"`
+	ServiceID     uuid.UUID `query:"service_id" required:"true" format:"uuid"`
 }

@@ -48,3 +48,41 @@ func (self *HandlerGroup) ListInstances(ctx context.Context, input *ListInstance
 	resp.Body.Data = containers
 	return resp, nil
 }
+
+// Get instance health for a service
+type GetInstanceHealthInput struct {
+	server.BaseAuthInput
+	models.InstanceHealthInput
+}
+
+type GetInstanceHealthResponse struct {
+	Body struct {
+		Data *k8s.SimpleHealthStatus `json:"data" nullable:"false"`
+	}
+}
+
+// GetInstanceHealth gets pod health for a service
+func (self *HandlerGroup) GetInstanceHealth(ctx context.Context, input *GetInstanceHealthInput) (*GetInstanceHealthResponse, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+
+	health, err := self.srv.InstanceService.GetInstanceHealth(
+		ctx,
+		user.ID,
+		bearerToken,
+		&input.InstanceHealthInput,
+	)
+	if err != nil {
+		return nil, self.handleErr(err)
+	}
+
+	resp := &GetInstanceHealthResponse{}
+	resp.Body.Data = health
+	return resp, nil
+}

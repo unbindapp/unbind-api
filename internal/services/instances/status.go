@@ -44,3 +44,24 @@ func (self *InstanceService) GetInstanceStatuses(ctx context.Context, requesterU
 		client,
 	)
 }
+
+// Get kubernetes container statuses for a service, simplified response
+func (self *InstanceService) GetInstanceHealth(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.InstanceHealthInput) (*k8s.SimpleHealthStatus, error) {
+	team, _, _, service, err := self.validatePermissionsAndParseInputs(ctx, requesterUserID, models.InstanceTypeService, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Determine labels
+	labels := map[string]string{
+		"unbind-service": service.ID.String(),
+	}
+
+	// Create kubernetes client
+	client, err := self.k8s.CreateClientWithToken(bearerToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return self.k8s.GetSimpleHealthStatus(ctx, team.Namespace, labels, client)
+}

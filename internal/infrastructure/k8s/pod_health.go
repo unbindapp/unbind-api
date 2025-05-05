@@ -10,10 +10,11 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
-// GetPodContainerStatusByLabels returns pods and their container status information matching the provided labels
+// GetPodContainerStatusByLabels returns pods and their instance status information matching the provided labels
 func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]PodContainerStatus, error) {
 	// Get pods by labels
 	pods, err := k.GetPodsByLabels(ctx, namespace, labels, client)
@@ -23,7 +24,7 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 
 	result := make([]PodContainerStatus, 0, len(pods.Items))
 
-	// Extract container status information for each pod
+	// Extract instance status information for each pod
 	for _, pod := range pods.Items {
 		serviceID, _ := uuid.Parse(pod.Labels["unbind-service"])
 		environmentID, _ := uuid.Parse(pod.Labels["unbind-environment"])
@@ -31,39 +32,39 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 		teamID, _ := uuid.Parse(pod.Labels["unbind-team"])
 
 		podStatus := PodContainerStatus{
-			Name:           pod.Name,
-			Namespace:      pod.Namespace,
-			Phase:          PodPhase(pod.Status.Phase),
-			PodIP:          pod.Status.PodIP,
-			Containers:     make([]ContainerStatus, 0, len(pod.Status.ContainerStatuses)),
-			InitContainers: make([]ContainerStatus, 0, len(pod.Status.InitContainerStatuses)),
-			TeamID:         teamID,
-			ProjectID:      projectID,
-			EnvironmentID:  environmentID,
-			ServiceID:      serviceID,
+			KubernetesName:       pod.Name,
+			Namespace:            pod.Namespace,
+			Phase:                PodPhase(pod.Status.Phase),
+			PodIP:                pod.Status.PodIP,
+			Instances:            make([]InstanceStatus, 0, len(pod.Status.ContainerStatuses)),
+			InstanceDependencies: make([]InstanceStatus, 0, len(pod.Status.InitContainerStatuses)),
+			TeamID:               teamID,
+			ProjectID:            projectID,
+			EnvironmentID:        environmentID,
+			ServiceID:            serviceID,
 		}
 
 		if pod.Status.StartTime != nil {
 			podStatus.StartTime = pod.Status.StartTime.Format(time.RFC3339)
 		}
 
-		// Process regular containers
+		// Process regular instances
 		hasCrashing := false
 		for _, container := range pod.Status.ContainerStatuses {
-			containerStatus := extractContainerStatus(container)
-			if containerStatus.IsCrashing {
+			instanceStatus := extractContainerStatus(container)
+			if instanceStatus.IsCrashing {
 				hasCrashing = true
 			}
-			podStatus.Containers = append(podStatus.Containers, containerStatus)
+			podStatus.Instances = append(podStatus.Instances, instanceStatus)
 		}
 
-		// Process init containers
+		// Process instance dependencies
 		for _, container := range pod.Status.InitContainerStatuses {
-			containerStatus := extractContainerStatus(container)
-			if containerStatus.IsCrashing {
+			instanceStatus := extractContainerStatus(container)
+			if instanceStatus.IsCrashing {
 				hasCrashing = true
 			}
-			podStatus.InitContainers = append(podStatus.InitContainers, containerStatus)
+			podStatus.InstanceDependencies = append(podStatus.InstanceDependencies, instanceStatus)
 		}
 
 		podStatus.HasCrashingContainers = hasCrashing
@@ -75,12 +76,12 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 }
 
 // extractContainerStatus extracts status details from a container status
-func extractContainerStatus(container corev1.ContainerStatus) ContainerStatus {
-	status := ContainerStatus{
-		Name:         container.Name,
-		Ready:        container.Ready,
-		RestartCount: container.RestartCount,
-		IsCrashing:   false, // Default to false, will check crash conditions below
+func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
+	status := InstanceStatus{
+		KubernetesName: container.Name,
+		Ready:          container.Ready,
+		RestartCount:   container.RestartCount,
+		IsCrashing:     false, // Default to false, will check crash conditions below
 	}
 
 	// Determine container state
@@ -136,9 +137,9 @@ func extractContainerStatus(container corev1.ContainerStatus) ContainerStatus {
 }
 
 // * Models
-// ContainerStatus contains information about a container's state
-type ContainerStatus struct {
-	Name            string         `json:"name"`
+// InstanceStatus contains information about an instance's state
+type InstanceStatus struct {
+	KubernetesName  string         `json:"kubernetes_name"`
 	Ready           bool           `json:"ready"`
 	RestartCount    int32          `json:"restartCount"`
 	State           ContainerState `json:"state"`
@@ -150,20 +151,33 @@ type ContainerStatus struct {
 	CrashLoopReason string         `json:"crashLoopReason,omitempty"`
 }
 
-// PodContainerStatus contains information about a pod and its containers
+// PodContainerStatus contains information about a pod and its instances
 type PodContainerStatus struct {
-	Name                  string            `json:"name"`
-	Namespace             string            `json:"namespace"`
-	Phase                 PodPhase          `json:"phase"` // Pending, Running, Succeeded, Failed, Unknown
-	PodIP                 string            `json:"podIP,omitempty"`
-	StartTime             string            `json:"startTime,omitempty"`
-	HasCrashingContainers bool              `json:"hasCrashingContainers"`
-	Containers            []ContainerStatus `json:"containers" nullable:"false"`
-	InitContainers        []ContainerStatus `json:"initContainers" nullable:"false"`
-	TeamID                uuid.UUID         `json:"team_id"`
-	ProjectID             uuid.UUID         `json:"project_id"`
-	EnvironmentID         uuid.UUID         `json:"environment_id"`
-	ServiceID             uuid.UUID         `json:"service_id"`
+	KubernetesName        string           `json:"kubernetes_name"`
+	Namespace             string           `json:"namespace"`
+	Phase                 PodPhase         `json:"phase"` // Pending, Running, Succeeded, Failed, Unknown
+	PodIP                 string           `json:"podIP,omitempty"`
+	StartTime             string           `json:"startTime,omitempty"`
+	HasCrashingContainers bool             `json:"hasCrashingContainers"`
+	Instances             []InstanceStatus `json:"instances" nullable:"false"`
+	InstanceDependencies  []InstanceStatus `json:"instanceDependencies" nullable:"false"`
+	TeamID                uuid.UUID        `json:"team_id"`
+	ProjectID             uuid.UUID        `json:"project_id"`
+	EnvironmentID         uuid.UUID        `json:"environment_id"`
+	ServiceID             uuid.UUID        `json:"service_id"`
+}
+
+// SimpleHealthStatus provides a simplified view of instance health
+type SimpleHealthStatus struct {
+	Health            string                 `json:"health"` // "healthy", "unhealthy", "degraded"
+	ExpectedInstances int                    `json:"expectedInstances"`
+	Instances         []SimpleInstanceStatus `json:"instances"`
+}
+
+// SimpleInstanceStatus provides basic instance status information
+type SimpleInstanceStatus struct {
+	KubernetesName string `json:"kubernetes_name"`
+	Status         string `json:"status"` // "Running", "Waiting", "Terminated"
 }
 
 // * Enums
@@ -221,4 +235,104 @@ func (u PodPhase) Schema(r huma.Registry) *huma.Schema {
 		r.Map()["PodPhase"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/PodPhase"}
+}
+
+// GetExpectedInstances determines the expected number of instances based on the parent resource
+func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string, podName string, client *kubernetes.Clientset) (int, error) {
+	// Get the pod to find its owner reference
+	pod, err := client.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("failed to get pod: %w", err)
+	}
+
+	// Look for owner references
+	for _, ownerRef := range pod.OwnerReferences {
+		switch ownerRef.Kind {
+		case "StatefulSet":
+			sts, err := client.AppsV1().StatefulSets(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
+			if err != nil {
+				return 0, fmt.Errorf("failed to get statefulset: %w", err)
+			}
+			return int(*sts.Spec.Replicas), nil
+
+		case "Deployment":
+			deploy, err := client.AppsV1().Deployments(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
+			if err != nil {
+				return 0, fmt.Errorf("failed to get deployment: %w", err)
+			}
+			return int(*deploy.Spec.Replicas), nil
+
+		case "ReplicaSet":
+			rs, err := client.AppsV1().ReplicaSets(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
+			if err != nil {
+				return 0, fmt.Errorf("failed to get replicaset: %w", err)
+			}
+			return int(*rs.Spec.Replicas), nil
+
+		case "DaemonSet":
+			// For DaemonSets, the expected count is the number of nodes that match the node selector
+			ds, err := client.AppsV1().DaemonSets(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
+			if err != nil {
+				return 0, fmt.Errorf("failed to get daemonset: %w", err)
+			}
+			return int(ds.Status.DesiredNumberScheduled), nil
+		}
+	}
+
+	// If no owner reference found or it's a standalone pod, return 1
+	return 1, nil
+}
+
+// GetSimpleHealthStatus gets a simplified health status for all pods matching the labels
+func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*SimpleHealthStatus, error) {
+	// Get all pods matching the labels
+	podStatuses, err := self.GetPodContainerStatusByLabels(ctx, namespace, labels, client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pod statuses: %w", err)
+	}
+
+	if len(podStatuses) == 0 {
+		return &SimpleHealthStatus{
+			Health:            "unhealthy",
+			ExpectedInstances: 0,
+			Instances:         []SimpleInstanceStatus{},
+		}, nil
+	}
+
+	// Get expected instances from the first pod (they should all have the same parent)
+	expectedInstances, err := self.GetExpectedInstances(ctx, podStatuses[0].Namespace, podStatuses[0].KubernetesName, client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get expected instances: %w", err)
+	}
+
+	// Determine overall health
+	health := "healthy"
+	hasCrashing := false
+	allInstances := make([]SimpleInstanceStatus, 0)
+
+	for _, podStatus := range podStatuses {
+		if podStatus.HasCrashingContainers {
+			hasCrashing = true
+		}
+
+		// Add all instances from this pod
+		for _, instance := range podStatus.Instances {
+			allInstances = append(allInstances, SimpleInstanceStatus{
+				KubernetesName: instance.KubernetesName,
+				Status:         string(instance.State),
+			})
+		}
+	}
+
+	if hasCrashing {
+		health = "unhealthy"
+	} else if len(allInstances) < expectedInstances {
+		health = "degraded"
+	}
+
+	return &SimpleHealthStatus{
+		Health:            health,
+		ExpectedInstances: expectedInstances,
+		Instances:         allInstances,
+	}, nil
 }
