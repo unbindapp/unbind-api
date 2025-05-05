@@ -92,6 +92,12 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 		url = fmt.Sprintf("redis://%s:%s@%s-headless.%s:%d", "default", password, service.KubernetesName, namespace, 6379)
 	case "mysql":
 		url = fmt.Sprintf("mysql://%s:%s@moco-%s.%s:%d/%s", username, password, service.KubernetesName, namespace, 3306, "moco")
+	case "mongodb":
+		url = fmt.Sprintf("mongodb://%s:%s@%s-headless.%s:27017/admin?replicaSet=rs0&ssl=false",
+			username,
+			password,
+			service.KubernetesName,
+			namespace)
 	}
 
 	if existingUrl != url {
