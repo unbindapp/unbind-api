@@ -24,6 +24,8 @@ func (self *HandlerGroup) DevLogin(ctx context.Context, _ *server.EmptyInput) (*
 
 	// Build the OAuth2 authentication URL with the state.
 	authURL := self.srv.OauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	// Add dev parameter
+	authURL += "&initiating_url=dev-login"
 
 	// Create a cookie that stores the state value.
 	cookie := &http.Cookie{
