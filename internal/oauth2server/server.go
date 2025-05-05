@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/unbindapp/unbind-api/config"
@@ -38,7 +39,12 @@ func BuildOauthRedirect(cfg *config.Config, redirectType RedirectType, queryPara
 		allowedUrls = append(allowedUrls, "http://localhost:3000")
 	}
 
-	if redirectType == RedirectLogin {
+	if strings.HasPrefix(queryParams["state"], "dev-login") {
+		baseURL, err = utils.JoinURLPaths(cfg.ExternalOauth2URL, string(redirectType))
+		if err != nil {
+			return "", err
+		}
+	} else if redirectType == RedirectLogin {
 		initiatingURL := queryParams["initiating_url"]
 		if initiatingURL == "" {
 			initiatingURL, _ = utils.JoinURLPaths(cfg.ExternalUIUrl, "/sign-in")

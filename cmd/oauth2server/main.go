@@ -222,6 +222,7 @@ func StartOauth2Server(cfg *config.Config) {
 
 		// OAuth2/OIDC endpoints
 		r.Post("/token", oauth2Srv.HandleToken)
+		r.Get("/login", oauth2Srv.HandleLoginPage)
 		r.Get("/authorize", oauth2Srv.HandleAuthorize)
 		r.Get("/userinfo", oauth2Srv.HandleUserinfo)
 		r.Get("/.well-known/openid-configuration", oauth2Srv.HandleOpenIDConfiguration)

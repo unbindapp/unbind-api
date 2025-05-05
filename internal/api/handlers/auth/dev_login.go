@@ -2,6 +2,7 @@ package auth_handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,7 +20,7 @@ type OauthLoginResponse struct {
 // Login handles the OAuth login redirect.
 func (self *HandlerGroup) DevLogin(ctx context.Context, _ *server.EmptyInput) (*OauthLoginResponse, error) {
 	// Generate a random state value for CSRF protection.
-	state := uuid.New().String()
+	state := fmt.Sprintf("dev-login-%s", uuid.New().String())
 
 	// Build the OAuth2 authentication URL with the state.
 	authURL := self.srv.OauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
