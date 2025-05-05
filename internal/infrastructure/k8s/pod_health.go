@@ -169,15 +169,15 @@ type PodContainerStatus struct {
 
 // SimpleHealthStatus provides a simplified view of instance health
 type SimpleHealthStatus struct {
-	Health            InstanceHealth         `json:"health"` // "healthy", "unhealthy", "degraded"
+	Health            InstanceHealth         `json:"health"`
 	ExpectedInstances int                    `json:"expectedInstances"`
 	Instances         []SimpleInstanceStatus `json:"instances"`
 }
 
 // SimpleInstanceStatus provides basic instance status information
 type SimpleInstanceStatus struct {
-	KubernetesName string `json:"kubernetes_name"`
-	Status         string `json:"status"` // "Running", "Waiting", "Terminated"
+	KubernetesName string         `json:"kubernetes_name"`
+	Status         ContainerState `json:"status"` // "Running", "Waiting", "Terminated"
 }
 
 // * Enums
@@ -342,7 +342,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 		for _, instance := range podStatus.Instances {
 			allInstances = append(allInstances, SimpleInstanceStatus{
 				KubernetesName: instance.KubernetesName,
-				Status:         string(instance.State),
+				Status:         instance.State,
 			})
 		}
 	}
