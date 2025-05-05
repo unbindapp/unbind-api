@@ -106,13 +106,6 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update version for database service with existing deployment")
 				}
 			}
-
-			// * special rule that mongodb can't be scaled down once scaled up
-			if service.Database != nil && *service.Database == "mongodb" && service.Edges.ServiceConfig.Replicas > 1 {
-				if input.Replicas != nil && *input.Replicas < 2 {
-					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot scale down mongodb service in replicaset mode")
-				}
-			}
 		}
 	}
 
