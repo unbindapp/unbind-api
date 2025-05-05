@@ -100,10 +100,17 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	if service.Type == schema.ServiceTypeDatabase && input.DatabaseConfig != nil && service.DatabaseVersion != nil {
 		hasDeployment := len(service.Edges.Deployments) > 0
 		if hasDeployment {
-			// See if theyre updating version
+			// * special rule that you can't update version if there is a deployment
 			if input.DatabaseConfig.Version != "" {
 				if input.DatabaseConfig.Version != *service.DatabaseVersion {
 					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update version for database service with existing deployment")
+				}
+			}
+
+			// * special rule that mongodb can't be scaled down once scaled up
+			if service.Database != nil && *service.Database == "mongodb" && service.Edges.ServiceConfig.Replicas > 1 {
+				if input.Replicas != nil && *input.Replicas < 2 {
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot scale down mongodb service in replicaset mode")
 				}
 			}
 		}

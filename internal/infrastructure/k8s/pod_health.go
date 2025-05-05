@@ -169,7 +169,7 @@ type PodContainerStatus struct {
 
 // SimpleHealthStatus provides a simplified view of instance health
 type SimpleHealthStatus struct {
-	Health            string                 `json:"health"` // "healthy", "unhealthy", "degraded"
+	Health            InstanceHealth         `json:"health"` // "healthy", "unhealthy", "degraded"
 	ExpectedInstances int                    `json:"expectedInstances"`
 	Instances         []SimpleInstanceStatus `json:"instances"`
 }
@@ -201,6 +201,29 @@ func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
 		r.Map()["ContainerState"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/ContainerState"}
+}
+
+// Overall health one
+type InstanceHealth string
+
+const (
+	InstanceHealthHealthy   InstanceHealth = "healthy"
+	InstanceHealthDegraded  InstanceHealth = "degraded"
+	InstanceHealthUnhealthy InstanceHealth = "unhealthy"
+)
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u InstanceHealth) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["InstanceHealth"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "InstanceHealth")
+		schemaRef.Title = "InstanceHealth"
+		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthHealthy))
+		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthDegraded))
+		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthUnhealthy))
+		r.Map()["InstanceHealth"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/InstanceHealth"}
 }
 
 // Direct copy of corev1.PodPhase, but so we can attach openapi schema to it
@@ -293,7 +316,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 
 	if len(podStatuses) == 0 {
 		return &SimpleHealthStatus{
-			Health:            "unhealthy",
+			Health:            InstanceHealthUnhealthy,
 			ExpectedInstances: 0,
 			Instances:         []SimpleInstanceStatus{},
 		}, nil
@@ -306,7 +329,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 	}
 
 	// Determine overall health
-	health := "healthy"
+	health := InstanceHealthHealthy
 	hasCrashing := false
 	allInstances := make([]SimpleInstanceStatus, 0)
 
@@ -325,9 +348,9 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 	}
 
 	if hasCrashing {
-		health = "unhealthy"
+		health = InstanceHealthUnhealthy
 	} else if len(allInstances) < expectedInstances {
-		health = "degraded"
+		health = InstanceHealthDegraded
 	}
 
 	return &SimpleHealthStatus{
