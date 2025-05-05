@@ -76,6 +76,8 @@ type Config struct {
 	SkipBootstrap    bool   `env:"SKIP_BOOTSTRAP" envDefault:"false"`
 	// Builder to pass around
 	BuildImage string
+	// Enable dev login page
+	EnableDevLoginPage bool `env:"ENABLE_DEV_LOGIN_PAGE" envDefault:"false"`
 }
 
 func (self *Config) GetPostgresHost() string {

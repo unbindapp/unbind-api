@@ -28,6 +28,20 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		handlers.LoginSubmit,
 	)
 
+	if server.Cfg.EnableDevLoginPage {
+		huma.Register(
+			grp,
+			huma.Operation{
+				OperationID: "dev_login",
+				Summary:     "Dev Login",
+				Description: "Dev Login",
+				Path:        "/dev_login",
+				Method:      http.MethodGet,
+			},
+			handlers.DevLogin,
+		)
+	}
+
 	huma.Register(
 		grp,
 		huma.Operation{
