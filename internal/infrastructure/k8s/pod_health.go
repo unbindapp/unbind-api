@@ -67,7 +67,7 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 			podStatus.InstanceDependencies = append(podStatus.InstanceDependencies, instanceStatus)
 		}
 
-		podStatus.HasCrashingContainers = hasCrashing
+		podStatus.HasCrashingInstances = hasCrashing
 
 		result = append(result, podStatus)
 	}
@@ -153,18 +153,18 @@ type InstanceStatus struct {
 
 // PodContainerStatus contains information about a pod and its instances
 type PodContainerStatus struct {
-	KubernetesName        string           `json:"kubernetes_name"`
-	Namespace             string           `json:"namespace"`
-	Phase                 PodPhase         `json:"phase"` // Pending, Running, Succeeded, Failed, Unknown
-	PodIP                 string           `json:"podIP,omitempty"`
-	StartTime             string           `json:"startTime,omitempty"`
-	HasCrashingContainers bool             `json:"hasCrashingContainers"`
-	Instances             []InstanceStatus `json:"instances" nullable:"false"`
-	InstanceDependencies  []InstanceStatus `json:"instanceDependencies" nullable:"false"`
-	TeamID                uuid.UUID        `json:"team_id"`
-	ProjectID             uuid.UUID        `json:"project_id"`
-	EnvironmentID         uuid.UUID        `json:"environment_id"`
-	ServiceID             uuid.UUID        `json:"service_id"`
+	KubernetesName       string           `json:"kubernetes_name"`
+	Namespace            string           `json:"namespace"`
+	Phase                PodPhase         `json:"phase"` // Pending, Running, Succeeded, Failed, Unknown
+	PodIP                string           `json:"podIP,omitempty"`
+	StartTime            string           `json:"startTime,omitempty"`
+	HasCrashingInstances bool             `json:"hasCrashingInstances"`
+	Instances            []InstanceStatus `json:"instances" nullable:"false"`
+	InstanceDependencies []InstanceStatus `json:"instanceDependencies" nullable:"false"`
+	TeamID               uuid.UUID        `json:"team_id"`
+	ProjectID            uuid.UUID        `json:"project_id"`
+	EnvironmentID        uuid.UUID        `json:"environment_id"`
+	ServiceID            uuid.UUID        `json:"service_id"`
 }
 
 // SimpleHealthStatus provides a simplified view of instance health
@@ -311,7 +311,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 	allInstances := make([]SimpleInstanceStatus, 0)
 
 	for _, podStatus := range podStatuses {
-		if podStatus.HasCrashingContainers {
+		if podStatus.HasCrashingInstances {
 			hasCrashing = true
 		}
 
