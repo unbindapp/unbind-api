@@ -204,3 +204,12 @@ func (self *Upgrader) rollbackToVersion(ctx context.Context, version string) err
 func (self *Upgrader) CheckDeploymentsReady(ctx context.Context, version string) (bool, error) {
 	return self.k8sClient.CheckDeploymentsReady(ctx, version)
 }
+
+// GetNextAvailableVersion returns the next version that can be upgraded to from the current version
+func (self *Upgrader) GetNextAvailableVersion(ctx context.Context, currentVersion string) (string, error) {
+	version, err := self.releaseManager.GetNextAvailableVersion(ctx, currentVersion)
+	if err != nil {
+		return "", fmt.Errorf("failed to get next available version: %w", err)
+	}
+	return version, nil
+}

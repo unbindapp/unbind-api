@@ -30,8 +30,9 @@ type RepositoriesServiceInterface interface {
 
 // Manager handles release management functionality
 type Manager struct {
-	client GitHubClientInterface
-	repo   string
+	client      GitHubClientInterface
+	repo        string
+	metadataURL string
 }
 
 // NewManager creates a new release manager
@@ -42,8 +43,9 @@ func NewManager(client GitHubClientInterface, releaseRepoOverride string) *Manag
 	}
 
 	return &Manager{
-		client: client,
-		repo:   repo,
+		client:      client,
+		repo:        repo,
+		metadataURL: fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/master/metadata.json", DefaultOwner, repo),
 	}
 }
 
@@ -124,60 +126,6 @@ func (self *Manager) GetLatestVersion(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no versions found")
 	}
 	return updates[len(updates)-1], nil
-}
-
-// GetUpdatePath returns the ordered list of versions needed to update from current to target
-func (self *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVersion string) ([]string, error) {
-	// Ensure versions have v prefix
-	if !strings.HasPrefix(currentVersion, "v") {
-		currentVersion = "v" + currentVersion
-	}
-	if !strings.HasPrefix(targetVersion, "v") {
-		targetVersion = "v" + targetVersion
-	}
-
-	// Validate versions
-	if !semver.IsValid(currentVersion) {
-		return nil, fmt.Errorf("invalid current version: %s", currentVersion)
-	}
-	if !semver.IsValid(targetVersion) {
-		return nil, fmt.Errorf("invalid target version: %s", targetVersion)
-	}
-
-	// Get all available updates
-	updates, err := self.AvailableUpdates(ctx, currentVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	// If no updates are available, return empty slice
-	if len(updates) == 0 {
-		return make([]string, 0), nil
-	}
-
-	// Check if target version exists in available versions
-	targetExists := false
-	for _, version := range updates {
-		if version == targetVersion {
-			targetExists = true
-			break
-		}
-	}
-
-	// If target version doesn't exist in available versions, return empty slice
-	if !targetExists {
-		return make([]string, 0), nil
-	}
-
-	// Filter versions up to target version
-	updatePath := make([]string, 0, len(updates))
-	for _, version := range updates {
-		if semver.Compare(version, targetVersion) <= 0 {
-			updatePath = append(updatePath, version)
-		}
-	}
-
-	return updatePath, nil
 }
 
 // GetRepositoryInfo returns the repository owner and name

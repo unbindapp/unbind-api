@@ -49,17 +49,32 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 		return nil, err
 	}
 
-	// Get versions available to upgrade
-	availableUpdates, err := self.srv.UpgradeManager.CheckForUpdates(ctx)
+	// Get all available versions
+	allUpdates, err := self.srv.UpgradeManager.CheckForUpdates(ctx)
 	if err != nil {
 		log.Errorf("Failed to check for updates: %v", err)
 		return nil, huma.Error500InternalServerError("Failed to check for updates: " + err.Error())
 	}
 
+	// Filter to only show versions that can be upgraded to directly
+	availableUpdates := make([]string, 0)
+	currentVersion := self.srv.UpgradeManager.CurrentVersion
+
+	for _, version := range allUpdates {
+		nextVersion, err := self.srv.UpgradeManager.GetNextAvailableVersion(ctx, currentVersion)
+		if err != nil {
+			// Skip versions that can't be upgraded to
+			continue
+		}
+		if nextVersion == version {
+			availableUpdates = append(availableUpdates, version)
+		}
+	}
+
 	resp := &UpgradeCheckResponse{}
 	resp.Body.HasUpgradeAvailable = len(availableUpdates) > 0
 	resp.Body.AvailableVersions = availableUpdates
-	resp.Body.CurrentVersion = self.srv.UpgradeManager.CurrentVersion
+	resp.Body.CurrentVersion = currentVersion
 
 	return resp, nil
 }
