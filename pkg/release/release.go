@@ -91,12 +91,21 @@ func (self *Manager) AvailableUpdates(ctx context.Context, currentVersion string
 		return nil, err
 	}
 
-	// Filter and sort valid semver tags that have published releases
+	// Get version metadata
+	metadata, err := self.GetVersionMetadata(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get version metadata: %w", err)
+	}
+
+	// Filter and sort valid semver tags that have published releases and metadata
 	validVersions := make([]string, 0, len(tags))
 	for _, tag := range tags {
 		version := tag.GetName()
 		if semver.IsValid(version) && published[version] {
-			validVersions = append(validVersions, version)
+			// Only include versions that have metadata
+			if _, hasMetadata := metadata[version]; hasMetadata {
+				validVersions = append(validVersions, version)
+			}
 		}
 	}
 
