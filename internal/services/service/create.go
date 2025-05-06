@@ -52,10 +52,12 @@ type CreateServiceInput struct {
 	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
 
 	// Databases (special case)
-	DatabaseType       *string                `json:"database_type,omitempty"`
-	DatabaseConfig     *schema.DatabaseConfig `json:"database_config,omitempty"`
-	S3BackupEndpointID *uuid.UUID             `json:"s3_backup_endpoint_id,omitempty" format:"uuid"`
-	S3BackupBucket     *string                `json:"s3_backup_bucket,omitempty"`
+	DatabaseType         *string                `json:"database_type,omitempty"`
+	DatabaseConfig       *schema.DatabaseConfig `json:"database_config,omitempty"`
+	S3BackupEndpointID   *uuid.UUID             `json:"s3_backup_endpoint_id,omitempty" format:"uuid"`
+	S3BackupBucket       *string                `json:"s3_backup_bucket,omitempty"`
+	BackupSchedule       *string                `json:"backup_schedule,omitempty" required:"false" doc:"Cron expression for the backup schedule, e.g. '0 0 * * *'"`
+	BackupRetentionCount *int                   `json:"backup_retention,omitempty" required:"false" doc:"Number of base backups to retain, e.g. 3"`
 }
 
 // CreateService creates a new service and its configuration
@@ -129,6 +131,13 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		if ok {
 			if image, ok := imageProperty.Default.(string); ok {
 				input.Image = utils.ToPtr(image)
+			}
+		}
+
+		// Check backup schedule
+		if input.BackupSchedule != nil {
+			if err := utils.ValidateCronExpression(*input.BackupSchedule); err != nil {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("invalid backup schedule: %s", err))
 			}
 		}
 
@@ -353,6 +362,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			DatabaseConfig:          input.DatabaseConfig,
 			S3BackupEndpointID:      input.S3BackupEndpointID,
 			S3BackupBucket:          input.S3BackupBucket,
+			BackupSchedule:          input.BackupSchedule,
+			BackupRetentionCount:    input.BackupRetentionCount,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

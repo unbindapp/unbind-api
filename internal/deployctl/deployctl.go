@@ -194,6 +194,8 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 			env["SERVICE_DATABASE_BACKUP_REGION"] = s3Source.Region
 			env["SERVICE_DATABASE_BACKUP_ENDPOINT"] = s3Source.Endpoint
 			env["SERVICE_DATABASE_BACKUP_SECRET_NAME"] = s3Source.KubernetesSecret
+			env["SERVICE_DATABASE_BACKUP_SCHEDULE"] = service.Edges.ServiceConfig.BackupSchedule
+			env["SERVICE_DATABASE_BACKUP_RETENTION"] = strconv.Itoa(service.Edges.ServiceConfig.BackupRetentionCount)
 		}
 	}
 

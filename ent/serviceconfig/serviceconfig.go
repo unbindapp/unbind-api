@@ -62,6 +62,10 @@ const (
 	FieldS3BackupEndpointID = "s3_backup_endpoint_id"
 	// FieldS3BackupBucket holds the string denoting the s3_backup_bucket field in the database.
 	FieldS3BackupBucket = "s3_backup_bucket"
+	// FieldBackupSchedule holds the string denoting the backup_schedule field in the database.
+	FieldBackupSchedule = "backup_schedule"
+	// FieldBackupRetentionCount holds the string denoting the backup_retention_count field in the database.
+	FieldBackupRetentionCount = "backup_retention_count"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// EdgeS3BackupEndpoint holds the string denoting the s3_backup_endpoint edge name in mutations.
@@ -109,6 +113,8 @@ var Columns = []string{
 	FieldDatabaseConfig,
 	FieldS3BackupEndpointID,
 	FieldS3BackupBucket,
+	FieldBackupSchedule,
+	FieldBackupRetentionCount,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -134,6 +140,10 @@ var (
 	DefaultAutoDeploy bool
 	// DefaultIsPublic holds the default value on creation for the "is_public" field.
 	DefaultIsPublic bool
+	// DefaultBackupSchedule holds the default value on creation for the "backup_schedule" field.
+	DefaultBackupSchedule string
+	// DefaultBackupRetentionCount holds the default value on creation for the "backup_retention_count" field.
+	DefaultBackupRetentionCount int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -269,6 +279,16 @@ func ByS3BackupEndpointID(opts ...sql.OrderTermOption) OrderOption {
 // ByS3BackupBucket orders the results by the s3_backup_bucket field.
 func ByS3BackupBucket(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldS3BackupBucket, opts...).ToFunc()
+}
+
+// ByBackupSchedule orders the results by the backup_schedule field.
+func ByBackupSchedule(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBackupSchedule, opts...).ToFunc()
+}
+
+// ByBackupRetentionCount orders the results by the backup_retention_count field.
+func ByBackupRetentionCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBackupRetentionCount, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

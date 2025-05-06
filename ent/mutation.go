@@ -12224,6 +12224,9 @@ type ServiceConfigMutation struct {
 	definition_version        *string
 	database_config           **schema.DatabaseConfig
 	s3_backup_bucket          *string
+	backup_schedule           *string
+	backup_retention_count    *int
+	addbackup_retention_count *int
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
@@ -13364,6 +13367,98 @@ func (m *ServiceConfigMutation) ResetS3BackupBucket() {
 	delete(m.clearedFields, serviceconfig.FieldS3BackupBucket)
 }
 
+// SetBackupSchedule sets the "backup_schedule" field.
+func (m *ServiceConfigMutation) SetBackupSchedule(s string) {
+	m.backup_schedule = &s
+}
+
+// BackupSchedule returns the value of the "backup_schedule" field in the mutation.
+func (m *ServiceConfigMutation) BackupSchedule() (r string, exists bool) {
+	v := m.backup_schedule
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBackupSchedule returns the old "backup_schedule" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldBackupSchedule(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBackupSchedule is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBackupSchedule requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBackupSchedule: %w", err)
+	}
+	return oldValue.BackupSchedule, nil
+}
+
+// ResetBackupSchedule resets all changes to the "backup_schedule" field.
+func (m *ServiceConfigMutation) ResetBackupSchedule() {
+	m.backup_schedule = nil
+}
+
+// SetBackupRetentionCount sets the "backup_retention_count" field.
+func (m *ServiceConfigMutation) SetBackupRetentionCount(i int) {
+	m.backup_retention_count = &i
+	m.addbackup_retention_count = nil
+}
+
+// BackupRetentionCount returns the value of the "backup_retention_count" field in the mutation.
+func (m *ServiceConfigMutation) BackupRetentionCount() (r int, exists bool) {
+	v := m.backup_retention_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBackupRetentionCount returns the old "backup_retention_count" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldBackupRetentionCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBackupRetentionCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBackupRetentionCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBackupRetentionCount: %w", err)
+	}
+	return oldValue.BackupRetentionCount, nil
+}
+
+// AddBackupRetentionCount adds i to the "backup_retention_count" field.
+func (m *ServiceConfigMutation) AddBackupRetentionCount(i int) {
+	if m.addbackup_retention_count != nil {
+		*m.addbackup_retention_count += i
+	} else {
+		m.addbackup_retention_count = &i
+	}
+}
+
+// AddedBackupRetentionCount returns the value that was added to the "backup_retention_count" field in this mutation.
+func (m *ServiceConfigMutation) AddedBackupRetentionCount() (r int, exists bool) {
+	v := m.addbackup_retention_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBackupRetentionCount resets all changes to the "backup_retention_count" field.
+func (m *ServiceConfigMutation) ResetBackupRetentionCount() {
+	m.backup_retention_count = nil
+	m.addbackup_retention_count = nil
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -13452,7 +13547,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 24)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -13519,6 +13614,12 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.s3_backup_bucket != nil {
 		fields = append(fields, serviceconfig.FieldS3BackupBucket)
 	}
+	if m.backup_schedule != nil {
+		fields = append(fields, serviceconfig.FieldBackupSchedule)
+	}
+	if m.backup_retention_count != nil {
+		fields = append(fields, serviceconfig.FieldBackupRetentionCount)
+	}
 	return fields
 }
 
@@ -13571,6 +13672,10 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.S3BackupEndpointID()
 	case serviceconfig.FieldS3BackupBucket:
 		return m.S3BackupBucket()
+	case serviceconfig.FieldBackupSchedule:
+		return m.BackupSchedule()
+	case serviceconfig.FieldBackupRetentionCount:
+		return m.BackupRetentionCount()
 	}
 	return nil, false
 }
@@ -13624,6 +13729,10 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldS3BackupEndpointID(ctx)
 	case serviceconfig.FieldS3BackupBucket:
 		return m.OldS3BackupBucket(ctx)
+	case serviceconfig.FieldBackupSchedule:
+		return m.OldBackupSchedule(ctx)
+	case serviceconfig.FieldBackupRetentionCount:
+		return m.OldBackupRetentionCount(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -13787,6 +13896,20 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetS3BackupBucket(v)
 		return nil
+	case serviceconfig.FieldBackupSchedule:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBackupSchedule(v)
+		return nil
+	case serviceconfig.FieldBackupRetentionCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBackupRetentionCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -13798,6 +13921,9 @@ func (m *ServiceConfigMutation) AddedFields() []string {
 	if m.addreplicas != nil {
 		fields = append(fields, serviceconfig.FieldReplicas)
 	}
+	if m.addbackup_retention_count != nil {
+		fields = append(fields, serviceconfig.FieldBackupRetentionCount)
+	}
 	return fields
 }
 
@@ -13808,6 +13934,8 @@ func (m *ServiceConfigMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case serviceconfig.FieldReplicas:
 		return m.AddedReplicas()
+	case serviceconfig.FieldBackupRetentionCount:
+		return m.AddedBackupRetentionCount()
 	}
 	return nil, false
 }
@@ -13823,6 +13951,13 @@ func (m *ServiceConfigMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddReplicas(v)
+		return nil
+	case serviceconfig.FieldBackupRetentionCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBackupRetentionCount(v)
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig numeric field %s", name)
@@ -14003,6 +14138,12 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldS3BackupBucket:
 		m.ResetS3BackupBucket()
+		return nil
+	case serviceconfig.FieldBackupSchedule:
+		m.ResetBackupSchedule()
+		return nil
+	case serviceconfig.FieldBackupRetentionCount:
+		m.ResetBackupRetentionCount()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

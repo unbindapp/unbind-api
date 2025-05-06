@@ -69,6 +69,10 @@ type ServiceConfig struct {
 	S3BackupEndpointID *uuid.UUID `json:"s3_backup_endpoint_id,omitempty"`
 	// S3 bucket to backup to
 	S3BackupBucket *string `json:"s3_backup_bucket,omitempty"`
+	// Cron expression for the backup schedule
+	BackupSchedule string `json:"backup_schedule,omitempty"`
+	// Number of base backups to retain
+	BackupRetentionCount int `json:"backup_retention_count,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -119,9 +123,9 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
-		case serviceconfig.FieldReplicas:
+		case serviceconfig.FieldReplicas, serviceconfig.FieldBackupRetentionCount:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket:
+		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket, serviceconfig.FieldBackupSchedule:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -296,6 +300,18 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				sc.S3BackupBucket = new(string)
 				*sc.S3BackupBucket = value.String
 			}
+		case serviceconfig.FieldBackupSchedule:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field backup_schedule", values[i])
+			} else if value.Valid {
+				sc.BackupSchedule = value.String
+			}
+		case serviceconfig.FieldBackupRetentionCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field backup_retention_count", values[i])
+			} else if value.Valid {
+				sc.BackupRetentionCount = int(value.Int64)
+			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
 		}
@@ -427,6 +443,12 @@ func (sc *ServiceConfig) String() string {
 		builder.WriteString("s3_backup_bucket=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("backup_schedule=")
+	builder.WriteString(sc.BackupSchedule)
+	builder.WriteString(", ")
+	builder.WriteString("backup_retention_count=")
+	builder.WriteString(fmt.Sprintf("%v", sc.BackupRetentionCount))
 	builder.WriteByte(')')
 	return builder.String()
 }

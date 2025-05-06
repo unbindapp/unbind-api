@@ -133,6 +133,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.JSON("database_config", &DatabaseConfig{}).Optional().Comment("Database configuration for the service"),
 		field.UUID("s3_backup_endpoint_id", uuid.UUID{}).Optional().Nillable().Comment("S3 endpoint backup to"),
 		field.String("s3_backup_bucket").Optional().Nillable().Comment("S3 bucket to backup to"),
+		field.String("backup_schedule").Default("5 5 * * *").Comment("Cron expression for the backup schedule"),
+		field.Int("backup_retention_count").Default(3).Comment("Number of base backups to retain"),
 	}
 }
 

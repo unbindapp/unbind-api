@@ -138,6 +138,16 @@ func S3BackupBucket(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldS3BackupBucket, v))
 }
 
+// BackupSchedule applies equality check predicate on the "backup_schedule" field. It's identical to BackupScheduleEQ.
+func BackupSchedule(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldBackupSchedule, v))
+}
+
+// BackupRetentionCount applies equality check predicate on the "backup_retention_count" field. It's identical to BackupRetentionCountEQ.
+func BackupRetentionCount(v int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldBackupRetentionCount, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldCreatedAt, v))
@@ -1131,6 +1141,111 @@ func S3BackupBucketEqualFold(v string) predicate.ServiceConfig {
 // S3BackupBucketContainsFold applies the ContainsFold predicate on the "s3_backup_bucket" field.
 func S3BackupBucketContainsFold(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldContainsFold(FieldS3BackupBucket, v))
+}
+
+// BackupScheduleEQ applies the EQ predicate on the "backup_schedule" field.
+func BackupScheduleEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldBackupSchedule, v))
+}
+
+// BackupScheduleNEQ applies the NEQ predicate on the "backup_schedule" field.
+func BackupScheduleNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldBackupSchedule, v))
+}
+
+// BackupScheduleIn applies the In predicate on the "backup_schedule" field.
+func BackupScheduleIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldBackupSchedule, vs...))
+}
+
+// BackupScheduleNotIn applies the NotIn predicate on the "backup_schedule" field.
+func BackupScheduleNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldBackupSchedule, vs...))
+}
+
+// BackupScheduleGT applies the GT predicate on the "backup_schedule" field.
+func BackupScheduleGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldBackupSchedule, v))
+}
+
+// BackupScheduleGTE applies the GTE predicate on the "backup_schedule" field.
+func BackupScheduleGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldBackupSchedule, v))
+}
+
+// BackupScheduleLT applies the LT predicate on the "backup_schedule" field.
+func BackupScheduleLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldBackupSchedule, v))
+}
+
+// BackupScheduleLTE applies the LTE predicate on the "backup_schedule" field.
+func BackupScheduleLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldBackupSchedule, v))
+}
+
+// BackupScheduleContains applies the Contains predicate on the "backup_schedule" field.
+func BackupScheduleContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldBackupSchedule, v))
+}
+
+// BackupScheduleHasPrefix applies the HasPrefix predicate on the "backup_schedule" field.
+func BackupScheduleHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldBackupSchedule, v))
+}
+
+// BackupScheduleHasSuffix applies the HasSuffix predicate on the "backup_schedule" field.
+func BackupScheduleHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldBackupSchedule, v))
+}
+
+// BackupScheduleEqualFold applies the EqualFold predicate on the "backup_schedule" field.
+func BackupScheduleEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldBackupSchedule, v))
+}
+
+// BackupScheduleContainsFold applies the ContainsFold predicate on the "backup_schedule" field.
+func BackupScheduleContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldBackupSchedule, v))
+}
+
+// BackupRetentionCountEQ applies the EQ predicate on the "backup_retention_count" field.
+func BackupRetentionCountEQ(v int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldBackupRetentionCount, v))
+}
+
+// BackupRetentionCountNEQ applies the NEQ predicate on the "backup_retention_count" field.
+func BackupRetentionCountNEQ(v int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldBackupRetentionCount, v))
+}
+
+// BackupRetentionCountIn applies the In predicate on the "backup_retention_count" field.
+func BackupRetentionCountIn(vs ...int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldBackupRetentionCount, vs...))
+}
+
+// BackupRetentionCountNotIn applies the NotIn predicate on the "backup_retention_count" field.
+func BackupRetentionCountNotIn(vs ...int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldBackupRetentionCount, vs...))
+}
+
+// BackupRetentionCountGT applies the GT predicate on the "backup_retention_count" field.
+func BackupRetentionCountGT(v int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldBackupRetentionCount, v))
+}
+
+// BackupRetentionCountGTE applies the GTE predicate on the "backup_retention_count" field.
+func BackupRetentionCountGTE(v int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldBackupRetentionCount, v))
+}
+
+// BackupRetentionCountLT applies the LT predicate on the "backup_retention_count" field.
+func BackupRetentionCountLT(v int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldBackupRetentionCount, v))
+}
+
+// BackupRetentionCountLTE applies the LTE predicate on the "backup_retention_count" field.
+func BackupRetentionCountLTE(v int) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldBackupRetentionCount, v))
 }
 
 // HasService applies the HasEdge predicate on the "service" edge.

@@ -67,6 +67,8 @@ type Config struct {
 	ServiceDatabaseBackupRegion      string `env:"SERVICE_DATABASE_BACKUP_REGION"`
 	ServiceDatabaseBackupEndpoint    string `env:"SERVICE_DATABASE_BACKUP_ENDPOINT"`
 	ServiceDatabaseBackupSecretName  string `env:"SERVICE_DATABASE_BACKUP_SECRET_NAME"`
+	ServiceDatabaseBackupSchedule    string `env:"SERVICE_DATABASE_BACKUP_SCHEDULE"`
+	ServiceDatabaseBackupRetention   int    `env:"SERVICE_DATABASE_BACKUP_RETENTION"`
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

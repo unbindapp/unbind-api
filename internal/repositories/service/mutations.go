@@ -74,6 +74,8 @@ type MutateConfigInput struct {
 	DatabaseConfig          *schema.DatabaseConfig
 	S3BackupEndpointID      *uuid.UUID
 	S3BackupBucket          *string
+	BackupSchedule          *string
+	BackupRetentionCount    *int
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -124,7 +126,9 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableDockerfileContext(input.DockerfileContext).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
 		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
-		SetNillableS3BackupBucket(input.S3BackupBucket)
+		SetNillableS3BackupBucket(input.S3BackupBucket).
+		SetNillableBackupSchedule(input.BackupSchedule).
+		SetNillableBackupRetentionCount(input.BackupRetentionCount)
 
 	if input.DatabaseConfig != nil {
 		c.SetDatabaseConfig(input.DatabaseConfig)
@@ -180,7 +184,9 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
-		SetNillableS3BackupEndpointID(input.S3BackupEndpointID)
+		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
+		SetNillableBackupSchedule(input.BackupSchedule).
+		SetNillableBackupRetentionCount(input.BackupRetentionCount)
 
 	if input.GitBranch != nil {
 		if *input.GitBranch == "" {

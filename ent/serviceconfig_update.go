@@ -401,6 +401,41 @@ func (scu *ServiceConfigUpdate) ClearS3BackupBucket() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetBackupSchedule sets the "backup_schedule" field.
+func (scu *ServiceConfigUpdate) SetBackupSchedule(s string) *ServiceConfigUpdate {
+	scu.mutation.SetBackupSchedule(s)
+	return scu
+}
+
+// SetNillableBackupSchedule sets the "backup_schedule" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableBackupSchedule(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetBackupSchedule(*s)
+	}
+	return scu
+}
+
+// SetBackupRetentionCount sets the "backup_retention_count" field.
+func (scu *ServiceConfigUpdate) SetBackupRetentionCount(i int) *ServiceConfigUpdate {
+	scu.mutation.ResetBackupRetentionCount()
+	scu.mutation.SetBackupRetentionCount(i)
+	return scu
+}
+
+// SetNillableBackupRetentionCount sets the "backup_retention_count" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableBackupRetentionCount(i *int) *ServiceConfigUpdate {
+	if i != nil {
+		scu.SetBackupRetentionCount(*i)
+	}
+	return scu
+}
+
+// AddBackupRetentionCount adds i to the "backup_retention_count" field.
+func (scu *ServiceConfigUpdate) AddBackupRetentionCount(i int) *ServiceConfigUpdate {
+	scu.mutation.AddBackupRetentionCount(i)
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -613,6 +648,15 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.S3BackupBucketCleared() {
 		_spec.ClearField(serviceconfig.FieldS3BackupBucket, field.TypeString)
+	}
+	if value, ok := scu.mutation.BackupSchedule(); ok {
+		_spec.SetField(serviceconfig.FieldBackupSchedule, field.TypeString, value)
+	}
+	if value, ok := scu.mutation.BackupRetentionCount(); ok {
+		_spec.SetField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
+	}
+	if value, ok := scu.mutation.AddedBackupRetentionCount(); ok {
+		_spec.AddField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1059,6 +1103,41 @@ func (scuo *ServiceConfigUpdateOne) ClearS3BackupBucket() *ServiceConfigUpdateOn
 	return scuo
 }
 
+// SetBackupSchedule sets the "backup_schedule" field.
+func (scuo *ServiceConfigUpdateOne) SetBackupSchedule(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetBackupSchedule(s)
+	return scuo
+}
+
+// SetNillableBackupSchedule sets the "backup_schedule" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableBackupSchedule(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetBackupSchedule(*s)
+	}
+	return scuo
+}
+
+// SetBackupRetentionCount sets the "backup_retention_count" field.
+func (scuo *ServiceConfigUpdateOne) SetBackupRetentionCount(i int) *ServiceConfigUpdateOne {
+	scuo.mutation.ResetBackupRetentionCount()
+	scuo.mutation.SetBackupRetentionCount(i)
+	return scuo
+}
+
+// SetNillableBackupRetentionCount sets the "backup_retention_count" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableBackupRetentionCount(i *int) *ServiceConfigUpdateOne {
+	if i != nil {
+		scuo.SetBackupRetentionCount(*i)
+	}
+	return scuo
+}
+
+// AddBackupRetentionCount adds i to the "backup_retention_count" field.
+func (scuo *ServiceConfigUpdateOne) AddBackupRetentionCount(i int) *ServiceConfigUpdateOne {
+	scuo.mutation.AddBackupRetentionCount(i)
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1301,6 +1380,15 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.S3BackupBucketCleared() {
 		_spec.ClearField(serviceconfig.FieldS3BackupBucket, field.TypeString)
+	}
+	if value, ok := scuo.mutation.BackupSchedule(); ok {
+		_spec.SetField(serviceconfig.FieldBackupSchedule, field.TypeString, value)
+	}
+	if value, ok := scuo.mutation.BackupRetentionCount(); ok {
+		_spec.SetField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
+	}
+	if value, ok := scuo.mutation.AddedBackupRetentionCount(); ok {
+		_spec.AddField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

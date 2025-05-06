@@ -289,6 +289,34 @@ func (scc *ServiceConfigCreate) SetNillableS3BackupBucket(s *string) *ServiceCon
 	return scc
 }
 
+// SetBackupSchedule sets the "backup_schedule" field.
+func (scc *ServiceConfigCreate) SetBackupSchedule(s string) *ServiceConfigCreate {
+	scc.mutation.SetBackupSchedule(s)
+	return scc
+}
+
+// SetNillableBackupSchedule sets the "backup_schedule" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableBackupSchedule(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetBackupSchedule(*s)
+	}
+	return scc
+}
+
+// SetBackupRetentionCount sets the "backup_retention_count" field.
+func (scc *ServiceConfigCreate) SetBackupRetentionCount(i int) *ServiceConfigCreate {
+	scc.mutation.SetBackupRetentionCount(i)
+	return scc
+}
+
+// SetNillableBackupRetentionCount sets the "backup_retention_count" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableBackupRetentionCount(i *int) *ServiceConfigCreate {
+	if i != nil {
+		scc.SetBackupRetentionCount(*i)
+	}
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -368,6 +396,14 @@ func (scc *ServiceConfigCreate) defaults() {
 		v := serviceconfig.DefaultIsPublic
 		scc.mutation.SetIsPublic(v)
 	}
+	if _, ok := scc.mutation.BackupSchedule(); !ok {
+		v := serviceconfig.DefaultBackupSchedule
+		scc.mutation.SetBackupSchedule(v)
+	}
+	if _, ok := scc.mutation.BackupRetentionCount(); !ok {
+		v := serviceconfig.DefaultBackupRetentionCount
+		scc.mutation.SetBackupRetentionCount(v)
+	}
 	if _, ok := scc.mutation.ID(); !ok {
 		v := serviceconfig.DefaultID()
 		scc.mutation.SetID(v)
@@ -414,6 +450,12 @@ func (scc *ServiceConfigCreate) check() error {
 	}
 	if _, ok := scc.mutation.IsPublic(); !ok {
 		return &ValidationError{Name: "is_public", err: errors.New(`ent: missing required field "ServiceConfig.is_public"`)}
+	}
+	if _, ok := scc.mutation.BackupSchedule(); !ok {
+		return &ValidationError{Name: "backup_schedule", err: errors.New(`ent: missing required field "ServiceConfig.backup_schedule"`)}
+	}
+	if _, ok := scc.mutation.BackupRetentionCount(); !ok {
+		return &ValidationError{Name: "backup_retention_count", err: errors.New(`ent: missing required field "ServiceConfig.backup_retention_count"`)}
 	}
 	if len(scc.mutation.ServiceIDs()) == 0 {
 		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "ServiceConfig.service"`)}
@@ -533,6 +575,14 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.S3BackupBucket(); ok {
 		_spec.SetField(serviceconfig.FieldS3BackupBucket, field.TypeString, value)
 		_node.S3BackupBucket = &value
+	}
+	if value, ok := scc.mutation.BackupSchedule(); ok {
+		_spec.SetField(serviceconfig.FieldBackupSchedule, field.TypeString, value)
+		_node.BackupSchedule = value
+	}
+	if value, ok := scc.mutation.BackupRetentionCount(); ok {
+		_spec.SetField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
+		_node.BackupRetentionCount = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -959,6 +1009,36 @@ func (u *ServiceConfigUpsert) UpdateS3BackupBucket() *ServiceConfigUpsert {
 // ClearS3BackupBucket clears the value of the "s3_backup_bucket" field.
 func (u *ServiceConfigUpsert) ClearS3BackupBucket() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldS3BackupBucket)
+	return u
+}
+
+// SetBackupSchedule sets the "backup_schedule" field.
+func (u *ServiceConfigUpsert) SetBackupSchedule(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldBackupSchedule, v)
+	return u
+}
+
+// UpdateBackupSchedule sets the "backup_schedule" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateBackupSchedule() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldBackupSchedule)
+	return u
+}
+
+// SetBackupRetentionCount sets the "backup_retention_count" field.
+func (u *ServiceConfigUpsert) SetBackupRetentionCount(v int) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldBackupRetentionCount, v)
+	return u
+}
+
+// UpdateBackupRetentionCount sets the "backup_retention_count" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateBackupRetentionCount() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldBackupRetentionCount)
+	return u
+}
+
+// AddBackupRetentionCount adds v to the "backup_retention_count" field.
+func (u *ServiceConfigUpsert) AddBackupRetentionCount(v int) *ServiceConfigUpsert {
+	u.Add(serviceconfig.FieldBackupRetentionCount, v)
 	return u
 }
 
@@ -1409,6 +1489,41 @@ func (u *ServiceConfigUpsertOne) UpdateS3BackupBucket() *ServiceConfigUpsertOne 
 func (u *ServiceConfigUpsertOne) ClearS3BackupBucket() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearS3BackupBucket()
+	})
+}
+
+// SetBackupSchedule sets the "backup_schedule" field.
+func (u *ServiceConfigUpsertOne) SetBackupSchedule(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBackupSchedule(v)
+	})
+}
+
+// UpdateBackupSchedule sets the "backup_schedule" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateBackupSchedule() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBackupSchedule()
+	})
+}
+
+// SetBackupRetentionCount sets the "backup_retention_count" field.
+func (u *ServiceConfigUpsertOne) SetBackupRetentionCount(v int) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBackupRetentionCount(v)
+	})
+}
+
+// AddBackupRetentionCount adds v to the "backup_retention_count" field.
+func (u *ServiceConfigUpsertOne) AddBackupRetentionCount(v int) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.AddBackupRetentionCount(v)
+	})
+}
+
+// UpdateBackupRetentionCount sets the "backup_retention_count" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateBackupRetentionCount() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBackupRetentionCount()
 	})
 }
 
@@ -2026,6 +2141,41 @@ func (u *ServiceConfigUpsertBulk) UpdateS3BackupBucket() *ServiceConfigUpsertBul
 func (u *ServiceConfigUpsertBulk) ClearS3BackupBucket() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearS3BackupBucket()
+	})
+}
+
+// SetBackupSchedule sets the "backup_schedule" field.
+func (u *ServiceConfigUpsertBulk) SetBackupSchedule(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBackupSchedule(v)
+	})
+}
+
+// UpdateBackupSchedule sets the "backup_schedule" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateBackupSchedule() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBackupSchedule()
+	})
+}
+
+// SetBackupRetentionCount sets the "backup_retention_count" field.
+func (u *ServiceConfigUpsertBulk) SetBackupRetentionCount(v int) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBackupRetentionCount(v)
+	})
+}
+
+// AddBackupRetentionCount adds v to the "backup_retention_count" field.
+func (u *ServiceConfigUpsertBulk) AddBackupRetentionCount(v int) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.AddBackupRetentionCount(v)
+	})
+}
+
+// UpdateBackupRetentionCount sets the "backup_retention_count" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateBackupRetentionCount() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBackupRetentionCount()
 	})
 }
 

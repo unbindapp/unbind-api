@@ -217,10 +217,12 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		self.builderConfig.ServiceDatabaseBackupRegion != "" &&
 		self.builderConfig.ServiceDatabaseBackupEndpoint != "" {
 		params.BackupConfig = &v1.S3ConfigSpec{
-			SecretName: self.builderConfig.ServiceDatabaseBackupSecretName,
-			Bucket:     self.builderConfig.ServiceDatabaseBackupBucket,
-			Region:     self.builderConfig.ServiceDatabaseBackupRegion,
-			Endpoint:   self.builderConfig.ServiceDatabaseBackupEndpoint,
+			SecretName:           self.builderConfig.ServiceDatabaseBackupSecretName,
+			Bucket:               self.builderConfig.ServiceDatabaseBackupBucket,
+			Region:               self.builderConfig.ServiceDatabaseBackupRegion,
+			Endpoint:             self.builderConfig.ServiceDatabaseBackupEndpoint,
+			BackupSchedule:       self.builderConfig.ServiceDatabaseBackupSchedule,
+			BackupRetentionCount: self.builderConfig.ServiceDatabaseBackupRetention,
 		}
 	}
 
