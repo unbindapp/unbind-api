@@ -3,6 +3,7 @@ package system_handler
 import (
 	"context"
 	"slices"
+	"sort"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"golang.org/x/mod/semver"
 )
 
 func (self *HandlerGroup) CheckPermissions(ctx context.Context, requesterUserID uuid.UUID) error {
@@ -56,19 +58,31 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 		return nil, huma.Error500InternalServerError("Failed to check for updates: " + err.Error())
 	}
 
-	// Filter to only show versions that can be upgraded to directly
+	// Filter to only show versions that can be upgraded to in sequence
 	availableUpdates := make([]string, 0)
 	currentVersion := self.srv.UpgradeManager.CurrentVersion
 
-	for _, version := range allUpdates {
-		nextVersion, err := self.srv.UpgradeManager.GetNextAvailableVersion(ctx, currentVersion)
-		if err != nil {
-			// Skip versions that can't be upgraded to
-			continue
+	// Sort versions to ensure we process them in order
+	sort.Slice(allUpdates, func(i, j int) bool {
+		return semver.Compare(allUpdates[i], allUpdates[j]) < 0
+	})
+
+	// Keep track of the current version we're checking from
+	checkVersion := currentVersion
+
+	// Build the upgrade path
+	for {
+		nextVersion, err := self.srv.UpgradeManager.GetNextAvailableVersion(ctx, checkVersion)
+		if err != nil || nextVersion == "" {
+			// No more versions available
+			break
 		}
-		if nextVersion == version {
-			availableUpdates = append(availableUpdates, version)
-		}
+
+		// Add the next version to our list
+		availableUpdates = append(availableUpdates, nextVersion)
+
+		// Update the version we're checking from
+		checkVersion = nextVersion
 	}
 
 	resp := &UpgradeCheckResponse{}
