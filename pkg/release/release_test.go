@@ -10,7 +10,8 @@ import (
 
 // mockGitHubClient is a mock implementation of the GitHub client
 type mockGitHubClient struct {
-	listTagsFunc func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error)
+	listTagsFunc     func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error)
+	listReleasesFunc func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error)
 }
 
 func (m *mockGitHubClient) Repositories() RepositoriesServiceInterface {
@@ -25,10 +26,15 @@ func (m *mockRepositoriesService) ListTags(ctx context.Context, owner, repo stri
 	return m.client.listTagsFunc(ctx, owner, repo, opts)
 }
 
+func (m *mockRepositoriesService) ListReleases(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error) {
+	return m.client.listReleasesFunc(ctx, owner, repo, opts)
+}
+
 type ReleaseTestSuite struct {
 	suite.Suite
-	manager  *Manager
-	mockTags []*github.RepositoryTag
+	manager      *Manager
+	mockTags     []*github.RepositoryTag
+	mockReleases []*github.RepositoryRelease
 }
 
 func (s *ReleaseTestSuite) SetupTest() {
@@ -43,10 +49,23 @@ func (s *ReleaseTestSuite) SetupTest() {
 		{Name: github.String("invalid-tag")}, // Should be filtered out
 	}
 
+	// Create mock releases (only some tags have releases)
+	s.mockReleases = []*github.RepositoryRelease{
+		{TagName: github.String("v0.0.1")},
+		{TagName: github.String("v0.0.2")},
+		{TagName: github.String("v0.0.3")},
+		{TagName: github.String("v0.1.0")},
+		{TagName: github.String("v0.1.1")},
+		// v1.0.0 and invalid-tag don't have releases
+	}
+
 	// Create mock client
 	mockClient := &mockGitHubClient{
 		listTagsFunc: func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error) {
 			return s.mockTags, nil, nil
+		},
+		listReleasesFunc: func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error) {
+			return s.mockReleases, nil, nil
 		},
 	}
 
@@ -64,18 +83,18 @@ func (s *ReleaseTestSuite) TestAvailableUpdates() {
 		{
 			name:           "valid version with updates",
 			currentVersion: "v0.0.1",
-			expected:       []string{"v0.0.2", "v0.0.3", "v0.1.0", "v0.1.1", "v1.0.0"},
+			expected:       []string{"v0.0.2", "v0.0.3", "v0.1.0", "v0.1.1"},
 			expectError:    false,
 		},
 		{
 			name:           "version without v prefix",
 			currentVersion: "0.0.1",
-			expected:       []string{"v0.0.2", "v0.0.3", "v0.1.0", "v0.1.1", "v1.0.0"},
+			expected:       []string{"v0.0.2", "v0.0.3", "v0.1.0", "v0.1.1"},
 			expectError:    false,
 		},
 		{
 			name:           "latest version",
-			currentVersion: "v1.0.0",
+			currentVersion: "v0.1.1",
 			expected:       []string{},
 			expectError:    false,
 		},
@@ -108,28 +127,39 @@ func (s *ReleaseTestSuite) TestAvailableUpdates() {
 
 func (s *ReleaseTestSuite) TestGetLatestVersion() {
 	tests := []struct {
-		name        string
-		mockTags    []*github.RepositoryTag
-		expected    string
-		expectError bool
+		name         string
+		mockTags     []*github.RepositoryTag
+		mockReleases []*github.RepositoryRelease
+		expected     string
+		expectError  bool
 	}{
 		{
-			name:        "valid tags",
-			mockTags:    s.mockTags,
-			expected:    "v1.0.0",
-			expectError: false,
+			name:         "valid tags with releases",
+			mockTags:     s.mockTags,
+			mockReleases: s.mockReleases,
+			expected:     "v0.1.1",
+			expectError:  false,
 		},
 		{
-			name:        "no tags",
-			mockTags:    []*github.RepositoryTag{},
-			expected:    "",
-			expectError: true,
+			name:         "no tags",
+			mockTags:     []*github.RepositoryTag{},
+			mockReleases: []*github.RepositoryRelease{},
+			expected:     "",
+			expectError:  true,
 		},
 		{
-			name:        "only invalid tags",
-			mockTags:    []*github.RepositoryTag{{Name: github.String("invalid-tag")}},
-			expected:    "",
-			expectError: true,
+			name:         "only invalid tags",
+			mockTags:     []*github.RepositoryTag{{Name: github.String("invalid-tag")}},
+			mockReleases: []*github.RepositoryRelease{},
+			expected:     "",
+			expectError:  true,
+		},
+		{
+			name:         "tags without releases",
+			mockTags:     s.mockTags,
+			mockReleases: []*github.RepositoryRelease{},
+			expected:     "",
+			expectError:  true,
 		},
 	}
 
@@ -138,6 +168,9 @@ func (s *ReleaseTestSuite) TestGetLatestVersion() {
 			// Update mock client for this test
 			s.manager.client.(*mockGitHubClient).listTagsFunc = func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error) {
 				return tt.mockTags, nil, nil
+			}
+			s.manager.client.(*mockGitHubClient).listReleasesFunc = func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error) {
+				return tt.mockReleases, nil, nil
 			}
 
 			version, err := s.manager.GetLatestVersion(context.Background())
@@ -197,7 +230,7 @@ func (s *ReleaseTestSuite) TestGetUpdatePath() {
 		{
 			name:           "non-existent current version",
 			currentVersion: "v999.999.999",
-			targetVersion:  "v1.0.0",
+			targetVersion:  "v0.1.1",
 			expected:       []string{},
 			expectError:    false,
 		},
@@ -205,6 +238,13 @@ func (s *ReleaseTestSuite) TestGetUpdatePath() {
 			name:           "non-existent target version",
 			currentVersion: "v0.0.1",
 			targetVersion:  "v999.999.999",
+			expected:       []string{},
+			expectError:    false,
+		},
+		{
+			name:           "target version without release",
+			currentVersion: "v0.0.1",
+			targetVersion:  "v1.0.0",
 			expected:       []string{},
 			expectError:    false,
 		},

@@ -35,3 +35,8 @@ type repositoriesServiceWrapper struct {
 func (r *repositoriesServiceWrapper) ListTags(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error) {
 	return r.service.ListTags(ctx, owner, repo, opts)
 }
+
+// ListReleases lists the releases for a repository
+func (r *repositoriesServiceWrapper) ListReleases(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error) {
+	return r.service.ListReleases(ctx, owner, repo, opts)
+}

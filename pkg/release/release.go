@@ -25,6 +25,7 @@ type GitHubClientInterface interface {
 // RepositoriesServiceInterface defines the interface for GitHub repositories service
 type RepositoriesServiceInterface interface {
 	ListTags(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error)
+	ListReleases(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error)
 }
 
 // Manager handles release management functionality
@@ -37,6 +38,23 @@ func NewManager(client GitHubClientInterface) *Manager {
 	return &Manager{
 		client: client,
 	}
+}
+
+// getPublishedReleases returns a map of tag names to their release status
+func (m *Manager) getPublishedReleases(ctx context.Context) (map[string]bool, error) {
+	releases, _, err := m.client.Repositories().ListReleases(ctx, DefaultOwner, DefaultRepo, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list releases: %w", err)
+	}
+
+	published := make(map[string]bool)
+	for _, release := range releases {
+		if release.GetTagName() != "" {
+			published[release.GetTagName()] = true
+		}
+	}
+
+	return published, nil
 }
 
 // AvailableUpdates returns a list of available updates from the current version
@@ -58,11 +76,17 @@ func (m *Manager) AvailableUpdates(ctx context.Context, currentVersion string) (
 		return nil, fmt.Errorf("failed to list tags: %w", err)
 	}
 
-	// Filter and sort valid semver tags
+	// Get published releases
+	published, err := m.getPublishedReleases(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter and sort valid semver tags that have published releases
 	validVersions := make([]string, 0, len(tags))
 	for _, tag := range tags {
 		version := tag.GetName()
-		if semver.IsValid(version) {
+		if semver.IsValid(version) && published[version] {
 			validVersions = append(validVersions, version)
 		}
 	}
