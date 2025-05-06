@@ -124,14 +124,44 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpgradeApplyIn
 		return nil, err
 	}
 
-	// Validate version is available
-	availableUpdates, err := self.srv.UpgradeManager.CheckForUpdates(ctx)
+	// Get all available versions
+	allUpdates, err := self.srv.UpgradeManager.CheckForUpdates(ctx)
 	if err != nil {
+		// Log the error but return error since this is an apply operation
+		log.Errorf("Failed to check for updates: %v", err)
 		return nil, huma.Error500InternalServerError("Failed to check for updates: " + err.Error())
 	}
 
+	// Filter to only show versions that can be upgraded to in sequence
+	availableUpdates := make([]string, 0)
+	currentVersion := self.srv.UpgradeManager.CurrentVersion
+
+	// Sort versions to ensure we process them in order
+	sort.Slice(allUpdates, func(i, j int) bool {
+		return semver.Compare(allUpdates[i], allUpdates[j]) < 0
+	})
+
+	// Keep track of the current version we're checking from
+	checkVersion := currentVersion
+
+	// Build the upgrade path
+	for {
+		nextVersion, err := self.srv.UpgradeManager.GetNextAvailableVersion(ctx, checkVersion)
+		if err != nil || nextVersion == "" {
+			// No more versions available
+			break
+		}
+
+		// Add the next version to our list
+		availableUpdates = append(availableUpdates, nextVersion)
+
+		// Update the version we're checking from
+		checkVersion = nextVersion
+	}
+
+	// Validate version is available
 	if !slices.Contains(availableUpdates, input.Body.TargetVersion) {
-		return nil, huma.Error400BadRequest("Target version is not available")
+		return nil, huma.Error400BadRequest("Target version is not available for upgrade")
 	}
 
 	// ! Temporarily disabling upgrade
