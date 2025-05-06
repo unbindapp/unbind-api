@@ -36,6 +36,9 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *
 	// Create unauthenticated GitHub client for public repositories
 	githubClient := gh.NewClient(httpClient)
 
+	// ! Temporarily hardcoding version for testing
+	currentVersion = "v0.0.1"
+
 	return &Upgrader{
 		cfg:            cfg,
 		releaseManager: release.NewManager(NewGitHubClientWrapper(githubClient)),
