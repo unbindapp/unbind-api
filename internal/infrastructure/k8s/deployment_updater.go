@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -18,13 +19,44 @@ func (k *KubeClient) UpdateDeploymentImages(ctx context.Context, newVersion stri
 
 	// Map of image prefixes to their new versions
 	imageUpdates := map[string]string{
-		"unbindapp/unbind-api":      fmt.Sprintf("unbindapp/unbind-api:%s", newVersion),
 		"unbindapp/unbind-ui":       fmt.Sprintf("unbindapp/unbind-ui:%s", newVersion),
 		"unbindapp/unbind-operator": fmt.Sprintf("unbindapp/unbind-operator:%s", newVersion),
+		"unbindapp/unbind-api":      fmt.Sprintf("unbindapp/unbind-api:%s", newVersion),
 	}
 
-	// Update each deployment
+	// First update all non-api deployments
 	for _, deployment := range deployments.Items {
+		// Skip if this is the API deployment
+		if strings.Contains(deployment.Name, "api") {
+			continue
+		}
+
+		updated := false
+		for i, container := range deployment.Spec.Template.Spec.Containers {
+			for prefix, newImage := range imageUpdates {
+				if strings.HasPrefix(container.Image, prefix+":") {
+					deployment.Spec.Template.Spec.Containers[i].Image = newImage
+					updated = true
+				}
+			}
+		}
+
+		if updated {
+			// Update the deployment
+			_, err := k.clientset.AppsV1().Deployments(k.config.GetSystemNamespace()).Update(ctx, &deployment, metav1.UpdateOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to update deployment %s: %w", deployment.Name, err)
+			}
+		}
+	}
+
+	// Then update the API deployment
+	for _, deployment := range deployments.Items {
+		// Only process API deployment
+		if !strings.Contains(deployment.Name, "api") {
+			continue
+		}
+
 		updated := false
 		for i, container := range deployment.Spec.Template.Spec.Containers {
 			for prefix, newImage := range imageUpdates {
@@ -47,33 +79,56 @@ func (k *KubeClient) UpdateDeploymentImages(ctx context.Context, newVersion stri
 	return nil
 }
 
-// WaitForDeploymentsReady waits for all deployments to be ready after an update
-func (k *KubeClient) WaitForDeploymentsReady(ctx context.Context) error {
+// CheckDeploymentsReady checks if all deployments are running with the specified version
+func (k *KubeClient) CheckDeploymentsReady(ctx context.Context, version string) (bool, error) {
+	// Get all deployments in the system namespace
 	deployments, err := k.clientset.AppsV1().Deployments(k.config.GetSystemNamespace()).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to list deployments: %w", err)
+		return false, fmt.Errorf("failed to list deployments: %w", err)
 	}
 
+	// Expected images for each component
+	expectedImages := map[string]string{
+		"unbindapp/unbind-ui":       fmt.Sprintf("unbindapp/unbind-ui:%s", version),
+		"unbindapp/unbind-operator": fmt.Sprintf("unbindapp/unbind-operator:%s", version),
+		"unbindapp/unbind-api":      fmt.Sprintf("unbindapp/unbind-api:%s", version),
+	}
+
+	// Check each deployment
 	for _, deployment := range deployments.Items {
-		// Wait for deployment to be ready
-		for {
-			updated, err := k.clientset.AppsV1().Deployments(k.config.GetSystemNamespace()).Get(ctx, deployment.Name, metav1.GetOptions{})
-			if err != nil {
-				return fmt.Errorf("failed to get deployment %s: %w", deployment.Name, err)
+		// Get the deployment's pods
+		pods, err := k.clientset.CoreV1().Pods(k.config.GetSystemNamespace()).List(ctx, metav1.ListOptions{
+			LabelSelector: metav1.FormatLabelSelector(metav1.SetAsLabelSelector(deployment.Spec.Selector.MatchLabels)),
+		})
+		if err != nil {
+			return false, fmt.Errorf("failed to list pods for deployment %s: %w", deployment.Name, err)
+		}
+
+		// Check if any pods are running with the new version
+		hasNewVersion := false
+		for _, pod := range pods.Items {
+			// Check if pod is running
+			if pod.Status.Phase != corev1.PodRunning {
+				continue
 			}
 
-			if updated.Status.ReadyReplicas == *updated.Spec.Replicas {
-				break
+			// Check if pod has the new version
+			for _, container := range pod.Spec.Containers {
+				for prefix, expectedImage := range expectedImages {
+					if strings.HasPrefix(container.Image, prefix+":") {
+						if container.Image == expectedImage {
+							hasNewVersion = true
+							break
+						}
+					}
+				}
 			}
+		}
 
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				// Continue waiting
-			}
+		if !hasNewVersion {
+			return false, nil
 		}
 	}
 
-	return nil
+	return true, nil
 }

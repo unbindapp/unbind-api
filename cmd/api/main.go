@@ -53,6 +53,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/registry"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/upgrader"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
@@ -293,6 +294,7 @@ func startAPI(cfg *config.Config) {
 		DeploymentController: deploymentController,
 		DatabaseProvider:     dbProvider,
 		DNSChecker:           utils.NewDNSChecker(),
+		UpgradeManager:       upgrader.New(cfg, Version, kubeClient),
 		TeamService:          teamService,
 		ProjectService:       projectService,
 		ServiceService:       serviceService,
@@ -331,6 +333,12 @@ func startAPI(cfg *config.Config) {
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+
+	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"version": "` + Version + `"}`))
+	})
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

@@ -1,13 +1,21 @@
 package k8s
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	yamlv3 "gopkg.in/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -79,4 +87,55 @@ func (self *KubeClient) CreateClientWithToken(token string) (*kubernetes.Clients
 	}
 
 	return kubernetes.NewForConfig(config)
+}
+
+// ApplyYAML applies a YAML document to the cluster
+func (self *KubeClient) ApplyYAML(ctx context.Context, yaml []byte) error {
+	// Split YAML documents
+	docs := strings.Split(string(yaml), "---")
+	for _, doc := range docs {
+		doc = strings.TrimSpace(doc)
+		if doc == "" {
+			continue
+		}
+
+		// Decode the YAML into an unstructured object
+		obj := &unstructured.Unstructured{}
+		if err := yamlv3.Unmarshal([]byte(doc), &obj.Object); err != nil {
+			return fmt.Errorf("failed to decode YAML: %w", err)
+		}
+
+		// Get the GVR for the resource
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		gvr := schema.GroupVersionResource{
+			Group:    gvk.Group,
+			Version:  gvk.Version,
+			Resource: strings.ToLower(gvk.Kind) + "s", // Convert Kind to plural form
+		}
+
+		// Get the dynamic client for the resource
+		dynamicClient := self.client.Resource(gvr)
+
+		// Get the namespace
+		namespace := obj.GetNamespace()
+		if namespace == "" {
+			namespace = self.config.GetSystemNamespace()
+		}
+
+		// Try to create the resource
+		_, err := dynamicClient.Namespace(namespace).Create(ctx, obj, metav1.CreateOptions{})
+		if err != nil {
+			// If the resource already exists, update it
+			if apierrors.IsAlreadyExists(err) {
+				_, err = dynamicClient.Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
+				if err != nil {
+					return fmt.Errorf("failed to update resource: %w", err)
+				}
+			} else {
+				return fmt.Errorf("failed to create resource: %w", err)
+			}
+		}
+	}
+
+	return nil
 }

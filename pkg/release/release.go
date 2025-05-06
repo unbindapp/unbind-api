@@ -148,3 +148,8 @@ func (m *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVersi
 
 	return updatePath, nil
 }
+
+// GetRepositoryInfo returns the repository owner and name
+func (m *Manager) GetRepositoryInfo() (string, string) {
+	return DefaultOwner, DefaultRepo
+}

@@ -55,6 +55,42 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.CheckDNSResolution,
 	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "check-for-updates",
+			Summary:     "Check for Updates",
+			Description: "Check for updates to the system.",
+			Path:        "/upgrade/check",
+			Method:      http.MethodGet,
+		},
+		handlers.CheckForUpdates,
+	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "apply-update",
+			Summary:     "Apply Update",
+			Description: "Apply an update to the system.",
+			Path:        "/upgrade/apply",
+			Method:      http.MethodPost,
+		},
+		handlers.ApplyUpdate,
+	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-upgrade-status",
+			Summary:     "Get Upgrade Status",
+			Description: "Get the status of the upgrade.",
+			Path:        "/upgrade/status",
+			Method:      http.MethodGet,
+		},
+		handlers.GetUpgradeStatus,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {
