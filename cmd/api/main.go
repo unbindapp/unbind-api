@@ -77,7 +77,7 @@ import (
 )
 
 var Version = "development"
-var BuildImage = "unbindapp/unbind-builder:latest"
+var BuildImage = "ghcr.io/unbindapp/unbind-builder:latest"
 
 // Adding a format for form data
 var decoder = schema.NewDecoder()
