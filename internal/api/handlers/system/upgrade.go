@@ -100,11 +100,12 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpgradeApplyIn
 		return nil, huma.Error400BadRequest("Target version is not available")
 	}
 
+	// ! Temporarily disabling upgrade
 	// Apply update
-	err = self.srv.UpgradeManager.UpgradeToVersion(ctx, input.Body.TargetVersion)
-	if err != nil {
-		return nil, huma.Error500InternalServerError("Failed to apply update: " + err.Error())
-	}
+	// err = self.srv.UpgradeManager.UpgradeToVersion(ctx, input.Body.TargetVersion)
+	// if err != nil {
+	// 	return nil, huma.Error500InternalServerError("Failed to apply update: " + err.Error())
+	// }
 
 	resp := &UpgradeApplyResponse{}
 	resp.Body.Started = true
