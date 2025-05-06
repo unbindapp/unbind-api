@@ -70,7 +70,7 @@ func (s *ReleaseTestSuite) SetupTest() {
 	}
 
 	// Create manager with mock client
-	s.manager = NewManager(mockClient)
+	s.manager = NewManager(mockClient, "")
 }
 
 func (s *ReleaseTestSuite) TestAvailableUpdates() {

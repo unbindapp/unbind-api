@@ -31,18 +31,25 @@ type RepositoriesServiceInterface interface {
 // Manager handles release management functionality
 type Manager struct {
 	client GitHubClientInterface
+	repo   string
 }
 
 // NewManager creates a new release manager
-func NewManager(client GitHubClientInterface) *Manager {
+func NewManager(client GitHubClientInterface, releaseRepoOverride string) *Manager {
+	repo := DefaultRepo
+	if releaseRepoOverride != "" {
+		repo = releaseRepoOverride
+	}
+
 	return &Manager{
 		client: client,
+		repo:   repo,
 	}
 }
 
 // getPublishedReleases returns a map of tag names to their release status
-func (m *Manager) getPublishedReleases(ctx context.Context) (map[string]bool, error) {
-	releases, _, err := m.client.Repositories().ListReleases(ctx, DefaultOwner, DefaultRepo, nil)
+func (self *Manager) getPublishedReleases(ctx context.Context) (map[string]bool, error) {
+	releases, _, err := self.client.Repositories().ListReleases(ctx, DefaultOwner, self.repo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list releases: %w", err)
 	}
@@ -59,7 +66,7 @@ func (m *Manager) getPublishedReleases(ctx context.Context) (map[string]bool, er
 
 // AvailableUpdates returns a list of available updates from the current version
 // The list is ordered from the next version to the latest version
-func (m *Manager) AvailableUpdates(ctx context.Context, currentVersion string) ([]string, error) {
+func (self *Manager) AvailableUpdates(ctx context.Context, currentVersion string) ([]string, error) {
 	// Ensure current version has v prefix
 	if !strings.HasPrefix(currentVersion, "v") {
 		currentVersion = "v" + currentVersion
@@ -71,13 +78,13 @@ func (m *Manager) AvailableUpdates(ctx context.Context, currentVersion string) (
 	}
 
 	// Get all tags from the repository
-	tags, _, err := m.client.Repositories().ListTags(ctx, DefaultOwner, DefaultRepo, nil)
+	tags, _, err := self.client.Repositories().ListTags(ctx, DefaultOwner, self.repo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list tags: %w", err)
 	}
 
 	// Get published releases
-	published, err := m.getPublishedReleases(ctx)
+	published, err := self.getPublishedReleases(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +115,8 @@ func (m *Manager) AvailableUpdates(ctx context.Context, currentVersion string) (
 }
 
 // GetLatestVersion returns the latest available version
-func (m *Manager) GetLatestVersion(ctx context.Context) (string, error) {
-	updates, err := m.AvailableUpdates(ctx, "v0.0.0")
+func (self *Manager) GetLatestVersion(ctx context.Context) (string, error) {
+	updates, err := self.AvailableUpdates(ctx, "v0.0.0")
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +127,7 @@ func (m *Manager) GetLatestVersion(ctx context.Context) (string, error) {
 }
 
 // GetUpdatePath returns the ordered list of versions needed to update from current to target
-func (m *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVersion string) ([]string, error) {
+func (self *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVersion string) ([]string, error) {
 	// Ensure versions have v prefix
 	if !strings.HasPrefix(currentVersion, "v") {
 		currentVersion = "v" + currentVersion
@@ -138,7 +145,7 @@ func (m *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVersi
 	}
 
 	// Get all available updates
-	updates, err := m.AvailableUpdates(ctx, currentVersion)
+	updates, err := self.AvailableUpdates(ctx, currentVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +181,6 @@ func (m *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVersi
 }
 
 // GetRepositoryInfo returns the repository owner and name
-func (m *Manager) GetRepositoryInfo() (string, string) {
-	return DefaultOwner, DefaultRepo
+func (self *Manager) GetRepositoryInfo() (string, string) {
+	return DefaultOwner, self.repo
 }

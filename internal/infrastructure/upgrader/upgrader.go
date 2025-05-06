@@ -41,7 +41,7 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *
 
 	return &Upgrader{
 		cfg:            cfg,
-		releaseManager: release.NewManager(NewGitHubClientWrapper(githubClient)),
+		releaseManager: release.NewManager(NewGitHubClientWrapper(githubClient), cfg.ReleaseRepoOverride),
 		CurrentVersion: currentVersion,
 		k8sClient:      k8sClient,
 		httpClient:     httpClient,

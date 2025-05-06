@@ -78,6 +78,8 @@ type Config struct {
 	BuildImage string
 	// Enable dev login page
 	EnableDevLoginPage bool `env:"ENABLE_DEV_LOGIN_PAGE" envDefault:"false"`
+	// Override the release repository for testing
+	ReleaseRepoOverride string `env:"RELEASE_REPO_OVERRIDE"`
 }
 
 func (self *Config) GetPostgresHost() string {
