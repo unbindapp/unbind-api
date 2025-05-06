@@ -54,8 +54,13 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 	// Get all available versions
 	allUpdates, err := self.srv.UpgradeManager.CheckForUpdates(ctx)
 	if err != nil {
+		// Log the error but return empty updates instead of error
 		log.Errorf("Failed to check for updates: %v", err)
-		return nil, huma.Error500InternalServerError("Failed to check for updates: " + err.Error())
+		resp := &UpgradeCheckResponse{}
+		resp.Body.HasUpgradeAvailable = false
+		resp.Body.AvailableVersions = []string{}
+		resp.Body.CurrentVersion = self.srv.UpgradeManager.CurrentVersion
+		return resp, nil
 	}
 
 	// Filter to only show versions that can be upgraded to in sequence

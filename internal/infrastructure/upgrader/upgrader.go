@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	gh "github.com/google/go-github/v69/github"
@@ -25,6 +26,11 @@ type Upgrader struct {
 	CurrentVersion string
 	k8sClient      *k8s.KubeClient
 	httpClient     *http.Client
+
+	// Cache for updates
+	updatesCache     []string
+	lastUpdateTime   time.Time
+	updateCacheMutex sync.RWMutex
 }
 
 // New creates a new upgrader instance
@@ -50,10 +56,35 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *
 
 // CheckForUpdates checks if there are any available updates
 func (self *Upgrader) CheckForUpdates(ctx context.Context) ([]string, error) {
+	// Check cache first
+	self.updateCacheMutex.RLock()
+	if !self.lastUpdateTime.IsZero() && time.Since(self.lastUpdateTime) < 12*time.Minute {
+		updates := self.updatesCache
+		self.updateCacheMutex.RUnlock()
+		return updates, nil
+	}
+	self.updateCacheMutex.RUnlock()
+
+	// Cache expired or empty, fetch new updates
 	updates, err := self.releaseManager.AvailableUpdates(ctx, self.CurrentVersion)
 	if err != nil {
+		// If we have cached updates, return them even if expired
+		self.updateCacheMutex.RLock()
+		if len(self.updatesCache) > 0 {
+			updates := self.updatesCache
+			self.updateCacheMutex.RUnlock()
+			return updates, nil
+		}
+		self.updateCacheMutex.RUnlock()
 		return nil, fmt.Errorf("failed to check for updates: %w", err)
 	}
+
+	// Update cache
+	self.updateCacheMutex.Lock()
+	self.updatesCache = updates
+	self.lastUpdateTime = time.Now()
+	self.updateCacheMutex.Unlock()
+
 	return updates, nil
 }
 
