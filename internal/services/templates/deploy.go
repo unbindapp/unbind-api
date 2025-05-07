@@ -208,8 +208,8 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 						// Special DB cases
 						switch *sourceService.Database {
 						case "mysql":
-							// Add moco in front
-							key = fmt.Sprintf("moco-%s", key)
+							// Moco primary instance
+							key = fmt.Sprintf("moco-%s-primary", key)
 						case "redis":
 							key = fmt.Sprintf("%s-headless", key)
 						}
