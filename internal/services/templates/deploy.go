@@ -191,6 +191,13 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		for _, templateService := range generatedTemplate.Services {
 			referenceInput := []*models.VariableReferenceInputItem{}
 			for _, variableReference := range templateService.VariableReferences {
+				// Get source
+				sourceService := dbServiceMap[variableReference.SourceID]
+				if sourceService == nil {
+					log.Error("failed to find service for variable reference", "serviceID", variableReference.SourceID, "template", templateService.Name)
+					return fmt.Errorf("failed to find service for variable reference: %w", err)
+				}
+
 				// Deal with is_host first, not really a reference just resolved on the fly
 				if variableReference.IsHost {
 					// Lookup name
@@ -200,6 +207,9 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 						return fmt.Errorf("failed to find service for variable reference: %w", err)
 					}
 					host := fmt.Sprintf("%s.%s", kubernetesName, project.Edges.Team.Namespace)
+					if sourceService.Database != nil && *sourceService.Database == "mysql" {
+						host = fmt.Sprintf("moco-%s", host) // Moco prefix
+					}
 
 					// Add to the secret of this service
 					secretName := kubeNameMap[templateService.ID]
@@ -220,13 +230,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				}
 
 				// Standard variable references
-				// Get source
-				sourceService := dbServiceMap[variableReference.SourceID]
-				if sourceService == nil {
-					log.Error("failed to find service for variable reference", "serviceID", variableReference.SourceID, "template", templateService.Name)
-					return fmt.Errorf("failed to find service for variable reference: %w", err)
-				}
-
 				referenceInput = append(referenceInput, &models.VariableReferenceInputItem{
 					Name: variableReference.TargetName,
 					Sources: []schema.VariableReferenceSource{

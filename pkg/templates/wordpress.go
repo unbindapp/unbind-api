@@ -70,24 +70,24 @@ func wordPressTemplate() *schema.TemplateDefinition {
 						},
 					},
 					{
-						Name:  "WORDPRESS_DATABASE_NAME",
+						Name:  "WORDPRESS_DB_NAME",
 						Value: "moco",
 					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1, // MySQL (now ID 1)
+						SourceID:   1,
 						SourceName: "DATABASE_USERNAME",
-						TargetName: "WORDPRESS_DATABASE_USER",
+						TargetName: "WORDPRESS_DB_USER",
 					},
 					{
-						SourceID:   1, // MySQL (now ID 1)
+						SourceID:   1,
 						SourceName: "DATABASE_PASSWORD",
-						TargetName: "WORDPRESS_DATABASE_PASSWORD",
+						TargetName: "WORDPRESS_DB_PASSWORD",
 					},
 					{
-						SourceID:   1, // MySQL (now ID 1)
-						TargetName: "WORDPRESS_DATABASE_HOST",
+						SourceID:   1,
+						TargetName: "WORDPRESS_DB_HOST",
 						IsHost:     true,
 					},
 				},

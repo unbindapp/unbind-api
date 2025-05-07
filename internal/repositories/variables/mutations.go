@@ -60,6 +60,13 @@ func (self *VariableRepository) AttachError(ctx context.Context, id uuid.UUID, e
 		Save(ctx)
 }
 
+func (self *VariableRepository) ClearError(ctx context.Context, id uuid.UUID) (*ent.VariableReference, error) {
+	// Clear error from variable reference
+	return self.base.DB.VariableReference.UpdateOneID(id).
+		ClearError().
+		Save(ctx)
+}
+
 func (self *VariableRepository) DeleteReferences(ctx context.Context, tx repository.TxInterface, targetServiceID uuid.UUID, ids []uuid.UUID) (int, error) {
 	db := self.base.DB
 	if tx != nil {
