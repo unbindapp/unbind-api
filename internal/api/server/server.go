@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/upgrader"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/updater"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
@@ -56,7 +56,7 @@ type Server struct {
 	DatabaseProvider     *databases.DatabaseProvider
 	DNSChecker           *utils.DNSChecker
 	OauthConfig          *oauth2.Config
-	UpgradeManager       *upgrader.Upgrader
+	UpdateManager        *updater.Updater
 	// Services
 	TeamService        *team_service.TeamService
 	ProjectService     *project_service.ProjectService

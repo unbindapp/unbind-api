@@ -52,7 +52,7 @@ func (m *Manager) GetVersionMetadata(ctx context.Context) (VersionMetadataMap, e
 	return metadata, nil
 }
 
-// GetNextAvailableVersion returns the next version that can be upgraded to from the current version
+// GetNextAvailableVersion returns the next version that can be updated to from the current version
 func (m *Manager) GetNextAvailableVersion(ctx context.Context, currentVersion string) (string, error) {
 	// Ensure current version has v prefix
 	if !strings.HasPrefix(currentVersion, "v") {
@@ -71,7 +71,7 @@ func (m *Manager) GetNextAvailableVersion(ctx context.Context, currentVersion st
 		return "", err
 	}
 
-	// Find the first version that can be upgraded to
+	// Find the first version that can be updated to
 	for _, version := range updates {
 		// Skip if version doesn't have metadata
 		versionMeta, exists := metadata[version]
@@ -85,24 +85,24 @@ func (m *Manager) GetNextAvailableVersion(ctx context.Context, currentVersion st
 		}
 
 		// Check if all dependencies are satisfied
-		canUpgrade := true
+		canUpdate := true
 		for _, dep := range versionMeta.DependsOn {
-			// If the dependency is newer than current version, we can't upgrade yet
+			// If the dependency is newer than current version, we can't update yet
 			if semver.Compare(dep, currentVersion) > 0 {
-				canUpgrade = false
+				canUpdate = false
 				break
 			}
 		}
 
-		if canUpgrade {
+		if canUpdate {
 			return version, nil
 		}
 
-		// If we can't upgrade to this version due to dependencies, return an error
-		return "", fmt.Errorf("cannot upgrade to version %s: requires version %s", version, versionMeta.DependsOn[0])
+		// If we can't update to this version due to dependencies, return an error
+		return "", fmt.Errorf("cannot update to version %s: requires version %s", version, versionMeta.DependsOn[0])
 	}
 
-	return "", fmt.Errorf("no available versions to upgrade to")
+	return "", fmt.Errorf("no available versions to update to")
 }
 
 // GetUpdatePath returns an ordered list of versions needed to update from current to target version

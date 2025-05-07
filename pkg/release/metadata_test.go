@@ -99,19 +99,19 @@ func (s *MetadataTestSuite) TestGetNextAvailableVersion() {
 		expectError    bool
 	}{
 		{
-			name:           "can upgrade to next version",
+			name:           "can update to next version",
 			currentVersion: "v0.1.0",
 			expected:       "v0.2.0",
 			expectError:    false,
 		},
 		{
-			name:           "can upgrade to version with satisfied dependencies",
+			name:           "can update to version with satisfied dependencies",
 			currentVersion: "v0.2.0",
 			expected:       "v0.3.0",
 			expectError:    false,
 		},
 		{
-			name:           "can upgrade to version with multiple satisfied dependencies",
+			name:           "can update to version with multiple satisfied dependencies",
 			currentVersion: "v0.3.0",
 			expected:       "v0.4.0",
 			expectError:    false,
@@ -147,7 +147,7 @@ func (s *MetadataTestSuite) TestGetUpdatePath() {
 		expectError    bool
 	}{
 		{
-			name:           "direct upgrade path",
+			name:           "direct update path",
 			currentVersion: "v0.1.0",
 			targetVersion:  "v0.2.0",
 			expected:       []string{"v0.2.0"},

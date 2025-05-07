@@ -31,15 +31,15 @@ func (self *HandlerGroup) CheckPermissions(ctx context.Context, requesterUserID 
 }
 
 // * Check for updates
-type UpgradeCheckResponse struct {
+type UpdateCheckResponse struct {
 	Body struct {
-		HasUpgradeAvailable bool     `json:"has_upgrade_available"`
-		AvailableVersions   []string `json:"available_versions"`
-		CurrentVersion      string   `json:"current_version"`
+		HasUpdateAvailable bool     `json:"has_update_available"`
+		AvailableVersions  []string `json:"available_versions"`
+		CurrentVersion     string   `json:"current_version"`
 	}
 }
 
-func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.BaseAuthInput) (*UpgradeCheckResponse, error) {
+func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.BaseAuthInput) (*UpdateCheckResponse, error) {
 	// Get requester
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -52,20 +52,20 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 	}
 
 	// Get all available versions
-	allUpdates, err := self.srv.UpgradeManager.CheckForUpdates(ctx)
+	allUpdates, err := self.srv.UpdateManager.CheckForUpdates(ctx)
 	if err != nil {
 		// Log the error but return empty updates instead of error
 		log.Errorf("Failed to check for updates: %v", err)
-		resp := &UpgradeCheckResponse{}
-		resp.Body.HasUpgradeAvailable = false
+		resp := &UpdateCheckResponse{}
+		resp.Body.HasUpdateAvailable = false
 		resp.Body.AvailableVersions = []string{}
-		resp.Body.CurrentVersion = self.srv.UpgradeManager.CurrentVersion
+		resp.Body.CurrentVersion = self.srv.UpdateManager.CurrentVersion
 		return resp, nil
 	}
 
-	// Filter to only show versions that can be upgraded to in sequence
+	// Filter to only show versions that can be updated to in sequence
 	availableUpdates := make([]string, 0)
-	currentVersion := self.srv.UpgradeManager.CurrentVersion
+	currentVersion := self.srv.UpdateManager.CurrentVersion
 
 	// Sort versions to ensure we process them in order
 	sort.Slice(allUpdates, func(i, j int) bool {
@@ -75,9 +75,9 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 	// Keep track of the current version we're checking from
 	checkVersion := currentVersion
 
-	// Build the upgrade path
+	// Build the update path
 	for {
-		nextVersion, err := self.srv.UpgradeManager.GetNextAvailableVersion(ctx, checkVersion)
+		nextVersion, err := self.srv.UpdateManager.GetNextAvailableVersion(ctx, checkVersion)
 		if err != nil || nextVersion == "" {
 			// No more versions available
 			break
@@ -90,8 +90,8 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 		checkVersion = nextVersion
 	}
 
-	resp := &UpgradeCheckResponse{}
-	resp.Body.HasUpgradeAvailable = len(availableUpdates) > 0
+	resp := &UpdateCheckResponse{}
+	resp.Body.HasUpdateAvailable = len(availableUpdates) > 0
 	resp.Body.AvailableVersions = availableUpdates
 	resp.Body.CurrentVersion = currentVersion
 
@@ -99,20 +99,20 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 }
 
 // * Apply update
-type UpgradeApplyInput struct {
+type UpdateApplyInput struct {
 	server.BaseAuthInput
 	Body struct {
 		TargetVersion string `json:"target_version"`
 	}
 }
 
-type UpgradeApplyResponse struct {
+type UpdateApplyResponse struct {
 	Body struct {
 		Started bool `json:"started"`
 	}
 }
 
-func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpgradeApplyInput) (*UpgradeApplyResponse, error) {
+func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpdateApplyInput) (*UpdateApplyResponse, error) {
 	// Get requester
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -125,16 +125,16 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpgradeApplyIn
 	}
 
 	// Get all available versions
-	allUpdates, err := self.srv.UpgradeManager.CheckForUpdates(ctx)
+	allUpdates, err := self.srv.UpdateManager.CheckForUpdates(ctx)
 	if err != nil {
 		// Log the error but return error since this is an apply operation
 		log.Errorf("Failed to check for updates: %v", err)
 		return nil, huma.Error500InternalServerError("Failed to check for updates: " + err.Error())
 	}
 
-	// Filter to only show versions that can be upgraded to in sequence
+	// Filter to only show versions that can be updated to in sequence
 	availableUpdates := make([]string, 0)
-	currentVersion := self.srv.UpgradeManager.CurrentVersion
+	currentVersion := self.srv.UpdateManager.CurrentVersion
 
 	// Sort versions to ensure we process them in order
 	sort.Slice(allUpdates, func(i, j int) bool {
@@ -144,9 +144,9 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpgradeApplyIn
 	// Keep track of the current version we're checking from
 	checkVersion := currentVersion
 
-	// Build the upgrade path
+	// Build the update path
 	for {
-		nextVersion, err := self.srv.UpgradeManager.GetNextAvailableVersion(ctx, checkVersion)
+		nextVersion, err := self.srv.UpdateManager.GetNextAvailableVersion(ctx, checkVersion)
 		if err != nil || nextVersion == "" {
 			// No more versions available
 			break
@@ -161,34 +161,34 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpgradeApplyIn
 
 	// Validate version is available
 	if !slices.Contains(availableUpdates, input.Body.TargetVersion) {
-		return nil, huma.Error400BadRequest("Target version is not available for upgrade")
+		return nil, huma.Error400BadRequest("Target version is not available for update")
 	}
 
-	// ! Temporarily disabling upgrade
+	// ! Temporarily disabling update
 	// Apply update
-	// err = self.srv.UpgradeManager.UpgradeToVersion(ctx, input.Body.TargetVersion)
+	// err = self.srv.UpdateManager.UpdateToVersion(ctx, input.Body.TargetVersion)
 	// if err != nil {
 	// 	return nil, huma.Error500InternalServerError("Failed to apply update: " + err.Error())
 	// }
 
-	resp := &UpgradeApplyResponse{}
+	resp := &UpdateApplyResponse{}
 	resp.Body.Started = true
 
 	return resp, nil
 }
 
-// * Get upgrade status
-type UpgradeStatusInput struct {
+// * Get update status
+type UpdateStatusInput struct {
 	ExpectedVersion string `query:"expected_version"`
 }
 
-type UpgradeStatusResponse struct {
+type UpdateStatusResponse struct {
 	Body struct {
 		Ready bool `json:"ready"`
 	}
 }
 
-func (self *HandlerGroup) GetUpgradeStatus(ctx context.Context, input *UpgradeStatusInput) (*UpgradeStatusResponse, error) {
+func (self *HandlerGroup) GetUpdateStatus(ctx context.Context, input *UpdateStatusInput) (*UpdateStatusResponse, error) {
 	// Get requester
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -200,13 +200,13 @@ func (self *HandlerGroup) GetUpgradeStatus(ctx context.Context, input *UpgradeSt
 		return nil, err
 	}
 
-	// Get upgrade status
-	ready, err := self.srv.UpgradeManager.CheckDeploymentsReady(ctx, input.ExpectedVersion)
+	// Get update status
+	ready, err := self.srv.UpdateManager.CheckDeploymentsReady(ctx, input.ExpectedVersion)
 	if err != nil {
-		return nil, huma.Error500InternalServerError("Failed to get upgrade status: " + err.Error())
+		return nil, huma.Error500InternalServerError("Failed to get update status: " + err.Error())
 	}
 
-	resp := &UpgradeStatusResponse{}
+	resp := &UpdateStatusResponse{}
 	resp.Body.Ready = ready
 
 	return resp, nil

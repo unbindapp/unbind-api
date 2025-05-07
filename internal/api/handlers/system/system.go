@@ -62,7 +62,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 			OperationID: "check-for-updates",
 			Summary:     "Check for Updates",
 			Description: "Check for updates to the system.",
-			Path:        "/upgrade/check",
+			Path:        "/update/check",
 			Method:      http.MethodGet,
 		},
 		handlers.CheckForUpdates,
@@ -74,7 +74,7 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 			OperationID: "apply-update",
 			Summary:     "Apply Update",
 			Description: "Apply an update to the system.",
-			Path:        "/upgrade/apply",
+			Path:        "/update/apply",
 			Method:      http.MethodPost,
 		},
 		handlers.ApplyUpdate,
@@ -83,13 +83,13 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "get-upgrade-status",
-			Summary:     "Get Upgrade Status",
-			Description: "Get the status of the upgrade.",
-			Path:        "/upgrade/status",
+			OperationID: "get-update-status",
+			Summary:     "Get Update Status",
+			Description: "Get the status of the update.",
+			Path:        "/update/status",
 			Method:      http.MethodGet,
 		},
-		handlers.GetUpgradeStatus,
+		handlers.GetUpdateStatus,
 	)
 }
 

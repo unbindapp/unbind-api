@@ -1,4 +1,4 @@
-package upgrader
+package updater
 
 import (
 	"context"
@@ -19,8 +19,8 @@ import (
 	"sigs.k8s.io/kustomize/kyaml/filesys"
 )
 
-// Upgrader handles the upgrade process for the application
-type Upgrader struct {
+// Updater handles the update process for the application
+type Updater struct {
 	cfg            *config.Config
 	releaseManager *release.Manager
 	CurrentVersion string
@@ -33,8 +33,8 @@ type Upgrader struct {
 	updateCacheMutex sync.RWMutex
 }
 
-// New creates a new upgrader instance
-func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *Upgrader {
+// New creates a new updater instance
+func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *Updater {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -45,7 +45,7 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *
 	// ! Temporarily hardcoding version for testing
 	currentVersion = "v0.0.1"
 
-	return &Upgrader{
+	return &Updater{
 		cfg:            cfg,
 		releaseManager: release.NewManager(NewGitHubClientWrapper(githubClient), cfg.ReleaseRepoOverride),
 		CurrentVersion: currentVersion,
@@ -55,7 +55,7 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *
 }
 
 // CheckForUpdates checks if there are any available updates
-func (self *Upgrader) CheckForUpdates(ctx context.Context) ([]string, error) {
+func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 	// Check cache first
 	self.updateCacheMutex.RLock()
 	if !self.lastUpdateTime.IsZero() && time.Since(self.lastUpdateTime) < 12*time.Minute {
@@ -89,7 +89,7 @@ func (self *Upgrader) CheckForUpdates(ctx context.Context) ([]string, error) {
 }
 
 // GetLatestVersion returns the latest available version
-func (self *Upgrader) GetLatestVersion(ctx context.Context) (string, error) {
+func (self *Updater) GetLatestVersion(ctx context.Context) (string, error) {
 	version, err := self.releaseManager.GetLatestVersion(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get latest version: %w", err)
@@ -98,7 +98,7 @@ func (self *Upgrader) GetLatestVersion(ctx context.Context) (string, error) {
 }
 
 // GetUpdatePath returns the ordered list of versions needed to update from current to target
-func (self *Upgrader) GetUpdatePath(ctx context.Context, targetVersion string) ([]string, error) {
+func (self *Updater) GetUpdatePath(ctx context.Context, targetVersion string) ([]string, error) {
 	path, err := self.releaseManager.GetUpdatePath(ctx, self.CurrentVersion, targetVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get update path: %w", err)
@@ -106,8 +106,8 @@ func (self *Upgrader) GetUpdatePath(ctx context.Context, targetVersion string) (
 	return path, nil
 }
 
-// UpgradeToVersion upgrades the application to the specified version
-func (self *Upgrader) UpgradeToVersion(ctx context.Context, targetVersion string) error {
+// UpdateToVersion updates the application to the specified version
+func (self *Updater) UpdateToVersion(ctx context.Context, targetVersion string) error {
 	// Get the update path
 	updatePath, err := self.GetUpdatePath(ctx, targetVersion)
 	if err != nil {
@@ -138,12 +138,12 @@ func (self *Upgrader) UpgradeToVersion(ctx context.Context, targetVersion string
 }
 
 // applyKustomizeManifests applies Kustomize manifests for a specific version
-func (self *Upgrader) applyKustomizeManifests(ctx context.Context, version string) error {
+func (self *Updater) applyKustomizeManifests(ctx context.Context, version string) error {
 	// Get repository info
 	owner, repo := self.releaseManager.GetRepositoryInfo()
 
 	// Create a temporary directory for cloning
-	tempDir, err := os.MkdirTemp("", "unbind-upgrade-*")
+	tempDir, err := os.MkdirTemp("", "unbind-update-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
@@ -222,7 +222,7 @@ func (self *Upgrader) applyKustomizeManifests(ctx context.Context, version strin
 }
 
 // rollbackToVersion rolls back to a specific version
-func (self *Upgrader) rollbackToVersion(ctx context.Context, version string) error {
+func (self *Updater) rollbackToVersion(ctx context.Context, version string) error {
 	// Update deployment images to the rollback version
 	if err := self.k8sClient.UpdateDeploymentImages(ctx, version); err != nil {
 		return fmt.Errorf("failed to rollback deployment images: %w", err)
@@ -232,12 +232,12 @@ func (self *Upgrader) rollbackToVersion(ctx context.Context, version string) err
 }
 
 // CheckDeploymentsReady checks if all deployments are running with the specified version
-func (self *Upgrader) CheckDeploymentsReady(ctx context.Context, version string) (bool, error) {
+func (self *Updater) CheckDeploymentsReady(ctx context.Context, version string) (bool, error) {
 	return self.k8sClient.CheckDeploymentsReady(ctx, version)
 }
 
-// GetNextAvailableVersion returns the next version that can be upgraded to from the current version
-func (self *Upgrader) GetNextAvailableVersion(ctx context.Context, currentVersion string) (string, error) {
+// GetNextAvailableVersion returns the next version that can be updated to from the current version
+func (self *Updater) GetNextAvailableVersion(ctx context.Context, currentVersion string) (string, error) {
 	version, err := self.releaseManager.GetNextAvailableVersion(ctx, currentVersion)
 	if err != nil {
 		return "", fmt.Errorf("failed to get next available version: %w", err)

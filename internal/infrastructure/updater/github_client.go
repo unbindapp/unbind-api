@@ -1,4 +1,4 @@
-package upgrader
+package updater
 
 import (
 	"context"

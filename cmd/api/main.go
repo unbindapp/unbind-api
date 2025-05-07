@@ -53,7 +53,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/registry"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/upgrader"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/updater"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
@@ -294,7 +294,7 @@ func startAPI(cfg *config.Config) {
 		DeploymentController: deploymentController,
 		DatabaseProvider:     dbProvider,
 		DNSChecker:           utils.NewDNSChecker(),
-		UpgradeManager:       upgrader.New(cfg, Version, kubeClient),
+		UpdateManager:        updater.New(cfg, Version, kubeClient),
 		TeamService:          teamService,
 		ProjectService:       projectService,
 		ServiceService:       serviceService,
