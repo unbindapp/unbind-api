@@ -169,7 +169,7 @@ func (self *VariablesService) resolveInternalEndpointURL(ctx context.Context, cl
 	case "":
 		return fmt.Sprintf("http://%s:%d", endpoint.DNS, targetPort.Port), nil
 	default:
-		return fmt.Sprintf("%s:%d", endpoint.DNS, targetPort.Port), nil
+		return endpoint.DNS, nil
 	}
 }
 
