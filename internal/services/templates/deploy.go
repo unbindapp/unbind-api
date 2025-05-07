@@ -154,6 +154,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					KubernetesSecret: secret.Name,
 					Database:         templateService.DatabaseType,
 					DatabaseVersion:  dbVersion,
+					TemplateID:       utils.ToPtr(template.ID),
 				})
 			if err != nil {
 				return fmt.Errorf("failed to create service: %w", err)
