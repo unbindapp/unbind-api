@@ -235,6 +235,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 							SourceName:           sourceService.Name,
 							SourceIcon:           sourceService.Edges.ServiceConfig.Icon,
 							SourceID:             sourceService.ID,
+							SourceType:           schema.VariableReferenceSourceTypeService,
 							SourceKubernetesName: sourceService.KubernetesName,
 							Key:                  variableReference.SourceName,
 						},
@@ -291,7 +292,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 		// If service has dependencies, add to dependent queue
 		if len(service.VariableReferences) > 0 {
-			_, err = self.deployCtl.EnqueueDependentDeployment(ctx, deployReq)
+			err = self.deployCtl.EnqueueDependentDeployment(ctx, deployReq)
 		} else {
 			// Otherwise deploy immediately
 			_, err = self.deployCtl.EnqueueDeploymentJob(ctx, deployReq)

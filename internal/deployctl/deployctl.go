@@ -613,8 +613,9 @@ func (self *DeploymentController) processDependentJob(ctx context.Context, item 
 		return self.dependentQueue.Enqueue(ctx, item.ID, item.Data)
 	}
 
-	// If dependencies are ready, process the job normally
-	return self.processJob(ctx, item)
+	// If dependencies are ready, enqueue to the real deployment queue
+	_, err = self.EnqueueDeploymentJob(ctx, item.Data)
+	return err
 }
 
 // AreDependenciesReady checks if all dependencies for a service are ready
@@ -631,29 +632,7 @@ func (self *DeploymentController) AreDependenciesReady(ctx context.Context, serv
 }
 
 // EnqueueDependentDeployment adds a deployment to the dependent services queue
-func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context, req DeploymentJobRequest) (job *ent.Deployment, err error) {
-	// Create a record in the database
-	job, err = self.repo.Deployment().Create(
-		ctx,
-		nil,
-		req.ServiceID,
-		req.CommitSHA,
-		req.CommitMessage,
-		req.Committer,
-		req.Source,
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create deployment record: %w", err)
-	}
-
-	req.Environment["SERVICE_DEPLOYMENT_ID"] = job.ID.String()
-
+func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context, req DeploymentJobRequest) error {
 	// Add to the dependent queue
-	err = self.dependentQueue.Enqueue(ctx, job.ID.String(), req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to enqueue job: %w", err)
-	}
-
-	return job, nil
+	return self.dependentQueue.Enqueue(ctx, uuid.New().String(), req)
 }
