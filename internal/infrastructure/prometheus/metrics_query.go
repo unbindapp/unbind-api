@@ -56,7 +56,7 @@ func (self *PrometheusClient) GetResourceMetrics(
 
 	diskQuery := fmt.Sprintf(`sum by (%s) (
 		kube_pod_spec_volumes_persistentvolumeclaims_info
-			* on(namespace,persistentvolumeclaim) group_left(pod)
+			* on(namespace,persistentvolumeclaim) group_right(pod)
 				(sum by (namespace,persistentvolumeclaim) (kubelet_volume_stats_used_bytes))
 			* on(namespace,pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 				kube_pod_labels%s
