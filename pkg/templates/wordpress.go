@@ -50,12 +50,6 @@ func wordPressTemplate() *schema.TemplateDefinition {
 					},
 				},
 				IsPublic: true,
-				Variables: []schema.TemplateVariable{
-					{
-						Name:  "WORDPRESS_DB_NAME",
-						Value: "moco",
-					},
-				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
 						SourceID:   1,
@@ -66,6 +60,11 @@ func wordPressTemplate() *schema.TemplateDefinition {
 						SourceID:   1,
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "WORDPRESS_DB_PASSWORD",
+					},
+					{
+						SourceID:   1,
+						SourceName: "DATABASE_DEFAULT_DB_NAME",
+						TargetName: "WORDPRESS_DB_NAME",
 					},
 					{
 						SourceID:   1,
