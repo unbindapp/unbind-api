@@ -21,7 +21,6 @@ func wordPressTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:        2,
-				Icon:      "wordpress",
 				DependsOn: []int{1},
 				Name:      "Wordpress",
 				Type:      schema.ServiceTypeDockerimage,

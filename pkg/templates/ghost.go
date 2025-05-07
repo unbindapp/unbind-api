@@ -21,7 +21,6 @@ func ghostTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:        2,
-				Icon:      "ghost",
 				DependsOn: []int{1},
 				Name:      "Ghost",
 				Type:      schema.ServiceTypeDockerimage,
