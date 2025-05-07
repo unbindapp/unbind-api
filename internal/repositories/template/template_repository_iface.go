@@ -5,11 +5,13 @@ package template_repo
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 )
 
 // TemplateRepositoryInterface ...
 type TemplateRepositoryInterface interface {
 	UpsertPredefinedTemplates(ctx context.Context) (result error)
+	GetByID(ctx context.Context, id uuid.UUID) (*ent.Template, error)
 	GetAll(ctx context.Context) ([]*ent.Template, error)
 }

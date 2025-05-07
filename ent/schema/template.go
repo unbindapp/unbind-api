@@ -63,11 +63,10 @@ func (Template) Annotations() []schema.Annotation {
 
 // TemplateDefinition represents a complete template configuration
 type TemplateDefinition struct {
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Version     int                `json:"version"`
-	Services    []TemplateService  `json:"services"`
-	Variables   []TemplateVariable `json:"variables"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Version     int               `json:"version"`
+	Services    []TemplateService `json:"services"`
 }
 
 // TemplateService represents a service within a template
@@ -103,11 +102,11 @@ type TemplateVariableReference struct {
 }
 
 // Types of generators
-type GeneratorType int
+type GeneratorType string
 
 const (
-	GeneratorTypePassword GeneratorType = iota
-	GeneratorTypeEmail
+	GeneratorTypePassword GeneratorType = "password"
+	GeneratorTypeEmail    GeneratorType = "email"
 )
 
 // ValueGenerator represents how to generate a value
@@ -131,6 +130,6 @@ func (self *ValueGenerator) Generate() (string, error) {
 		}
 		return fmt.Sprintf("admin@%s", domain), nil
 	default:
-		return "", fmt.Errorf("unknown generator type: %d", self.Type)
+		return "", fmt.Errorf("unknown generator type: %s", self.Type)
 	}
 }

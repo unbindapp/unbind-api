@@ -1,9 +1,9 @@
 package templates
 
 import (
+	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/pkg/builder/config"
 )
 
 type Templater struct {

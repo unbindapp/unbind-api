@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/pkg/builder/config"
 )
 
 func TestResolveGeneratedVariables(t *testing.T) {

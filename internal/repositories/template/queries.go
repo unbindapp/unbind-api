@@ -4,9 +4,20 @@ import (
 	"context"
 	"sort"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/template"
 )
+
+func (self *TemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Template, error) {
+	template, err := self.base.DB.Template.Query().
+		Where(template.ID(id)).Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return template, nil
+}
 
 func (self *TemplateRepository) GetAll(ctx context.Context) ([]*ent.Template, error) {
 	templates, err := self.base.DB.Template.Query().
