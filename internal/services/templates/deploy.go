@@ -201,32 +201,37 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 				// Deal with is_host first, not really a reference just resolved on the fly
 				if variableReference.IsHost {
-					// Lookup name
-					kubernetesName, ok := kubeNameMap[variableReference.SourceID]
-					if !ok {
-						log.Error("failed to find service for variable reference", "serviceID", variableReference.SourceID, "template", templateService.Name)
-						return fmt.Errorf("failed to find service for variable reference: %w", err)
-					}
-					host := fmt.Sprintf("%s.%s", kubernetesName, project.Edges.Team.Namespace)
-					if sourceService.Database != nil && *sourceService.Database == "mysql" {
-						host = fmt.Sprintf("moco-%s", host) // Moco prefix
+					// Determine the host key (it may not exist yet so we can't DNS lookup)
+					key := sourceService.KubernetesName
+
+					if sourceService.Type == schema.ServiceTypeDatabase && sourceService.Database != nil {
+						// Special DB cases
+						switch *sourceService.Database {
+						case "mysql":
+							// Add moco in front
+							key = fmt.Sprintf("moco-%s", key)
+						case "redis":
+							key = fmt.Sprintf("%s-headless", key)
+						}
 					}
 
-					// Add to the secret of this service
-					secretName := kubeNameMap[templateService.ID]
-					secret, err := self.k8s.GetSecret(ctx, secretName, project.Edges.Team.Namespace, client)
-					if err != nil {
-						log.Error("failed to get secret for service", "secretName", secretName, "error", err)
-						return fmt.Errorf("failed to get secret for service: %w", err)
-					}
-					if secret.Data == nil {
-						secret.Data = make(map[string][]byte)
-					}
-					secret.Data[variableReference.TargetName] = []byte(host)
-					if _, err := self.k8s.UpsertSecretValues(ctx, secretName, project.Edges.Team.Namespace, secret.Data, client); err != nil {
-						log.Error("failed to update secret values", "secretName", secretName, "error", err)
-						return fmt.Errorf("failed to update secret values: %w", err)
-					}
+					// Standard variable references
+					referenceInput = append(referenceInput, &models.VariableReferenceInputItem{
+						Name: variableReference.TargetName,
+						Sources: []schema.VariableReferenceSource{
+							{
+								Type:                 schema.VariableReferenceTypeInternalEndpoint,
+								SourceName:           sourceService.Name,
+								SourceIcon:           sourceService.Edges.ServiceConfig.Icon,
+								SourceID:             sourceService.ID,
+								SourceType:           schema.VariableReferenceSourceTypeService,
+								SourceKubernetesName: sourceService.KubernetesName,
+								Key:                  key,
+							},
+						},
+						Value: fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName),
+					})
+
 					continue
 				}
 
