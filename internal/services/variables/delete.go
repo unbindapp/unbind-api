@@ -94,7 +94,8 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 			if service.Type == schema.ServiceTypeDatabase &&
 				(secretKey.Name == "DATABASE_USERNAME" ||
 					secretKey.Name == "DATABASE_PASSWORD" ||
-					secretKey.Name == "DATABASE_URL") {
+					secretKey.Name == "DATABASE_URL" ||
+					secretKey.Name == "DATABASE_DEFAULT_DB_NAME") {
 				continue
 			}
 			delete(secrets, secretKey.Name)

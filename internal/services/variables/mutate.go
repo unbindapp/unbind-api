@@ -104,7 +104,8 @@ func (self *VariablesService) UpdateVariables(
 				_, hasUsername := newVariables["DATABASE_USERNAME"]
 				_, hasPassword := newVariables["DATABASE_PASSWORD"]
 				_, hasURL := newVariables["DATABASE_URL"]
-				if !hasUsername || !hasPassword || !hasURL {
+				_, hasDefaultDB := newVariables["DATABASE_DEFAULT_DB_NAME"]
+				if !hasUsername || !hasPassword || !hasURL || !hasDefaultDB {
 					// Get existing secrets
 					existingSecrets, err := self.k8s.GetSecretMap(ctx, secretName, team.Namespace, client)
 					if err != nil {
@@ -119,6 +120,9 @@ func (self *VariablesService) UpdateVariables(
 					}
 					if !hasURL {
 						newVariables["DATABASE_URL"] = existingSecrets["DATABASE_URL"]
+					}
+					if !hasDefaultDB {
+						newVariables["DATABASE_DEFAULT_DB_NAME"] = existingSecrets["DATABASE_DEFAULT_DB_NAME"]
 					}
 				}
 			}
