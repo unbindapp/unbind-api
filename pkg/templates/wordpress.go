@@ -52,24 +52,6 @@ func wordPressTemplate() *schema.TemplateDefinition {
 				IsPublic: true,
 				Variables: []schema.TemplateVariable{
 					{
-						Name:  "WORDPRESS_USERNAME",
-						Value: "admin",
-					},
-					{
-						Name: "WORDPRESS_PASSWORD",
-						// Generate the value in rendering
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypePassword,
-						},
-					},
-					{
-						Name: "WORDPRESS_EMAIL",
-						// Generate the value in rendering
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeEmail,
-						},
-					},
-					{
 						Name:  "WORDPRESS_DB_NAME",
 						Value: "moco",
 					},
