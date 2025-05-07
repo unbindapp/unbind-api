@@ -274,7 +274,7 @@ func startAPI(cfg *config.Config) {
 	metricsService := metric_service.NewMetricService(promClient, repo)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
 	storageService := storage_service.NewStorageService(cfg, repo, kubeClient)
-	templateService := templates_service.NewTemplatesService(repo, kubeClient)
+	templateService := templates_service.NewTemplatesService(cfg, repo, kubeClient, dbProvider, deploymentController)
 
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 

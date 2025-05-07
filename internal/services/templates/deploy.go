@@ -273,21 +273,30 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 	// Deploy all services without variable references
 	for _, service := range generatedTemplate.Services {
-		if service.VariableReferences != nil || len(service.VariableReferences) > 0 {
-			continue
-		}
-
-		// Enqueue deployment
+		// Get the service from our map
 		dbService := dbServiceMap[service.ID]
+
+		// Populate build environment
 		env, err := self.deployCtl.PopulateBuildEnvironment(ctx, dbService.ID, nil)
 		if err != nil {
 			return nil, err
 		}
-		_, err = self.deployCtl.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
+
+		// Create deployment request
+		deployReq := deployctl.DeploymentJobRequest{
 			ServiceID:   dbService.ID,
 			Environment: env,
 			Source:      schema.DeploymentSourceManual,
-		})
+		}
+
+		// If service has dependencies, add to dependent queue
+		if len(service.VariableReferences) > 0 {
+			_, err = self.deployCtl.EnqueueDependentDeployment(ctx, deployReq)
+		} else {
+			// Otherwise deploy immediately
+			_, err = self.deployCtl.EnqueueDeploymentJob(ctx, deployReq)
+		}
+
 		if err != nil {
 			return nil, err
 		}
