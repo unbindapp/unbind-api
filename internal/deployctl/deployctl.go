@@ -603,32 +603,27 @@ func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 // processDependentJob processes a job from the dependent services queue
 func (self *DeploymentController) processDependentJob(ctx context.Context, item *queue.QueueItem[DeploymentJobRequest]) error {
 	// Check if dependencies are ready
-	ready, err := self.AreDependenciesReady(ctx, item.Data.ServiceID)
-	if err != nil {
-		return fmt.Errorf("failed to check dependencies: %w", err)
-	}
-
-	if !ready {
+	if !self.AreDependenciesReady(ctx, item.Data.ServiceID) {
 		// If dependencies aren't ready, put the job back in the queue
 		return self.dependentQueue.Enqueue(ctx, item.ID, item.Data)
 	}
 
 	// If dependencies are ready, enqueue to the real deployment queue
-	_, err = self.EnqueueDeploymentJob(ctx, item.Data)
+	_, err := self.EnqueueDeploymentJob(ctx, item.Data)
 	return err
 }
 
 // AreDependenciesReady checks if all dependencies for a service are ready
-func (self *DeploymentController) AreDependenciesReady(ctx context.Context, serviceID uuid.UUID) (bool, error) {
+func (self *DeploymentController) AreDependenciesReady(ctx context.Context, serviceID uuid.UUID) bool {
 	// Try to resolve all references
 	_, err := self.variableService.ResolveAllReferences(ctx, serviceID)
 	if err != nil {
 		// If we can't resolve references, dependencies aren't ready
-		return false, nil
+		return false
 	}
 
 	// If we can resolve all references, dependencies are ready
-	return true, nil
+	return true
 }
 
 // EnqueueDependentDeployment adds a deployment to the dependent services queue
