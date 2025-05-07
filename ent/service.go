@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/template"
 )
 
 // Service is the model entity for the Service schema.
@@ -52,6 +53,8 @@ type Service struct {
 	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
 	// Reference the current active deployment
 	CurrentDeploymentID *uuid.UUID `json:"current_deployment_id,omitempty"`
+	// Reference to the template this service was created from
+	TemplateID *uuid.UUID `json:"template_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -70,11 +73,13 @@ type ServiceEdges struct {
 	Deployments []*Deployment `json:"deployments,omitempty"`
 	// Optional reference to the currently active deployment
 	CurrentDeployment *Deployment `json:"current_deployment,omitempty"`
+	// Template holds the value of the template edge.
+	Template *Template `json:"template,omitempty"`
 	// VariableReferences holds the value of the variable_references edge.
 	VariableReferences []*VariableReference `json:"variable_references,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // EnvironmentOrErr returns the Environment value or an error if the edge
@@ -130,10 +135,21 @@ func (e ServiceEdges) CurrentDeploymentOrErr() (*Deployment, error) {
 	return nil, &NotLoadedError{edge: "current_deployment"}
 }
 
+// TemplateOrErr returns the Template value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ServiceEdges) TemplateOrErr() (*Template, error) {
+	if e.Template != nil {
+		return e.Template, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: template.Label}
+	}
+	return nil, &NotLoadedError{edge: "template"}
+}
+
 // VariableReferencesOrErr returns the VariableReferences value or an error if the edge
 // was not loaded in eager-loading.
 func (e ServiceEdges) VariableReferencesOrErr() ([]*VariableReference, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[6] {
 		return e.VariableReferences, nil
 	}
 	return nil, &NotLoadedError{edge: "variable_references"}
@@ -144,7 +160,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case service.FieldCurrentDeploymentID:
+		case service.FieldCurrentDeploymentID, service.FieldTemplateID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
@@ -265,6 +281,13 @@ func (s *Service) assignValues(columns []string, values []any) error {
 				s.CurrentDeploymentID = new(uuid.UUID)
 				*s.CurrentDeploymentID = *value.S.(*uuid.UUID)
 			}
+		case service.FieldTemplateID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field template_id", values[i])
+			} else if value.Valid {
+				s.TemplateID = new(uuid.UUID)
+				*s.TemplateID = *value.S.(*uuid.UUID)
+			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -301,6 +324,11 @@ func (s *Service) QueryDeployments() *DeploymentQuery {
 // QueryCurrentDeployment queries the "current_deployment" edge of the Service entity.
 func (s *Service) QueryCurrentDeployment() *DeploymentQuery {
 	return NewServiceClient(s.config).QueryCurrentDeployment(s)
+}
+
+// QueryTemplate queries the "template" edge of the Service entity.
+func (s *Service) QueryTemplate() *TemplateQuery {
+	return NewServiceClient(s.config).QueryTemplate(s)
 }
 
 // QueryVariableReferences queries the "variable_references" edge of the Service entity.
@@ -382,6 +410,11 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	if v := s.CurrentDeploymentID; v != nil {
 		builder.WriteString("current_deployment_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := s.TemplateID; v != nil {
+		builder.WriteString("template_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')

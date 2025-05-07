@@ -2,6 +2,7 @@ package utils
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,4 +128,111 @@ func TestGenerateSlugUniqueness(t *testing.T) {
 			assert.NotEqual(t, slugs[i], slugs[j], "Generated slugs should be unique")
 		}
 	}
+}
+
+func TestGenerateSecurePassword(t *testing.T) {
+	// Test with real random source first
+	t.Run("real random source", func(t *testing.T) {
+		for i := 0; i < 100; i++ { // Run multiple times to ensure consistency
+			length := 12
+			password, err := GenerateSecurePassword(length)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if len(password) != length {
+				t.Errorf("expected password length %d, got %d", length, len(password))
+			}
+
+			// Verify password requirements
+			hasUpper := false
+			hasSpecial := false
+			hasAlphaNumeric := false
+			firstIsAlphaNumeric := false
+
+			for i, c := range password {
+				char := string(c)
+
+				if strings.ContainsAny(char, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+					hasUpper = true
+				}
+
+				if strings.ContainsAny(char, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
+					hasAlphaNumeric = true
+					if i == 0 {
+						firstIsAlphaNumeric = true
+					}
+				}
+
+				if strings.ContainsAny(char, "!@#$%^&*()_+-=[]{}|;:,.<>?") {
+					hasSpecial = true
+				}
+			}
+
+			if !hasUpper {
+				t.Error("password missing uppercase letter")
+			}
+			if !hasSpecial {
+				t.Error("password missing special character")
+			}
+			if !hasAlphaNumeric {
+				t.Error("password missing alphanumeric character")
+			}
+			if !firstIsAlphaNumeric {
+				t.Error("first character is not alphanumeric")
+			}
+		}
+	})
+
+	t.Run("random source never duplicates", func(t *testing.T) {
+		results := make(map[string]bool)
+		for i := 0; i < 100; i++ {
+			password, err := GenerateSecurePassword(12)
+			assert.NoError(t, err)
+			assert.NotContains(t, results, password)
+			results[password] = true
+		}
+	})
+
+	// Test with a mocked random source for deterministic testing
+	t.Run("mocked random source", func(t *testing.T) {
+		// Create a deterministic random source for testing
+		mockRand := &mockRandReader{
+			values: []byte{
+				5,                              // First alphanumeric (index into alphanumeric)
+				10,                             // Special char index
+				2,                              // Special position (will be +1 to avoid first position)
+				7,                              // Uppercase index
+				4,                              // Uppercase position (will try this, may need to find another)
+				20, 30, 40, 50, 60, 70, 80, 90, // Values for remaining positions
+			},
+		}
+
+		password, err := generateSecurePasswordWithRand(8, mockRand)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if len(password) != 8 {
+			t.Errorf("expected password length 8, got %d", len(password))
+		}
+
+		assert.Equal(t, "fuE_OHY8", password)
+	})
+}
+
+// Better mockRandReader for testing
+type mockRandReader struct {
+	values []byte
+	index  int
+}
+
+func (m *mockRandReader) Read(p []byte) (n int, err error) {
+	for i := range p {
+		if m.index >= len(m.values) {
+			m.index = 0
+		}
+		p[i] = m.values[m.index]
+		m.index++
+	}
+	return len(p), nil
 }

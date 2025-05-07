@@ -330,6 +330,7 @@ var (
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "current_deployment_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "template_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// ServicesTable holds the schema information for the "services" table.
 	ServicesTable = &schema.Table{
@@ -353,6 +354,12 @@ var (
 				Symbol:     "services_deployments_current_deployment",
 				Columns:    []*schema.Column{ServicesColumns[14]},
 				RefColumns: []*schema.Column{DeploymentsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "services_templates_services",
+				Columns:    []*schema.Column{ServicesColumns[15]},
+				RefColumns: []*schema.Column{TemplatesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -435,6 +442,29 @@ var (
 		Name:       "teams",
 		Columns:    TeamsColumns,
 		PrimaryKey: []*schema.Column{TeamsColumns[0]},
+	}
+	// TemplatesColumns holds the columns for the "templates" table.
+	TemplatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "version", Type: field.TypeInt},
+		{Name: "immutable", Type: field.TypeBool, Default: false},
+		{Name: "definition", Type: field.TypeJSON},
+	}
+	// TemplatesTable holds the schema information for the "templates" table.
+	TemplatesTable = &schema.Table{
+		Name:       "templates",
+		Columns:    TemplatesColumns,
+		PrimaryKey: []*schema.Column{TemplatesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "template_name_version",
+				Unique:  true,
+				Columns: []*schema.Column{TemplatesColumns[3], TemplatesColumns[4]},
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
@@ -607,6 +637,7 @@ var (
 		ServiceConfigsTable,
 		SystemSettingsTable,
 		TeamsTable,
+		TemplatesTable,
 		UsersTable,
 		VariableReferencesTable,
 		WebhooksTable,
@@ -668,6 +699,7 @@ func init() {
 	ServicesTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	ServicesTable.ForeignKeys[1].RefTable = GithubInstallationsTable
 	ServicesTable.ForeignKeys[2].RefTable = DeploymentsTable
+	ServicesTable.ForeignKeys[3].RefTable = TemplatesTable
 	ServicesTable.Annotation = &entsql.Annotation{
 		Table: "services",
 	}
@@ -681,6 +713,9 @@ func init() {
 	}
 	TeamsTable.Annotation = &entsql.Annotation{
 		Table: "teams",
+	}
+	TemplatesTable.Annotation = &entsql.Annotation{
+		Table: "templates",
 	}
 	UsersTable.Annotation = &entsql.Annotation{
 		Table: "users",

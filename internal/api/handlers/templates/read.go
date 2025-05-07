@@ -1,0 +1,28 @@
+package template_handler
+
+import (
+	"context"
+
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/server"
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/services/models"
+)
+
+type ListTemplatesResponse struct {
+	Body struct {
+		Data []*models.TemplateResponse `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) ListTemplates(ctx context.Context, input *server.BaseAuthInput) (*ListTemplatesResponse, error) {
+	templates, err := self.srv.TemplateService.GetAvailable(ctx)
+	if err != nil {
+		log.Errorf("Failed to get templates: %v", err)
+		return nil, huma.Error500InternalServerError("Failed to get templates")
+	}
+
+	resp := &ListTemplatesResponse{}
+	resp.Body.Data = templates
+	return resp, nil
+}

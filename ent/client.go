@@ -33,6 +33,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 	"github.com/unbindapp/unbind-api/ent/team"
+	"github.com/unbindapp/unbind-api/ent/template"
 	"github.com/unbindapp/unbind-api/ent/user"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
 	"github.com/unbindapp/unbind-api/ent/webhook"
@@ -79,6 +80,8 @@ type Client struct {
 	SystemSetting *SystemSettingClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
+	// Template is the client for interacting with the Template builders.
+	Template *TemplateClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// VariableReference is the client for interacting with the VariableReference builders.
@@ -113,6 +116,7 @@ func (c *Client) init() {
 	c.ServiceConfig = NewServiceConfigClient(c.config)
 	c.SystemSetting = NewSystemSettingClient(c.config)
 	c.Team = NewTeamClient(c.config)
+	c.Template = NewTemplateClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.VariableReference = NewVariableReferenceClient(c.config)
 	c.Webhook = NewWebhookClient(c.config)
@@ -225,6 +229,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ServiceConfig:      NewServiceConfigClient(cfg),
 		SystemSetting:      NewSystemSettingClient(cfg),
 		Team:               NewTeamClient(cfg),
+		Template:           NewTemplateClient(cfg),
 		User:               NewUserClient(cfg),
 		VariableReference:  NewVariableReferenceClient(cfg),
 		Webhook:            NewWebhookClient(cfg),
@@ -264,6 +269,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ServiceConfig:      NewServiceConfigClient(cfg),
 		SystemSetting:      NewSystemSettingClient(cfg),
 		Team:               NewTeamClient(cfg),
+		Template:           NewTemplateClient(cfg),
 		User:               NewUserClient(cfg),
 		VariableReference:  NewVariableReferenceClient(cfg),
 		Webhook:            NewWebhookClient(cfg),
@@ -298,8 +304,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
 		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team, c.User,
-		c.VariableReference, c.Webhook,
+		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team,
+		c.Template, c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -311,8 +317,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
 		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team, c.User,
-		c.VariableReference, c.Webhook,
+		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team,
+		c.Template, c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -355,6 +361,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.SystemSetting.mutate(ctx, m)
 	case *TeamMutation:
 		return c.Team.mutate(ctx, m)
+	case *TemplateMutation:
+		return c.Template.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *VariableReferenceMutation:
@@ -2587,6 +2595,22 @@ func (c *ServiceClient) QueryCurrentDeployment(s *Service) *DeploymentQuery {
 	return query
 }
 
+// QueryTemplate queries the template edge of a Service.
+func (c *ServiceClient) QueryTemplate(s *Service) *TemplateQuery {
+	query := (&TemplateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(template.Table, template.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, service.TemplateTable, service.TemplateColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryVariableReferences queries the variable_references edge of a Service.
 func (c *ServiceClient) QueryVariableReferences(s *Service) *VariableReferenceQuery {
 	query := (&VariableReferenceClient{config: c.config}).Query()
@@ -3123,6 +3147,155 @@ func (c *TeamClient) mutate(ctx context.Context, m *TeamMutation) (Value, error)
 	}
 }
 
+// TemplateClient is a client for the Template schema.
+type TemplateClient struct {
+	config
+}
+
+// NewTemplateClient returns a client for the Template from the given config.
+func NewTemplateClient(c config) *TemplateClient {
+	return &TemplateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `template.Hooks(f(g(h())))`.
+func (c *TemplateClient) Use(hooks ...Hook) {
+	c.hooks.Template = append(c.hooks.Template, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `template.Intercept(f(g(h())))`.
+func (c *TemplateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Template = append(c.inters.Template, interceptors...)
+}
+
+// Create returns a builder for creating a Template entity.
+func (c *TemplateClient) Create() *TemplateCreate {
+	mutation := newTemplateMutation(c.config, OpCreate)
+	return &TemplateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Template entities.
+func (c *TemplateClient) CreateBulk(builders ...*TemplateCreate) *TemplateCreateBulk {
+	return &TemplateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TemplateClient) MapCreateBulk(slice any, setFunc func(*TemplateCreate, int)) *TemplateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TemplateCreateBulk{err: fmt.Errorf("calling to TemplateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TemplateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TemplateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Template.
+func (c *TemplateClient) Update() *TemplateUpdate {
+	mutation := newTemplateMutation(c.config, OpUpdate)
+	return &TemplateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TemplateClient) UpdateOne(t *Template) *TemplateUpdateOne {
+	mutation := newTemplateMutation(c.config, OpUpdateOne, withTemplate(t))
+	return &TemplateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TemplateClient) UpdateOneID(id uuid.UUID) *TemplateUpdateOne {
+	mutation := newTemplateMutation(c.config, OpUpdateOne, withTemplateID(id))
+	return &TemplateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Template.
+func (c *TemplateClient) Delete() *TemplateDelete {
+	mutation := newTemplateMutation(c.config, OpDelete)
+	return &TemplateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TemplateClient) DeleteOne(t *Template) *TemplateDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TemplateClient) DeleteOneID(id uuid.UUID) *TemplateDeleteOne {
+	builder := c.Delete().Where(template.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TemplateDeleteOne{builder}
+}
+
+// Query returns a query builder for Template.
+func (c *TemplateClient) Query() *TemplateQuery {
+	return &TemplateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTemplate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Template entity by its id.
+func (c *TemplateClient) Get(ctx context.Context, id uuid.UUID) (*Template, error) {
+	return c.Query().Where(template.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TemplateClient) GetX(ctx context.Context, id uuid.UUID) *Template {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryServices queries the services edge of a Template.
+func (c *TemplateClient) QueryServices(t *Template) *ServiceQuery {
+	query := (&ServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(template.Table, template.FieldID, id),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, template.ServicesTable, template.ServicesColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TemplateClient) Hooks() []Hook {
+	return c.hooks.Template
+}
+
+// Interceptors returns the client interceptors.
+func (c *TemplateClient) Interceptors() []Interceptor {
+	return c.inters.Template
+}
+
+func (c *TemplateClient) mutate(ctx context.Context, m *TemplateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TemplateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TemplateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TemplateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TemplateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Template mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -3655,12 +3828,13 @@ type (
 	hooks struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
 		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
-		ServiceConfig, SystemSetting, Team, User, VariableReference, Webhook []ent.Hook
+		ServiceConfig, SystemSetting, Team, Template, User, VariableReference,
+		Webhook []ent.Hook
 	}
 	inters struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
 		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
-		ServiceConfig, SystemSetting, Team, User, VariableReference,
+		ServiceConfig, SystemSetting, Team, Template, User, VariableReference,
 		Webhook []ent.Interceptor
 	}
 )

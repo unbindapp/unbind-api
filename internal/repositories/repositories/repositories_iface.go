@@ -19,6 +19,7 @@ import (
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
+	template_repo "github.com/unbindapp/unbind-api/internal/repositories/template"
 	user_repo "github.com/unbindapp/unbind-api/internal/repositories/user"
 	variable_repo "github.com/unbindapp/unbind-api/internal/repositories/variables"
 	webhook_repo "github.com/unbindapp/unbind-api/internal/repositories/webhook"
@@ -58,5 +59,7 @@ type RepositoriesInterface interface {
 	Bootstrap() bootstrap_repo.BootstrapRepositoryInterface
 	// S3 returns the S3 repository
 	S3() s3_repo.S3RepositoryInterface
+	// Template returns the Template repository
+	Template() template_repo.TemplateRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

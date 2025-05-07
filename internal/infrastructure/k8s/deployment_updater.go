@@ -19,9 +19,9 @@ func (k *KubeClient) UpdateDeploymentImages(ctx context.Context, newVersion stri
 
 	// Map of image prefixes to their new versions
 	imageUpdates := map[string]string{
-		"unbindapp/unbind-ui":       fmt.Sprintf("unbindapp/unbind-ui:%s", newVersion),
-		"unbindapp/unbind-operator": fmt.Sprintf("unbindapp/unbind-operator:%s", newVersion),
-		"unbindapp/unbind-api":      fmt.Sprintf("unbindapp/unbind-api:%s", newVersion),
+		"ghcr.io/unbindapp/unbind-ui":       fmt.Sprintf("ghcr.io/unbindapp/unbind-ui:%s", newVersion),
+		"ghcr.io/unbindapp/unbind-operator": fmt.Sprintf("ghcr.io/unbindapp/unbind-operator:%s", newVersion),
+		"ghcr.io/unbindapp/unbind-api":      fmt.Sprintf("ghcr.io/unbindapp/unbind-api:%s", newVersion),
 	}
 
 	// First update all non-api deployments
@@ -89,9 +89,9 @@ func (k *KubeClient) CheckDeploymentsReady(ctx context.Context, version string) 
 
 	// Expected images for each component
 	expectedImages := map[string]string{
-		"unbindapp/unbind-ui":       fmt.Sprintf("unbindapp/unbind-ui:%s", version),
-		"unbindapp/unbind-operator": fmt.Sprintf("unbindapp/unbind-operator:%s", version),
-		"unbindapp/unbind-api":      fmt.Sprintf("unbindapp/unbind-api:%s", version),
+		"ghcr.io/unbindapp/unbind-ui":       fmt.Sprintf("ghcr.io/unbindapp/unbind-ui:%s", version),
+		"ghcr.io/unbindapp/unbind-operator": fmt.Sprintf("ghcr.io/unbindapp/unbind-operator:%s", version),
+		"ghcr.io/unbindapp/unbind-api":      fmt.Sprintf("ghcr.io/unbindapp/unbind-api:%s", version),
 	}
 
 	// Check each deployment
