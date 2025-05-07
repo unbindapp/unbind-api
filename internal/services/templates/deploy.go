@@ -229,7 +229,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 								Key:                  key,
 							},
 						},
-						Value: fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName),
+						Value: fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, key),
 					})
 
 					continue

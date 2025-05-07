@@ -5,12 +5,12 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-// WordPressTemplate returns the predefined WordPress template
-func wordPressTemplate() *schema.TemplateDefinition {
+// GhostTemplate returns the predefined Ghost template
+func ghostTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "wordpress",
+		Name:        "ghost",
 		Version:     1,
-		Description: "WordPress with MySQL",
+		Description: "Ghost CMS with MySQL",
 		Services: []schema.TemplateService{
 			{
 				ID:           1,
@@ -21,38 +21,44 @@ func wordPressTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:        2,
-				Icon:      "wordpress",
+				Icon:      "ghost",
 				DependsOn: []int{1},
-				Name:      "Wordpress",
+				Name:      "Ghost",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("wordpress:6.8"),
+				Image:     utils.ToPtr("ghost:5"),
 				Ports: []schema.PortSpec{
 					{
-						Port:     80,
+						Port:     2368,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
 				IsPublic: true,
+				Variables: []schema.TemplateVariable{
+					{
+						Name:  "database__client",
+						Value: "mysql",
+					},
+				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
 						SourceID:   1,
 						SourceName: "DATABASE_USERNAME",
-						TargetName: "WORDPRESS_DB_USER",
+						TargetName: "database__connection__user",
 					},
 					{
 						SourceID:   1,
 						SourceName: "DATABASE_PASSWORD",
-						TargetName: "WORDPRESS_DB_PASSWORD",
+						TargetName: "database__connection__password",
 					},
 					{
 						SourceID:   1,
 						SourceName: "DATABASE_DEFAULT_DB_NAME",
-						TargetName: "WORDPRESS_DB_NAME",
+						TargetName: "database__connection__database",
 					},
 					{
 						SourceID:   1,
-						TargetName: "WORDPRESS_DB_HOST",
+						TargetName: "database__connection__host",
 						IsHost:     true,
 					},
 				},
