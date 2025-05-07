@@ -142,10 +142,16 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 		switch *service.Database {
 		case "postgres":
 			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("postgres")
+			// Always set port too
+			secrets["DATABASE_PORT"] = []byte("5432")
 		case "mysql":
 			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("moco")
+			secrets["DATABASE_PORT"] = []byte("3306")
 		case "mongodb":
 			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("admin")
+			secrets["DATABASE_PORT"] = []byte("27017")
+		case "redis":
+			secrets["DATABASE_PORT"] = []byte("6379")
 		}
 	}
 	// Sync secret
