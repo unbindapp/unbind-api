@@ -201,6 +201,20 @@ func (sc *ServiceCreate) SetNillableTemplateID(u *uuid.UUID) *ServiceCreate {
 	return sc
 }
 
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (sc *ServiceCreate) SetTemplateInstanceID(u uuid.UUID) *ServiceCreate {
+	sc.mutation.SetTemplateInstanceID(u)
+	return sc
+}
+
+// SetNillableTemplateInstanceID sets the "template_instance_id" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableTemplateInstanceID(u *uuid.UUID) *ServiceCreate {
+	if u != nil {
+		sc.SetTemplateInstanceID(*u)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *ServiceCreate) SetID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetID(u)
@@ -448,6 +462,10 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
 		_node.KubernetesSecret = value
+	}
+	if value, ok := sc.mutation.TemplateInstanceID(); ok {
+		_spec.SetField(service.FieldTemplateInstanceID, field.TypeUUID, value)
+		_node.TemplateInstanceID = &value
 	}
 	if nodes := sc.mutation.EnvironmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -833,6 +851,24 @@ func (u *ServiceUpsert) ClearTemplateID() *ServiceUpsert {
 	return u
 }
 
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (u *ServiceUpsert) SetTemplateInstanceID(v uuid.UUID) *ServiceUpsert {
+	u.Set(service.FieldTemplateInstanceID, v)
+	return u
+}
+
+// UpdateTemplateInstanceID sets the "template_instance_id" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateTemplateInstanceID() *ServiceUpsert {
+	u.SetExcluded(service.FieldTemplateInstanceID)
+	return u
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (u *ServiceUpsert) ClearTemplateInstanceID() *ServiceUpsert {
+	u.SetNull(service.FieldTemplateInstanceID)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1133,6 +1169,27 @@ func (u *ServiceUpsertOne) UpdateTemplateID() *ServiceUpsertOne {
 func (u *ServiceUpsertOne) ClearTemplateID() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearTemplateID()
+	})
+}
+
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (u *ServiceUpsertOne) SetTemplateInstanceID(v uuid.UUID) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetTemplateInstanceID(v)
+	})
+}
+
+// UpdateTemplateInstanceID sets the "template_instance_id" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateTemplateInstanceID() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateTemplateInstanceID()
+	})
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (u *ServiceUpsertOne) ClearTemplateInstanceID() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearTemplateInstanceID()
 	})
 }
 
@@ -1603,6 +1660,27 @@ func (u *ServiceUpsertBulk) UpdateTemplateID() *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) ClearTemplateID() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearTemplateID()
+	})
+}
+
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (u *ServiceUpsertBulk) SetTemplateInstanceID(v uuid.UUID) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetTemplateInstanceID(v)
+	})
+}
+
+// UpdateTemplateInstanceID sets the "template_instance_id" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateTemplateInstanceID() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateTemplateInstanceID()
+	})
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (u *ServiceUpsertBulk) ClearTemplateInstanceID() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearTemplateInstanceID()
 	})
 }
 

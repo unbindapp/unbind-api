@@ -70,6 +70,9 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	kubeNameMap := make(map[int]string)
 	dbServiceMap := make(map[int]*ent.Service)
 
+	// Generate a launch ID
+	templateInstanceID := uuid.New()
+
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		for _, templateService := range generatedTemplate.Services {
 			// Fetch DB metadata (if a databsae)
@@ -147,14 +150,15 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			// Create the service
 			createService, err := self.repo.Service().Create(ctx, tx,
 				&service_repo.CreateServiceInput{
-					KubernetesName:   kubernetesName,
-					ServiceType:      templateService.Type,
-					Name:             templateService.Name,
-					EnvironmentID:    input.EnvironmentID,
-					KubernetesSecret: secret.Name,
-					Database:         templateService.DatabaseType,
-					DatabaseVersion:  dbVersion,
-					TemplateID:       utils.ToPtr(template.ID),
+					KubernetesName:     kubernetesName,
+					ServiceType:        templateService.Type,
+					Name:               templateService.Name,
+					EnvironmentID:      input.EnvironmentID,
+					KubernetesSecret:   secret.Name,
+					Database:           templateService.DatabaseType,
+					DatabaseVersion:    dbVersion,
+					TemplateID:         utils.ToPtr(template.ID),
+					TemplateInstanceID: utils.ToPtr(templateInstanceID),
 				})
 			if err != nil {
 				return fmt.Errorf("failed to create service: %w", err)

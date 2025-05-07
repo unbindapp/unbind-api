@@ -47,6 +47,8 @@ const (
 	FieldCurrentDeploymentID = "current_deployment_id"
 	// FieldTemplateID holds the string denoting the template_id field in the database.
 	FieldTemplateID = "template_id"
+	// FieldTemplateInstanceID holds the string denoting the template_instance_id field in the database.
+	FieldTemplateInstanceID = "template_instance_id"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
 	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
@@ -132,6 +134,7 @@ var Columns = []string{
 	FieldKubernetesSecret,
 	FieldCurrentDeploymentID,
 	FieldTemplateID,
+	FieldTemplateInstanceID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -248,6 +251,11 @@ func ByCurrentDeploymentID(opts ...sql.OrderTermOption) OrderOption {
 // ByTemplateID orders the results by the template_id field.
 func ByTemplateID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTemplateID, opts...).ToFunc()
+}
+
+// ByTemplateInstanceID orders the results by the template_instance_id field.
+func ByTemplateInstanceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplateInstanceID, opts...).ToFunc()
 }
 
 // ByEnvironmentField orders the results by environment field.

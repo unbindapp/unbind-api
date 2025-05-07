@@ -273,6 +273,26 @@ func (su *ServiceUpdate) ClearTemplateID() *ServiceUpdate {
 	return su
 }
 
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (su *ServiceUpdate) SetTemplateInstanceID(u uuid.UUID) *ServiceUpdate {
+	su.mutation.SetTemplateInstanceID(u)
+	return su
+}
+
+// SetNillableTemplateInstanceID sets the "template_instance_id" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableTemplateInstanceID(u *uuid.UUID) *ServiceUpdate {
+	if u != nil {
+		su.SetTemplateInstanceID(*u)
+	}
+	return su
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (su *ServiceUpdate) ClearTemplateInstanceID() *ServiceUpdate {
+	su.mutation.ClearTemplateInstanceID()
+	return su
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
 	return su.SetEnvironmentID(e.ID)
@@ -535,6 +555,12 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
+	}
+	if value, ok := su.mutation.TemplateInstanceID(); ok {
+		_spec.SetField(service.FieldTemplateInstanceID, field.TypeUUID, value)
+	}
+	if su.mutation.TemplateInstanceIDCleared() {
+		_spec.ClearField(service.FieldTemplateInstanceID, field.TypeUUID)
 	}
 	if su.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1029,6 +1055,26 @@ func (suo *ServiceUpdateOne) ClearTemplateID() *ServiceUpdateOne {
 	return suo
 }
 
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (suo *ServiceUpdateOne) SetTemplateInstanceID(u uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.SetTemplateInstanceID(u)
+	return suo
+}
+
+// SetNillableTemplateInstanceID sets the "template_instance_id" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableTemplateInstanceID(u *uuid.UUID) *ServiceUpdateOne {
+	if u != nil {
+		suo.SetTemplateInstanceID(*u)
+	}
+	return suo
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (suo *ServiceUpdateOne) ClearTemplateInstanceID() *ServiceUpdateOne {
+	suo.mutation.ClearTemplateInstanceID()
+	return suo
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
 	return suo.SetEnvironmentID(e.ID)
@@ -1321,6 +1367,12 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	}
 	if value, ok := suo.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
+	}
+	if value, ok := suo.mutation.TemplateInstanceID(); ok {
+		_spec.SetField(service.FieldTemplateInstanceID, field.TypeUUID, value)
+	}
+	if suo.mutation.TemplateInstanceIDCleared() {
+		_spec.ClearField(service.FieldTemplateInstanceID, field.TypeUUID)
 	}
 	if suo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{

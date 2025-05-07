@@ -82,6 +82,7 @@ func (Service) Fields() []ent.Field {
 		field.String("kubernetes_secret").Comment("Kubernetes secret for this service"),
 		field.UUID("current_deployment_id", uuid.UUID{}).Optional().Nillable().Comment("Reference the current active deployment"),
 		field.UUID("template_id", uuid.UUID{}).Optional().Nillable().Comment("Reference to the template this service was created from"),
+		field.UUID("template_instance_id", uuid.UUID{}).Optional().Nillable().Comment("Group reference of all services launched together from a template."),
 	}
 }
 

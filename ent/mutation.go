@@ -10668,6 +10668,7 @@ type ServiceMutation struct {
 	git_repository_owner       *string
 	git_repository             *string
 	kubernetes_secret          *string
+	template_instance_id       *uuid.UUID
 	clearedFields              map[string]struct{}
 	environment                *uuid.UUID
 	clearedenvironment         bool
@@ -11438,6 +11439,55 @@ func (m *ServiceMutation) ResetTemplateID() {
 	delete(m.clearedFields, service.FieldTemplateID)
 }
 
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (m *ServiceMutation) SetTemplateInstanceID(u uuid.UUID) {
+	m.template_instance_id = &u
+}
+
+// TemplateInstanceID returns the value of the "template_instance_id" field in the mutation.
+func (m *ServiceMutation) TemplateInstanceID() (r uuid.UUID, exists bool) {
+	v := m.template_instance_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTemplateInstanceID returns the old "template_instance_id" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldTemplateInstanceID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTemplateInstanceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTemplateInstanceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTemplateInstanceID: %w", err)
+	}
+	return oldValue.TemplateInstanceID, nil
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (m *ServiceMutation) ClearTemplateInstanceID() {
+	m.template_instance_id = nil
+	m.clearedFields[service.FieldTemplateInstanceID] = struct{}{}
+}
+
+// TemplateInstanceIDCleared returns if the "template_instance_id" field was cleared in this mutation.
+func (m *ServiceMutation) TemplateInstanceIDCleared() bool {
+	_, ok := m.clearedFields[service.FieldTemplateInstanceID]
+	return ok
+}
+
+// ResetTemplateInstanceID resets all changes to the "template_instance_id" field.
+func (m *ServiceMutation) ResetTemplateInstanceID() {
+	m.template_instance_id = nil
+	delete(m.clearedFields, service.FieldTemplateInstanceID)
+}
+
 // ClearEnvironment clears the "environment" edge to the Environment entity.
 func (m *ServiceMutation) ClearEnvironment() {
 	m.clearedenvironment = true
@@ -11727,7 +11777,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -11773,6 +11823,9 @@ func (m *ServiceMutation) Fields() []string {
 	if m.template != nil {
 		fields = append(fields, service.FieldTemplateID)
 	}
+	if m.template_instance_id != nil {
+		fields = append(fields, service.FieldTemplateInstanceID)
+	}
 	return fields
 }
 
@@ -11811,6 +11864,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.CurrentDeploymentID()
 	case service.FieldTemplateID:
 		return m.TemplateID()
+	case service.FieldTemplateInstanceID:
+		return m.TemplateInstanceID()
 	}
 	return nil, false
 }
@@ -11850,6 +11905,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldCurrentDeploymentID(ctx)
 	case service.FieldTemplateID:
 		return m.OldTemplateID(ctx)
+	case service.FieldTemplateInstanceID:
+		return m.OldTemplateInstanceID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Service field %s", name)
 }
@@ -11964,6 +12021,13 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTemplateID(v)
 		return nil
+	case service.FieldTemplateInstanceID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTemplateInstanceID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
 }
@@ -12021,6 +12085,9 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldTemplateID) {
 		fields = append(fields, service.FieldTemplateID)
 	}
+	if m.FieldCleared(service.FieldTemplateInstanceID) {
+		fields = append(fields, service.FieldTemplateInstanceID)
+	}
 	return fields
 }
 
@@ -12058,6 +12125,9 @@ func (m *ServiceMutation) ClearField(name string) error {
 		return nil
 	case service.FieldTemplateID:
 		m.ClearTemplateID()
+		return nil
+	case service.FieldTemplateInstanceID:
+		m.ClearTemplateInstanceID()
 		return nil
 	}
 	return fmt.Errorf("unknown Service nullable field %s", name)
@@ -12111,6 +12181,9 @@ func (m *ServiceMutation) ResetField(name string) error {
 		return nil
 	case service.FieldTemplateID:
 		m.ResetTemplateID()
+		return nil
+	case service.FieldTemplateInstanceID:
+		m.ResetTemplateInstanceID()
 		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)

@@ -27,6 +27,7 @@ type CreateServiceInput struct {
 	Database             *string
 	DatabaseVersion      *string
 	TemplateID           *uuid.UUID
+	TemplateInstanceID   *uuid.UUID
 }
 
 // Create the service
@@ -52,6 +53,7 @@ func (self *ServiceRepository) Create(
 		SetKubernetesSecret(input.KubernetesSecret).
 		SetNillableDatabase(input.Database).
 		SetNillableTemplateID(input.TemplateID).
+		SetNillableTemplateInstanceID(input.TemplateInstanceID).
 		SetNillableDatabaseVersion(input.DatabaseVersion).Save(ctx)
 }
 

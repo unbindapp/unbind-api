@@ -55,6 +55,8 @@ type Service struct {
 	CurrentDeploymentID *uuid.UUID `json:"current_deployment_id,omitempty"`
 	// Reference to the template this service was created from
 	TemplateID *uuid.UUID `json:"template_id,omitempty"`
+	// Group reference of all services launched together from a template.
+	TemplateInstanceID *uuid.UUID `json:"template_instance_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -160,7 +162,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case service.FieldCurrentDeploymentID, service.FieldTemplateID:
+		case service.FieldCurrentDeploymentID, service.FieldTemplateID, service.FieldTemplateInstanceID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
@@ -287,6 +289,13 @@ func (s *Service) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				s.TemplateID = new(uuid.UUID)
 				*s.TemplateID = *value.S.(*uuid.UUID)
+			}
+		case service.FieldTemplateInstanceID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field template_instance_id", values[i])
+			} else if value.Valid {
+				s.TemplateInstanceID = new(uuid.UUID)
+				*s.TemplateInstanceID = *value.S.(*uuid.UUID)
 			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
@@ -415,6 +424,11 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	if v := s.TemplateID; v != nil {
 		builder.WriteString("template_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := s.TemplateInstanceID; v != nil {
+		builder.WriteString("template_instance_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')

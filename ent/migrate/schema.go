@@ -327,6 +327,7 @@ var (
 		{Name: "git_repository_owner", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository", Type: field.TypeString, Nullable: true},
 		{Name: "kubernetes_secret", Type: field.TypeString},
+		{Name: "template_instance_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "current_deployment_id", Type: field.TypeUUID, Nullable: true},
@@ -340,25 +341,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[12]},
+				Columns:    []*schema.Column{ServicesColumns[13]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[13]},
+				Columns:    []*schema.Column{ServicesColumns[14]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "services_deployments_current_deployment",
-				Columns:    []*schema.Column{ServicesColumns[14]},
+				Columns:    []*schema.Column{ServicesColumns[15]},
 				RefColumns: []*schema.Column{DeploymentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "services_templates_services",
-				Columns:    []*schema.Column{ServicesColumns[15]},
+				Columns:    []*schema.Column{ServicesColumns[16]},
 				RefColumns: []*schema.Column{TemplatesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
