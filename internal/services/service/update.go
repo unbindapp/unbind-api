@@ -47,6 +47,10 @@ type UpdateServiceInput struct {
 	S3BackupBucket       *string                `json:"s3_backup_bucket,omitempty"`
 	BackupSchedule       *string                `json:"backup_schedule,omitempty" required:"false" doc:"Cron expression for the backup schedule, e.g. '0 0 * * *'"`
 	BackupRetentionCount *int                   `json:"backup_retention,omitempty" required:"false" doc:"Number of base backups to retain, e.g. 3"`
+
+	// PVC
+	PVCID        *string `json:"pvc_id,omitempty" doc:"ID of the PVC to attach to the service"`
+	PVCMountPath *string `json:"pvc_mount_path,omitempty" required:"false" doc:"Mount path for the PVC"`
 }
 
 // UpdateService updates a service and its configuration
@@ -103,6 +107,22 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("invalid backup schedule: %s", err))
 			}
 		}
+
+		// Disallow attaching a PVC to a database service
+		if input.PVCID != nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot attach a PVC to a database service")
+		}
+	}
+
+	// PVC validation, requires a path
+	if input.PVCID != nil {
+		if input.PVCMountPath == nil {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC mount path is required")
+		}
+		// Validate unix-style path
+		if !utils.IsValidUnixPath(*input.PVCMountPath) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid PVC mount path")
+		}
 	}
 
 	// For database we can't set version if deployed
@@ -122,6 +142,11 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if PVC is in use by a service
+	if input.PVCID != nil {
+		self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, *input.PVCID, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, client)
 	}
 
 	// Verify backup sources (for databases)
@@ -192,6 +217,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			S3BackupBucket:       input.S3BackupBucket,
 			BackupSchedule:       input.BackupSchedule,
 			BackupRetentionCount: input.BackupRetentionCount,
+			PVCID:                input.PVCID,
+			PVCVolumeMountPath:   input.PVCMountPath,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)

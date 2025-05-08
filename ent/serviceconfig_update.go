@@ -436,6 +436,46 @@ func (scu *ServiceConfigUpdate) AddBackupRetentionCount(i int) *ServiceConfigUpd
 	return scu
 }
 
+// SetVolumeName sets the "volume_name" field.
+func (scu *ServiceConfigUpdate) SetVolumeName(s string) *ServiceConfigUpdate {
+	scu.mutation.SetVolumeName(s)
+	return scu
+}
+
+// SetNillableVolumeName sets the "volume_name" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableVolumeName(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetVolumeName(*s)
+	}
+	return scu
+}
+
+// ClearVolumeName clears the value of the "volume_name" field.
+func (scu *ServiceConfigUpdate) ClearVolumeName() *ServiceConfigUpdate {
+	scu.mutation.ClearVolumeName()
+	return scu
+}
+
+// SetVolumeMountPath sets the "volume_mount_path" field.
+func (scu *ServiceConfigUpdate) SetVolumeMountPath(s string) *ServiceConfigUpdate {
+	scu.mutation.SetVolumeMountPath(s)
+	return scu
+}
+
+// SetNillableVolumeMountPath sets the "volume_mount_path" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableVolumeMountPath(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetVolumeMountPath(*s)
+	}
+	return scu
+}
+
+// ClearVolumeMountPath clears the value of the "volume_mount_path" field.
+func (scu *ServiceConfigUpdate) ClearVolumeMountPath() *ServiceConfigUpdate {
+	scu.mutation.ClearVolumeMountPath()
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -657,6 +697,18 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := scu.mutation.AddedBackupRetentionCount(); ok {
 		_spec.AddField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
+	}
+	if value, ok := scu.mutation.VolumeName(); ok {
+		_spec.SetField(serviceconfig.FieldVolumeName, field.TypeString, value)
+	}
+	if scu.mutation.VolumeNameCleared() {
+		_spec.ClearField(serviceconfig.FieldVolumeName, field.TypeString)
+	}
+	if value, ok := scu.mutation.VolumeMountPath(); ok {
+		_spec.SetField(serviceconfig.FieldVolumeMountPath, field.TypeString, value)
+	}
+	if scu.mutation.VolumeMountPathCleared() {
+		_spec.ClearField(serviceconfig.FieldVolumeMountPath, field.TypeString)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1138,6 +1190,46 @@ func (scuo *ServiceConfigUpdateOne) AddBackupRetentionCount(i int) *ServiceConfi
 	return scuo
 }
 
+// SetVolumeName sets the "volume_name" field.
+func (scuo *ServiceConfigUpdateOne) SetVolumeName(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetVolumeName(s)
+	return scuo
+}
+
+// SetNillableVolumeName sets the "volume_name" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableVolumeName(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetVolumeName(*s)
+	}
+	return scuo
+}
+
+// ClearVolumeName clears the value of the "volume_name" field.
+func (scuo *ServiceConfigUpdateOne) ClearVolumeName() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearVolumeName()
+	return scuo
+}
+
+// SetVolumeMountPath sets the "volume_mount_path" field.
+func (scuo *ServiceConfigUpdateOne) SetVolumeMountPath(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetVolumeMountPath(s)
+	return scuo
+}
+
+// SetNillableVolumeMountPath sets the "volume_mount_path" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableVolumeMountPath(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetVolumeMountPath(*s)
+	}
+	return scuo
+}
+
+// ClearVolumeMountPath clears the value of the "volume_mount_path" field.
+func (scuo *ServiceConfigUpdateOne) ClearVolumeMountPath() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearVolumeMountPath()
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1389,6 +1481,18 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if value, ok := scuo.mutation.AddedBackupRetentionCount(); ok {
 		_spec.AddField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
+	}
+	if value, ok := scuo.mutation.VolumeName(); ok {
+		_spec.SetField(serviceconfig.FieldVolumeName, field.TypeString, value)
+	}
+	if scuo.mutation.VolumeNameCleared() {
+		_spec.ClearField(serviceconfig.FieldVolumeName, field.TypeString)
+	}
+	if value, ok := scuo.mutation.VolumeMountPath(); ok {
+		_spec.SetField(serviceconfig.FieldVolumeMountPath, field.TypeString, value)
+	}
+	if scuo.mutation.VolumeMountPathCleared() {
+		_spec.ClearField(serviceconfig.FieldVolumeMountPath, field.TypeString)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

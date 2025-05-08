@@ -390,6 +390,8 @@ var (
 		{Name: "s3_backup_bucket", Type: field.TypeString, Nullable: true},
 		{Name: "backup_schedule", Type: field.TypeString, Default: "5 5 * * *"},
 		{Name: "backup_retention_count", Type: field.TypeInt, Default: 3},
+		{Name: "volume_name", Type: field.TypeString, Nullable: true},
+		{Name: "volume_mount_path", Type: field.TypeString, Nullable: true},
 		{Name: "s3_backup_endpoint_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID, Unique: true},
 	}
@@ -401,13 +403,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_s3_endpoints_service_backup_endpoint",
-				Columns:    []*schema.Column{ServiceConfigsColumns[23]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[25]},
 				RefColumns: []*schema.Column{S3EndpointsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[24]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[26]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

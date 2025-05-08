@@ -69,6 +69,10 @@ type Config struct {
 	ServiceDatabaseBackupSecretName  string `env:"SERVICE_DATABASE_BACKUP_SECRET_NAME"`
 	ServiceDatabaseBackupSchedule    string `env:"SERVICE_DATABASE_BACKUP_SCHEDULE"`
 	ServiceDatabaseBackupRetention   int    `env:"SERVICE_DATABASE_BACKUP_RETENTION"`
+	// Volume data
+	// ! TODO - support multiple volumes
+	ServiceVolumeName      string `env:"SERVICE_VOLUME_NAME"`
+	ServiceVolumeMountPath string `env:"SERVICE_VOLUME_MOUNT_PATH"`
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

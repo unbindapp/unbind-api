@@ -289,6 +289,9 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 	}
 	// See if a deployment is needed
 	// Create a an object with only fields we care to compare
+	if service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Volumes == nil {
+		service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{}
+	}
 	existingCrd := &v1.Service{
 		Spec: v1.ServiceSpec{
 			Builder: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Builder,
@@ -299,6 +302,7 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 				Ports:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Ports,
 				RunCommand: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.RunCommand,
 				Public:     service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Public,
+				Volumes:    service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Volumes,
 			},
 		},
 	}
@@ -320,8 +324,18 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 				Ports:      schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports),
 				RunCommand: service.Edges.ServiceConfig.RunCommand,
 				Public:     service.Edges.ServiceConfig.IsPublic,
+				Volumes:    []v1.VolumeSpec{},
 			},
 		},
+	}
+
+	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
+		newCrd.Spec.Config.Volumes = []v1.VolumeSpec{
+			{
+				Name:      *service.Edges.ServiceConfig.VolumeName,
+				MountPath: *service.Edges.ServiceConfig.VolumeMountPath,
+			},
+		}
 	}
 
 	// Changing builder requires a new build
@@ -340,4 +354,15 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 	}
 
 	return NoDeploymentNeeded, nil
+}
+
+// See if volume is in use
+func (self *ServiceRepository) IsVolumeInUse(ctx context.Context, volumeName string) (bool, error) {
+	services, err := self.base.DB.ServiceConfig.Query().
+		Where(serviceconfig.VolumeNameEqualFold(volumeName)).
+		All(ctx)
+	if err != nil {
+		return false, err
+	}
+	return len(services) > 0, nil
 }

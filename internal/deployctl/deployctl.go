@@ -206,6 +206,12 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
+	// Volumes
+	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
+		env["SERVICE_VOLUME_NAME"] = *service.Edges.ServiceConfig.VolumeName
+		env["SERVICE_VOLUME_MOUNT_PATH"] = *service.Edges.ServiceConfig.VolumeMountPath
+	}
+
 	// Add docker image override
 	if service.Edges.ServiceConfig.Image != "" {
 		env["SERVICE_IMAGE"] = service.Edges.ServiceConfig.Image

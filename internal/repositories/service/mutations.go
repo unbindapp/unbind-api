@@ -81,6 +81,8 @@ type MutateConfigInput struct {
 	S3BackupBucket          *string
 	BackupSchedule          *string
 	BackupRetentionCount    *int
+	PVCID                   *string
+	PVCVolumeMountPath      *string
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -135,6 +137,8 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
 		SetNillableS3BackupBucket(input.S3BackupBucket).
 		SetNillableBackupSchedule(input.BackupSchedule).
+		SetNillableVolumeName(input.PVCID).
+		SetNillableVolumeMountPath(input.PVCVolumeMountPath).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
 
 	if input.DatabaseConfig != nil {
@@ -194,6 +198,23 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.PVCID != nil {
+		if *input.PVCID == "" {
+			upd.ClearVolumeName()
+			upd.ClearVolumeMountPath()
+		} else {
+			upd.SetVolumeName(*input.PVCID)
+		}
+	}
+
+	if input.PVCVolumeMountPath != nil {
+		if *input.PVCVolumeMountPath == "" {
+			upd.ClearVolumeMountPath()
+		} else {
+			upd.SetVolumeMountPath(*input.PVCVolumeMountPath)
+		}
+	}
 
 	if input.GitBranch != nil {
 		if *input.GitBranch == "" {

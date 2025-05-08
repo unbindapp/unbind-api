@@ -51,6 +51,10 @@ type ServiceParams struct {
 	ImagePullSecrets []string
 	RunCommand       string
 
+	// Volume
+	VolumeClaimName string
+	VolumeMountPath string
+
 	// Database
 	DatabaseType          string
 	DatabaseUSDVersionRef string
@@ -112,6 +116,15 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 
 	if params.RunCommand != "" {
 		service.Spec.Config.RunCommand = utils.ToPtr(params.RunCommand)
+	}
+
+	if params.VolumeClaimName != "" && params.VolumeMountPath != "" {
+		service.Spec.Config.Volumes = []v1.VolumeSpec{
+			{
+				Name:      params.VolumeClaimName,
+				MountPath: params.VolumeMountPath,
+			},
+		}
 	}
 
 	// Add host configuration if provided
@@ -210,6 +223,9 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		DatabaseUSDVersionRef: self.builderConfig.ServiceDatabaseDefinitionVersion,
 		// ImagePullSecrets
 		ImagePullSecrets: strings.Split(self.builderConfig.ImagePullSecrets, ","),
+		// Volume
+		VolumeClaimName: self.builderConfig.ServiceVolumeName,
+		VolumeMountPath: self.builderConfig.ServiceVolumeMountPath,
 	}
 
 	if self.builderConfig.ServiceDatabaseBackupSecretName != "" &&

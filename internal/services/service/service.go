@@ -148,3 +148,37 @@ func (self *ServiceService) verifyS3Access(ctx context.Context, s3Source *ent.S3
 
 	return nil
 }
+
+func (self *ServiceService) validatePVC(ctx context.Context, teamID, projectID, environmentID uuid.UUID, name, namespace string, client *kubernetes.Clientset) error {
+	isInUse, err := self.repo.Service().IsVolumeInUse(ctx, name)
+	if err != nil {
+		return err
+	}
+	if isInUse {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC is already in use by another service")
+	}
+
+	// Get the actual PVC from k8s
+	pvc, err := self.k8s.GetPersistentVolumeClaim(ctx, namespace, name, client)
+	if err != nil {
+		return err
+	}
+	if !pvc.IsAvailable {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC is not available")
+	}
+
+	// Verify scope
+	if pvc.TeamID != teamID {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC not found")
+	}
+
+	if pvc.ProjectID != nil && *pvc.ProjectID != projectID {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC not found")
+	}
+
+	if pvc.EnvironmentID != nil && *pvc.EnvironmentID != environmentID {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC not found")
+	}
+
+	return nil
+}

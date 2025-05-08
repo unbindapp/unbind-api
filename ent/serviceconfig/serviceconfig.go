@@ -66,6 +66,10 @@ const (
 	FieldBackupSchedule = "backup_schedule"
 	// FieldBackupRetentionCount holds the string denoting the backup_retention_count field in the database.
 	FieldBackupRetentionCount = "backup_retention_count"
+	// FieldVolumeName holds the string denoting the volume_name field in the database.
+	FieldVolumeName = "volume_name"
+	// FieldVolumeMountPath holds the string denoting the volume_mount_path field in the database.
+	FieldVolumeMountPath = "volume_mount_path"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// EdgeS3BackupEndpoint holds the string denoting the s3_backup_endpoint edge name in mutations.
@@ -115,6 +119,8 @@ var Columns = []string{
 	FieldS3BackupBucket,
 	FieldBackupSchedule,
 	FieldBackupRetentionCount,
+	FieldVolumeName,
+	FieldVolumeMountPath,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -289,6 +295,16 @@ func ByBackupSchedule(opts ...sql.OrderTermOption) OrderOption {
 // ByBackupRetentionCount orders the results by the backup_retention_count field.
 func ByBackupRetentionCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBackupRetentionCount, opts...).ToFunc()
+}
+
+// ByVolumeName orders the results by the volume_name field.
+func ByVolumeName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVolumeName, opts...).ToFunc()
+}
+
+// ByVolumeMountPath orders the results by the volume_mount_path field.
+func ByVolumeMountPath(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVolumeMountPath, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

@@ -33,4 +33,6 @@ type ServiceRepositoryInterface interface {
 	// Summarize services in environment
 	SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, icons map[uuid.UUID][]string, err error)
 	NeedsDeployment(ctx context.Context, service *ent.Service) (NeedsDeploymentResponse, error)
+	// See if volume is in use
+	IsVolumeInUse(ctx context.Context, volumeName string) (bool, error)
 }
