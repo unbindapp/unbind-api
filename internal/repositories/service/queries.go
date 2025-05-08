@@ -35,6 +35,7 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 			dq.Limit(1)
 		}).
 		WithCurrentDeployment().
+		WithTemplate().
 		Only(ctx)
 
 	if err != nil {
@@ -108,6 +109,7 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 		Where(service.EnvironmentIDEQ(environmentID)).
 		WithServiceConfig().
 		WithCurrentDeployment().
+		WithTemplate().
 		Order(ent.Desc(service.FieldCreatedAt)).
 		All(ctx)
 

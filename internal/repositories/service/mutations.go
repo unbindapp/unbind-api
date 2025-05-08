@@ -26,6 +26,8 @@ type CreateServiceInput struct {
 	KubernetesSecret     string
 	Database             *string
 	DatabaseVersion      *string
+	TemplateID           *uuid.UUID
+	TemplateInstanceID   *uuid.UUID
 }
 
 // Create the service
@@ -50,6 +52,8 @@ func (self *ServiceRepository) Create(
 		SetNillableGitRepositoryOwner(input.GitRepositoryOwner).
 		SetKubernetesSecret(input.KubernetesSecret).
 		SetNillableDatabase(input.Database).
+		SetNillableTemplateID(input.TemplateID).
+		SetNillableTemplateInstanceID(input.TemplateInstanceID).
 		SetNillableDatabaseVersion(input.DatabaseVersion).Save(ctx)
 }
 
@@ -61,6 +65,7 @@ type MutateConfigInput struct {
 	Framework               *enum.Framework
 	GitBranch               *string
 	GitTag                  *string
+	Icon                    *string
 	Ports                   []schema.PortSpec
 	Hosts                   []v1.HostSpec
 	Replicas                *int32
@@ -100,7 +105,9 @@ func (self *ServiceRepository) CreateConfig(
 
 	// Get high level icon
 	var icon string
-	if service.Database != nil {
+	if input.Icon != nil {
+		icon = *input.Icon
+	} else if service.Database != nil {
 		icon = *service.Database
 	} else if input.Framework != nil {
 		icon = string(*input.Framework)

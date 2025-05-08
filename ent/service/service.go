@@ -45,6 +45,10 @@ const (
 	FieldKubernetesSecret = "kubernetes_secret"
 	// FieldCurrentDeploymentID holds the string denoting the current_deployment_id field in the database.
 	FieldCurrentDeploymentID = "current_deployment_id"
+	// FieldTemplateID holds the string denoting the template_id field in the database.
+	FieldTemplateID = "template_id"
+	// FieldTemplateInstanceID holds the string denoting the template_instance_id field in the database.
+	FieldTemplateInstanceID = "template_instance_id"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
 	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
@@ -55,6 +59,8 @@ const (
 	EdgeDeployments = "deployments"
 	// EdgeCurrentDeployment holds the string denoting the current_deployment edge name in mutations.
 	EdgeCurrentDeployment = "current_deployment"
+	// EdgeTemplate holds the string denoting the template edge name in mutations.
+	EdgeTemplate = "template"
 	// EdgeVariableReferences holds the string denoting the variable_references edge name in mutations.
 	EdgeVariableReferences = "variable_references"
 	// Table holds the table name of the service in the database.
@@ -94,6 +100,13 @@ const (
 	CurrentDeploymentInverseTable = "deployments"
 	// CurrentDeploymentColumn is the table column denoting the current_deployment relation/edge.
 	CurrentDeploymentColumn = "current_deployment_id"
+	// TemplateTable is the table that holds the template relation/edge.
+	TemplateTable = "services"
+	// TemplateInverseTable is the table name for the Template entity.
+	// It exists in this package in order to avoid circular dependency with the "template" package.
+	TemplateInverseTable = "templates"
+	// TemplateColumn is the table column denoting the template relation/edge.
+	TemplateColumn = "template_id"
 	// VariableReferencesTable is the table that holds the variable_references relation/edge.
 	VariableReferencesTable = "variable_references"
 	// VariableReferencesInverseTable is the table name for the VariableReference entity.
@@ -120,6 +133,8 @@ var Columns = []string{
 	FieldGitRepository,
 	FieldKubernetesSecret,
 	FieldCurrentDeploymentID,
+	FieldTemplateID,
+	FieldTemplateInstanceID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -233,6 +248,16 @@ func ByCurrentDeploymentID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCurrentDeploymentID, opts...).ToFunc()
 }
 
+// ByTemplateID orders the results by the template_id field.
+func ByTemplateID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplateID, opts...).ToFunc()
+}
+
+// ByTemplateInstanceID orders the results by the template_instance_id field.
+func ByTemplateInstanceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTemplateInstanceID, opts...).ToFunc()
+}
+
 // ByEnvironmentField orders the results by environment field.
 func ByEnvironmentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -272,6 +297,13 @@ func ByDeployments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 func ByCurrentDeploymentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newCurrentDeploymentStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByTemplateField orders the results by template field.
+func ByTemplateField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTemplateStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -321,6 +353,13 @@ func newCurrentDeploymentStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CurrentDeploymentInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, CurrentDeploymentTable, CurrentDeploymentColumn),
+	)
+}
+func newTemplateStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TemplateInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, TemplateTable, TemplateColumn),
 	)
 }
 func newVariableReferencesStep() *sqlgraph.Step {

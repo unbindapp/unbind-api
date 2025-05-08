@@ -37,6 +37,7 @@ import (
 	storage_handler "github.com/unbindapp/unbind-api/internal/api/handlers/storage"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
 	teams_handler "github.com/unbindapp/unbind-api/internal/api/handlers/teams"
+	template_handler "github.com/unbindapp/unbind-api/internal/api/handlers/templates"
 	unbindwebhooks_handler "github.com/unbindapp/unbind-api/internal/api/handlers/unbindwebhooks"
 	user_handler "github.com/unbindapp/unbind-api/internal/api/handlers/user"
 	variables_handler "github.com/unbindapp/unbind-api/internal/api/handlers/variables"
@@ -66,6 +67,7 @@ import (
 	storage_service "github.com/unbindapp/unbind-api/internal/services/storage"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
+	templates_service "github.com/unbindapp/unbind-api/internal/services/templates"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
@@ -212,6 +214,11 @@ func startAPI(cfg *config.Config) {
 
 	repo := repositories.NewRepositories(db)
 
+	// Do a template sync of our pre-defined stuff
+	if err := repo.Template().UpsertPredefinedTemplates(ctx); err != nil {
+		log.Errorf("Failed to upsert predefined templates: %v", err)
+	}
+
 	// Create kubernetes client
 	kubeClient := k8s.NewKubeClient(cfg, repo)
 
@@ -267,6 +274,7 @@ func startAPI(cfg *config.Config) {
 	metricsService := metric_service.NewMetricService(promClient, repo)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
 	storageService := storage_service.NewStorageService(cfg, repo, kubeClient)
+	templateService := templates_service.NewTemplatesService(cfg, repo, kubeClient, dbProvider, deploymentController)
 
 	stringCache := cache.NewStringCache(valkeyClient, "unbind")
 
@@ -307,6 +315,7 @@ func startAPI(cfg *config.Config) {
 		InstanceService:      instanceService,
 		VariablesService:     variableService,
 		StorageService:       storageService,
+		TemplateService:      templateService,
 		OauthConfig:          oauthConfig,
 	}
 
@@ -528,6 +537,15 @@ func startAPI(cfg *config.Config) {
 			next(op)
 		})
 		storage_handler.RegisterHandlers(srvImpl, storageGroup)
+
+		// /templates group
+		templatesGroup := huma.NewGroup(api, "/templates")
+		templatesGroup.UseMiddleware(mw.Authenticate)
+		templatesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Templates"}
+			next(op)
+		})
+		template_handler.RegisterHandlers(srvImpl, templatesGroup)
 	})
 
 	// Start the server

@@ -15,6 +15,7 @@ import (
 type VariableRepositoryInterface interface {
 	UpdateReferences(ctx context.Context, tx repository.TxInterface, behavior models.VariableUpdateBehavior, targetServiceID uuid.UUID, items []*models.VariableReferenceInputItem) ([]*ent.VariableReference, error)
 	AttachError(ctx context.Context, id uuid.UUID, err error) (*ent.VariableReference, error)
+	ClearError(ctx context.Context, id uuid.UUID) (*ent.VariableReference, error)
 	DeleteReferences(ctx context.Context, tx repository.TxInterface, targetServiceID uuid.UUID, ids []uuid.UUID) (int, error)
 	GetReferenceByID(ctx context.Context, id uuid.UUID) (*ent.VariableReference, error)
 	GetReferencesForService(ctx context.Context, serviceID uuid.UUID) ([]*ent.VariableReference, error)

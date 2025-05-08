@@ -122,6 +122,16 @@ func CurrentDeploymentID(v uuid.UUID) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldCurrentDeploymentID, v))
 }
 
+// TemplateID applies equality check predicate on the "template_id" field. It's identical to TemplateIDEQ.
+func TemplateID(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldTemplateID, v))
+}
+
+// TemplateInstanceID applies equality check predicate on the "template_instance_id" field. It's identical to TemplateInstanceIDEQ.
+func TemplateInstanceID(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldTemplateInstanceID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldCreatedAt, v))
@@ -882,6 +892,86 @@ func CurrentDeploymentIDNotNil() predicate.Service {
 	return predicate.Service(sql.FieldNotNull(FieldCurrentDeploymentID))
 }
 
+// TemplateIDEQ applies the EQ predicate on the "template_id" field.
+func TemplateIDEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldTemplateID, v))
+}
+
+// TemplateIDNEQ applies the NEQ predicate on the "template_id" field.
+func TemplateIDNEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldTemplateID, v))
+}
+
+// TemplateIDIn applies the In predicate on the "template_id" field.
+func TemplateIDIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldTemplateID, vs...))
+}
+
+// TemplateIDNotIn applies the NotIn predicate on the "template_id" field.
+func TemplateIDNotIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldTemplateID, vs...))
+}
+
+// TemplateIDIsNil applies the IsNil predicate on the "template_id" field.
+func TemplateIDIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldTemplateID))
+}
+
+// TemplateIDNotNil applies the NotNil predicate on the "template_id" field.
+func TemplateIDNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldTemplateID))
+}
+
+// TemplateInstanceIDEQ applies the EQ predicate on the "template_instance_id" field.
+func TemplateInstanceIDEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldTemplateInstanceID, v))
+}
+
+// TemplateInstanceIDNEQ applies the NEQ predicate on the "template_instance_id" field.
+func TemplateInstanceIDNEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldTemplateInstanceID, v))
+}
+
+// TemplateInstanceIDIn applies the In predicate on the "template_instance_id" field.
+func TemplateInstanceIDIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldTemplateInstanceID, vs...))
+}
+
+// TemplateInstanceIDNotIn applies the NotIn predicate on the "template_instance_id" field.
+func TemplateInstanceIDNotIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldTemplateInstanceID, vs...))
+}
+
+// TemplateInstanceIDGT applies the GT predicate on the "template_instance_id" field.
+func TemplateInstanceIDGT(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldGT(FieldTemplateInstanceID, v))
+}
+
+// TemplateInstanceIDGTE applies the GTE predicate on the "template_instance_id" field.
+func TemplateInstanceIDGTE(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldGTE(FieldTemplateInstanceID, v))
+}
+
+// TemplateInstanceIDLT applies the LT predicate on the "template_instance_id" field.
+func TemplateInstanceIDLT(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldLT(FieldTemplateInstanceID, v))
+}
+
+// TemplateInstanceIDLTE applies the LTE predicate on the "template_instance_id" field.
+func TemplateInstanceIDLTE(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldLTE(FieldTemplateInstanceID, v))
+}
+
+// TemplateInstanceIDIsNil applies the IsNil predicate on the "template_instance_id" field.
+func TemplateInstanceIDIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldTemplateInstanceID))
+}
+
+// TemplateInstanceIDNotNil applies the NotNil predicate on the "template_instance_id" field.
+func TemplateInstanceIDNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldTemplateInstanceID))
+}
+
 // HasEnvironment applies the HasEdge predicate on the "environment" edge.
 func HasEnvironment() predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
@@ -989,6 +1079,29 @@ func HasCurrentDeployment() predicate.Service {
 func HasCurrentDeploymentWith(preds ...predicate.Deployment) predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
 		step := newCurrentDeploymentStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTemplate applies the HasEdge predicate on the "template" edge.
+func HasTemplate() predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TemplateTable, TemplateColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTemplateWith applies the HasEdge predicate on the "template" edge with a given conditions (other predicates).
+func HasTemplateWith(preds ...predicate.Template) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := newTemplateStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

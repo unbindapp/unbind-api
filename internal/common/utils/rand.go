@@ -2,10 +2,132 @@ package utils
 
 import (
 	"crypto/rand"
+	"fmt"
+	"io"
 	"math/big"
 	"regexp"
 	"strings"
 )
+
+// GenerateSecurePassword creates a password with the required constraints
+func GenerateSecurePassword(length int) (string, error) {
+	const lowercase = "abcdefghijklmnopqrstuvwxyz"
+	const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const numbers = "0123456789"
+	const specialChars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+
+	const alphanumeric = lowercase + uppercase + numbers
+	const allChars = alphanumeric + specialChars
+
+	if length < 3 {
+		return "", fmt.Errorf("password length must be at least 3")
+	}
+
+	// Generate password
+	password := make([]byte, length)
+
+	// First character must be alphanumeric
+	alphaIndex, err := randInt(int64(len(alphanumeric)))
+	if err != nil {
+		return "", err
+	}
+	password[0] = alphanumeric[alphaIndex]
+
+	// Make sure at least one special character is included
+	specialIndex, err := randInt(int64(len(specialChars)))
+	if err != nil {
+		return "", err
+	}
+
+	// Choose a random position for special char (not the first)
+	specialPos, err := randInt(int64(length - 1))
+	if err != nil {
+		return "", err
+	}
+	// Add 1 to avoid position 0
+	specialPos += 1
+	password[specialPos] = specialChars[specialIndex]
+
+	// Make sure at least one uppercase letter is included
+	upperIndex, err := randInt(int64(len(uppercase)))
+	if err != nil {
+		return "", err
+	}
+
+	// Find a position for uppercase that isn't already taken
+	var upperPos int64
+	for attempts := 0; attempts < 10; attempts++ { // Limit attempts to avoid infinite loop
+		pos, err := randInt(int64(length - 1))
+		if err != nil {
+			return "", err
+		}
+		// Add 1 to avoid position 0
+		pos += 1
+
+		// Check if this position is already used for special char
+		if pos != specialPos {
+			upperPos = pos
+			break
+		}
+
+		// If we've tried several times and failed, just use a deterministic position
+		if attempts == 9 {
+			// Find the first available position that's not the special char position
+			for i := 1; i < length; i++ {
+				if int64(i) != specialPos {
+					upperPos = int64(i)
+					break
+				}
+			}
+		}
+	}
+
+	password[upperPos] = uppercase[upperIndex]
+
+	// Fill the rest with random characters
+	for i := range password {
+		// Skip positions that are already set
+		if i == 0 || int64(i) == specialPos || int64(i) == upperPos {
+			continue
+		}
+
+		index, err := randInt(int64(len(allChars)))
+		if err != nil {
+			return "", err
+		}
+		password[i] = allChars[index]
+	}
+
+	return string(password), nil
+}
+
+// randInt generates a random integer between 0 and max-1
+func randInt(max int64) (int64, error) {
+	if max <= 0 {
+		return 0, fmt.Errorf("max must be positive")
+	}
+
+	n, err := rand.Int(rand.Reader, big.NewInt(max))
+	if err != nil {
+		return 0, err
+	}
+
+	return n.Int64(), nil
+}
+
+// For testing purposes, this function allows overriding the random source
+func generateSecurePasswordWithRand(length int, reader io.Reader) (string, error) {
+	// Save original rand.Reader
+	origReader := rand.Reader
+	defer func() {
+		rand.Reader = origReader
+	}()
+
+	// Override rand.Reader for this function call
+	rand.Reader = reader
+
+	return GenerateSecurePassword(length)
+}
 
 func GenerateRandomSimpleID(length int) (string, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"

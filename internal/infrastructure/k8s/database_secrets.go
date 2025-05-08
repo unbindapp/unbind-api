@@ -63,6 +63,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 
 	username := string(secret.Data["DATABASE_USERNAME"])
 	password := string(secret.Data["DATABASE_PASSWORD"])
+	defaultDBName := string(secret.Data["DATABASE_DEFAULT_DB_NAME"])
 	existingUrl := string(secret.Data["DATABASE_URL"])
 
 	// For postgres, we can sync username and password if they are empty
@@ -77,6 +78,36 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 		}
 		username = string(zalandoSecret.Data["username"])
 		password = string(zalandoSecret.Data["password"])
+	}
+
+	// For mongo we can sync too
+	if *service.Database == "mongodb" && (username == "" || password == "") {
+		mongoSecretName := fmt.Sprintf("%s-mongo-secret", service.ID.String())
+		mongoSecret, err := self.GetSecret(ctx, mongoSecretName, namespace, self.GetInternalClient())
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("secret %s in namespace %s not found: %w", mongoSecretName, namespace, err)
+			}
+			return fmt.Errorf("failed to get secret %s in namespace %s: %w", mongoSecretName, namespace, err)
+		}
+
+		username = "root"
+		password = string(mongoSecret.Data["mongodb-root-password"])
+	}
+
+	// For mysql we can sync too
+	if *service.Database == "mysql" && (username == "" || password == "") {
+		mysqlSecretName := fmt.Sprintf("moco-%s", service.KubernetesName)
+		mysqlSecret, err := self.GetSecret(ctx, mysqlSecretName, namespace, self.GetInternalClient())
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("secret %s in namespace %s not found: %w", mysqlSecretName, namespace, err)
+			}
+			return fmt.Errorf("failed to get secret %s in namespace %s: %w", mysqlSecretName, namespace, err)
+		}
+
+		username = "moco-writable"
+		password = string(mysqlSecret.Data["WRITABLE_PASSWORD"])
 	}
 
 	if username == "" || password == "" {
@@ -100,19 +131,33 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 			namespace)
 	}
 
-	if existingUrl != url {
-		secrets := map[string][]byte{
-			"DATABASE_USERNAME": []byte(username),
-			"DATABASE_PASSWORD": []byte(password),
+	secrets := map[string][]byte{
+		"DATABASE_USERNAME": []byte(username),
+		"DATABASE_PASSWORD": []byte(password),
+	}
+	if existingUrl != url && url != "" {
+		secrets["DATABASE_URL"] = []byte(url)
+	}
+	if defaultDBName == "" {
+		switch *service.Database {
+		case "postgres":
+			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("postgres")
+			// Always set port too
+			secrets["DATABASE_PORT"] = []byte("5432")
+		case "mysql":
+			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("moco")
+			secrets["DATABASE_PORT"] = []byte("3306")
+		case "mongodb":
+			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("admin")
+			secrets["DATABASE_PORT"] = []byte("27017")
+		case "redis":
+			secrets["DATABASE_PORT"] = []byte("6379")
 		}
-		if url != "" {
-			secrets["DATABASE_URL"] = []byte(url)
-		}
-		// Sync secret
-		_, err = self.UpsertSecretValues(ctx, secret.Name, namespace, secrets, self.GetInternalClient())
-		if err != nil {
-			return fmt.Errorf("failed to update secret %s in namespace %s: %w", secret.Name, namespace, err)
-		}
+	}
+	// Sync secret
+	_, err = self.UpsertSecretValues(ctx, secret.Name, namespace, secrets, self.GetInternalClient())
+	if err != nil {
+		return fmt.Errorf("failed to update secret %s in namespace %s: %w", secret.Name, namespace, err)
 	}
 
 	return nil

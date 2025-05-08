@@ -19,6 +19,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/template"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
 )
 
@@ -252,6 +253,46 @@ func (su *ServiceUpdate) ClearCurrentDeploymentID() *ServiceUpdate {
 	return su
 }
 
+// SetTemplateID sets the "template_id" field.
+func (su *ServiceUpdate) SetTemplateID(u uuid.UUID) *ServiceUpdate {
+	su.mutation.SetTemplateID(u)
+	return su
+}
+
+// SetNillableTemplateID sets the "template_id" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableTemplateID(u *uuid.UUID) *ServiceUpdate {
+	if u != nil {
+		su.SetTemplateID(*u)
+	}
+	return su
+}
+
+// ClearTemplateID clears the value of the "template_id" field.
+func (su *ServiceUpdate) ClearTemplateID() *ServiceUpdate {
+	su.mutation.ClearTemplateID()
+	return su
+}
+
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (su *ServiceUpdate) SetTemplateInstanceID(u uuid.UUID) *ServiceUpdate {
+	su.mutation.SetTemplateInstanceID(u)
+	return su
+}
+
+// SetNillableTemplateInstanceID sets the "template_instance_id" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableTemplateInstanceID(u *uuid.UUID) *ServiceUpdate {
+	if u != nil {
+		su.SetTemplateInstanceID(*u)
+	}
+	return su
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (su *ServiceUpdate) ClearTemplateInstanceID() *ServiceUpdate {
+	su.mutation.ClearTemplateInstanceID()
+	return su
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
 	return su.SetEnvironmentID(e.ID)
@@ -299,6 +340,11 @@ func (su *ServiceUpdate) AddDeployments(d ...*Deployment) *ServiceUpdate {
 // SetCurrentDeployment sets the "current_deployment" edge to the Deployment entity.
 func (su *ServiceUpdate) SetCurrentDeployment(d *Deployment) *ServiceUpdate {
 	return su.SetCurrentDeploymentID(d.ID)
+}
+
+// SetTemplate sets the "template" edge to the Template entity.
+func (su *ServiceUpdate) SetTemplate(t *Template) *ServiceUpdate {
+	return su.SetTemplateID(t.ID)
 }
 
 // AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by IDs.
@@ -363,6 +409,12 @@ func (su *ServiceUpdate) RemoveDeployments(d ...*Deployment) *ServiceUpdate {
 // ClearCurrentDeployment clears the "current_deployment" edge to the Deployment entity.
 func (su *ServiceUpdate) ClearCurrentDeployment() *ServiceUpdate {
 	su.mutation.ClearCurrentDeployment()
+	return su
+}
+
+// ClearTemplate clears the "template" edge to the Template entity.
+func (su *ServiceUpdate) ClearTemplate() *ServiceUpdate {
+	su.mutation.ClearTemplate()
 	return su
 }
 
@@ -503,6 +555,12 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := su.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
+	}
+	if value, ok := su.mutation.TemplateInstanceID(); ok {
+		_spec.SetField(service.FieldTemplateInstanceID, field.TypeUUID, value)
+	}
+	if su.mutation.TemplateInstanceIDCleared() {
+		_spec.ClearField(service.FieldTemplateInstanceID, field.TypeUUID)
 	}
 	if su.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -658,6 +716,35 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if su.mutation.TemplateCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.TemplateTable,
+			Columns: []string{service.TemplateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(template.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.TemplateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.TemplateTable,
+			Columns: []string{service.TemplateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(template.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -948,6 +1035,46 @@ func (suo *ServiceUpdateOne) ClearCurrentDeploymentID() *ServiceUpdateOne {
 	return suo
 }
 
+// SetTemplateID sets the "template_id" field.
+func (suo *ServiceUpdateOne) SetTemplateID(u uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.SetTemplateID(u)
+	return suo
+}
+
+// SetNillableTemplateID sets the "template_id" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableTemplateID(u *uuid.UUID) *ServiceUpdateOne {
+	if u != nil {
+		suo.SetTemplateID(*u)
+	}
+	return suo
+}
+
+// ClearTemplateID clears the value of the "template_id" field.
+func (suo *ServiceUpdateOne) ClearTemplateID() *ServiceUpdateOne {
+	suo.mutation.ClearTemplateID()
+	return suo
+}
+
+// SetTemplateInstanceID sets the "template_instance_id" field.
+func (suo *ServiceUpdateOne) SetTemplateInstanceID(u uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.SetTemplateInstanceID(u)
+	return suo
+}
+
+// SetNillableTemplateInstanceID sets the "template_instance_id" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableTemplateInstanceID(u *uuid.UUID) *ServiceUpdateOne {
+	if u != nil {
+		suo.SetTemplateInstanceID(*u)
+	}
+	return suo
+}
+
+// ClearTemplateInstanceID clears the value of the "template_instance_id" field.
+func (suo *ServiceUpdateOne) ClearTemplateInstanceID() *ServiceUpdateOne {
+	suo.mutation.ClearTemplateInstanceID()
+	return suo
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
 	return suo.SetEnvironmentID(e.ID)
@@ -995,6 +1122,11 @@ func (suo *ServiceUpdateOne) AddDeployments(d ...*Deployment) *ServiceUpdateOne 
 // SetCurrentDeployment sets the "current_deployment" edge to the Deployment entity.
 func (suo *ServiceUpdateOne) SetCurrentDeployment(d *Deployment) *ServiceUpdateOne {
 	return suo.SetCurrentDeploymentID(d.ID)
+}
+
+// SetTemplate sets the "template" edge to the Template entity.
+func (suo *ServiceUpdateOne) SetTemplate(t *Template) *ServiceUpdateOne {
+	return suo.SetTemplateID(t.ID)
 }
 
 // AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by IDs.
@@ -1059,6 +1191,12 @@ func (suo *ServiceUpdateOne) RemoveDeployments(d ...*Deployment) *ServiceUpdateO
 // ClearCurrentDeployment clears the "current_deployment" edge to the Deployment entity.
 func (suo *ServiceUpdateOne) ClearCurrentDeployment() *ServiceUpdateOne {
 	suo.mutation.ClearCurrentDeployment()
+	return suo
+}
+
+// ClearTemplate clears the "template" edge to the Template entity.
+func (suo *ServiceUpdateOne) ClearTemplate() *ServiceUpdateOne {
+	suo.mutation.ClearTemplate()
 	return suo
 }
 
@@ -1230,6 +1368,12 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	if value, ok := suo.mutation.KubernetesSecret(); ok {
 		_spec.SetField(service.FieldKubernetesSecret, field.TypeString, value)
 	}
+	if value, ok := suo.mutation.TemplateInstanceID(); ok {
+		_spec.SetField(service.FieldTemplateInstanceID, field.TypeUUID, value)
+	}
+	if suo.mutation.TemplateInstanceIDCleared() {
+		_spec.ClearField(service.FieldTemplateInstanceID, field.TypeUUID)
+	}
 	if suo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1384,6 +1528,35 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(deployment.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.TemplateCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.TemplateTable,
+			Columns: []string{service.TemplateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(template.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.TemplateIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.TemplateTable,
+			Columns: []string{service.TemplateColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(template.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

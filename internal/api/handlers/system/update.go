@@ -170,6 +170,11 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpdateApplyInp
 	// if err != nil {
 	// 	return nil, huma.Error500InternalServerError("Failed to apply update: " + err.Error())
 	// }
+	// // Cache update status
+	// err = self.srv.StringCache.Set(ctx, "update-in-progres", input.Body.TargetVersion)
+	// if err != nil {
+	// 	log.Errorf("Failed to cache update status: %v", err)
+	// }
 
 	resp := &UpdateApplyResponse{}
 	resp.Body.Started = true
@@ -178,17 +183,13 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpdateApplyInp
 }
 
 // * Get update status
-type UpdateStatusInput struct {
-	ExpectedVersion string `query:"expected_version"`
-}
-
 type UpdateStatusResponse struct {
 	Body struct {
 		Ready bool `json:"ready"`
 	}
 }
 
-func (self *HandlerGroup) GetUpdateStatus(ctx context.Context, input *UpdateStatusInput) (*UpdateStatusResponse, error) {
+func (self *HandlerGroup) GetUpdateStatus(ctx context.Context, input *server.BaseAuthInput) (*UpdateStatusResponse, error) {
 	// Get requester
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -200,10 +201,27 @@ func (self *HandlerGroup) GetUpdateStatus(ctx context.Context, input *UpdateStat
 		return nil, err
 	}
 
+	// Get update status from cache
+	cachedVersion, err := self.srv.StringCache.Get(ctx, "update-in-progres")
+	clearCache := true
+	if err != nil {
+		clearCache = false // Don't clear cache if we can't get it
+		log.Errorf("Failed to get cached update status: %v", err)
+		cachedVersion = self.srv.UpdateManager.CurrentVersion
+	}
 	// Get update status
-	ready, err := self.srv.UpdateManager.CheckDeploymentsReady(ctx, input.ExpectedVersion)
+	ready, err := self.srv.UpdateManager.CheckDeploymentsReady(ctx, cachedVersion)
 	if err != nil {
 		return nil, huma.Error500InternalServerError("Failed to get update status: " + err.Error())
+	}
+
+	// Check if the expected version is the same as the cached version
+	if ready && clearCache {
+		// Clear the cache if the update is ready
+		err = self.srv.StringCache.Delete(ctx, "update-in-progres")
+		if err != nil {
+			log.Errorf("Failed to clear cached update status: %v", err)
+		}
 	}
 
 	resp := &UpdateStatusResponse{}

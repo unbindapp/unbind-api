@@ -81,6 +81,8 @@ func (Service) Fields() []ent.Field {
 		field.String("git_repository").Optional().Nillable().Comment("Git repository name"),
 		field.String("kubernetes_secret").Comment("Kubernetes secret for this service"),
 		field.UUID("current_deployment_id", uuid.UUID{}).Optional().Nillable().Comment("Reference the current active deployment"),
+		field.UUID("template_id", uuid.UUID{}).Optional().Nillable().Comment("Reference to the template this service was created from"),
+		field.UUID("template_instance_id", uuid.UUID{}).Optional().Nillable().Comment("Group reference of all services launched together from a template."),
 	}
 }
 
@@ -108,6 +110,8 @@ func (Service) Edges() []ent.Edge {
 					OnDelete: entsql.SetNull,
 				},
 			),
+		// M2O with templates
+		edge.From("template", Template.Type).Ref("services").Field("template_id").Unique(),
 		// O2M with variabel references
 		edge.To("variable_references", VariableReference.Type).Annotations(
 			entsql.Annotation{

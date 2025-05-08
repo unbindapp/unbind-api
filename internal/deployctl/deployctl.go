@@ -27,6 +27,7 @@ import (
 
 // Valkey key for the queue
 const BUILDER_QUEUE_KEY = "unbind:build:queue"
+const DEPENDENT_SERVICES_QUEUE_KEY = "unbind:dependent-services:queue"
 
 // The request to deploy a service, includes environment for builder image
 type DeploymentJobRequest struct {
@@ -43,6 +44,7 @@ type DeploymentController struct {
 	cfg             *config.Config
 	k8s             *k8s.KubeClient
 	jobQueue        *queue.Queue[DeploymentJobRequest]
+	dependentQueue  *queue.Queue[DeploymentJobRequest]
 	ctx             context.Context
 	cancelFunc      context.CancelFunc
 	repo            *repositories.Repositories
@@ -62,11 +64,13 @@ func NewDeploymentController(
 	webeehookService *webhooks_service.WebhooksService,
 	variableService *variables_service.VariablesService) *DeploymentController {
 	jobQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
+	dependentQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, DEPENDENT_SERVICES_QUEUE_KEY)
 
 	return &DeploymentController{
 		cfg:             cfg,
 		k8s:             k8s,
 		jobQueue:        jobQueue,
+		dependentQueue:  dependentQueue,
 		ctx:             ctx,
 		cancelFunc:      cancel,
 		repo:            repositories,
@@ -80,6 +84,9 @@ func NewDeploymentController(
 func (self *DeploymentController) StartAsync() {
 	// Start the job processor
 	self.jobQueue.StartProcessor(self.ctx, self.processJob, self.k8s.CountActiveDeploymentJobs)
+
+	// Start the dependent services processor
+	self.dependentQueue.StartProcessor(self.ctx, self.processDependentJob, self.k8s.CountActiveDeploymentJobs)
 
 	// Start the job status synchronizer
 	go self.startStatusSynchronizer()
@@ -591,4 +598,36 @@ func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// processDependentJob processes a job from the dependent services queue
+func (self *DeploymentController) processDependentJob(ctx context.Context, item *queue.QueueItem[DeploymentJobRequest]) error {
+	// Check if dependencies are ready
+	if !self.AreDependenciesReady(ctx, item.Data.ServiceID) {
+		// If dependencies aren't ready, put the job back in the queue
+		return self.dependentQueue.Enqueue(ctx, item.ID, item.Data)
+	}
+
+	// If dependencies are ready, enqueue to the real deployment queue
+	_, err := self.EnqueueDeploymentJob(ctx, item.Data)
+	return err
+}
+
+// AreDependenciesReady checks if all dependencies for a service are ready
+func (self *DeploymentController) AreDependenciesReady(ctx context.Context, serviceID uuid.UUID) bool {
+	// Try to resolve all references
+	_, err := self.variableService.ResolveAllReferences(ctx, serviceID)
+	if err != nil {
+		// If we can't resolve references, dependencies aren't ready
+		return false
+	}
+
+	// If we can resolve all references, dependencies are ready
+	return true
+}
+
+// EnqueueDependentDeployment adds a deployment to the dependent services queue
+func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context, req DeploymentJobRequest) error {
+	// Add to the dependent queue
+	return self.dependentQueue.Enqueue(ctx, uuid.New().String(), req)
 }

@@ -17,6 +17,7 @@ import (
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
+	template_repo "github.com/unbindapp/unbind-api/internal/repositories/template"
 	user_repo "github.com/unbindapp/unbind-api/internal/repositories/user"
 	variable_repo "github.com/unbindapp/unbind-api/internal/repositories/variables"
 	webhook_repo "github.com/unbindapp/unbind-api/internal/repositories/webhook"
@@ -43,6 +44,7 @@ type Repositories struct {
 	variables   variable_repo.VariableRepositoryInterface
 	bootstrap   bootstrap_repo.BootstrapRepositoryInterface
 	s3          s3_repo.S3RepositoryInterface
+	template    template_repo.TemplateRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -63,6 +65,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 	variablesRepo := variable_repo.NewVariableRepository(db)
 	bootstrapRepo := bootstrap_repo.NewBootstrapRepository(db)
 	s3Repo := s3_repo.NewS3Repository(db)
+	templateRepo := template_repo.NewTemplateRepository(db)
 	return &Repositories{
 		db:          db,
 		base:        base,
@@ -81,6 +84,7 @@ func NewRepositories(db *ent.Client) *Repositories {
 		variables:   variablesRepo,
 		bootstrap:   bootstrapRepo,
 		s3:          s3Repo,
+		template:    templateRepo,
 	}
 }
 
@@ -162,6 +166,11 @@ func (r *Repositories) Bootstrap() bootstrap_repo.BootstrapRepositoryInterface {
 // S3 returns the S3 repository
 func (r *Repositories) S3() s3_repo.S3RepositoryInterface {
 	return r.s3
+}
+
+// Template returns the Template repository
+func (r *Repositories) Template() template_repo.TemplateRepositoryInterface {
+	return r.template
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {
