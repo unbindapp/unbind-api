@@ -63,6 +63,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 
 	username := string(secret.Data["DATABASE_USERNAME"])
 	password := string(secret.Data["DATABASE_PASSWORD"])
+	host := string(secret.Data["DATABASE_HOST"])
 	defaultDBName := string(secret.Data["DATABASE_DEFAULT_DB_NAME"])
 	existingUrl := string(secret.Data["DATABASE_URL"])
 
@@ -118,22 +119,26 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	var url string
 	switch *service.Database {
 	case "postgres":
-		url = fmt.Sprintf("postgresql://%s:%s@%s.%s:%d/postgres?sslmode=disable", username, password, service.KubernetesName, namespace, 5432)
+		host = fmt.Sprintf("%s.%s", service.KubernetesName, namespace)
+		url = fmt.Sprintf("postgresql://%s:%s@%s:%d/postgres?sslmode=disable", username, password, host, 5432)
 	case "redis":
-		url = fmt.Sprintf("redis://%s:%s@%s-headless.%s:%d", "default", password, service.KubernetesName, namespace, 6379)
+		host = fmt.Sprintf("%s-headless.%s", service.KubernetesName, namespace)
+		url = fmt.Sprintf("redis://%s:%s@%s:%d", "default", password, host, 6379)
 	case "mysql":
-		url = fmt.Sprintf("mysql://%s:%s@moco-%s.%s:%d/%s", username, password, service.KubernetesName, namespace, 3306, "moco")
+		host = fmt.Sprintf("moco-%s.%s", service.KubernetesName, namespace)
+		url = fmt.Sprintf("mysql://%s:%s@%s:%d/%s", username, password, host, 3306, "moco")
 	case "mongodb":
-		url = fmt.Sprintf("mongodb://%s:%s@%s.%s:27017/admin?ssl=false",
+		host = fmt.Sprintf("%s.%s", service.KubernetesName, namespace)
+		url = fmt.Sprintf("mongodb://%s:%s@%s:27017/admin?ssl=false",
 			username,
 			password,
-			service.KubernetesName,
-			namespace)
+			host)
 	}
 
 	secrets := map[string][]byte{
 		"DATABASE_USERNAME": []byte(username),
 		"DATABASE_PASSWORD": []byte(password),
+		"DATABASE_HOST":     []byte(host),
 	}
 	if existingUrl != url && url != "" {
 		secrets["DATABASE_URL"] = []byte(url)
