@@ -119,6 +119,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.CreatePVC,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "update-pvc",
+			Summary:     "Update PVC",
+			Description: "Update a PVC.",
+			Path:        "/pvc/update",
+			Method:      http.MethodPut,
+		},
+		handlers.UpdatePVC,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

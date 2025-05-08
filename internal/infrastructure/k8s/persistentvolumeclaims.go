@@ -118,6 +118,57 @@ func (self *KubeClient) CreatePersistentVolumeClaim(
 	return self.GetPersistentVolumeClaim(ctx, namespace, pvcName, client)
 }
 
+// UpdatePersistentVolumeClaim updates an existing PersistentVolumeClaim with new parameters (size, name)
+func (self *KubeClient) UpdatePersistentVolumeClaim(
+	ctx context.Context,
+	namespace string,
+	pvcName string,
+	newName *string,
+	newSize *string,
+	client *kubernetes.Clientset,
+) (*PVCInfo, error) {
+	if namespace == "" {
+		return nil, fmt.Errorf("namespace cannot be empty")
+	}
+	if pvcName == "" {
+		return nil, fmt.Errorf("pvcName cannot be empty")
+	}
+	if newName == nil && newSize == nil {
+		return nil, fmt.Errorf("at least one of newName or newSize must be provided")
+	}
+
+	// Get the existing PVC
+	pvc, err := client.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, pvcName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("PersistentVolumeClaim '%s' not found", pvcName))
+		}
+		return nil, fmt.Errorf("failed to get PersistentVolumeClaim '%s' in namespace '%s': %w", pvcName, namespace, err)
+	}
+
+	// Update the PVC name if provided
+	if newName != nil {
+		pvc.Labels["pvc-display-name"] = *newName
+	}
+
+	// Update the PVC size if provided
+	if newSize != nil {
+		newStorageQuantity, err := resource.ParseQuantity(*newSize)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse newSize '%s': %w", *newSize, err)
+		}
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = newStorageQuantity
+	}
+
+	// Update the PVC in Kubernetes
+	_, err = client.CoreV1().PersistentVolumeClaims(namespace).Update(ctx, pvc, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update PersistentVolumeClaim '%s' in namespace '%s': %w", pvcName, namespace, err)
+	}
+	// Return the updated PVC info using GetPersistentVolumeClaim
+	return self.GetPersistentVolumeClaim(ctx, namespace, pvcName, client)
+}
+
 // GetPersistentVolumeClaim retrieves a specific PersistentVolumeClaim by its name and namespace.
 func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) (*PVCInfo, error) {
 	if namespace == "" {
