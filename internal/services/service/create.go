@@ -23,6 +23,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // CreateServiceInput defines the input for creating a new service
@@ -119,6 +120,20 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			// check version
 			if input.DatabaseConfig.Version != "" {
 				dbVersion = utils.ToPtr(input.DatabaseConfig.Version)
+			}
+			if input.DatabaseConfig.StorageSize == "" {
+				input.DatabaseConfig.StorageSize = "1Gi" // Default to 1Gi
+			} else {
+				// Validate
+				_, err := resource.ParseQuantity(input.DatabaseConfig.StorageSize)
+				if err != nil {
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
+						fmt.Sprintf("Invalid storage size: %s", err))
+				}
+			}
+		} else {
+			input.DatabaseConfig = &schema.DatabaseConfig{
+				StorageSize: "1Gi", // Default to 1Gi
 			}
 		}
 

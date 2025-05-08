@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // UpdateServiceConfigInput defines the input for updating a service configuration
@@ -133,6 +134,38 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			if input.DatabaseConfig.Version != "" {
 				if input.DatabaseConfig.Version != *service.DatabaseVersion {
 					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot update version for database service with existing deployment")
+				}
+			}
+		}
+	}
+
+	// Verify storage size changes if applicable
+	if input.DatabaseConfig != nil {
+		if input.DatabaseConfig.StorageSize == "" {
+			// Set to existing
+			if service.Edges.ServiceConfig.DatabaseConfig != nil {
+				input.DatabaseConfig.StorageSize = service.Edges.ServiceConfig.DatabaseConfig.StorageSize
+				// Sort of a DB migration I guess
+				if input.DatabaseConfig.StorageSize == "" {
+					input.DatabaseConfig.StorageSize = "1Gi"
+				}
+			}
+		} else {
+			// Parse
+			newSizeTarget, err := resource.ParseQuantity(input.DatabaseConfig.StorageSize)
+			if err != nil {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid storage size")
+			}
+
+			// Parse existing (if present)
+			if service.Edges.ServiceConfig.DatabaseConfig != nil && service.Edges.ServiceConfig.DatabaseConfig.StorageSize != "" {
+				existingSizeTarget, err := resource.ParseQuantity(service.Edges.ServiceConfig.DatabaseConfig.StorageSize)
+				if err != nil {
+					existingSizeTarget = resource.MustParse("1Gi")
+				}
+				// Compare
+				if newSizeTarget.Cmp(existingSizeTarget) < 0 {
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot decrease storage size")
 				}
 			}
 		}

@@ -80,7 +80,8 @@ func (u Protocol) Schema(r huma.Registry) *huma.Schema {
 }
 
 type DatabaseConfig struct {
-	Version string `json:"version,omitempty" required:"false" description:"Version of the database"`
+	Version     string `json:"version,omitempty" required:"false" description:"Version of the database"`
+	StorageSize string `json:"storage,omitempty" required:"false" description:"Storage size for the database"`
 }
 
 func (self *DatabaseConfig) AsMap() map[string]interface{} {
@@ -88,6 +89,9 @@ func (self *DatabaseConfig) AsMap() map[string]interface{} {
 
 	if self.Version != "" {
 		ret["version"] = self.Version
+	}
+	if self.StorageSize != "" {
+		ret["storage"] = self.StorageSize
 	}
 	return ret
 }
@@ -123,7 +127,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		// Generic CRD configuration
 		field.JSON("hosts", []v1.HostSpec{}).Optional().Comment("External domains and paths for the service"),
 		field.JSON("ports", []PortSpec{}).Optional().Comment("Container ports to expose"),
-		field.Int32("replicas").Default(2).Comment("Number of replicas for the service"),
+		field.Int32("replicas").Default(1).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
 		field.Bool("is_public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),

@@ -380,7 +380,7 @@ var (
 		{Name: "git_tag", Type: field.TypeString, Nullable: true},
 		{Name: "hosts", Type: field.TypeJSON, Nullable: true},
 		{Name: "ports", Type: field.TypeJSON, Nullable: true},
-		{Name: "replicas", Type: field.TypeInt32, Default: 2},
+		{Name: "replicas", Type: field.TypeInt32, Default: 1},
 		{Name: "auto_deploy", Type: field.TypeBool, Default: false},
 		{Name: "run_command", Type: field.TypeString, Nullable: true},
 		{Name: "is_public", Type: field.TypeBool, Default: false},
