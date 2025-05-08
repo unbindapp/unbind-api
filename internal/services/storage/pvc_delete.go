@@ -46,5 +46,5 @@ func (self *StorageService) DeletePVC(ctx context.Context, requesterUserID uuid.
 		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC cannot be deleted")
 	}
 
-	return self.k8s.DeletePersistentVolumeClaim(ctx, team.Namespace, pvc.Name, client)
+	return self.k8s.DeletePersistentVolumeClaim(ctx, team.Namespace, pvc.ID, client)
 }
