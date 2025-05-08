@@ -10,7 +10,9 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -25,6 +27,7 @@ type PVCInfo struct {
 	EnvironmentID      *uuid.UUID                 `json:"environment_id,omitempty"`
 	MountedOnServiceID *uuid.UUID                 `json:"mounted_on_service_id,omitempty"`
 	Status             PersistentVolumeClaimPhase `json:"status"` // e.g., "Bound", "Pending"
+	IsStatefulset      bool                       `json:"is_statefulset"`
 	CreatedAt          time.Time                  `json:"created_at"`
 }
 
@@ -122,6 +125,9 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 
 	pvc, err := client.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, pvcName, metav1.GetOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("PersistentVolumeClaim '%s' not found", pvcName))
+		}
 		return nil, fmt.Errorf("failed to get PersistentVolumeClaim '%s' in namespace '%s': %w", pvcName, namespace, err)
 	}
 
@@ -152,6 +158,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	}
 
 	var boundToServiceID *uuid.UUID
+	isStatefulset := false
 
 	// Check if bound to pods with unbind-service label
 	pods, err := self.GetPodsUsingPVC(ctx, pvc.Namespace, pvc.Name, client)
@@ -161,6 +168,16 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 
 	isBound := len(pods) > 0
 	for _, pod := range pods {
+		// Check if pod is part of a StatefulSet
+		if pod.OwnerReferences != nil {
+			for _, owner := range pod.OwnerReferences {
+				if strings.EqualFold(owner.Kind, "StatefulSet") {
+					isStatefulset = true
+					break
+				}
+			}
+		}
+
 		podServiceLabel := pod.GetLabels()[serviceLabel]
 		if podServiceLabel != "" {
 			// Parse the service ID from the label
@@ -202,6 +219,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 		MountedOnServiceID: boundToServiceID,
 		Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
 		CreatedAt:          pvc.CreationTimestamp.Time,
+		IsStatefulset:      isStatefulset,
 	}, nil
 }
 
@@ -254,6 +272,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		}
 
 		var boundToServiceID *uuid.UUID
+		isStatefulset := false
 
 		// Rule 2: If bound to pods, they must have unbind-service label
 		pods, err := self.GetPodsUsingPVC(ctx, pvc.Namespace, pvc.Name, client)
@@ -263,6 +282,16 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 
 		isBound := len(pods) > 0
 		for _, pod := range pods {
+			// Check if pod is part of a StatefulSet
+			if pod.OwnerReferences != nil {
+				for _, owner := range pod.OwnerReferences {
+					if strings.EqualFold(owner.Kind, "StatefulSet") {
+						isStatefulset = true
+						break
+					}
+				}
+			}
+
 			podServiceLabel := pod.GetLabels()[serviceLabel]
 			if podServiceLabel != "" {
 				// Parse the service ID from the label
@@ -305,6 +334,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 			MountedOnServiceID: boundToServiceID,
 			Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
 			CreatedAt:          pvc.CreationTimestamp.Time,
+			IsStatefulset:      isStatefulset,
 		})
 	}
 

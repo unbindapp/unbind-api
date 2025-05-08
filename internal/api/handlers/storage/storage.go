@@ -97,6 +97,28 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.ListPVCs,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-pvc",
+			Summary:     "Get PVC",
+			Description: "Get a PVC by name.",
+			Path:        "/pvc/get",
+			Method:      http.MethodGet,
+		},
+		handlers.GetPVC,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "create-pvc",
+			Summary:     "Create PVC",
+			Description: "Create a PVC.",
+			Path:        "/pvc/create",
+			Method:      http.MethodPost,
+		},
+		handlers.CreatePVC,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

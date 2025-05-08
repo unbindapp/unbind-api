@@ -43,3 +43,34 @@ func (self *HandlerGroup) ListPVCs(ctx context.Context, input *ListPVCInput) (*L
 	response.Body.Data = pvcs
 	return response, nil
 }
+
+// * get by ID
+type GetPVCInput struct {
+	server.BaseAuthInput
+	models.GetPVCInput
+}
+
+type GetPVCResponse struct {
+	Body struct {
+		Data *k8s.PVCInfo `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) GetPVC(ctx context.Context, input *GetPVCInput) (*GetPVCResponse, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+
+	pvc, err := self.srv.StorageService.GetPVC(ctx, user.ID, bearerToken, &input.GetPVCInput)
+	if err != nil {
+		return nil, self.handleErr(err)
+	}
+
+	response := &GetPVCResponse{}
+	response.Body.Data = pvc
+	return response, nil
+}

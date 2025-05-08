@@ -32,9 +32,28 @@ func (u PvcScope) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/PvcScope"}
 }
 
+// * List
 type ListPVCInput struct {
 	Type          PvcScope  `query:"type" required:"true"`
 	TeamID        uuid.UUID `query:"team_id" required:"true"`
 	ProjectID     uuid.UUID `query:"project_id" required:"false"`
 	EnvironmentID uuid.UUID `query:"environment_id" required:"false"`
+}
+
+// * Get
+type GetPVCInput struct {
+	Type          PvcScope  `query:"type" required:"true"`
+	TeamID        uuid.UUID `query:"team_id" required:"true"`
+	ProjectID     uuid.UUID `query:"project_id" required:"false"`
+	EnvironmentID uuid.UUID `query:"environment_id" required:"false"`
+	PVCName       string    `query:"pvc_name" required:"true"`
+}
+
+// * Create
+type CreatePVCInput struct {
+	Type          PvcScope  `query:"type" required:"true"`
+	TeamID        uuid.UUID `query:"team_id" required:"true"`
+	ProjectID     uuid.UUID `query:"project_id" required:"false"`
+	EnvironmentID uuid.UUID `query:"environment_id" required:"false"`
+	Size          string    `query:"size" required:"true" doc:"Size of the PVC (e.g., '10Gi')"`
 }

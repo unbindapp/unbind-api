@@ -2,6 +2,7 @@ package storage_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
@@ -12,6 +13,7 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // Integrate storage management with internal permissions and kubernetes RBAC
@@ -29,21 +31,21 @@ func NewStorageService(cfg *config.Config, repo repositories.RepositoriesInterfa
 	}
 }
 
-func (self *StorageService) validatePermissionsAndParseInputs(ctx context.Context, requesterUserID uuid.UUID, pvcScope models.PvcScope, teamID, projectID, environmentID uuid.UUID) (*ent.Team, *ent.Project, *ent.Environment, error) {
+func (self *StorageService) validatePermissionsAndParseInputs(ctx context.Context, action schema.PermittedAction, requesterUserID uuid.UUID, pvcScope models.PvcScope, teamID, projectID, environmentID uuid.UUID) (*ent.Team, *ent.Project, *ent.Environment, error) {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		//Can read team, project, environmnent depending on inputs
 		{
-			Action:       schema.ActionViewer,
+			Action:       action,
 			ResourceType: schema.ResourceTypeTeam,
 			ResourceID:   teamID,
 		},
 		{
-			Action:       schema.ActionViewer,
+			Action:       action,
 			ResourceType: schema.ResourceTypeProject,
 			ResourceID:   projectID,
 		},
 		{
-			Action:       schema.ActionViewer,
+			Action:       action,
 			ResourceType: schema.ResourceTypeEnvironment,
 			ResourceID:   environmentID,
 		},
@@ -97,4 +99,32 @@ func (self *StorageService) validatePermissionsAndParseInputs(ctx context.Contex
 	}
 
 	return team, project, environment, nil
+}
+
+// validateStorageQuantity returns the parsed Quantity
+// or an error if the string isn’t a whole-byte storage unit.
+func validateStorageQuantity(s string) (resource.Quantity, error) {
+	qty, err := resource.ParseQuantity(s)
+	if err != nil {
+		return resource.Quantity{}, fmt.Errorf("invalid resource quantity %q: %w", s, err)
+	}
+
+	switch qty.Format {
+	case resource.BinarySI:
+		// Gi, Mi, etc.
+		return qty, nil
+
+	case resource.DecimalSI:
+		// Any negative scale (10^-n) means the user typed milli (`m`)
+		// or some other fractional unit; treat that as CPU-only.
+		if qty.AsDec().Scale() < 0 {
+			return resource.Quantity{}, fmt.Errorf(
+				"%q looks like a CPU value (milli units); use Ki, Mi, Gi, … or whole K/M/G for storage", s)
+		}
+		return qty, nil
+
+	default:
+		return resource.Quantity{}, fmt.Errorf(
+			"%q uses scientific notation; disallowed for storage sizes", s)
+	}
 }
