@@ -25,6 +25,9 @@ type ServiceConfigResponse struct {
 	S3BackupBucket       *string    `json:"s3_backup_bucket,omitempty"`
 	BackupSchedule       string     `json:"backup_schedule"`
 	BackupRetentionCount int        `json:"backup_retention_count"`
+	// Volume
+	PVCID              *string `json:"pvc_id,omitempty"`
+	PVCVolumeMountPath *string `json:"pvc_volume_mount_path,omitempty"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -47,6 +50,8 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			S3BackupBucket:       entity.S3BackupBucket,
 			BackupSchedule:       entity.BackupSchedule,
 			BackupRetentionCount: entity.BackupRetentionCount,
+			PVCID:                entity.VolumeName,
+			PVCVolumeMountPath:   entity.VolumeMountPath,
 		}
 	}
 	return response

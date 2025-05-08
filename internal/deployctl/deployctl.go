@@ -168,6 +168,12 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
+	// Volumes
+	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
+		env["SERVICE_VOLUME_NAME"] = *service.Edges.ServiceConfig.VolumeName
+		env["SERVICE_VOLUME_MOUNT_PATH"] = *service.Edges.ServiceConfig.VolumeMountPath
+	}
+
 	if service.Type == schema.ServiceTypeDatabase {
 		if service.Database == nil ||
 			service.Edges.ServiceConfig.DefinitionVersion == nil {
@@ -204,12 +210,6 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 			env["SERVICE_DATABASE_BACKUP_SCHEDULE"] = service.Edges.ServiceConfig.BackupSchedule
 			env["SERVICE_DATABASE_BACKUP_RETENTION"] = strconv.Itoa(service.Edges.ServiceConfig.BackupRetentionCount)
 		}
-	}
-
-	// Volumes
-	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
-		env["SERVICE_VOLUME_NAME"] = *service.Edges.ServiceConfig.VolumeName
-		env["SERVICE_VOLUME_MOUNT_PATH"] = *service.Edges.ServiceConfig.VolumeMountPath
 	}
 
 	// Add docker image override
