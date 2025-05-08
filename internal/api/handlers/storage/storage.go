@@ -86,6 +86,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.DeleteS3Endpoint,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "list-pvc",
+			Summary:     "List PVCs",
+			Description: "List all PVCs for a team, project, or environment.",
+			Path:        "/pvc/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListPVCs,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {
