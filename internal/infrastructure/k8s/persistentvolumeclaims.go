@@ -386,6 +386,8 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 				environmentID = &environmentIDParsed
 			}
 		}
+		// Check if PVC can be deleted (no owners and not in use)
+		canDelete := len(pvc.OwnerReferences) == 0 && !isBound
 
 		result = append(result, PVCInfo{
 			ID:                 pvc.Name,
@@ -397,6 +399,8 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 			MountedOnServiceID: boundToServiceID,
 			Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
 			IsDatabase:         isDatabase,
+			IsAvailable:        canDelete,
+			CanDelete:          canDelete,
 			CreatedAt:          pvc.CreationTimestamp.Time,
 		})
 	}
