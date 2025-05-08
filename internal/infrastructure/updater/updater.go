@@ -6,15 +6,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	gh "github.com/google/go-github/v69/github"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	github_integration "github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/pkg/release"
+	"github.com/valkey-io/valkey-go"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/api/types"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
@@ -29,13 +30,16 @@ type Updater struct {
 	httpClient     *http.Client
 
 	// Cache for updates
-	updatesCache     []string
-	lastUpdateTime   time.Time
-	updateCacheMutex sync.RWMutex
+	valkeyCache *cache.ValkeyCache[*UpdateCacheItem]
+}
+
+type UpdateCacheItem struct {
+	Updates   []string
+	CheckedAt time.Time
 }
 
 // New creates a new updater instance
-func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *Updater {
+func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, valkeyClient valkey.Client) *Updater {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -46,46 +50,52 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient) *
 	// ! Temporarily hardcoding version for testing
 	currentVersion = "v0.0.1"
 
+	// Create string cache
+	valkeyCache := cache.NewCache[*UpdateCacheItem](valkeyClient, "unbind-updater")
+
 	return &Updater{
 		cfg:            cfg,
 		releaseManager: release.NewManager(NewGitHubClientWrapper(githubClient), cfg.ReleaseRepoOverride),
 		CurrentVersion: currentVersion,
 		k8sClient:      k8sClient,
 		httpClient:     httpClient,
+		valkeyCache:    valkeyCache,
 	}
 }
 
 // CheckForUpdates checks if there are any available updates
 func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 	// Check cache first
-	self.updateCacheMutex.RLock()
-	if !self.lastUpdateTime.IsZero() && time.Since(self.lastUpdateTime) < 12*time.Minute {
-		updates := self.updatesCache
-		self.updateCacheMutex.RUnlock()
-		return updates, nil
+	cacheItem, err := self.valkeyCache.Get(ctx, "updates")
+	if err == nil && cacheItem != nil {
+		// Check if  time is older than 10 minutes
+		if time.Since(cacheItem.CheckedAt) < 10*time.Minute {
+			return cacheItem.Updates, nil
+		}
 	}
-	self.updateCacheMutex.RUnlock()
 
 	// Cache expired or empty, fetch new updates
 	updates, err := self.releaseManager.AvailableUpdates(ctx, self.CurrentVersion)
 	if err != nil {
-		log.Errorf("Failed to check for updates - expired cache: %v", err)
-		// If we have cached updates, return them even if expired
-		self.updateCacheMutex.RLock()
-		if len(self.updatesCache) > 0 {
-			updates := self.updatesCache
-			self.updateCacheMutex.RUnlock()
-			return updates, nil
+		log.Errorf("Failed to check for updates, trying to return cache %v", err)
+
+		if cacheItem != nil {
+			// Return cached updates if available
+			return cacheItem.Updates, nil
 		}
-		self.updateCacheMutex.RUnlock()
-		return nil, fmt.Errorf("failed to check for updates: %w", err)
+
+		log.Errorf("Failed to check for updates and no cache available: %v", err)
+		return []string{}, nil
 	}
 
-	// Update cache
-	self.updateCacheMutex.Lock()
-	self.updatesCache = updates
-	self.lastUpdateTime = time.Now()
-	self.updateCacheMutex.Unlock()
+	// Cache the updates
+	cacheItem = &UpdateCacheItem{
+		Updates:   updates,
+		CheckedAt: time.Now(),
+	}
+	if err := self.valkeyCache.Set(ctx, "updates", cacheItem); err != nil {
+		log.Errorf("Failed to cache updates: %v", err)
+	}
 
 	return updates, nil
 }

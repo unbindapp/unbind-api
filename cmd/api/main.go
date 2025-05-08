@@ -302,7 +302,7 @@ func startAPI(cfg *config.Config) {
 		DeploymentController: deploymentController,
 		DatabaseProvider:     dbProvider,
 		DNSChecker:           utils.NewDNSChecker(),
-		UpdateManager:        updater.New(cfg, Version, kubeClient),
+		UpdateManager:        updater.New(cfg, Version, kubeClient, valkeyClient),
 		TeamService:          teamService,
 		ProjectService:       projectService,
 		ServiceService:       serviceService,
