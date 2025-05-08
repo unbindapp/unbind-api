@@ -10,6 +10,7 @@ import (
 	"time"
 
 	gh "github.com/google/go-github/v69/github"
+	"github.com/pingcap/log"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	github_integration "github.com/unbindapp/unbind-api/internal/integrations/github"
@@ -68,6 +69,7 @@ func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 	// Cache expired or empty, fetch new updates
 	updates, err := self.releaseManager.AvailableUpdates(ctx, self.CurrentVersion)
 	if err != nil {
+		log.Errorf("Failed to check for updates - expired cache: %v", err)
 		// If we have cached updates, return them even if expired
 		self.updateCacheMutex.RLock()
 		if len(self.updatesCache) > 0 {
