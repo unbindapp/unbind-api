@@ -42,7 +42,7 @@ func (self *HandlerGroup) DeleteService(ctx context.Context, input *DeleteServic
 
 	resp := &DeleteServiceResponse{}
 	resp.Body.Data = server.DeletedResponse{
-		ID:      input.Body.ServiceID,
+		ID:      input.Body.ServiceID.String(),
 		Deleted: true,
 	}
 	return resp, nil

@@ -130,6 +130,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.UpdatePVC,
 	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "delete-pvc",
+			Summary:     "Delete PVC",
+			Description: "Delete a PVC.",
+			Path:        "/pvc/delete",
+			Method:      http.MethodDelete,
+		},
+		handlers.DeletePVC,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

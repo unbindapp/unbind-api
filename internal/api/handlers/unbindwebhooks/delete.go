@@ -42,7 +42,7 @@ func (self *HandlerGroup) DeleteWebhook(ctx context.Context, input *DeleteWebhoo
 
 	resp := &DeleteWebhookResponse{}
 	resp.Body.Data = server.DeletedResponse{
-		ID:      input.Body.ID,
+		ID:      input.Body.ID.String(),
 		Deleted: true,
 	}
 	return resp, nil

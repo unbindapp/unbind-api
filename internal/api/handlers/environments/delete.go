@@ -41,7 +41,7 @@ func (self *HandlerGroup) DeleteEnvironment(ctx context.Context, input *DeleteEn
 
 	resp := &DeleteEnvironmentResponse{}
 	resp.Body.Data = server.DeletedResponse{
-		ID:      input.Body.EnvironmentID,
+		ID:      input.Body.EnvironmentID.String(),
 		Deleted: true,
 	}
 	return resp, nil

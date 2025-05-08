@@ -44,7 +44,7 @@ func (self *HandlerGroup) DeleteProject(ctx context.Context, input *DeleteProjec
 
 	resp := &DeleteProjectResponse{}
 	resp.Body.Data = server.DeletedResponse{
-		ID:      input.Body.ProjectID,
+		ID:      input.Body.ProjectID.String(),
 		Deleted: true,
 	}
 	return resp, nil

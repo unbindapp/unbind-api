@@ -46,7 +46,7 @@ func (self *HandlerGroup) DeleteS3Endpoint(ctx context.Context, input *DeleteS3E
 
 	resp := &DeleteS3EndpointByIDOutput{}
 	resp.Body.Data = server.DeletedResponse{
-		ID:      input.Body.ID,
+		ID:      input.Body.ID.String(),
 		Deleted: true,
 	}
 	return resp, nil

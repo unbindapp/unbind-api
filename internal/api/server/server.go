@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
@@ -41,8 +40,8 @@ type BaseAuthInput struct {
 
 // DeletedResponse is used to return a deleted response.
 type DeletedResponse struct {
-	ID      uuid.UUID `json:"id"`
-	Deleted bool      `json:"deleted"`
+	ID      string `json:"id"`
+	Deleted bool   `json:"deleted"`
 }
 
 // Server implements generated.ServerInterface

@@ -29,6 +29,8 @@ type PVCInfo struct {
 	MountedOnServiceID *uuid.UUID                 `json:"mounted_on_service_id,omitempty"`
 	Status             PersistentVolumeClaimPhase `json:"status"` // e.g., "Bound", "Pending"
 	IsDatabase         bool                       `json:"is_database"`
+	IsAvailable        bool                       `json:"is_available"`
+	CanDelete          bool                       `json:"can_delete"`
 	CreatedAt          time.Time                  `json:"created_at"`
 }
 
@@ -264,6 +266,9 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 		}
 	}
 
+	// Check if PVC can be deleted (no owners and not in use)
+	canDelete := len(pvc.OwnerReferences) == 0 && !isBound
+
 	return &PVCInfo{
 		ID:                 pvc.Name,
 		Name:               displayname,
@@ -274,6 +279,8 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 		MountedOnServiceID: boundToServiceID,
 		Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
 		IsDatabase:         isDatabase,
+		IsAvailable:        canDelete,
+		CanDelete:          canDelete,
 		CreatedAt:          pvc.CreationTimestamp.Time,
 	}, nil
 }
@@ -416,7 +423,35 @@ func (self *KubeClient) DeletePersistentVolumeClaim(ctx context.Context, namespa
 		return fmt.Errorf("pvcName cannot be empty")
 	}
 
-	err := client.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, pvcName, metav1.DeleteOptions{})
+	// Get the PVC to check its owner references
+	pvc, err := client.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, pvcName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("PersistentVolumeClaim '%s' not found", pvcName))
+		}
+		return fmt.Errorf("failed to get PersistentVolumeClaim '%s': %w", pvcName, err)
+	}
+
+	// Check if PVC has any owner references
+	if len(pvc.OwnerReferences) > 0 {
+		ownerNames := make([]string, 0, len(pvc.OwnerReferences))
+		for _, owner := range pvc.OwnerReferences {
+			ownerNames = append(ownerNames, fmt.Sprintf("%s/%s", owner.Kind, owner.Name))
+		}
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
+			fmt.Sprintf("Cannot delete PVC '%s' as it is owned by: %s", pvcName, strings.Join(ownerNames, ", ")))
+	}
+
+	// Check if PVC is in use by any pods
+	pods, err := self.GetPodsUsingPVC(ctx, namespace, pvcName, client)
+	if err != nil {
+		return fmt.Errorf("failed to check if PVC is in use: %w", err)
+	}
+	if len(pods) > 0 {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("Cannot delete PVC '%s' as it is currently in use by %d pod(s)", pvcName, len(pods)))
+	}
+
+	err = client.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, pvcName, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete PersistentVolumeClaim '%s' in namespace '%s': %w", pvcName, namespace, err)
 	}
