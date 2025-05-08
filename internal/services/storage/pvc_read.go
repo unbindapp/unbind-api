@@ -48,7 +48,7 @@ func (self *StorageService) GetPVC(ctx context.Context, requesterUserID uuid.UUI
 	}
 
 	// Get the PVC
-	pvc, err := self.k8s.GetPersistentVolumeClaim(ctx, team.Namespace, input.PVCName, client)
+	pvc, err := self.k8s.GetPersistentVolumeClaim(ctx, team.Namespace, input.ID, client)
 	if err != nil {
 		return nil, err
 	}

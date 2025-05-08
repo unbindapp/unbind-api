@@ -20,6 +20,7 @@ import (
 
 // PVCInfo holds prettier information about a PVC.
 type PVCInfo struct {
+	ID                 string                     `json:"id"`
 	Name               string                     `json:"name"`
 	Size               string                     `json:"size"` // e.g., "10Gi"
 	TeamID             uuid.UUID                  `json:"team_id"`
@@ -27,7 +28,7 @@ type PVCInfo struct {
 	EnvironmentID      *uuid.UUID                 `json:"environment_id,omitempty"`
 	MountedOnServiceID *uuid.UUID                 `json:"mounted_on_service_id,omitempty"`
 	Status             PersistentVolumeClaimPhase `json:"status"` // e.g., "Bound", "Pending"
-	IsStatefulset      bool                       `json:"is_statefulset"`
+	IsDatabase         bool                       `json:"is_database"`
 	CreatedAt          time.Time                  `json:"created_at"`
 }
 
@@ -61,6 +62,7 @@ func (self *KubeClient) CreatePersistentVolumeClaim(
 	ctx context.Context,
 	namespace string,
 	pvcName string,
+	displayName string,
 	labels map[string]string,
 	storageRequest string,
 	accessModes []corev1.PersistentVolumeAccessMode,
@@ -84,6 +86,8 @@ func (self *KubeClient) CreatePersistentVolumeClaim(
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse storageRequest '%s': %w", storageRequest, err)
 	}
+
+	labels["pvc-display-name"] = displayName
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -139,6 +143,10 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	)
 
 	pvcLabels := pvc.GetLabels()
+	displayname := pvcLabels["pvc-display-name"]
+	if displayname == "" {
+		displayname = pvc.Name
+	}
 	teamIDStr := pvcLabels[teamLabel]
 	// Skip if the PVC doesn't have the unbind-team label
 	if teamIDStr == "" {
@@ -158,7 +166,6 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	}
 
 	var boundToServiceID *uuid.UUID
-	isStatefulset := false
 
 	// Check if bound to pods with unbind-service label
 	pods, err := self.GetPodsUsingPVC(ctx, pvc.Namespace, pvc.Name, client)
@@ -167,17 +174,13 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	}
 
 	isBound := len(pods) > 0
+	isDatabase := false
 	for _, pod := range pods {
-		// Check if pod is part of a StatefulSet
-		if pod.OwnerReferences != nil {
-			for _, owner := range pod.OwnerReferences {
-				if strings.EqualFold(owner.Kind, "StatefulSet") {
-					isStatefulset = true
-					break
-				}
-			}
+		// Check if pod has database label
+		// unbind/usd-category : databases
+		if podLabel, ok := pod.GetLabels()["unbind/usd-category"]; ok && podLabel == "databases" {
+			isDatabase = true
 		}
-
 		podServiceLabel := pod.GetLabels()[serviceLabel]
 		if podServiceLabel != "" {
 			// Parse the service ID from the label
@@ -211,15 +214,16 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	}
 
 	return &PVCInfo{
-		Name:               pvc.Name,
+		ID:                 pvc.Name,
+		Name:               displayname,
 		Size:               size,
 		TeamID:             teamID,
 		ProjectID:          projectID,
 		EnvironmentID:      environmentID,
 		MountedOnServiceID: boundToServiceID,
 		Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
+		IsDatabase:         isDatabase,
 		CreatedAt:          pvc.CreationTimestamp.Time,
-		IsStatefulset:      isStatefulset,
 	}, nil
 }
 
@@ -266,13 +270,17 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 
 		projectIDStr := pvcLabels[projectLabel]
 		environmentIDStr := pvcLabels[environmentLabel]
+		displayName := pvcLabels["pvc-display-name"]
+		if displayName == "" {
+			displayName = pvc.Name
+		}
 		size := ""
 		if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
 			size = storageRequest.String()
 		}
 
 		var boundToServiceID *uuid.UUID
-		isStatefulset := false
+		isDatabase := false
 
 		// Rule 2: If bound to pods, they must have unbind-service label
 		pods, err := self.GetPodsUsingPVC(ctx, pvc.Namespace, pvc.Name, client)
@@ -282,14 +290,10 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 
 		isBound := len(pods) > 0
 		for _, pod := range pods {
-			// Check if pod is part of a StatefulSet
-			if pod.OwnerReferences != nil {
-				for _, owner := range pod.OwnerReferences {
-					if strings.EqualFold(owner.Kind, "StatefulSet") {
-						isStatefulset = true
-						break
-					}
-				}
+			// Check if pod has database label
+			// unbind/usd-category : databases
+			if podLabel, ok := pod.GetLabels()["unbind/usd-category"]; ok && podLabel == "databases" {
+				isDatabase = true
 			}
 
 			podServiceLabel := pod.GetLabels()[serviceLabel]
@@ -326,15 +330,16 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		}
 
 		result = append(result, PVCInfo{
-			Name:               pvc.Name,
+			ID:                 pvc.Name,
+			Name:               displayName,
 			Size:               size,
 			TeamID:             teamID,
 			ProjectID:          projectID,
 			EnvironmentID:      environmentID,
 			MountedOnServiceID: boundToServiceID,
 			Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
+			IsDatabase:         isDatabase,
 			CreatedAt:          pvc.CreationTimestamp.Time,
-			IsStatefulset:      isStatefulset,
 		})
 	}
 

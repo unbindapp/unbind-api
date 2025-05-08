@@ -46,12 +46,13 @@ type GetPVCInput struct {
 	TeamID        uuid.UUID `query:"team_id" required:"true"`
 	ProjectID     uuid.UUID `query:"project_id" required:"false"`
 	EnvironmentID uuid.UUID `query:"environment_id" required:"false"`
-	PVCName       string    `query:"pvc_name" required:"true"`
+	ID            string    `query:"id" required:"true"`
 }
 
 // * Create
 type CreatePVCInput struct {
 	Type          PvcScope  `query:"type" required:"true"`
+	Name          string    `query:"name" required:"true" minLength:"1" maxLength:"63" doc:"Name of the PVC"`
 	TeamID        uuid.UUID `query:"team_id" required:"true"`
 	ProjectID     uuid.UUID `query:"project_id" required:"false"`
 	EnvironmentID uuid.UUID `query:"environment_id" required:"false"`

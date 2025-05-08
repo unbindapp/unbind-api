@@ -42,7 +42,7 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 	}
 
 	//  Generate a name
-	name, err := utils.GenerateSlug("unbind-pvc")
+	kubernetesName, err := utils.GenerateSlug(input.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,8 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 	// Get the PVCs
 	return self.k8s.CreatePersistentVolumeClaim(ctx,
 		team.Namespace,
-		name,
+		kubernetesName,
+		input.Name,
 		labels,
 		input.Size,
 		[]v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
