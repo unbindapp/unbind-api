@@ -14,6 +14,8 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 		Description: template.Description,
 		Version:     template.Version,
 		Services:    make([]schema.TemplateService, len(template.Services)),
+		Inputs:      template.Inputs,
+		Volumes:     template.Volumes,
 	}
 
 	// Copy and resolve each service
@@ -60,4 +62,61 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 	}
 
 	return resolved, nil
+}
+
+// ProcessTemplateInputs processes the template inputs and returns a map of resolved values
+func (self *Templater) ProcessTemplateInputs(template *schema.TemplateDefinition, values map[string]string) (map[string]string, error) {
+	result := make(map[string]string)
+
+	for _, input := range template.Inputs {
+		// Skip host type as it's handled separately
+		if input.Type == schema.InputTypeHost {
+			continue
+		}
+
+		// Get value from provided values or use default
+		value, exists := values[input.Name]
+		if !exists {
+			if input.Default != nil {
+				value = *input.Default
+			} else if input.Required {
+				return nil, fmt.Errorf("required input %s is missing", input.Name)
+			} else {
+				continue
+			}
+		}
+
+		result[input.Name] = value
+	}
+
+	return result, nil
+}
+
+// getVolumeSizeInputName returns the input name for a volume's size
+func getVolumeSizeInputName(volumeName string) string {
+	return volumeName + "_size"
+}
+
+// ProcessTemplateVolumes processes the template volumes and returns a map of resolved volume configurations
+func (self *Templater) ProcessTemplateVolumes(template *schema.TemplateDefinition, values map[string]string) (map[string]map[string]string, error) {
+	result := make(map[string]map[string]string)
+
+	for _, volume := range template.Volumes {
+		// Get size from provided values or use default
+		size, exists := values[getVolumeSizeInputName(volume.Name)]
+		if !exists {
+			if volume.Default != nil {
+				size = *volume.Default
+			} else {
+				return nil, fmt.Errorf("volume size for %s is required", volume.Name)
+			}
+		}
+
+		result[volume.Name] = map[string]string{
+			"size":      size,
+			"mountPath": volume.MountPath,
+		}
+	}
+
+	return result, nil
 }

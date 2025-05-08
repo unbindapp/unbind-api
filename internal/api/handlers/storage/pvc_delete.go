@@ -11,7 +11,7 @@ import (
 
 type DeletePVCInput struct {
 	server.BaseAuthInput
-	models.DeletePVCInput
+	Body *models.DeletePVCInput
 }
 
 type DeletePVCResponse struct {
@@ -28,14 +28,14 @@ func (self *HandlerGroup) DeletePVC(ctx context.Context, input *DeletePVCInput) 
 	}
 	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	err := self.srv.StorageService.DeletePVC(ctx, user.ID, bearerToken, &input.DeletePVCInput)
+	err := self.srv.StorageService.DeletePVC(ctx, user.ID, bearerToken, input.Body)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}
 
 	response := &DeletePVCResponse{}
 	response.Body.Data = server.DeletedResponse{
-		ID:      input.DeletePVCInput.ID,
+		ID:      input.Body.ID,
 		Deleted: true,
 	}
 	return response, nil

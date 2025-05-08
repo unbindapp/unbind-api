@@ -67,6 +67,8 @@ type TemplateDefinition struct {
 	Description string            `json:"description"`
 	Version     int               `json:"version"`
 	Services    []TemplateService `json:"services"`
+	Inputs      []TemplateInput   `json:"inputs,omitempty"`
+	Volumes     []TemplateVolume  `json:"volumes,omitempty"`
 }
 
 // TemplateService represents a service within a template
@@ -132,4 +134,30 @@ func (self *ValueGenerator) Generate() (string, error) {
 	default:
 		return "", fmt.Errorf("unknown generator type: %s", self.Type)
 	}
+}
+
+// TemplateInputType represents the type of user input
+type TemplateInputType string
+
+const (
+	InputTypeVariable   TemplateInputType = "variable"
+	InputTypeHost       TemplateInputType = "host"
+	InputTypeVolumeSize TemplateInputType = "volume_size"
+)
+
+// TemplateInput represents a user input field in the template
+type TemplateInput struct {
+	Name        string            `json:"name"`
+	Type        TemplateInputType `json:"type"`
+	Description string            `json:"description"`
+	Default     *string           `json:"default,omitempty"`
+	Required    bool              `json:"required"`
+}
+
+// TemplateVolume represents a volume configuration in the template
+type TemplateVolume struct {
+	Name      string  `json:"name"`
+	Size      string  `json:"size"`
+	MountPath string  `json:"mountPath"`
+	Default   *string `json:"default,omitempty"`
 }
