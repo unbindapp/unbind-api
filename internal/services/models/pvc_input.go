@@ -23,9 +23,9 @@ func (u PvcScope) Schema(r huma.Registry) *huma.Schema {
 		schemaRef.Title = "PvcScope"
 		schemaRef.Enum = append(schemaRef.Enum,
 			[]any{
-				PvcScopeTeam,
-				PvcScopeProject,
-				PvcScopeEnvironment,
+				string(PvcScopeTeam),
+				string(PvcScopeProject),
+				string(PvcScopeEnvironment),
 			}...)
 		r.Map()["PvcScope"] = schemaRef
 	}
