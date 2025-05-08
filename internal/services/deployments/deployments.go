@@ -75,16 +75,16 @@ func (self *DeploymentService) validateInputs(ctx context.Context, input models.
 	}
 
 	// Validate service
-	var service *ent.Service
-	for _, svc := range environment.Edges.Services {
-		if svc.ID == input.GetServiceID() {
-			service = svc
-			break
+	service, err := self.repo.Service().GetByID(ctx, input.GetServiceID())
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "service not found")
 		}
+		return nil, err
 	}
 
-	if service == nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "service does not belong to environment")
+	if service.EnvironmentID != environment.ID {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "service not found")
 	}
 
 	return service, nil

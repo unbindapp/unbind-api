@@ -116,7 +116,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	}
 
 	// PVC validation, requires a path
-	if input.PVCID != nil {
+	if input.PVCID != nil && *input.PVCID != "" {
 		if input.PVCMountPath == nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC mount path is required")
 		}

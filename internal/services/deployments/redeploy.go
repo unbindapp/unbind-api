@@ -12,6 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -70,6 +71,16 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 				return nil, err
 			}
 			deployment.ResourceDefinition.Spec.EnvVars = envVars
+			// Set volume data to current
+			deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{}
+			if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
+				deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{
+					{
+						Name:      *service.Edges.ServiceConfig.VolumeName,
+						MountPath: *service.Edges.ServiceConfig.VolumeMountPath,
+					},
+				}
+			}
 			// We can just, re-deploy the existing CRD spec
 			// Deploy to kubernetes
 			_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
@@ -85,15 +96,6 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	}
 
 	// For docker-image builds, if we don't have a deployment image we can get it from the config
-	// re-fetch service
-	service, err = self.repo.Service().GetByID(ctx, input.ServiceID)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
-		}
-		return nil, err
-	}
-
 	if (service.Type == schema.ServiceTypeDockerimage || service.Type == schema.ServiceTypeDatabase) && deployment.ResourceDefinition != nil {
 		deployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
 		envVars, err := self.resolveReferences(ctx, service)
@@ -106,6 +108,15 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 		newDeployment, err := self.repo.Deployment().CreateCopy(ctx, nil, deployment)
 		if err != nil {
 			return nil, err
+		}
+		deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{}
+		if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
+			deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{
+				{
+					Name:      *service.Edges.ServiceConfig.VolumeName,
+					MountPath: *service.Edges.ServiceConfig.VolumeMountPath,
+				},
+			}
 		}
 		_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
 		if err != nil {

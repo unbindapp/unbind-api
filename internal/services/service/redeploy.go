@@ -215,6 +215,15 @@ func (self *ServiceService) createCRDFromService(service *ent.Service) *v1.Servi
 	crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
 	crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.IsPublic
 
+	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
+		crdToDeploy.Spec.Config.Volumes = []v1.VolumeSpec{
+			{
+				Name:      *service.Edges.ServiceConfig.VolumeName,
+				MountPath: *service.Edges.ServiceConfig.VolumeMountPath,
+			},
+		}
+	}
+
 	return crdToDeploy
 }
 
