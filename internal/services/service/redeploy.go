@@ -214,6 +214,7 @@ func (self *ServiceService) createCRDFromService(service *ent.Service) *v1.Servi
 	crdToDeploy.Spec.Config.Ports = schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports)
 	crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
 	crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.IsPublic
+	crdToDeploy.Spec.Config.Volumes = []v1.VolumeSpec{}
 
 	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
 		crdToDeploy.Spec.Config.Volumes = []v1.VolumeSpec{
