@@ -10,8 +10,8 @@ import (
 	"time"
 
 	gh "github.com/google/go-github/v69/github"
-	"github.com/pingcap/log"
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	github_integration "github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/pkg/release"
