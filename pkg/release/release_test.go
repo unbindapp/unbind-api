@@ -114,21 +114,33 @@ func (s *ReleaseTestSuite) TestAvailableUpdates() {
 		expectError    bool
 	}{
 		{
-			name:           "valid version with updates",
+			name:           "from v0.0.1 - can update to non-breaking versions",
 			currentVersion: "v0.0.1",
-			expected:       []string{"v0.0.2", "v0.0.3", "v0.1.0"},
+			expected:       []string{"v0.0.2", "v0.0.3"},
+			expectError:    false,
+		},
+		{
+			name:           "from v0.0.2 - can update to non-breaking version",
+			currentVersion: "v0.0.2",
+			expected:       []string{"v0.0.3"},
+			expectError:    false,
+		},
+		{
+			name:           "from v0.0.3 - can update to breaking version that depends on it",
+			currentVersion: "v0.0.3",
+			expected:       []string{"v0.1.0"},
+			expectError:    false,
+		},
+		{
+			name:           "from v0.1.0 - no updates available",
+			currentVersion: "v0.1.0",
+			expected:       []string{},
 			expectError:    false,
 		},
 		{
 			name:           "version without v prefix",
 			currentVersion: "0.0.1",
-			expected:       []string{"v0.0.2", "v0.0.3", "v0.1.0"},
-			expectError:    false,
-		},
-		{
-			name:           "latest version",
-			currentVersion: "v0.1.0",
-			expected:       []string{},
+			expected:       []string{"v0.0.2", "v0.0.3"},
 			expectError:    false,
 		},
 		{
@@ -152,7 +164,7 @@ func (s *ReleaseTestSuite) TestAvailableUpdates() {
 				s.Error(err)
 			} else {
 				s.NoError(err)
-				s.Equal(tt.expected, updates)
+				s.Equal(tt.expected, updates, "Expected updates for version %s to be %v, got %v", tt.currentVersion, tt.expected, updates)
 			}
 		})
 	}

@@ -72,22 +72,11 @@ func (self *HandlerGroup) CheckForUpdates(ctx context.Context, input *server.Bas
 		return semver.Compare(allUpdates[i], allUpdates[j]) < 0
 	})
 
-	// Keep track of the current version we're checking from
-	checkVersion := currentVersion
-
-	// Build the update path
-	for {
-		nextVersion, err := self.srv.UpdateManager.GetNextAvailableVersion(ctx, checkVersion)
-		if err != nil || nextVersion == "" {
-			// No more versions available
-			break
+	// Filter out versions less than or equal to current version
+	for _, version := range allUpdates {
+		if semver.Compare(version, currentVersion) > 0 {
+			availableUpdates = append(availableUpdates, version)
 		}
-
-		// Add the next version to our list
-		availableUpdates = append(availableUpdates, nextVersion)
-
-		// Update the version we're checking from
-		checkVersion = nextVersion
 	}
 
 	resp := &UpdateCheckResponse{}
@@ -125,56 +114,34 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpdateApplyInp
 	}
 
 	// Get all available versions
-	allUpdates, err := self.srv.UpdateManager.CheckForUpdates(ctx)
+	availableUpdates, err := self.srv.UpdateManager.CheckForUpdates(ctx)
 	if err != nil {
 		// Log the error but return error since this is an apply operation
 		log.Errorf("Failed to check for updates: %v", err)
 		return nil, huma.Error500InternalServerError("Failed to check for updates: " + err.Error())
 	}
 
-	// Filter to only show versions that can be updated to in sequence
-	availableUpdates := make([]string, 0)
-	currentVersion := self.srv.UpdateManager.CurrentVersion
-
-	// Sort versions to ensure we process them in order
-	sort.Slice(allUpdates, func(i, j int) bool {
-		return semver.Compare(allUpdates[i], allUpdates[j]) < 0
-	})
-
-	// Keep track of the current version we're checking from
-	checkVersion := currentVersion
-
-	// Build the update path
-	for {
-		nextVersion, err := self.srv.UpdateManager.GetNextAvailableVersion(ctx, checkVersion)
-		if err != nil || nextVersion == "" {
-			// No more versions available
-			break
-		}
-
-		// Add the next version to our list
-		availableUpdates = append(availableUpdates, nextVersion)
-
-		// Update the version we're checking from
-		checkVersion = nextVersion
-	}
-
-	// Validate version is available
+	// Validate version is in the available updates list
 	if !slices.Contains(availableUpdates, input.Body.TargetVersion) {
 		return nil, huma.Error400BadRequest("Target version is not available for update")
 	}
 
-	// ! Temporarily disabling update
-	// Apply update
-	// err = self.srv.UpdateManager.UpdateToVersion(ctx, input.Body.TargetVersion)
-	// if err != nil {
-	// 	return nil, huma.Error500InternalServerError("Failed to apply update: " + err.Error())
-	// }
-	// // Cache update status
-	// err = self.srv.StringCache.Set(ctx, "update-in-progres", input.Body.TargetVersion)
-	// if err != nil {
-	// 	log.Errorf("Failed to cache update status: %v", err)
-	// }
+	// Apply the update
+	// Cache update status
+	err = self.srv.StringCache.Set(ctx, "update-in-progres", input.Body.TargetVersion)
+	if err != nil {
+		log.Errorf("Failed to cache update status: %v", err)
+	}
+
+	if err := self.srv.UpdateManager.UpdateToVersion(ctx, input.Body.TargetVersion); err != nil {
+		log.Errorf("Failed to apply update: %v", err)
+		// Clear the cache if the update fails
+		err = self.srv.StringCache.Delete(ctx, "update-in-progres")
+		if err != nil {
+			log.Errorf("Failed to clear cached update status: %v", err)
+		}
+		return nil, huma.Error500InternalServerError("Failed to apply update: " + err.Error())
+	}
 
 	resp := &UpdateApplyResponse{}
 	resp.Body.Started = true

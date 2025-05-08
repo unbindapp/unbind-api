@@ -67,11 +67,17 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, v
 func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 	// Check cache first
 	cacheItem, err := self.valkeyCache.Get(ctx, "updates")
-	if err == nil && cacheItem != nil {
-		// Check if  time is older than 10 minutes
+	if err != nil {
+		if err != valkey.Nil {
+			log.Errorf("Error reading from cache: %v", err)
+		}
+	} else if cacheItem != nil {
+		// Check if time is older than 10 minutes
 		if time.Since(cacheItem.CheckedAt) < 10*time.Minute {
+			log.Infof("Returning cached updates from %v", cacheItem.CheckedAt)
 			return cacheItem.Updates, nil
 		}
+		log.Infof("Cache expired at %v", cacheItem.CheckedAt)
 	}
 
 	// Cache expired or empty, fetch new updates
@@ -81,6 +87,7 @@ func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 
 		if cacheItem != nil {
 			// Return cached updates if available
+			log.Infof("Returning stale cached updates from %v due to GitHub error", cacheItem.CheckedAt)
 			return cacheItem.Updates, nil
 		}
 
@@ -88,13 +95,15 @@ func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 		return []string{}, nil
 	}
 
-	// Cache the updates
+	// Cache the updates with a 1 hour expiration
 	cacheItem = &UpdateCacheItem{
 		Updates:   updates,
 		CheckedAt: time.Now(),
 	}
 	if err := self.valkeyCache.Set(ctx, "updates", cacheItem); err != nil {
 		log.Errorf("Failed to cache updates: %v", err)
+	} else {
+		log.Infof("Successfully cached updates until %v", time.Now().Add(time.Hour))
 	}
 
 	return updates, nil
@@ -250,9 +259,46 @@ func (self *Updater) CheckDeploymentsReady(ctx context.Context, version string) 
 
 // GetNextAvailableVersion returns the next version that can be updated to from the current version
 func (self *Updater) GetNextAvailableVersion(ctx context.Context, currentVersion string) (string, error) {
+	// Check cache first
+	cacheKey := fmt.Sprintf("next-version-%s", currentVersion)
+	cacheItem, err := self.valkeyCache.Get(ctx, cacheKey)
+	if err != nil {
+		if err != valkey.Nil {
+			log.Errorf("Error reading next version from cache: %v", err)
+		}
+	} else if cacheItem != nil {
+		// Check if time is older than 10 minutes
+		if time.Since(cacheItem.CheckedAt) < 10*time.Minute {
+			log.Infof("Returning cached next version %v from %v", cacheItem.Updates[0], cacheItem.CheckedAt)
+			return cacheItem.Updates[0], nil
+		}
+		log.Infof("Cache expired at %v", cacheItem.CheckedAt)
+	}
+
+	// Cache expired or empty, fetch new version
 	version, err := self.releaseManager.GetNextAvailableVersion(ctx, currentVersion)
 	if err != nil {
+		log.Errorf("Failed to get next available version, trying to return cache %v", err)
+
+		if cacheItem != nil {
+			// Return cached version if available
+			log.Infof("Returning stale cached next version %v from %v due to GitHub error", cacheItem.Updates[0], cacheItem.CheckedAt)
+			return cacheItem.Updates[0], nil
+		}
+
 		return "", fmt.Errorf("failed to get next available version: %w", err)
 	}
+
+	// Cache the version with a 1 hour expiration
+	cacheItem = &UpdateCacheItem{
+		Updates:   []string{version},
+		CheckedAt: time.Now(),
+	}
+	if err := self.valkeyCache.SetWithExpiration(ctx, cacheKey, cacheItem, time.Hour); err != nil {
+		log.Errorf("Failed to cache next version: %v", err)
+	} else {
+		log.Infof("Successfully cached next version %v until %v", version, time.Now().Add(time.Hour))
+	}
+
 	return version, nil
 }

@@ -114,12 +114,37 @@ func (self *Manager) AvailableUpdates(ctx context.Context, currentVersion string
 		return semver.Compare(validVersions[i], validVersions[j]) < 0
 	})
 
-	// Find versions that are newer than current version
+	// Find versions that are available for update based on metadata
 	updates := make([]string, 0, len(validVersions))
 	for _, version := range validVersions {
-		if semver.Compare(version, currentVersion) > 0 {
-			updates = append(updates, version)
+		// Skip versions older than or equal to current version
+		if semver.Compare(version, currentVersion) <= 0 {
+			continue
 		}
+
+		meta := metadata[version]
+
+		// If version has dependencies, check if current version is in them
+		if len(meta.DependsOn) > 0 {
+			canUpdate := false
+			for _, dep := range meta.DependsOn {
+				if dep == currentVersion {
+					canUpdate = true
+					break
+				}
+			}
+			if !canUpdate {
+				continue
+			}
+		} else if meta.Breaking {
+			// If no dependencies but breaking, skip it
+			continue
+		}
+
+		// If we get here, the version is either:
+		// 1. A non-breaking update
+		// 2. A breaking update that depends on our current version
+		updates = append(updates, version)
 	}
 
 	return updates, nil
@@ -127,14 +152,47 @@ func (self *Manager) AvailableUpdates(ctx context.Context, currentVersion string
 
 // GetLatestVersion returns the latest available version
 func (self *Manager) GetLatestVersion(ctx context.Context) (string, error) {
-	updates, err := self.AvailableUpdates(ctx, "v0.0.0")
+	// Get all tags from the repository
+	tags, _, err := self.client.Repositories().ListTags(ctx, DefaultOwner, self.repo, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to list tags: %w", err)
+	}
+
+	// Get published releases
+	published, err := self.getPublishedReleases(ctx)
 	if err != nil {
 		return "", err
 	}
-	if len(updates) == 0 {
+
+	// Get version metadata
+	metadata, err := self.GetVersionMetadata(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get version metadata: %w", err)
+	}
+
+	// Filter and sort valid semver tags that have published releases and metadata
+	validVersions := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		version := tag.GetName()
+		if semver.IsValid(version) && published[version] {
+			// Only include versions that have metadata
+			if _, hasMetadata := metadata[version]; hasMetadata {
+				validVersions = append(validVersions, version)
+			}
+		}
+	}
+
+	// Sort versions
+	sort.Slice(validVersions, func(i, j int) bool {
+		return semver.Compare(validVersions[i], validVersions[j]) < 0
+	})
+
+	if len(validVersions) == 0 {
 		return "", fmt.Errorf("no versions found")
 	}
-	return updates[len(updates)-1], nil
+
+	// Return the latest version
+	return validVersions[len(validVersions)-1], nil
 }
 
 // GetRepositoryInfo returns the repository owner and name

@@ -117,7 +117,19 @@ func (self *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVe
 
 	// Validate versions
 	if !semver.IsValid(currentVersion) || !semver.IsValid(targetVersion) {
-		return nil, fmt.Errorf("invalid version format")
+		return []string{}, nil
+	}
+
+	// Get all tags from the repository
+	tags, _, err := self.client.Repositories().ListTags(ctx, DefaultOwner, self.repo, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tags: %w", err)
+	}
+
+	// Get published releases
+	published, err := self.getPublishedReleases(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get version metadata
@@ -126,58 +138,69 @@ func (self *Manager) GetUpdatePath(ctx context.Context, currentVersion, targetVe
 		return nil, fmt.Errorf("failed to get version metadata: %w", err)
 	}
 
-	// Get available updates
-	updates, err := self.AvailableUpdates(ctx, currentVersion)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get available updates: %w", err)
-	}
-
-	// Check if target version exists in updates
-	targetExists := false
-	for _, version := range updates {
-		if version == targetVersion {
-			targetExists = true
-			break
+	// Filter and sort valid semver tags that have published releases and metadata
+	validVersions := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		version := tag.GetName()
+		if semver.IsValid(version) && published[version] {
+			// Only include versions that have metadata
+			if _, hasMetadata := metadata[version]; hasMetadata {
+				validVersions = append(validVersions, version)
+			}
 		}
 	}
-	if !targetExists {
+
+	// Sort versions
+	sort.Slice(validVersions, func(i, j int) bool {
+		return semver.Compare(validVersions[i], validVersions[j]) < 0
+	})
+
+	// Find the path from current to target version
+	path := make([]string, 0)
+	currentIdx := -1
+	targetIdx := -1
+
+	// Find indices of current and target versions
+	for i, version := range validVersions {
+		if version == currentVersion {
+			currentIdx = i
+		}
+		if version == targetVersion {
+			targetIdx = i
+		}
+	}
+
+	// If either version not found or target is not newer, return empty path
+	if currentIdx == -1 || targetIdx == -1 || targetIdx <= currentIdx {
 		return []string{}, nil
 	}
 
-	// Build the update path
-	path := make([]string, 0)
-	visited := make(map[string]bool)
+	// Build the path, respecting metadata rules
+	for i := currentIdx + 1; i <= targetIdx; i++ {
+		version := validVersions[i]
+		meta := metadata[version]
 
-	// First, add all versions between current and target
-	for _, version := range updates {
-		if semver.Compare(version, currentVersion) > 0 && semver.Compare(version, targetVersion) <= 0 {
-			path = append(path, version)
-			visited[version] = true
-		}
-	}
-
-	// Sort the path by version
-	sort.Slice(path, func(i, j int) bool {
-		return semver.Compare(path[i], path[j]) < 0
-	})
-
-	// Now check dependencies and ensure they're in the path
-	for i := 0; i < len(path); i++ {
-		version := path[i]
-		versionMeta, exists := metadata[version]
-		if !exists {
-			continue
-		}
-
-		// Check each dependency
-		for _, dep := range versionMeta.DependsOn {
-			// If dependency is not in path and is between current and target
-			if !visited[dep] && semver.Compare(dep, currentVersion) > 0 && semver.Compare(dep, targetVersion) <= 0 {
-				// Insert dependency before this version
-				path = append(path[:i], append([]string{dep}, path[i:]...)...)
-				visited[dep] = true
-				i++ // Skip the dependency we just added
+		// Check if we can update to this version
+		canUpdate := false
+		if !meta.Breaking {
+			// Non-breaking updates are always allowed
+			canUpdate = true
+		} else if len(meta.DependsOn) > 0 {
+			// For breaking updates, check if current version is in dependencies
+			for _, dep := range meta.DependsOn {
+				if dep == currentVersion {
+					canUpdate = true
+					break
+				}
 			}
+		}
+
+		if canUpdate {
+			path = append(path, version)
+			currentVersion = version // Update current version for next iteration
+		} else {
+			// If we can't update to this version, we can't reach the target
+			return []string{}, nil
 		}
 	}
 
