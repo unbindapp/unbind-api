@@ -34,7 +34,7 @@ func (self *HandlerGroup) CheckPermissions(ctx context.Context, requesterUserID 
 type UpdateCheckResponse struct {
 	Body struct {
 		HasUpdateAvailable bool     `json:"has_update_available"`
-		AvailableVersions  []string `json:"available_versions"`
+		AvailableVersions  []string `json:"available_versions" nullable:"false"`
 		CurrentVersion     string   `json:"current_version"`
 	}
 }
