@@ -16,7 +16,7 @@ func ghostTemplate() *schema.TemplateDefinition {
 				ID:          1,
 				Name:        "Host",
 				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the WordPress instance.",
+				Description: "Hostname to use for the Ghost instance.",
 				Required:    true,
 			},
 		},

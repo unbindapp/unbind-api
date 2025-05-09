@@ -18,5 +18,6 @@ func (self *Templater) AvailableTemplates() []*schema.TemplateDefinition {
 	return []*schema.TemplateDefinition{
 		wordPressTemplate(),
 		ghostTemplate(),
+		minioTemplate(),
 	}
 }

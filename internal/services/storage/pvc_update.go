@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -50,12 +51,12 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 	// Size validation
 	if input.Size != nil {
 		// Parse size
-		newSize, err := validateStorageQuantity(*input.Size)
+		newSize, err := utils.ValidateStorageQuantity(*input.Size)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}
 
-		existingSize, err := validateStorageQuantity(pvc.Size)
+		existingSize, err := utils.ValidateStorageQuantity(pvc.Size)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}

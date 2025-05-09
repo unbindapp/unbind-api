@@ -68,7 +68,6 @@ type TemplateDefinition struct {
 	Version     int               `json:"version"`
 	Services    []TemplateService `json:"services"`
 	Inputs      []TemplateInput   `json:"inputs,omitempty"`
-	Volumes     []TemplateVolume  `json:"volumes,omitempty"`
 }
 
 // TemplateService represents a service within a template
@@ -83,6 +82,7 @@ type TemplateService struct {
 	Image              *string                     `json:"image,omitempty"`
 	Ports              []PortSpec                  `json:"ports,omitempty"`
 	IsPublic           bool                        `json:"is_public"`
+	Volumes            []TemplateVolume            `json:"volumes,omitempty"`
 	Variables          []TemplateVariable          `json:"variables"`                     // Variables this service needs
 	VariableReferences []TemplateVariableReference `json:"variable_references,omitempty"` // Variables this service needs
 }
@@ -167,12 +167,16 @@ type TemplateInput struct {
 	Description string            `json:"description"`
 	Default     *string           `json:"default,omitempty"`
 	Required    bool              `json:"required"`
+	TargetPort  *int              `json:"target_port,omitempty"`
 }
 
 // TemplateVolume represents a volume configuration in the template
 type TemplateVolume struct {
-	Name      string  `json:"name"`
-	Size      string  `json:"size"`
-	MountPath string  `json:"mountPath"`
-	Default   *string `json:"default,omitempty"`
+	Name      string             `json:"name"`
+	Size      TemplateVolumeSize `json:"size"`
+	MountPath string             `json:"mountPath"`
+}
+
+type TemplateVolumeSize struct {
+	FromInputID int `json:"from_input_id"`
 }

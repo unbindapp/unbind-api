@@ -16,7 +16,6 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 		Version:     template.Version,
 		Services:    make([]schema.TemplateService, len(template.Services)),
 		Inputs:      template.Inputs,
-		Volumes:     template.Volumes,
 	}
 
 	// Copy and resolve each service
@@ -33,6 +32,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 			Ports:              svc.Ports,
 			IsPublic:           svc.IsPublic,
 			VariableReferences: svc.VariableReferences,
+			Volumes:            svc.Volumes,
 		}
 
 		// Resolve variables
@@ -88,35 +88,6 @@ func (self *Templater) ProcessTemplateInputs(template *schema.TemplateDefinition
 		}
 
 		result[input.Name] = value
-	}
-
-	return result, nil
-}
-
-// getVolumeSizeInputName returns the input name for a volume's size
-func getVolumeSizeInputName(volumeName string) string {
-	return volumeName + "_size"
-}
-
-// ProcessTemplateVolumes processes the template volumes and returns a map of resolved volume configurations
-func (self *Templater) ProcessTemplateVolumes(template *schema.TemplateDefinition, values map[string]string) (map[string]map[string]string, error) {
-	result := make(map[string]map[string]string)
-
-	for _, volume := range template.Volumes {
-		// Get size from provided values or use default
-		size, exists := values[getVolumeSizeInputName(volume.Name)]
-		if !exists {
-			if volume.Default != nil {
-				size = *volume.Default
-			} else {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("volume size for %s is required", volume.Name))
-			}
-		}
-
-		result[volume.Name] = map[string]string{
-			"size":      size,
-			"mountPath": volume.MountPath,
-		}
 	}
 
 	return result, nil

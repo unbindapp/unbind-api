@@ -2,8 +2,11 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func ExtractRepoName(gitURL string) (string, error) {
@@ -35,4 +38,32 @@ func ExtractRepoName(gitURL string) (string, error) {
 	}
 
 	return repoName, nil
+}
+
+// validateStorageQuantity returns the parsed Quantity
+// or an error if the string isn’t a whole-byte storage unit.
+func ValidateStorageQuantity(s string) (resource.Quantity, error) {
+	qty, err := resource.ParseQuantity(s)
+	if err != nil {
+		return resource.Quantity{}, fmt.Errorf("invalid resource quantity %q: %w", s, err)
+	}
+
+	switch qty.Format {
+	case resource.BinarySI:
+		// Gi, Mi, etc.
+		return qty, nil
+
+	case resource.DecimalSI:
+		// Any negative scale (10^-n) means the user typed milli (`m`)
+		// or some other fractional unit; treat that as CPU-only.
+		if qty.AsDec().Scale() < 0 {
+			return resource.Quantity{}, fmt.Errorf(
+				"%q looks like a CPU value (milli units); use Ki, Mi, Gi, … or whole K/M/G for storage", s)
+		}
+		return qty, nil
+
+	default:
+		return resource.Quantity{}, fmt.Errorf(
+			"%q uses scientific notation; disallowed for storage sizes", s)
+	}
 }

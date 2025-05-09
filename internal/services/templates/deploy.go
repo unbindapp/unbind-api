@@ -19,6 +19,7 @@ import (
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.TemplateDeployInput) ([]*models.ServiceResponse, error) {
@@ -91,6 +92,16 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("invalid host for input %s: %v", defInput.Name, err))
 			}
 			value = cleanedHost
+
+			// If TargetPort is specified, use it instead of the first port
+			if defInput.TargetPort != nil {
+				port := int32(*defInput.TargetPort)
+				hostSpecs[defInput.ID] = []v1.HostSpec{{
+					Host: value,
+					Path: "/",
+					Port: &port,
+				}}
+			}
 		}
 
 		validatedInputs[defInput.ID] = value
@@ -114,7 +125,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				return nil, err
 			}
 
-			generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName, firstPublicService.Ports)
+			generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName, firstPublicService.Ports, nil)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate wildcard host: %w", err)
 			}
@@ -217,7 +228,17 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 				// If no host input found and we don't already have a host spec for this service, try to generate a wildcard host
 				if !hostFound && hostSpecs[templateService.ID] == nil {
-					generatedHost, err := self.generateWildcardHost(ctx, tx, kubernetesName, templateService.Ports)
+					// Check if there's a host input with TargetPort for this service
+					var targetPort *int32
+					for _, defInput := range template.Definition.Inputs {
+						if defInput.Type == schema.InputTypeHost && defInput.TargetPort != nil {
+							port := int32(*defInput.TargetPort)
+							targetPort = &port
+							break
+						}
+					}
+
+					generatedHost, err := self.generateWildcardHost(ctx, tx, kubernetesName, templateService.Ports, targetPort)
 					if err != nil {
 						return fmt.Errorf("failed to generate wildcard host: %w", err)
 					}
@@ -263,6 +284,52 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				return fmt.Errorf("failed to create service: %w", err)
 			}
 
+			// Create volumes
+			var pvcID *string
+			var pvcMountPath *string
+			for _, volume := range templateService.Volumes {
+				// Get size from input ID
+				size, exists := validatedInputs[volume.Size.FromInputID]
+				if !exists {
+					return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "size input not found")
+				}
+				// Parse size
+				_, err = utils.ValidateStorageQuantity(size)
+				if err != nil {
+					return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
+				}
+
+				// Build labels to set
+				labels := map[string]string{
+					"unbind-team":        input.TeamID.String(),
+					"unbind-project":     input.ProjectID.String(),
+					"unbind-environment": input.EnvironmentID.String(),
+				}
+
+				//  Generate a name
+				pvcName, err := utils.GenerateSlug(volume.Name)
+				if err != nil {
+					return err
+				}
+
+				// Get the PVCs
+				pvc, err := self.k8s.CreatePersistentVolumeClaim(ctx,
+					project.Edges.Team.Namespace,
+					pvcName,
+					volume.Name,
+					labels,
+					size,
+					[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+					nil,
+					client,
+				)
+				if err != nil {
+					return err
+				}
+				pvcID = utils.ToPtr(pvc.Name)
+				pvcMountPath = utils.ToPtr(volume.MountPath)
+			}
+
 			// Create the service config
 			createInput := &service_repo.MutateConfigInput{
 				ServiceID:               createService.ID,
@@ -273,6 +340,8 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				Public:                  &templateService.IsPublic,
 				Image:                   templateService.Image,
 				CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
+				PVCID:                   pvcID,
+				PVCVolumeMountPath:      pvcMountPath,
 			}
 			if templateService.Icon != "" {
 				createInput.Icon = utils.ToPtr(templateService.Icon)
@@ -418,7 +487,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	return models.TransformServiceEntities(newServices), nil
 }
 
-func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec) (*v1.HostSpec, error) {
+func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec, targetPort *int32) (*v1.HostSpec, error) {
 	settings, err := self.repo.System().GetSystemSettings(ctx, tx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get system settings: %w", err)
@@ -445,9 +514,15 @@ func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repos
 		}
 	}
 
+	// Use targetPort if provided, otherwise use the first port from ports
+	port := targetPort
+	if port == nil && len(ports) > 0 {
+		port = utils.ToPtr(ports[0].Port)
+	}
+
 	return &v1.HostSpec{
 		Host: domain,
 		Path: "/",
-		Port: utils.ToPtr(ports[0].Port),
+		Port: port,
 	}, nil
 }
