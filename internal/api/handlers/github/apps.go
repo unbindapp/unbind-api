@@ -243,15 +243,15 @@ func transformGithubAppEntities(entities []*ent.GithubApp) []*GithubAppAPIRespon
 type GithubAppAPIResponse struct {
 	// ID of the ent.
 	// The GitHub App ID
-	ID   int64     `json:"id,omitempty"`
-	UUID uuid.UUID `json:"uuid,omitempty"`
+	ID   int64     `json:"id"`
+	UUID uuid.UUID `json:"uuid"`
 	// The time at which the entity was created.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 	// The time at which the entity was last updated.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// The user that created this github app.
-	CreatedBy uuid.UUID `json:"created_by,omitempty"`
+	CreatedBy uuid.UUID `json:"created_by"`
 	// Name of the GitHub App
-	Name          string                           `json:"name,omitempty"`
+	Name          string                           `json:"name"`
 	Installations []*GithubInstallationAPIResponse `json:"installations,omitempty"`
 }
