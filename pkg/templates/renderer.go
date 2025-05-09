@@ -32,6 +32,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 			Ports:              svc.Ports,
 			IsPublic:           svc.IsPublic,
 			RunCommand:         svc.RunCommand,
+			HostInputIDs:       svc.HostInputIDs,
 			VariableReferences: svc.VariableReferences,
 			Volumes:            svc.Volumes,
 		}
