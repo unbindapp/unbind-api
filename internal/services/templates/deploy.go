@@ -52,15 +52,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		return nil, err
 	}
 
-	// Find the first public service that's not a database for wildcard host generation
-	var firstPublicService *schema.TemplateService
-	for _, svc := range template.Definition.Services {
-		if svc.IsPublic && svc.Type != schema.ServiceTypeDatabase && len(svc.Ports) > 0 {
-			firstPublicService = &svc
-			break
-		}
-	}
-
 	// Validate template inputs and handle hosts
 	validatedInputs := make(map[int]string)
 	hostInputMap := make(map[int]v1.HostSpec) // Maps input ID to host spec
@@ -126,11 +117,25 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			hostValue = *defInput.Default
 		} else if defInput.Required {
 			// Required but missing, generate a wildcard host
-			if firstPublicService == nil {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "no public service found for required host input")
+			// Find the service that owns this host input
+			var owningService *schema.TemplateService
+			for _, svc := range template.Definition.Services {
+				for _, hostInputID := range svc.HostInputIDs {
+					if hostInputID == defInput.ID {
+						owningService = &svc
+						break
+					}
+				}
+				if owningService != nil {
+					break
+				}
 			}
 
-			kubernetesName, err := utils.GenerateSlug(firstPublicService.Name)
+			if owningService == nil {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("no service found for host input %s", defInput.Name))
+			}
+
+			kubernetesName, err := utils.GenerateSlug(owningService.Name)
 			if err != nil {
 				return nil, err
 			}
@@ -140,11 +145,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			if defInput.TargetPort != nil {
 				port := int32(*defInput.TargetPort)
 				targetPort = &port
-			} else if len(firstPublicService.Ports) > 0 {
-				targetPort = &firstPublicService.Ports[0].Port
+			} else if len(owningService.Ports) > 0 {
+				targetPort = &owningService.Ports[0].Port
 			}
 
-			generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName, firstPublicService.Ports, targetPort)
+			generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName, owningService.Ports, targetPort)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate wildcard host: %w", err)
 			}
@@ -169,8 +174,19 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			if defInput.TargetPort != nil {
 				p := int32(*defInput.TargetPort)
 				port = &p
-			} else if firstPublicService != nil && len(firstPublicService.Ports) > 0 {
-				port = &firstPublicService.Ports[0].Port
+			} else {
+				// Find the service that owns this host input
+				for _, svc := range template.Definition.Services {
+					for _, hostInputID := range svc.HostInputIDs {
+						if hostInputID == defInput.ID && len(svc.Ports) > 0 {
+							port = &svc.Ports[0].Port
+							break
+						}
+					}
+					if port != nil {
+						break
+					}
+				}
 			}
 
 			hostInputMap[defInput.ID] = v1.HostSpec{
