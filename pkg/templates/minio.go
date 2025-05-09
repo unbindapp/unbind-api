@@ -39,11 +39,12 @@ func minioTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:      1,
-				Name:    "MinIO",
-				Type:    schema.ServiceTypeDockerimage,
-				Builder: schema.ServiceBuilderDocker,
-				Image:   utils.ToPtr("minio/minio:latest"),
+				ID:           1,
+				Name:         "MinIO",
+				Type:         schema.ServiceTypeDockerimage,
+				Builder:      schema.ServiceBuilderDocker,
+				HostInputIDs: []int{1, 2},
+				Image:        utils.ToPtr("minio/minio:latest"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,

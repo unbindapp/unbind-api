@@ -29,12 +29,13 @@ func ghostTemplate() *schema.TemplateDefinition {
 				DatabaseType: utils.ToPtr("mysql"),
 			},
 			{
-				ID:        2,
-				DependsOn: []int{1},
-				Name:      "Ghost",
-				Type:      schema.ServiceTypeDockerimage,
-				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("ghost:5"),
+				ID:           2,
+				DependsOn:    []int{1},
+				HostInputIDs: []int{1},
+				Name:         "Ghost",
+				Type:         schema.ServiceTypeDockerimage,
+				Builder:      schema.ServiceBuilderDocker,
+				Image:        utils.ToPtr("ghost:5"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     2368,
