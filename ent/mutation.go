@@ -2784,6 +2784,7 @@ type GithubAppMutation struct {
 	id                   *int64
 	created_at           *time.Time
 	updated_at           *time.Time
+	uuid                 *uuid.UUID
 	name                 *string
 	client_id            *string
 	client_secret        *string
@@ -2974,6 +2975,42 @@ func (m *GithubAppMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *GithubAppMutation) ResetUpdatedAt() {
 	m.updated_at = nil
+}
+
+// SetUUID sets the "uuid" field.
+func (m *GithubAppMutation) SetUUID(u uuid.UUID) {
+	m.uuid = &u
+}
+
+// UUID returns the value of the "uuid" field in the mutation.
+func (m *GithubAppMutation) UUID() (r uuid.UUID, exists bool) {
+	v := m.uuid
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUUID returns the old "uuid" field's value of the GithubApp entity.
+// If the GithubApp object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GithubAppMutation) OldUUID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUUID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUUID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUUID: %w", err)
+	}
+	return oldValue.UUID, nil
+}
+
+// ResetUUID resets all changes to the "uuid" field.
+func (m *GithubAppMutation) ResetUUID() {
+	m.uuid = nil
 }
 
 // SetCreatedBy sets the "created_by" field.
@@ -3320,12 +3357,15 @@ func (m *GithubAppMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GithubAppMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, githubapp.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, githubapp.FieldUpdatedAt)
+	}
+	if m.uuid != nil {
+		fields = append(fields, githubapp.FieldUUID)
 	}
 	if m.users != nil {
 		fields = append(fields, githubapp.FieldCreatedBy)
@@ -3357,6 +3397,8 @@ func (m *GithubAppMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case githubapp.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case githubapp.FieldUUID:
+		return m.UUID()
 	case githubapp.FieldCreatedBy:
 		return m.CreatedBy()
 	case githubapp.FieldName:
@@ -3382,6 +3424,8 @@ func (m *GithubAppMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldCreatedAt(ctx)
 	case githubapp.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case githubapp.FieldUUID:
+		return m.OldUUID(ctx)
 	case githubapp.FieldCreatedBy:
 		return m.OldCreatedBy(ctx)
 	case githubapp.FieldName:
@@ -3416,6 +3460,13 @@ func (m *GithubAppMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
+		return nil
+	case githubapp.FieldUUID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUUID(v)
 		return nil
 	case githubapp.FieldCreatedBy:
 		v, ok := value.(uuid.UUID)
@@ -3513,6 +3564,9 @@ func (m *GithubAppMutation) ResetField(name string) error {
 		return nil
 	case githubapp.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case githubapp.FieldUUID:
+		m.ResetUUID()
 		return nil
 	case githubapp.FieldCreatedBy:
 		m.ResetCreatedBy()

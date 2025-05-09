@@ -66,6 +66,11 @@ func UpdatedAt(v time.Time) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// UUID applies equality check predicate on the "uuid" field. It's identical to UUIDEQ.
+func UUID(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldEQ(FieldUUID, v))
+}
+
 // CreatedBy applies equality check predicate on the "created_by" field. It's identical to CreatedByEQ.
 func CreatedBy(v uuid.UUID) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldEQ(FieldCreatedBy, v))
@@ -174,6 +179,46 @@ func UpdatedAtLT(v time.Time) predicate.GithubApp {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.GithubApp {
 	return predicate.GithubApp(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// UUIDEQ applies the EQ predicate on the "uuid" field.
+func UUIDEQ(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldEQ(FieldUUID, v))
+}
+
+// UUIDNEQ applies the NEQ predicate on the "uuid" field.
+func UUIDNEQ(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldNEQ(FieldUUID, v))
+}
+
+// UUIDIn applies the In predicate on the "uuid" field.
+func UUIDIn(vs ...uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldIn(FieldUUID, vs...))
+}
+
+// UUIDNotIn applies the NotIn predicate on the "uuid" field.
+func UUIDNotIn(vs ...uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldNotIn(FieldUUID, vs...))
+}
+
+// UUIDGT applies the GT predicate on the "uuid" field.
+func UUIDGT(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldGT(FieldUUID, v))
+}
+
+// UUIDGTE applies the GTE predicate on the "uuid" field.
+func UUIDGTE(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldGTE(FieldUUID, v))
+}
+
+// UUIDLT applies the LT predicate on the "uuid" field.
+func UUIDLT(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldLT(FieldUUID, v))
+}
+
+// UUIDLTE applies the LTE predicate on the "uuid" field.
+func UUIDLTE(v uuid.UUID) predicate.GithubApp {
+	return predicate.GithubApp(sql.FieldLTE(FieldUUID, v))
 }
 
 // CreatedByEQ applies the EQ predicate on the "created_by" field.

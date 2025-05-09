@@ -55,6 +55,13 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 		return nil, huma.Error400BadRequest("Invalid state")
 	}
 
+	// Parse state as uuid
+	parsedState, err := uuid.Parse(state)
+	if err != nil {
+		log.Error("Error parsing state", "err", err)
+		return nil, huma.Error400BadRequest("Failed to parse state")
+	}
+
 	// Get user id from cache
 	userID, err := self.srv.StringCache.Getdel(ctx, input.State)
 	if err != nil {
@@ -79,7 +86,7 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 	}
 
 	// Save the app config
-	ghApp, err := self.srv.Repository.Github().CreateApp(ctx, appConfig, userIDParsed)
+	ghApp, err := self.srv.Repository.Github().CreateApp(ctx, parsedState, appConfig, userIDParsed)
 	if err != nil {
 		log.Error("Error saving github app", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to save github app")

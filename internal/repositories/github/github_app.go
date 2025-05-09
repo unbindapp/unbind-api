@@ -23,9 +23,10 @@ func (self *GithubRepository) GetApps(ctx context.Context, withInstallations boo
 	return q.All(ctx)
 }
 
-func (self *GithubRepository) CreateApp(ctx context.Context, app *github.AppConfig, createdBy uuid.UUID) (*ent.GithubApp, error) {
+func (self *GithubRepository) CreateApp(ctx context.Context, uniqueUuid uuid.UUID, app *github.AppConfig, createdBy uuid.UUID) (*ent.GithubApp, error) {
 	return self.base.DB.GithubApp.Create().
 		SetID(app.GetID()).
+		SetUUID(uniqueUuid).
 		SetClientID(app.GetClientID()).
 		SetClientSecret(app.GetClientSecret()).
 		SetWebhookSecret(app.GetWebhookSecret()).
@@ -37,4 +38,8 @@ func (self *GithubRepository) CreateApp(ctx context.Context, app *github.AppConf
 
 func (self *GithubRepository) GetGithubAppByID(ctx context.Context, ID int64) (*ent.GithubApp, error) {
 	return self.base.DB.GithubApp.Query().Where(githubapp.ID(ID)).Only(ctx)
+}
+
+func (self *GithubRepository) GetGithubAppByUUID(ctx context.Context, ID uuid.UUID) (*ent.GithubApp, error) {
+	return self.base.DB.GithubApp.Query().Where(githubapp.UUID(ID)).WithInstallations().Only(ctx)
 }

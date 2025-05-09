@@ -53,6 +53,12 @@ func (gac *GithubAppCreate) SetNillableUpdatedAt(t *time.Time) *GithubAppCreate 
 	return gac
 }
 
+// SetUUID sets the "uuid" field.
+func (gac *GithubAppCreate) SetUUID(u uuid.UUID) *GithubAppCreate {
+	gac.mutation.SetUUID(u)
+	return gac
+}
+
 // SetCreatedBy sets the "created_by" field.
 func (gac *GithubAppCreate) SetCreatedBy(u uuid.UUID) *GithubAppCreate {
 	gac.mutation.SetCreatedBy(u)
@@ -174,6 +180,9 @@ func (gac *GithubAppCreate) check() error {
 	if _, ok := gac.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "GithubApp.updated_at"`)}
 	}
+	if _, ok := gac.mutation.UUID(); !ok {
+		return &ValidationError{Name: "uuid", err: errors.New(`ent: missing required field "GithubApp.uuid"`)}
+	}
 	if _, ok := gac.mutation.CreatedBy(); !ok {
 		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required field "GithubApp.created_by"`)}
 	}
@@ -245,6 +254,10 @@ func (gac *GithubAppCreate) createSpec() (*GithubApp, *sqlgraph.CreateSpec) {
 	if value, ok := gac.mutation.UpdatedAt(); ok {
 		_spec.SetField(githubapp.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := gac.mutation.UUID(); ok {
+		_spec.SetField(githubapp.FieldUUID, field.TypeUUID, value)
+		_node.UUID = value
 	}
 	if value, ok := gac.mutation.Name(); ok {
 		_spec.SetField(githubapp.FieldName, field.TypeString, value)
@@ -454,6 +467,9 @@ func (u *GithubAppUpsertOne) UpdateNewValues() *GithubAppUpsertOne {
 		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(githubapp.FieldCreatedAt)
+		}
+		if _, exists := u.create.mutation.UUID(); exists {
+			s.SetIgnore(githubapp.FieldUUID)
 		}
 	}))
 	return u
@@ -768,6 +784,9 @@ func (u *GithubAppUpsertBulk) UpdateNewValues() *GithubAppUpsertBulk {
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(githubapp.FieldCreatedAt)
+			}
+			if _, exists := b.mutation.UUID(); exists {
+				s.SetIgnore(githubapp.FieldUUID)
 			}
 		}
 	}))

@@ -24,6 +24,8 @@ type GithubApp struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// UUID holds the value of the "uuid" field.
+	UUID uuid.UUID `json:"uuid,omitempty"`
 	// The user that created this github app.
 	CreatedBy uuid.UUID `json:"created_by,omitempty"`
 	// Name of the GitHub App
@@ -84,7 +86,7 @@ func (*GithubApp) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case githubapp.FieldCreatedAt, githubapp.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case githubapp.FieldCreatedBy:
+		case githubapp.FieldUUID, githubapp.FieldCreatedBy:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -118,6 +120,12 @@ func (ga *GithubApp) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				ga.UpdatedAt = value.Time
+			}
+		case githubapp.FieldUUID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field uuid", values[i])
+			} else if value != nil {
+				ga.UUID = *value
 			}
 		case githubapp.FieldCreatedBy:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -206,6 +214,9 @@ func (ga *GithubApp) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(ga.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("uuid=")
+	builder.WriteString(fmt.Sprintf("%v", ga.UUID))
 	builder.WriteString(", ")
 	builder.WriteString("created_by=")
 	builder.WriteString(fmt.Sprintf("%v", ga.CreatedBy))

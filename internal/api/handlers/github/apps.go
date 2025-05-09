@@ -75,6 +75,20 @@ func (self *HandlerGroup) HandleGithubAppCreate(ctx context.Context, input *GitH
 		return nil, huma.Error500InternalServerError("Failed to build redirect URL")
 	}
 
+	// Create a unique state to identify this request
+	state := uuid.New().String()
+
+	// Attach state as ?id to the input redirect URL
+	parsedRedirect, err := url.Parse(input.RedirectURL)
+	if err != nil {
+		log.Error("Error parsing redirect URL", "err", err)
+		return nil, huma.Error400BadRequest("Invalid redirect URL")
+	}
+	inputQ := parsedRedirect.Query()
+	inputQ.Set("id", state)
+	parsedRedirect.RawQuery = inputQ.Encode()
+	input.RedirectURL = parsedRedirect.String()
+
 	// Create GitHub app manifest, if not organization we also want organization read permission
 	manifest, appName, err := self.srv.GithubClient.CreateAppManifest(redirect, input.RedirectURL, input.Organization != "")
 
@@ -83,8 +97,6 @@ func (self *HandlerGroup) HandleGithubAppCreate(ctx context.Context, input *GitH
 		return nil, huma.Error500InternalServerError("Failed to create github app manifest")
 	}
 
-	// Create a unique state to identify this request
-	state := uuid.New().String()
 	err = self.srv.StringCache.SetWithExpiration(ctx, appName, state, 30*time.Minute)
 	if err != nil {
 		log.Error("Error setting state in cache", "err", err)
@@ -177,6 +189,34 @@ func (self *HandlerGroup) HandleListGithubApps(ctx context.Context, input *Githu
 
 	resp := &GithubAppListResponse{}
 	resp.Body.Data = transformGithubAppEntities(apps)
+	return resp, nil
+}
+
+// GET by UUID
+type GithubAppGetInput struct {
+	server.BaseAuthInput
+	UUID uuid.UUID `query:"uuid" required:"true" format:"uuid"`
+}
+
+type GithubAppGetResponse struct {
+	Body struct {
+		Data *GithubAppAPIResponse `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) HandleGetGithubApp(ctx context.Context, input *GithubAppGetInput) (*GithubAppGetResponse, error) {
+	// Get app by ID
+	app, err := self.srv.Repository.Github().GetGithubAppByUUID(ctx, input.UUID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, huma.Error404NotFound("App not found")
+		}
+		log.Error("Error getting github app", "err", err)
+		return nil, huma.Error500InternalServerError("Failed to get github app")
+	}
+
+	resp := &GithubAppGetResponse{}
+	resp.Body.Data = transformGithubAppEntity(app)
 	return resp, nil
 }
 

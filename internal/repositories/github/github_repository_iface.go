@@ -18,8 +18,9 @@ type GithubRepositoryInterface interface {
 	GetApp(ctx context.Context) (*ent.GithubApp, error)
 	// Get all github apps returns a slice of GithubApp entities.
 	GetApps(ctx context.Context, withInstallations bool) ([]*ent.GithubApp, error)
-	CreateApp(ctx context.Context, app *github.AppConfig, createdBy uuid.UUID) (*ent.GithubApp, error)
+	CreateApp(ctx context.Context, uniqueUuid uuid.UUID, app *github.AppConfig, createdBy uuid.UUID) (*ent.GithubApp, error)
 	GetGithubAppByID(ctx context.Context, ID int64) (*ent.GithubApp, error)
+	GetGithubAppByUUID(ctx context.Context, ID uuid.UUID) (*ent.GithubApp, error)
 	GetInstallationByID(ctx context.Context, ID int64) (*ent.GithubInstallation, error)
 	GetInstallationsByCreator(ctx context.Context, createdBy uuid.UUID) ([]*ent.GithubInstallation, error)
 	GetInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error)

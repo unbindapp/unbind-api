@@ -30,6 +30,9 @@ func (GithubApp) Fields() []ent.Field {
 			Positive().
 			Unique().
 			Comment("The GitHub App ID"),
+		field.UUID("uuid", uuid.UUID{}).
+			Immutable().
+			Unique(),
 		field.UUID("created_by", uuid.UUID{}).
 			Comment("The user that created this github app."),
 		field.String("name").
