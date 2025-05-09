@@ -56,7 +56,7 @@ func minioTemplate() *schema.TemplateDefinition {
 					},
 				},
 				IsPublic:   true,
-				RunCommand: utils.ToPtr("server /data --console-address ':9001'"),
+				RunCommand: utils.ToPtr("minio server /data --console-address ':9001'"),
 				Variables: []schema.TemplateVariable{
 					{
 						Name:  "MINIO_ROOT_USER",
