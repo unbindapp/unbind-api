@@ -117,50 +117,63 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			hostValue = *defInput.Default
 		} else if defInput.Required {
 			// Required but missing, generate a wildcard host
-			// Find the service that owns this host input
-			var owningService *schema.TemplateService
+			// Find ALL services that use this host input (not just the first one)
+			hostGenerated := false
 			for _, svc := range template.Definition.Services {
 				for _, hostInputID := range svc.HostInputIDs {
 					if hostInputID == defInput.ID {
-						owningService = &svc
+						kubernetesName, err := utils.GenerateSlug(svc.Name)
+						if err != nil {
+							return nil, err
+						}
+
+						// Use the specific target port from the host input
+						var targetPort *int32
+						if defInput.TargetPort != nil {
+							port := int32(*defInput.TargetPort)
+							targetPort = &port
+						} else {
+							// Find appropriate port based on the service's port list
+							// This is a fallback if targetPort isn't specified
+							if len(svc.Ports) > 0 {
+								targetPort = &svc.Ports[0].Port
+							}
+						}
+
+						// Add a suffix based on the port to ensure unique names for multiple hosts
+						// on the same service
+						hostSuffix := ""
+						if targetPort != nil {
+							hostSuffix = fmt.Sprintf("-%d", *targetPort)
+						}
+
+						generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName+hostSuffix, svc.Ports, targetPort)
+						if err != nil {
+							return nil, fmt.Errorf("failed to generate wildcard host: %w", err)
+						}
+
+						if generatedHost == nil {
+							return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "failed to generate wildcard host for required host input")
+						}
+
+						hostValue = generatedHost.Host
+						// Store the host spec for later use
+						hostInputMap[defInput.ID] = *generatedHost
+						hostGenerated = true
+
+						// We found a match and created a host, so we can break from the inner loop
 						break
 					}
 				}
-				if owningService != nil {
+				if hostGenerated {
 					break
 				}
 			}
 
-			if owningService == nil {
+			// If we didn't create a host for this input, return an error
+			if !hostGenerated {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("no service found for host input %s", defInput.Name))
 			}
-
-			kubernetesName, err := utils.GenerateSlug(owningService.Name)
-			if err != nil {
-				return nil, err
-			}
-
-			// Generate wildcard host - NOT inside transaction
-			var targetPort *int32
-			if defInput.TargetPort != nil {
-				port := int32(*defInput.TargetPort)
-				targetPort = &port
-			} else if len(owningService.Ports) > 0 {
-				targetPort = &owningService.Ports[0].Port
-			}
-
-			generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName, owningService.Ports, targetPort)
-			if err != nil {
-				return nil, fmt.Errorf("failed to generate wildcard host: %w", err)
-			}
-
-			if generatedHost == nil {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "failed to generate wildcard host for required host input")
-			}
-
-			hostValue = generatedHost.Host
-			// Store the host spec for later use
-			hostInputMap[defInput.ID] = *generatedHost
 		} else {
 			// Not required and no value, skip
 			continue
@@ -175,7 +188,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				p := int32(*defInput.TargetPort)
 				port = &p
 			} else {
-				// Find the service that owns this host input
+				// Find the service that uses this host input
 				for _, svc := range template.Definition.Services {
 					for _, hostInputID := range svc.HostInputIDs {
 						if hostInputID == defInput.ID && len(svc.Ports) > 0 {

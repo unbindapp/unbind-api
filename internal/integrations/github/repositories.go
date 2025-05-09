@@ -538,7 +538,13 @@ func (self *GithubClient) GetCommitSummary(ctx context.Context, installation *en
 		if err != nil {
 			return "", "", nil, fmt.Errorf("error getting branch %s for repository %s/%s: %v", branchOrSHA, owner, repo, err)
 		}
-		repoCommit = branchInfo.GetCommit()
+		// Get the commit SHA from the branch
+		commitSHA := branchInfo.GetCommit().GetSHA()
+		// Use the commit SHA to get the full commit information
+		repoCommit, _, err = authenticatedClient.Repositories.GetCommit(ctx, owner, repo, commitSHA, nil)
+		if err != nil {
+			return "", "", nil, fmt.Errorf("error getting commit %s for repository %s/%s: %v", commitSHA, owner, repo, err)
+		}
 	}
 
 	commit := repoCommit.GetCommit()
