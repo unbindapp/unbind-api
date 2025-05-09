@@ -96,11 +96,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			// If TargetPort is specified, use it instead of the first port
 			if defInput.TargetPort != nil {
 				port := int32(*defInput.TargetPort)
-				hostSpecs[defInput.ID] = []v1.HostSpec{{
+				hostSpecs[defInput.ID] = append(hostSpecs[defInput.ID], v1.HostSpec{
 					Host: value,
 					Path: "/",
 					Port: &port,
-				}}
+				})
 			}
 		}
 
@@ -145,7 +145,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					validatedInputs[missingHostInput.ID] = generatedHost.Host
 					// Store the host spec for the service
 					kubeNameMap[firstPublicService.ID] = kubernetesName
-					hostSpecs[missingHostInput.ID] = []v1.HostSpec{*generatedHost}
+					hostSpecs[missingHostInput.ID] = append(hostSpecs[missingHostInput.ID], *generatedHost)
 				} else {
 					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "failed to generate wildcard host for required host input")
 				}
@@ -227,12 +227,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					if defInput.Type == schema.InputTypeHost {
 						hostValue, exists := validatedInputs[defInput.ID]
 						if exists {
-							hosts := []v1.HostSpec{{
+							hostSpecs[templateService.ID] = append(hostSpecs[templateService.ID], v1.HostSpec{
 								Host: hostValue,
 								Path: "/",
 								Port: utils.ToPtr(templateService.Ports[0].Port),
-							}}
-							hostSpecs[templateService.ID] = hosts
+							})
 							hostFound = true
 							break
 						}
@@ -259,7 +258,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 						// No wildcard host generated, set to false
 						templateService.IsPublic = false
 					} else {
-						hostSpecs[templateService.ID] = []v1.HostSpec{*generatedHost}
+						hostSpecs[templateService.ID] = append(hostSpecs[templateService.ID], *generatedHost)
 					}
 				}
 			}
