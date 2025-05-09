@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -33,6 +34,8 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	var committer *schema.GitCommitter
 
 	if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
+		log.Infof("--- GETTING COMMIT SUMMARY FOR %s/%s", *service.GitRepository, *service.Edges.ServiceConfig.GitBranch)
+
 		// Branch or sha
 		summaryTarget := *service.Edges.ServiceConfig.GitBranch
 		isCommitHash := false
@@ -47,6 +50,8 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 			*service.GitRepository,
 			summaryTarget,
 			isCommitHash)
+
+		log.Infof("--- RECEIVED %s, %s, %s", commitSHA, commitMessage, committer.Name)
 
 		// ! TODO - Should we hard fail here?
 		if err != nil {
