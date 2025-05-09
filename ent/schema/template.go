@@ -125,7 +125,7 @@ type ValueGenerator struct {
 func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
 	switch self.Type {
 	case GeneratorTypePassword:
-		pwd, err := utils.GenerateSecurePassword(16)
+		pwd, err := utils.GenerateSecurePassword(32)
 		if err != nil {
 			return "", err
 		}

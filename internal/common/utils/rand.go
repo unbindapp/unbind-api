@@ -26,12 +26,13 @@ func GenerateSecurePassword(length int) (string, error) {
 	// Generate password
 	password := make([]byte, length)
 
-	// First character must be alphanumeric
-	alphaIndex, err := randInt(int64(len(alphanumeric)))
+	// First character must be a letter
+	letters := lowercase + uppercase
+	letterIndex, err := randInt(int64(len(letters)))
 	if err != nil {
 		return "", err
 	}
-	password[0] = alphanumeric[alphaIndex]
+	password[0] = letters[letterIndex]
 
 	// Make sure at least one special character is included
 	specialIndex, err := randInt(int64(len(specialChars)))

@@ -147,7 +147,7 @@ func TestGenerateSecurePassword(t *testing.T) {
 			hasUpper := false
 			hasSpecial := false
 			hasAlphaNumeric := false
-			firstIsAlphaNumeric := false
+			firstIsLetter := false
 
 			for i, c := range password {
 				char := string(c)
@@ -158,13 +158,15 @@ func TestGenerateSecurePassword(t *testing.T) {
 
 				if strings.ContainsAny(char, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
 					hasAlphaNumeric = true
-					if i == 0 {
-						firstIsAlphaNumeric = true
-					}
 				}
 
 				if strings.ContainsAny(char, "!@#$%^&*()_+-=[]{}|;:,.<>?") {
 					hasSpecial = true
+				}
+
+				// Check if first character is a letter
+				if i == 0 && strings.ContainsAny(char, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+					firstIsLetter = true
 				}
 			}
 
@@ -177,8 +179,8 @@ func TestGenerateSecurePassword(t *testing.T) {
 			if !hasAlphaNumeric {
 				t.Error("password missing alphanumeric character")
 			}
-			if !firstIsAlphaNumeric {
-				t.Error("first character is not alphanumeric")
+			if !firstIsLetter {
+				t.Error("first character is not a letter")
 			}
 		}
 	})
