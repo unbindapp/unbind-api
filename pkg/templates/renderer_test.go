@@ -49,7 +49,7 @@ func TestResolveGeneratedVariables(t *testing.T) {
 	})
 
 	// Test variable resolution
-	resolved, err := templater.ResolveGeneratedVariables(template)
+	resolved, err := templater.ResolveGeneratedVariables(template, nil)
 	require.NoError(t, err)
 	require.NotNil(t, resolved)
 

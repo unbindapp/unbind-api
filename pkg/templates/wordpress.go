@@ -11,6 +11,15 @@ func wordPressTemplate() *schema.TemplateDefinition {
 		Name:        "wordpress",
 		Version:     1,
 		Description: "WordPress with MySQL",
+		Inputs: []schema.TemplateInput{
+			{
+				ID:          1,
+				Name:        "Host",
+				Type:        schema.InputTypeHost,
+				Description: "Hostname to use for the WordPress instance.",
+				Required:    true,
+			},
+		},
 		Services: []schema.TemplateService{
 			{
 				ID:           1,

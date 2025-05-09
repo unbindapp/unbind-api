@@ -109,18 +109,25 @@ type GeneratorType string
 const (
 	GeneratorTypePassword GeneratorType = "password"
 	GeneratorTypeEmail    GeneratorType = "email"
+	GeneratorTypeInput    GeneratorType = "input" // For user input
 )
 
 // ValueGenerator represents how to generate a value
 type ValueGenerator struct {
 	Type       GeneratorType `json:"type"`
+	InputID    int           `json:"input_id,omitempty"`    // For input
 	BaseDomain string        `json:"base_domain,omitempty"` // For email
+	AddPrefix  string        `json:"add_prefix,omitempty"`  // Add a prefix to the generated value
 }
 
-func (self *ValueGenerator) Generate() (string, error) {
+func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
 	switch self.Type {
 	case GeneratorTypePassword:
-		return utils.GenerateSecurePassword(16)
+		pwd, err := utils.GenerateSecurePassword(16)
+		if err != nil {
+			return "", err
+		}
+		return self.AddPrefix + pwd, nil
 	case GeneratorTypeEmail:
 		// Strip http:// or https:// from the base domain
 		// Remove port if present and add .com if no domain part is present
@@ -130,7 +137,14 @@ func (self *ValueGenerator) Generate() (string, error) {
 		if !strings.Contains(domain, ".") {
 			domain = domain + ".com"
 		}
-		return fmt.Sprintf("admin@%s", domain), nil
+		return self.AddPrefix + fmt.Sprintf("admin@%s", domain), nil
+	case GeneratorTypeInput:
+		// Find the input by ID
+		inputValue, ok := inputs[self.InputID]
+		if !ok {
+			return "", fmt.Errorf("input ID %d not found in inputs map", self.InputID)
+		}
+		return self.AddPrefix + inputValue, nil
 	default:
 		return "", fmt.Errorf("unknown generator type: %s", self.Type)
 	}
@@ -147,6 +161,7 @@ const (
 
 // TemplateInput represents a user input field in the template
 type TemplateInput struct {
+	ID          int               `json:"id"`
 	Name        string            `json:"name"`
 	Type        TemplateInputType `json:"type"`
 	Description string            `json:"description"`

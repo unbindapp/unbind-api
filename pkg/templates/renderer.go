@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 )
 
 // ResolveGeneratedVariables creates a new TemplateDefinition with all generated variables resolved to their values
-func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefinition) (*schema.TemplateDefinition, error) {
+func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
 	// Create a deep copy of the template
 	resolved := &schema.TemplateDefinition{
 		Name:        template.Name,
@@ -46,7 +47,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 				if v.Generator.Type == schema.GeneratorTypeEmail {
 					v.Generator.BaseDomain = self.cfg.ExternalUIUrl
 				}
-				value, err := v.Generator.Generate()
+				value, err := v.Generator.Generate(inputs)
 				if err != nil {
 					return nil, fmt.Errorf("failed to generate value for %s: %w", v.Name, err)
 				}
@@ -80,7 +81,7 @@ func (self *Templater) ProcessTemplateInputs(template *schema.TemplateDefinition
 			if input.Default != nil {
 				value = *input.Default
 			} else if input.Required {
-				return nil, fmt.Errorf("required input %s is missing", input.Name)
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is required", input.Name))
 			} else {
 				continue
 			}
@@ -108,7 +109,7 @@ func (self *Templater) ProcessTemplateVolumes(template *schema.TemplateDefinitio
 			if volume.Default != nil {
 				size = *volume.Default
 			} else {
-				return nil, fmt.Errorf("volume size for %s is required", volume.Name)
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("volume size for %s is required", volume.Name))
 			}
 		}
 

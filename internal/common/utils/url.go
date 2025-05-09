@@ -112,3 +112,24 @@ func sanitizeForSubdomain(s string) string {
 
 	return s
 }
+
+// CleanAndValidateHost takes a host string and returns a cleaned version with protocol removed
+// and ensures it's a valid domain. Returns an error if the host is invalid.
+func CleanAndValidateHost(host string) (string, error) {
+	// Remove protocol if present
+	host = strings.TrimPrefix(host, "http://")
+	host = strings.TrimPrefix(host, "https://")
+	host = strings.TrimSuffix(host, "/")
+
+	// Basic domain validation
+	if !strings.Contains(host, ".") {
+		return "", fmt.Errorf("invalid domain: must contain at least one dot")
+	}
+
+	// Check for invalid characters
+	if strings.ContainsAny(host, "!@#$%^&*()_+{}|:\"<>?[]\\;',./") {
+		return "", fmt.Errorf("invalid domain: contains invalid characters")
+	}
+
+	return host, nil
+}

@@ -11,6 +11,15 @@ func ghostTemplate() *schema.TemplateDefinition {
 		Name:        "ghost",
 		Version:     1,
 		Description: "Ghost CMS with MySQL",
+		Inputs: []schema.TemplateInput{
+			{
+				ID:          1,
+				Name:        "Host",
+				Type:        schema.InputTypeHost,
+				Description: "Hostname to use for the WordPress instance.",
+				Required:    true,
+			},
+		},
 		Services: []schema.TemplateService{
 			{
 				ID:           1,
@@ -34,6 +43,14 @@ func ghostTemplate() *schema.TemplateDefinition {
 				},
 				IsPublic: true,
 				Variables: []schema.TemplateVariable{
+					{
+						Name: "url",
+						Generator: &schema.ValueGenerator{
+							Type:      schema.GeneratorTypeInput,
+							InputID:   1,
+							AddPrefix: "https://",
+						},
+					},
 					{
 						Name:  "database__client",
 						Value: "mysql",
