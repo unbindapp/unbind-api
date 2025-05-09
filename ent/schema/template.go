@@ -82,6 +82,7 @@ type TemplateService struct {
 	Image              *string                     `json:"image,omitempty"`
 	Ports              []PortSpec                  `json:"ports,omitempty"`
 	IsPublic           bool                        `json:"is_public"`
+	RunCommand         *string                     `json:"run_command,omitempty"`
 	Volumes            []TemplateVolume            `json:"volumes,omitempty"`
 	Variables          []TemplateVariable          `json:"variables"`                     // Variables this service needs
 	VariableReferences []TemplateVariableReference `json:"variable_references,omitempty"` // Variables this service needs

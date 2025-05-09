@@ -354,6 +354,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
 				PVCID:                   pvcID,
 				PVCVolumeMountPath:      pvcMountPath,
+				RunCommand:              templateService.RunCommand,
 			}
 			if templateService.Icon != "" {
 				createInput.Icon = utils.ToPtr(templateService.Icon)

@@ -31,6 +31,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 			Image:              svc.Image,
 			Ports:              svc.Ports,
 			IsPublic:           svc.IsPublic,
+			RunCommand:         svc.RunCommand,
 			VariableReferences: svc.VariableReferences,
 			Volumes:            svc.Volumes,
 		}

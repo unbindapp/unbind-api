@@ -54,7 +54,8 @@ func minioTemplate() *schema.TemplateDefinition {
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
+				IsPublic:   true,
+				RunCommand: utils.ToPtr("server /data --console-address ':9001'"),
 				Variables: []schema.TemplateVariable{
 					{
 						Name:  "MINIO_ROOT_USER",
