@@ -339,7 +339,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				if err != nil {
 					return err
 				}
-				pvcID = utils.ToPtr(pvc.Name)
+				pvcID = utils.ToPtr(pvc.ID)
 				pvcMountPath = utils.ToPtr(volume.MountPath)
 			}
 
