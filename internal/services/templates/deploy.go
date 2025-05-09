@@ -54,7 +54,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 	// Validate template inputs and handle hosts
 	validatedInputs := make(map[int]string)
-	hostInputMap := make(map[int]v1.HostSpec) // Maps input ID to host spec
+	hostInputMap, validatedInputs, err :=
+		self.resolveHostInputs(ctx, &template.Definition, input.Inputs)
+	if err != nil {
+		return nil, err
+	}
 
 	// * Validate all non-host inputs
 	for _, defInput := range template.Definition.Inputs {
@@ -86,135 +90,22 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		validatedInputs[defInput.ID] = value
 	}
 
-	// * Validate or generate host inputs
-	for _, defInput := range template.Definition.Inputs {
-		if defInput.Type != schema.InputTypeHost {
-			continue
-		}
-
-		// Get value from provided inputs or use default
-		var hostValue string
-		var exists bool
-
-		for _, inputItem := range input.Inputs {
-			if inputItem.ID == defInput.ID {
-				hostValue = inputItem.Value
-				exists = true
-				break
-			}
-		}
-
-		// If host value exists, validate it
-		if exists {
-			// Clean and validate the host
-			cleanedHost, err := utils.CleanAndValidateHost(hostValue)
-			if err != nil {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("invalid host for input %s: %v", defInput.Name, err))
-			}
-			hostValue = cleanedHost
-		} else if defInput.Default != nil {
-			// Use default if available
-			hostValue = *defInput.Default
-		} else if defInput.Required {
-			// Required but missing, generate a wildcard host
-			// Find ALL services that use this host input (not just the first one)
-			hostGenerated := false
-			for _, svc := range template.Definition.Services {
-				for _, hostInputID := range svc.HostInputIDs {
-					if hostInputID == defInput.ID {
-						kubernetesName, err := utils.GenerateSlug(svc.Name)
-						if err != nil {
-							return nil, err
-						}
-
-						// Use the specific target port from the host input
-						var targetPort *int32
-						if defInput.TargetPort != nil {
-							port := int32(*defInput.TargetPort)
-							targetPort = &port
-						} else {
-							// Find appropriate port based on the service's port list
-							// This is a fallback if targetPort isn't specified
-							if len(svc.Ports) > 0 {
-								targetPort = &svc.Ports[0].Port
-							}
-						}
-
-						// Add a suffix based on the port to ensure unique names for multiple hosts
-						// on the same service
-						hostSuffix := ""
-						if targetPort != nil {
-							hostSuffix = fmt.Sprintf("-%d", *targetPort)
-						}
-
-						generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName+hostSuffix, svc.Ports, targetPort)
-						if err != nil {
-							return nil, fmt.Errorf("failed to generate wildcard host: %w", err)
-						}
-
-						if generatedHost == nil {
-							return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "failed to generate wildcard host for required host input")
-						}
-
-						hostValue = generatedHost.Host
-						// Store the host spec for later use
-						hostInputMap[defInput.ID] = *generatedHost
-						hostGenerated = true
-
-						// We found a match and created a host, so we can break from the inner loop
-						break
-					}
-				}
-				if hostGenerated {
-					break
-				}
-			}
-
-			// If we didn't create a host for this input, return an error
-			if !hostGenerated {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("no service found for host input %s", defInput.Name))
-			}
-		} else {
-			// Not required and no value, skip
-			continue
-		}
-
-		validatedInputs[defInput.ID] = hostValue
-
-		// Create host spec if not already created
-		if _, exists := hostInputMap[defInput.ID]; !exists {
-			var port *int32
-			if defInput.TargetPort != nil {
-				p := int32(*defInput.TargetPort)
-				port = &p
-			} else {
-				// Find the service that uses this host input
-				for _, svc := range template.Definition.Services {
-					for _, hostInputID := range svc.HostInputIDs {
-						if hostInputID == defInput.ID && len(svc.Ports) > 0 {
-							port = &svc.Ports[0].Port
-							break
-						}
-					}
-					if port != nil {
-						break
-					}
-				}
-			}
-
-			hostInputMap[defInput.ID] = v1.HostSpec{
-				Host: hostValue,
-				Path: "/",
-				Port: port,
-			}
-		}
-	}
-
 	// Parse and generate variables
 	templater := templates.NewTemplater(self.cfg)
 	generatedTemplate, err := templater.ResolveGeneratedVariables(&template.Definition, validatedInputs)
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
+	}
+
+	// Make sure we have all our hosts
+	for _, svc := range generatedTemplate.Services {
+		for _, id := range svc.HostInputIDs {
+			if _, ok := hostInputMap[id]; !ok {
+				return nil, errdefs.NewCustomError(
+					errdefs.ErrTypeInvalidInput,
+					fmt.Sprintf("service %q references unresolved host input ID %d", svc.Name, id))
+			}
+		}
 	}
 
 	// Create kubernetes client
@@ -518,6 +409,106 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	return models.TransformServiceEntities(newServices), nil
+}
+
+// returns: map[inputID]HostSpec, map[inputID]string (value to hand to the templater)
+func (self *TemplatesService) resolveHostInputs(
+	ctx context.Context,
+	tmpl *schema.TemplateDefinition,
+	rawInputs []models.TemplateInput,
+) (map[int]v1.HostSpec, map[int]string, error) {
+	hostSpecByID := make(map[int]v1.HostSpec)
+	valueByID := make(map[int]string)
+
+	for _, in := range tmpl.Inputs {
+		if in.Type != schema.InputTypeHost {
+			continue
+		}
+
+		// 1. find a value (provided → default → "")
+		var hostVal string
+		provided := false
+		for _, u := range rawInputs {
+			if u.ID == in.ID {
+				hostVal, provided = u.Value, true
+				break
+			}
+		}
+		if !provided && in.Default != nil {
+			hostVal = *in.Default
+		}
+
+		// 2. if we still have nothing AND it’s required → try generate
+		if hostVal == "" && in.Required {
+			// generateWildcardHost needs *one* service / port context – first match wins
+			genForSvc := (*schema.TemplateService)(nil)
+			var targetPort *int32
+			for _, svc := range tmpl.Services {
+				for _, id := range svc.HostInputIDs {
+					if id == in.ID {
+						genForSvc = &svc
+						break
+					}
+				}
+				if genForSvc != nil {
+					break
+				}
+			}
+			if genForSvc == nil {
+				return nil, nil, errdefs.NewCustomError(
+					errdefs.ErrTypeInvalidInput,
+					fmt.Sprintf("no service refers to required host input %q", in.Name))
+			}
+
+			if in.TargetPort != nil {
+				p := int32(*in.TargetPort)
+				targetPort = &p
+			} else if len(genForSvc.Ports) > 0 {
+				targetPort = &genForSvc.Ports[0].Port
+			}
+			kubename, _ := utils.GenerateSlug(genForSvc.Name)
+			spec, err := self.generateWildcardHost(ctx, nil, kubename, genForSvc.Ports, targetPort)
+			if err != nil {
+				return nil, nil, err
+			}
+			hostVal = spec.Host
+			hostSpecByID[in.ID] = *spec // we already have the full spec
+			valueByID[in.ID] = hostVal
+			continue
+		}
+
+		// 3. we have a hostVal from user / default – clean & store
+		if hostVal != "" {
+			cleaned, err := utils.CleanAndValidateHost(hostVal)
+			if err != nil {
+				return nil, nil, errdefs.NewCustomError(
+					errdefs.ErrTypeInvalidInput,
+					fmt.Sprintf("invalid host for input %q: %v", in.Name, err))
+			}
+			hostVal = cleaned
+			// pick a port (targetPort or first port of *any* svc using this input)
+			var port *int32
+			if in.TargetPort != nil {
+				p := int32(*in.TargetPort)
+				port = &p
+			} else {
+				for _, svc := range tmpl.Services {
+					for _, id := range svc.HostInputIDs {
+						if id == in.ID && len(svc.Ports) > 0 {
+							port = &svc.Ports[0].Port
+							break
+						}
+					}
+					if port != nil {
+						break
+					}
+				}
+			}
+			hostSpecByID[in.ID] = v1.HostSpec{Host: hostVal, Path: "/", Port: port}
+			valueByID[in.ID] = hostVal
+		}
+	}
+	return hostSpecByID, valueByID, nil
 }
 
 func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec, targetPort *int32) (*v1.HostSpec, error) {
