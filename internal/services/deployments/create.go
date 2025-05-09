@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -33,8 +35,16 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	var commitMessage string
 	var committer *schema.GitCommitter
 
-	if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
-		log.Infof("--- GETTING COMMIT SUMMARY FOR %s/%s", *service.GitRepository, *service.Edges.ServiceConfig.GitBranch)
+	if service.GithubInstallationID != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
+		// Get installation
+		installation, err := self.repo.Github().GetInstallationByID(ctx, *service.GithubInstallationID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Invalid github installation")
+			}
+			log.Error("Error getting github installation", "err", err)
+			return nil, err
+		}
 
 		// Branch or sha
 		summaryTarget := *service.Edges.ServiceConfig.GitBranch
@@ -45,31 +55,17 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 		}
 
 		commitSHA, commitMessage, committer, err = self.githubClient.GetCommitSummary(ctx,
-			service.Edges.GithubInstallation,
-			service.Edges.GithubInstallation.AccountLogin,
+			installation,
+			installation.AccountLogin,
 			*service.GitRepository,
 			summaryTarget,
 			isCommitHash)
-
-		log.Infof("--- RECEIVED %s, %s, %s", commitSHA, commitMessage, committer.Name)
 
 		// ! TODO - Should we hard fail here?
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		log.Infof("--- NO GITHUB INSTALLATION OR REPO FOUND")
-		if service.Edges.GithubInstallation == nil {
-			log.Infof("--- GITHUB INSTALLATION NOT FOUND")
-		}
-		if service.GitRepository == nil {
-			log.Infof("--- GITHUB REPO NOT FOUND")
-		}
-		if service.Edges.ServiceConfig.GitBranch == nil {
-			log.Infof("--- GITHUB BRANCH NOT FOUND")
-		}
 	}
-
 	// Enqueue build job
 	env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID, nil)
 	if err != nil {

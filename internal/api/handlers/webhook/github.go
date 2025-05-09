@@ -156,7 +156,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 	}
 
 	if ghApp == nil {
-		log.Error("Received webhook with invalid signature", "input", input.RawBody)
+		log.Error("Received webhook with invalid signature")
 		return nil, huma.Error400BadRequest("Invalid signature")
 	}
 
