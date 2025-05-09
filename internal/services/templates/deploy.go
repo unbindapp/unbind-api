@@ -54,7 +54,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 	// Validate template inputs
 	validatedInputs := make(map[int]string)
-	var missingHostInput *schema.TemplateInput
+	var missingHostInputs []*schema.TemplateInput
 	kubeNameMap := make(map[int]string)
 	hostSpecs := make(map[int][]v1.HostSpec)
 
@@ -75,7 +75,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			} else if defInput.Required {
 				if defInput.Type == schema.InputTypeHost {
 					// Store the missing host input for later processing
-					missingHostInput = &defInput
+					missingHostInputs = append(missingHostInputs, &defInput)
 					continue
 				}
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is required", defInput.Name))
@@ -107,8 +107,8 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		validatedInputs[defInput.ID] = value
 	}
 
-	// If we have a missing required host input, generate a wildcard host for the first public service
-	if missingHostInput != nil {
+	// If we have missing required host inputs, generate wildcard hosts for the first public service
+	if len(missingHostInputs) > 0 {
 		// Find the first public service that's not a database
 		var firstPublicService *schema.TemplateService
 		for _, svc := range template.Definition.Services {
@@ -125,17 +125,30 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				return nil, err
 			}
 
-			generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName, firstPublicService.Ports, nil)
-			if err != nil {
-				return nil, fmt.Errorf("failed to generate wildcard host: %w", err)
-			}
-			if generatedHost != nil {
-				validatedInputs[missingHostInput.ID] = generatedHost.Host
-				// Store the host spec for the service
-				kubeNameMap[firstPublicService.ID] = kubernetesName
-				hostSpecs[firstPublicService.ID] = []v1.HostSpec{*generatedHost}
-			} else {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "failed to generate wildcard host for required host input")
+			// Generate a wildcard host for each missing host input
+			for i, missingHostInput := range missingHostInputs {
+				// For each missing host input, generate a unique subdomain
+				subdomainSuffix := ""
+				if i > 0 {
+					subdomainSuffix = fmt.Sprintf("-%d", i+1)
+				}
+				var targetPort *int32
+				if missingHostInput.TargetPort != nil {
+					port := int32(*missingHostInput.TargetPort)
+					targetPort = &port
+				}
+				generatedHost, err := self.generateWildcardHost(ctx, nil, kubernetesName+subdomainSuffix, firstPublicService.Ports, targetPort)
+				if err != nil {
+					return nil, fmt.Errorf("failed to generate wildcard host: %w", err)
+				}
+				if generatedHost != nil {
+					validatedInputs[missingHostInput.ID] = generatedHost.Host
+					// Store the host spec for the service
+					kubeNameMap[firstPublicService.ID] = kubernetesName
+					hostSpecs[missingHostInput.ID] = []v1.HostSpec{*generatedHost}
+				} else {
+					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "failed to generate wildcard host for required host input")
+				}
 			}
 		} else {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "no public service found for required host input")
@@ -146,7 +159,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	templater := templates.NewTemplater(self.cfg)
 	generatedTemplate, err := templater.ResolveGeneratedVariables(&template.Definition, validatedInputs)
 	if err != nil {
-		return nil, err
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
 
 	// Create kubernetes client
