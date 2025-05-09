@@ -57,6 +57,17 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		log.Infof("--- NO GITHUB INSTALLATION OR REPO FOUND")
+		if service.Edges.GithubInstallation == nil {
+			log.Infof("--- GITHUB INSTALLATION NOT FOUND")
+		}
+		if service.GitRepository == nil {
+			log.Infof("--- GITHUB REPO NOT FOUND")
+		}
+		if service.Edges.ServiceConfig.GitBranch == nil {
+			log.Infof("--- GITHUB BRANCH NOT FOUND")
+		}
 	}
 
 	// Enqueue build job
