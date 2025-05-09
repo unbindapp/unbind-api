@@ -30,6 +30,17 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
+			OperationID: "get-github-app",
+			Summary:     "Get App",
+			Description: "Get the GitHub app details",
+			Path:        "/app/get",
+			Method:      http.MethodGet,
+		},
+		handlers.HandleGetGithubApp,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
 			OperationID: "list-apps",
 			Summary:     "List Apps",
 			Description: "List all the GitHub apps connected to our instance",
