@@ -14,6 +14,8 @@ import (
 	"golang.org/x/mod/semver"
 )
 
+const updateKey = "update-in-progress"
+
 func (self *HandlerGroup) CheckPermissions(ctx context.Context, requesterUserID uuid.UUID) error {
 	permissionChecks := []permissions_repo.PermissionCheck{
 		// Team editor can create projects
@@ -128,7 +130,7 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpdateApplyInp
 
 	// Apply the update
 	// Cache update status
-	err = self.srv.StringCache.Set(ctx, "update-in-progres", input.Body.TargetVersion)
+	err = self.srv.StringCache.Set(ctx, updateKey, input.Body.TargetVersion)
 	if err != nil {
 		log.Errorf("Failed to cache update status: %v", err)
 	}
@@ -136,7 +138,7 @@ func (self *HandlerGroup) ApplyUpdate(ctx context.Context, input *UpdateApplyInp
 	if err := self.srv.UpdateManager.UpdateToVersion(ctx, input.Body.TargetVersion); err != nil {
 		log.Errorf("Failed to apply update: %v", err)
 		// Clear the cache if the update fails
-		err = self.srv.StringCache.Delete(ctx, "update-in-progres")
+		err = self.srv.StringCache.Delete(ctx, updateKey)
 		if err != nil {
 			log.Errorf("Failed to clear cached update status: %v", err)
 		}
@@ -169,7 +171,7 @@ func (self *HandlerGroup) GetUpdateStatus(ctx context.Context, input *server.Bas
 	}
 
 	// Get update status from cache
-	cachedVersion, err := self.srv.StringCache.Get(ctx, "update-in-progres")
+	cachedVersion, err := self.srv.StringCache.Get(ctx, updateKey)
 	clearCache := true
 	if err != nil {
 		clearCache = false // Don't clear cache if we can't get it
@@ -185,7 +187,7 @@ func (self *HandlerGroup) GetUpdateStatus(ctx context.Context, input *server.Bas
 	// Check if the expected version is the same as the cached version
 	if ready && clearCache {
 		// Clear the cache if the update is ready
-		err = self.srv.StringCache.Delete(ctx, "update-in-progres")
+		err = self.srv.StringCache.Delete(ctx, updateKey)
 		if err != nil {
 			log.Errorf("Failed to clear cached update status: %v", err)
 		}

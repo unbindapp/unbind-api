@@ -79,7 +79,7 @@ func (k *KubeClient) UpdateDeploymentImages(ctx context.Context, newVersion stri
 	return nil
 }
 
-// CheckDeploymentsReady checks if all deployments are running with the specified version
+// CheckDeploymentsReady checks if all deployments with unbind images have at least one pod running with the specified version
 func (k *KubeClient) CheckDeploymentsReady(ctx context.Context, version string) (bool, error) {
 	// Get all deployments in the system namespace
 	deployments, err := k.clientset.AppsV1().Deployments(k.config.GetSystemNamespace()).List(ctx, metav1.ListOptions{})
@@ -87,7 +87,11 @@ func (k *KubeClient) CheckDeploymentsReady(ctx context.Context, version string) 
 		return false, fmt.Errorf("failed to list deployments: %w", err)
 	}
 
-	// Expected images for each component
+	// Define the expected image base and version format
+	unbindImageBase := "ghcr.io/unbindapp/"
+	foundUnbindDeployments := false
+
+	// Expected images for each component with version
 	expectedImages := map[string]string{
 		"ghcr.io/unbindapp/unbind-ui":       fmt.Sprintf("ghcr.io/unbindapp/unbind-ui:%s", version),
 		"ghcr.io/unbindapp/unbind-operator": fmt.Sprintf("ghcr.io/unbindapp/unbind-operator:%s", version),
@@ -96,7 +100,35 @@ func (k *KubeClient) CheckDeploymentsReady(ctx context.Context, version string) 
 
 	// Check each deployment
 	for _, deployment := range deployments.Items {
-		// Get the deployment's pods
+		deploymentHasUnbindImage := false
+		requiredImages := make(map[string]bool)
+
+		// Check if this deployment has any unbind images
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			if strings.HasPrefix(container.Image, unbindImageBase) {
+				deploymentHasUnbindImage = true
+
+				// Extract the base image name (before the tag)
+				baseImage := container.Image
+				if tagIndex := strings.LastIndex(baseImage, ":"); tagIndex > 0 {
+					baseImage = baseImage[:tagIndex]
+				}
+
+				// Mark which images we need to find in running pods
+				if _, exists := expectedImages[baseImage]; exists {
+					requiredImages[baseImage] = false
+				}
+			}
+		}
+
+		// Skip if not an unbind deployment
+		if !deploymentHasUnbindImage {
+			continue
+		}
+
+		foundUnbindDeployments = true
+
+		// Get the pods for this deployment
 		pods, err := k.clientset.CoreV1().Pods(k.config.GetSystemNamespace()).List(ctx, metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(metav1.SetAsLabelSelector(deployment.Spec.Selector.MatchLabels)),
 		})
@@ -104,31 +136,46 @@ func (k *KubeClient) CheckDeploymentsReady(ctx context.Context, version string) 
 			return false, fmt.Errorf("failed to list pods for deployment %s: %w", deployment.Name, err)
 		}
 
-		// Check if any pods are running with the new version
-		hasNewVersion := false
+		// Check if at least one pod is running with the correct version for each image
 		for _, pod := range pods.Items {
-			// Check if pod is running
+			// Skip pods that aren't running
 			if pod.Status.Phase != corev1.PodRunning {
 				continue
 			}
 
-			// Check if pod has the new version
+			// Check each container in the pod
 			for _, container := range pod.Spec.Containers {
-				for prefix, expectedImage := range expectedImages {
-					if strings.HasPrefix(container.Image, prefix+":") {
+				// Only check unbind containers
+				if strings.HasPrefix(container.Image, unbindImageBase) {
+					// Extract the base image name
+					baseImage := container.Image
+					if tagIndex := strings.LastIndex(baseImage, ":"); tagIndex > 0 {
+						baseImage = baseImage[:tagIndex]
+					}
+
+					// Check if this container has the correct version
+					if expectedImage, exists := expectedImages[baseImage]; exists {
 						if container.Image == expectedImage {
-							hasNewVersion = true
-							break
+							requiredImages[baseImage] = true
 						}
 					}
 				}
 			}
 		}
 
-		if !hasNewVersion {
-			return false, nil
+		// Check if we found at least one running pod with the correct version for each required image
+		for _, found := range requiredImages {
+			if !found {
+				return false, nil
+			}
 		}
 	}
 
+	// If we found no unbind deployments, that's an error
+	if !foundUnbindDeployments {
+		return false, fmt.Errorf("no deployments with unbind images found")
+	}
+
+	// All unbind deployments have at least one pod running with the correct version
 	return true, nil
 }
