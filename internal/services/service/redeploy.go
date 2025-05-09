@@ -8,6 +8,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
@@ -31,10 +32,20 @@ func (self *ServiceService) EnqueueFullBuildDeployments(ctx context.Context, ser
 		var committer *schema.GitCommitter
 
 		// Get git information if available
-		if service.Edges.GithubInstallation != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
+		if service.GithubInstallationID != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
+			// Get installation
+			installation, err := self.repo.Github().GetInstallationByID(ctx, *service.GithubInstallationID)
+			if err != nil {
+				if ent.IsNotFound(err) {
+					return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Invalid github installation")
+				}
+				log.Error("Error getting github installation", "err", err)
+				return err
+			}
+
 			commitSHA, commitMessage, committer, err = self.githubClient.GetCommitSummary(ctx,
-				service.Edges.GithubInstallation,
-				service.Edges.GithubInstallation.AccountLogin,
+				installation,
+				installation.AccountLogin,
 				*service.GitRepository,
 				*service.Edges.ServiceConfig.GitBranch,
 				false)
