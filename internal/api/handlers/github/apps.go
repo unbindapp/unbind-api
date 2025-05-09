@@ -223,6 +223,7 @@ func (self *HandlerGroup) HandleGetGithubApp(ctx context.Context, input *GithubA
 func transformGithubAppEntity(entity *ent.GithubApp) *GithubAppAPIResponse {
 	return &GithubAppAPIResponse{
 		ID:            entity.ID,
+		UUID:          entity.UUID,
 		CreatedAt:     entity.CreatedAt,
 		UpdatedAt:     entity.UpdatedAt,
 		CreatedBy:     entity.CreatedBy,
@@ -242,7 +243,8 @@ func transformGithubAppEntities(entities []*ent.GithubApp) []*GithubAppAPIRespon
 type GithubAppAPIResponse struct {
 	// ID of the ent.
 	// The GitHub App ID
-	ID int64 `json:"id,omitempty"`
+	ID   int64     `json:"id,omitempty"`
+	UUID uuid.UUID `json:"uuid,omitempty"`
 	// The time at which the entity was created.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// The time at which the entity was last updated.
