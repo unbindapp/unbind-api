@@ -47,9 +47,6 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, v
 	// Create unauthenticated GitHub client for public repositories
 	githubClient := gh.NewClient(httpClient)
 
-	// ! Temporarily hardcoding version for testing
-	currentVersion = "v0.0.1"
-
 	// Create string cache
 	valkeyCache := cache.NewCache[*UpdateCacheItem](valkeyClient, "unbind-updater")
 
