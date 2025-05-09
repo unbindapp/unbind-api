@@ -221,6 +221,11 @@ func (self *HandlerGroup) HandleGetGithubApp(ctx context.Context, input *GithubA
 }
 
 func transformGithubAppEntity(entity *ent.GithubApp) *GithubAppAPIResponse {
+	installations := []*GithubInstallationAPIResponse{}
+	if entity.Edges.Installations != nil && len(entity.Edges.Installations) > 0 {
+		installations = transformGithubInstallationEntities(entity.Edges.Installations)
+	}
+
 	return &GithubAppAPIResponse{
 		ID:            entity.ID,
 		UUID:          entity.UUID,
@@ -228,7 +233,7 @@ func transformGithubAppEntity(entity *ent.GithubApp) *GithubAppAPIResponse {
 		UpdatedAt:     entity.UpdatedAt,
 		CreatedBy:     entity.CreatedBy,
 		Name:          entity.Name,
-		Installations: transformGithubInstallationEntities(entity.Edges.Installations),
+		Installations: installations,
 	}
 }
 
@@ -253,5 +258,5 @@ type GithubAppAPIResponse struct {
 	CreatedBy uuid.UUID `json:"created_by"`
 	// Name of the GitHub App
 	Name          string                           `json:"name"`
-	Installations []*GithubInstallationAPIResponse `json:"installations,omitempty"`
+	Installations []*GithubInstallationAPIResponse `json:"installations" nullable:"false"`
 }
