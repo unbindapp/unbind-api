@@ -201,6 +201,19 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 	}
 
+	// Force build if certain things change
+	forceBuild := false
+	if input.InstallCommand != nil {
+		if service.Edges.ServiceConfig.InstallCommand == nil || (*input.InstallCommand != *service.Edges.ServiceConfig.InstallCommand) {
+			forceBuild = true
+		}
+	}
+	if input.BuildCommand != nil {
+		if service.Edges.ServiceConfig.BuildCommand == nil || (*input.BuildCommand != *service.Edges.ServiceConfig.BuildCommand) {
+			forceBuild = true
+		}
+	}
+
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Update the service
 		if err := self.repo.Service().Update(ctx, tx, input.ServiceID, input.Name, input.Description); err != nil {
@@ -272,9 +285,16 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		return nil, fmt.Errorf("failed to re-fetch service: %w", err)
 	}
 
-	deployments, err := self.RedeployServices(ctx, []*ent.Service{service})
-	if err != nil {
-		return nil, err
+	var deployments []*ent.Deployment
+	if forceBuild {
+		if err := self.EnqueueFullBuildDeployments(ctx, []*ent.Service{service}); err != nil {
+			return nil, fmt.Errorf("failed to enqueue build deployments: %w", err)
+		}
+	} else {
+		deployments, err = self.RedeployServices(ctx, []*ent.Service{service})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Update service deployment
