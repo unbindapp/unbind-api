@@ -20,5 +20,6 @@ func (self *Templater) AvailableTemplates() []*schema.TemplateDefinition {
 		ghostTemplate(),
 		minioTemplate(),
 		meiliSearchTemplate(),
+		plausibleTemplate(),
 	}
 }

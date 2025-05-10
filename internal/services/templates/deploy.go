@@ -308,6 +308,8 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 							key = fmt.Sprintf("moco-%s-primary", key)
 						case "redis":
 							key = fmt.Sprintf("%s-headless", key)
+						case "clickhouse":
+							key = fmt.Sprintf("clickhouse-%s", key)
 						}
 					}
 
