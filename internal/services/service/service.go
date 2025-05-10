@@ -87,7 +87,7 @@ func (self *ServiceService) generateWildcardHost(ctx context.Context, tx reposit
 		return nil, fmt.Errorf("failed to get system settings: %w", err)
 	}
 
-	if settings.WildcardBaseURL == nil {
+	if settings.WildcardBaseURL == nil || *settings.WildcardBaseURL == "" {
 		return nil, nil // No wildcard base URL configured
 	}
 
