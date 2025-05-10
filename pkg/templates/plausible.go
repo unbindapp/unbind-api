@@ -45,7 +45,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Image:        utils.ToPtr("ghcr.io/plausible/community-edition:v3.0.1"),
 				Ports: []schema.PortSpec{
 					{
-						Port:     80,
+						Port:     8000,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
@@ -53,7 +53,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Variables: []schema.TemplateVariable{
 					{
 						Name:  "HTTP_PORT",
-						Value: "80",
+						Value: "8000",
 					},
 					{
 						Name: "BASE_URL",
