@@ -428,7 +428,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 func (self *TemplatesService) resolveHostInputs(
 	ctx context.Context,
 	tmpl *schema.TemplateDefinition,
-	rawInputs []models.TemplateInput,
+	rawInputs []models.TemplateInputValue,
 ) (map[int]v1.HostSpec, map[int]string, error) {
 	hostSpecByID := make(map[int]v1.HostSpec)
 	valueByID := make(map[int]string)
