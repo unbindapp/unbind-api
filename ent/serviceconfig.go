@@ -55,6 +55,10 @@ type ServiceConfig struct {
 	Replicas int32 `json:"replicas,omitempty"`
 	// Whether to automatically deploy on git push
 	AutoDeploy bool `json:"auto_deploy,omitempty"`
+	// Custom install command (railpack only)
+	InstallCommand *string `json:"install_command,omitempty"`
+	// Custom build command (railpack only)
+	BuildCommand *string `json:"build_command,omitempty"`
 	// Custom run command
 	RunCommand *string `json:"run_command,omitempty"`
 	// Whether the service is publicly accessible, creates an ingress resource
@@ -129,7 +133,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas, serviceconfig.FieldBackupRetentionCount:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket, serviceconfig.FieldBackupSchedule, serviceconfig.FieldVolumeName, serviceconfig.FieldVolumeMountPath:
+		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldInstallCommand, serviceconfig.FieldBuildCommand, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket, serviceconfig.FieldBackupSchedule, serviceconfig.FieldVolumeName, serviceconfig.FieldVolumeMountPath:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -255,6 +259,20 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field auto_deploy", values[i])
 			} else if value.Valid {
 				sc.AutoDeploy = value.Bool
+			}
+		case serviceconfig.FieldInstallCommand:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field install_command", values[i])
+			} else if value.Valid {
+				sc.InstallCommand = new(string)
+				*sc.InstallCommand = value.String
+			}
+		case serviceconfig.FieldBuildCommand:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field build_command", values[i])
+			} else if value.Valid {
+				sc.BuildCommand = new(string)
+				*sc.BuildCommand = value.String
 			}
 		case serviceconfig.FieldRunCommand:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -432,6 +450,16 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("auto_deploy=")
 	builder.WriteString(fmt.Sprintf("%v", sc.AutoDeploy))
+	builder.WriteString(", ")
+	if v := sc.InstallCommand; v != nil {
+		builder.WriteString("install_command=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := sc.BuildCommand; v != nil {
+		builder.WriteString("build_command=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := sc.RunCommand; v != nil {
 		builder.WriteString("run_command=")

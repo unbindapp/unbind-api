@@ -108,6 +108,16 @@ func AutoDeploy(v bool) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldAutoDeploy, v))
 }
 
+// InstallCommand applies equality check predicate on the "install_command" field. It's identical to InstallCommandEQ.
+func InstallCommand(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldInstallCommand, v))
+}
+
+// BuildCommand applies equality check predicate on the "build_command" field. It's identical to BuildCommandEQ.
+func BuildCommand(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldBuildCommand, v))
+}
+
 // RunCommand applies equality check predicate on the "run_command" field. It's identical to RunCommandEQ.
 func RunCommand(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldRunCommand, v))
@@ -801,6 +811,156 @@ func AutoDeployEQ(v bool) predicate.ServiceConfig {
 // AutoDeployNEQ applies the NEQ predicate on the "auto_deploy" field.
 func AutoDeployNEQ(v bool) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNEQ(FieldAutoDeploy, v))
+}
+
+// InstallCommandEQ applies the EQ predicate on the "install_command" field.
+func InstallCommandEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldInstallCommand, v))
+}
+
+// InstallCommandNEQ applies the NEQ predicate on the "install_command" field.
+func InstallCommandNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldInstallCommand, v))
+}
+
+// InstallCommandIn applies the In predicate on the "install_command" field.
+func InstallCommandIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldInstallCommand, vs...))
+}
+
+// InstallCommandNotIn applies the NotIn predicate on the "install_command" field.
+func InstallCommandNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldInstallCommand, vs...))
+}
+
+// InstallCommandGT applies the GT predicate on the "install_command" field.
+func InstallCommandGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldInstallCommand, v))
+}
+
+// InstallCommandGTE applies the GTE predicate on the "install_command" field.
+func InstallCommandGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldInstallCommand, v))
+}
+
+// InstallCommandLT applies the LT predicate on the "install_command" field.
+func InstallCommandLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldInstallCommand, v))
+}
+
+// InstallCommandLTE applies the LTE predicate on the "install_command" field.
+func InstallCommandLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldInstallCommand, v))
+}
+
+// InstallCommandContains applies the Contains predicate on the "install_command" field.
+func InstallCommandContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldInstallCommand, v))
+}
+
+// InstallCommandHasPrefix applies the HasPrefix predicate on the "install_command" field.
+func InstallCommandHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldInstallCommand, v))
+}
+
+// InstallCommandHasSuffix applies the HasSuffix predicate on the "install_command" field.
+func InstallCommandHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldInstallCommand, v))
+}
+
+// InstallCommandIsNil applies the IsNil predicate on the "install_command" field.
+func InstallCommandIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldInstallCommand))
+}
+
+// InstallCommandNotNil applies the NotNil predicate on the "install_command" field.
+func InstallCommandNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldInstallCommand))
+}
+
+// InstallCommandEqualFold applies the EqualFold predicate on the "install_command" field.
+func InstallCommandEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldInstallCommand, v))
+}
+
+// InstallCommandContainsFold applies the ContainsFold predicate on the "install_command" field.
+func InstallCommandContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldInstallCommand, v))
+}
+
+// BuildCommandEQ applies the EQ predicate on the "build_command" field.
+func BuildCommandEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldBuildCommand, v))
+}
+
+// BuildCommandNEQ applies the NEQ predicate on the "build_command" field.
+func BuildCommandNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldBuildCommand, v))
+}
+
+// BuildCommandIn applies the In predicate on the "build_command" field.
+func BuildCommandIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldBuildCommand, vs...))
+}
+
+// BuildCommandNotIn applies the NotIn predicate on the "build_command" field.
+func BuildCommandNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldBuildCommand, vs...))
+}
+
+// BuildCommandGT applies the GT predicate on the "build_command" field.
+func BuildCommandGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldBuildCommand, v))
+}
+
+// BuildCommandGTE applies the GTE predicate on the "build_command" field.
+func BuildCommandGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldBuildCommand, v))
+}
+
+// BuildCommandLT applies the LT predicate on the "build_command" field.
+func BuildCommandLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldBuildCommand, v))
+}
+
+// BuildCommandLTE applies the LTE predicate on the "build_command" field.
+func BuildCommandLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldBuildCommand, v))
+}
+
+// BuildCommandContains applies the Contains predicate on the "build_command" field.
+func BuildCommandContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldBuildCommand, v))
+}
+
+// BuildCommandHasPrefix applies the HasPrefix predicate on the "build_command" field.
+func BuildCommandHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldBuildCommand, v))
+}
+
+// BuildCommandHasSuffix applies the HasSuffix predicate on the "build_command" field.
+func BuildCommandHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldBuildCommand, v))
+}
+
+// BuildCommandIsNil applies the IsNil predicate on the "build_command" field.
+func BuildCommandIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldBuildCommand))
+}
+
+// BuildCommandNotNil applies the NotNil predicate on the "build_command" field.
+func BuildCommandNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldBuildCommand))
+}
+
+// BuildCommandEqualFold applies the EqualFold predicate on the "build_command" field.
+func BuildCommandEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldBuildCommand, v))
+}
+
+// BuildCommandContainsFold applies the ContainsFold predicate on the "build_command" field.
+func BuildCommandContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldBuildCommand, v))
 }
 
 // RunCommandEQ applies the EQ predicate on the "run_command" field.

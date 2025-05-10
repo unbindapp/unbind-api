@@ -309,6 +309,14 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_HOSTS"] = string(marshalled)
 	}
 
+	if service.Edges.ServiceConfig.InstallCommand != nil {
+		env["RAILPACK_INSTALL_CMD"] = *service.Edges.ServiceConfig.InstallCommand
+	}
+
+	if service.Edges.ServiceConfig.BuildCommand != nil {
+		env["RAILPACK_BUILD_CMD"] = *service.Edges.ServiceConfig.BuildCommand
+	}
+
 	if service.Edges.ServiceConfig.RunCommand != nil {
 		env["SERVICE_RUN_COMMAND"] = *service.Edges.ServiceConfig.RunCommand
 	}

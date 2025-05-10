@@ -199,6 +199,34 @@ func (scc *ServiceConfigCreate) SetNillableAutoDeploy(b *bool) *ServiceConfigCre
 	return scc
 }
 
+// SetInstallCommand sets the "install_command" field.
+func (scc *ServiceConfigCreate) SetInstallCommand(s string) *ServiceConfigCreate {
+	scc.mutation.SetInstallCommand(s)
+	return scc
+}
+
+// SetNillableInstallCommand sets the "install_command" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableInstallCommand(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetInstallCommand(*s)
+	}
+	return scc
+}
+
+// SetBuildCommand sets the "build_command" field.
+func (scc *ServiceConfigCreate) SetBuildCommand(s string) *ServiceConfigCreate {
+	scc.mutation.SetBuildCommand(s)
+	return scc
+}
+
+// SetNillableBuildCommand sets the "build_command" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableBuildCommand(s *string) *ServiceConfigCreate {
+	if s != nil {
+		scc.SetBuildCommand(*s)
+	}
+	return scc
+}
+
 // SetRunCommand sets the "run_command" field.
 func (scc *ServiceConfigCreate) SetRunCommand(s string) *ServiceConfigCreate {
 	scc.mutation.SetRunCommand(s)
@@ -580,6 +608,14 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldAutoDeploy, field.TypeBool, value)
 		_node.AutoDeploy = value
 	}
+	if value, ok := scc.mutation.InstallCommand(); ok {
+		_spec.SetField(serviceconfig.FieldInstallCommand, field.TypeString, value)
+		_node.InstallCommand = &value
+	}
+	if value, ok := scc.mutation.BuildCommand(); ok {
+		_spec.SetField(serviceconfig.FieldBuildCommand, field.TypeString, value)
+		_node.BuildCommand = &value
+	}
 	if value, ok := scc.mutation.RunCommand(); ok {
 		_spec.SetField(serviceconfig.FieldRunCommand, field.TypeString, value)
 		_node.RunCommand = &value
@@ -925,6 +961,42 @@ func (u *ServiceConfigUpsert) SetAutoDeploy(v bool) *ServiceConfigUpsert {
 // UpdateAutoDeploy sets the "auto_deploy" field to the value that was provided on create.
 func (u *ServiceConfigUpsert) UpdateAutoDeploy() *ServiceConfigUpsert {
 	u.SetExcluded(serviceconfig.FieldAutoDeploy)
+	return u
+}
+
+// SetInstallCommand sets the "install_command" field.
+func (u *ServiceConfigUpsert) SetInstallCommand(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldInstallCommand, v)
+	return u
+}
+
+// UpdateInstallCommand sets the "install_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateInstallCommand() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldInstallCommand)
+	return u
+}
+
+// ClearInstallCommand clears the value of the "install_command" field.
+func (u *ServiceConfigUpsert) ClearInstallCommand() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldInstallCommand)
+	return u
+}
+
+// SetBuildCommand sets the "build_command" field.
+func (u *ServiceConfigUpsert) SetBuildCommand(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldBuildCommand, v)
+	return u
+}
+
+// UpdateBuildCommand sets the "build_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateBuildCommand() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldBuildCommand)
+	return u
+}
+
+// ClearBuildCommand clears the value of the "build_command" field.
+func (u *ServiceConfigUpsert) ClearBuildCommand() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldBuildCommand)
 	return u
 }
 
@@ -1421,6 +1493,48 @@ func (u *ServiceConfigUpsertOne) SetAutoDeploy(v bool) *ServiceConfigUpsertOne {
 func (u *ServiceConfigUpsertOne) UpdateAutoDeploy() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateAutoDeploy()
+	})
+}
+
+// SetInstallCommand sets the "install_command" field.
+func (u *ServiceConfigUpsertOne) SetInstallCommand(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetInstallCommand(v)
+	})
+}
+
+// UpdateInstallCommand sets the "install_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateInstallCommand() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateInstallCommand()
+	})
+}
+
+// ClearInstallCommand clears the value of the "install_command" field.
+func (u *ServiceConfigUpsertOne) ClearInstallCommand() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearInstallCommand()
+	})
+}
+
+// SetBuildCommand sets the "build_command" field.
+func (u *ServiceConfigUpsertOne) SetBuildCommand(v string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBuildCommand(v)
+	})
+}
+
+// UpdateBuildCommand sets the "build_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateBuildCommand() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBuildCommand()
+	})
+}
+
+// ClearBuildCommand clears the value of the "build_command" field.
+func (u *ServiceConfigUpsertOne) ClearBuildCommand() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearBuildCommand()
 	})
 }
 
@@ -2115,6 +2229,48 @@ func (u *ServiceConfigUpsertBulk) SetAutoDeploy(v bool) *ServiceConfigUpsertBulk
 func (u *ServiceConfigUpsertBulk) UpdateAutoDeploy() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.UpdateAutoDeploy()
+	})
+}
+
+// SetInstallCommand sets the "install_command" field.
+func (u *ServiceConfigUpsertBulk) SetInstallCommand(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetInstallCommand(v)
+	})
+}
+
+// UpdateInstallCommand sets the "install_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateInstallCommand() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateInstallCommand()
+	})
+}
+
+// ClearInstallCommand clears the value of the "install_command" field.
+func (u *ServiceConfigUpsertBulk) ClearInstallCommand() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearInstallCommand()
+	})
+}
+
+// SetBuildCommand sets the "build_command" field.
+func (u *ServiceConfigUpsertBulk) SetBuildCommand(v string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetBuildCommand(v)
+	})
+}
+
+// UpdateBuildCommand sets the "build_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateBuildCommand() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateBuildCommand()
+	})
+}
+
+// ClearBuildCommand clears the value of the "build_command" field.
+func (u *ServiceConfigUpsertBulk) ClearBuildCommand() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearBuildCommand()
 	})
 }
 

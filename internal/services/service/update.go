@@ -36,6 +36,8 @@ type UpdateServiceInput struct {
 	Ports             []schema.PortSpec      `json:"ports,omitempty" required:"false"`
 	Replicas          *int32                 `json:"replicas,omitempty" required:"false"`
 	AutoDeploy        *bool                  `json:"auto_deploy,omitempty" required:"false"`
+	InstallCommand    *string                `json:"install_command,omitempty"`
+	BuildCommand      *string                `json:"build_command,omitempty"`
 	RunCommand        *string                `json:"run_command,omitempty" required:"false"`
 	IsPublic          *bool                  `json:"is_public,omitempty" required:"false"`
 	Image             *string                `json:"image,omitempty" required:"false"`
@@ -240,6 +242,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			Hosts:                input.Hosts,
 			Replicas:             input.Replicas,
 			AutoDeploy:           input.AutoDeploy,
+			InstallCommand:       input.InstallCommand,
+			BuildCommand:         input.BuildCommand,
 			RunCommand:           input.RunCommand,
 			Public:               input.IsPublic,
 			Image:                input.Image,

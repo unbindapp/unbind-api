@@ -383,6 +383,8 @@ var (
 		{Name: "ports", Type: field.TypeJSON, Nullable: true},
 		{Name: "replicas", Type: field.TypeInt32, Default: 1},
 		{Name: "auto_deploy", Type: field.TypeBool, Default: false},
+		{Name: "install_command", Type: field.TypeString, Nullable: true},
+		{Name: "build_command", Type: field.TypeString, Nullable: true},
 		{Name: "run_command", Type: field.TypeString, Nullable: true},
 		{Name: "is_public", Type: field.TypeBool, Default: false},
 		{Name: "image", Type: field.TypeString, Nullable: true},
@@ -404,13 +406,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_s3_endpoints_service_backup_endpoint",
-				Columns:    []*schema.Column{ServiceConfigsColumns[25]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[27]},
 				RefColumns: []*schema.Column{S3EndpointsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[26]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[28]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

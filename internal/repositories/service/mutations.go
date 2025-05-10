@@ -70,6 +70,8 @@ type MutateConfigInput struct {
 	Hosts                   []v1.HostSpec
 	Replicas                *int32
 	AutoDeploy              *bool
+	InstallCommand          *string
+	BuildCommand            *string
 	RunCommand              *string
 	Public                  *bool
 	Image                   *string
@@ -128,6 +130,8 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableGitBranch(input.GitBranch).
 		SetNillableReplicas(input.Replicas).
 		SetNillableAutoDeploy(input.AutoDeploy).
+		SetNillableInstallCommand(input.InstallCommand).
+		SetNillableBuildCommand(input.BuildCommand).
 		SetNillableRunCommand(input.RunCommand).
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
@@ -191,13 +195,36 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableBuilder(input.Builder).
 		SetNillableReplicas(input.Replicas).
 		SetNillableAutoDeploy(input.AutoDeploy).
-		SetNillableRunCommand(input.RunCommand).
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
 		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.InstallCommand != nil {
+		if *input.InstallCommand == "" {
+			upd.ClearInstallCommand()
+		} else {
+			upd.SetInstallCommand(*input.InstallCommand)
+		}
+	}
+
+	if input.BuildCommand != nil {
+		if *input.BuildCommand == "" {
+			upd.ClearBuildCommand()
+		} else {
+			upd.SetBuildCommand(*input.BuildCommand)
+		}
+	}
+
+	if input.RunCommand != nil {
+		if *input.RunCommand == "" {
+			upd.ClearRunCommand()
+		} else {
+			upd.SetRunCommand(*input.RunCommand)
+		}
+	}
 
 	if input.PVCID != nil {
 		if *input.PVCID == "" {

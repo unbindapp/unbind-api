@@ -275,6 +275,46 @@ func (scu *ServiceConfigUpdate) SetNillableAutoDeploy(b *bool) *ServiceConfigUpd
 	return scu
 }
 
+// SetInstallCommand sets the "install_command" field.
+func (scu *ServiceConfigUpdate) SetInstallCommand(s string) *ServiceConfigUpdate {
+	scu.mutation.SetInstallCommand(s)
+	return scu
+}
+
+// SetNillableInstallCommand sets the "install_command" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableInstallCommand(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetInstallCommand(*s)
+	}
+	return scu
+}
+
+// ClearInstallCommand clears the value of the "install_command" field.
+func (scu *ServiceConfigUpdate) ClearInstallCommand() *ServiceConfigUpdate {
+	scu.mutation.ClearInstallCommand()
+	return scu
+}
+
+// SetBuildCommand sets the "build_command" field.
+func (scu *ServiceConfigUpdate) SetBuildCommand(s string) *ServiceConfigUpdate {
+	scu.mutation.SetBuildCommand(s)
+	return scu
+}
+
+// SetNillableBuildCommand sets the "build_command" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableBuildCommand(s *string) *ServiceConfigUpdate {
+	if s != nil {
+		scu.SetBuildCommand(*s)
+	}
+	return scu
+}
+
+// ClearBuildCommand clears the value of the "build_command" field.
+func (scu *ServiceConfigUpdate) ClearBuildCommand() *ServiceConfigUpdate {
+	scu.mutation.ClearBuildCommand()
+	return scu
+}
+
 // SetRunCommand sets the "run_command" field.
 func (scu *ServiceConfigUpdate) SetRunCommand(s string) *ServiceConfigUpdate {
 	scu.mutation.SetRunCommand(s)
@@ -656,6 +696,18 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.AutoDeploy(); ok {
 		_spec.SetField(serviceconfig.FieldAutoDeploy, field.TypeBool, value)
 	}
+	if value, ok := scu.mutation.InstallCommand(); ok {
+		_spec.SetField(serviceconfig.FieldInstallCommand, field.TypeString, value)
+	}
+	if scu.mutation.InstallCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldInstallCommand, field.TypeString)
+	}
+	if value, ok := scu.mutation.BuildCommand(); ok {
+		_spec.SetField(serviceconfig.FieldBuildCommand, field.TypeString, value)
+	}
+	if scu.mutation.BuildCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldBuildCommand, field.TypeString)
+	}
 	if value, ok := scu.mutation.RunCommand(); ok {
 		_spec.SetField(serviceconfig.FieldRunCommand, field.TypeString, value)
 	}
@@ -1026,6 +1078,46 @@ func (scuo *ServiceConfigUpdateOne) SetNillableAutoDeploy(b *bool) *ServiceConfi
 	if b != nil {
 		scuo.SetAutoDeploy(*b)
 	}
+	return scuo
+}
+
+// SetInstallCommand sets the "install_command" field.
+func (scuo *ServiceConfigUpdateOne) SetInstallCommand(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetInstallCommand(s)
+	return scuo
+}
+
+// SetNillableInstallCommand sets the "install_command" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableInstallCommand(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetInstallCommand(*s)
+	}
+	return scuo
+}
+
+// ClearInstallCommand clears the value of the "install_command" field.
+func (scuo *ServiceConfigUpdateOne) ClearInstallCommand() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearInstallCommand()
+	return scuo
+}
+
+// SetBuildCommand sets the "build_command" field.
+func (scuo *ServiceConfigUpdateOne) SetBuildCommand(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetBuildCommand(s)
+	return scuo
+}
+
+// SetNillableBuildCommand sets the "build_command" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableBuildCommand(s *string) *ServiceConfigUpdateOne {
+	if s != nil {
+		scuo.SetBuildCommand(*s)
+	}
+	return scuo
+}
+
+// ClearBuildCommand clears the value of the "build_command" field.
+func (scuo *ServiceConfigUpdateOne) ClearBuildCommand() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearBuildCommand()
 	return scuo
 }
 
@@ -1439,6 +1531,18 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if value, ok := scuo.mutation.AutoDeploy(); ok {
 		_spec.SetField(serviceconfig.FieldAutoDeploy, field.TypeBool, value)
+	}
+	if value, ok := scuo.mutation.InstallCommand(); ok {
+		_spec.SetField(serviceconfig.FieldInstallCommand, field.TypeString, value)
+	}
+	if scuo.mutation.InstallCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldInstallCommand, field.TypeString)
+	}
+	if value, ok := scuo.mutation.BuildCommand(); ok {
+		_spec.SetField(serviceconfig.FieldBuildCommand, field.TypeString, value)
+	}
+	if scuo.mutation.BuildCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldBuildCommand, field.TypeString)
 	}
 	if value, ok := scuo.mutation.RunCommand(); ok {
 		_spec.SetField(serviceconfig.FieldRunCommand, field.TypeString, value)

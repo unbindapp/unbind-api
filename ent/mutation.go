@@ -12466,6 +12466,8 @@ type ServiceConfigMutation struct {
 	replicas                  *int32
 	addreplicas               *int32
 	auto_deploy               *bool
+	install_command           *string
+	build_command             *string
 	run_command               *string
 	is_public                 *bool
 	image                     *string
@@ -13287,6 +13289,104 @@ func (m *ServiceConfigMutation) ResetAutoDeploy() {
 	m.auto_deploy = nil
 }
 
+// SetInstallCommand sets the "install_command" field.
+func (m *ServiceConfigMutation) SetInstallCommand(s string) {
+	m.install_command = &s
+}
+
+// InstallCommand returns the value of the "install_command" field in the mutation.
+func (m *ServiceConfigMutation) InstallCommand() (r string, exists bool) {
+	v := m.install_command
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInstallCommand returns the old "install_command" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldInstallCommand(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInstallCommand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInstallCommand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInstallCommand: %w", err)
+	}
+	return oldValue.InstallCommand, nil
+}
+
+// ClearInstallCommand clears the value of the "install_command" field.
+func (m *ServiceConfigMutation) ClearInstallCommand() {
+	m.install_command = nil
+	m.clearedFields[serviceconfig.FieldInstallCommand] = struct{}{}
+}
+
+// InstallCommandCleared returns if the "install_command" field was cleared in this mutation.
+func (m *ServiceConfigMutation) InstallCommandCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldInstallCommand]
+	return ok
+}
+
+// ResetInstallCommand resets all changes to the "install_command" field.
+func (m *ServiceConfigMutation) ResetInstallCommand() {
+	m.install_command = nil
+	delete(m.clearedFields, serviceconfig.FieldInstallCommand)
+}
+
+// SetBuildCommand sets the "build_command" field.
+func (m *ServiceConfigMutation) SetBuildCommand(s string) {
+	m.build_command = &s
+}
+
+// BuildCommand returns the value of the "build_command" field in the mutation.
+func (m *ServiceConfigMutation) BuildCommand() (r string, exists bool) {
+	v := m.build_command
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBuildCommand returns the old "build_command" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldBuildCommand(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBuildCommand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBuildCommand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBuildCommand: %w", err)
+	}
+	return oldValue.BuildCommand, nil
+}
+
+// ClearBuildCommand clears the value of the "build_command" field.
+func (m *ServiceConfigMutation) ClearBuildCommand() {
+	m.build_command = nil
+	m.clearedFields[serviceconfig.FieldBuildCommand] = struct{}{}
+}
+
+// BuildCommandCleared returns if the "build_command" field was cleared in this mutation.
+func (m *ServiceConfigMutation) BuildCommandCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldBuildCommand]
+	return ok
+}
+
+// ResetBuildCommand resets all changes to the "build_command" field.
+func (m *ServiceConfigMutation) ResetBuildCommand() {
+	m.build_command = nil
+	delete(m.clearedFields, serviceconfig.FieldBuildCommand)
+}
+
 // SetRunCommand sets the "run_command" field.
 func (m *ServiceConfigMutation) SetRunCommand(s string) {
 	m.run_command = &s
@@ -13895,7 +13995,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 26)
+	fields := make([]string, 0, 28)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -13940,6 +14040,12 @@ func (m *ServiceConfigMutation) Fields() []string {
 	}
 	if m.auto_deploy != nil {
 		fields = append(fields, serviceconfig.FieldAutoDeploy)
+	}
+	if m.install_command != nil {
+		fields = append(fields, serviceconfig.FieldInstallCommand)
+	}
+	if m.build_command != nil {
+		fields = append(fields, serviceconfig.FieldBuildCommand)
 	}
 	if m.run_command != nil {
 		fields = append(fields, serviceconfig.FieldRunCommand)
@@ -14012,6 +14118,10 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.Replicas()
 	case serviceconfig.FieldAutoDeploy:
 		return m.AutoDeploy()
+	case serviceconfig.FieldInstallCommand:
+		return m.InstallCommand()
+	case serviceconfig.FieldBuildCommand:
+		return m.BuildCommand()
 	case serviceconfig.FieldRunCommand:
 		return m.RunCommand()
 	case serviceconfig.FieldIsPublic:
@@ -14073,6 +14183,10 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldReplicas(ctx)
 	case serviceconfig.FieldAutoDeploy:
 		return m.OldAutoDeploy(ctx)
+	case serviceconfig.FieldInstallCommand:
+		return m.OldInstallCommand(ctx)
+	case serviceconfig.FieldBuildCommand:
+		return m.OldBuildCommand(ctx)
 	case serviceconfig.FieldRunCommand:
 		return m.OldRunCommand(ctx)
 	case serviceconfig.FieldIsPublic:
@@ -14208,6 +14322,20 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAutoDeploy(v)
+		return nil
+	case serviceconfig.FieldInstallCommand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInstallCommand(v)
+		return nil
+	case serviceconfig.FieldBuildCommand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBuildCommand(v)
 		return nil
 	case serviceconfig.FieldRunCommand:
 		v, ok := value.(string)
@@ -14367,6 +14495,12 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldPorts) {
 		fields = append(fields, serviceconfig.FieldPorts)
 	}
+	if m.FieldCleared(serviceconfig.FieldInstallCommand) {
+		fields = append(fields, serviceconfig.FieldInstallCommand)
+	}
+	if m.FieldCleared(serviceconfig.FieldBuildCommand) {
+		fields = append(fields, serviceconfig.FieldBuildCommand)
+	}
 	if m.FieldCleared(serviceconfig.FieldRunCommand) {
 		fields = append(fields, serviceconfig.FieldRunCommand)
 	}
@@ -14428,6 +14562,12 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldPorts:
 		m.ClearPorts()
+		return nil
+	case serviceconfig.FieldInstallCommand:
+		m.ClearInstallCommand()
+		return nil
+	case serviceconfig.FieldBuildCommand:
+		m.ClearBuildCommand()
 		return nil
 	case serviceconfig.FieldRunCommand:
 		m.ClearRunCommand()
@@ -14505,6 +14645,12 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldAutoDeploy:
 		m.ResetAutoDeploy()
+		return nil
+	case serviceconfig.FieldInstallCommand:
+		m.ResetInstallCommand()
+		return nil
+	case serviceconfig.FieldBuildCommand:
+		m.ResetBuildCommand()
 		return nil
 	case serviceconfig.FieldRunCommand:
 		m.ResetRunCommand()

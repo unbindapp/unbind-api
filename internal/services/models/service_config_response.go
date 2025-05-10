@@ -9,17 +9,19 @@ import (
 
 // ServiceConfigResponse defines the configuration response for a service
 type ServiceConfigResponse struct {
-	GitBranch  *string               `json:"git_branch,omitempty"`
-	GitTag     *string               `json:"git_tag,omitempty"`
-	Builder    schema.ServiceBuilder `json:"builder"`
-	Icon       string                `json:"icon"`
-	Host       []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
-	Port       []schema.PortSpec     `json:"ports,omitempty" nullable:"false"`
-	Replicas   int32                 `json:"replicas"`
-	AutoDeploy bool                  `json:"auto_deploy"`
-	RunCommand *string               `json:"run_command,omitempty"`
-	IsPublic   bool                  `json:"is_public"`
-	Image      string                `json:"image,omitempty"`
+	GitBranch      *string               `json:"git_branch,omitempty"`
+	GitTag         *string               `json:"git_tag,omitempty"`
+	Builder        schema.ServiceBuilder `json:"builder"`
+	Icon           string                `json:"icon"`
+	Host           []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
+	Port           []schema.PortSpec     `json:"ports,omitempty" nullable:"false"`
+	Replicas       int32                 `json:"replicas"`
+	AutoDeploy     bool                  `json:"auto_deploy"`
+	InstallCommand *string               `json:"install_command,omitempty"`
+	BuildCommand   *string               `json:"build_command,omitempty"`
+	RunCommand     *string               `json:"run_command,omitempty"`
+	IsPublic       bool                  `json:"is_public"`
+	Image          string                `json:"image,omitempty"`
 	// For backups
 	S3BackupEndpointID   *uuid.UUID `json:"s3_backup_endpoint_id,omitempty"`
 	S3BackupBucket       *string    `json:"s3_backup_bucket,omitempty"`
@@ -43,6 +45,8 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			Port:                 entity.Ports,
 			Replicas:             entity.Replicas,
 			AutoDeploy:           entity.AutoDeploy,
+			InstallCommand:       entity.InstallCommand,
+			BuildCommand:         entity.BuildCommand,
 			RunCommand:           entity.RunCommand,
 			IsPublic:             entity.IsPublic,
 			Image:                entity.Image,

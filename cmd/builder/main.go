@@ -225,6 +225,14 @@ func main() {
 	buildSecrets := make(map[string]string)
 	additionalEnv := make(map[string]string)
 
+	if cfg.RailpackInstallCommand != "" {
+		buildSecrets["RAILPACK_INSTALL_CMD"] = cfg.RailpackInstallCommand
+	}
+
+	if cfg.RailpackBuildCommand != "" {
+		buildSecrets["RAILPACK_BUILD_CMD"] = cfg.RailpackBuildCommand
+	}
+
 	if cfg.AdditionalEnv != "" {
 		if err := json.Unmarshal([]byte(cfg.AdditionalEnv), &additionalEnv); err != nil {
 			if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal additional env %v", err), cfg.ServiceDeploymentID); err != nil {

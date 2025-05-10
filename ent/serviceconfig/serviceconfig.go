@@ -48,6 +48,10 @@ const (
 	FieldReplicas = "replicas"
 	// FieldAutoDeploy holds the string denoting the auto_deploy field in the database.
 	FieldAutoDeploy = "auto_deploy"
+	// FieldInstallCommand holds the string denoting the install_command field in the database.
+	FieldInstallCommand = "install_command"
+	// FieldBuildCommand holds the string denoting the build_command field in the database.
+	FieldBuildCommand = "build_command"
 	// FieldRunCommand holds the string denoting the run_command field in the database.
 	FieldRunCommand = "run_command"
 	// FieldIsPublic holds the string denoting the is_public field in the database.
@@ -110,6 +114,8 @@ var Columns = []string{
 	FieldPorts,
 	FieldReplicas,
 	FieldAutoDeploy,
+	FieldInstallCommand,
+	FieldBuildCommand,
 	FieldRunCommand,
 	FieldIsPublic,
 	FieldImage,
@@ -255,6 +261,16 @@ func ByReplicas(opts ...sql.OrderTermOption) OrderOption {
 // ByAutoDeploy orders the results by the auto_deploy field.
 func ByAutoDeploy(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAutoDeploy, opts...).ToFunc()
+}
+
+// ByInstallCommand orders the results by the install_command field.
+func ByInstallCommand(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldInstallCommand, opts...).ToFunc()
+}
+
+// ByBuildCommand orders the results by the build_command field.
+func ByBuildCommand(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBuildCommand, opts...).ToFunc()
 }
 
 // ByRunCommand orders the results by the run_command field.

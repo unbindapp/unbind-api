@@ -1,4 +1,4 @@
-h1:VdcO6o7FQkECGMiYzRqytmS4IcFs20mGznHclvwNn0g=
+h1:NrWSUowo8WnovlR0v9Qu601G6R+Vn2vc8QimRO3u2VQ=
 20250502184415_initial_migration.up.sql h1:PTLVgkOWBAH1xQGGizcIFu4k36oUnVpcDDpfRrKzbYU=
 20250503163312_s3_source_to_endpoint.up.sql h1:ZZGZvzdwaq28vgb9Bayu2kl88LmrfDjOrOMhxz9ViJY=
 20250506140303_add_backup_schedules.up.sql h1:Oo4AjXHSqbThqDcv0KNTJTeKu1MZRhGQT9Vu4nsdlHA=
@@ -8,3 +8,4 @@ h1:VdcO6o7FQkECGMiYzRqytmS4IcFs20mGznHclvwNn0g=
 20250508181355_add_volumes.up.sql h1:xba4/eCaocmp2QCUEyWdKYmdFRHclW2DgGQadr4D5eo=
 20250508185401_lower_default_replicas.up.sql h1:ETVx/0UfCy4nkmF0zkcQAJ+gsrfkSMcIrTs6tqf3C5A=
 20250509190434_add_github_app_uuid.up.sql h1:icqF15qOQzLgoooA8qpPueSq9wjfZJHO32YuXO2Qi34=
+20250510124338_add_install_build_command.up.sql h1:tFW2qIrGFKDwZ8FLZi8l5Yq3l+jkDqN4MskwQrHA8NI=

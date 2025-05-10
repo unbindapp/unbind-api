@@ -79,6 +79,9 @@ type Config struct {
 	ServicePorts string `env:"SERVICE_PORTS"`
 	// Pull image secrets to pass to operator
 	ImagePullSecrets string `env:"IMAGE_PULL_SECRETS"`
+	// Railpack specific
+	RailpackInstallCommand string `env:"RAILPACK_INSTALL_CMD"`
+	RailpackBuildCommand   string `env:"RAILPACK_BUILD_CMD"`
 	// Kubeconfig for local testing
 	KubeConfig string `env:"KUBECONFIG"`
 	// Non-env config

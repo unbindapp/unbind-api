@@ -129,6 +129,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.JSON("ports", []PortSpec{}).Optional().Comment("Container ports to expose"),
 		field.Int32("replicas").Default(1).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),
+		field.String("install_command").Optional().Nillable().Comment("Custom install command (railpack only)"),
+		field.String("build_command").Optional().Nillable().Comment("Custom build command (railpack only)"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
 		field.Bool("is_public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),
 		field.String("image").Optional().Comment("Custom Docker image if not building from git"), // Only applies to type=docker-image

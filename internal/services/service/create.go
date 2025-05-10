@@ -46,6 +46,8 @@ type CreateServiceInput struct {
 	Ports             []schema.PortSpec     `json:"ports,omitempty"`
 	Replicas          *int32                `minimum:"0" maximum:"10" json:"replicas,omitempty"`
 	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`
+	InstallCommand    *string               `json:"install_command,omitempty"`
+	BuildCommand      *string               `json:"build_command,omitempty"`
 	RunCommand        *string               `json:"run_command,omitempty"`
 	IsPublic          *bool                 `json:"is_public,omitempty"`
 	Image             *string               `json:"image,omitempty"`
@@ -394,6 +396,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Hosts:                   hosts,
 			Replicas:                input.Replicas,
 			AutoDeploy:              input.AutoDeploy,
+			InstallCommand:          input.InstallCommand,
+			BuildCommand:            input.BuildCommand,
 			RunCommand:              input.RunCommand,
 			Public:                  isPublic,
 			Image:                   input.Image,
