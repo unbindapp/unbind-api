@@ -111,6 +111,20 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 		password = string(mysqlSecret.Data["WRITABLE_PASSWORD"])
 	}
 
+	// For clickhouse we can sync too
+	if *service.Database == "clickhouse" && (username == "" || password == "") {
+		clickhouseSecretName := fmt.Sprintf("%s-clickhouse-secret", service.ID.String())
+		clickhouseSecret, err := self.GetSecret(ctx, clickhouseSecretName, namespace, self.GetInternalClient())
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return fmt.Errorf("secret %s in namespace %s not found: %w", clickhouseSecretName, namespace, err)
+			}
+			return fmt.Errorf("failed to get secret %s in namespace %s: %w", clickhouseSecretName, namespace, err)
+		}
+		username = "default"
+		password = string(clickhouseSecret.Data["password"])
+	}
+
 	if username == "" || password == "" {
 		return fmt.Errorf("secret %s in namespace %s does not have username or password", service.KubernetesSecret, namespace)
 	}
@@ -133,6 +147,10 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 			username,
 			password,
 			host)
+	case "clickhouse":
+		host = fmt.Sprintf("clickhouse-%s.%s", service.KubernetesName, namespace)
+		host = fmt.Sprintf("clickhouse://%s:%s@%s:9000/default", username, password, host)
+
 	}
 
 	secrets := map[string][]byte{
@@ -157,6 +175,9 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 			secrets["DATABASE_PORT"] = []byte("27017")
 		case "redis":
 			secrets["DATABASE_PORT"] = []byte("6379")
+		case "clickhouse":
+			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("default")
+			secrets["DATABASE_PORT"] = []byte("9000")
 		}
 	}
 	// Sync secret
