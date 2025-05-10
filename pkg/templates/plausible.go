@@ -42,7 +42,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Name:         "Plausible",
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("plausible/community-edition:latest"),
+				Image:        utils.ToPtr("ghcr.io/plausible/community-edition:v3.0.1"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,
@@ -65,65 +65,19 @@ func plausibleTemplate() *schema.TemplateDefinition {
 							Type: schema.GeneratorTypePassword,
 						},
 					},
-					{
-						Name:  "ADMIN_USER_EMAIL",
-						Value: "admin@example.com",
-					},
-					{
-						Name: "ADMIN_USER_NAME",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeEmail,
-						},
-					},
-					{
-						Name: "ADMIN_USER_PWD",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypePassword,
-						},
-					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					// PostgreSQL references
 					{
 						SourceID:   1,
-						SourceName: "DATABASE_USERNAME",
-						TargetName: "POSTGRES_USER",
-					},
-					{
-						SourceID:   1,
-						SourceName: "DATABASE_PASSWORD",
-						TargetName: "POSTGRES_PASSWORD",
-					},
-					{
-						SourceID:   1,
-						SourceName: "DATABASE_DEFAULT_DB_NAME",
-						TargetName: "POSTGRES_DB",
-					},
-					{
-						SourceID:   1,
-						TargetName: "POSTGRES_HOST",
-						IsHost:     true,
+						SourceName: "DATABASE_URL",
+						TargetName: "DATABASE_URL",
 					},
 					// ClickHouse references
 					{
 						SourceID:   2,
-						SourceName: "DATABASE_USERNAME",
-						TargetName: "CLICKHOUSE_USER",
-					},
-					{
-						SourceID:   2,
-						SourceName: "DATABASE_PASSWORD",
-						TargetName: "CLICKHOUSE_PASSWORD",
-					},
-					{
-						SourceID:   2,
-						SourceName: "DATABASE_DEFAULT_DB_NAME",
-						TargetName: "CLICKHOUSE_DB",
-					},
-					{
-						SourceID:   2,
-						TargetName: "CLICKHOUSE_HOST",
-						IsHost:     true,
+						SourceName: "DATABASE_URL",
+						TargetName: "CLICKHOUSE_DATABASE_URL",
 					},
 				},
 			},
