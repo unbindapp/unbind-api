@@ -79,6 +79,7 @@ type TemplateService struct {
 	Type               ServiceType                 `json:"type"`
 	Builder            ServiceBuilder              `json:"builder"`
 	DatabaseType       *string                     `json:"database_type,omitempty"`
+	DatabaseVersion    *string                     `json:"database_version,omitempty"`
 	Image              *string                     `json:"image,omitempty"`
 	Ports              []PortSpec                  `json:"ports,omitempty"`
 	IsPublic           bool                        `json:"is_public"`

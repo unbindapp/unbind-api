@@ -22,11 +22,12 @@ func plausibleTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
-				Name:         "PostgreSQL",
-				Type:         schema.ServiceTypeDatabase,
-				Builder:      schema.ServiceBuilderDatabase,
-				DatabaseType: utils.ToPtr("postgres"),
+				ID:              1,
+				Name:            "PostgreSQL",
+				Type:            schema.ServiceTypeDatabase,
+				Builder:         schema.ServiceBuilderDatabase,
+				DatabaseType:    utils.ToPtr("postgres"),
+				DatabaseVersion: utils.ToPtr("16"),
 			},
 			{
 				ID:           2,

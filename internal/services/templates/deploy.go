@@ -158,6 +158,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				if dbVersion == nil && dbDefinition.DBVersion != "" {
 					dbVersion = utils.ToPtr(dbDefinition.DBVersion)
 				}
+
+				// ! TODO - validate validity
+				if templateService.DatabaseVersion != nil {
+					dbVersion = templateService.DatabaseVersion
+				}
 			}
 
 			// Generate unique name
