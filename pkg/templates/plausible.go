@@ -41,6 +41,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				DependsOn:    []int{1, 2},
 				HostInputIDs: []int{1},
 				Name:         "Plausible",
+				RunCommand:   utils.ToPtr("sh -c \"/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run\""),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("ghcr.io/plausible/community-edition:v3.0.1"),
