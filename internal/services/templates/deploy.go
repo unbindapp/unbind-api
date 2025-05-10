@@ -155,11 +155,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					}
 				}
 
-				// Check metadata
-				if dbVersion == nil && dbDefinition.DBVersion != "" {
-					dbVersion = utils.ToPtr(dbDefinition.DBVersion)
-				}
-
 				// ! TODO - validate validity
 				if templateService.DatabaseVersion != nil {
 					dbVersion = templateService.DatabaseVersion

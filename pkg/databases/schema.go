@@ -57,7 +57,6 @@ type Definition struct {
 	Description string                    `json:"description"`
 	Type        string                    `json:"type"`
 	Version     string                    `json:"version"`
-	DBVersion   string                    `json:"dbVersion"`
 	Schema      DefinitionParameterSchema `json:"schema"`
 	Content     string                    `json:"-"`
 	Chart       *HelmChartInfo            `json:"chart,omitempty"`

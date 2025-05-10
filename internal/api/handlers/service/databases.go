@@ -84,13 +84,8 @@ func (self *HandlerGroup) GetDatabaseDefinition(ctx context.Context, input *GetD
 		}
 	}
 	if !ok {
-		// See if version is in metadata
-		if template.DBVersion != "" {
-			versionConfigurable = DatabaseConfigurable{
-				Default: template.DBVersion,
-				Options: []string{template.DBVersion},
-			}
-		}
+		log.Errorf("failed to get version property from database template: %v", err)
+		return nil, huma.Error500InternalServerError("An unknown error occured")
 	}
 
 	response := &GetDatabaseResponse{}

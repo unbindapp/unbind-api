@@ -2,9 +2,6 @@ package utils
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
-	"crypto/sha512"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"math/big"
@@ -176,14 +173,4 @@ func GenerateSlug(displayName string) (string, error) {
 
 	// Combine slug and short ID
 	return slug + "-" + shortID, nil
-}
-
-func HashSHA256(input string) string {
-	hash := sha256.Sum256([]byte(input))
-	return hex.EncodeToString(hash[:])
-}
-
-func HashSHA512(input string) string {
-	hash := sha512.Sum512([]byte(input))
-	return hex.EncodeToString(hash[:])
 }
