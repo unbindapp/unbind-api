@@ -19,5 +19,6 @@ func (self *Templater) AvailableTemplates() []*schema.TemplateDefinition {
 		wordPressTemplate(),
 		ghostTemplate(),
 		minioTemplate(),
+		meiliSearchTemplate(),
 	}
 }
