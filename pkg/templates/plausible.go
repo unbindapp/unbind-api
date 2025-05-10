@@ -42,7 +42,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Name:         "Plausible",
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("plausible/analytics:latest"),
+				Image:        utils.ToPtr("plausible/community-edition:latest"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,
