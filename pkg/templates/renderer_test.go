@@ -32,13 +32,6 @@ func TestResolveGeneratedVariables(t *testing.T) {
 							Type: schema.GeneratorTypePassword,
 						},
 					},
-					{
-						Name: "GENERATED_EMAIL",
-						Generator: &schema.ValueGenerator{
-							Type:       schema.GeneratorTypeEmail,
-							BaseDomain: "example.com",
-						},
-					},
 				},
 			},
 		},
@@ -64,7 +57,7 @@ func TestResolveGeneratedVariables(t *testing.T) {
 	assert.Equal(t, template.Services[0].Name, service.Name)
 	assert.Equal(t, template.Services[0].Type, service.Type)
 	assert.Equal(t, template.Services[0].Builder, service.Builder)
-	assert.Len(t, service.Variables, 3)
+	assert.Len(t, service.Variables, 2)
 
 	// Verify static variable is preserved
 	staticVar := findVariable(service.Variables, "STATIC_VAR")
@@ -77,14 +70,7 @@ func TestResolveGeneratedVariables(t *testing.T) {
 	require.NotNil(t, passwordVar)
 	assert.NotEmpty(t, passwordVar.Value)
 	assert.Nil(t, passwordVar.Generator)
-	assert.Len(t, passwordVar.Value, 16) // Default password length
-
-	// Verify email is generated
-	emailVar := findVariable(service.Variables, "GENERATED_EMAIL")
-	require.NotNil(t, emailVar)
-	assert.NotEmpty(t, emailVar.Value)
-	assert.Nil(t, emailVar.Generator)
-	assert.Equal(t, "admin@example.com", emailVar.Value)
+	assert.Len(t, passwordVar.Value, 32) // Default password length
 
 	// Verify all variables have no generators
 	for _, v := range service.Variables {

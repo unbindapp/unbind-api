@@ -18,48 +18,78 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 		Inputs:      template.Inputs,
 	}
 
+	// Ensure Inputs is initialized if nil
+	if resolved.Inputs == nil {
+		resolved.Inputs = []schema.TemplateInput{}
+	}
+
 	// Copy and resolve each service
 	for i, svc := range template.Services {
 		resolvedService := schema.TemplateService{
-			ID:                 svc.ID,
-			Icon:               svc.Icon,
-			DependsOn:          svc.DependsOn,
-			Name:               svc.Name,
-			Type:               svc.Type,
-			Builder:            svc.Builder,
-			DatabaseType:       svc.DatabaseType,
-			DatabaseVersion:    svc.DatabaseVersion,
-			Image:              svc.Image,
-			Ports:              svc.Ports,
-			IsPublic:           svc.IsPublic,
-			RunCommand:         svc.RunCommand,
-			HostInputIDs:       svc.HostInputIDs,
-			VariableReferences: svc.VariableReferences,
-			Volumes:            svc.Volumes,
+			ID:              svc.ID,
+			Icon:            svc.Icon,
+			Name:            svc.Name,
+			Type:            svc.Type,
+			Builder:         svc.Builder,
+			DatabaseType:    svc.DatabaseType,
+			DatabaseVersion: svc.DatabaseVersion,
+			Image:           svc.Image,
+			IsPublic:        svc.IsPublic,
+			RunCommand:      svc.RunCommand,
+		}
+
+		// Initialize all slices if nil
+		if svc.DependsOn == nil {
+			resolvedService.DependsOn = []int{}
+		} else {
+			resolvedService.DependsOn = svc.DependsOn
+		}
+
+		if svc.Ports == nil {
+			resolvedService.Ports = []schema.PortSpec{}
+		} else {
+			resolvedService.Ports = svc.Ports
+		}
+
+		if svc.HostInputIDs == nil {
+			resolvedService.HostInputIDs = []int{}
+		} else {
+			resolvedService.HostInputIDs = svc.HostInputIDs
+		}
+
+		if svc.VariableReferences == nil {
+			resolvedService.VariableReferences = []schema.TemplateVariableReference{}
+		} else {
+			resolvedService.VariableReferences = svc.VariableReferences
+		}
+
+		if svc.Volumes == nil {
+			resolvedService.Volumes = []schema.TemplateVolume{}
+		} else {
+			resolvedService.Volumes = svc.Volumes
 		}
 
 		// Resolve variables
-		resolvedService.Variables = make([]schema.TemplateVariable, len(svc.Variables))
-		for j, v := range svc.Variables {
-			resolvedVar := schema.TemplateVariable{
-				Name: v.Name,
-			}
-
-			if v.Generator != nil {
-				// Set base domain for email generator
-				if v.Generator.Type == schema.GeneratorTypeEmail {
-					v.Generator.BaseDomain = self.cfg.ExternalUIUrl
+		if svc.Variables == nil {
+			resolvedService.Variables = []schema.TemplateVariable{}
+		} else {
+			resolvedService.Variables = make([]schema.TemplateVariable, len(svc.Variables))
+			for j, v := range svc.Variables {
+				resolvedVar := schema.TemplateVariable{
+					Name: v.Name,
 				}
-				value, err := v.Generator.Generate(inputs)
-				if err != nil {
-					return nil, fmt.Errorf("failed to generate value for %s: %w", v.Name, err)
-				}
-				resolvedVar.Value = value
-			} else {
-				resolvedVar.Value = v.Value
-			}
 
-			resolvedService.Variables[j] = resolvedVar
+				if v.Generator != nil {
+					value, err := v.Generator.Generate(inputs)
+					if err != nil {
+						return nil, fmt.Errorf("failed to generate value for %s: %w", v.Name, err)
+					}
+					resolvedVar.Value = value
+				} else {
+					resolvedVar.Value = v.Value
+				}
+				resolvedService.Variables[j] = resolvedVar
+			}
 		}
 
 		resolved.Services[i] = resolvedService

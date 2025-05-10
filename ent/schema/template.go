@@ -5,7 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"strings"
+	"reflect"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
@@ -69,28 +70,28 @@ type TemplateDefinition struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	Version     int               `json:"version"`
-	Services    []TemplateService `json:"services"`
-	Inputs      []TemplateInput   `json:"inputs,omitempty"`
+	Services    []TemplateService `json:"services" nullable:"false"`
+	Inputs      []TemplateInput   `json:"inputs" nullable:"false"`
 }
 
 // TemplateService represents a service within a template
 type TemplateService struct {
 	ID                 int                         `json:"id"`
-	DependsOn          []int                       `json:"depends_on,omitempty"` // IDs of services that must be started before this one
-	Icon               string                      `json:"icon,omitempty"`       // Icon name
+	DependsOn          []int                       `json:"depends_on" nullable:"false"` // IDs of services that must be started before this one
+	Icon               string                      `json:"icon,omitempty"`              // Icon name
 	Name               string                      `json:"name"`
 	Type               ServiceType                 `json:"type"`
 	Builder            ServiceBuilder              `json:"builder"`
 	DatabaseType       *string                     `json:"database_type,omitempty"`
 	DatabaseVersion    *string                     `json:"database_version,omitempty"`
 	Image              *string                     `json:"image,omitempty"`
-	Ports              []PortSpec                  `json:"ports,omitempty"`
+	Ports              []PortSpec                  `json:"ports" nullable:"false"` // Ports to expose
 	IsPublic           bool                        `json:"is_public"`
 	HostInputIDs       []int                       `json:"host_input_ids,omitempty"` // IDs of inputs that are hostnames
 	RunCommand         *string                     `json:"run_command,omitempty"`
-	Volumes            []TemplateVolume            `json:"volumes,omitempty"`
-	Variables          []TemplateVariable          `json:"variables"`                     // Variables this service needs
-	VariableReferences []TemplateVariableReference `json:"variable_references,omitempty"` // Variables this service needs
+	Volumes            []TemplateVolume            `json:"volumes" nullable:"false"`             // Volumes to mount
+	Variables          []TemplateVariable          `json:"variables" nullable:"false"`           // Variables this service needs
+	VariableReferences []TemplateVariableReference `json:"variable_references" nullable:"false"` // Variables this service needs
 }
 
 // TemplateVariable represents a configurable variable in a template
@@ -114,9 +115,24 @@ type GeneratorType string
 
 const (
 	GeneratorTypePassword GeneratorType = "password"
-	GeneratorTypeEmail    GeneratorType = "email"
 	GeneratorTypeInput    GeneratorType = "input" // For user input
 )
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u GeneratorType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["GeneratorType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "GeneratorType")
+		schemaRef.Title = "GeneratorType"
+		schemaRef.Enum = append(schemaRef.Enum,
+			[]any{
+				string(GeneratorTypePassword),
+				string(GeneratorTypeInput),
+			}...)
+		r.Map()["GeneratorType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/GeneratorType"}
+}
 
 // ValueGenerator represents how to generate a value
 type ValueGenerator struct {
@@ -133,6 +149,22 @@ const (
 	ValueHashTypeSHA256 ValueHashType = "sha256"
 	ValueHashTypeSHA512 ValueHashType = "sha512"
 )
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u ValueHashType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["ValueHashType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "ValueHashType")
+		schemaRef.Title = "ValueHashType"
+		schemaRef.Enum = append(schemaRef.Enum,
+			[]any{
+				string(ValueHashTypeSHA256),
+				string(ValueHashTypeSHA512),
+			}...)
+		r.Map()["ValueHashType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/ValueHashType"}
+}
 
 func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
 	switch self.Type {
@@ -152,16 +184,6 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
 			}
 		}
 		return self.AddPrefix + pwd, nil
-	case GeneratorTypeEmail:
-		// Strip http:// or https:// from the base domain
-		// Remove port if present and add .com if no domain part is present
-		domain := strings.TrimPrefix(self.BaseDomain, "http://")
-		domain = strings.TrimPrefix(domain, "https://")
-		domain = strings.TrimSuffix(domain, "/")
-		if !strings.Contains(domain, ".") {
-			domain = domain + ".com"
-		}
-		return self.AddPrefix + fmt.Sprintf("admin@%s", domain), nil
 	case GeneratorTypeInput:
 		// Find the input by ID
 		inputValue, ok := inputs[self.InputID]
@@ -182,6 +204,23 @@ const (
 	InputTypeHost       TemplateInputType = "host"
 	InputTypeVolumeSize TemplateInputType = "volume_size"
 )
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u TemplateInputType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["TemplateInputType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "TemplateInputType")
+		schemaRef.Title = "TemplateInputType"
+		schemaRef.Enum = append(schemaRef.Enum,
+			[]any{
+				string(InputTypeVariable),
+				string(InputTypeHost),
+				string(InputTypeVolumeSize),
+			}...)
+		r.Map()["TemplateInputType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/TemplateInputType"}
+}
 
 // TemplateInput represents a user input field in the template
 type TemplateInput struct {
