@@ -5,17 +5,17 @@ import (
 
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
+	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
-	"github.com/valkey-io/valkey-go"
 )
 
-// A custom client store that persists clients in a Valkey cache.
+// A custom client store that persists clients in a Redis cache.
 type dbClientStore struct {
 	ctx   context.Context
-	cache *cache.ValkeyCache[CacheClientInto]
+	cache *cache.RedisCache[CacheClientInto]
 }
 
-func NewDBClientStore(ctx context.Context, cache *cache.ValkeyCache[CacheClientInto]) *dbClientStore {
+func NewDBClientStore(ctx context.Context, cache *cache.RedisCache[CacheClientInto]) *dbClientStore {
 	return &dbClientStore{
 		ctx:   ctx,
 		cache: cache,
@@ -25,7 +25,7 @@ func NewDBClientStore(ctx context.Context, cache *cache.ValkeyCache[CacheClientI
 func (s *dbClientStore) GetByID(ctx context.Context, id string) (oauth2.ClientInfo, error) {
 	cacheItem, err := s.cache.Get(ctx, id)
 	if err != nil {
-		if err == valkey.Nil {
+		if err == redis.Nil {
 			return nil, errors.ErrInvalidClient
 		}
 		return nil, err

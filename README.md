@@ -11,7 +11,7 @@ The APIs for the Unbind platform.
 - [Dex IDP](https://dexidp.io) binary installed in $PATH
 
 1. Clone the repository
-2. Run `docker-compose up -d` to start dependencies (postgres, valkey, etc.)
+2. Run `docker-compose up -d` to start dependencies (postgres, redis, etc.)
 3. Run `./startdex.sh` to start dex IDP
 4. Reference [config/config.go](config/config.go) for environment variables, place them in a `.env` file
 
@@ -38,7 +38,7 @@ Install mockery and run `mockery` to re-generate mocks.
 
 - [Huma](https://huma.rocks/) - REST API Framework
 - [ent](https://entgo.io/) - Entity framework for GO
-- [valkey-go](https://github.com/valkey-io/valkey-go) - Valkey client
+- [go-redis](https://github.com/redis/go-redis) - Redis client
 - [ifacemaker](https://github.com/vburenin/ifacemaker) - Automatically generates interfaces from structs
 - [mockery](https://github.com/vektra/mockery) - Automatically creates mocks based on `.mockery.yaml`
 

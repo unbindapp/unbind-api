@@ -50,7 +50,7 @@ type Server struct {
 	Cfg                  *config.Config
 	GithubClient         *github.GithubClient
 	Repository           repositories.RepositoriesInterface
-	StringCache          *cache.ValkeyCache[string]
+	StringCache          *cache.RedisCache[string]
 	HttpClient           *http.Client
 	DeploymentController *deployctl.DeploymentController
 	DatabaseProvider     *databases.DatabaseProvider

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -22,10 +23,9 @@ import (
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
-	"github.com/valkey-io/valkey-go"
 )
 
-// Valkey key for the queue
+// Redis key for the queue
 const BUILDER_QUEUE_KEY = "unbind:build:queue"
 const DEPENDENT_SERVICES_QUEUE_KEY = "unbind:dependent-services:queue"
 
@@ -58,13 +58,13 @@ func NewDeploymentController(
 	cancel context.CancelFunc,
 	cfg *config.Config,
 	k8s *k8s.KubeClient,
-	valkeyClient valkey.Client,
+	redisClient *redis.Client,
 	repositories *repositories.Repositories,
 	githubClient *github.GithubClient,
 	webeehookService *webhooks_service.WebhooksService,
 	variableService *variables_service.VariablesService) *DeploymentController {
-	jobQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, BUILDER_QUEUE_KEY)
-	dependentQueue := queue.NewQueue[DeploymentJobRequest](valkeyClient, DEPENDENT_SERVICES_QUEUE_KEY)
+	jobQueue := queue.NewQueue[DeploymentJobRequest](redisClient, BUILDER_QUEUE_KEY)
+	dependentQueue := queue.NewQueue[DeploymentJobRequest](redisClient, DEPENDENT_SERVICES_QUEUE_KEY)
 
 	return &DeploymentController{
 		cfg:             cfg,

@@ -20,7 +20,7 @@ type Oauth2Server struct {
 	Srv         *server.Server
 	PrivateKey  *rsa.PrivateKey
 	Kid         string
-	StringCache *cache.ValkeyCache[string]
+	StringCache *cache.RedisCache[string]
 }
 
 type RedirectType string

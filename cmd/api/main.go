@@ -23,6 +23,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/gorilla/schema"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/config"
 	auth_handler "github.com/unbindapp/unbind-api/internal/api/handlers/auth"
 	deployments_handler "github.com/unbindapp/unbind-api/internal/api/handlers/deployments"
@@ -71,7 +72,6 @@ import (
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
-	"github.com/valkey-io/valkey-go"
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -171,12 +171,13 @@ func startAPI(cfg *config.Config) {
 		cancel() // This will propagate cancellation to all derived contexts
 	}()
 
-	// Initialize valkey (redis)
-	valkeyClient, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
-	if err != nil {
-		log.Fatal("Failed to create valkey client", "err", err)
-	}
-	defer valkeyClient.Close()
+	// Initialize redis
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisURL,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	defer redisClient.Close()
 
 	// Load database
 	dbConnInfo, err := database.GetSqlDbConn(cfg, false)
@@ -261,7 +262,7 @@ func startAPI(cfg *config.Config) {
 	webhooksService := webhooks_service.NewWebhooksService(repo)
 
 	// Create deployment controller
-	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, valkeyClient, repo, githubClient, webhooksService, variableService)
+	deploymentController := deployctl.NewDeploymentController(ctx, cancel, cfg, kubeClient, redisClient, repo, githubClient, webhooksService, variableService)
 
 	// Create services
 	teamService := team_service.NewTeamService(repo, kubeClient)
@@ -276,7 +277,7 @@ func startAPI(cfg *config.Config) {
 	storageService := storage_service.NewStorageService(cfg, repo, kubeClient)
 	templateService := templates_service.NewTemplatesService(cfg, repo, kubeClient, dbProvider, deploymentController)
 
-	stringCache := cache.NewStringCache(valkeyClient, "unbind")
+	stringCache := cache.NewStringCache(redisClient, "unbind")
 
 	// Create OAuth2 config
 
@@ -302,7 +303,7 @@ func startAPI(cfg *config.Config) {
 		DeploymentController: deploymentController,
 		DatabaseProvider:     dbProvider,
 		DNSChecker:           utils.NewDNSChecker(),
-		UpdateManager:        updater.New(cfg, Version, kubeClient, valkeyClient),
+		UpdateManager:        updater.New(cfg, Version, kubeClient, redisClient),
 		TeamService:          teamService,
 		ProjectService:       projectService,
 		ServiceService:       serviceService,
@@ -569,7 +570,7 @@ func startAPI(cfg *config.Config) {
 		log.Fatal("Failed to create scheduler", "err", err)
 	}
 
-	// ! TODO - we should leverage valkey or something to prevent concurrent runs
+	// ! TODO - we should leverage redis or something to prevent concurrent runs
 	// Clean up test DNS ingresses
 	_, err = scheduler.NewJob(
 		gocron.DurationJob(10*time.Minute),

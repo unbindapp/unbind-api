@@ -12,13 +12,13 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/go-github/v69/github"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
-	"github.com/valkey-io/valkey-go"
 )
 
 // Connect the new github app to our instance, via manifest code exchange
@@ -44,7 +44,7 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 	// Verify state
 	state, err := self.srv.StringCache.Getdel(ctx, appConfig.GetName())
 	if err != nil {
-		if err == valkey.Nil {
+		if err == redis.Nil {
 			return nil, huma.Error400BadRequest("Invalid state")
 		}
 		log.Error("Error getting state from cache", "err", err)
@@ -65,7 +65,7 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 	// Get user id from cache
 	userID, err := self.srv.StringCache.Getdel(ctx, input.State)
 	if err != nil {
-		if err == valkey.Nil {
+		if err == redis.Nil {
 			return nil, huma.Error400BadRequest("Invalid state")
 		}
 		log.Error("Error getting user ID from cache", "err", err)
@@ -80,7 +80,7 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 	// Get organization from the cache
 	// !  TODO - do we need this? seems like installation URL is the same regardless of org
 	_, err = self.srv.StringCache.Getdel(ctx, state+"-org")
-	if err != nil && !errors.Is(err, valkey.Nil) {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		log.Error("Error getting organization from the cache", "err", err)
 		return nil, huma.Error500InternalServerError("Failed to get organization from cache")
 	}

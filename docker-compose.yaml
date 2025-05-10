@@ -17,9 +17,9 @@ services:
     networks:
       - app-network
 
-  valkey:
-    container_name: unbind_valkey
-    image: valkey/valkey:8
+  redis:
+    container_name: unbind_redis
+    image: redis:8
     restart: unless-stopped
     ports:
       - '127.0.0.1:63234:6379'

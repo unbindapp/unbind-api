@@ -3,15 +3,13 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 	"time"
 
+	"github.com/go-redis/redismock/v9"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/valkey-io/valkey-go"
-	"github.com/valkey-io/valkey-go/mock"
-	"go.uber.org/mock/gomock"
 )
 
 // User is a test struct for cache storage
@@ -21,21 +19,20 @@ type User struct {
 	Email string `json:"email"`
 }
 
-// ValkeyCacheSuite is a test suite for the Cache implementation
-type ValkeyCacheSuite struct {
+// RedisCacheSuite is a test suite for the Cache implementation
+type RedisCacheSuite struct {
 	suite.Suite
-	ctrl        *gomock.Controller
-	mockClient  *mock.Client
-	stringCache *ValkeyCache[string]
-	intCache    *ValkeyCache[int]
-	userCache   *ValkeyCache[User]
+	mockClient  *redis.Client
+	mock        redismock.ClientMock
+	stringCache *RedisCache[string]
+	intCache    *RedisCache[int]
+	userCache   *RedisCache[User]
 	ctx         context.Context
 }
 
 // SetupTest runs before each test
-func (s *ValkeyCacheSuite) SetupTest() {
-	s.ctrl = gomock.NewController(s.T())
-	s.mockClient = mock.NewClient(s.ctrl)
+func (s *RedisCacheSuite) SetupTest() {
+	s.mockClient, s.mock = redismock.NewClientMock()
 	s.stringCache = NewCache[string](s.mockClient, "test")
 	s.intCache = NewCache[int](s.mockClient, "int-test")
 	s.userCache = NewCache[User](s.mockClient, "user-test")
@@ -43,44 +40,40 @@ func (s *ValkeyCacheSuite) SetupTest() {
 }
 
 // TearDownTest cleans up after each test
-func (s *ValkeyCacheSuite) TearDownTest() {
-	s.ctrl.Finish()
+func (s *RedisCacheSuite) TearDownTest() {
+	s.mock.ClearExpect()
 }
 
 // TestSet tests the Set method
-func (s *ValkeyCacheSuite) TestSet() {
+func (s *RedisCacheSuite) TestSet() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("SET", "test:key1", "\"value1\"")). // Include the value in the match
-		Return(mock.Result(mock.ValkeyString("OK")))
+	s.mock.ExpectSet("test:key1", "\"value1\"", 0).SetVal("OK")
 
 	// Call method
 	err := s.stringCache.Set(s.ctx, "key1", "value1")
 
 	// Assert
 	assert.NoError(s.T(), err)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestSetWithExpiration tests the SetWithExpiration method
-func (s *ValkeyCacheSuite) TestSetWithExpiration() {
+func (s *RedisCacheSuite) TestSetWithExpiration() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("SET", "test:key1", "\"value1\"", "EX", "600")).
-		Return(mock.Result(mock.ValkeyString("OK")))
+	s.mock.ExpectSet("test:key1", "\"value1\"", 10*time.Minute).SetVal("OK")
 
 	// Call method
 	err := s.stringCache.SetWithExpiration(s.ctx, "key1", "value1", 10*time.Minute)
 
 	// Assert
 	assert.NoError(s.T(), err)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestGet tests the Get method
-func (s *ValkeyCacheSuite) TestGet() {
+func (s *RedisCacheSuite) TestGet() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(gomock.Any(), gomock.Any()).
-		Return(mock.Result(mock.ValkeyString("\"value1\""))) // Note the extra quotes for JSON
+	s.mock.ExpectGet("test:key1").SetVal("\"value1\"")
 
 	// Call method
 	value, err := s.stringCache.Get(s.ctx, "key1")
@@ -88,14 +81,13 @@ func (s *ValkeyCacheSuite) TestGet() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), "value1", value)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
-// TestGet tests the Getdel method
-func (s *ValkeyCacheSuite) TestGetdel() {
+// TestGetdel tests the Getdel method
+func (s *RedisCacheSuite) TestGetdel() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(gomock.Any(), gomock.Any()).
-		Return(mock.Result(mock.ValkeyString("\"value1\""))) // Note the extra quotes for JSON
+	s.mock.ExpectGetDel("test:key1").SetVal("\"value1\"")
 
 	// Call method
 	value, err := s.stringCache.Getdel(s.ctx, "key1")
@@ -103,34 +95,28 @@ func (s *ValkeyCacheSuite) TestGetdel() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), "value1", value)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestGet_NotFound tests the Get method when key is not found
-func (s *ValkeyCacheSuite) TestGet_NotFound() {
+func (s *RedisCacheSuite) TestGet_NotFound() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("GET", "test:nonexistent")).
-		Return(mock.Result(mock.ValkeyNil()))
+	s.mock.ExpectGet("test:nonexistent").RedisNil()
 
 	// Call method
 	_, err := s.stringCache.Get(s.ctx, "nonexistent")
 
 	// Assert
 	assert.Error(s.T(), err)
-	assert.True(s.T(), errors.Is(err, valkey.Nil))
+	assert.Equal(s.T(), redis.Nil, err)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestGetWithTTL tests the GetWithTTL method
-func (s *ValkeyCacheSuite) TestGetWithTTL() {
-	// Set up expectation for GET
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("GET", "test:key1")).
-		Return(mock.Result(mock.ValkeyString("\"value1\"")))
-
-	// Set up expectation for TTL
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("TTL", "test:key1")).
-		Return(mock.Result(mock.ValkeyInt64(300))) // 5 minutes in seconds
+func (s *RedisCacheSuite) TestGetWithTTL() {
+	// Set up expectations
+	s.mock.ExpectGet("test:key1").SetVal("\"value1\"")
+	s.mock.ExpectTTL("test:key1").SetVal(5 * time.Minute)
 
 	// Call method
 	value, ttl, err := s.stringCache.GetWithTTL(s.ctx, "key1")
@@ -138,20 +124,15 @@ func (s *ValkeyCacheSuite) TestGetWithTTL() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), "value1", value)
-	assert.Equal(s.T(), 300*time.Second, ttl)
+	assert.Equal(s.T(), 5*time.Minute, ttl)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestGetWithTTL_NoExpiry tests the GetWithTTL method for keys with no expiration
-func (s *ValkeyCacheSuite) TestGetWithTTL_NoExpiry() {
-	// Set up expectation for GET
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("GET", "test:key1")).
-		Return(mock.Result(mock.ValkeyString("\"value1\"")))
-
-	// Set up expectation for TTL (return -1 for keys with no expiry)
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("TTL", "test:key1")).
-		Return(mock.Result(mock.ValkeyInt64(-1)))
+func (s *RedisCacheSuite) TestGetWithTTL_NoExpiry() {
+	// Set up expectations
+	s.mock.ExpectGet("test:key1").SetVal("\"value1\"")
+	s.mock.ExpectTTL("test:key1").SetVal(-1)
 
 	// Call method
 	value, ttl, err := s.stringCache.GetWithTTL(s.ctx, "key1")
@@ -159,61 +140,52 @@ func (s *ValkeyCacheSuite) TestGetWithTTL_NoExpiry() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), "value1", value)
-	assert.Equal(s.T(), time.Duration(-1), ttl) // -1 indicates no expiry
+	assert.Equal(s.T(), time.Duration(-1), ttl)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestDelete tests the Delete method
-func (s *ValkeyCacheSuite) TestDelete() {
+func (s *RedisCacheSuite) TestDelete() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("DEL", "test:key1")).
-		Return(mock.Result(mock.ValkeyInt64(1)))
+	s.mock.ExpectDel("test:key1").SetVal(1)
 
 	// Call method
 	err := s.stringCache.Delete(s.ctx, "key1")
 
 	// Assert
 	assert.NoError(s.T(), err)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestDeleteAll tests the DeleteAll method
-func (s *ValkeyCacheSuite) TestDeleteAll() {
-	// Set up expectation for KEYS
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("KEYS", "test:*")).
-		Return(mock.Result(mock.ValkeyArray(
-			mock.ValkeyString("test:key1"),
-			mock.ValkeyString("test:key2"),
-		)))
-
-	// Set up expectation for DEL
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("DEL", "test:key1", "test:key2")).
-		Return(mock.Result(mock.ValkeyInt64(2)))
+func (s *RedisCacheSuite) TestDeleteAll() {
+	// Set up expectations
+	s.mock.ExpectKeys("test:*").SetVal([]string{"test:key1", "test:key2"})
+	s.mock.ExpectDel("test:key1", "test:key2").SetVal(2)
 
 	// Call method
 	err := s.stringCache.DeleteAll(s.ctx)
 
 	// Assert
 	assert.NoError(s.T(), err)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestDeleteAll_NoKeys tests the DeleteAll method when no keys match
-func (s *ValkeyCacheSuite) TestDeleteAll_NoKeys() {
-	// Set up expectation for KEYS (empty result)
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("KEYS", "test:*")).
-		Return(mock.Result(mock.ValkeyArray()))
+func (s *RedisCacheSuite) TestDeleteAll_NoKeys() {
+	// Set up expectation
+	s.mock.ExpectKeys("test:*").SetVal([]string{})
 
 	// Call method
 	err := s.stringCache.DeleteAll(s.ctx)
 
 	// Assert
 	assert.NoError(s.T(), err)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestDeleteAll_NoPrefix tests the DeleteAll method when no prefix is set
-func (s *ValkeyCacheSuite) TestDeleteAll_NoPrefix() {
+func (s *RedisCacheSuite) TestDeleteAll_NoPrefix() {
 	// Create cache with no prefix
 	noPrefix := NewCache[string](s.mockClient, "")
 
@@ -226,11 +198,9 @@ func (s *ValkeyCacheSuite) TestDeleteAll_NoPrefix() {
 }
 
 // TestExists tests the Exists method
-func (s *ValkeyCacheSuite) TestExists() {
+func (s *RedisCacheSuite) TestExists() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("EXISTS", "test:key1")).
-		Return(mock.Result(mock.ValkeyInt64(1)))
+	s.mock.ExpectExists("test:key1").SetVal(1)
 
 	// Call method
 	exists, err := s.stringCache.Exists(s.ctx, "key1")
@@ -238,14 +208,13 @@ func (s *ValkeyCacheSuite) TestExists() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.True(s.T(), exists)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestExists_NotFound tests the Exists method when key doesn't exist
-func (s *ValkeyCacheSuite) TestExists_NotFound() {
+func (s *RedisCacheSuite) TestExists_NotFound() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("EXISTS", "test:nonexistent")).
-		Return(mock.Result(mock.ValkeyInt64(0)))
+	s.mock.ExpectExists("test:nonexistent").SetVal(0)
 
 	// Call method
 	exists, err := s.stringCache.Exists(s.ctx, "nonexistent")
@@ -253,65 +222,46 @@ func (s *ValkeyCacheSuite) TestExists_NotFound() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.False(s.T(), exists)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestKeys tests the Keys method
-func (s *ValkeyCacheSuite) TestKeys() {
+func (s *RedisCacheSuite) TestKeys() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("KEYS", "test:*")).
-		Return(mock.Result(mock.ValkeyArray(
-			mock.ValkeyString("test:key1"),
-			mock.ValkeyString("test:key2"),
-		)))
+	s.mock.ExpectKeys("test:*").SetVal([]string{"test:key1", "test:key2"})
 
 	// Call method
 	keys, err := s.stringCache.Keys(s.ctx)
 
 	// Assert
 	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), []string{"key1", "key2"}, keys)
+	assert.ElementsMatch(s.T(), []string{"key1", "key2"}, keys)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestKeys_NoPrefix tests the Keys method when no prefix is set
-func (s *ValkeyCacheSuite) TestKeys_NoPrefix() {
+func (s *RedisCacheSuite) TestKeys_NoPrefix() {
 	// Create cache with no prefix
 	noPrefix := NewCache[string](s.mockClient, "")
 
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("KEYS", "*")).
-		Return(mock.Result(mock.ValkeyArray(
-			mock.ValkeyString("key1"),
-			mock.ValkeyString("key2"),
-		)))
+	s.mock.ExpectKeys("*").SetVal([]string{"key1", "key2"})
 
 	// Call method
 	keys, err := noPrefix.Keys(s.ctx)
 
 	// Assert
 	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), []string{"key1", "key2"}, keys)
+	assert.ElementsMatch(s.T(), []string{"key1", "key2"}, keys)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestGetAll tests the GetAll method
-func (s *ValkeyCacheSuite) TestGetAll() {
-	// Set up expectation for KEYS - don't add extra quotes to the keys
-	s.mockClient.EXPECT().
-		Do(gomock.Any(), gomock.Any()).
-		Return(mock.Result(mock.ValkeyArray(
-			mock.ValkeyString("test:key1"),
-			mock.ValkeyString("test:key2"),
-		)))
-
-	// Set up expectations for GET calls
-	s.mockClient.EXPECT().
-		Do(gomock.Any(), gomock.Any()).
-		Return(mock.Result(mock.ValkeyString("\"value1\"")))
-
-	s.mockClient.EXPECT().
-		Do(gomock.Any(), gomock.Any()).
-		Return(mock.Result(mock.ValkeyString("\"value2\"")))
+func (s *RedisCacheSuite) TestGetAll() {
+	// Set up expectations
+	s.mock.ExpectKeys("test:*").SetVal([]string{"test:key1", "test:key2"})
+	s.mock.ExpectGet("test:key1").SetVal("\"value1\"")
+	s.mock.ExpectGet("test:key2").SetVal("\"value2\"")
 
 	// Call method
 	items, err := s.stringCache.GetAll(s.ctx)
@@ -322,25 +272,15 @@ func (s *ValkeyCacheSuite) TestGetAll() {
 		"key1": "value1",
 		"key2": "value2",
 	}, items)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestGetAll_WithMissingKey tests the GetAll method when one key is missing
-func (s *ValkeyCacheSuite) TestGetAll_WithMissingKey() {
-	// Set up expectation for KEYS
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("KEYS", "test:*")).
-		Return(mock.Result(mock.ValkeyArray(
-			mock.ValkeyString("test:key1"),
-			mock.ValkeyString("test:key2"),
-		)))
-
-	// Set up expectations for GET calls
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("GET", "test:key1")).
-		Return(mock.Result(mock.ValkeyString("\"value1\"")))
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("GET", "test:key2")).
-		Return(mock.Result(mock.ValkeyNil()))
+func (s *RedisCacheSuite) TestGetAll_WithMissingKey() {
+	// Set up expectations
+	s.mock.ExpectKeys("test:*").SetVal([]string{"test:key1", "test:key2"})
+	s.mock.ExpectGet("test:key1").SetVal("\"value1\"")
+	s.mock.ExpectGet("test:key2").RedisNil()
 
 	// Call method
 	items, err := s.stringCache.GetAll(s.ctx)
@@ -350,37 +290,34 @@ func (s *ValkeyCacheSuite) TestGetAll_WithMissingKey() {
 	assert.Equal(s.T(), map[string]string{
 		"key1": "value1",
 	}, items)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestStructEncoding tests encoding and decoding of struct values
-func (s *ValkeyCacheSuite) TestStructEncoding() {
+func (s *RedisCacheSuite) TestStructEncoding() {
 	user := User{ID: 1, Name: "John", Email: "john@example.com"}
 	userJSON, _ := json.Marshal(user)
 
-	// Test Set with a struct - using gomock.Any() for arguments to avoid matching issues
-	s.mockClient.EXPECT().
-		Do(gomock.Any(), gomock.Any()).
-		Return(mock.Result(mock.ValkeyString("OK")))
+	// Set up expectations
+	s.mock.ExpectSet("user-test:user1", string(userJSON), 0).SetVal("OK")
+	s.mock.ExpectGet("user-test:user1").SetVal(string(userJSON))
 
+	// Test Set with a struct
 	err := s.userCache.Set(s.ctx, "user1", user)
 	assert.NoError(s.T(), err)
 
 	// Test Get with a struct
-	s.mockClient.EXPECT().
-		Do(gomock.Any(), gomock.Any()).
-		Return(mock.Result(mock.ValkeyString(string(userJSON))))
-
 	retrievedUser, err := s.userCache.Get(s.ctx, "user1")
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), user, retrievedUser)
+
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestIncrementInt tests the Increment function with int type
-func (s *ValkeyCacheSuite) TestIncrementInt() {
+func (s *RedisCacheSuite) TestIncrementInt() {
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("INCRBY", "int-test:counter", "5")).
-		Return(mock.Result(mock.ValkeyInt64(10)))
+	s.mock.ExpectIncrBy("int-test:counter", 5).SetVal(10)
 
 	// Call method
 	newValue, err := Increment(s.ctx, s.intCache, "counter", 5)
@@ -388,17 +325,16 @@ func (s *ValkeyCacheSuite) TestIncrementInt() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), 10, newValue)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestIncrementFloat64 tests the Increment function with float64 type
-func (s *ValkeyCacheSuite) TestIncrementFloat64() {
+func (s *RedisCacheSuite) TestIncrementFloat64() {
 	// Create a float cache
 	floatCache := NewCache[float64](s.mockClient, "float-test")
 
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("INCRBYFLOAT", "float-test:counter", "2.5")).
-		Return(mock.Result(mock.ValkeyFloat64(15.5)))
+	s.mock.ExpectIncrByFloat("float-test:counter", 2.5).SetVal(15.5)
 
 	// Call method
 	newValue, err := Increment(s.ctx, floatCache, "counter", 2.5)
@@ -406,10 +342,11 @@ func (s *ValkeyCacheSuite) TestIncrementFloat64() {
 	// Assert
 	assert.NoError(s.T(), err)
 	assert.Equal(s.T(), 15.5, newValue)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // TestStringCache tests the specialized string cache
-func (s *ValkeyCacheSuite) TestStringCache() {
+func (s *RedisCacheSuite) TestStringCache() {
 	// Create a string cache
 	stringCache := NewStringCache(s.mockClient, "string-test")
 
@@ -417,20 +354,19 @@ func (s *ValkeyCacheSuite) TestStringCache() {
 	assert.IsType(s.T(), StringValueCoder{}, stringCache.coder)
 
 	// Set up expectation
-	s.mockClient.EXPECT().
-		Do(s.ctx, mock.Match("SET", "string-test:key1", "direct-string")).
-		Return(mock.Result(mock.ValkeyString("\"OK\"")))
+	s.mock.ExpectSet("string-test:key1", "direct-string", 0).SetVal("OK")
 
 	// Call method
 	err := stringCache.Set(s.ctx, "key1", "direct-string")
 
 	// Assert
 	assert.NoError(s.T(), err)
+	assert.NoError(s.T(), s.mock.ExpectationsWereMet())
 }
 
 // Run the test suite
-func TestValkeyCacheSuite(t *testing.T) {
-	suite.Run(t, new(ValkeyCacheSuite))
+func TestRedisCacheSuite(t *testing.T) {
+	suite.Run(t, new(RedisCacheSuite))
 }
 
 // Test the JSONValueCoder directly
@@ -477,11 +413,8 @@ func TestStringValueCoder(t *testing.T) {
 
 // Test creating cache with custom coder
 func TestWithCoder(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClient := mock.NewClient(ctrl)
-	cache := NewCache[string](mockClient, "test")
+	client, _ := redismock.NewClientMock()
+	cache := NewCache[string](client, "test")
 
 	// Create a custom coder
 	customCoder := StringValueCoder{}
@@ -498,16 +431,13 @@ func TestWithCoder(t *testing.T) {
 
 // Test fullKey method
 func TestFullKey(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockClient := mock.NewClient(ctrl)
+	client, _ := redismock.NewClientMock()
 
 	// Cache with prefix
-	cache := NewCache[string](mockClient, "prefix")
+	cache := NewCache[string](client, "prefix")
 	assert.Equal(t, "prefix:key", cache.fullKey("key"))
 
 	// Cache without prefix
-	cacheNoPrefix := NewCache[string](mockClient, "")
+	cacheNoPrefix := NewCache[string](client, "")
 	assert.Equal(t, "key", cacheNoPrefix.fullKey("key"))
 }

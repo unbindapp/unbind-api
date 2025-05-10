@@ -9,13 +9,13 @@ import (
 	"time"
 
 	gh "github.com/google/go-github/v69/github"
+	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	github_integration "github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/pkg/release"
-	"github.com/valkey-io/valkey-go"
 	"sigs.k8s.io/kustomize/api/krusty"
 	"sigs.k8s.io/kustomize/api/types"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
@@ -30,7 +30,7 @@ type Updater struct {
 	httpClient     *http.Client
 
 	// Cache for updates
-	valkeyCache *cache.ValkeyCache[*UpdateCacheItem]
+	redisCache *cache.RedisCache[*UpdateCacheItem]
 }
 
 type UpdateCacheItem struct {
@@ -39,7 +39,7 @@ type UpdateCacheItem struct {
 }
 
 // New creates a new updater instance
-func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, valkeyClient valkey.Client) *Updater {
+func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, redisClient *redis.Client) *Updater {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -48,7 +48,7 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, v
 	githubClient := gh.NewClient(httpClient)
 
 	// Create string cache
-	valkeyCache := cache.NewCache[*UpdateCacheItem](valkeyClient, "unbind-updater")
+	redisCache := cache.NewCache[*UpdateCacheItem](redisClient, "unbind-updater")
 
 	return &Updater{
 		cfg:            cfg,
@@ -56,16 +56,16 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, v
 		CurrentVersion: currentVersion,
 		k8sClient:      k8sClient,
 		httpClient:     httpClient,
-		valkeyCache:    valkeyCache,
+		redisCache:     redisCache,
 	}
 }
 
 // CheckForUpdates checks if there are any available updates
 func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 	// Check cache first
-	cacheItem, err := self.valkeyCache.Get(ctx, "updates")
+	cacheItem, err := self.redisCache.Get(ctx, "updates")
 	if err != nil {
-		if err != valkey.Nil {
+		if err != redis.Nil {
 			log.Errorf("Error reading from cache: %v", err)
 		}
 	} else if cacheItem != nil {
@@ -97,7 +97,7 @@ func (self *Updater) CheckForUpdates(ctx context.Context) ([]string, error) {
 		Updates:   updates,
 		CheckedAt: time.Now(),
 	}
-	if err := self.valkeyCache.Set(ctx, "updates", cacheItem); err != nil {
+	if err := self.redisCache.Set(ctx, "updates", cacheItem); err != nil {
 		log.Errorf("Failed to cache updates: %v", err)
 	} else {
 		log.Infof("Successfully cached updates until %v", time.Now().Add(time.Hour))
@@ -258,9 +258,9 @@ func (self *Updater) CheckDeploymentsReady(ctx context.Context, version string) 
 func (self *Updater) GetNextAvailableVersion(ctx context.Context, currentVersion string) (string, error) {
 	// Check cache first
 	cacheKey := fmt.Sprintf("next-version-%s", currentVersion)
-	cacheItem, err := self.valkeyCache.Get(ctx, cacheKey)
+	cacheItem, err := self.redisCache.Get(ctx, cacheKey)
 	if err != nil {
-		if err != valkey.Nil {
+		if err != redis.Nil {
 			log.Errorf("Error reading next version from cache: %v", err)
 		}
 	} else if cacheItem != nil {
@@ -291,7 +291,7 @@ func (self *Updater) GetNextAvailableVersion(ctx context.Context, currentVersion
 		Updates:   []string{version},
 		CheckedAt: time.Now(),
 	}
-	if err := self.valkeyCache.SetWithExpiration(ctx, cacheKey, cacheItem, time.Hour); err != nil {
+	if err := self.redisCache.SetWithExpiration(ctx, cacheKey, cacheItem, time.Hour); err != nil {
 		log.Errorf("Failed to cache next version: %v", err)
 	} else {
 		log.Infof("Successfully cached next version %v until %v", version, time.Now().Add(time.Hour))

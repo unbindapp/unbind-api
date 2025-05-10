@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/valkey-io/valkey-go"
-	"github.com/valkey-io/valkey-go/valkeycompat"
 )
 
 // Default poll interval for processor
@@ -17,9 +16,9 @@ const POLL_INTERVAL = 5 * time.Second
 // Default concurrency for processor
 const QUEUE_CONCURRENCY = 2
 
-// Prirority queue implementation using valkey sorted set
+// Prirority queue implementation using redis sorted set
 type Queue[T any] struct {
-	client       valkeycompat.Cmdable
+	client       *redis.Client
 	key          string
 	pollInterval time.Duration
 }
@@ -32,11 +31,9 @@ type QueueItem[T any] struct {
 	Priority   int       `json:"priority"`
 }
 
-func NewQueue[T any](client valkey.Client, key string) *Queue[T] {
-	// redis-go compatible client
-	compatClient := valkeycompat.NewAdapter(client)
+func NewQueue[T any](client *redis.Client, key string) *Queue[T] {
 	return &Queue[T]{
-		client:       compatClient,
+		client:       client,
 		key:          key,
 		pollInterval: POLL_INTERVAL,
 	}
@@ -62,7 +59,7 @@ func (q *Queue[T]) Enqueue(ctx context.Context, id string, data T) error {
 	// ! We would subtract priority * 1000000 here, for priority
 	score := float64(time.Now().Unix())
 
-	return q.client.ZAdd(ctx, q.key, valkeycompat.Z{
+	return q.client.ZAdd(ctx, q.key, redis.Z{
 		Score:  score,
 		Member: string(itemData),
 	}).Err()

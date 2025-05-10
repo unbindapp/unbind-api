@@ -17,9 +17,9 @@ services:
     networks:
       - app-network
 
-  valkey:
-    container_name: unbind_valkey
-    image: valkey/valkey:8
+  redis:
+    container_name: unbind_redis
+    image: redis:8
     restart: unless-stopped
     ports:
       - '127.0.0.1:63234:6379'
@@ -56,7 +56,7 @@ services:
       - DEX_ISSUER_URL_EXTERNAL=http://localhost:5556
       - DEX_CLIENT_ID=unbind-dev
       - DEX_CLIENT_SECRET=supersecret
-      - VALKEY_URL=valkey:6379
+      - REDIS_URL=redis:6379
     ports:
       - '127.0.0.1:8089:8089'
     volumes:

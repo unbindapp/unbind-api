@@ -22,6 +22,7 @@ require (
 	github.com/go-co-op/gocron/v2 v2.16.1
 	github.com/go-git/go-git/v5 v5.14.0
 	github.com/go-oauth2/oauth2/v4 v4.5.3
+	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/go-containerregistry v0.20.3
 	github.com/google/go-github/v69 v69.2.0
@@ -32,12 +33,11 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/moby/buildkit v0.20.2
 	github.com/prometheus/common v0.63.0
+	github.com/redis/go-redis/v9 v9.8.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tonistiigi/fsutil v0.0.0-20250318190121-d73a4b3b8a7e
 	github.com/valkey-io/valkey-go v1.0.56
-	github.com/valkey-io/valkey-go/mock v1.0.56
 	go.uber.org/automaxprocs v1.6.0
-	go.uber.org/mock v0.5.0
 	golang.org/x/oauth2 v0.29.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.3
@@ -89,6 +89,7 @@ require (
 	github.com/containerd/ttrpc v1.2.7 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
@@ -234,7 +235,6 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/unbindapp/unbind-operator v0.0.0-20250508183557-f94119c9b8fa
-	github.com/valkey-io/valkey-go/valkeycompat v1.0.56
 	github.com/vburenin/ifacemaker v1.2.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zalando/postgres-operator v1.14.0

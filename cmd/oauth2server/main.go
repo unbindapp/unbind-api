@@ -15,6 +15,7 @@ import (
 	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/common/log"
@@ -23,7 +24,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/database"
 	"github.com/unbindapp/unbind-api/internal/oauth2server"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	"github.com/valkey-io/valkey-go"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -32,7 +32,7 @@ const REFRESH_TOKEN_EXP = 24 * time.Hour * 14 // 2 weeks
 var ALLOWED_SCOPES = []string{"openid", "profile", "email", "offline_access", "groups"}
 
 // Setup the go-oauth2 server
-func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Client) *oauth2server.Oauth2Server {
+func setupOAuthServer(ctx context.Context, cfg *config.Config, redis *redis.Client) *oauth2server.Oauth2Server {
 	manager := manage.NewDefaultManager()
 
 	// Load database
@@ -54,7 +54,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 	}
 
 	// Use our custom token store
-	clientStoreCache := cache.NewCache[CacheClientInto](valkey, "auth")
+	clientStoreCache := cache.NewCache[CacheClientInto](redis, "auth")
 	clientStore := NewDBClientStore(ctx, clientStoreCache)
 	tokenStore := NewCustomTokenStore(clientStore, repo)
 	manager.MapTokenStorage(tokenStore)
@@ -97,7 +97,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, valkey valkey.Cli
 		Cfg:         cfg,
 		PrivateKey:  pkey,
 		Kid:         keyID,
-		StringCache: cache.NewStringCache(valkey, "unbind-oauth-str"),
+		StringCache: cache.NewStringCache(redis, "unbind-oauth-str"),
 	}
 
 	// Create the server
@@ -198,14 +198,15 @@ func StartOauth2Server(cfg *config.Config) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize valkey (redis)
-	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
-	if err != nil {
-		log.Fatal("Failed to create valkey client", "err", err)
-	}
-	defer client.Close()
+	// Initialize redis (redis)
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisURL,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	defer redisClient.Close()
 
-	oauth2Srv := setupOAuthServer(ctx, cfg, client)
+	oauth2Srv := setupOAuthServer(ctx, cfg, redisClient)
 
 	// Setup router
 	// New chi router
