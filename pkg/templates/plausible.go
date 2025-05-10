@@ -70,8 +70,10 @@ func plausibleTemplate() *schema.TemplateDefinition {
 						Value: "admin@example.com",
 					},
 					{
-						Name:  "ADMIN_USER_NAME",
-						Value: "admin",
+						Name: "ADMIN_USER_NAME",
+						Generator: &schema.ValueGenerator{
+							Type: schema.GeneratorTypeEmail,
+						},
 					},
 					{
 						Name: "ADMIN_USER_PWD",
