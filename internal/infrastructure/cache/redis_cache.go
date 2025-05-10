@@ -10,19 +10,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// RedisClient defines the minimal interface required for Redis operations
-type RedisClient interface {
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
-	Get(ctx context.Context, key string) *redis.StringCmd
-	GetDel(ctx context.Context, key string) *redis.StringCmd
-	TTL(ctx context.Context, key string) *redis.DurationCmd
-	Del(ctx context.Context, keys ...string) *redis.IntCmd
-	Exists(ctx context.Context, keys ...string) *redis.IntCmd
-	Keys(ctx context.Context, pattern string) *redis.StringSliceCmd
-	IncrBy(ctx context.Context, key string, value int64) *redis.IntCmd
-	IncrByFloat(ctx context.Context, key string, value float64) *redis.FloatCmd
-}
-
 // ValueCoder defines how values are encoded and decoded for Redis storage
 type ValueCoder[T any] interface {
 	Encode(value T) (string, error)
@@ -61,13 +48,13 @@ func (c StringValueCoder) Decode(encoded string) (string, error) {
 
 // RedisCache implements a generic Redis-based cache
 type RedisCache[T any] struct {
-	client RedisClient
+	client *redis.Client
 	prefix string
 	coder  ValueCoder[T]
 }
 
 // NewCache creates a new RedisCache instance
-func NewCache[T any](client RedisClient, prefix string) *RedisCache[T] {
+func NewCache[T any](client *redis.Client, prefix string) *RedisCache[T] {
 	return &RedisCache[T]{
 		client: client,
 		prefix: prefix,
@@ -76,7 +63,7 @@ func NewCache[T any](client RedisClient, prefix string) *RedisCache[T] {
 }
 
 // NewStringCache creates a new RedisCache instance for string values
-func NewStringCache(client RedisClient, prefix string) *RedisCache[string] {
+func NewStringCache(client *redis.Client, prefix string) *RedisCache[string] {
 	return &RedisCache[string]{
 		client: client,
 		prefix: prefix,
