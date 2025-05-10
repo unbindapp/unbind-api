@@ -132,8 +132,6 @@ type GithubWebhookOutput struct {
 }
 
 func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *GithubWebhookInput) (*GithubWebhookOutput, error) {
-	log.Infof("Incoming GitHub webhook: event=%s sha1=%s sha256=%s body_len=%d", input.EventType, input.Sha1SignatureHeader, input.Sha256SignatureHeader, len(input.RawBody))
-
 	// Since we may have multiple apps, we want to validate against every webhook secret to see if it belongs to any of our apps
 	ghApps, err := self.srv.Repository.Github().GetApps(ctx, false)
 	if err != nil {
@@ -148,15 +146,12 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 		signature = input.Sha1SignatureHeader
 	}
 
+	// Validate the payload using the webhook secret.
 	for _, app := range ghApps {
-		log.Infof("Trying app id=%d name=%s webhook_secret_len=%d", app.ID, app.Name, len(app.WebhookSecret))
 		err := github.ValidateSignature(signature, input.RawBody, []byte(app.WebhookSecret))
 		if err == nil {
-			log.Infof("Signature validated for app id=%d name=%s", app.ID, app.Name)
 			ghApp = app
 			break
-		} else {
-			log.Infof("Signature validation failed for app id=%d: %v", app.ID, err)
 		}
 	}
 
@@ -165,7 +160,6 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 		return nil, huma.Error400BadRequest("Invalid signature")
 	}
 
-	log.Infof("Parsing webhook event: event_type=%s", input.EventType)
 	// Parse the webhook event.
 	event, err := github.ParseWebHook(input.EventType, input.RawBody)
 	if err != nil {
@@ -175,7 +169,6 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 
 	switch e := event.(type) {
 	case *github.InstallationEvent:
-		log.Infof("Received installation event: action=%s app_id=%d installation_id=%d", e.GetAction(), e.GetInstallation().GetAppID(), e.GetInstallation().GetID())
 		// Common installation data
 		installation := e.GetInstallation()
 		installationID := installation.GetID()
@@ -259,7 +252,6 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			}
 		}
 	case *github.PushEvent:
-		log.Infof("Received push event: repo=%s installation_id=%d ref=%s", e.GetRepo().GetFullName(), e.GetInstallation().GetID(), e.GetRef())
 		// Trigger a build if the push event is for a branch we care about
 		if e.Repo == nil || e.Installation == nil {
 			log.Errorf("Received push event with missing repo or installation %v", e)
