@@ -28,6 +28,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 			Type:               svc.Type,
 			Builder:            svc.Builder,
 			DatabaseType:       svc.DatabaseType,
+			DatabaseVersion:    svc.DatabaseVersion,
 			Image:              svc.Image,
 			Ports:              svc.Ports,
 			IsPublic:           svc.IsPublic,
