@@ -26,7 +26,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Name:         "PostgreSQL",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
-				DatabaseType: utils.ToPtr("postgresql"),
+				DatabaseType: utils.ToPtr("postgres"),
 			},
 			{
 				ID:           2,
