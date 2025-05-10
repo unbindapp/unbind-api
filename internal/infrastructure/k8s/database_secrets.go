@@ -66,6 +66,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	host := string(secret.Data["DATABASE_HOST"])
 	defaultDBName := string(secret.Data["DATABASE_DEFAULT_DB_NAME"])
 	existingUrl := string(secret.Data["DATABASE_URL"])
+	existingHttpUrl := string(secret.Data["DATABASE_HTTP_URL"])
 
 	// For postgres, we can sync username and password if they are empty
 	if *service.Database == "postgres" && (username == "" || password == "") {
@@ -131,6 +132,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 
 	// Set database URL for database type
 	var url string
+	var httpUrl string
 	switch *service.Database {
 	case "postgres":
 		host = fmt.Sprintf("%s.%s", service.KubernetesName, namespace)
@@ -149,8 +151,8 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 			host)
 	case "clickhouse":
 		host = fmt.Sprintf("clickhouse-%s.%s", service.KubernetesName, namespace)
-		host = fmt.Sprintf("clickhouse://%s:%s@%s:9000/default", username, password, host)
-
+		url = fmt.Sprintf("clickhouse://%s:%s@%s:9000/default", username, password, host)
+		httpUrl = fmt.Sprintf("http://%s:%s@%s:8123/default", username, password, host)
 	}
 
 	secrets := map[string][]byte{
@@ -160,6 +162,9 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	}
 	if existingUrl != url && url != "" {
 		secrets["DATABASE_URL"] = []byte(url)
+	}
+	if existingHttpUrl != httpUrl && httpUrl != "" {
+		secrets["DATABASE_HTTP_URL"] = []byte(httpUrl)
 	}
 	if defaultDBName == "" {
 		switch *service.Database {
@@ -178,6 +183,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 		case "clickhouse":
 			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("default")
 			secrets["DATABASE_PORT"] = []byte("9000")
+			secrets["DATABASE_HTTP_PORT"] = []byte("8123")
 		}
 	}
 	// Sync secret

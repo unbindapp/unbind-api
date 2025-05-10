@@ -97,7 +97,9 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 					secretKey.Name == "DATABASE_URL" ||
 					secretKey.Name == "DATABASE_DEFAULT_DB_NAME" ||
 					secretKey.Name == "DATABASE_PORT" ||
-					secretKey.Name == "DATABASE_HOST") {
+					secretKey.Name == "DATABASE_HOST" ||
+					secretKey.Name == "DATABASE_HTTP_URL" ||
+					secretKey.Name == "DATABASE_HTTP_PORT") {
 				continue
 			}
 			delete(secrets, secretKey.Name)

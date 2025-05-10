@@ -82,7 +82,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 					// ClickHouse references
 					{
 						SourceID:   2,
-						SourceName: "DATABASE_URL",
+						SourceName: "DATABASE_HTTP_URL",
 						TargetName: "CLICKHOUSE_DATABASE_URL",
 					},
 				},
