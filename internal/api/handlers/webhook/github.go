@@ -152,9 +152,6 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 		if err == nil {
 			ghApp = app
 			break
-		} else {
-			log.Info("app", "appID", app.ID, "webhookSecret", app.WebhookSecret, "signature", signature)
-			log.Error("Error validating github webhook signature", "err", err)
 		}
 	}
 
