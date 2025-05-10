@@ -1,6 +1,9 @@
 package schema
 
 import (
+	"crypto/sha256"
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -117,11 +120,19 @@ const (
 
 // ValueGenerator represents how to generate a value
 type ValueGenerator struct {
-	Type       GeneratorType `json:"type"`
-	InputID    int           `json:"input_id,omitempty"`    // For input
-	BaseDomain string        `json:"base_domain,omitempty"` // For email
-	AddPrefix  string        `json:"add_prefix,omitempty"`  // Add a prefix to the generated value
+	Type       GeneratorType  `json:"type"`
+	InputID    int            `json:"input_id,omitempty"`    // For input
+	BaseDomain string         `json:"base_domain,omitempty"` // For email
+	AddPrefix  string         `json:"add_prefix,omitempty"`  // Add a prefix to the generated value
+	HashType   *ValueHashType `json:"hash_type,omitempty"`   // Hash the generated value
 }
+
+type ValueHashType string
+
+const (
+	ValueHashTypeSHA256 ValueHashType = "sha256"
+	ValueHashTypeSHA512 ValueHashType = "sha512"
+)
 
 func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
 	switch self.Type {
@@ -129,6 +140,16 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
 		pwd, err := utils.GenerateSecurePassword(32)
 		if err != nil {
 			return "", err
+		}
+		if self.HashType != nil {
+			switch *self.HashType {
+			case ValueHashTypeSHA256:
+				hash := sha256.Sum256([]byte(pwd))
+				pwd = hex.EncodeToString(hash[:])
+			case ValueHashTypeSHA512:
+				hash := sha512.Sum512([]byte(pwd))
+				pwd = hex.EncodeToString(hash[:])
+			}
 		}
 		return self.AddPrefix + pwd, nil
 	case GeneratorTypeEmail:

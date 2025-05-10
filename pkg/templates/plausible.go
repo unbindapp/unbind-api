@@ -69,6 +69,8 @@ func plausibleTemplate() *schema.TemplateDefinition {
 						Name: "SECRET_KEY_BASE",
 						Generator: &schema.ValueGenerator{
 							Type: schema.GeneratorTypePassword,
+							// Plausible wants a 64-byte key
+							HashType: utils.ToPtr(schema.ValueHashTypeSHA512),
 						},
 					},
 				},
