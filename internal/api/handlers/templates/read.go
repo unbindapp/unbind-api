@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -11,7 +12,7 @@ import (
 
 type ListTemplatesResponse struct {
 	Body struct {
-		Data []*models.TemplateResponse `json:"data"`
+		Data []*models.TemplateShortResponse `json:"data"`
 	}
 }
 
@@ -24,5 +25,28 @@ func (self *HandlerGroup) ListTemplates(ctx context.Context, input *server.BaseA
 
 	resp := &ListTemplatesResponse{}
 	resp.Body.Data = templates
+	return resp, nil
+}
+
+// * BY Id
+type GetTemplateByIDInput struct {
+	server.BaseAuthInput
+	ID uuid.UUID `query:"id" format:"uuid" required:"true"`
+}
+
+type GetTemplateResponse struct {
+	Body struct {
+		Data *models.TemplateWithDefinitionResponse `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) GetTemplateByID(ctx context.Context, input *GetTemplateByIDInput) (*GetTemplateResponse, error) {
+	template, err := self.srv.TemplateService.GetByID(ctx, input.ID)
+	if err != nil {
+		return nil, self.handleErr(err)
+	}
+
+	resp := &GetTemplateResponse{}
+	resp.Body.Data = template
 	return resp, nil
 }
