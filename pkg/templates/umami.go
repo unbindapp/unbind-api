@@ -28,9 +28,8 @@ func umamiTemplate() *schema.TemplateDefinition {
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 				DatabaseConfig: &schema.DatabaseConfig{
-					Version:                "16",
-					AdditionalDatabaseName: "umami",
-					DefaultDatabaseName:    "umami",
+					Version:             "16",
+					DefaultDatabaseName: "umami",
 				},
 			},
 			{

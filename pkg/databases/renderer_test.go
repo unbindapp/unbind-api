@@ -24,10 +24,6 @@ func TestDefinitionRendering(t *testing.T) {
 					Description: "Enable master load balancer",
 					Default:     false,
 				},
-				"additionalDatabaseName": {
-					Type:        "string",
-					Description: "Name of an additional database to create and grant access to",
-				},
 				"dockerImage": {
 					Type:        "string",
 					Description: "Spilo image version",
@@ -264,12 +260,12 @@ spec:
       cpu:    {{ .Parameters.common.resources.limits.cpu    | default "500m" }}
       memory: {{ .Parameters.common.resources.limits.memory | default "256Mi" }}
 
-  {{- if .Parameters.additionalDatabaseName }}
+	{{- if ne .Parameters.defaultDatabaseName "postgres" }}
   databases:
-    {{ .Parameters.additionalDatabaseName }}: {{ .Parameters.additionalDatabaseName }}
+    {{ .Parameters.defaultDatabaseName }}: {{ .Parameters.defaultDatabaseName }}
 
   users:
-    {{ .Parameters.additionalDatabaseName }}:
+    {{ .Parameters.defaultDatabaseName }}:
       - SUPERUSER
   {{- end }}
 
@@ -416,7 +412,7 @@ spec:
 		// Check for resource settings - directly check strings that exist in the output
 		assert.Contains(t, result, "cpu:    100m")
 		assert.Contains(t, result, "memory: 128Mi")
-		assert.Contains(t, result, "cpu:    500m")
+		assert.Contains(t, result, "cpu:    200m")
 		assert.Contains(t, result, "memory: 256Mi")
 
 		// Parse to objects
@@ -435,7 +431,7 @@ spec:
 				"common": map[string]interface{}{
 					"replicas": 1,
 				},
-				"additionalDatabaseName": "myapp",
+				"defaultDatabaseName": "myapp",
 			},
 			Definition: Definition{
 				Type:    "postgres-operator",
@@ -613,12 +609,13 @@ spec:
 					"replicas": 2,
 				},
 				"restore": map[string]interface{}{
-					"enabled":    true,
-					"bucket":     "restore-bucket",
-					"cluster":    "source-cluster",
-					"secretName": "restore-secret",
-					"accessKey":  "RESTORE_ACCESS_KEY",
-					"secretKey":  "RESTORE_SECRET_KEY",
+					"enabled":      true,
+					"bucket":       "restore-bucket",
+					"cluster":      "source-cluster",
+					"secretName":   "restore-secret",
+					"accessKey":    "RESTORE_ACCESS_KEY",
+					"secretKey":    "RESTORE_SECRET_KEY",
+					"restorePoint": "2050-08-28T18:30:00+00:00", // Custom restore point
 				},
 			},
 			Definition: Definition{
