@@ -22,6 +22,6 @@ func (self *Templater) AvailableTemplates() []*schema.TemplateDefinition {
 		meiliSearchTemplate(),
 		plausibleTemplate(),
 		umamiTemplate(),
-		strapiTemplate(),
+		// strapiTemplate(),
 	}
 }
