@@ -61,8 +61,8 @@ func wordPressTemplate() *schema.TemplateDefinition {
 					},
 					{
 						SourceID:   1,
+						SourceName: "DATABASE_HOST",
 						TargetName: "WORDPRESS_DB_HOST",
-						IsHost:     true,
 					},
 				},
 			},

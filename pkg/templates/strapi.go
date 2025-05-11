@@ -23,9 +23,9 @@ func strapiTemplate() *schema.TemplateDefinition {
 				ID:          2,
 				Name:        "Storage Size",
 				Type:        schema.InputTypeVolumeSize,
-				Description: "Size of the persistent storage for Strapi data.",
+				Description: "Size of the persistent storage for Strapi uploads.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("512Mi"),
 			},
 		},
 		Services: []schema.TemplateService{
@@ -123,11 +123,11 @@ func strapiTemplate() *schema.TemplateDefinition {
 				},
 				Volumes: []schema.TemplateVolume{
 					{
-						Name: "strapi-data",
+						Name: "strapi-upload-data",
 						Size: schema.TemplateVolumeSize{
 							FromInputID: 2,
 						},
-						MountPath: "/opt/app",
+						MountPath: "/opt/app/public/uploads",
 					},
 				},
 			},

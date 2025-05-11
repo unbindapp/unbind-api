@@ -75,8 +75,8 @@ func ghostTemplate() *schema.TemplateDefinition {
 					},
 					{
 						SourceID:   1,
+						SourceName: "DATABASE_HOST",
 						TargetName: "database__connection__host",
-						IsHost:     true,
 					},
 				},
 			},
