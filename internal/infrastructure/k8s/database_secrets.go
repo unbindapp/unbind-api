@@ -69,8 +69,14 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	existingHttpUrl := string(secret.Data["DATABASE_HTTP_URL"])
 
 	// For postgres, we can sync username and password if they are empty
+	postgresDBName := "postgres"
+	if service.Edges.ServiceConfig.DatabaseConfig != nil {
+		if service.Edges.ServiceConfig.DatabaseConfig.DefaultDatabaseName != "" {
+			postgresDBName = service.Edges.ServiceConfig.DatabaseConfig.DefaultDatabaseName
+		}
+	}
 	if *service.Database == "postgres" && (username == "" || password == "") {
-		zalandoSecretName := fmt.Sprintf("postgres.%s.credentials.postgresql.acid.zalan.do", service.Name)
+		zalandoSecretName := fmt.Sprintf("%s.%s.credentials.postgresql.acid.zalan.do", postgresDBName, service.Name)
 		zalandoSecret, err := self.GetSecret(ctx, zalandoSecretName, namespace, self.GetInternalClient())
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -136,7 +142,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	switch *service.Database {
 	case "postgres":
 		host = fmt.Sprintf("%s.%s", service.KubernetesName, namespace)
-		url = fmt.Sprintf("postgresql://%s:%s@%s:%d/postgres?sslmode=disable", username, password, host, 5432)
+		url = fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable", username, password, host, 5432, postgresDBName)
 	case "redis":
 		host = fmt.Sprintf("%s-headless.%s", service.KubernetesName, namespace)
 		url = fmt.Sprintf("redis://%s:%s@%s:%d", "default", password, host, 6379)
@@ -169,7 +175,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	if defaultDBName == "" {
 		switch *service.Database {
 		case "postgres":
-			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte("postgres")
+			secrets["DATABASE_DEFAULT_DB_NAME"] = []byte(postgresDBName)
 			// Always set port too
 			secrets["DATABASE_PORT"] = []byte("5432")
 		case "mysql":
