@@ -29,6 +29,11 @@ func TestDefinitionRendering(t *testing.T) {
 					Description: "Spilo image version",
 					Default:     "unbindapp/spilo:17",
 				},
+				"defaultDatabaseName": {
+					Type:        "string",
+					Description: "Default database name",
+					Default:     "primarydb",
+				},
 				"common": {
 					Type: "object",
 					Properties: map[string]ParameterProperty{
@@ -386,6 +391,7 @@ spec:
 		require.NoError(t, err)
 
 		// Verify the output contains the expected values for PostgreSQL object
+		assert.Contains(t, result, "primarydb")
 		assert.Contains(t, result, "name: test-postgres")
 		assert.Contains(t, result, "namespace: default")
 		assert.Contains(t, result, "team: team1")

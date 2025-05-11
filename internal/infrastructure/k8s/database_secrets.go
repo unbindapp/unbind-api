@@ -69,7 +69,7 @@ func (self *KubeClient) SyncDatabaseSecretForService(ctx context.Context, servic
 	existingHttpUrl := string(secret.Data["DATABASE_HTTP_URL"])
 
 	// For postgres, we can sync username and password if they are empty
-	postgresDBName := "postgres"
+	postgresDBName := "primarydb"
 	if service.Edges.ServiceConfig.DatabaseConfig != nil {
 		if service.Edges.ServiceConfig.DatabaseConfig.DefaultDatabaseName != "" {
 			postgresDBName = service.Edges.ServiceConfig.DatabaseConfig.DefaultDatabaseName
