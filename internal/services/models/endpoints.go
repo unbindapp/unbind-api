@@ -25,6 +25,7 @@ type ServiceEndpoint struct {
 // IngressEndpoint represents external DNS information for a Kubernetes ingress
 type IngressEndpoint struct {
 	KubernetesName string             `json:"kubernetes_name"`
+	IsIngress      bool               `json:"is_ingress"`
 	Hosts          []ExtendedHostSpec `json:"hosts" nullable:"false"`
 	TeamID         uuid.UUID          `json:"team_id"`
 	ProjectID      uuid.UUID          `json:"project_id"`

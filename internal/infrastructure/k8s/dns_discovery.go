@@ -49,25 +49,101 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 		environmentID, _ := uuid.Parse(svc.Labels["unbind-environment"])
 		serviceID, _ := uuid.Parse(svc.Labels["unbind-service"])
 
-		endpoint := models.ServiceEndpoint{
-			KubernetesName: svc.Name,
-			DNS:            fmt.Sprintf("%s.%s", svc.Name, namespace),
-			Ports:          make([]schema.PortSpec, len(svc.Spec.Ports)),
-			TeamID:         teamID,
-			ProjectID:      projectID,
-			EnvironmentID:  environmentID,
-			ServiceID:      serviceID,
-		}
+		// Only process ClusterIP services as internal
+		if svc.Spec.Type == corev1.ServiceTypeClusterIP {
+			endpoint := models.ServiceEndpoint{
+				KubernetesName: svc.Name,
+				DNS:            fmt.Sprintf("%s.%s", svc.Name, namespace),
+				Ports:          make([]schema.PortSpec, len(svc.Spec.Ports)),
+				TeamID:         teamID,
+				ProjectID:      projectID,
+				EnvironmentID:  environmentID,
+				ServiceID:      serviceID,
+			}
 
-		// Add port information
-		for i, port := range svc.Spec.Ports {
-			endpoint.Ports[i] = schema.PortSpec{
-				Port:     port.Port,
-				Protocol: utils.ToPtr(schema.Protocol(port.Protocol)),
+			// Add port information
+			for i, port := range svc.Spec.Ports {
+				endpoint.Ports[i] = schema.PortSpec{
+					Port:     port.Port,
+					Protocol: utils.ToPtr(schema.Protocol(port.Protocol)),
+				}
+			}
+
+			discovery.Internal = append(discovery.Internal, endpoint)
+		} else if svc.Spec.Type == corev1.ServiceTypeNodePort || svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
+			// Process NodePort and LoadBalancer services as external
+			endpoint := models.IngressEndpoint{
+				KubernetesName: svc.Name,
+				Hosts:          []models.ExtendedHostSpec{},
+				TeamID:         teamID,
+				ProjectID:      projectID,
+				EnvironmentID:  environmentID,
+				ServiceID:      serviceID,
+			}
+
+			// Get the node IPs
+			nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("failed to list nodes: %w", err)
+			}
+
+			var nodeIPs []string
+			for _, node := range nodes.Items {
+				for _, addr := range node.Status.Addresses {
+					if addr.Type == corev1.NodeInternalIP {
+						nodeIPs = append(nodeIPs, addr.Address)
+						break
+					}
+				}
+			}
+
+			// Add each port as a host with the node IPs
+			for _, port := range svc.Spec.Ports {
+				if port.NodePort > 0 {
+					for _, nodeIP := range nodeIPs {
+						host := fmt.Sprintf("%s:%d", nodeIP, port.NodePort)
+						endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
+							HostSpec: v1.HostSpec{
+								Host: host,
+								Path: "/",
+								Port: utils.ToPtr(port.NodePort),
+							},
+							Issued:        false,
+							DnsConfigured: true,
+							Cloudflare:    false,
+						})
+					}
+				}
+			}
+
+			// Add LoadBalancer external IPs if available
+			if svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
+				for _, ingress := range svc.Status.LoadBalancer.Ingress {
+					if ingress.IP != "" {
+						for _, port := range svc.Spec.Ports {
+							// Also add the external IP with the NodePort if it exists
+							if port.NodePort > 0 {
+								host := fmt.Sprintf("%s:%d", ingress.IP, port.NodePort)
+								endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
+									HostSpec: v1.HostSpec{
+										Host: host,
+										Path: "/",
+										Port: utils.ToPtr(port.NodePort),
+									},
+									Issued:        false,
+									DnsConfigured: true,
+									Cloudflare:    false,
+								})
+							}
+						}
+					}
+				}
+			}
+
+			if len(endpoint.Hosts) > 0 {
+				discovery.External = append(discovery.External, endpoint)
 			}
 		}
-
-		discovery.Internal = append(discovery.Internal, endpoint)
 	}
 
 	// Get ingresses matching the label selector
@@ -87,6 +163,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 
 		endpoint := models.IngressEndpoint{
 			KubernetesName: ing.Name,
+			IsIngress:      true,
 			Hosts:          []models.ExtendedHostSpec{},
 			TeamID:         teamID,
 			ProjectID:      projectID,
