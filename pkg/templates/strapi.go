@@ -117,8 +117,8 @@ func strapiTemplate() *schema.TemplateDefinition {
 					},
 					{
 						SourceID:   1,
+						SourceName: "DATABASE_HOST",
 						TargetName: "DATABASE_HOST",
-						IsHost:     true,
 					},
 				},
 				Volumes: []schema.TemplateVolume{
