@@ -35,9 +35,6 @@ func strapiTemplate() *schema.TemplateDefinition {
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
-				DatabaseConfig: &schema.DatabaseConfig{
-					DefaultDatabaseName: "strapi",
-				},
 			},
 			{
 				ID:           2,
