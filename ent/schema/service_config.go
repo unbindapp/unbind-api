@@ -82,8 +82,8 @@ func (u Protocol) Schema(r huma.Registry) *huma.Schema {
 type DatabaseConfig struct {
 	Version                string `json:"version,omitempty" required:"false" description:"Version of the database"`
 	StorageSize            string `json:"storage,omitempty" required:"false" description:"Storage size for the database"`
-	AdditionalDatabaseName string `json:"additional_database_name,omitempty" required:"false" description:"Additional database and user to create"`
-	DefaultDatabaseName    string `json:"default_database_name,omitempty" required:"false" description:"Default database name"`
+	AdditionalDatabaseName string `json:"additionalDatabaseName,omitempty" required:"false" description:"Additional database and user to create"`
+	DefaultDatabaseName    string `json:"defaultDatabaseName,omitempty" required:"false" description:"Default database name"`
 }
 
 func (self *DatabaseConfig) AsMap() map[string]interface{} {
