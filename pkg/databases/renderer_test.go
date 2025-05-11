@@ -24,6 +24,10 @@ func TestDefinitionRendering(t *testing.T) {
 					Description: "Enable master load balancer",
 					Default:     false,
 				},
+				"additionalDatabaseName": {
+					Type:        "string",
+					Description: "Name of an additional database to create and grant access to",
+				},
 				"dockerImage": {
 					Type:        "string",
 					Description: "Spilo image version",
@@ -231,8 +235,8 @@ metadata:
 
 spec:
   teamId: {{ .TeamID }}
-  dockerImage: {{ if .Parameters.dockerImage }}{{ .Parameters.dockerImage }}{{ else }}{{ printf "unbindapp/spilo:%s-latest" (.Parameters.version | default "17") }}{{ end }}
-  enableMasterLoadBalancer: {{ .Parameters.enableMasterLoadBalancer | default false }}
+  dockerImage: {{ if .Parameters.dockerImage }}{{ .Parameters.dockerImage }}{{ else }}{{ printf "ghcr.io/unbindapp/spilo:%s-latest" (.Parameters.version | default "17") }}{{ end }}
+  enableMasterLoadBalancer: {{ .Parameters.common.exposeExternal | default false }}
   postgresql:
     version: {{ .Parameters.version | default "17" | quote }}
   numberOfInstances: {{ .Parameters.common.replicas | default 1 }}
@@ -241,6 +245,7 @@ spec:
 
   patroni:
     pg_hba:
+      - "local all all trust"
       - "hostssl all +pamrole all pam"           # keep for pam auth
       - "hostssl all all 0.0.0.0/0 md5"          # force SSL for external
       - "host all all 10.42.0.0/16 md5"          # non-SSL inside k3s pod net
@@ -256,13 +261,22 @@ spec:
       cpu:    {{ .Parameters.common.resources.requests.cpu    | default "100m" }}
       memory: {{ .Parameters.common.resources.requests.memory | default "128Mi" }}
     limits:
-      cpu:    {{ .Parameters.common.resources.limits.cpu    | default "200m" }}
+      cpu:    {{ .Parameters.common.resources.limits.cpu    | default "500m" }}
       memory: {{ .Parameters.common.resources.limits.memory | default "256Mi" }}
+
+  {{- if .Parameters.additionalDatabaseName }}
+  databases:
+    {{ .Parameters.additionalDatabaseName }}: {{ .Parameters.additionalDatabaseName }}
+
+  users:
+    {{ .Parameters.additionalDatabaseName }}:
+      - SUPERUSER
+  {{- end }}
 
   {{- if .Parameters.restore.enabled }}
   clone:
     # use latest backup unless you supply your own timestamp
-    timestamp: "2050-08-28T18:30:00+00:00"
+    timestamp: {{ .Parameters.restore.restorePoint | default (timeFormat .RFC3339 now) | quote }}
     cluster:   {{ .Parameters.restore.cluster }}
   {{- end }}
 
@@ -306,7 +320,7 @@ spec:
       value: "true"
 
     - name: BACKUP_NUM_TO_RETAIN
-      value: {{ .Parameters.s3.backupRetention | default 5 | quote }}
+      value: {{ .Parameters.s3.backupRetention | default 2 | quote }}
     - name: BACKUP_SCHEDULE
       value: {{ .Parameters.s3.backupSchedule  | default "5 5 * * *" }}
     {{- end }}
@@ -337,7 +351,7 @@ spec:
     - name: CLONE_WAL_BUCKET_SCOPE_PREFIX
       value: {{ .Parameters.restore.backupPrefix | default "" | quote }}
     - name: CLONE_WAL_S3_BUCKET
-      value: {{ .Parameters.restore.bucket }}
+      value: {{ .Parameters.restore.bucket | default .Parameters.s3.bucket }}
     - name: CLONE_WALG_DISABLE_S3_SSE
       value: "true"
     {{- end }}
@@ -402,8 +416,43 @@ spec:
 		// Check for resource settings - directly check strings that exist in the output
 		assert.Contains(t, result, "cpu:    100m")
 		assert.Contains(t, result, "memory: 128Mi")
-		assert.Contains(t, result, "cpu:    200m")
+		assert.Contains(t, result, "cpu:    500m")
 		assert.Contains(t, result, "memory: 256Mi")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
+
+	t.Run("With Additional Database", func(t *testing.T) {
+		// Create render context with additional database
+		ctx := &RenderContext{
+			Name:      "test-postgres-additional-db",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"additionalDatabaseName": "myapp",
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Render the template
+		result, err := renderer.Render(template, ctx)
+		require.NoError(t, err)
+
+		// Verify additional database configuration
+		assert.Contains(t, result, "databases:")
+		assert.Contains(t, result, "myapp: myapp")
+		assert.Contains(t, result, "users:")
+		assert.Contains(t, result, "myapp:")
+		assert.Contains(t, result, "- SUPERUSER")
 
 		// Parse to objects
 		objects, err := renderer.RenderToObjects(result)

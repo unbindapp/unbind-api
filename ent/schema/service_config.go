@@ -95,6 +95,12 @@ func (self *DatabaseConfig) AsMap() map[string]interface{} {
 	if self.StorageSize != "" {
 		ret["storage"] = self.StorageSize
 	}
+	if self.AdditionalDatabaseName != "" {
+		ret["additionalDatabaseName"] = self.AdditionalDatabaseName
+	}
+	if self.DefaultDatabaseName != "" {
+		ret["defaultDatabaseName"] = self.DefaultDatabaseName
+	}
 	return ret
 }
 
