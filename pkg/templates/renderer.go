@@ -26,16 +26,16 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 	// Copy and resolve each service
 	for i, svc := range template.Services {
 		resolvedService := schema.TemplateService{
-			ID:              svc.ID,
-			Icon:            svc.Icon,
-			Name:            svc.Name,
-			Type:            svc.Type,
-			Builder:         svc.Builder,
-			DatabaseType:    svc.DatabaseType,
-			DatabaseVersion: svc.DatabaseVersion,
-			Image:           svc.Image,
-			IsPublic:        svc.IsPublic,
-			RunCommand:      svc.RunCommand,
+			ID:             svc.ID,
+			Icon:           svc.Icon,
+			Name:           svc.Name,
+			Type:           svc.Type,
+			Builder:        svc.Builder,
+			DatabaseType:   svc.DatabaseType,
+			DatabaseConfig: svc.DatabaseConfig,
+			Image:          svc.Image,
+			IsPublic:       svc.IsPublic,
+			RunCommand:     svc.RunCommand,
 		}
 
 		// Initialize all slices if nil

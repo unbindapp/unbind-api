@@ -127,7 +127,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		for _, templateService := range generatedTemplate.Services {
 			// Fetch DB metadata (if a database)
 			var dbVersion *string
-			var dbConfig *schema.DatabaseConfig
 			if templateService.Type == schema.ServiceTypeDatabase {
 				// Fetch the template
 				dbDefinition, err := self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *templateService.DatabaseType)
@@ -156,8 +155,8 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				}
 
 				// ! TODO - validate validity
-				if templateService.DatabaseVersion != nil {
-					dbVersion = templateService.DatabaseVersion
+				if templateService.DatabaseConfig != nil && templateService.DatabaseConfig.Version != "" {
+					dbVersion = utils.ToPtr(templateService.DatabaseConfig.Version)
 				}
 
 				if dbVersion == nil {
@@ -165,8 +164,10 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 						fmt.Sprintf("Database version not found for %s", *templateService.DatabaseType))
 				}
 
-				dbConfig = &schema.DatabaseConfig{
-					Version: *dbVersion,
+				if templateService.DatabaseConfig == nil {
+					templateService.DatabaseConfig = &schema.DatabaseConfig{
+						Version: *dbVersion,
+					}
 				}
 			}
 
@@ -273,7 +274,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				Hosts:                   hosts,
 				Replicas:                utils.ToPtr[int32](1),
 				Public:                  &templateService.IsPublic,
-				DatabaseConfig:          dbConfig,
+				DatabaseConfig:          templateService.DatabaseConfig,
 				Image:                   templateService.Image,
 				CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
 				PVCID:                   pvcID,
