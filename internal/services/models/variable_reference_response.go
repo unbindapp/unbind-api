@@ -63,6 +63,9 @@ type SecretData struct {
 }
 
 func TransformAvailableVariableResponse(secretData []SecretData, endpoints *EndpointDiscovery, kubernetesNameMap map[uuid.UUID]string, nameMap map[uuid.UUID]string, iconMap map[uuid.UUID]string) []AvailableVariableReference {
+	if endpoints == nil {
+		endpoints = &EndpointDiscovery{}
+	}
 	resp := make([]AvailableVariableReference, len(secretData)+len(endpoints.Internal)+len(endpoints.External))
 
 	// Process variables

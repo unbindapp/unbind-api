@@ -81,8 +81,8 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 				ServiceID:      serviceID,
 			}
 
-			// Get the node IPs
-			nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+			// Get the node IPs, use internal client for this
+			nodes, err := self.GetInternalClient().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 			if err != nil {
 				return nil, fmt.Errorf("failed to list nodes: %w", err)
 			}

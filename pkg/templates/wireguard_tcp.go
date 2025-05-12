@@ -8,9 +8,9 @@ import (
 // WireGuardTemplate returns the predefined WireGuard template
 func wireGuardTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "wireguard",
+		Name:        "wireguard-tcp",
 		Version:     1,
-		Description: "WireGuard VPN with web-based management interface and TCP support",
+		Description: "WireGuard VPN with web-based management interface and TCP tunnel",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
@@ -156,7 +156,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 					},
 					{
 						Name:  "UDP2RAW_RAW_MODE",
-						Value: "faketcp",
+						Value: "easy-faketcp",
 					},
 					{
 						Name:  "UDP2RAW_CIPHER",
