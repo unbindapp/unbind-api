@@ -363,6 +363,9 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		for _, templateService := range generatedTemplate.Services {
 			referenceInput := []*models.VariableReferenceInputItem{}
 			for _, variableReference := range templateService.VariableReferences {
+				if variableReference.ResolveAsNormalVariable {
+					continue
+				}
 				// Get source
 				sourceService := dbServiceMap[variableReference.SourceID]
 				if sourceService == nil {
@@ -371,7 +374,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				}
 
 				// Deal with is_host first, not really a reference just resolved on the fly
-				if variableReference.IsHost && !variableReference.ResolveAsNormalVariable {
+				if variableReference.IsHost {
 					// Determine the host key (it may not exist yet so we can't DNS lookup)
 					key := sourceService.KubernetesName
 
