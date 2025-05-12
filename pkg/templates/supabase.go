@@ -286,18 +286,19 @@ $$;
 				},
 			},
 			{
-				ID:      2,
-				Name:    "kong",
-				Type:    schema.ServiceTypeDockerimage,
-				Builder: schema.ServiceBuilderDocker,
-				Image:   utils.ToPtr("kong:2.8.1"),
+				ID:           2,
+				Name:         "kong",
+				Type:         schema.ServiceTypeDockerimage,
+				Builder:      schema.ServiceBuilderDocker,
+				Image:        utils.ToPtr("kong:2.8.1"),
+				HostInputIDs: []int{1},
+				IsPublic:     true,
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/",
@@ -478,7 +479,7 @@ services:
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
 				DependsOn:    []int{1, 2},
-				HostInputIDs: []int{1},
+				HostInputIDs: []int{2},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,
