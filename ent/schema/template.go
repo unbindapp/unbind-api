@@ -16,6 +16,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Template holds the schema definition for the Template entity.
@@ -115,8 +116,9 @@ type TemplateVariableReference struct {
 type GeneratorType string
 
 const (
-	GeneratorTypePassword GeneratorType = "password"
-	GeneratorTypeInput    GeneratorType = "input"
+	GeneratorTypePassword       GeneratorType = "password"
+	GeneratorTypePasswordBcrypt GeneratorType = "bcrypt"
+	GeneratorTypeInput          GeneratorType = "input"
 )
 
 // Register enum in OpenAPI specification
@@ -128,6 +130,7 @@ func (u GeneratorType) Schema(r huma.Registry) *huma.Schema {
 		schemaRef.Enum = append(schemaRef.Enum,
 			[]any{
 				string(GeneratorTypePassword),
+				string(GeneratorTypePasswordBcrypt),
 				string(GeneratorTypeInput),
 			}...)
 		r.Map()["GeneratorType"] = schemaRef
@@ -167,12 +170,12 @@ func (u ValueHashType) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/ValueHashType"}
 }
 
-func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
+func (self *ValueGenerator) Generate(inputs map[int]string) (string, string, error) {
 	switch self.Type {
 	case GeneratorTypePassword:
 		pwd, err := utils.GenerateSecurePassword(32)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		if self.HashType != nil {
 			switch *self.HashType {
@@ -184,16 +187,36 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (string, error) {
 				pwd = hex.EncodeToString(hash[:])
 			}
 		}
-		return self.AddPrefix + pwd, nil
+		return self.AddPrefix + pwd, "", nil
+	case GeneratorTypePasswordBcrypt:
+		pwd, err := utils.GenerateSecurePassword(32)
+		if err != nil {
+			return "", "", err
+		}
+		if self.HashType != nil {
+			switch *self.HashType {
+			case ValueHashTypeSHA256:
+				hash := sha256.Sum256([]byte(pwd))
+				pwd = hex.EncodeToString(hash[:])
+			case ValueHashTypeSHA512:
+				hash := sha512.Sum512([]byte(pwd))
+				pwd = hex.EncodeToString(hash[:])
+			}
+		}
+		bcryptHashed, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+		if err != nil {
+			return "", "", err
+		}
+		return string(bcryptHashed), pwd, nil
 	case GeneratorTypeInput:
 		// Find the input by ID
 		inputValue, ok := inputs[self.InputID]
 		if !ok {
-			return "", fmt.Errorf("input ID %d not found in inputs map", self.InputID)
+			return "", "", fmt.Errorf("input ID %d not found in inputs map", self.InputID)
 		}
-		return self.AddPrefix + inputValue, nil
+		return self.AddPrefix + inputValue, "", nil
 	default:
-		return "", fmt.Errorf("unknown generator type: %s", self.Type)
+		return "", "", fmt.Errorf("unknown generator type: %s", self.Type)
 	}
 }
 

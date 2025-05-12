@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
@@ -71,6 +72,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 		}
 
 		// Resolve variables
+		var additionalVars []schema.TemplateVariable
 		if svc.Variables == nil {
 			resolvedService.Variables = []schema.TemplateVariable{}
 		} else {
@@ -81,11 +83,20 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 				}
 
 				if v.Generator != nil {
-					value, err := v.Generator.Generate(inputs)
+					value, rawPassword, err := v.Generator.Generate(inputs)
 					if err != nil {
 						return nil, fmt.Errorf("failed to generate value for %s: %w", v.Name, err)
 					}
 					resolvedVar.Value = value
+					if v.Generator.Type == schema.GeneratorTypePasswordBcrypt {
+						// Inject the raw password into a variable with the same name but without the _HASH suffix
+						if strings.HasSuffix(v.Name, "_HASH") {
+							additionalVars = append(additionalVars, schema.TemplateVariable{
+								Name:  strings.TrimSuffix(v.Name, "_HASH"),
+								Value: rawPassword,
+							})
+						}
+					}
 				} else {
 					resolvedVar.Value = v.Value
 				}
