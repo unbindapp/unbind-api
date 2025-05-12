@@ -60,6 +60,9 @@ type ServiceParams struct {
 	DatabaseUSDVersionRef string
 	DatabaseConfig        runtime.RawExtension
 	BackupConfig          *v1.S3ConfigSpec
+
+	// Security
+	SecurityContext *corev1.SecurityContext
 }
 
 // CreateServiceObject creates a new v1.Service object with the provided parameters
@@ -100,6 +103,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 			GitRepository:    gitRepository,
 			EnvVars:          params.EnvVars,
 			ImagePullSecrets: params.ImagePullSecrets,
+			SecurityContext:  params.SecurityContext,
 		},
 	}
 
@@ -163,7 +167,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 
 // DeployImage creates (or replaces) the service resource in the target namespace
 // for deployment after a successful build job.
-func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, additionalEnv map[string]string) (*unstructured.Unstructured, *v1.Service, error) {
+func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, additionalEnv map[string]string, securityContext *corev1.SecurityContext) (*unstructured.Unstructured, *v1.Service, error) {
 	// Generate a sanitized service name from the repo name
 	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
 
@@ -226,6 +230,8 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		// Volume
 		VolumeClaimName: self.builderConfig.ServiceVolumeName,
 		VolumeMountPath: self.builderConfig.ServiceVolumeMountPath,
+		// Security context
+		SecurityContext: securityContext,
 	}
 
 	if self.builderConfig.ServiceDatabaseBackupSecretName != "" &&

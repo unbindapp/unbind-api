@@ -92,6 +92,7 @@ type TemplateService struct {
 	Volumes            []TemplateVolume            `json:"volumes" nullable:"false"`             // Volumes to mount
 	Variables          []TemplateVariable          `json:"variables" nullable:"false"`           // Variables this service needs
 	VariableReferences []TemplateVariableReference `json:"variable_references" nullable:"false"` // Variables this service needs
+	SecurityContext    *SecurityContext            `json:"security_context,omitempty"`           // Security context for the service
 }
 
 // TemplateVariable represents a configurable variable in a template

@@ -373,6 +373,12 @@ func (scc *ServiceConfigCreate) SetNillableVolumeMountPath(s *string) *ServiceCo
 	return scc
 }
 
+// SetSecurityContext sets the "security_context" field.
+func (scc *ServiceConfigCreate) SetSecurityContext(sc *schema.SecurityContext) *ServiceConfigCreate {
+	scc.mutation.SetSecurityContext(sc)
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -655,6 +661,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.VolumeMountPath(); ok {
 		_spec.SetField(serviceconfig.FieldVolumeMountPath, field.TypeString, value)
 		_node.VolumeMountPath = &value
+	}
+	if value, ok := scc.mutation.SecurityContext(); ok {
+		_spec.SetField(serviceconfig.FieldSecurityContext, field.TypeJSON, value)
+		_node.SecurityContext = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1183,6 +1193,24 @@ func (u *ServiceConfigUpsert) UpdateVolumeMountPath() *ServiceConfigUpsert {
 // ClearVolumeMountPath clears the value of the "volume_mount_path" field.
 func (u *ServiceConfigUpsert) ClearVolumeMountPath() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldVolumeMountPath)
+	return u
+}
+
+// SetSecurityContext sets the "security_context" field.
+func (u *ServiceConfigUpsert) SetSecurityContext(v *schema.SecurityContext) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldSecurityContext, v)
+	return u
+}
+
+// UpdateSecurityContext sets the "security_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateSecurityContext() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldSecurityContext)
+	return u
+}
+
+// ClearSecurityContext clears the value of the "security_context" field.
+func (u *ServiceConfigUpsert) ClearSecurityContext() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldSecurityContext)
 	return u
 }
 
@@ -1752,6 +1780,27 @@ func (u *ServiceConfigUpsertOne) UpdateVolumeMountPath() *ServiceConfigUpsertOne
 func (u *ServiceConfigUpsertOne) ClearVolumeMountPath() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearVolumeMountPath()
+	})
+}
+
+// SetSecurityContext sets the "security_context" field.
+func (u *ServiceConfigUpsertOne) SetSecurityContext(v *schema.SecurityContext) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetSecurityContext(v)
+	})
+}
+
+// UpdateSecurityContext sets the "security_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateSecurityContext() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateSecurityContext()
+	})
+}
+
+// ClearSecurityContext clears the value of the "security_context" field.
+func (u *ServiceConfigUpsertOne) ClearSecurityContext() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearSecurityContext()
 	})
 }
 
@@ -2488,6 +2537,27 @@ func (u *ServiceConfigUpsertBulk) UpdateVolumeMountPath() *ServiceConfigUpsertBu
 func (u *ServiceConfigUpsertBulk) ClearVolumeMountPath() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearVolumeMountPath()
+	})
+}
+
+// SetSecurityContext sets the "security_context" field.
+func (u *ServiceConfigUpsertBulk) SetSecurityContext(v *schema.SecurityContext) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetSecurityContext(v)
+	})
+}
+
+// UpdateSecurityContext sets the "security_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateSecurityContext() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateSecurityContext()
+	})
+}
+
+// ClearSecurityContext clears the value of the "security_context" field.
+func (u *ServiceConfigUpsertBulk) ClearSecurityContext() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearSecurityContext()
 	})
 }
 

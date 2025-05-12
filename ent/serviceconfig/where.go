@@ -1568,6 +1568,16 @@ func VolumeMountPathContainsFold(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldContainsFold(FieldVolumeMountPath, v))
 }
 
+// SecurityContextIsNil applies the IsNil predicate on the "security_context" field.
+func SecurityContextIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldSecurityContext))
+}
+
+// SecurityContextNotNil applies the NotNil predicate on the "security_context" field.
+func SecurityContextNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldSecurityContext))
+}
+
 // HasService applies the HasEdge predicate on the "service" edge.
 func HasService() predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {

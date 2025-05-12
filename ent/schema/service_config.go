@@ -68,6 +68,11 @@ func AsV1PortSpecs(ports []PortSpec) []v1.PortSpec {
 	return v1Ports
 }
 
+// * Security context
+type SecurityContext struct {
+	*corev1.SecurityContext
+}
+
 // Register enum in OpenAPI specification
 // https://github.com/danielgtaylor/huma/issues/621
 func (u Protocol) Schema(r huma.Registry) *huma.Schema {
@@ -157,6 +162,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		// Volume
 		field.String("volume_name").Optional().Nillable().Comment("Volume name to use for the service"),
 		field.String("volume_mount_path").Optional().Nillable().Comment("Volume mount path for the service"),
+		// Security context
+		field.JSON("security_context", &SecurityContext{}).Optional().Comment("Security context for the service containers."),
 	}
 }
 

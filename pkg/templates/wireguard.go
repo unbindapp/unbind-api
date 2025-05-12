@@ -3,6 +3,7 @@ package templates
 import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // WireGuardTemplate returns the predefined WireGuard template
@@ -99,6 +100,17 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 							FromInputID: 3,
 						},
 						MountPath: "/etc/wireguard",
+					},
+				},
+				SecurityContext: &schema.SecurityContext{
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: utils.ToPtr(true),
+						Capabilities: &corev1.Capabilities{
+							Add: []corev1.Capability{
+								"NET_ADMIN",
+								"SYS_MODULE",
+							},
+						},
 					},
 				},
 			},

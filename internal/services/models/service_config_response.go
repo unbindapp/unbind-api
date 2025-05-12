@@ -30,6 +30,8 @@ type ServiceConfigResponse struct {
 	// Volume
 	PVCID              *string `json:"pvc_id,omitempty"`
 	PVCVolumeMountPath *string `json:"pvc_volume_mount_path,omitempty"`
+	// Security context
+	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -56,6 +58,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			BackupRetentionCount: entity.BackupRetentionCount,
 			PVCID:                entity.VolumeName,
 			PVCVolumeMountPath:   entity.VolumeMountPath,
+			SecurityContext:      entity.SecurityContext,
 		}
 	}
 	return response

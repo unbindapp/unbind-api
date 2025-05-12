@@ -91,6 +91,8 @@ type Config struct {
 	AdditionalEnv string `env:"ADDITIONAL_ENV"`
 	// Checking out specific commit
 	CheckoutCommitSHA string `env:"CHECKOUT_COMMIT_SHA"`
+	// Security context
+	SecurityContext string `env:"SECURITY_CONTEXT"`
 }
 
 func (self *Config) GetPostgresHost() string {

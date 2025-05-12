@@ -81,6 +81,8 @@ type ServiceConfig struct {
 	VolumeName *string `json:"volume_name,omitempty"`
 	// Volume mount path for the service
 	VolumeMountPath *string `json:"volume_mount_path,omitempty"`
+	// Security context for the service containers.
+	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -127,7 +129,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case serviceconfig.FieldS3BackupEndpointID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig:
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldSecurityContext:
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
@@ -348,6 +350,14 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 				sc.VolumeMountPath = new(string)
 				*sc.VolumeMountPath = value.String
 			}
+		case serviceconfig.FieldSecurityContext:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field security_context", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.SecurityContext); err != nil {
+					return fmt.Errorf("unmarshal field security_context: %w", err)
+				}
+			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
 		}
@@ -505,6 +515,9 @@ func (sc *ServiceConfig) String() string {
 		builder.WriteString("volume_mount_path=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("security_context=")
+	builder.WriteString(fmt.Sprintf("%v", sc.SecurityContext))
 	builder.WriteByte(')')
 	return builder.String()
 }

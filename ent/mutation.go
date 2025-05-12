@@ -12479,6 +12479,7 @@ type ServiceConfigMutation struct {
 	addbackup_retention_count *int
 	volume_name               *string
 	volume_mount_path         *string
+	security_context          **schema.SecurityContext
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
@@ -13907,6 +13908,55 @@ func (m *ServiceConfigMutation) ResetVolumeMountPath() {
 	delete(m.clearedFields, serviceconfig.FieldVolumeMountPath)
 }
 
+// SetSecurityContext sets the "security_context" field.
+func (m *ServiceConfigMutation) SetSecurityContext(sc *schema.SecurityContext) {
+	m.security_context = &sc
+}
+
+// SecurityContext returns the value of the "security_context" field in the mutation.
+func (m *ServiceConfigMutation) SecurityContext() (r *schema.SecurityContext, exists bool) {
+	v := m.security_context
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSecurityContext returns the old "security_context" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldSecurityContext(ctx context.Context) (v *schema.SecurityContext, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSecurityContext is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSecurityContext requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSecurityContext: %w", err)
+	}
+	return oldValue.SecurityContext, nil
+}
+
+// ClearSecurityContext clears the value of the "security_context" field.
+func (m *ServiceConfigMutation) ClearSecurityContext() {
+	m.security_context = nil
+	m.clearedFields[serviceconfig.FieldSecurityContext] = struct{}{}
+}
+
+// SecurityContextCleared returns if the "security_context" field was cleared in this mutation.
+func (m *ServiceConfigMutation) SecurityContextCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldSecurityContext]
+	return ok
+}
+
+// ResetSecurityContext resets all changes to the "security_context" field.
+func (m *ServiceConfigMutation) ResetSecurityContext() {
+	m.security_context = nil
+	delete(m.clearedFields, serviceconfig.FieldSecurityContext)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -13995,7 +14045,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 28)
+	fields := make([]string, 0, 29)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -14080,6 +14130,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.volume_mount_path != nil {
 		fields = append(fields, serviceconfig.FieldVolumeMountPath)
 	}
+	if m.security_context != nil {
+		fields = append(fields, serviceconfig.FieldSecurityContext)
+	}
 	return fields
 }
 
@@ -14144,6 +14197,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.VolumeName()
 	case serviceconfig.FieldVolumeMountPath:
 		return m.VolumeMountPath()
+	case serviceconfig.FieldSecurityContext:
+		return m.SecurityContext()
 	}
 	return nil, false
 }
@@ -14209,6 +14264,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldVolumeName(ctx)
 	case serviceconfig.FieldVolumeMountPath:
 		return m.OldVolumeMountPath(ctx)
+	case serviceconfig.FieldSecurityContext:
+		return m.OldSecurityContext(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14414,6 +14471,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetVolumeMountPath(v)
 		return nil
+	case serviceconfig.FieldSecurityContext:
+		v, ok := value.(*schema.SecurityContext)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSecurityContext(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14525,6 +14589,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldVolumeMountPath) {
 		fields = append(fields, serviceconfig.FieldVolumeMountPath)
 	}
+	if m.FieldCleared(serviceconfig.FieldSecurityContext) {
+		fields = append(fields, serviceconfig.FieldSecurityContext)
+	}
 	return fields
 }
 
@@ -14592,6 +14659,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldVolumeMountPath:
 		m.ClearVolumeMountPath()
+		return nil
+	case serviceconfig.FieldSecurityContext:
+		m.ClearSecurityContext()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig nullable field %s", name)
@@ -14684,6 +14754,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldVolumeMountPath:
 		m.ResetVolumeMountPath()
+		return nil
+	case serviceconfig.FieldSecurityContext:
+		m.ResetSecurityContext()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

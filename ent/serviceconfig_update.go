@@ -516,6 +516,18 @@ func (scu *ServiceConfigUpdate) ClearVolumeMountPath() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetSecurityContext sets the "security_context" field.
+func (scu *ServiceConfigUpdate) SetSecurityContext(sc *schema.SecurityContext) *ServiceConfigUpdate {
+	scu.mutation.SetSecurityContext(sc)
+	return scu
+}
+
+// ClearSecurityContext clears the value of the "security_context" field.
+func (scu *ServiceConfigUpdate) ClearSecurityContext() *ServiceConfigUpdate {
+	scu.mutation.ClearSecurityContext()
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -761,6 +773,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.VolumeMountPathCleared() {
 		_spec.ClearField(serviceconfig.FieldVolumeMountPath, field.TypeString)
+	}
+	if value, ok := scu.mutation.SecurityContext(); ok {
+		_spec.SetField(serviceconfig.FieldSecurityContext, field.TypeJSON, value)
+	}
+	if scu.mutation.SecurityContextCleared() {
+		_spec.ClearField(serviceconfig.FieldSecurityContext, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1322,6 +1340,18 @@ func (scuo *ServiceConfigUpdateOne) ClearVolumeMountPath() *ServiceConfigUpdateO
 	return scuo
 }
 
+// SetSecurityContext sets the "security_context" field.
+func (scuo *ServiceConfigUpdateOne) SetSecurityContext(sc *schema.SecurityContext) *ServiceConfigUpdateOne {
+	scuo.mutation.SetSecurityContext(sc)
+	return scuo
+}
+
+// ClearSecurityContext clears the value of the "security_context" field.
+func (scuo *ServiceConfigUpdateOne) ClearSecurityContext() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearSecurityContext()
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1597,6 +1627,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.VolumeMountPathCleared() {
 		_spec.ClearField(serviceconfig.FieldVolumeMountPath, field.TypeString)
+	}
+	if value, ok := scuo.mutation.SecurityContext(); ok {
+		_spec.SetField(serviceconfig.FieldSecurityContext, field.TypeJSON, value)
+	}
+	if scuo.mutation.SecurityContextCleared() {
+		_spec.ClearField(serviceconfig.FieldSecurityContext, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

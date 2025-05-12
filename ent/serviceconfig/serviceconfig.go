@@ -74,6 +74,8 @@ const (
 	FieldVolumeName = "volume_name"
 	// FieldVolumeMountPath holds the string denoting the volume_mount_path field in the database.
 	FieldVolumeMountPath = "volume_mount_path"
+	// FieldSecurityContext holds the string denoting the security_context field in the database.
+	FieldSecurityContext = "security_context"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// EdgeS3BackupEndpoint holds the string denoting the s3_backup_endpoint edge name in mutations.
@@ -127,6 +129,7 @@ var Columns = []string{
 	FieldBackupRetentionCount,
 	FieldVolumeName,
 	FieldVolumeMountPath,
+	FieldSecurityContext,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
