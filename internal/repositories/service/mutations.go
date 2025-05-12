@@ -85,6 +85,7 @@ type MutateConfigInput struct {
 	BackupRetentionCount    *int
 	PVCID                   *string
 	PVCVolumeMountPath      *string
+	SecurityContext         *schema.SecurityContext
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -144,6 +145,10 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableVolumeName(input.PVCID).
 		SetNillableVolumeMountPath(input.PVCVolumeMountPath).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.SecurityContext != nil {
+		c.SetSecurityContext(input.SecurityContext)
+	}
 
 	if input.DatabaseConfig != nil {
 		c.SetDatabaseConfig(input.DatabaseConfig)
