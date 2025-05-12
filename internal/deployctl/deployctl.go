@@ -23,6 +23,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // Redis key for the queue
@@ -292,8 +293,12 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	}
 
 	if len(service.Edges.ServiceConfig.Ports) > 0 {
+		asV1Ports := make([]v1.PortSpec, len(service.Edges.ServiceConfig.Ports))
+		for i, port := range service.Edges.ServiceConfig.Ports {
+			asV1Ports[i] = port.AsV1PortSpec()
+		}
 		// Serialize
-		marshalled, err := json.Marshal(service.Edges.ServiceConfig.Ports)
+		marshalled, err := json.Marshal(asV1Ports)
 		if err != nil {
 			return nil, err
 		}
