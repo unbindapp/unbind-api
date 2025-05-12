@@ -106,7 +106,6 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 					},
 				},
 				SecurityContext: &schema.SecurityContext{
-					Privileged: utils.ToPtr(true),
 					Capabilities: &schema.Capabilities{
 						Add: []schema.Capability{
 							"NET_ADMIN",
@@ -176,6 +175,15 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 						TargetName:              "UDP2RAW_REMOTE_ADDR",
 						IsHost:                  true,
 						ResolveAsNormalVariable: true,
+					},
+				},
+				SecurityContext: &schema.SecurityContext{
+					Privileged: utils.ToPtr(true), // Required for iptables manipulation
+					Capabilities: &schema.Capabilities{
+						Add: []schema.Capability{
+							"NET_ADMIN",
+							"NET_RAW",
+						},
 					},
 				},
 			},
