@@ -105,6 +105,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 					},
 				},
 				SecurityContext: &schema.SecurityContext{
+					Privileged: utils.ToPtr(true), // Required for iptables manipulation
 					Capabilities: &schema.Capabilities{
 						Add: []schema.Capability{
 							"NET_ADMIN",
