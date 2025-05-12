@@ -92,7 +92,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 						// Inject the raw password into a variable with the same name but without the _HASH suffix
 						if strings.HasSuffix(v.Name, "_HASH") {
 							additionalVars = append(additionalVars, schema.TemplateVariable{
-								Name:  strings.TrimSuffix(v.Name, "_HASH"),
+								Name:  strings.TrimSuffix(v.Name, "_HASH") + "_PLAINTEXT",
 								Value: rawPassword,
 							})
 						}
