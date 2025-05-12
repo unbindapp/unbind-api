@@ -540,6 +540,24 @@ func (scu *ServiceConfigUpdate) ClearHealthCheck() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetVariableMounts sets the "variable_mounts" field.
+func (scu *ServiceConfigUpdate) SetVariableMounts(sm []*schema.VariableMount) *ServiceConfigUpdate {
+	scu.mutation.SetVariableMounts(sm)
+	return scu
+}
+
+// AppendVariableMounts appends sm to the "variable_mounts" field.
+func (scu *ServiceConfigUpdate) AppendVariableMounts(sm []*schema.VariableMount) *ServiceConfigUpdate {
+	scu.mutation.AppendVariableMounts(sm)
+	return scu
+}
+
+// ClearVariableMounts clears the value of the "variable_mounts" field.
+func (scu *ServiceConfigUpdate) ClearVariableMounts() *ServiceConfigUpdate {
+	scu.mutation.ClearVariableMounts()
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -797,6 +815,17 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.HealthCheckCleared() {
 		_spec.ClearField(serviceconfig.FieldHealthCheck, field.TypeJSON)
+	}
+	if value, ok := scu.mutation.VariableMounts(); ok {
+		_spec.SetField(serviceconfig.FieldVariableMounts, field.TypeJSON, value)
+	}
+	if value, ok := scu.mutation.AppendedVariableMounts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldVariableMounts, value)
+		})
+	}
+	if scu.mutation.VariableMountsCleared() {
+		_spec.ClearField(serviceconfig.FieldVariableMounts, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1382,6 +1411,24 @@ func (scuo *ServiceConfigUpdateOne) ClearHealthCheck() *ServiceConfigUpdateOne {
 	return scuo
 }
 
+// SetVariableMounts sets the "variable_mounts" field.
+func (scuo *ServiceConfigUpdateOne) SetVariableMounts(sm []*schema.VariableMount) *ServiceConfigUpdateOne {
+	scuo.mutation.SetVariableMounts(sm)
+	return scuo
+}
+
+// AppendVariableMounts appends sm to the "variable_mounts" field.
+func (scuo *ServiceConfigUpdateOne) AppendVariableMounts(sm []*schema.VariableMount) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendVariableMounts(sm)
+	return scuo
+}
+
+// ClearVariableMounts clears the value of the "variable_mounts" field.
+func (scuo *ServiceConfigUpdateOne) ClearVariableMounts() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearVariableMounts()
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1669,6 +1716,17 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.HealthCheckCleared() {
 		_spec.ClearField(serviceconfig.FieldHealthCheck, field.TypeJSON)
+	}
+	if value, ok := scuo.mutation.VariableMounts(); ok {
+		_spec.SetField(serviceconfig.FieldVariableMounts, field.TypeJSON, value)
+	}
+	if value, ok := scuo.mutation.AppendedVariableMounts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldVariableMounts, value)
+		})
+	}
+	if scuo.mutation.VariableMountsCleared() {
+		_spec.ClearField(serviceconfig.FieldVariableMounts, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

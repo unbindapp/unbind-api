@@ -76,6 +76,12 @@ func AsV1PortSpecs(ports []PortSpec) []v1.PortSpec {
 	return v1Ports
 }
 
+// * For mounting variables as volumes
+type VariableMount struct {
+	Name string `json:"name" required:"true" doc:"Name of the variable to mount"`
+	Path string `json:"path" required:"true" doc:"Path to mount the variable (e.g. /etc/secret)"`
+}
+
 // * Health check compatible with unbind-operator
 type HealthCheckType string
 

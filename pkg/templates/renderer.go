@@ -8,8 +8,43 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 )
 
-// ResolveGeneratedVariables creates a new TemplateDefinition with all generated variables resolved to their values
-func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inputs map[int]string, kubeNameMap map[int]string, namespace string) (*schema.TemplateDefinition, error) {
+	resolved, err := self.resolveGeneratedVariables(template, inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build string replace map
+	stringReplaceMap := make(map[string]string)
+	stringReplaceMap["NAMESPACE"] = namespace
+	for _, service := range resolved.Services {
+		for _, variable := range service.Variables {
+			if variable.Value != "" && (variable.Generator == nil || variable.Generator.Type != schema.GeneratorTypeStringReplace) {
+				stringReplaceMap[fmt.Sprintf("SERVICE_%d_%s", service.ID, variable.Name)] = variable.Value
+			}
+		}
+	}
+	for k, v := range kubeNameMap {
+		stringReplaceMap[fmt.Sprintf("SERVICE_%d_KUBE_NAME", k)] = v
+	}
+
+	// Execute string replace on all StringReplace variables
+	for i := range resolved.Services {
+		for j := range resolved.Services[i].Variables {
+			variable := &resolved.Services[i].Variables[j]
+			if variable.Generator != nil && variable.Generator.Type == schema.GeneratorTypeStringReplace {
+				for k, v := range stringReplaceMap {
+					variable.Value = strings.ReplaceAll(variable.Value, fmt.Sprintf("${%s}", k), v)
+				}
+			}
+		}
+	}
+
+	return resolved, nil
+}
+
+// resolveGeneratedVariables creates a new TemplateDefinition with all generated variables resolved to their values
+func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
 	// Create a deep copy of the template
 	resolved := &schema.TemplateDefinition{
 		Name:        template.Name,
@@ -27,87 +62,111 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 	// Copy and resolve each service
 	for i, svc := range template.Services {
 		resolvedService := schema.TemplateService{
-			ID:              svc.ID,
-			Icon:            svc.Icon,
-			Name:            svc.Name,
-			Type:            svc.Type,
-			Builder:         svc.Builder,
-			DatabaseType:    svc.DatabaseType,
-			DatabaseConfig:  svc.DatabaseConfig,
-			Image:           svc.Image,
-			IsPublic:        svc.IsPublic,
-			RunCommand:      svc.RunCommand,
-			SecurityContext: svc.SecurityContext,
-			HealthCheck:     svc.HealthCheck,
+			ID:                 svc.ID,
+			DependsOn:          svc.DependsOn,
+			Icon:               svc.Icon,
+			Name:               svc.Name,
+			Type:               svc.Type,
+			Builder:            svc.Builder,
+			DatabaseType:       svc.DatabaseType,
+			DatabaseConfig:     svc.DatabaseConfig,
+			Image:              svc.Image,
+			Ports:              svc.Ports,
+			IsPublic:           svc.IsPublic,
+			HostInputIDs:       svc.HostInputIDs,
+			RunCommand:         svc.RunCommand,
+			Volumes:            svc.Volumes,
+			Variables:          svc.Variables,
+			VariableReferences: svc.VariableReferences,
+			SecurityContext:    svc.SecurityContext,
+			HealthCheck:        svc.HealthCheck,
 		}
 
 		// Initialize all slices if nil
-		if svc.DependsOn == nil {
+		if resolvedService.DependsOn == nil {
 			resolvedService.DependsOn = []int{}
-		} else {
-			resolvedService.DependsOn = svc.DependsOn
 		}
-
-		if svc.Ports == nil {
+		if resolvedService.Ports == nil {
 			resolvedService.Ports = []schema.PortSpec{}
-		} else {
-			resolvedService.Ports = svc.Ports
 		}
-
-		if svc.HostInputIDs == nil {
+		if resolvedService.HostInputIDs == nil {
 			resolvedService.HostInputIDs = []int{}
-		} else {
-			resolvedService.HostInputIDs = svc.HostInputIDs
 		}
-
-		if svc.VariableReferences == nil {
+		if resolvedService.VariableReferences == nil {
 			resolvedService.VariableReferences = []schema.TemplateVariableReference{}
-		} else {
-			resolvedService.VariableReferences = svc.VariableReferences
 		}
-
-		if svc.Volumes == nil {
+		if resolvedService.Volumes == nil {
 			resolvedService.Volumes = []schema.TemplateVolume{}
-		} else {
-			resolvedService.Volumes = svc.Volumes
+		}
+		if resolvedService.Variables == nil {
+			resolvedService.Variables = []schema.TemplateVariable{}
 		}
 
 		// Resolve variables
 		var additionalVars []schema.TemplateVariable
-		if svc.Variables == nil {
-			resolvedService.Variables = []schema.TemplateVariable{}
-		} else {
-			resolvedService.Variables = make([]schema.TemplateVariable, len(svc.Variables))
-			for j, v := range svc.Variables {
+		if len(resolvedService.Variables) > 0 {
+			resolvedVars := make([]schema.TemplateVariable, len(resolvedService.Variables))
+			for j, v := range resolvedService.Variables {
 				resolvedVar := schema.TemplateVariable{
 					Name: v.Name,
 				}
 
 				if v.Generator != nil {
-					value, rawPassword, err := v.Generator.Generate(inputs)
-					if err != nil {
-						return nil, fmt.Errorf("failed to generate value for %s: %w", v.Name, err)
-					}
-					resolvedVar.Value = value
-					if v.Generator.Type == schema.GeneratorTypePasswordBcrypt {
-						// Inject the raw password into a variable with the same name but without the _HASH suffix
-						if strings.HasSuffix(v.Name, "_HASH") {
-							additionalVars = append(additionalVars, schema.TemplateVariable{
-								Name:  strings.TrimSuffix(v.Name, "_HASH") + "_PLAINTEXT",
-								Value: rawPassword,
-							})
+					if v.Generator.Type == schema.GeneratorTypeStringReplace {
+						// Preserve StringReplace generators and their values
+						resolvedVar.Generator = v.Generator
+						resolvedVar.Value = v.Value
+					} else {
+						res, err := v.Generator.Generate(inputs)
+						if err != nil {
+							return nil, fmt.Errorf("failed to generate value for %s: %w", v.Name, err)
+						}
+						resolvedVar.Value = res.GeneratedValue
+						if v.Generator.Type == schema.GeneratorTypePasswordBcrypt {
+							// Inject the raw password into a variable with the same name but without the _HASH suffix
+							if strings.HasSuffix(v.Name, "_HASH") {
+								additionalVars = append(additionalVars, schema.TemplateVariable{
+									Name:  strings.TrimSuffix(v.Name, "_HASH") + "_PLAINTEXT",
+									Value: res.PlainValue,
+								})
+							}
+						}
+						if v.Generator.Type == schema.GeneratorTypeJWT {
+							// Parse all of them into additional variables based on the inputs
+							resolvedVar.Value = fmt.Sprintf("generated-%s-%s-%s", v.Generator.JWTParams.SecretOutputKey, v.Generator.JWTParams.AnonOutputKey, v.Generator.JWTParams.ServiceOutputKey)
+							additionalVars = append(additionalVars, []schema.TemplateVariable{
+								{
+									Name:  v.Generator.JWTParams.SecretOutputKey,
+									Value: res.JWTValues[v.Generator.JWTParams.SecretOutputKey],
+								},
+								{
+									Name:  v.Generator.JWTParams.AnonOutputKey,
+									Value: res.JWTValues[v.Generator.JWTParams.AnonOutputKey],
+								},
+								{
+									Name:  v.Generator.JWTParams.ServiceOutputKey,
+									Value: res.JWTValues[v.Generator.JWTParams.ServiceOutputKey],
+								},
+							}...)
 						}
 					}
 				} else {
 					resolvedVar.Value = v.Value
 				}
-				resolvedService.Variables[j] = resolvedVar
+				resolvedVars[j] = resolvedVar
 			}
+			resolvedService.Variables = resolvedVars
 		}
 
 		// Append additional variables
 		if len(additionalVars) > 0 {
 			resolvedService.Variables = append(resolvedService.Variables, additionalVars...)
+		}
+
+		// Convert variables to map for template rendering
+		variables := make(map[string]string)
+		for _, v := range resolvedService.Variables {
+			variables[v.Name] = v.Value
 		}
 
 		resolved.Services[i] = resolvedService

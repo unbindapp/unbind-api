@@ -1,11 +1,14 @@
 package schema
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"reflect"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
@@ -14,6 +17,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -95,6 +99,7 @@ type TemplateService struct {
 	VariableReferences []TemplateVariableReference `json:"variable_references" nullable:"false"` // Variables this service needs
 	SecurityContext    *SecurityContext            `json:"security_context,omitempty"`           // Security context for the service
 	HealthCheck        *HealthCheck                `json:"health_check,omitempty"`               // Health check configuration
+	VariablesMounts    []*VariableMount            `json:"variables_mounts" nullable:"false"`    // Variables mounts
 }
 
 // TemplateVariable represents a configurable variable in a template
@@ -110,6 +115,7 @@ type TemplateVariableReference struct {
 	SourceID                int    `json:"source_id"`
 	TargetName              string `json:"target_name"`                // Name of the variable
 	SourceName              string `json:"source_name"`                // Name of the variable
+	TemplateString          string `json:"template_string"`            // Template string to resolve the variable, in format "abc${VARIABLE_KEY}def"
 	IsHost                  bool   `json:"is_host"`                    // If true, variable will be <kubernetesName>.<serviceName>, sort of customized by type (e.g. mysql adds moco- prefix)
 	ResolveAsNormalVariable bool   `json:"resolve_as_normal_variable"` // If true, the variable will be resolved as a normal variable not a reference
 }
@@ -121,6 +127,8 @@ const (
 	GeneratorTypePassword       GeneratorType = "password"
 	GeneratorTypePasswordBcrypt GeneratorType = "bcrypt"
 	GeneratorTypeInput          GeneratorType = "input"
+	GeneratorTypeJWT            GeneratorType = "jwt"
+	GeneratorTypeStringReplace  GeneratorType = "string_replace"
 )
 
 // Register enum in OpenAPI specification
@@ -134,10 +142,20 @@ func (u GeneratorType) Schema(r huma.Registry) *huma.Schema {
 				string(GeneratorTypePassword),
 				string(GeneratorTypePasswordBcrypt),
 				string(GeneratorTypeInput),
+				string(GeneratorTypeJWT),
+				string(GeneratorTypeStringReplace),
 			}...)
 		r.Map()["GeneratorType"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/GeneratorType"}
+}
+
+// JWTParams represents the parameters for JWT generation
+type JWTParams struct {
+	Issuer           string
+	SecretOutputKey  string
+	AnonOutputKey    string
+	ServiceOutputKey string
 }
 
 // ValueGenerator represents how to generate a value
@@ -147,6 +165,7 @@ type ValueGenerator struct {
 	BaseDomain string         `json:"base_domain,omitempty"` // For email
 	AddPrefix  string         `json:"add_prefix,omitempty"`  // Add a prefix to the generated value
 	HashType   *ValueHashType `json:"hash_type,omitempty"`   // Hash the generated value
+	JWTParams  *JWTParams     `json:"jwt_params,omitempty"`  // JWT parameters
 }
 
 type ValueHashType string
@@ -172,12 +191,18 @@ func (u ValueHashType) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/ValueHashType"}
 }
 
-func (self *ValueGenerator) Generate(inputs map[int]string) (string, string, error) {
+type GenerateResponse struct {
+	GeneratedValue string            `json:"generated_value"`
+	PlainValue     string            `json:"plain_value"`
+	JWTValues      map[string]string `json:"jwt_values"`
+}
+
+func (self *ValueGenerator) Generate(inputs map[int]string) (*GenerateResponse, error) {
 	switch self.Type {
 	case GeneratorTypePassword:
 		pwd, err := utils.GenerateSecurePassword(32)
 		if err != nil {
-			return "", "", err
+			return nil, err
 		}
 		if self.HashType != nil {
 			switch *self.HashType {
@@ -189,11 +214,13 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (string, string, err
 				pwd = hex.EncodeToString(hash[:])
 			}
 		}
-		return self.AddPrefix + pwd, "", nil
+		return &GenerateResponse{
+			GeneratedValue: self.AddPrefix + pwd,
+		}, nil
 	case GeneratorTypePasswordBcrypt:
 		pwd, err := utils.GenerateSecurePassword(32)
 		if err != nil {
-			return "", "", err
+			return nil, err
 		}
 		if self.HashType != nil {
 			switch *self.HashType {
@@ -207,18 +234,65 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (string, string, err
 		}
 		bcryptHashed, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 		if err != nil {
-			return "", "", err
+			return nil, err
 		}
-		return string(bcryptHashed), pwd, nil
+		return &GenerateResponse{
+			GeneratedValue: string(bcryptHashed),
+			PlainValue:     pwd,
+		}, nil
 	case GeneratorTypeInput:
 		// Find the input by ID
 		inputValue, ok := inputs[self.InputID]
 		if !ok {
-			return "", "", fmt.Errorf("input ID %d not found in inputs map", self.InputID)
+			return nil, fmt.Errorf("input ID %d not found in inputs map", self.InputID)
 		}
-		return self.AddPrefix + inputValue, "", nil
+		return &GenerateResponse{
+			GeneratedValue: self.AddPrefix + inputValue,
+		}, nil
+	case GeneratorTypeJWT:
+		if self.JWTParams == nil {
+			return nil, fmt.Errorf("JWT parameters are required for JWT generator")
+		}
+
+		resp := make(map[string]string)
+
+		// 32 random bytes = 256-bit key, the minimum Supabase recommends
+		secretBytes := make([]byte, 32)
+		if _, err := rand.Read(secretBytes); err != nil {
+			return nil, err
+		}
+		secret := base64.RawURLEncoding.EncodeToString(secretBytes)
+		resp[self.JWTParams.SecretOutputKey] = secret
+
+		makeToken := func(role string) (string, error) {
+			claims := jwt.MapClaims{
+				"role": role,
+				"iss":  self.JWTParams.Issuer,
+				"sub":  role,
+				"aud":  "authenticated",
+				"iat":  time.Now().Unix(),
+				"exp":  time.Now().AddDate(10, 0, 0).Unix(), // 10 years
+			}
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+			return token.SignedString([]byte(secret))
+		}
+
+		anon, err := makeToken("anon")
+		if err != nil {
+			return nil, err
+		}
+		resp[self.JWTParams.AnonOutputKey] = anon
+		service, err := makeToken("service_role")
+		if err != nil {
+			return nil, err
+		}
+		resp[self.JWTParams.ServiceOutputKey] = service
+
+		return &GenerateResponse{
+			JWTValues: resp,
+		}, nil
 	default:
-		return "", "", fmt.Errorf("unknown generator type: %s", self.Type)
+		return nil, fmt.Errorf("unknown generator type: %s", self.Type)
 	}
 }
 

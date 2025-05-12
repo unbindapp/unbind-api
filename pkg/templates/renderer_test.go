@@ -9,8 +9,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 )
 
-func TestResolveGeneratedVariables(t *testing.T) {
-	// Create a test template with both static and generated variables
+func TestResolveTemplate(t *testing.T) {
+	// Create a test template with static, generated, and string replace variables
 	template := &schema.TemplateDefinition{
 		Name:        "test-template",
 		Description: "Test template",
@@ -32,6 +32,13 @@ func TestResolveGeneratedVariables(t *testing.T) {
 							Type: schema.GeneratorTypePassword,
 						},
 					},
+					{
+						Name: "STRING_REPLACE_VAR",
+						Generator: &schema.ValueGenerator{
+							Type: schema.GeneratorTypeStringReplace,
+						},
+						Value: "postgres://user:${SERVICE_1_GENERATED_PASSWORD}@${SERVICE_1_KUBE_NAME}.${NAMESPACE}:5432/postgres",
+					},
 				},
 			},
 		},
@@ -41,8 +48,14 @@ func TestResolveGeneratedVariables(t *testing.T) {
 		ExternalUIUrl: "https://example.com",
 	})
 
-	// Test variable resolution
-	resolved, err := templater.ResolveGeneratedVariables(template, nil)
+	// Test template resolution
+	inputs := map[int]string{}
+	kubeNameMap := map[int]string{
+		1: "test-service",
+	}
+	namespace := "test-namespace"
+
+	resolved, err := templater.ResolveTemplate(template, inputs, kubeNameMap, namespace)
 	require.NoError(t, err)
 	require.NotNil(t, resolved)
 
@@ -57,7 +70,7 @@ func TestResolveGeneratedVariables(t *testing.T) {
 	assert.Equal(t, template.Services[0].Name, service.Name)
 	assert.Equal(t, template.Services[0].Type, service.Type)
 	assert.Equal(t, template.Services[0].Builder, service.Builder)
-	assert.Len(t, service.Variables, 2)
+	assert.Len(t, service.Variables, 3)
 
 	// Verify static variable is preserved
 	staticVar := findVariable(service.Variables, "STATIC_VAR")
@@ -72,9 +85,19 @@ func TestResolveGeneratedVariables(t *testing.T) {
 	assert.Nil(t, passwordVar.Generator)
 	assert.Len(t, passwordVar.Value, 32) // Default password length
 
-	// Verify all variables have no generators
+	// Verify string replace variable is preserved and replaced
+	stringReplaceVar := findVariable(service.Variables, "STRING_REPLACE_VAR")
+	require.NotNil(t, stringReplaceVar)
+	assert.Contains(t, stringReplaceVar.Value, "postgres://user:")
+	assert.Contains(t, stringReplaceVar.Value, "@test-service.test-namespace:5432/postgres")
+	assert.NotNil(t, stringReplaceVar.Generator)
+	assert.Equal(t, schema.GeneratorTypeStringReplace, stringReplaceVar.Generator.Type)
+
+	// Verify all non-string-replace variables have no generators
 	for _, v := range service.Variables {
-		assert.Nil(t, v.Generator, "Variable %s should not have a generator", v.Name)
+		if v.Generator != nil {
+			assert.Equal(t, schema.GeneratorTypeStringReplace, v.Generator.Type, "Only StringReplace generators should be preserved")
+		}
 	}
 }
 

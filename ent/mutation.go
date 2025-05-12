@@ -12481,6 +12481,8 @@ type ServiceConfigMutation struct {
 	volume_mount_path         *string
 	security_context          **schema.SecurityContext
 	health_check              **schema.HealthCheck
+	variable_mounts           *[]*schema.VariableMount
+	appendvariable_mounts     []*schema.VariableMount
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
@@ -14007,6 +14009,71 @@ func (m *ServiceConfigMutation) ResetHealthCheck() {
 	delete(m.clearedFields, serviceconfig.FieldHealthCheck)
 }
 
+// SetVariableMounts sets the "variable_mounts" field.
+func (m *ServiceConfigMutation) SetVariableMounts(sm []*schema.VariableMount) {
+	m.variable_mounts = &sm
+	m.appendvariable_mounts = nil
+}
+
+// VariableMounts returns the value of the "variable_mounts" field in the mutation.
+func (m *ServiceConfigMutation) VariableMounts() (r []*schema.VariableMount, exists bool) {
+	v := m.variable_mounts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVariableMounts returns the old "variable_mounts" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldVariableMounts(ctx context.Context) (v []*schema.VariableMount, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVariableMounts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVariableMounts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVariableMounts: %w", err)
+	}
+	return oldValue.VariableMounts, nil
+}
+
+// AppendVariableMounts adds sm to the "variable_mounts" field.
+func (m *ServiceConfigMutation) AppendVariableMounts(sm []*schema.VariableMount) {
+	m.appendvariable_mounts = append(m.appendvariable_mounts, sm...)
+}
+
+// AppendedVariableMounts returns the list of values that were appended to the "variable_mounts" field in this mutation.
+func (m *ServiceConfigMutation) AppendedVariableMounts() ([]*schema.VariableMount, bool) {
+	if len(m.appendvariable_mounts) == 0 {
+		return nil, false
+	}
+	return m.appendvariable_mounts, true
+}
+
+// ClearVariableMounts clears the value of the "variable_mounts" field.
+func (m *ServiceConfigMutation) ClearVariableMounts() {
+	m.variable_mounts = nil
+	m.appendvariable_mounts = nil
+	m.clearedFields[serviceconfig.FieldVariableMounts] = struct{}{}
+}
+
+// VariableMountsCleared returns if the "variable_mounts" field was cleared in this mutation.
+func (m *ServiceConfigMutation) VariableMountsCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldVariableMounts]
+	return ok
+}
+
+// ResetVariableMounts resets all changes to the "variable_mounts" field.
+func (m *ServiceConfigMutation) ResetVariableMounts() {
+	m.variable_mounts = nil
+	m.appendvariable_mounts = nil
+	delete(m.clearedFields, serviceconfig.FieldVariableMounts)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -14095,7 +14162,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 30)
+	fields := make([]string, 0, 31)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -14186,6 +14253,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.health_check != nil {
 		fields = append(fields, serviceconfig.FieldHealthCheck)
 	}
+	if m.variable_mounts != nil {
+		fields = append(fields, serviceconfig.FieldVariableMounts)
+	}
 	return fields
 }
 
@@ -14254,6 +14324,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.SecurityContext()
 	case serviceconfig.FieldHealthCheck:
 		return m.HealthCheck()
+	case serviceconfig.FieldVariableMounts:
+		return m.VariableMounts()
 	}
 	return nil, false
 }
@@ -14323,6 +14395,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldSecurityContext(ctx)
 	case serviceconfig.FieldHealthCheck:
 		return m.OldHealthCheck(ctx)
+	case serviceconfig.FieldVariableMounts:
+		return m.OldVariableMounts(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14542,6 +14616,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetHealthCheck(v)
 		return nil
+	case serviceconfig.FieldVariableMounts:
+		v, ok := value.([]*schema.VariableMount)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVariableMounts(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14659,6 +14740,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldHealthCheck) {
 		fields = append(fields, serviceconfig.FieldHealthCheck)
 	}
+	if m.FieldCleared(serviceconfig.FieldVariableMounts) {
+		fields = append(fields, serviceconfig.FieldVariableMounts)
+	}
 	return fields
 }
 
@@ -14732,6 +14816,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldHealthCheck:
 		m.ClearHealthCheck()
+		return nil
+	case serviceconfig.FieldVariableMounts:
+		m.ClearVariableMounts()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig nullable field %s", name)
@@ -14830,6 +14917,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldHealthCheck:
 		m.ResetHealthCheck()
+		return nil
+	case serviceconfig.FieldVariableMounts:
+		m.ResetVariableMounts()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

@@ -34,6 +34,8 @@ type ServiceConfigResponse struct {
 	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 	// Health check
 	HealthCheck *schema.HealthCheck `json:"health_check,omitempty"`
+	// Variable Volume Mounts
+	VariableMounts []*schema.VariableMount `json:"variable_mounts" nullable:"false"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -62,6 +64,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			PVCVolumeMountPath:   entity.VolumeMountPath,
 			SecurityContext:      entity.SecurityContext,
 			HealthCheck:          entity.HealthCheck,
+			VariableMounts:       entity.VariableMounts,
 		}
 	}
 	return response

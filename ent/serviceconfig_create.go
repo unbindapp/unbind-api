@@ -385,6 +385,12 @@ func (scc *ServiceConfigCreate) SetHealthCheck(sc *schema.HealthCheck) *ServiceC
 	return scc
 }
 
+// SetVariableMounts sets the "variable_mounts" field.
+func (scc *ServiceConfigCreate) SetVariableMounts(sm []*schema.VariableMount) *ServiceConfigCreate {
+	scc.mutation.SetVariableMounts(sm)
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -675,6 +681,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.HealthCheck(); ok {
 		_spec.SetField(serviceconfig.FieldHealthCheck, field.TypeJSON, value)
 		_node.HealthCheck = value
+	}
+	if value, ok := scc.mutation.VariableMounts(); ok {
+		_spec.SetField(serviceconfig.FieldVariableMounts, field.TypeJSON, value)
+		_node.VariableMounts = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1239,6 +1249,24 @@ func (u *ServiceConfigUpsert) UpdateHealthCheck() *ServiceConfigUpsert {
 // ClearHealthCheck clears the value of the "health_check" field.
 func (u *ServiceConfigUpsert) ClearHealthCheck() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldHealthCheck)
+	return u
+}
+
+// SetVariableMounts sets the "variable_mounts" field.
+func (u *ServiceConfigUpsert) SetVariableMounts(v []*schema.VariableMount) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldVariableMounts, v)
+	return u
+}
+
+// UpdateVariableMounts sets the "variable_mounts" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateVariableMounts() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldVariableMounts)
+	return u
+}
+
+// ClearVariableMounts clears the value of the "variable_mounts" field.
+func (u *ServiceConfigUpsert) ClearVariableMounts() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldVariableMounts)
 	return u
 }
 
@@ -1850,6 +1878,27 @@ func (u *ServiceConfigUpsertOne) UpdateHealthCheck() *ServiceConfigUpsertOne {
 func (u *ServiceConfigUpsertOne) ClearHealthCheck() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearHealthCheck()
+	})
+}
+
+// SetVariableMounts sets the "variable_mounts" field.
+func (u *ServiceConfigUpsertOne) SetVariableMounts(v []*schema.VariableMount) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetVariableMounts(v)
+	})
+}
+
+// UpdateVariableMounts sets the "variable_mounts" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateVariableMounts() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateVariableMounts()
+	})
+}
+
+// ClearVariableMounts clears the value of the "variable_mounts" field.
+func (u *ServiceConfigUpsertOne) ClearVariableMounts() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearVariableMounts()
 	})
 }
 
@@ -2628,6 +2677,27 @@ func (u *ServiceConfigUpsertBulk) UpdateHealthCheck() *ServiceConfigUpsertBulk {
 func (u *ServiceConfigUpsertBulk) ClearHealthCheck() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearHealthCheck()
+	})
+}
+
+// SetVariableMounts sets the "variable_mounts" field.
+func (u *ServiceConfigUpsertBulk) SetVariableMounts(v []*schema.VariableMount) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetVariableMounts(v)
+	})
+}
+
+// UpdateVariableMounts sets the "variable_mounts" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateVariableMounts() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateVariableMounts()
+	})
+}
+
+// ClearVariableMounts clears the value of the "variable_mounts" field.
+func (u *ServiceConfigUpsertBulk) ClearVariableMounts() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearVariableMounts()
 	})
 }
 

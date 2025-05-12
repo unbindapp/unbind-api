@@ -64,6 +64,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.JSON("security_context", &SecurityContext{}).Optional().Comment("Security context for the service containers."),
 		// Health check
 		field.JSON("health_check", &HealthCheck{}).Optional().Comment("Health check configuration for the service"),
+		// Variable mount
+		field.JSON("variable_mounts", []*VariableMount{}).Optional().Comment("Mount variables as volumes"),
 	}
 }
 

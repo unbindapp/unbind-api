@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -125,8 +126,19 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	// Parse and generate variables
+	kubeNameMap := make(map[int]string)
+
+	// Generate kube name map
+	for _, service := range template.Definition.Services {
+		kubernetesName, err := utils.GenerateSlug(service.Name)
+		if err != nil {
+			return nil, err
+		}
+		kubeNameMap[service.ID] = kubernetesName
+	}
+
 	templater := templates.NewTemplater(self.cfg)
-	generatedTemplate, err := templater.ResolveGeneratedVariables(&template.Definition, validatedInputs)
+	generatedTemplate, err := templater.ResolveTemplate(&template.Definition, validatedInputs, kubeNameMap, project.Edges.Team.Namespace)
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
@@ -152,7 +164,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	var secretNames []string
 	var newServices []*ent.Service
 	dbServiceMap := make(map[int]*ent.Service)
-	kubeNameMap := make(map[int]string)
 
 	// Generate a launch ID
 	templateInstanceID := uuid.New()
@@ -205,12 +216,10 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				}
 			}
 
-			// Generate unique name
-			kubernetesName, err := utils.GenerateSlug(templateService.Name)
-			if err != nil {
-				return err
+			kubernetesName, ok := kubeNameMap[templateService.ID]
+			if !ok {
+				return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("service %q not found", templateService.Name))
 			}
-			kubeNameMap[templateService.ID] = kubernetesName
 
 			// Create kubernetes secrets
 			secret, _, err := self.k8s.GetOrCreateSecret(ctx, kubernetesName, project.Edges.Team.Namespace, client)
@@ -393,6 +402,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					}
 
 					// Standard variable references
+					value := fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, key)
+					if variableReference.TemplateString != "" {
+						// Replace the key with the right one
+						value = strings.ReplaceAll(variableReference.TemplateString, fmt.Sprintf("${%s}", key), fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, key))
+					}
 					referenceInput = append(referenceInput, &models.VariableReferenceInputItem{
 						Name: variableReference.TargetName,
 						Sources: []schema.VariableReferenceSource{
@@ -406,7 +420,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 								Key:                  key,
 							},
 						},
-						Value: fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, key),
+						Value: value,
 					})
 
 					continue
@@ -519,7 +533,7 @@ func (self *TemplatesService) resolveHostInputs(
 			hostVal = *in.Default
 		}
 
-		// 2. if we still have nothing AND it’s required → try generate
+		// 2. if we still have nothing AND it's required → try generate
 		if hostVal == "" && in.Required {
 			// generateWildcardHost needs *one* service / port context – first match wins
 			genForSvc := (*schema.TemplateService)(nil)

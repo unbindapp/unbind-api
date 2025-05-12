@@ -1588,6 +1588,16 @@ func HealthCheckNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldHealthCheck))
 }
 
+// VariableMountsIsNil applies the IsNil predicate on the "variable_mounts" field.
+func VariableMountsIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldVariableMounts))
+}
+
+// VariableMountsNotNil applies the NotNil predicate on the "variable_mounts" field.
+func VariableMountsNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldVariableMounts))
+}
+
 // HasService applies the HasEdge predicate on the "service" edge.
 func HasService() predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {

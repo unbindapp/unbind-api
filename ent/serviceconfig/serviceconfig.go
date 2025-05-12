@@ -78,6 +78,8 @@ const (
 	FieldSecurityContext = "security_context"
 	// FieldHealthCheck holds the string denoting the health_check field in the database.
 	FieldHealthCheck = "health_check"
+	// FieldVariableMounts holds the string denoting the variable_mounts field in the database.
+	FieldVariableMounts = "variable_mounts"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// EdgeS3BackupEndpoint holds the string denoting the s3_backup_endpoint edge name in mutations.
@@ -133,6 +135,7 @@ var Columns = []string{
 	FieldVolumeMountPath,
 	FieldSecurityContext,
 	FieldHealthCheck,
+	FieldVariableMounts,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
