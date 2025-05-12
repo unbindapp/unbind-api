@@ -90,7 +90,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 			var nodeIPs []string
 			for _, node := range nodes.Items {
 				for _, addr := range node.Status.Addresses {
-					if addr.Type == corev1.NodeInternalIP {
+					if addr.Type == corev1.NodeExternalIP {
 						nodeIPs = append(nodeIPs, addr.Address)
 						break
 					}
