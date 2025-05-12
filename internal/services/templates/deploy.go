@@ -116,6 +116,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("failed to generate node port: %v", err))
 			}
 			portMap[defInput.ID] = nodePort
+			validatedInputs[defInput.ID] = strconv.Itoa(int(portMap[defInput.ID]))
 		}
 	}
 
