@@ -6,11 +6,11 @@ import (
 )
 
 // WireGuardTemplate returns the predefined WireGuard template
-func wireGuardTCPTemplate() *schema.TemplateDefinition {
+func wireGuardTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "wireguard-tcp",
+		Name:        "wireguard",
 		Version:     1,
-		Description: "WireGuard VPN with web-based management interface and TCP tunnel",
+		Description: "WireGuard VPN with web-based management interface.",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
@@ -47,8 +47,9 @@ func wireGuardTCPTemplate() *schema.TemplateDefinition {
 				Image:        utils.ToPtr("ghcr.io/wg-easy/wg-easy:14"),
 				Ports: []schema.PortSpec{
 					{
-						Port:     51820,
-						Protocol: utils.ToPtr(schema.ProtocolUDP),
+						IsNodePort:      true,
+						InputTemplateID: utils.ToPtr(2),
+						Protocol:        utils.ToPtr(schema.ProtocolUDP),
 					},
 					{
 						Port:     51821,
@@ -65,8 +66,11 @@ func wireGuardTCPTemplate() *schema.TemplateDefinition {
 						},
 					},
 					{
-						Name:  "WG_PORT",
-						Value: "51820",
+						Name: "WG_PORT",
+						Generator: &schema.ValueGenerator{
+							Type:    schema.GeneratorTypeInput,
+							InputID: 2,
+						},
 					},
 					{
 						Name: "PASSWORD_HASH",
@@ -105,87 +109,10 @@ func wireGuardTCPTemplate() *schema.TemplateDefinition {
 					},
 				},
 				SecurityContext: &schema.SecurityContext{
-					Privileged: utils.ToPtr(true), // Required for iptables manipulation
 					Capabilities: &schema.Capabilities{
 						Add: []schema.Capability{
 							"NET_ADMIN",
 							"SYS_MODULE",
-						},
-					},
-				},
-			},
-			// UDP2RAW Service - TCP tunnel for WireGuard
-			{
-				ID:      2,
-				Name:    "WireGuard TCP Tunnel",
-				Type:    schema.ServiceTypeDockerimage,
-				Builder: schema.ServiceBuilderDocker,
-				Image:   utils.ToPtr("ghcr.io/unbindapp/udp2raw:latest"),
-				Ports: []schema.PortSpec{
-					{
-						IsNodePort:      true,
-						InputTemplateID: utils.ToPtr(2),
-						Protocol:        utils.ToPtr(schema.ProtocolTCP),
-					},
-				},
-				IsPublic: true, // Expose TCP port publicly
-				Variables: []schema.TemplateVariable{
-					{
-						Name:  "UDP2RAW_MODE",
-						Value: "server",
-					},
-					{
-						Name:  "UDP2RAW_LOCAL_ADDR",
-						Value: "0.0.0.0",
-					},
-					{
-						Name: "UDP2RAW_LOCAL_PORT",
-						Generator: &schema.ValueGenerator{
-							Type:    schema.GeneratorTypeInput,
-							InputID: 2,
-						},
-					},
-					{
-						Name:  "UDP2RAW_REMOTE_PORT",
-						Value: "51820",
-					},
-					{
-						Name: "UDP2RAW_KEY",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypePassword,
-						},
-					},
-					{
-						Name:  "UDP2RAW_RAW_MODE",
-						Value: "easy-faketcp",
-					},
-					{
-						Name:  "UDP2RAW_CIPHER",
-						Value: "aes128cbc",
-					},
-					{
-						Name:  "UDP2RAW_AUTH",
-						Value: "md5",
-					},
-					{
-						Name:  "UDP2RAW_LOG_LEVEL",
-						Value: "info",
-					},
-				},
-				VariableReferences: []schema.TemplateVariableReference{
-					{
-						SourceID:                1,
-						TargetName:              "UDP2RAW_REMOTE_ADDR",
-						IsHost:                  true,
-						ResolveAsNormalVariable: true,
-					},
-				},
-				SecurityContext: &schema.SecurityContext{
-					Privileged: utils.ToPtr(true), // Required for iptables manipulation
-					Capabilities: &schema.Capabilities{
-						Add: []schema.Capability{
-							"NET_ADMIN",
-							"NET_RAW",
 						},
 					},
 				},
