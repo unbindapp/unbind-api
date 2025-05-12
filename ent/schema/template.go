@@ -106,10 +106,11 @@ type TemplateVariable struct {
 
 // TenokateVariableReference represents a reference to a variable in a template
 type TemplateVariableReference struct {
-	SourceID   int    `json:"source_id"`
-	TargetName string `json:"target_name"` // Name of the variable
-	SourceName string `json:"source_name"` // Name of the variable
-	IsHost     bool   `json:"is_host"`     // If true, variable will be <kubernetesName>.<serviceName>, sort of customized by type (e.g. mysql adds moco- prefix)
+	SourceID                int    `json:"source_id"`
+	TargetName              string `json:"target_name"`                // Name of the variable
+	SourceName              string `json:"source_name"`                // Name of the variable
+	IsHost                  bool   `json:"is_host"`                    // If true, variable will be <kubernetesName>.<serviceName>, sort of customized by type (e.g. mysql adds moco- prefix)
+	ResolveAsNormalVariable bool   `json:"resolve_as_normal_variable"` // If true, the variable will be resolved as a normal variable not a reference
 }
 
 // Types of generators

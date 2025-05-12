@@ -224,6 +224,20 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			for _, variable := range templateService.Variables {
 				secretData[variable.Name] = []byte(variable.Value)
 			}
+
+			// Resolve any references that should be treated as local
+			for _, ref := range templateService.VariableReferences {
+				if ref.IsHost && ref.ResolveAsNormalVariable {
+					// See if we have a kubeNameMap for the source ID
+					sourceKubeName, ok := kubeNameMap[ref.SourceID]
+					if !ok {
+						return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("source service not found for local variable reference %s", ref.TargetName))
+					}
+					// Add the reference to the secret data
+					secretData[ref.TargetName] = fmt.Appendf(nil, "%s.%s", sourceKubeName, project.Edges.Team.Namespace)
+				}
+			}
+
 			if _, err := self.k8s.UpsertSecretValues(ctx, secret.Name, project.Edges.Team.Namespace, secretData, client); err != nil {
 				return fmt.Errorf("failed to update secret values: %v", err)
 			}
@@ -357,7 +371,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				}
 
 				// Deal with is_host first, not really a reference just resolved on the fly
-				if variableReference.IsHost {
+				if variableReference.IsHost && !variableReference.ResolveAsNormalVariable {
 					// Determine the host key (it may not exist yet so we can't DNS lookup)
 					key := sourceService.KubernetesName
 

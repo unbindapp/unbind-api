@@ -43,6 +43,10 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 						Port:     51820,
 						Protocol: utils.ToPtr(schema.ProtocolUDP),
 					},
+					{
+						Port:     51821,
+						Protocol: utils.ToPtr(schema.ProtocolTCP),
+					},
 				},
 				IsPublic: false, // Not directly exposed, use TCP proxy instead
 				Variables: []schema.TemplateVariable{
@@ -160,9 +164,10 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
-						TargetName: "UDP2RAW_REMOTE_ADDR",
-						IsHost:     true,
+						SourceID:                1,
+						TargetName:              "UDP2RAW_REMOTE_ADDR",
+						IsHost:                  true,
+						ResolveAsNormalVariable: true,
 					},
 				},
 			},
