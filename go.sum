@@ -600,6 +600,8 @@ github.com/unbindapp/unbind-operator v0.0.0-20250511194259-2d91431724b6 h1:ekUxZ
 github.com/unbindapp/unbind-operator v0.0.0-20250511194259-2d91431724b6/go.mod h1:zR8jQGv9hC/H0kXvuKXcVajt32YJowOCFjyq31OP/8E=
 github.com/unbindapp/unbind-operator v0.0.0-20250512140220-91cddc94ed94 h1:Eju7tsbxvqXOBJNNyQo7Mmvvz5OYyZXcOrydC44z7wY=
 github.com/unbindapp/unbind-operator v0.0.0-20250512140220-91cddc94ed94/go.mod h1:zR8jQGv9hC/H0kXvuKXcVajt32YJowOCFjyq31OP/8E=
+github.com/unbindapp/unbind-operator v0.0.0-20250512151603-f1c9571693b6 h1:z0Y+9qJSH1Q21I6x1g+67L+2FhhJTpIlYAYo6o5Okbk=
+github.com/unbindapp/unbind-operator v0.0.0-20250512151603-f1c9571693b6/go.mod h1:zR8jQGv9hC/H0kXvuKXcVajt32YJowOCFjyq31OP/8E=
 github.com/valkey-io/valkey-go v1.0.56 h1:7qp/9dqqPbYEEKeFZCnpX6nzM5XzO2MPp0iKh9+c9Wg=
 github.com/valkey-io/valkey-go v1.0.56/go.mod h1:sxpCChk8i3oTG+A/lUi9Lj8C/7WI+yhnQCvDJlPVKNM=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=

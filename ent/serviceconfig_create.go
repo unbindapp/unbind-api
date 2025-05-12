@@ -379,6 +379,12 @@ func (scc *ServiceConfigCreate) SetSecurityContext(sc *schema.SecurityContext) *
 	return scc
 }
 
+// SetHealthCheck sets the "health_check" field.
+func (scc *ServiceConfigCreate) SetHealthCheck(sc *schema.HealthCheck) *ServiceConfigCreate {
+	scc.mutation.SetHealthCheck(sc)
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -665,6 +671,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.SecurityContext(); ok {
 		_spec.SetField(serviceconfig.FieldSecurityContext, field.TypeJSON, value)
 		_node.SecurityContext = value
+	}
+	if value, ok := scc.mutation.HealthCheck(); ok {
+		_spec.SetField(serviceconfig.FieldHealthCheck, field.TypeJSON, value)
+		_node.HealthCheck = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1211,6 +1221,24 @@ func (u *ServiceConfigUpsert) UpdateSecurityContext() *ServiceConfigUpsert {
 // ClearSecurityContext clears the value of the "security_context" field.
 func (u *ServiceConfigUpsert) ClearSecurityContext() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldSecurityContext)
+	return u
+}
+
+// SetHealthCheck sets the "health_check" field.
+func (u *ServiceConfigUpsert) SetHealthCheck(v *schema.HealthCheck) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldHealthCheck, v)
+	return u
+}
+
+// UpdateHealthCheck sets the "health_check" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateHealthCheck() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldHealthCheck)
+	return u
+}
+
+// ClearHealthCheck clears the value of the "health_check" field.
+func (u *ServiceConfigUpsert) ClearHealthCheck() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldHealthCheck)
 	return u
 }
 
@@ -1801,6 +1829,27 @@ func (u *ServiceConfigUpsertOne) UpdateSecurityContext() *ServiceConfigUpsertOne
 func (u *ServiceConfigUpsertOne) ClearSecurityContext() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearSecurityContext()
+	})
+}
+
+// SetHealthCheck sets the "health_check" field.
+func (u *ServiceConfigUpsertOne) SetHealthCheck(v *schema.HealthCheck) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetHealthCheck(v)
+	})
+}
+
+// UpdateHealthCheck sets the "health_check" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateHealthCheck() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateHealthCheck()
+	})
+}
+
+// ClearHealthCheck clears the value of the "health_check" field.
+func (u *ServiceConfigUpsertOne) ClearHealthCheck() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearHealthCheck()
 	})
 }
 
@@ -2558,6 +2607,27 @@ func (u *ServiceConfigUpsertBulk) UpdateSecurityContext() *ServiceConfigUpsertBu
 func (u *ServiceConfigUpsertBulk) ClearSecurityContext() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearSecurityContext()
+	})
+}
+
+// SetHealthCheck sets the "health_check" field.
+func (u *ServiceConfigUpsertBulk) SetHealthCheck(v *schema.HealthCheck) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetHealthCheck(v)
+	})
+}
+
+// UpdateHealthCheck sets the "health_check" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateHealthCheck() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateHealthCheck()
+	})
+}
+
+// ClearHealthCheck clears the value of the "health_check" field.
+func (u *ServiceConfigUpsertBulk) ClearHealthCheck() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearHealthCheck()
 	})
 }
 

@@ -86,6 +86,7 @@ type MutateConfigInput struct {
 	PVCID                   *string
 	PVCVolumeMountPath      *string
 	SecurityContext         *schema.SecurityContext
+	HealthCheck             *schema.HealthCheck
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -145,6 +146,10 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableVolumeName(input.PVCID).
 		SetNillableVolumeMountPath(input.PVCVolumeMountPath).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.HealthCheck != nil {
+		c.SetHealthCheck(input.HealthCheck)
+	}
 
 	if input.SecurityContext != nil {
 		c.SetSecurityContext(input.SecurityContext)
@@ -206,6 +211,14 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.HealthCheck != nil {
+		if input.HealthCheck.Type == schema.HealthCheckTypeNone {
+			upd.ClearHealthCheck()
+		} else {
+			upd.SetHealthCheck(input.HealthCheck)
+		}
+	}
 
 	if input.SecurityContext != nil {
 		upd.SetSecurityContext(input.SecurityContext)

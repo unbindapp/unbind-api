@@ -12480,6 +12480,7 @@ type ServiceConfigMutation struct {
 	volume_name               *string
 	volume_mount_path         *string
 	security_context          **schema.SecurityContext
+	health_check              **schema.HealthCheck
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
@@ -13957,6 +13958,55 @@ func (m *ServiceConfigMutation) ResetSecurityContext() {
 	delete(m.clearedFields, serviceconfig.FieldSecurityContext)
 }
 
+// SetHealthCheck sets the "health_check" field.
+func (m *ServiceConfigMutation) SetHealthCheck(sc *schema.HealthCheck) {
+	m.health_check = &sc
+}
+
+// HealthCheck returns the value of the "health_check" field in the mutation.
+func (m *ServiceConfigMutation) HealthCheck() (r *schema.HealthCheck, exists bool) {
+	v := m.health_check
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHealthCheck returns the old "health_check" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldHealthCheck(ctx context.Context) (v *schema.HealthCheck, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHealthCheck is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHealthCheck requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHealthCheck: %w", err)
+	}
+	return oldValue.HealthCheck, nil
+}
+
+// ClearHealthCheck clears the value of the "health_check" field.
+func (m *ServiceConfigMutation) ClearHealthCheck() {
+	m.health_check = nil
+	m.clearedFields[serviceconfig.FieldHealthCheck] = struct{}{}
+}
+
+// HealthCheckCleared returns if the "health_check" field was cleared in this mutation.
+func (m *ServiceConfigMutation) HealthCheckCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldHealthCheck]
+	return ok
+}
+
+// ResetHealthCheck resets all changes to the "health_check" field.
+func (m *ServiceConfigMutation) ResetHealthCheck() {
+	m.health_check = nil
+	delete(m.clearedFields, serviceconfig.FieldHealthCheck)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -14045,7 +14095,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 29)
+	fields := make([]string, 0, 30)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -14133,6 +14183,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.security_context != nil {
 		fields = append(fields, serviceconfig.FieldSecurityContext)
 	}
+	if m.health_check != nil {
+		fields = append(fields, serviceconfig.FieldHealthCheck)
+	}
 	return fields
 }
 
@@ -14199,6 +14252,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.VolumeMountPath()
 	case serviceconfig.FieldSecurityContext:
 		return m.SecurityContext()
+	case serviceconfig.FieldHealthCheck:
+		return m.HealthCheck()
 	}
 	return nil, false
 }
@@ -14266,6 +14321,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldVolumeMountPath(ctx)
 	case serviceconfig.FieldSecurityContext:
 		return m.OldSecurityContext(ctx)
+	case serviceconfig.FieldHealthCheck:
+		return m.OldHealthCheck(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14478,6 +14535,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetSecurityContext(v)
 		return nil
+	case serviceconfig.FieldHealthCheck:
+		v, ok := value.(*schema.HealthCheck)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHealthCheck(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14592,6 +14656,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldSecurityContext) {
 		fields = append(fields, serviceconfig.FieldSecurityContext)
 	}
+	if m.FieldCleared(serviceconfig.FieldHealthCheck) {
+		fields = append(fields, serviceconfig.FieldHealthCheck)
+	}
 	return fields
 }
 
@@ -14662,6 +14729,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldSecurityContext:
 		m.ClearSecurityContext()
+		return nil
+	case serviceconfig.FieldHealthCheck:
+		m.ClearHealthCheck()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig nullable field %s", name)
@@ -14757,6 +14827,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldSecurityContext:
 		m.ResetSecurityContext()
+		return nil
+	case serviceconfig.FieldHealthCheck:
+		m.ResetHealthCheck()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

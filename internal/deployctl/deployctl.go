@@ -335,6 +335,15 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SECURITY_CONTEXT"] = string(marshalled)
 	}
 
+	if service.Edges.ServiceConfig.HealthCheck != nil && service.Edges.ServiceConfig.HealthCheck.Type != schema.HealthCheckTypeNone {
+		// Marshal as string
+		marshalled, err := json.Marshal(service.Edges.ServiceConfig.HealthCheck.AsV1HealthCheck())
+		if err != nil {
+			return nil, err
+		}
+		env["SERVICE_HEALTH_CHECK"] = string(marshalled)
+	}
+
 	return env, nil
 }
 

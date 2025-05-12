@@ -1578,6 +1578,16 @@ func SecurityContextNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldSecurityContext))
 }
 
+// HealthCheckIsNil applies the IsNil predicate on the "health_check" field.
+func HealthCheckIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldHealthCheck))
+}
+
+// HealthCheckNotNil applies the NotNil predicate on the "health_check" field.
+func HealthCheckNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldHealthCheck))
+}
+
 // HasService applies the HasEdge predicate on the "service" edge.
 func HasService() predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {

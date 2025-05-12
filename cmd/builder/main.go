@@ -20,6 +20,7 @@ import (
 	"github.com/unbindapp/unbind-api/pkg/builder/builders"
 	"github.com/unbindapp/unbind-api/pkg/builder/config"
 	"github.com/unbindapp/unbind-api/pkg/builder/k8s"
+	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	_ "go.uber.org/automaxprocs"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -244,6 +245,16 @@ func main() {
 		}
 	}
 
+	var healthCheck *v1.HealthCheckSpec
+	if cfg.ServiceHealthCheck != "" {
+		if err := json.Unmarshal([]byte(cfg.ServiceHealthCheck), &healthCheck); err != nil {
+			if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal health check %v", err), cfg.ServiceDeploymentID); err != nil {
+				log.Errorf("Failed to mark deployment as failed: %v", err)
+			}
+			log.Fatalf("Failed to parse health check: %v", err)
+		}
+	}
+
 	if cfg.AdditionalEnv != "" {
 		if err := json.Unmarshal([]byte(cfg.AdditionalEnv), &additionalEnv); err != nil {
 			if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal additional env %v", err), cfg.ServiceDeploymentID); err != nil {
@@ -329,7 +340,7 @@ func main() {
 	}
 
 	// Deploy to kubernetes with context
-	_, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv, securityContext)
+	_, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv, securityContext, healthCheck)
 	if err != nil {
 		if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to deploy image %v", err), cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)

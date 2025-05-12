@@ -83,6 +83,8 @@ type ServiceConfig struct {
 	VolumeMountPath *string `json:"volume_mount_path,omitempty"`
 	// Security context for the service containers.
 	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
+	// Health check configuration for the service
+	HealthCheck *schema.HealthCheck `json:"health_check,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -129,7 +131,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case serviceconfig.FieldS3BackupEndpointID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldSecurityContext:
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldSecurityContext, serviceconfig.FieldHealthCheck:
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
@@ -358,6 +360,14 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field security_context: %w", err)
 				}
 			}
+		case serviceconfig.FieldHealthCheck:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field health_check", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.HealthCheck); err != nil {
+					return fmt.Errorf("unmarshal field health_check: %w", err)
+				}
+			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
 		}
@@ -518,6 +528,9 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("security_context=")
 	builder.WriteString(fmt.Sprintf("%v", sc.SecurityContext))
+	builder.WriteString(", ")
+	builder.WriteString("health_check=")
+	builder.WriteString(fmt.Sprintf("%v", sc.HealthCheck))
 	builder.WriteByte(')')
 	return builder.String()
 }

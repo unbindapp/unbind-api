@@ -52,12 +52,87 @@ func (s Protocol) Values() (kinds []string) {
 	return
 }
 
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u Protocol) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["Protocol"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "Protocol")
+		schemaRef.Title = "Protocol"
+		schemaRef.Enum = append(schemaRef.Enum, []any{
+			string(ProtocolTCP),
+			string(ProtocolUDP),
+			string(ProtocolSCTP),
+		}...)
+		r.Map()["Protocol"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/Protocol"}
+}
+
 func AsV1PortSpecs(ports []PortSpec) []v1.PortSpec {
 	v1Ports := make([]v1.PortSpec, len(ports))
 	for i, port := range ports {
 		v1Ports[i] = port.AsV1PortSpec()
 	}
 	return v1Ports
+}
+
+// * Health check compatible with unbind-operator
+type HealthCheckType string
+
+const (
+	HealthCheckTypeHTTP HealthCheckType = "http"
+	HealthCheckTypeExec HealthCheckType = "exec"
+	HealthCheckTypeNone HealthCheckType = "none"
+)
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u HealthCheckType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["HealthCheckType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "HealthCheckType")
+		schemaRef.Title = "HealthCheckType"
+		schemaRef.Enum = append(schemaRef.Enum, []any{
+			string(HealthCheckTypeHTTP),
+			string(HealthCheckTypeExec),
+			string(HealthCheckTypeNone),
+		}...)
+		r.Map()["HealthCheckType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/HealthCheckType"}
+}
+
+type HealthCheck struct {
+	Type                      HealthCheckType `json:"type" required:"true"`
+	Path                      string          `json:"path,omitempty" required:"false" doc:"Path for http health checks"`
+	Port                      *int32          `json:"port,omitempty" required:"false" doc:"Port for http health checks"`
+	Command                   string          `json:"command,omitempty" required:"false" doc:"Command for exec health checks"`
+	PeriodSeconds             int32           `json:"period_seconds" required:"true" default:"10" doc:"Period in seconds for health checks"`
+	TimeoutSeconds            int32           `json:"timeout_seconds" required:"true" default:"5" doc:"Timeout in seconds for health checks"`
+	StartupFailureThreshold   int32           `json:"startup_failure_threshold" required:"true" default:"5" doc:"Number of failures before the container is considered unhealthy"`
+	LivenessFailureThreshold  int32           `json:"liveness_failure_threshold" required:"true" default:"5" doc:"Number of failures before the container is considered unhealthy"`
+	ReadinessFailureThreshold int32           `json:"readiness_failure_threshold" required:"true" default:"3" doc:"Number of failures before the container is considered unhealthy"`
+}
+
+func (self *HealthCheck) AsV1HealthCheck() *v1.HealthCheckSpec {
+	if self == nil {
+		return nil
+	}
+	healthCheck := &v1.HealthCheckSpec{
+		Type:                      string(self.Type),
+		PeriodSeconds:             utils.ToPtr(self.PeriodSeconds),
+		TimeoutSeconds:            utils.ToPtr(self.TimeoutSeconds),
+		StartupFailureThreshold:   utils.ToPtr(self.StartupFailureThreshold),
+		LivenessFailureThreshold:  utils.ToPtr(self.LivenessFailureThreshold),
+		ReadinessFailureThreshold: utils.ToPtr(self.ReadinessFailureThreshold),
+		Port:                      self.Port,
+	}
+	if self.Path != "" {
+		healthCheck.Path = self.Path
+	}
+	if self.Command != "" {
+		healthCheck.Command = self.Command
+	}
+	return healthCheck
 }
 
 // * Kubernetes Security context
@@ -98,22 +173,6 @@ func (self *SecurityContext) AsV1SecurityContext() *corev1.SecurityContext {
 		}
 	}
 	return secCtx
-}
-
-// Register enum in OpenAPI specification
-// https://github.com/danielgtaylor/huma/issues/621
-func (u Protocol) Schema(r huma.Registry) *huma.Schema {
-	if r.Map()["Protocol"] == nil {
-		schemaRef := r.Schema(reflect.TypeOf(""), true, "Protocol")
-		schemaRef.Title = "Protocol"
-		schemaRef.Enum = append(schemaRef.Enum, []any{
-			string(ProtocolTCP),
-			string(ProtocolUDP),
-			string(ProtocolSCTP),
-		}...)
-		r.Map()["Protocol"] = schemaRef
-	}
-	return &huma.Schema{Ref: "#/components/schemas/Protocol"}
 }
 
 type DatabaseConfig struct {

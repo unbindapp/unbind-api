@@ -65,6 +65,9 @@ type CreateServiceInput struct {
 	// PVC
 	PVCID        *string `json:"pvc_id,omitempty" required:"false" doc:"ID of the PVC to use for the service"`
 	PVCMountPath *string `json:"pvc_mount_path,omitempty" required:"false" doc:"Mount path for the PVC"`
+
+	// Health check
+	HealthCheck *schema.HealthCheck `json:"health_check,omitempty" doc:"Health check configuration for the service"`
 }
 
 // CreateService creates a new service and its configuration
@@ -406,6 +409,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			BackupRetentionCount:    input.BackupRetentionCount,
 			PVCID:                   input.PVCID,
 			PVCVolumeMountPath:      input.PVCMountPath,
+			HealthCheck:             input.HealthCheck,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

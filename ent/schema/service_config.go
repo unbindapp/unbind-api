@@ -62,6 +62,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("volume_mount_path").Optional().Nillable().Comment("Volume mount path for the service"),
 		// Security context
 		field.JSON("security_context", &SecurityContext{}).Optional().Comment("Security context for the service containers."),
+		// Health check
+		field.JSON("health_check", &HealthCheck{}).Optional().Comment("Health check configuration for the service"),
 	}
 }
 

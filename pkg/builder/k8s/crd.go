@@ -63,6 +63,9 @@ type ServiceParams struct {
 
 	// Security
 	SecurityContext *corev1.SecurityContext
+
+	// Health check
+	HealthCheck *v1.HealthCheckSpec
 }
 
 // CreateServiceObject creates a new v1.Service object with the provided parameters
@@ -167,7 +170,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 
 // DeployImage creates (or replaces) the service resource in the target namespace
 // for deployment after a successful build job.
-func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, additionalEnv map[string]string, securityContext *corev1.SecurityContext) (*unstructured.Unstructured, *v1.Service, error) {
+func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, additionalEnv map[string]string, securityContext *corev1.SecurityContext, healthCheck *v1.HealthCheckSpec) (*unstructured.Unstructured, *v1.Service, error) {
 	// Generate a sanitized service name from the repo name
 	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
 
@@ -232,6 +235,8 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		VolumeMountPath: self.builderConfig.ServiceVolumeMountPath,
 		// Security context
 		SecurityContext: securityContext,
+		// Health check
+		HealthCheck: healthCheck,
 	}
 
 	if self.builderConfig.ServiceDatabaseBackupSecretName != "" &&

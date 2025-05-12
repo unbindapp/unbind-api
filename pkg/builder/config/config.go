@@ -69,6 +69,7 @@ type Config struct {
 	ServiceDatabaseBackupSecretName  string `env:"SERVICE_DATABASE_BACKUP_SECRET_NAME"`
 	ServiceDatabaseBackupSchedule    string `env:"SERVICE_DATABASE_BACKUP_SCHEDULE"`
 	ServiceDatabaseBackupRetention   int    `env:"SERVICE_DATABASE_BACKUP_RETENTION"`
+	ServiceHealthCheck               string `env:"SERVICE_HEALTH_CHECK"`
 	// Volume data
 	// ! TODO - support multiple volumes
 	ServiceVolumeName      string `env:"SERVICE_VOLUME_NAME"`

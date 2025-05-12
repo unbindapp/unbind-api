@@ -528,6 +528,18 @@ func (scu *ServiceConfigUpdate) ClearSecurityContext() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetHealthCheck sets the "health_check" field.
+func (scu *ServiceConfigUpdate) SetHealthCheck(sc *schema.HealthCheck) *ServiceConfigUpdate {
+	scu.mutation.SetHealthCheck(sc)
+	return scu
+}
+
+// ClearHealthCheck clears the value of the "health_check" field.
+func (scu *ServiceConfigUpdate) ClearHealthCheck() *ServiceConfigUpdate {
+	scu.mutation.ClearHealthCheck()
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -779,6 +791,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.SecurityContextCleared() {
 		_spec.ClearField(serviceconfig.FieldSecurityContext, field.TypeJSON)
+	}
+	if value, ok := scu.mutation.HealthCheck(); ok {
+		_spec.SetField(serviceconfig.FieldHealthCheck, field.TypeJSON, value)
+	}
+	if scu.mutation.HealthCheckCleared() {
+		_spec.ClearField(serviceconfig.FieldHealthCheck, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1352,6 +1370,18 @@ func (scuo *ServiceConfigUpdateOne) ClearSecurityContext() *ServiceConfigUpdateO
 	return scuo
 }
 
+// SetHealthCheck sets the "health_check" field.
+func (scuo *ServiceConfigUpdateOne) SetHealthCheck(sc *schema.HealthCheck) *ServiceConfigUpdateOne {
+	scuo.mutation.SetHealthCheck(sc)
+	return scuo
+}
+
+// ClearHealthCheck clears the value of the "health_check" field.
+func (scuo *ServiceConfigUpdateOne) ClearHealthCheck() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearHealthCheck()
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1633,6 +1663,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.SecurityContextCleared() {
 		_spec.ClearField(serviceconfig.FieldSecurityContext, field.TypeJSON)
+	}
+	if value, ok := scuo.mutation.HealthCheck(); ok {
+		_spec.SetField(serviceconfig.FieldHealthCheck, field.TypeJSON, value)
+	}
+	if scuo.mutation.HealthCheckCleared() {
+		_spec.ClearField(serviceconfig.FieldHealthCheck, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

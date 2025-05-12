@@ -54,6 +54,9 @@ type UpdateServiceInput struct {
 	// PVC
 	PVCID        *string `json:"pvc_id,omitempty" doc:"ID of the PVC to attach to the service"`
 	PVCMountPath *string `json:"pvc_mount_path,omitempty" required:"false" doc:"Mount path for the PVC"`
+
+	// Health check
+	HealthCheck *schema.HealthCheck `json:"health_check,omitempty" required:"false"`
 }
 
 // UpdateService updates a service and its configuration
@@ -269,6 +272,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			BackupRetentionCount: input.BackupRetentionCount,
 			PVCID:                input.PVCID,
 			PVCVolumeMountPath:   input.PVCMountPath,
+			HealthCheck:          input.HealthCheck,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)
