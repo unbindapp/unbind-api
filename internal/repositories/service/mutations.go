@@ -207,6 +207,10 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
 
+	if input.SecurityContext != nil {
+		upd.SetSecurityContext(input.SecurityContext)
+	}
+
 	if input.InstallCommand != nil {
 		if *input.InstallCommand == "" {
 			upd.ClearInstallCommand()
