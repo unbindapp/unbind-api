@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/unbindapp/unbind-api/internal/common/log"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // LoadBalancerAddresses contains the addresses for a load balancer service
@@ -102,4 +106,49 @@ func (self *KubeClient) GetIngressNginxIP(ctx context.Context) (*LoadBalancerAdd
 	}
 
 	return nil, fmt.Errorf("no ingress-nginx load balancer found")
+}
+
+// GetUnusedNodePort returns an unused NodePort, determined by letting kubernetes allocate one then deleting the temp service
+func (self *KubeClient) GetUnusedNodePort(ctx context.Context) (int32, error) {
+	// Create a temporary service to get an allocated NodePort
+	tempSvc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("temp-nodeport-%d", time.Now().UnixNano()),
+			Namespace: self.config.GetSystemNamespace(),
+		},
+		Spec: corev1.ServiceSpec{
+			Type: corev1.ServiceTypeNodePort,
+			Ports: []corev1.ServicePort{
+				{
+					Port:       80,
+					TargetPort: intstr.FromInt(80),
+				},
+			},
+		},
+	}
+
+	// Create the service
+	createdSvc, err := self.clientset.CoreV1().Services(self.config.GetSystemNamespace()).Create(ctx, tempSvc, metav1.CreateOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("failed to create temporary service: %w", err)
+	}
+
+	// Get the allocated NodePort
+	var nodePort int32
+	if len(createdSvc.Spec.Ports) > 0 {
+		nodePort = createdSvc.Spec.Ports[0].NodePort
+	}
+
+	// Delete the temporary service
+	err = self.clientset.CoreV1().Services(self.config.GetSystemNamespace()).Delete(ctx, createdSvc.Name, metav1.DeleteOptions{})
+	if err != nil {
+		// Log the error but don't fail the function since we already got the port
+		log.Warnf("failed to delete temporary service: %v", err)
+	}
+
+	if nodePort == 0 {
+		return 0, fmt.Errorf("no NodePort was allocated for temporary service")
+	}
+
+	return nodePort, nil
 }

@@ -19,6 +19,10 @@ import (
 
 // Custom types
 type PortSpec struct {
+	InputTemplateID *int `json:"input_template_id,omitempty" required:"false" doc:"For template port inputs"`
+	// Will create a node port (public) service
+	IsNodePort bool   `json:"is_nodeport" required:"false"`
+	NodePort   *int32 `json:"node_port,omitempty" required:"false"`
 	// Port is the container port to expose
 	Port     int32     `json:"port"`
 	Protocol *Protocol `json:"protocol,omitempty" required:"false"`
@@ -32,6 +36,7 @@ func (self *PortSpec) AsV1PortSpec() v1.PortSpec {
 		protocol = utils.ToPtr(corev1.ProtocolTCP)
 	}
 	return v1.PortSpec{
+		NodePort: self.NodePort,
 		Port:     self.Port,
 		Protocol: protocol,
 	}
@@ -83,6 +88,7 @@ type DatabaseConfig struct {
 	Version             string `json:"version,omitempty" required:"false" description:"Version of the database"`
 	StorageSize         string `json:"storage,omitempty" required:"false" description:"Storage size for the database"`
 	DefaultDatabaseName string `json:"defaultDatabaseName,omitempty" required:"false" description:"Default database name"`
+	InitDB              string `json:"initdb,omitempty" required:"false" description:"SQL commands to run to initialize the database"`
 }
 
 func (self *DatabaseConfig) AsMap() map[string]interface{} {
@@ -96,6 +102,9 @@ func (self *DatabaseConfig) AsMap() map[string]interface{} {
 	}
 	if self.DefaultDatabaseName != "" {
 		ret["defaultDatabaseName"] = self.DefaultDatabaseName
+	}
+	if self.InitDB != "" {
+		ret["initdb"] = self.InitDB
 	}
 	return ret
 }

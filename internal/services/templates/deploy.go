@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -88,6 +89,38 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		}
 
 		validatedInputs[defInput.ID] = value
+	}
+
+	// Generate node ports for node port inputs
+	portMap := make(map[int]int32)
+	portInputCount := 0
+	for _, defInput := range template.Definition.Inputs {
+		if defInput.Type == schema.InputTypeNodePort {
+			portInputCount++
+			// Ignore if input already exists
+			for _, input := range input.Inputs {
+				if input.ID == defInput.ID {
+					// Parse as int32
+					port, err := strconv.Atoi(input.Value)
+					if err != nil {
+						return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("invalid node port %s for input %d", input.Value, input.ID))
+					}
+					portMap[defInput.ID] = int32(port)
+					break
+				}
+			}
+
+			// Generate a port
+			nodePort, err := self.k8s.GetUnusedNodePort(ctx)
+			if err != nil {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("failed to generate node port: %v", err))
+			}
+			portMap[defInput.ID] = nodePort
+		}
+	}
+
+	if len(portMap) != portInputCount {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "not all node ports were provided")
 	}
 
 	// Parse and generate variables
@@ -257,6 +290,20 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				pvcMountPath = utils.ToPtr(volume.MountPath)
 			}
 
+			var ports []schema.PortSpec
+			for _, port := range templateService.Ports {
+				// Check if we have an input value
+				if port.InputTemplateID != nil {
+					// Get the value from the input map
+					portValue := portMap[*port.InputTemplateID]
+					if port.IsNodePort {
+						port.NodePort = utils.ToPtr(portValue)
+					}
+					port.Port = portValue
+				}
+				ports = append(ports, port)
+			}
+
 			var hosts []v1.HostSpec
 			for _, hostInputID := range templateService.HostInputIDs {
 				hostSpec, exists := hostInputMap[hostInputID]
@@ -270,7 +317,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			createInput := &service_repo.MutateConfigInput{
 				ServiceID:               createService.ID,
 				Builder:                 utils.ToPtr(templateService.Builder),
-				Ports:                   templateService.Ports,
+				Ports:                   ports,
 				Hosts:                   hosts,
 				Replicas:                utils.ToPtr[int32](1),
 				Public:                  &templateService.IsPublic,

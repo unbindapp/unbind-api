@@ -115,7 +115,7 @@ type GeneratorType string
 
 const (
 	GeneratorTypePassword GeneratorType = "password"
-	GeneratorTypeInput    GeneratorType = "input" // For user input
+	GeneratorTypeInput    GeneratorType = "input"
 )
 
 // Register enum in OpenAPI specification
@@ -203,6 +203,7 @@ const (
 	InputTypeVariable   TemplateInputType = "variable"
 	InputTypeHost       TemplateInputType = "host"
 	InputTypeVolumeSize TemplateInputType = "volume_size"
+	InputTypeNodePort   TemplateInputType = "node_port"
 )
 
 // Register enum in OpenAPI specification
@@ -216,6 +217,7 @@ func (u TemplateInputType) Schema(r huma.Registry) *huma.Schema {
 				string(InputTypeVariable),
 				string(InputTypeHost),
 				string(InputTypeVolumeSize),
+				string(InputTypeNodePort),
 			}...)
 		r.Map()["TemplateInputType"] = schemaRef
 	}

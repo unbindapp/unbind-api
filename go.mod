@@ -234,7 +234,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/unbindapp/unbind-operator v0.0.0-20250508183557-f94119c9b8fa
+	github.com/unbindapp/unbind-operator v0.0.0-20250511194259-2d91431724b6
 	github.com/vburenin/ifacemaker v1.2.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zalando/postgres-operator v1.14.0
