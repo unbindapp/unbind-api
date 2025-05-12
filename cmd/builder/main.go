@@ -255,6 +255,16 @@ func main() {
 		}
 	}
 
+	var variableMounts []v1.VariableMountSpec
+	if cfg.ServiceVariableMounts != "" {
+		if err := json.Unmarshal([]byte(cfg.ServiceVariableMounts), &variableMounts); err != nil {
+			if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal variable mounts %v", err), cfg.ServiceDeploymentID); err != nil {
+				log.Errorf("Failed to mark deployment as failed: %v", err)
+			}
+			log.Fatalf("Failed to parse variable mounts: %v", err)
+		}
+	}
+
 	if cfg.AdditionalEnv != "" {
 		if err := json.Unmarshal([]byte(cfg.AdditionalEnv), &additionalEnv); err != nil {
 			if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to unmarshal additional env %v", err), cfg.ServiceDeploymentID); err != nil {
@@ -340,7 +350,7 @@ func main() {
 	}
 
 	// Deploy to kubernetes with context
-	_, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv, securityContext, healthCheck)
+	_, serviceSpec, err := k8s.DeployImage(ctx, crdName, dockerImg, additionalEnv, securityContext, healthCheck, variableMounts)
 	if err != nil {
 		if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("failed to deploy image %v", err), cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)

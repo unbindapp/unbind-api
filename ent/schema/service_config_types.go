@@ -82,6 +82,17 @@ type VariableMount struct {
 	Path string `json:"path" required:"true" doc:"Path to mount the variable (e.g. /etc/secret)"`
 }
 
+func AsV1VariableMounts(mounts []*VariableMount) []v1.VariableMountSpec {
+	v1Mounts := make([]v1.VariableMountSpec, len(mounts))
+	for i, mount := range mounts {
+		v1Mounts[i] = v1.VariableMountSpec{
+			Name: mount.Name,
+			Path: mount.Path,
+		}
+	}
+	return v1Mounts
+}
+
 // * Health check compatible with unbind-operator
 type HealthCheckType string
 

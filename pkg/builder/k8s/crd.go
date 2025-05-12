@@ -66,6 +66,9 @@ type ServiceParams struct {
 
 	// Health check
 	HealthCheck *v1.HealthCheckSpec
+
+	// Variable mounts
+	VariableMounts []v1.VariableMountSpec
 }
 
 // CreateServiceObject creates a new v1.Service object with the provided parameters
@@ -117,9 +120,10 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 
 	// Build service configuration
 	service.Spec.Config = v1.ServiceConfigSpec{
-		GitBranch:   params.GitRef,
-		Image:       params.Image,
-		HealthCheck: params.HealthCheck,
+		GitBranch:      params.GitRef,
+		Image:          params.Image,
+		HealthCheck:    params.HealthCheck,
+		VariableMounts: params.VariableMounts,
 	}
 
 	if params.RunCommand != "" {
@@ -171,7 +175,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 
 // DeployImage creates (or replaces) the service resource in the target namespace
 // for deployment after a successful build job.
-func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, additionalEnv map[string]string, securityContext *corev1.SecurityContext, healthCheck *v1.HealthCheckSpec) (*unstructured.Unstructured, *v1.Service, error) {
+func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, additionalEnv map[string]string, securityContext *corev1.SecurityContext, healthCheck *v1.HealthCheckSpec, variableMounts []v1.VariableMountSpec) (*unstructured.Unstructured, *v1.Service, error) {
 	// Generate a sanitized service name from the repo name
 	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
 
@@ -238,6 +242,8 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		SecurityContext: securityContext,
 		// Health check
 		HealthCheck: healthCheck,
+		// Variable mounts
+		VariableMounts: variableMounts,
 	}
 
 	if self.builderConfig.ServiceDatabaseBackupSecretName != "" &&

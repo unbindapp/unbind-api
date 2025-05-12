@@ -353,6 +353,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				RunCommand:              templateService.RunCommand,
 				SecurityContext:         templateService.SecurityContext,
 				HealthCheck:             templateService.HealthCheck,
+				VariableMounts:          templateService.VariablesMounts,
 			}
 			if templateService.Icon != "" {
 				createInput.Icon = utils.ToPtr(templateService.Icon)

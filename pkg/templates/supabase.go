@@ -5,8 +5,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-// SupabaseTemplate returns a template definition for Supabase
-func SupabaseTemplate() *schema.TemplateDefinition {
+// supabaseTemplate returns a template definition for Supabase
+func supabaseTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "supabase",
 		Description: "The open source Firebase alternative",
@@ -46,6 +46,7 @@ func SupabaseTemplate() *schema.TemplateDefinition {
 				DatabaseType: utils.ToPtr("postgres"),
 				DatabaseConfig: &schema.DatabaseConfig{
 					DefaultDatabaseName: "postgres",
+					Version:             "15",
 					InitDB: `
 -- Create _supabase database
 CREATE DATABASE _supabase WITH OWNER postgres;
@@ -475,7 +476,7 @@ services:
 				Name:         "studio",
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("supabase/studio:20241202-71e5240"),
+				Image:        utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
 				DependsOn:    []int{1, 2},
 				HostInputIDs: []int{1},
 				Ports: []schema.PortSpec{
@@ -548,7 +549,7 @@ services:
 				Name:      "analytics",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/logflare:1.4.0"),
+				Image:     utils.ToPtr("supabase/logflare:1.12.0"),
 				DependsOn: []int{1},
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
@@ -725,7 +726,7 @@ sinks:
 				Name:      "storage",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/storage-api:v1.14.6"),
+				Image:     utils.ToPtr("supabase/storage-api:v1.22.7"),
 				DependsOn: []int{1, 7},
 				Ports: []schema.PortSpec{
 					{
@@ -846,7 +847,7 @@ sinks:
 				Name:      "rest",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("postgrest/postgrest:v12.2.0"),
+				Image:     utils.ToPtr("postgrest/postgrest:v12.2.11"),
 				DependsOn: []int{1},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -893,7 +894,7 @@ sinks:
 				Name:      "auth",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/gotrue:v2.164.0"),
+				Image:     utils.ToPtr("supabase/gotrue:v2.171.0"),
 				DependsOn: []int{1},
 				Ports: []schema.PortSpec{
 					{
@@ -966,7 +967,7 @@ sinks:
 				Name:      "meta",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/postgres-meta:v0.84.2"),
+				Image:     utils.ToPtr("supabase/postgres-meta:v0.88.9"),
 				DependsOn: []int{1},
 				Ports: []schema.PortSpec{
 					{
@@ -1011,7 +1012,7 @@ sinks:
 				Name:      "functions",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/edge-runtime:v1.65.3"),
+				Image:     utils.ToPtr("supabase/edge-runtime:v1.67.4"),
 				DependsOn: []int{1, 2},
 				Ports: []schema.PortSpec{
 					{

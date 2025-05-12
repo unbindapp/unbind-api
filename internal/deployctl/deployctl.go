@@ -344,6 +344,16 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_HEALTH_CHECK"] = string(marshalled)
 	}
 
+	if len(service.Edges.ServiceConfig.VariableMounts) > 0 {
+		// Marshal as string
+		asV1Mounts := schema.AsV1VariableMounts(service.Edges.ServiceConfig.VariableMounts)
+		marshalled, err := json.Marshal(asV1Mounts)
+		if err != nil {
+			return nil, err
+		}
+		env["SERVICE_VARIABLE_MOUNTS"] = string(marshalled)
+	}
+
 	return env, nil
 }
 

@@ -74,6 +74,7 @@ type Config struct {
 	// ! TODO - support multiple volumes
 	ServiceVolumeName      string `env:"SERVICE_VOLUME_NAME"`
 	ServiceVolumeMountPath string `env:"SERVICE_VOLUME_MOUNT_PATH"`
+	ServiceVariableMounts  string `env:"SERVICE_VARIABLE_MOUNTS"` // Json serialized map[string]string
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

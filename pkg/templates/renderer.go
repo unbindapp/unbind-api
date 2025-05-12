@@ -80,6 +80,7 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 			VariableReferences: svc.VariableReferences,
 			SecurityContext:    svc.SecurityContext,
 			HealthCheck:        svc.HealthCheck,
+			VariablesMounts:    svc.VariablesMounts,
 		}
 
 		// Initialize all slices if nil
