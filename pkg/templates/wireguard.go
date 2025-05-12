@@ -106,7 +106,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 			// UDP2RAW Service - TCP tunnel for WireGuard
 			{
 				ID:           2,
-				Name:         "udp2raw-tcp-tunnel",
+				Name:         "WireGuard TCP Tunnel",
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				HostInputIDs: []int{1},
