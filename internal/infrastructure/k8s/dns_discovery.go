@@ -101,10 +101,9 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 			for _, port := range svc.Spec.Ports {
 				if port.NodePort > 0 {
 					for _, nodeIP := range nodeIPs {
-						host := fmt.Sprintf("%s:%d", nodeIP, port.NodePort)
 						endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
 							HostSpec: v1.HostSpec{
-								Host: host,
+								Host: nodeIP,
 								Path: "/",
 								Port: utils.ToPtr(port.NodePort),
 							},
