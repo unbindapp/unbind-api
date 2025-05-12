@@ -69,8 +69,43 @@ func AsV1PortSpecs(ports []PortSpec) []v1.PortSpec {
 }
 
 // * Security context
+type Capability string
+
+// Adds and removes POSIX capabilities from running containers.
+type Capabilities struct {
+	Add  []Capability `json:"add,omitempty" protobuf:"bytes,1,rep,name=add,casttype=Capability"`
+	Drop []Capability `json:"drop,omitempty" protobuf:"bytes,2,rep,name=drop,casttype=Capability"`
+}
+
 type SecurityContext struct {
-	*corev1.SecurityContext
+	Capabilities *Capabilities `json:"capabilities,omitempty" protobuf:"bytes,1,opt,name=capabilities"`
+	Privileged   *bool         `json:"privileged,omitempty" protobuf:"varint,2,opt,name=privileged"`
+}
+
+func (self *SecurityContext) AsV1SecurityContext() *corev1.SecurityContext {
+	if self == nil {
+		return nil
+	}
+	secCtx := &corev1.SecurityContext{}
+	if self.Privileged != nil {
+		secCtx.Privileged = self.Privileged
+	}
+	if self.Capabilities != nil {
+		secCtx.Capabilities = &corev1.Capabilities{}
+		if self.Capabilities.Add != nil {
+			secCtx.Capabilities.Add = make([]corev1.Capability, len(self.Capabilities.Add))
+			for i, cap := range self.Capabilities.Add {
+				secCtx.Capabilities.Add[i] = corev1.Capability(cap)
+			}
+		}
+		if self.Capabilities.Drop != nil {
+			secCtx.Capabilities.Drop = make([]corev1.Capability, len(self.Capabilities.Drop))
+			for i, cap := range self.Capabilities.Drop {
+				secCtx.Capabilities.Drop[i] = corev1.Capability(cap)
+			}
+		}
+	}
+	return secCtx
 }
 
 // Register enum in OpenAPI specification

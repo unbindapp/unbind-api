@@ -321,9 +321,9 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_RUN_COMMAND"] = *service.Edges.ServiceConfig.RunCommand
 	}
 
-	if service.Edges.ServiceConfig.SecurityContext != nil && service.Edges.ServiceConfig.SecurityContext.SecurityContext != nil {
+	if service.Edges.ServiceConfig.SecurityContext != nil {
 		// Marshal as string
-		marshalled, err := json.Marshal(service.Edges.ServiceConfig.SecurityContext.SecurityContext)
+		marshalled, err := json.Marshal(service.Edges.ServiceConfig.SecurityContext.AsV1SecurityContext())
 		if err != nil {
 			return nil, err
 		}
