@@ -115,12 +115,11 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 			},
 			// UDP2RAW Service - TCP tunnel for WireGuard
 			{
-				ID:           2,
-				Name:         "WireGuard TCP Tunnel",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				HostInputIDs: []int{2},
-				Image:        utils.ToPtr("ghcr.io/unbindapp/udp2raw:latest"),
+				ID:      2,
+				Name:    "WireGuard TCP Tunnel",
+				Type:    schema.ServiceTypeDockerimage,
+				Builder: schema.ServiceBuilderDocker,
+				Image:   utils.ToPtr("ghcr.io/unbindapp/udp2raw:latest"),
 				Ports: []schema.PortSpec{
 					{
 						IsNodePort:      true,
