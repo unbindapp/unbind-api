@@ -63,7 +63,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 	// * Validate all non-host inputs
 	for _, defInput := range template.Definition.Inputs {
-		if defInput.Type == schema.InputTypeHost {
+		if defInput.Type == schema.InputTypeHost || defInput.Type == schema.InputTypeNodePort {
 			continue
 		}
 
