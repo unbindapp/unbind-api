@@ -117,8 +117,9 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 
 	// Build service configuration
 	service.Spec.Config = v1.ServiceConfigSpec{
-		GitBranch: params.GitRef,
-		Image:     params.Image,
+		GitBranch:   params.GitRef,
+		Image:       params.Image,
+		HealthCheck: params.HealthCheck,
 	}
 
 	if params.RunCommand != "" {
