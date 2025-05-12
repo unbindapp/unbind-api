@@ -38,6 +38,7 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 			IsPublic:        svc.IsPublic,
 			RunCommand:      svc.RunCommand,
 			SecurityContext: svc.SecurityContext,
+			HealthCheck:     svc.HealthCheck,
 		}
 
 		// Initialize all slices if nil

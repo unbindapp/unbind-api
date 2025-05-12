@@ -43,6 +43,7 @@ func ghostTemplate() *schema.TemplateDefinition {
 					},
 				},
 				IsPublic: true,
+				// ! Ghost doesn't have a good health check endpoint?
 				Variables: []schema.TemplateVariable{
 					{
 						Name: "url",

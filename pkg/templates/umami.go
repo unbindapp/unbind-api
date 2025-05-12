@@ -43,6 +43,16 @@ func umamiTemplate() *schema.TemplateDefinition {
 					},
 				},
 				IsPublic: true,
+				HealthCheck: &schema.HealthCheck{
+					Type:                      schema.HealthCheckTypeHTTP,
+					Path:                      "/api/heartbeat",
+					Port:                      utils.ToPtr(int32(3000)),
+					PeriodSeconds:             5,
+					TimeoutSeconds:            20,
+					StartupFailureThreshold:   10,
+					LivenessFailureThreshold:  10,
+					ReadinessFailureThreshold: 3,
+				},
 				Variables: []schema.TemplateVariable{
 					{
 						Name: "HASH_SALT",

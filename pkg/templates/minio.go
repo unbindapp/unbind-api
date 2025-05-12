@@ -57,6 +57,15 @@ func minioTemplate() *schema.TemplateDefinition {
 				},
 				IsPublic:   true,
 				RunCommand: utils.ToPtr("minio server /data --console-address ':9001'"),
+				HealthCheck: &schema.HealthCheck{
+					Type:                      schema.HealthCheckTypeExec,
+					Command:                   "mc ready local",
+					PeriodSeconds:             5,
+					TimeoutSeconds:            20,
+					StartupFailureThreshold:   10,
+					LivenessFailureThreshold:  10,
+					ReadinessFailureThreshold: 3,
+				},
 				Variables: []schema.TemplateVariable{
 					{
 						Name:  "MINIO_ROOT_USER",

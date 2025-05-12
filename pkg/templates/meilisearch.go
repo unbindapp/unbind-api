@@ -44,6 +44,16 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 					},
 				},
 				IsPublic: true,
+				HealthCheck: &schema.HealthCheck{
+					Type:                      schema.HealthCheckTypeHTTP,
+					Path:                      "/health",
+					Port:                      utils.ToPtr(int32(7700)),
+					PeriodSeconds:             2,
+					TimeoutSeconds:            10,
+					StartupFailureThreshold:   15,
+					LivenessFailureThreshold:  15,
+					ReadinessFailureThreshold: 3,
+				},
 				Variables: []schema.TemplateVariable{
 					{
 						Name: "MEILI_MASTER_KEY",

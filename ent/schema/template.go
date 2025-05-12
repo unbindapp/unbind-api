@@ -94,6 +94,7 @@ type TemplateService struct {
 	Variables          []TemplateVariable          `json:"variables" nullable:"false"`           // Variables this service needs
 	VariableReferences []TemplateVariableReference `json:"variable_references" nullable:"false"` // Variables this service needs
 	SecurityContext    *SecurityContext            `json:"security_context,omitempty"`           // Security context for the service
+	HealthCheck        *HealthCheck                `json:"health_check,omitempty"`               // Health check configuration
 }
 
 // TemplateVariable represents a configurable variable in a template

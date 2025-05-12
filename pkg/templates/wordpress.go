@@ -43,6 +43,16 @@ func wordPressTemplate() *schema.TemplateDefinition {
 					},
 				},
 				IsPublic: true,
+				HealthCheck: &schema.HealthCheck{
+					Type:                      schema.HealthCheckTypeHTTP,
+					Path:                      "/",
+					Port:                      utils.ToPtr(int32(80)),
+					PeriodSeconds:             2,
+					TimeoutSeconds:            10,
+					StartupFailureThreshold:   10,
+					LivenessFailureThreshold:  10,
+					ReadinessFailureThreshold: 3,
+				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
 						SourceID:   1,
