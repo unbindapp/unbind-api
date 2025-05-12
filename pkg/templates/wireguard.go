@@ -22,11 +22,10 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:          2,
-				Name:        "Wireguard TCP Host",
-				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the WireGuard TCP tunnel.",
+				Name:        "Wireguard TCP NodePort",
+				Type:        schema.InputTypeNodePort,
+				Description: "NodePort to use for the WireGuard TCP tunnel.",
 				Required:    true,
-				TargetPort:  utils.ToPtr(51821), // Target TCP port
 			},
 			{
 				ID:          3,
@@ -124,8 +123,9 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				Image:        utils.ToPtr("ghcr.io/unbindapp/udp2raw:latest"),
 				Ports: []schema.PortSpec{
 					{
-						Port:     51821,
-						Protocol: utils.ToPtr(schema.ProtocolTCP),
+						IsNodePort:      true,
+						InputTemplateID: utils.ToPtr(2),
+						Protocol:        utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
 				IsPublic: true, // Expose TCP port publicly
@@ -139,8 +139,11 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 						Value: "0.0.0.0",
 					},
 					{
-						Name:  "UDP2RAW_LOCAL_PORT",
-						Value: "51821",
+						Name: "UDP2RAW_LOCAL_PORT",
+						Generator: &schema.ValueGenerator{
+							Type:    schema.GeneratorTypeInput,
+							InputID: 2,
+						},
 					},
 					{
 						Name:  "UDP2RAW_REMOTE_PORT",
