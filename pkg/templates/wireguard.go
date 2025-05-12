@@ -14,7 +14,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "Host",
+				Name:        "Wireguard Host",
 				Type:        schema.InputTypeHost,
 				Description: "Hostname to use for the WireGuard instance.",
 				Required:    true,
@@ -22,6 +22,14 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:          2,
+				Name:        "Wireguard TCP Host",
+				Type:        schema.InputTypeHost,
+				Description: "Hostname to use for the WireGuard TCP tunnel.",
+				Required:    true,
+				TargetPort:  utils.ToPtr(51821), // Target TCP port
+			},
+			{
+				ID:          3,
 				Name:        "Storage Size",
 				Type:        schema.InputTypeVolumeSize,
 				Description: "Size of the persistent storage for Wireguard config data.",
@@ -92,7 +100,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 					{
 						Name: "wireguard-config",
 						Size: schema.TemplateVolumeSize{
-							FromInputID: 2,
+							FromInputID: 3,
 						},
 						MountPath: "/etc/wireguard",
 					},
@@ -113,7 +121,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				Name:         "WireGuard TCP Tunnel",
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
-				HostInputIDs: []int{1},
+				HostInputIDs: []int{2},
 				Image:        utils.ToPtr("ghcr.io/unbindapp/udp2raw:latest"),
 				Ports: []schema.PortSpec{
 					{
