@@ -56,7 +56,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: false, // Not directly exposed, use TCP proxy instead
+				IsPublic: true, // Not directly exposed, use TCP proxy instead
 				Variables: []schema.TemplateVariable{
 					{
 						Name: "WG_HOST",

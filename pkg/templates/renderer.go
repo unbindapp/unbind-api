@@ -104,6 +104,11 @@ func (self *Templater) ResolveGeneratedVariables(template *schema.TemplateDefini
 			}
 		}
 
+		// Append additional variables
+		if len(additionalVars) > 0 {
+			resolvedService.Variables = append(resolvedService.Variables, additionalVars...)
+		}
+
 		resolved.Services[i] = resolvedService
 	}
 
