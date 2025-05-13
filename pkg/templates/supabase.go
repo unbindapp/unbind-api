@@ -562,6 +562,12 @@ services:
 					LivenessFailureThreshold:  3,
 					ReadinessFailureThreshold: 3,
 				},
+				Ports: []schema.PortSpec{
+					{
+						Port:     4000,
+						Protocol: utils.ToPtr(schema.ProtocolTCP),
+					},
+				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
 						SourceID:   1,

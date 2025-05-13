@@ -402,12 +402,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 						}
 					}
 
-					// Standard variable references
-					value := fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, key)
-					if variableReference.TemplateString != "" {
-						// Replace the key with the right one
-						value = strings.ReplaceAll(variableReference.TemplateString, fmt.Sprintf("${%s}", key), fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, key))
-					}
+					// Host Refs
 					referenceInput = append(referenceInput, &models.VariableReferenceInputItem{
 						Name: variableReference.TargetName,
 						Sources: []schema.VariableReferenceSource{
@@ -421,13 +416,18 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 								Key:                  key,
 							},
 						},
-						Value: value,
+						Value: fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, key),
 					})
 
 					continue
 				}
 
 				// Standard variable references
+				value := fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName)
+				if variableReference.TemplateString != "" {
+					// Replace the key with the right one
+					value = strings.ReplaceAll(variableReference.TemplateString, fmt.Sprintf("${%s}", variableReference.SourceName), fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName))
+				}
 				referenceInput = append(referenceInput, &models.VariableReferenceInputItem{
 					Name: variableReference.TargetName,
 					Sources: []schema.VariableReferenceSource{
@@ -441,7 +441,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 							Key:                  variableReference.SourceName,
 						},
 					},
-					Value: fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName),
+					Value: value,
 				})
 			}
 
