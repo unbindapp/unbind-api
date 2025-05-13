@@ -34,9 +34,9 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "create-s3-endpoint",
-			Summary:     "Create S3 Endpoint",
-			Description: "Create an S3 endpoint to be used for backups, etc.",
+			OperationID: "create-s3-source",
+			Summary:     "Create S3 Source",
+			Description: "Create an S3 source to be used for backups, etc.",
 			Path:        "/s3/create",
 			Method:      http.MethodPost,
 		},
@@ -45,46 +45,46 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "update-s3-endpoint",
-			Summary:     "Update S3 Endpoint",
-			Description: "Update an S3 endpoint.",
+			OperationID: "update-s3-source",
+			Summary:     "Update S3 Source",
+			Description: "Update an S3 source.",
 			Path:        "/s3/update",
 			Method:      http.MethodPost,
 		},
-		handlers.UpdateS3Endpoint,
+		handlers.UpdateS3Source,
 	)
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "get-s3-endpoint-by-id",
-			Summary:     "Get S3 Endpoint by ID",
-			Description: "Get S3 endpoint by ID.",
+			OperationID: "get-s3-source-by-id",
+			Summary:     "Get S3 Source by ID",
+			Description: "Get S3 source ID.",
 			Path:        "/s3/get",
 			Method:      http.MethodGet,
 		},
-		handlers.GetS3EndpointByID,
+		handlers.GetS3SourceByID,
 	)
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "list-s3-endpoints",
-			Summary:     "List S3 Endpoints",
-			Description: "List all S3 endpoints for a team.",
+			OperationID: "list-s3-sources",
+			Summary:     "List S3 Sources",
+			Description: "List all S3 sources for a team.",
 			Path:        "/s3/list",
 			Method:      http.MethodGet,
 		},
-		handlers.ListS3Endpoint,
+		handlers.ListS3Source,
 	)
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "delete-s3-endpoint",
-			Summary:     "Delete S3 Endpoint",
-			Description: "Delete an S3 endpoint.",
+			OperationID: "delete-s3-source",
+			Summary:     "Delete S3 Source",
+			Description: "Delete an S3 source.",
 			Path:        "/s3/delete",
 			Method:      http.MethodDelete,
 		},
-		handlers.DeleteS3Endpoint,
+		handlers.DeleteS3Source,
 	)
 	huma.Register(
 		grp,

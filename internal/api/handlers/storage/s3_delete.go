@@ -10,7 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
-type DeleteS3EndpointByIDInput struct {
+type DeleteS3SourceByIDInput struct {
 	server.BaseAuthInput
 	Body struct {
 		ID     uuid.UUID `json:"id" format:"uuid" required:"true"`
@@ -18,13 +18,13 @@ type DeleteS3EndpointByIDInput struct {
 	}
 }
 
-type DeleteS3EndpointByIDOutput struct {
+type DeleteS3SourceByIDOutput struct {
 	Body struct {
 		Data server.DeletedResponse `json:"data"`
 	}
 }
 
-func (self *HandlerGroup) DeleteS3Endpoint(ctx context.Context, input *DeleteS3EndpointByIDInput) (*DeleteS3EndpointByIDOutput, error) {
+func (self *HandlerGroup) DeleteS3Source(ctx context.Context, input *DeleteS3SourceByIDInput) (*DeleteS3SourceByIDOutput, error) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
 	if !found {
@@ -44,7 +44,7 @@ func (self *HandlerGroup) DeleteS3Endpoint(ctx context.Context, input *DeleteS3E
 		return nil, self.handleErr(err)
 	}
 
-	resp := &DeleteS3EndpointByIDOutput{}
+	resp := &DeleteS3SourceByIDOutput{}
 	resp.Body.Data = server.DeletedResponse{
 		ID:      input.Body.ID.String(),
 		Deleted: true,
