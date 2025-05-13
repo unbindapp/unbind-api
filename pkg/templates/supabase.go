@@ -1976,11 +1976,10 @@ sinks:
 						TargetName: "GOTRUE_JWT_SECRET",
 					},
 					{
-						SourceID:                  1,
-						SourceName:                "DATABASE_HOST",
-						TargetName:                "GOTRUE_DB_DATABASE_URL",
-						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://supabase_auth_admin:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						SourceID:       1,
+						SourceName:     "DATABASE_HOST",
+						TargetName:     "GOTRUE_DB_DATABASE_URL",
+						TemplateString: "postgresql://supabase_auth_admin:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{

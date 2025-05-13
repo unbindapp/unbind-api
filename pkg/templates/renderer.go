@@ -41,7 +41,8 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 				}
 			}
 		}
-		for _, ref := range resolved.Services[i].VariableReferences {
+		for j := range resolved.Services[i].VariableReferences {
+			ref := &resolved.Services[i].VariableReferences[j]
 			if ref.TemplateString != "" {
 				for k, v := range stringReplaceMap {
 					ref.TemplateString = strings.ReplaceAll(ref.TemplateString, fmt.Sprintf("${%s}", k), v)
