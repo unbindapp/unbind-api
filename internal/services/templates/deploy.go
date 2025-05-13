@@ -424,13 +424,23 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 				// Standard variable references
 				value := fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName)
-				var additionalSources []schema.VariableReferenceSource
+				sources := []schema.VariableReferenceSource{
+					{
+						Type:                 schema.VariableReferenceTypeVariable,
+						SourceName:           sourceService.Name,
+						SourceIcon:           sourceService.Edges.ServiceConfig.Icon,
+						SourceID:             sourceService.ID,
+						SourceType:           schema.VariableReferenceSourceTypeService,
+						SourceKubernetesName: sourceService.KubernetesName,
+						Key:                  variableReference.SourceName,
+					},
+				}
 				if variableReference.TemplateString != "" {
 					// Replace the key with the right one
 					value = strings.ReplaceAll(variableReference.TemplateString, fmt.Sprintf("${%s}", variableReference.SourceName), fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName))
 					if len(variableReference.AdditionalTemplateSources) > 0 {
 						for _, additionalSource := range variableReference.AdditionalTemplateSources {
-							additionalSources = append(additionalSources, schema.VariableReferenceSource{
+							sources = append(sources, schema.VariableReferenceSource{
 								Type:                 schema.VariableReferenceTypeVariable,
 								SourceName:           sourceService.Name,
 								SourceIcon:           sourceService.Edges.ServiceConfig.Icon,
@@ -445,19 +455,9 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					}
 				}
 				referenceInput = append(referenceInput, &models.VariableReferenceInputItem{
-					Name: variableReference.TargetName,
-					Sources: []schema.VariableReferenceSource{
-						{
-							Type:                 schema.VariableReferenceTypeVariable,
-							SourceName:           sourceService.Name,
-							SourceIcon:           sourceService.Edges.ServiceConfig.Icon,
-							SourceID:             sourceService.ID,
-							SourceType:           schema.VariableReferenceSourceTypeService,
-							SourceKubernetesName: sourceService.KubernetesName,
-							Key:                  variableReference.SourceName,
-						},
-					},
-					Value: value,
+					Name:    variableReference.TargetName,
+					Sources: sources,
+					Value:   value,
 				})
 			}
 
