@@ -64,6 +64,10 @@ alter schema _supavisor owner to postgres;
 create schema if not exists _analytics;
 alter schema _analytics owner to postgres;
 
+-- Create auth schema
+create schema if not exists auth;
+alter schema auth owner to postgres;
+
 -- Create pg_net extension and supabase_functions schema
 \c postgres
 CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
