@@ -424,9 +424,25 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 				// Standard variable references
 				value := fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName)
+				var additionalSources []schema.VariableReferenceSource
 				if variableReference.TemplateString != "" {
 					// Replace the key with the right one
 					value = strings.ReplaceAll(variableReference.TemplateString, fmt.Sprintf("${%s}", variableReference.SourceName), fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, variableReference.SourceName))
+					if len(variableReference.AdditionalTemplateSources) > 0 {
+						for _, additionalSource := range variableReference.AdditionalTemplateSources {
+							additionalSources = append(additionalSources, schema.VariableReferenceSource{
+								Type:                 schema.VariableReferenceTypeVariable,
+								SourceName:           sourceService.Name,
+								SourceIcon:           sourceService.Edges.ServiceConfig.Icon,
+								SourceID:             sourceService.ID,
+								SourceType:           schema.VariableReferenceSourceTypeService,
+								SourceKubernetesName: sourceService.KubernetesName,
+								Key:                  additionalSource,
+							})
+
+							value = strings.ReplaceAll(value, fmt.Sprintf("${%s}", additionalSource), fmt.Sprintf("${%s.%s}", sourceService.KubernetesName, additionalSource))
+						}
+					}
 				}
 				referenceInput = append(referenceInput, &models.VariableReferenceInputItem{
 					Name: variableReference.TargetName,
