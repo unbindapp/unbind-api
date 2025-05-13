@@ -1351,13 +1351,33 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				VariablesMounts: []*schema.VariableMount{
 					{
 						Name: "kong.yml",
-						Path: "/kong.yml",
+						Path: "/home/kong/kong.yml",
 					},
 				},
 				Variables: []schema.TemplateVariable{
 					{
+						Name:  "KONG_DATABASE",
+						Value: "off",
+					},
+					{
+						Name:  "KONG_DNS_ORDER",
+						Value: "LAST,A,CNAME",
+					},
+					{
+						Name:  "KONG_PLUGINS",
+						Value: "request-transformer,cors,key-auth,acl,basic-auth",
+					},
+					{
+						Name:  "KONG_NGINX_PROXY_PROXY_BUFFER_SIZE",
+						Value: "160k",
+					},
+					{
+						Name:  "KONG_NGINX_PROXY_PROXY_BUFFERS",
+						Value: "64 160k",
+					},
+					{
 						Name:  "KONG_DECLARATIVE_CONFIG",
-						Value: "/kong.yml",
+						Value: "/home/kong/kong.yml",
 					},
 					{
 						Name: "GENERATED_JWT_VARIABLES",
@@ -1528,7 +1548,7 @@ services:
 				IsPublic: true,
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
-					Path:                      "/api/profile",
+					Path:                      "/api/platform/profile",
 					Port:                      utils.ToPtr(int32(3000)),
 					PeriodSeconds:             5,
 					TimeoutSeconds:            5,
@@ -1572,6 +1592,11 @@ services:
 						TargetName: "LOGFLARE_URL",
 						IsHost:     true,
 					},
+					{
+						SourceID:   10,
+						TargetName: "STUDIO_PG_META_URL",
+						IsHost:     true,
+					},
 				},
 				Variables: []schema.TemplateVariable{
 					{
@@ -1581,6 +1606,22 @@ services:
 							InputID:   1,
 							AddPrefix: "https://",
 						},
+					},
+					{
+						Name:  "NEXT_PUBLIC_ENABLE_LOGS",
+						Value: "true",
+					},
+					{
+						Name:  "NEXT_ANALYTICS_BACKEND_PROVIDER",
+						Value: "postgres",
+					},
+					{
+						Name:  "DEFAULT_ORGANIZATION_NAME",
+						Value: "Default Organization",
+					},
+					{
+						Name:  "DEFAULT_PROJECT_NAME",
+						Value: "Default Project",
 					},
 				},
 			},
@@ -1694,6 +1735,7 @@ services:
 					LivenessFailureThreshold:  3,
 					ReadinessFailureThreshold: 3,
 				},
+				RunCommand: utils.ToPtr("/usr/local/bin/vector --config /etc/vector/vector.yml"),
 				VariablesMounts: []*schema.VariableMount{
 					{
 						Name: "vector.yml",
@@ -2070,7 +2112,7 @@ sinks:
 					LivenessFailureThreshold:  3,
 					ReadinessFailureThreshold: 3,
 				},
-				RunCommand: utils.ToPtr("start --main-service /home/deno/functions/main"),
+				RunCommand: utils.ToPtr("edge-runtime start --main-service /home/deno/functions/main"),
 				VariablesMounts: []*schema.VariableMount{
 					{
 						Name: "main_index_ts",
