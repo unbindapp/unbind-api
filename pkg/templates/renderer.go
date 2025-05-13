@@ -27,6 +27,9 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 	for k, v := range kubeNameMap {
 		stringReplaceMap[fmt.Sprintf("SERVICE_%d_KUBE_NAME", k)] = v
 	}
+	for k, v := range inputs {
+		stringReplaceMap[fmt.Sprintf("INPUT_%d_VALUE", k)] = v
+	}
 
 	// Execute string replace on all StringReplace variables
 	for i := range resolved.Services {
@@ -36,6 +39,22 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 				for k, v := range stringReplaceMap {
 					variable.Value = strings.ReplaceAll(variable.Value, fmt.Sprintf("${%s}", k), v)
 				}
+			}
+		}
+		for _, ref := range resolved.Services[i].VariableReferences {
+			if ref.TemplateString != "" {
+				for k, v := range stringReplaceMap {
+					ref.TemplateString = strings.ReplaceAll(ref.TemplateString, fmt.Sprintf("${%s}", k), v)
+				}
+			}
+		}
+		if resolved.Services[i].DatabaseConfig != nil && resolved.Services[i].DatabaseConfig.InitDB != "" {
+			for k, v := range resolved.Services[i].InitDBReplacers {
+				toReplace, ok := stringReplaceMap[v]
+				if !ok || toReplace == "" {
+					toReplace = v
+				}
+				resolved.Services[i].DatabaseConfig.InitDB = strings.ReplaceAll(resolved.Services[i].DatabaseConfig.InitDB, k, toReplace)
 			}
 		}
 	}
@@ -81,6 +100,7 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 			SecurityContext:    svc.SecurityContext,
 			HealthCheck:        svc.HealthCheck,
 			VariablesMounts:    svc.VariablesMounts,
+			InitDBReplacers:    svc.InitDBReplacers,
 		}
 
 		// Initialize all slices if nil

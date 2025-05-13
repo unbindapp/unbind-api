@@ -100,6 +100,7 @@ type TemplateService struct {
 	SecurityContext    *SecurityContext            `json:"security_context,omitempty"`           // Security context for the service
 	HealthCheck        *HealthCheck                `json:"health_check,omitempty"`               // Health check configuration
 	VariablesMounts    []*VariableMount            `json:"variables_mounts" nullable:"false"`    // Variables mounts
+	InitDBReplacers    map[string]string           `json:"init_db_replacers,omitempty"`          // Replacers for the init DB, will replace key with value in InitDB string
 }
 
 // TemplateVariable represents a configurable variable in a template
@@ -305,6 +306,7 @@ const (
 	InputTypeHost       TemplateInputType = "host"
 	InputTypeVolumeSize TemplateInputType = "volume_size"
 	InputTypeNodePort   TemplateInputType = "node_port"
+	InputTypePassword   TemplateInputType = "password"
 )
 
 // Register enum in OpenAPI specification
@@ -319,6 +321,7 @@ func (u TemplateInputType) Schema(r huma.Registry) *huma.Schema {
 				string(InputTypeHost),
 				string(InputTypeVolumeSize),
 				string(InputTypeNodePort),
+				string(InputTypePassword),
 			}...)
 		r.Map()["TemplateInputType"] = schemaRef
 	}

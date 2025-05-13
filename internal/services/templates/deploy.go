@@ -82,6 +82,13 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		if !exists {
 			if defInput.Default != nil {
 				value = *defInput.Default
+			} else if defInput.Type == schema.InputTypePassword {
+				// Generate a password
+				pwd, err := utils.GenerateSecurePassword(32)
+				if err != nil {
+					return nil, err
+				}
+				value = pwd
 			} else if defInput.Required {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is required", defInput.Name))
 			} else {

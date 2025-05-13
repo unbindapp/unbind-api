@@ -34,7 +34,14 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				Type:        schema.InputTypeVolumeSize,
 				Description: "Size of the persistent storage for Supabase storage service.",
 				Required:    true,
-				Default:     utils.ToPtr("10Gi"),
+				Default:     utils.ToPtr("1Gi"),
+			},
+			{
+				ID:          4,
+				Name:        "Internal Password",
+				Type:        schema.InputTypePassword,
+				Description: "Password for the internal accounts that supabase creates, generated if not provided.",
+				Required:    true,
 			},
 		},
 		Services: []schema.TemplateService{
@@ -44,10 +51,13 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
+				InitDBReplacers: map[string]string{
+					"${REPLACEME}": "INPUT_4_VALUE",
+				},
 				DatabaseConfig: &schema.DatabaseConfig{
 					DefaultDatabaseName: "postgres",
-					Version:             "15",
-					InitDB: `-- Combined Supabase migration file with default passwords set to 'postgres'
+					Version:             "17",
+					InitDB: `-- Combined Supabase migration file with default passwords set to '${REPLACEME}'
 
 -- Set up realtime
 -- defaults to empty publication
@@ -57,10 +67,10 @@ create publication supabase_realtime;
 -- (postgres user is already a superuser, no need to alter)
 
 -- Supabase replication user
-create user supabase_replication_admin with login replication password 'postgres';
+create user supabase_replication_admin with login replication password '${REPLACEME}';
 
 -- Supabase read-only user
-create role supabase_read_only_user with login bypassrls password 'postgres';
+create role supabase_read_only_user with login bypassrls password '${REPLACEME}';
 grant pg_read_all_data to supabase_read_only_user;
 
 -- Extension namespacing
@@ -83,7 +93,7 @@ create role anon nologin noinherit;
 create role authenticated nologin noinherit; -- "logged in" user: web_user, app_user, etc
 create role service_role nologin noinherit bypassrls; -- allow developers to create JWT's that bypass their policies
 
-create user authenticator noinherit password 'postgres';
+create user authenticator noinherit password '${REPLACEME}';
 grant anon to authenticator;
 grant authenticated to authenticator;
 grant service_role to authenticator;
@@ -110,6 +120,25 @@ alter default privileges for user postgres in schema public grant all
 -- Set short statement/query timeouts for API roles
 alter role anon set statement_timeout = '3s';
 alter role authenticated set statement_timeout = '8s';
+
+-- Create additional databases for supabase
+CREATE DATABASE _supabase WITH OWNER postgres;
+
+-- Create _analytics schema in _supabase database
+\c _supabase
+create schema if not exists _analytics;
+alter schema _analytics owner to postgres;
+\c postgres
+
+-- Create _supavisor schema in _supabase database
+\c _supabase
+create schema if not exists _supavisor;
+alter schema _supavisor owner to postgres;
+\c postgres
+
+-- Create _realtime schema
+create schema if not exists _realtime;
+alter schema _realtime owner to postgres;
 
 -- Create auth schema
 CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION postgres;
@@ -216,7 +245,7 @@ $$ language sql stable;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
 
 -- Supabase auth admin
-CREATE USER supabase_auth_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+CREATE USER supabase_auth_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD '${REPLACEME}';
 GRANT ALL PRIVILEGES ON SCHEMA auth TO supabase_auth_admin;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA auth TO supabase_auth_admin;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA auth TO supabase_auth_admin;
@@ -330,7 +359,7 @@ CREATE TABLE IF NOT EXISTS storage.migrations (
   executed_at timestamp DEFAULT current_timestamp
 );
 
-CREATE USER supabase_storage_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+CREATE USER supabase_storage_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD '${REPLACEME}';
 GRANT ALL PRIVILEGES ON SCHEMA storage TO supabase_storage_admin;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA storage TO supabase_storage_admin;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA storage TO supabase_storage_admin;
@@ -407,7 +436,7 @@ BEGIN
       WHERE rolname = 'supabase_functions_admin'
     )
     THEN
-      CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+      CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD '${REPLACEME}';
     END IF;
 
     GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
@@ -444,8 +473,188 @@ BEGIN
 END
 $$;
 
+-- Setup for Edge Functions
+BEGIN;
+  -- Create pg_net extension
+  CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
+  
+  -- Create supabase_functions schema
+  CREATE SCHEMA supabase_functions AUTHORIZATION postgres;
+  GRANT USAGE ON SCHEMA supabase_functions TO postgres, anon, authenticated, service_role;
+  ALTER DEFAULT PRIVILEGES IN SCHEMA supabase_functions GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+  ALTER DEFAULT PRIVILEGES IN SCHEMA supabase_functions GRANT ALL ON FUNCTIONS TO postgres, anon, authenticated, service_role;
+  ALTER DEFAULT PRIVILEGES IN SCHEMA supabase_functions GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+  
+  -- supabase_functions.migrations definition
+  CREATE TABLE supabase_functions.migrations (
+    version text PRIMARY KEY,
+    inserted_at timestamptz NOT NULL DEFAULT NOW()
+  );
+  
+  -- Initial supabase_functions migration
+  INSERT INTO supabase_functions.migrations (version) VALUES ('initial');
+  
+  -- supabase_functions.hooks definition
+  CREATE TABLE supabase_functions.hooks (
+    id bigserial PRIMARY KEY,
+    hook_table_id integer NOT NULL,
+    hook_name text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    request_id bigint
+  );
+  CREATE INDEX supabase_functions_hooks_request_id_idx ON supabase_functions.hooks USING btree (request_id);
+  CREATE INDEX supabase_functions_hooks_h_table_id_h_name_idx ON supabase_functions.hooks USING btree (hook_table_id, hook_name);
+  COMMENT ON TABLE supabase_functions.hooks IS 'Supabase Functions Hooks: Audit trail for triggered hooks.';
+  
+  CREATE FUNCTION supabase_functions.http_request()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $function$
+    DECLARE
+      request_id bigint;
+      payload jsonb;
+      url text := TG_ARGV[0]::text;
+      method text := TG_ARGV[1]::text;
+      headers jsonb DEFAULT '{}'::jsonb;
+      params jsonb DEFAULT '{}'::jsonb;
+      timeout_ms integer DEFAULT 1000;
+    BEGIN
+      IF url IS NULL OR url = 'null' THEN
+        RAISE EXCEPTION 'url argument is missing';
+      END IF;
+
+      IF method IS NULL OR method = 'null' THEN
+        RAISE EXCEPTION 'method argument is missing';
+      END IF;
+
+      IF TG_ARGV[2] IS NULL OR TG_ARGV[2] = 'null' THEN
+        headers = '{"Content-Type": "application/json"}'::jsonb;
+      ELSE
+        headers = TG_ARGV[2]::jsonb;
+      END IF;
+
+      IF TG_ARGV[3] IS NULL OR TG_ARGV[3] = 'null' THEN
+        params = '{}'::jsonb;
+      ELSE
+        params = TG_ARGV[3]::jsonb;
+      END IF;
+
+      IF TG_ARGV[4] IS NULL OR TG_ARGV[4] = 'null' THEN
+        timeout_ms = 1000;
+      ELSE
+        timeout_ms = TG_ARGV[4]::integer;
+      END IF;
+
+      CASE
+        WHEN method = 'GET' THEN
+          SELECT http_get INTO request_id FROM net.http_get(
+            url,
+            params,
+            headers,
+            timeout_ms
+          );
+        WHEN method = 'POST' THEN
+          payload = jsonb_build_object(
+            'old_record', OLD,
+            'record', NEW,
+            'type', TG_OP,
+            'table', TG_TABLE_NAME,
+            'schema', TG_TABLE_SCHEMA
+          );
+
+          SELECT http_post INTO request_id FROM net.http_post(
+            url,
+            payload,
+            params,
+            headers,
+            timeout_ms
+          );
+        ELSE
+          RAISE EXCEPTION 'method argument % is invalid', method;
+      END CASE;
+
+      INSERT INTO supabase_functions.hooks
+        (hook_table_id, hook_name, request_id)
+      VALUES
+        (TG_RELID, TG_NAME, request_id);
+
+      RETURN NEW;
+    END
+  $function$;
+  
+  -- Supabase super admin
+  DO
+  $$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_roles
+      WHERE rolname = 'supabase_functions_admin'
+    )
+    THEN
+      CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD '${REPLACEME}';
+    END IF;
+  END
+  $$;
+  
+  GRANT ALL PRIVILEGES ON SCHEMA supabase_functions TO supabase_functions_admin;
+  GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA supabase_functions TO supabase_functions_admin;
+  GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA supabase_functions TO supabase_functions_admin;
+  ALTER USER supabase_functions_admin SET search_path = "supabase_functions";
+  ALTER table "supabase_functions".migrations OWNER TO supabase_functions_admin;
+  ALTER table "supabase_functions".hooks OWNER TO supabase_functions_admin;
+  ALTER function "supabase_functions".http_request() OWNER TO supabase_functions_admin;
+  GRANT supabase_functions_admin TO postgres;
+  
+  -- Remove unused supabase_pg_net_admin role
+  DO
+  $$
+  BEGIN
+    IF EXISTS (
+      SELECT 1
+      FROM pg_roles
+      WHERE rolname = 'supabase_pg_net_admin'
+    )
+    THEN
+      REASSIGN OWNED BY supabase_pg_net_admin TO postgres;
+      DROP OWNED BY supabase_pg_net_admin;
+      DROP ROLE supabase_pg_net_admin;
+    END IF;
+  END
+  $$;
+  
+  -- pg_net grants when extension is already enabled
+  DO
+  $$
+  BEGIN
+    IF EXISTS (
+      SELECT 1
+      FROM pg_extension
+      WHERE extname = 'pg_net'
+    )
+    THEN
+      GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+      ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
+      ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
+      ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
+      ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
+      REVOKE ALL ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
+      REVOKE ALL ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
+      GRANT EXECUTE ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+      GRANT EXECUTE ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+    END IF;
+  END
+  $$;
+  
+  INSERT INTO supabase_functions.migrations (version) VALUES ('20210809183423_update_grants');
+  ALTER function supabase_functions.http_request() SECURITY DEFINER;
+  ALTER function supabase_functions.http_request() SET search_path = supabase_functions;
+  REVOKE ALL ON FUNCTION supabase_functions.http_request() FROM PUBLIC;
+  GRANT EXECUTE ON FUNCTION supabase_functions.http_request() TO postgres, anon, authenticated, service_role;
+COMMIT;
+
 -- Supabase dashboard user
-CREATE ROLE dashboard_user NOSUPERUSER CREATEDB CREATEROLE REPLICATION PASSWORD 'postgres';
+CREATE ROLE dashboard_user NOSUPERUSER CREATEDB CREATEROLE REPLICATION PASSWORD '${REPLACEME}';
 GRANT ALL ON DATABASE postgres TO dashboard_user;
 GRANT ALL ON SCHEMA auth TO dashboard_user;
 GRANT ALL ON SCHEMA extensions TO dashboard_user;
@@ -845,7 +1054,7 @@ BEGIN
       WHERE rolname = 'supabase_functions_admin'
     )
     THEN
-      CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+      CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD '${REPLACEME}';
     END IF;
 
     GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
@@ -1633,7 +1842,7 @@ sinks:
 						SourceID:       1,
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "DATABASE_URL",
-						TemplateString: "postgresql://supabase_storage_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://supabase_storage_admin:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1656,16 +1865,12 @@ sinks:
 				},
 			},
 			{
-				ID:      7,
-				Name:    "minio",
-				Type:    schema.ServiceTypeDockerimage,
-				Builder: schema.ServiceBuilderDocker,
-				Image:   utils.ToPtr("minio/minio"),
-				RunCommand: utils.ToPtr(`bash -c '
-				/usr/bin/mc alias set supabase-minio http://localhost:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} 2>/dev/null || true
-				/usr/bin/mc mb --ignore-existing supabase-minio/stub 2>/dev/null || true
-				exec minio server /data --console-address \":9001\"
-			'`),
+				ID:         7,
+				Name:       "minio",
+				Type:       schema.ServiceTypeDockerimage,
+				Builder:    schema.ServiceBuilderDocker,
+				Image:      utils.ToPtr("minio/minio"),
+				RunCommand: utils.ToPtr("bash -c '/usr/bin/mc alias set supabase-minio http://localhost:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} 2>/dev/null || true && /usr/bin/mc mb --ignore-existing supabase-minio/stub 2>/dev/null || true && exec minio server /data --console-address \":9001\"'"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,
@@ -1735,7 +1940,7 @@ sinks:
 						SourceID:       1,
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "PGRST_DB_URI",
-						TemplateString: "postgresql://authenticator:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://authenticator:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1797,7 +2002,7 @@ sinks:
 						SourceName:                "DATABASE_HOST",
 						TargetName:                "GOTRUE_DB_DATABASE_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://supabase_auth_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString:            "postgresql://supabase_auth_admin:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1893,6 +2098,17 @@ sinks:
 					LivenessFailureThreshold:  3,
 					ReadinessFailureThreshold: 3,
 				},
+				RunCommand: utils.ToPtr("start --main-service /home/deno/functions/main"),
+				VariablesMounts: []*schema.VariableMount{
+					{
+						Name: "main_index_ts",
+						Path: "/home/deno/functions/main/index.ts",
+					},
+					{
+						Name: "hello_index_ts",
+						Path: "/home/deno/functions/hello/index.ts",
+					},
+				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
 						SourceID:   1,
@@ -1920,10 +2136,139 @@ sinks:
 						IsHost:     true,
 					},
 					{
-						SourceID:       1,
-						SourceName:     "DATABASE_HOST",
-						TargetName:     "SUPABASE_DB_URL",
-						TemplateString: "postgresql://supabase_functions_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						SourceID:                  1,
+						SourceName:                "DATABASE_PASSWORD",
+						TargetName:                "SUPABASE_DB_URL",
+						AdditionalTemplateSources: []string{"DATABASE_HOST"},
+						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres",
+					},
+				},
+				Variables: []schema.TemplateVariable{
+					{
+						Name:  "VERIFY_JWT",
+						Value: "false",
+					},
+					{
+						Name: "main_index_ts",
+						Value: `import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
+import * as jose from 'https://deno.land/x/jose@v4.14.4/index.ts'
+
+console.log('main function started')
+
+const JWT_SECRET = Deno.env.get('JWT_SECRET')
+const VERIFY_JWT = Deno.env.get('VERIFY_JWT') === 'true'
+
+function getAuthToken(req: Request) {
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader) {
+    throw new Error('Missing authorization header')
+  }
+  const [bearer, token] = authHeader.split(' ')
+  if (bearer !== 'Bearer') {
+    throw new Error("Auth header is not 'Bearer {token}'")
+  }
+  return token
+}
+
+async function verifyJWT(jwt: string): Promise<boolean> {
+  const encoder = new TextEncoder()
+  const secretKey = encoder.encode(JWT_SECRET)
+  try {
+    await jose.jwtVerify(jwt, secretKey)
+  } catch (err) {
+    console.error(err)
+    return false
+  }
+  return true
+}
+
+serve(async (req: Request) => {
+  if (req.method !== 'OPTIONS' && VERIFY_JWT) {
+    try {
+      const token = getAuthToken(req)
+      const isValidJWT = await verifyJWT(token)
+
+      if (!isValidJWT) {
+        return new Response(JSON.stringify({ msg: 'Invalid JWT' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+    } catch (e) {
+      console.error(e)
+      return new Response(JSON.stringify({ msg: e.toString() }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
+  const url = new URL(req.url)
+  const { pathname } = url
+  const path_parts = pathname.split('/')
+  const service_name = path_parts[1]
+
+  if (!service_name || service_name === '') {
+    const error = { msg: 'missing function name in request' }
+    return new Response(JSON.stringify(error), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const servicePath = "/home/deno/functions/" + service_name
+  console.error("serving the request with " + servicePath)
+
+  const memoryLimitMb = 150
+  const workerTimeoutMs = 1 * 60 * 1000
+  const noModuleCache = false
+  const importMapPath = null
+  const envVarsObj = Deno.env.toObject()
+  const envVars = Object.keys(envVarsObj).map((k) => [k, envVarsObj[k]])
+
+  try {
+    const worker = await EdgeRuntime.userWorkers.create({
+      servicePath,
+      memoryLimitMb,
+      workerTimeoutMs,
+      noModuleCache,
+      importMapPath,
+      envVars,
+    })
+    return await worker.fetch(req)
+  } catch (e) {
+    const error = { msg: e.toString() }
+    return new Response(JSON.stringify(error), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+})`,
+					},
+					{
+						Name: "hello_index_ts",
+						Value: `// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+import { serve } from "https://deno.land/std@0.177.1/http/server.ts"
+
+serve(async () => {
+  return new Response(
+    '"Hello from Edge Functions!"',
+    { headers: { "Content-Type": "application/json" } },
+  )
+})
+
+// To invoke:
+// curl 'http://localhost:<KONG_HTTP_PORT>/functions/v1/hello' \\
+//   --header 'Authorization: Bearer <anon/service_role API key>'`,
+					},
+				},
+				Volumes: []schema.TemplateVolume{
+					{
+						Name:      "functions-data",
+						MountPath: "/home/deno/functions",
 					},
 				},
 			},

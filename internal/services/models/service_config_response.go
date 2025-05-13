@@ -42,6 +42,9 @@ type ServiceConfigResponse struct {
 func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigResponse {
 	response := &ServiceConfigResponse{}
 	if entity != nil {
+		if entity.VariableMounts == nil {
+			entity.VariableMounts = []*schema.VariableMount{}
+		}
 		response = &ServiceConfigResponse{
 			GitBranch:            entity.GitBranch,
 			GitTag:               entity.GitTag,
