@@ -1440,7 +1440,7 @@ services:
 						SourceID:                  1,
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "POSTGRES_BACKEND_URL",
-						AdditionalTemplateSources: []string{"DATABASE_HOST}"},
+						AdditionalTemplateSources: []string{"DATABASE_HOST"},
 						TemplateString:            `postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/_supabase?sslmode=disable`,
 					},
 				},
@@ -1654,15 +1654,6 @@ sinks:
 						Value: "us-east-1",
 					},
 				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name: "storage-data",
-						Size: schema.TemplateVolumeSize{
-							FromInputID: 3,
-						},
-						MountPath: "/var/lib/storage",
-					},
-				},
 			},
 			{
 				ID:      7,
@@ -1670,6 +1661,11 @@ sinks:
 				Type:    schema.ServiceTypeDockerimage,
 				Builder: schema.ServiceBuilderDocker,
 				Image:   utils.ToPtr("minio/minio"),
+				RunCommand: utils.ToPtr(`bash -c '
+				/usr/bin/mc alias set supabase-minio http://localhost:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} 2>/dev/null || true
+				/usr/bin/mc mb --ignore-existing supabase-minio/stub 2>/dev/null || true
+				exec minio server /data --console-address \":9001\"
+			'`),
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,
@@ -1699,6 +1695,15 @@ sinks:
 						Generator: &schema.ValueGenerator{
 							Type: schema.GeneratorTypePassword,
 						},
+					},
+				},
+				Volumes: []schema.TemplateVolume{
+					{
+						Name: "minio-data",
+						Size: schema.TemplateVolumeSize{
+							FromInputID: 3,
+						},
+						MountPath: "/data",
 					},
 				},
 			},
