@@ -1186,28 +1186,6 @@ BEGIN
   END IF;
 END $$;
 
--- Set up the PgBouncer auth function
-create or replace function pgbouncer.get_auth(p_usename text) returns table (username text, password text)
-    language plpgsql security definer
-    as $$
-begin
-    raise debug 'PgBouncer auth request: %', p_usename;
-
-    return query
-    select 
-        rolname::text, 
-        case when rolvaliduntil < now() 
-            then null 
-            else rolpassword::text 
-        end 
-    from pg_authid 
-    where rolname=$1 and rolcanlogin;
-end;
-$$;
-
-alter function pgbouncer.get_auth owner to supabase_auth_admin;
-grant execute on function pgbouncer.get_auth(p_usename text) to postgres;
-
 -- Orioledb extension if available
 do $$ 
 begin 

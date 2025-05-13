@@ -28,6 +28,7 @@ type ServiceResponse struct {
 	DatabaseVersion          *string                         `json:"database_version,omitempty"`
 	DatabaseType             *string                         `json:"database_type,omitempty"`
 	Template                 *TemplateWithDefinitionResponse `json:"template,omitempty"`
+	TemplateInstanceID       *uuid.UUID                      `json:"template_instance_id,omitempty"`
 }
 
 // TransformServiceEntity transforms an ent.Service entity into a ServiceResponse
@@ -49,6 +50,7 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 			DatabaseVersion:      entity.DatabaseVersion,
 			DatabaseType:         entity.Database,
 			Config:               TransformServiceConfigEntity(entity.Edges.ServiceConfig),
+			TemplateInstanceID:   entity.TemplateInstanceID,
 		}
 
 		if entity.Edges.Template != nil {
