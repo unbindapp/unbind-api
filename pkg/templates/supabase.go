@@ -1338,16 +1338,6 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
-					Path:                      "/",
-					Port:                      utils.ToPtr(int32(8000)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
-				},
 				VariablesMounts: []*schema.VariableMount{
 					{
 						Name: "kong.yml",
