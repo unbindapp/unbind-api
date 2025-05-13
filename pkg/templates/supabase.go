@@ -22,14 +22,6 @@ func supabaseTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:          2,
-				Name:        "Studio Host",
-				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the Supabase Studio.",
-				Required:    true,
-				TargetPort:  utils.ToPtr(3000),
-			},
-			{
-				ID:          3,
 				Name:        "Storage Size",
 				Type:        schema.InputTypeVolumeSize,
 				Description: "Size of the persistent storage for Supabase storage service.",
@@ -37,7 +29,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				Default:     utils.ToPtr("1Gi"),
 			},
 			{
-				ID:          4,
+				ID:          3,
 				Name:        "Internal Password",
 				Type:        schema.InputTypePassword,
 				Description: "Password for the internal accounts that supabase creates, generated if not provided.",
@@ -52,7 +44,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 				InitDBReplacers: map[string]string{
-					"${REPLACEME}": "INPUT_4_VALUE",
+					"${REPLACEME}": "INPUT_3_VALUE",
 				},
 				DatabaseConfig: &schema.DatabaseConfig{
 					DefaultDatabaseName: "postgres",
@@ -1522,20 +1514,19 @@ services:
 				},
 			},
 			{
-				ID:           3,
-				Name:         "studio",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
-				DependsOn:    []int{1, 2},
-				HostInputIDs: []int{2},
+				ID:        3,
+				Name:      "studio",
+				Type:      schema.ServiceTypeDockerimage,
+				Builder:   schema.ServiceBuilderDocker,
+				Image:     utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
+				DependsOn: []int{1, 2},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
+				IsPublic: false,
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/api/platform/profile",
@@ -1708,97 +1699,105 @@ services:
 					},
 				},
 			},
-			{
-				ID:        5,
-				Name:      "vector",
-				Type:      schema.ServiceTypeDockerimage,
-				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("timberio/vector:0.28.1-alpine"),
-				DependsOn: []int{4},
-				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
-					Path:                      "/health",
-					Port:                      utils.ToPtr(int32(9001)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   3,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
-				},
-				RunCommand: utils.ToPtr("/usr/local/bin/vector --config /etc/vector/vector.yml"),
-				VariablesMounts: []*schema.VariableMount{
-					{
-						Name: "vector.yml",
-						Path: "/etc/vector/vector.yml",
-					},
-				},
-				VariableReferences: []schema.TemplateVariableReference{
-					{
-						SourceID:   4,
-						SourceName: "LOGFLARE_API_KEY",
-						TargetName: "LOGFLARE_API_KEY",
-					},
-				},
-				Variables: []schema.TemplateVariable{
-					{
-						Name: "vector.yml",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeStringReplace,
-						},
-						Value: `api:
-  enabled: true
-  address: 0.0.0.0:9001
+			// * Disabling vector because it should be a DaemonSet
+			// * And it should have the VECTOR_NODE_NAME variable
+			// * Neither of which are supported by unbind-operator currently
+			// 			{
+			// 				ID:        5,
+			// 				Name:      "vector",
+			// 				Type:      schema.ServiceTypeDockerimage,
+			// 				Builder:   schema.ServiceBuilderDocker,
+			// 				Image:     utils.ToPtr("timberio/vector:0.28.1-alpine"),
+			// 				DependsOn: []int{4},
+			// 				HealthCheck: &schema.HealthCheck{
+			// 					Type:                      schema.HealthCheckTypeHTTP,
+			// 					Path:                      "/health",
+			// 					Port:                      utils.ToPtr(int32(9001)),
+			// 					PeriodSeconds:             5,
+			// 					TimeoutSeconds:            5,
+			// 					StartupFailureThreshold:   3,
+			// 					LivenessFailureThreshold:  3,
+			// 					ReadinessFailureThreshold: 3,
+			// 				},
+			// 				RunCommand: utils.ToPtr("/usr/local/bin/vector --config /etc/vector/vector.yml"),
+			// 				VariablesMounts: []*schema.VariableMount{
+			// 					{
+			// 						Name: "vector.yml",
+			// 						Path: "/etc/vector/vector.yml",
+			// 					},
+			// 				},
+			// 				VariableReferences: []schema.TemplateVariableReference{
+			// 					{
+			// 						SourceID:   4,
+			// 						SourceName: "LOGFLARE_API_KEY",
+			// 						TargetName: "LOGFLARE_API_KEY",
+			// 					},
+			// 				},
+			// 				Variables: []schema.TemplateVariable{
+			// 					{
+			// 						Name: "vector.yml",
+			// 						Generator: &schema.ValueGenerator{
+			// 							Type: schema.GeneratorTypeStringReplace,
+			// 						},
+			// 						Value: `api:
+			//   enabled: true
+			//   address: 0.0.0.0:9001               # Vector API / playground
 
-sources:
-  docker_host:
-    type: docker_logs
-    exclude_containers:
-      - vector
+			// sources:
+			//   k8s_logs:                           # new source id
+			//     type: kubernetes_logs
+			//     # (optional) keep Vector from logging itself; you can also label the pod
+			//     extra_label_selector: "app!=vector"
 
-transforms:
-  project_logs:
-    type: remap
-    inputs:
-      - docker_host
-    source: |-
-      .project = "default"
-      .event_message = del(.message)
-      .appname = del(.container_name)
-      del(.container_created_at)
-      del(.container_id)
-      del(.source_type)
-      del(.stream)
-      del(.label)
-      del(.image)
-      del(.host)
-      del(.stream)
-  router:
-    type: route
-    inputs:
-      - project_logs
-    route:
-      kong: 'starts_with(string!(.appname), "kong")'
-      auth: 'starts_with(string!(.appname), "auth")'
-      rest: 'starts_with(string!(.appname), "rest")'
-      realtime: 'starts_with(string!(.appname), "realtime")'
-      storage: 'starts_with(string!(.appname), "storage")'
-      functions: 'starts_with(string!(.appname), "functions")'
-      db: 'starts_with(string!(.appname), "db")'
+			// transforms:
+			//   project_logs:
+			//     type: remap
+			//     inputs:
+			//       - k8s_logs
+			//     source: |-
+			//       .project        = "default"
+			//       .event_message  = del(.message)
 
-sinks:
-  logflare:
-    type: http
-    inputs:
-      - router.*
-    encoding:
-      codec: json
-    method: post
-    request:
-      retry_max_duration_secs: 10
-    uri: http://${SERVICE_4_KUBE_NAME}.${NAMESPACE}:4000/api/logs?source_name=supabase.logs&api_key=${SERVICE_4_LOGFLARE_API_KEY}`,
-					},
-				},
-			},
+			//       # kubernetes_logs puts the container name under .kubernetes.*
+			//       .appname        = del(.kubernetes.container_name)
+
+			//       # drop lots of noisy fields
+			//       del(.kubernetes.container_image)
+			//       del(.kubernetes.pod_uid)
+			//       del(.kubernetes.pod_name)
+			//       del(.kubernetes.namespace_name)
+			//       del(.kubernetes.pod_labels)
+			//       del(.kubernetes.namespace_labels)
+			//       del(.source_type)
+			//       del(.stream)
+
+			//   router:
+			//     type: route
+			//     inputs:
+			//       - project_logs
+			//     route:
+			//       kong:      'starts_with(string!(.appname), "kong")'
+			//       auth:      'starts_with(string!(.appname), "auth")'
+			//       rest:      'starts_with(string!(.appname), "rest")'
+			//       realtime:  'starts_with(string!(.appname), "realtime")'
+			//       storage:   'starts_with(string!(.appname), "storage")'
+			//       functions: 'starts_with(string!(.appname), "functions")'
+			//       db:        'starts_with(string!(.appname), "db")'
+
+			// sinks:
+			//   logflare:
+			//     type: http
+			//     inputs:
+			//       - router.*
+			//     encoding:
+			//       codec: json
+			//     method: post
+			//     request:
+			//       retry_max_duration_secs: 10
+			//     uri: http://${SERVICE_4_KUBE_NAME}.${NAMESPACE}:4000/api/logs?source_name=supabase.logs&api_key=${SERVICE_4_LOGFLARE_API_KEY}`,
+			// 					},
+			// 				},
+			// 			},
 			{
 				ID:        6,
 				Name:      "storage",
@@ -1852,7 +1851,7 @@ sinks:
 						SourceID:       1,
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "DATABASE_URL",
-						TemplateString: "postgresql://supabase_storage_admin:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://supabase_storage_admin:${INPUT_3_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1916,7 +1915,7 @@ sinks:
 					{
 						Name: "minio-data",
 						Size: schema.TemplateVolumeSize{
-							FromInputID: 3,
+							FromInputID: 2,
 						},
 						MountPath: "/data",
 					},
@@ -1950,7 +1949,7 @@ sinks:
 						SourceID:       1,
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "PGRST_DB_URI",
-						TemplateString: "postgresql://authenticator:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://authenticator:${INPUT_3_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -2006,7 +2005,7 @@ sinks:
 						SourceID:       1,
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "GOTRUE_DB_DATABASE_URL",
-						TemplateString: "postgresql://supabase_auth_admin:${INPUT_4_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://supabase_auth_admin:${INPUT_3_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
