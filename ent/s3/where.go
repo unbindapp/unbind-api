@@ -489,21 +489,21 @@ func HasTeamWith(preds ...predicate.Team) predicate.S3 {
 	})
 }
 
-// HasServiceBackupEndpoint applies the HasEdge predicate on the "service_backup_endpoint" edge.
-func HasServiceBackupEndpoint() predicate.S3 {
+// HasServiceBackupSource applies the HasEdge predicate on the "service_backup_source" edge.
+func HasServiceBackupSource() predicate.S3 {
 	return predicate.S3(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ServiceBackupEndpointTable, ServiceBackupEndpointColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, ServiceBackupSourceTable, ServiceBackupSourceColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasServiceBackupEndpointWith applies the HasEdge predicate on the "service_backup_endpoint" edge with a given conditions (other predicates).
-func HasServiceBackupEndpointWith(preds ...predicate.ServiceConfig) predicate.S3 {
+// HasServiceBackupSourceWith applies the HasEdge predicate on the "service_backup_source" edge with a given conditions (other predicates).
+func HasServiceBackupSourceWith(preds ...predicate.ServiceConfig) predicate.S3 {
 	return predicate.S3(func(s *sql.Selector) {
-		step := newServiceBackupEndpointStep()
+		step := newServiceBackupSourceStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

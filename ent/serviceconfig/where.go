@@ -138,9 +138,9 @@ func DefinitionVersion(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldDefinitionVersion, v))
 }
 
-// S3BackupEndpointID applies equality check predicate on the "s3_backup_endpoint_id" field. It's identical to S3BackupEndpointIDEQ.
-func S3BackupEndpointID(v uuid.UUID) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldS3BackupEndpointID, v))
+// S3BackupSourceID applies equality check predicate on the "s3_backup_source_id" field. It's identical to S3BackupSourceIDEQ.
+func S3BackupSourceID(v uuid.UUID) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldS3BackupSourceID, v))
 }
 
 // S3BackupBucket applies equality check predicate on the "s3_backup_bucket" field. It's identical to S3BackupBucketEQ.
@@ -1208,34 +1208,34 @@ func DatabaseConfigNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldDatabaseConfig))
 }
 
-// S3BackupEndpointIDEQ applies the EQ predicate on the "s3_backup_endpoint_id" field.
-func S3BackupEndpointIDEQ(v uuid.UUID) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldS3BackupEndpointID, v))
+// S3BackupSourceIDEQ applies the EQ predicate on the "s3_backup_source_id" field.
+func S3BackupSourceIDEQ(v uuid.UUID) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldS3BackupSourceID, v))
 }
 
-// S3BackupEndpointIDNEQ applies the NEQ predicate on the "s3_backup_endpoint_id" field.
-func S3BackupEndpointIDNEQ(v uuid.UUID) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldS3BackupEndpointID, v))
+// S3BackupSourceIDNEQ applies the NEQ predicate on the "s3_backup_source_id" field.
+func S3BackupSourceIDNEQ(v uuid.UUID) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldS3BackupSourceID, v))
 }
 
-// S3BackupEndpointIDIn applies the In predicate on the "s3_backup_endpoint_id" field.
-func S3BackupEndpointIDIn(vs ...uuid.UUID) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldS3BackupEndpointID, vs...))
+// S3BackupSourceIDIn applies the In predicate on the "s3_backup_source_id" field.
+func S3BackupSourceIDIn(vs ...uuid.UUID) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldS3BackupSourceID, vs...))
 }
 
-// S3BackupEndpointIDNotIn applies the NotIn predicate on the "s3_backup_endpoint_id" field.
-func S3BackupEndpointIDNotIn(vs ...uuid.UUID) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldS3BackupEndpointID, vs...))
+// S3BackupSourceIDNotIn applies the NotIn predicate on the "s3_backup_source_id" field.
+func S3BackupSourceIDNotIn(vs ...uuid.UUID) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldS3BackupSourceID, vs...))
 }
 
-// S3BackupEndpointIDIsNil applies the IsNil predicate on the "s3_backup_endpoint_id" field.
-func S3BackupEndpointIDIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldS3BackupEndpointID))
+// S3BackupSourceIDIsNil applies the IsNil predicate on the "s3_backup_source_id" field.
+func S3BackupSourceIDIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldS3BackupSourceID))
 }
 
-// S3BackupEndpointIDNotNil applies the NotNil predicate on the "s3_backup_endpoint_id" field.
-func S3BackupEndpointIDNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldS3BackupEndpointID))
+// S3BackupSourceIDNotNil applies the NotNil predicate on the "s3_backup_source_id" field.
+func S3BackupSourceIDNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldS3BackupSourceID))
 }
 
 // S3BackupBucketEQ applies the EQ predicate on the "s3_backup_bucket" field.
@@ -1621,21 +1621,21 @@ func HasServiceWith(preds ...predicate.Service) predicate.ServiceConfig {
 	})
 }
 
-// HasS3BackupEndpoint applies the HasEdge predicate on the "s3_backup_endpoint" edge.
-func HasS3BackupEndpoint() predicate.ServiceConfig {
+// HasS3BackupSources applies the HasEdge predicate on the "s3_backup_sources" edge.
+func HasS3BackupSources() predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, S3BackupEndpointTable, S3BackupEndpointColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, S3BackupSourcesTable, S3BackupSourcesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasS3BackupEndpointWith applies the HasEdge predicate on the "s3_backup_endpoint" edge with a given conditions (other predicates).
-func HasS3BackupEndpointWith(preds ...predicate.S3) predicate.ServiceConfig {
+// HasS3BackupSourcesWith applies the HasEdge predicate on the "s3_backup_sources" edge with a given conditions (other predicates).
+func HasS3BackupSourcesWith(preds ...predicate.S3) predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {
-		step := newS3BackupEndpointStep()
+		step := newS3BackupSourcesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

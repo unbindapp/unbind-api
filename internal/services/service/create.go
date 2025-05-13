@@ -57,7 +57,7 @@ type CreateServiceInput struct {
 	// Databases (special case)
 	DatabaseType         *string                `json:"database_type,omitempty"`
 	DatabaseConfig       *schema.DatabaseConfig `json:"database_config,omitempty"`
-	S3BackupEndpointID   *uuid.UUID             `json:"s3_backup_endpoint_id,omitempty" format:"uuid"`
+	S3BackupSourceID     *uuid.UUID             `json:"s3_backup_source_id,omitempty" format:"uuid"`
 	S3BackupBucket       *string                `json:"s3_backup_bucket,omitempty"`
 	BackupSchedule       *string                `json:"backup_schedule,omitempty" required:"false" doc:"Cron expression for the backup schedule, e.g. '0 0 * * *'"`
 	BackupRetentionCount *int                   `json:"backup_retention,omitempty" required:"false" doc:"Number of base backups to retain, e.g. 3"`
@@ -285,12 +285,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 	// Verify backup sources (for databases)
 	// Make sure we can read and write to the S3 bucket provided
-	if input.Type == schema.ServiceTypeDatabase && input.S3BackupEndpointID != nil && input.S3BackupBucket != nil {
+	if input.Type == schema.ServiceTypeDatabase && input.S3BackupSourceID != nil && input.S3BackupBucket != nil {
 		// Check if the S3 source exists
-		s3Source, err := self.repo.S3().GetByID(ctx, *input.S3BackupEndpointID)
+		s3Source, err := self.repo.S3().GetByID(ctx, *input.S3BackupSourceID)
 		if err != nil {
 			if ent.IsNotFound(err) {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 endpoint not found")
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "S3 source not found")
 			}
 			return nil, err
 		}
@@ -403,7 +403,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			DockerfileContext:       input.DockerfileContext,
 			CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
 			DatabaseConfig:          input.DatabaseConfig,
-			S3BackupEndpointID:      input.S3BackupEndpointID,
+			S3BackupSourceID:        input.S3BackupSourceID,
 			S3BackupBucket:          input.S3BackupBucket,
 			BackupSchedule:          input.BackupSchedule,
 			BackupRetentionCount:    input.BackupRetentionCount,

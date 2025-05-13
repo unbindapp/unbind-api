@@ -117,19 +117,19 @@ func (s *S3Create) SetTeam(t *Team) *S3Create {
 	return s.SetTeamID(t.ID)
 }
 
-// AddServiceBackupEndpointIDs adds the "service_backup_endpoint" edge to the ServiceConfig entity by IDs.
-func (s *S3Create) AddServiceBackupEndpointIDs(ids ...uuid.UUID) *S3Create {
-	s.mutation.AddServiceBackupEndpointIDs(ids...)
+// AddServiceBackupSourceIDs adds the "service_backup_source" edge to the ServiceConfig entity by IDs.
+func (s *S3Create) AddServiceBackupSourceIDs(ids ...uuid.UUID) *S3Create {
+	s.mutation.AddServiceBackupSourceIDs(ids...)
 	return s
 }
 
-// AddServiceBackupEndpoint adds the "service_backup_endpoint" edges to the ServiceConfig entity.
-func (s *S3Create) AddServiceBackupEndpoint(v ...*ServiceConfig) *S3Create {
+// AddServiceBackupSource adds the "service_backup_source" edges to the ServiceConfig entity.
+func (s *S3Create) AddServiceBackupSource(v ...*ServiceConfig) *S3Create {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return s.AddServiceBackupEndpointIDs(ids...)
+	return s.AddServiceBackupSourceIDs(ids...)
 }
 
 // Mutation returns the S3Mutation object of the builder.
@@ -300,12 +300,12 @@ func (s *S3Create) createSpec() (*S3, *sqlgraph.CreateSpec) {
 		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := s.mutation.ServiceBackupEndpointIDs(); len(nodes) > 0 {
+	if nodes := s.mutation.ServiceBackupSourceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   s3.ServiceBackupEndpointTable,
-			Columns: []string{s3.ServiceBackupEndpointColumn},
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),

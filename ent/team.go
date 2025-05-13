@@ -43,8 +43,8 @@ type Team struct {
 type TeamEdges struct {
 	// Projects holds the value of the projects edge.
 	Projects []*Project `json:"projects,omitempty"`
-	// S3Endpoints holds the value of the s3_endpoints edge.
-	S3Endpoints []*S3 `json:"s3_endpoints,omitempty"`
+	// S3Sources holds the value of the s3_sources edge.
+	S3Sources []*S3 `json:"s3_sources,omitempty"`
 	// Members holds the value of the members edge.
 	Members []*User `json:"members,omitempty"`
 	// TeamWebhooks holds the value of the team_webhooks edge.
@@ -63,13 +63,13 @@ func (e TeamEdges) ProjectsOrErr() ([]*Project, error) {
 	return nil, &NotLoadedError{edge: "projects"}
 }
 
-// S3EndpointsOrErr returns the S3Endpoints value or an error if the edge
+// S3SourcesOrErr returns the S3Sources value or an error if the edge
 // was not loaded in eager-loading.
-func (e TeamEdges) S3EndpointsOrErr() ([]*S3, error) {
+func (e TeamEdges) S3SourcesOrErr() ([]*S3, error) {
 	if e.loadedTypes[1] {
-		return e.S3Endpoints, nil
+		return e.S3Sources, nil
 	}
-	return nil, &NotLoadedError{edge: "s3_endpoints"}
+	return nil, &NotLoadedError{edge: "s3_sources"}
 }
 
 // MembersOrErr returns the Members value or an error if the edge
@@ -183,9 +183,9 @@ func (t *Team) QueryProjects() *ProjectQuery {
 	return NewTeamClient(t.config).QueryProjects(t)
 }
 
-// QueryS3Endpoints queries the "s3_endpoints" edge of the Team entity.
-func (t *Team) QueryS3Endpoints() *S3Query {
-	return NewTeamClient(t.config).QueryS3Endpoints(t)
+// QueryS3Sources queries the "s3_sources" edge of the Team entity.
+func (t *Team) QueryS3Sources() *S3Query {
+	return NewTeamClient(t.config).QueryS3Sources(t)
 }
 
 // QueryMembers queries the "members" edge of the Team entity.

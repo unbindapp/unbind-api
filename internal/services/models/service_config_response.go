@@ -23,7 +23,7 @@ type ServiceConfigResponse struct {
 	IsPublic       bool                  `json:"is_public"`
 	Image          string                `json:"image,omitempty"`
 	// For backups
-	S3BackupEndpointID   *uuid.UUID `json:"s3_backup_endpoint_id,omitempty"`
+	S3BackupSourceID     *uuid.UUID `json:"s3_backup_source_id,omitempty"`
 	S3BackupBucket       *string    `json:"s3_backup_bucket,omitempty"`
 	BackupSchedule       string     `json:"backup_schedule"`
 	BackupRetentionCount int        `json:"backup_retention_count"`
@@ -59,7 +59,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			RunCommand:           entity.RunCommand,
 			IsPublic:             entity.IsPublic,
 			Image:                entity.Image,
-			S3BackupEndpointID:   entity.S3BackupEndpointID,
+			S3BackupSourceID:     entity.S3BackupSourceID,
 			S3BackupBucket:       entity.S3BackupBucket,
 			BackupSchedule:       entity.BackupSchedule,
 			BackupRetentionCount: entity.BackupRetentionCount,

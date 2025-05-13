@@ -79,7 +79,7 @@ type MutateConfigInput struct {
 	DockerfileContext       *string
 	CustomDefinitionVersion *string
 	DatabaseConfig          *schema.DatabaseConfig
-	S3BackupEndpointID      *uuid.UUID
+	S3BackupSourceID        *uuid.UUID
 	S3BackupBucket          *string
 	BackupSchedule          *string
 	BackupRetentionCount    *int
@@ -141,7 +141,7 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableDockerfilePath(input.DockerfilePath).
 		SetNillableDockerfileContext(input.DockerfileContext).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
-		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
+		SetNillableS3BackupSourceID(input.S3BackupSourceID).
 		SetNillableS3BackupBucket(input.S3BackupBucket).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableVolumeName(input.PVCID).
@@ -213,7 +213,7 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
-		SetNillableS3BackupEndpointID(input.S3BackupEndpointID).
+		SetNillableS3BackupSourceID(input.S3BackupSourceID).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
 

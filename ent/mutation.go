@@ -9859,25 +9859,25 @@ func (m *RegistryMutation) ResetEdge(name string) error {
 // S3Mutation represents an operation that mutates the S3 nodes in the graph.
 type S3Mutation struct {
 	config
-	op                             Op
-	typ                            string
-	id                             *uuid.UUID
-	created_at                     *time.Time
-	updated_at                     *time.Time
-	name                           *string
-	endpoint                       *string
-	region                         *string
-	force_path_style               *bool
-	kubernetes_secret              *string
-	clearedFields                  map[string]struct{}
-	team                           *uuid.UUID
-	clearedteam                    bool
-	service_backup_endpoint        map[uuid.UUID]struct{}
-	removedservice_backup_endpoint map[uuid.UUID]struct{}
-	clearedservice_backup_endpoint bool
-	done                           bool
-	oldValue                       func(context.Context) (*S3, error)
-	predicates                     []predicate.S3
+	op                           Op
+	typ                          string
+	id                           *uuid.UUID
+	created_at                   *time.Time
+	updated_at                   *time.Time
+	name                         *string
+	endpoint                     *string
+	region                       *string
+	force_path_style             *bool
+	kubernetes_secret            *string
+	clearedFields                map[string]struct{}
+	team                         *uuid.UUID
+	clearedteam                  bool
+	service_backup_source        map[uuid.UUID]struct{}
+	removedservice_backup_source map[uuid.UUID]struct{}
+	clearedservice_backup_source bool
+	done                         bool
+	oldValue                     func(context.Context) (*S3, error)
+	predicates                   []predicate.S3
 }
 
 var _ ent.Mutation = (*S3Mutation)(nil)
@@ -10299,58 +10299,58 @@ func (m *S3Mutation) ResetTeam() {
 	m.clearedteam = false
 }
 
-// AddServiceBackupEndpointIDs adds the "service_backup_endpoint" edge to the ServiceConfig entity by ids.
-func (m *S3Mutation) AddServiceBackupEndpointIDs(ids ...uuid.UUID) {
-	if m.service_backup_endpoint == nil {
-		m.service_backup_endpoint = make(map[uuid.UUID]struct{})
+// AddServiceBackupSourceIDs adds the "service_backup_source" edge to the ServiceConfig entity by ids.
+func (m *S3Mutation) AddServiceBackupSourceIDs(ids ...uuid.UUID) {
+	if m.service_backup_source == nil {
+		m.service_backup_source = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.service_backup_endpoint[ids[i]] = struct{}{}
+		m.service_backup_source[ids[i]] = struct{}{}
 	}
 }
 
-// ClearServiceBackupEndpoint clears the "service_backup_endpoint" edge to the ServiceConfig entity.
-func (m *S3Mutation) ClearServiceBackupEndpoint() {
-	m.clearedservice_backup_endpoint = true
+// ClearServiceBackupSource clears the "service_backup_source" edge to the ServiceConfig entity.
+func (m *S3Mutation) ClearServiceBackupSource() {
+	m.clearedservice_backup_source = true
 }
 
-// ServiceBackupEndpointCleared reports if the "service_backup_endpoint" edge to the ServiceConfig entity was cleared.
-func (m *S3Mutation) ServiceBackupEndpointCleared() bool {
-	return m.clearedservice_backup_endpoint
+// ServiceBackupSourceCleared reports if the "service_backup_source" edge to the ServiceConfig entity was cleared.
+func (m *S3Mutation) ServiceBackupSourceCleared() bool {
+	return m.clearedservice_backup_source
 }
 
-// RemoveServiceBackupEndpointIDs removes the "service_backup_endpoint" edge to the ServiceConfig entity by IDs.
-func (m *S3Mutation) RemoveServiceBackupEndpointIDs(ids ...uuid.UUID) {
-	if m.removedservice_backup_endpoint == nil {
-		m.removedservice_backup_endpoint = make(map[uuid.UUID]struct{})
+// RemoveServiceBackupSourceIDs removes the "service_backup_source" edge to the ServiceConfig entity by IDs.
+func (m *S3Mutation) RemoveServiceBackupSourceIDs(ids ...uuid.UUID) {
+	if m.removedservice_backup_source == nil {
+		m.removedservice_backup_source = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.service_backup_endpoint, ids[i])
-		m.removedservice_backup_endpoint[ids[i]] = struct{}{}
+		delete(m.service_backup_source, ids[i])
+		m.removedservice_backup_source[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedServiceBackupEndpoint returns the removed IDs of the "service_backup_endpoint" edge to the ServiceConfig entity.
-func (m *S3Mutation) RemovedServiceBackupEndpointIDs() (ids []uuid.UUID) {
-	for id := range m.removedservice_backup_endpoint {
+// RemovedServiceBackupSource returns the removed IDs of the "service_backup_source" edge to the ServiceConfig entity.
+func (m *S3Mutation) RemovedServiceBackupSourceIDs() (ids []uuid.UUID) {
+	for id := range m.removedservice_backup_source {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ServiceBackupEndpointIDs returns the "service_backup_endpoint" edge IDs in the mutation.
-func (m *S3Mutation) ServiceBackupEndpointIDs() (ids []uuid.UUID) {
-	for id := range m.service_backup_endpoint {
+// ServiceBackupSourceIDs returns the "service_backup_source" edge IDs in the mutation.
+func (m *S3Mutation) ServiceBackupSourceIDs() (ids []uuid.UUID) {
+	for id := range m.service_backup_source {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetServiceBackupEndpoint resets all changes to the "service_backup_endpoint" edge.
-func (m *S3Mutation) ResetServiceBackupEndpoint() {
-	m.service_backup_endpoint = nil
-	m.clearedservice_backup_endpoint = false
-	m.removedservice_backup_endpoint = nil
+// ResetServiceBackupSource resets all changes to the "service_backup_source" edge.
+func (m *S3Mutation) ResetServiceBackupSource() {
+	m.service_backup_source = nil
+	m.clearedservice_backup_source = false
+	m.removedservice_backup_source = nil
 }
 
 // Where appends a list predicates to the S3Mutation builder.
@@ -10609,8 +10609,8 @@ func (m *S3Mutation) AddedEdges() []string {
 	if m.team != nil {
 		edges = append(edges, s3.EdgeTeam)
 	}
-	if m.service_backup_endpoint != nil {
-		edges = append(edges, s3.EdgeServiceBackupEndpoint)
+	if m.service_backup_source != nil {
+		edges = append(edges, s3.EdgeServiceBackupSource)
 	}
 	return edges
 }
@@ -10623,9 +10623,9 @@ func (m *S3Mutation) AddedIDs(name string) []ent.Value {
 		if id := m.team; id != nil {
 			return []ent.Value{*id}
 		}
-	case s3.EdgeServiceBackupEndpoint:
-		ids := make([]ent.Value, 0, len(m.service_backup_endpoint))
-		for id := range m.service_backup_endpoint {
+	case s3.EdgeServiceBackupSource:
+		ids := make([]ent.Value, 0, len(m.service_backup_source))
+		for id := range m.service_backup_source {
 			ids = append(ids, id)
 		}
 		return ids
@@ -10636,8 +10636,8 @@ func (m *S3Mutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *S3Mutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedservice_backup_endpoint != nil {
-		edges = append(edges, s3.EdgeServiceBackupEndpoint)
+	if m.removedservice_backup_source != nil {
+		edges = append(edges, s3.EdgeServiceBackupSource)
 	}
 	return edges
 }
@@ -10646,9 +10646,9 @@ func (m *S3Mutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *S3Mutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case s3.EdgeServiceBackupEndpoint:
-		ids := make([]ent.Value, 0, len(m.removedservice_backup_endpoint))
-		for id := range m.removedservice_backup_endpoint {
+	case s3.EdgeServiceBackupSource:
+		ids := make([]ent.Value, 0, len(m.removedservice_backup_source))
+		for id := range m.removedservice_backup_source {
 			ids = append(ids, id)
 		}
 		return ids
@@ -10662,8 +10662,8 @@ func (m *S3Mutation) ClearedEdges() []string {
 	if m.clearedteam {
 		edges = append(edges, s3.EdgeTeam)
 	}
-	if m.clearedservice_backup_endpoint {
-		edges = append(edges, s3.EdgeServiceBackupEndpoint)
+	if m.clearedservice_backup_source {
+		edges = append(edges, s3.EdgeServiceBackupSource)
 	}
 	return edges
 }
@@ -10674,8 +10674,8 @@ func (m *S3Mutation) EdgeCleared(name string) bool {
 	switch name {
 	case s3.EdgeTeam:
 		return m.clearedteam
-	case s3.EdgeServiceBackupEndpoint:
-		return m.clearedservice_backup_endpoint
+	case s3.EdgeServiceBackupSource:
+		return m.clearedservice_backup_source
 	}
 	return false
 }
@@ -10698,8 +10698,8 @@ func (m *S3Mutation) ResetEdge(name string) error {
 	case s3.EdgeTeam:
 		m.ResetTeam()
 		return nil
-	case s3.EdgeServiceBackupEndpoint:
-		m.ResetServiceBackupEndpoint()
+	case s3.EdgeServiceBackupSource:
+		m.ResetServiceBackupSource()
 		return nil
 	}
 	return fmt.Errorf("unknown S3 edge %s", name)
@@ -12486,8 +12486,8 @@ type ServiceConfigMutation struct {
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
-	s3_backup_endpoint        *uuid.UUID
-	cleareds3_backup_endpoint bool
+	s3_backup_sources         *uuid.UUID
+	cleareds3_backup_sources  bool
 	done                      bool
 	oldValue                  func(context.Context) (*ServiceConfig, error)
 	predicates                []predicate.ServiceConfig
@@ -13623,53 +13623,53 @@ func (m *ServiceConfigMutation) ResetDatabaseConfig() {
 	delete(m.clearedFields, serviceconfig.FieldDatabaseConfig)
 }
 
-// SetS3BackupEndpointID sets the "s3_backup_endpoint_id" field.
-func (m *ServiceConfigMutation) SetS3BackupEndpointID(u uuid.UUID) {
-	m.s3_backup_endpoint = &u
+// SetS3BackupSourceID sets the "s3_backup_source_id" field.
+func (m *ServiceConfigMutation) SetS3BackupSourceID(u uuid.UUID) {
+	m.s3_backup_sources = &u
 }
 
-// S3BackupEndpointID returns the value of the "s3_backup_endpoint_id" field in the mutation.
-func (m *ServiceConfigMutation) S3BackupEndpointID() (r uuid.UUID, exists bool) {
-	v := m.s3_backup_endpoint
+// S3BackupSourceID returns the value of the "s3_backup_source_id" field in the mutation.
+func (m *ServiceConfigMutation) S3BackupSourceID() (r uuid.UUID, exists bool) {
+	v := m.s3_backup_sources
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldS3BackupEndpointID returns the old "s3_backup_endpoint_id" field's value of the ServiceConfig entity.
+// OldS3BackupSourceID returns the old "s3_backup_source_id" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldS3BackupEndpointID(ctx context.Context) (v *uuid.UUID, err error) {
+func (m *ServiceConfigMutation) OldS3BackupSourceID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldS3BackupEndpointID is only allowed on UpdateOne operations")
+		return v, errors.New("OldS3BackupSourceID is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldS3BackupEndpointID requires an ID field in the mutation")
+		return v, errors.New("OldS3BackupSourceID requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldS3BackupEndpointID: %w", err)
+		return v, fmt.Errorf("querying old value for OldS3BackupSourceID: %w", err)
 	}
-	return oldValue.S3BackupEndpointID, nil
+	return oldValue.S3BackupSourceID, nil
 }
 
-// ClearS3BackupEndpointID clears the value of the "s3_backup_endpoint_id" field.
-func (m *ServiceConfigMutation) ClearS3BackupEndpointID() {
-	m.s3_backup_endpoint = nil
-	m.clearedFields[serviceconfig.FieldS3BackupEndpointID] = struct{}{}
+// ClearS3BackupSourceID clears the value of the "s3_backup_source_id" field.
+func (m *ServiceConfigMutation) ClearS3BackupSourceID() {
+	m.s3_backup_sources = nil
+	m.clearedFields[serviceconfig.FieldS3BackupSourceID] = struct{}{}
 }
 
-// S3BackupEndpointIDCleared returns if the "s3_backup_endpoint_id" field was cleared in this mutation.
-func (m *ServiceConfigMutation) S3BackupEndpointIDCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldS3BackupEndpointID]
+// S3BackupSourceIDCleared returns if the "s3_backup_source_id" field was cleared in this mutation.
+func (m *ServiceConfigMutation) S3BackupSourceIDCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldS3BackupSourceID]
 	return ok
 }
 
-// ResetS3BackupEndpointID resets all changes to the "s3_backup_endpoint_id" field.
-func (m *ServiceConfigMutation) ResetS3BackupEndpointID() {
-	m.s3_backup_endpoint = nil
-	delete(m.clearedFields, serviceconfig.FieldS3BackupEndpointID)
+// ResetS3BackupSourceID resets all changes to the "s3_backup_source_id" field.
+func (m *ServiceConfigMutation) ResetS3BackupSourceID() {
+	m.s3_backup_sources = nil
+	delete(m.clearedFields, serviceconfig.FieldS3BackupSourceID)
 }
 
 // SetS3BackupBucket sets the "s3_backup_bucket" field.
@@ -14101,31 +14101,44 @@ func (m *ServiceConfigMutation) ResetService() {
 	m.clearedservice = false
 }
 
-// ClearS3BackupEndpoint clears the "s3_backup_endpoint" edge to the S3 entity.
-func (m *ServiceConfigMutation) ClearS3BackupEndpoint() {
-	m.cleareds3_backup_endpoint = true
-	m.clearedFields[serviceconfig.FieldS3BackupEndpointID] = struct{}{}
+// SetS3BackupSourcesID sets the "s3_backup_sources" edge to the S3 entity by id.
+func (m *ServiceConfigMutation) SetS3BackupSourcesID(id uuid.UUID) {
+	m.s3_backup_sources = &id
 }
 
-// S3BackupEndpointCleared reports if the "s3_backup_endpoint" edge to the S3 entity was cleared.
-func (m *ServiceConfigMutation) S3BackupEndpointCleared() bool {
-	return m.S3BackupEndpointIDCleared() || m.cleareds3_backup_endpoint
+// ClearS3BackupSources clears the "s3_backup_sources" edge to the S3 entity.
+func (m *ServiceConfigMutation) ClearS3BackupSources() {
+	m.cleareds3_backup_sources = true
+	m.clearedFields[serviceconfig.FieldS3BackupSourceID] = struct{}{}
 }
 
-// S3BackupEndpointIDs returns the "s3_backup_endpoint" edge IDs in the mutation.
+// S3BackupSourcesCleared reports if the "s3_backup_sources" edge to the S3 entity was cleared.
+func (m *ServiceConfigMutation) S3BackupSourcesCleared() bool {
+	return m.S3BackupSourceIDCleared() || m.cleareds3_backup_sources
+}
+
+// S3BackupSourcesID returns the "s3_backup_sources" edge ID in the mutation.
+func (m *ServiceConfigMutation) S3BackupSourcesID() (id uuid.UUID, exists bool) {
+	if m.s3_backup_sources != nil {
+		return *m.s3_backup_sources, true
+	}
+	return
+}
+
+// S3BackupSourcesIDs returns the "s3_backup_sources" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// S3BackupEndpointID instead. It exists only for internal usage by the builders.
-func (m *ServiceConfigMutation) S3BackupEndpointIDs() (ids []uuid.UUID) {
-	if id := m.s3_backup_endpoint; id != nil {
+// S3BackupSourcesID instead. It exists only for internal usage by the builders.
+func (m *ServiceConfigMutation) S3BackupSourcesIDs() (ids []uuid.UUID) {
+	if id := m.s3_backup_sources; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetS3BackupEndpoint resets all changes to the "s3_backup_endpoint" edge.
-func (m *ServiceConfigMutation) ResetS3BackupEndpoint() {
-	m.s3_backup_endpoint = nil
-	m.cleareds3_backup_endpoint = false
+// ResetS3BackupSources resets all changes to the "s3_backup_sources" edge.
+func (m *ServiceConfigMutation) ResetS3BackupSources() {
+	m.s3_backup_sources = nil
+	m.cleareds3_backup_sources = false
 }
 
 // Where appends a list predicates to the ServiceConfigMutation builder.
@@ -14229,8 +14242,8 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.database_config != nil {
 		fields = append(fields, serviceconfig.FieldDatabaseConfig)
 	}
-	if m.s3_backup_endpoint != nil {
-		fields = append(fields, serviceconfig.FieldS3BackupEndpointID)
+	if m.s3_backup_sources != nil {
+		fields = append(fields, serviceconfig.FieldS3BackupSourceID)
 	}
 	if m.s3_backup_bucket != nil {
 		fields = append(fields, serviceconfig.FieldS3BackupBucket)
@@ -14308,8 +14321,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.DefinitionVersion()
 	case serviceconfig.FieldDatabaseConfig:
 		return m.DatabaseConfig()
-	case serviceconfig.FieldS3BackupEndpointID:
-		return m.S3BackupEndpointID()
+	case serviceconfig.FieldS3BackupSourceID:
+		return m.S3BackupSourceID()
 	case serviceconfig.FieldS3BackupBucket:
 		return m.S3BackupBucket()
 	case serviceconfig.FieldBackupSchedule:
@@ -14379,8 +14392,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldDefinitionVersion(ctx)
 	case serviceconfig.FieldDatabaseConfig:
 		return m.OldDatabaseConfig(ctx)
-	case serviceconfig.FieldS3BackupEndpointID:
-		return m.OldS3BackupEndpointID(ctx)
+	case serviceconfig.FieldS3BackupSourceID:
+		return m.OldS3BackupSourceID(ctx)
 	case serviceconfig.FieldS3BackupBucket:
 		return m.OldS3BackupBucket(ctx)
 	case serviceconfig.FieldBackupSchedule:
@@ -14560,12 +14573,12 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetDatabaseConfig(v)
 		return nil
-	case serviceconfig.FieldS3BackupEndpointID:
+	case serviceconfig.FieldS3BackupSourceID:
 		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetS3BackupEndpointID(v)
+		m.SetS3BackupSourceID(v)
 		return nil
 	case serviceconfig.FieldS3BackupBucket:
 		v, ok := value.(string)
@@ -14722,8 +14735,8 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldDatabaseConfig) {
 		fields = append(fields, serviceconfig.FieldDatabaseConfig)
 	}
-	if m.FieldCleared(serviceconfig.FieldS3BackupEndpointID) {
-		fields = append(fields, serviceconfig.FieldS3BackupEndpointID)
+	if m.FieldCleared(serviceconfig.FieldS3BackupSourceID) {
+		fields = append(fields, serviceconfig.FieldS3BackupSourceID)
 	}
 	if m.FieldCleared(serviceconfig.FieldS3BackupBucket) {
 		fields = append(fields, serviceconfig.FieldS3BackupBucket)
@@ -14799,8 +14812,8 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 	case serviceconfig.FieldDatabaseConfig:
 		m.ClearDatabaseConfig()
 		return nil
-	case serviceconfig.FieldS3BackupEndpointID:
-		m.ClearS3BackupEndpointID()
+	case serviceconfig.FieldS3BackupSourceID:
+		m.ClearS3BackupSourceID()
 		return nil
 	case serviceconfig.FieldS3BackupBucket:
 		m.ClearS3BackupBucket()
@@ -14894,8 +14907,8 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 	case serviceconfig.FieldDatabaseConfig:
 		m.ResetDatabaseConfig()
 		return nil
-	case serviceconfig.FieldS3BackupEndpointID:
-		m.ResetS3BackupEndpointID()
+	case serviceconfig.FieldS3BackupSourceID:
+		m.ResetS3BackupSourceID()
 		return nil
 	case serviceconfig.FieldS3BackupBucket:
 		m.ResetS3BackupBucket()
@@ -14931,8 +14944,8 @@ func (m *ServiceConfigMutation) AddedEdges() []string {
 	if m.service != nil {
 		edges = append(edges, serviceconfig.EdgeService)
 	}
-	if m.s3_backup_endpoint != nil {
-		edges = append(edges, serviceconfig.EdgeS3BackupEndpoint)
+	if m.s3_backup_sources != nil {
+		edges = append(edges, serviceconfig.EdgeS3BackupSources)
 	}
 	return edges
 }
@@ -14945,8 +14958,8 @@ func (m *ServiceConfigMutation) AddedIDs(name string) []ent.Value {
 		if id := m.service; id != nil {
 			return []ent.Value{*id}
 		}
-	case serviceconfig.EdgeS3BackupEndpoint:
-		if id := m.s3_backup_endpoint; id != nil {
+	case serviceconfig.EdgeS3BackupSources:
+		if id := m.s3_backup_sources; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -14971,8 +14984,8 @@ func (m *ServiceConfigMutation) ClearedEdges() []string {
 	if m.clearedservice {
 		edges = append(edges, serviceconfig.EdgeService)
 	}
-	if m.cleareds3_backup_endpoint {
-		edges = append(edges, serviceconfig.EdgeS3BackupEndpoint)
+	if m.cleareds3_backup_sources {
+		edges = append(edges, serviceconfig.EdgeS3BackupSources)
 	}
 	return edges
 }
@@ -14983,8 +14996,8 @@ func (m *ServiceConfigMutation) EdgeCleared(name string) bool {
 	switch name {
 	case serviceconfig.EdgeService:
 		return m.clearedservice
-	case serviceconfig.EdgeS3BackupEndpoint:
-		return m.cleareds3_backup_endpoint
+	case serviceconfig.EdgeS3BackupSources:
+		return m.cleareds3_backup_sources
 	}
 	return false
 }
@@ -14996,8 +15009,8 @@ func (m *ServiceConfigMutation) ClearEdge(name string) error {
 	case serviceconfig.EdgeService:
 		m.ClearService()
 		return nil
-	case serviceconfig.EdgeS3BackupEndpoint:
-		m.ClearS3BackupEndpoint()
+	case serviceconfig.EdgeS3BackupSources:
+		m.ClearS3BackupSources()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig unique edge %s", name)
@@ -15010,8 +15023,8 @@ func (m *ServiceConfigMutation) ResetEdge(name string) error {
 	case serviceconfig.EdgeService:
 		m.ResetService()
 		return nil
-	case serviceconfig.EdgeS3BackupEndpoint:
-		m.ResetS3BackupEndpoint()
+	case serviceconfig.EdgeS3BackupSources:
+		m.ResetS3BackupSources()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig edge %s", name)
@@ -15569,9 +15582,9 @@ type TeamMutation struct {
 	projects             map[uuid.UUID]struct{}
 	removedprojects      map[uuid.UUID]struct{}
 	clearedprojects      bool
-	s3_endpoints         map[uuid.UUID]struct{}
-	removeds3_endpoints  map[uuid.UUID]struct{}
-	cleareds3_endpoints  bool
+	s3_sources           map[uuid.UUID]struct{}
+	removeds3_sources    map[uuid.UUID]struct{}
+	cleareds3_sources    bool
 	members              map[uuid.UUID]struct{}
 	removedmembers       map[uuid.UUID]struct{}
 	clearedmembers       bool
@@ -16006,58 +16019,58 @@ func (m *TeamMutation) ResetProjects() {
 	m.removedprojects = nil
 }
 
-// AddS3EndpointIDs adds the "s3_endpoints" edge to the S3 entity by ids.
-func (m *TeamMutation) AddS3EndpointIDs(ids ...uuid.UUID) {
-	if m.s3_endpoints == nil {
-		m.s3_endpoints = make(map[uuid.UUID]struct{})
+// AddS3SourceIDs adds the "s3_sources" edge to the S3 entity by ids.
+func (m *TeamMutation) AddS3SourceIDs(ids ...uuid.UUID) {
+	if m.s3_sources == nil {
+		m.s3_sources = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.s3_endpoints[ids[i]] = struct{}{}
+		m.s3_sources[ids[i]] = struct{}{}
 	}
 }
 
-// ClearS3Endpoints clears the "s3_endpoints" edge to the S3 entity.
-func (m *TeamMutation) ClearS3Endpoints() {
-	m.cleareds3_endpoints = true
+// ClearS3Sources clears the "s3_sources" edge to the S3 entity.
+func (m *TeamMutation) ClearS3Sources() {
+	m.cleareds3_sources = true
 }
 
-// S3EndpointsCleared reports if the "s3_endpoints" edge to the S3 entity was cleared.
-func (m *TeamMutation) S3EndpointsCleared() bool {
-	return m.cleareds3_endpoints
+// S3SourcesCleared reports if the "s3_sources" edge to the S3 entity was cleared.
+func (m *TeamMutation) S3SourcesCleared() bool {
+	return m.cleareds3_sources
 }
 
-// RemoveS3EndpointIDs removes the "s3_endpoints" edge to the S3 entity by IDs.
-func (m *TeamMutation) RemoveS3EndpointIDs(ids ...uuid.UUID) {
-	if m.removeds3_endpoints == nil {
-		m.removeds3_endpoints = make(map[uuid.UUID]struct{})
+// RemoveS3SourceIDs removes the "s3_sources" edge to the S3 entity by IDs.
+func (m *TeamMutation) RemoveS3SourceIDs(ids ...uuid.UUID) {
+	if m.removeds3_sources == nil {
+		m.removeds3_sources = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.s3_endpoints, ids[i])
-		m.removeds3_endpoints[ids[i]] = struct{}{}
+		delete(m.s3_sources, ids[i])
+		m.removeds3_sources[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedS3Endpoints returns the removed IDs of the "s3_endpoints" edge to the S3 entity.
-func (m *TeamMutation) RemovedS3EndpointsIDs() (ids []uuid.UUID) {
-	for id := range m.removeds3_endpoints {
+// RemovedS3Sources returns the removed IDs of the "s3_sources" edge to the S3 entity.
+func (m *TeamMutation) RemovedS3SourcesIDs() (ids []uuid.UUID) {
+	for id := range m.removeds3_sources {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// S3EndpointsIDs returns the "s3_endpoints" edge IDs in the mutation.
-func (m *TeamMutation) S3EndpointsIDs() (ids []uuid.UUID) {
-	for id := range m.s3_endpoints {
+// S3SourcesIDs returns the "s3_sources" edge IDs in the mutation.
+func (m *TeamMutation) S3SourcesIDs() (ids []uuid.UUID) {
+	for id := range m.s3_sources {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetS3Endpoints resets all changes to the "s3_endpoints" edge.
-func (m *TeamMutation) ResetS3Endpoints() {
-	m.s3_endpoints = nil
-	m.cleareds3_endpoints = false
-	m.removeds3_endpoints = nil
+// ResetS3Sources resets all changes to the "s3_sources" edge.
+func (m *TeamMutation) ResetS3Sources() {
+	m.s3_sources = nil
+	m.cleareds3_sources = false
+	m.removeds3_sources = nil
 }
 
 // AddMemberIDs adds the "members" edge to the User entity by ids.
@@ -16416,8 +16429,8 @@ func (m *TeamMutation) AddedEdges() []string {
 	if m.projects != nil {
 		edges = append(edges, team.EdgeProjects)
 	}
-	if m.s3_endpoints != nil {
-		edges = append(edges, team.EdgeS3Endpoints)
+	if m.s3_sources != nil {
+		edges = append(edges, team.EdgeS3Sources)
 	}
 	if m.members != nil {
 		edges = append(edges, team.EdgeMembers)
@@ -16438,9 +16451,9 @@ func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case team.EdgeS3Endpoints:
-		ids := make([]ent.Value, 0, len(m.s3_endpoints))
-		for id := range m.s3_endpoints {
+	case team.EdgeS3Sources:
+		ids := make([]ent.Value, 0, len(m.s3_sources))
+		for id := range m.s3_sources {
 			ids = append(ids, id)
 		}
 		return ids
@@ -16466,8 +16479,8 @@ func (m *TeamMutation) RemovedEdges() []string {
 	if m.removedprojects != nil {
 		edges = append(edges, team.EdgeProjects)
 	}
-	if m.removeds3_endpoints != nil {
-		edges = append(edges, team.EdgeS3Endpoints)
+	if m.removeds3_sources != nil {
+		edges = append(edges, team.EdgeS3Sources)
 	}
 	if m.removedmembers != nil {
 		edges = append(edges, team.EdgeMembers)
@@ -16488,9 +16501,9 @@ func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case team.EdgeS3Endpoints:
-		ids := make([]ent.Value, 0, len(m.removeds3_endpoints))
-		for id := range m.removeds3_endpoints {
+	case team.EdgeS3Sources:
+		ids := make([]ent.Value, 0, len(m.removeds3_sources))
+		for id := range m.removeds3_sources {
 			ids = append(ids, id)
 		}
 		return ids
@@ -16516,8 +16529,8 @@ func (m *TeamMutation) ClearedEdges() []string {
 	if m.clearedprojects {
 		edges = append(edges, team.EdgeProjects)
 	}
-	if m.cleareds3_endpoints {
-		edges = append(edges, team.EdgeS3Endpoints)
+	if m.cleareds3_sources {
+		edges = append(edges, team.EdgeS3Sources)
 	}
 	if m.clearedmembers {
 		edges = append(edges, team.EdgeMembers)
@@ -16534,8 +16547,8 @@ func (m *TeamMutation) EdgeCleared(name string) bool {
 	switch name {
 	case team.EdgeProjects:
 		return m.clearedprojects
-	case team.EdgeS3Endpoints:
-		return m.cleareds3_endpoints
+	case team.EdgeS3Sources:
+		return m.cleareds3_sources
 	case team.EdgeMembers:
 		return m.clearedmembers
 	case team.EdgeTeamWebhooks:
@@ -16559,8 +16572,8 @@ func (m *TeamMutation) ResetEdge(name string) error {
 	case team.EdgeProjects:
 		m.ResetProjects()
 		return nil
-	case team.EdgeS3Endpoints:
-		m.ResetS3Endpoints()
+	case team.EdgeS3Sources:
+		m.ResetS3Sources()
 		return nil
 	case team.EdgeMembers:
 		m.ResetMembers()

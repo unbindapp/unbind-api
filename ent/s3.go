@@ -46,8 +46,8 @@ type S3 struct {
 type S3Edges struct {
 	// Team holds the value of the team edge.
 	Team *Team `json:"team,omitempty"`
-	// ServiceBackupEndpoint holds the value of the service_backup_endpoint edge.
-	ServiceBackupEndpoint []*ServiceConfig `json:"service_backup_endpoint,omitempty"`
+	// ServiceBackupSource holds the value of the service_backup_source edge.
+	ServiceBackupSource []*ServiceConfig `json:"service_backup_source,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -64,13 +64,13 @@ func (e S3Edges) TeamOrErr() (*Team, error) {
 	return nil, &NotLoadedError{edge: "team"}
 }
 
-// ServiceBackupEndpointOrErr returns the ServiceBackupEndpoint value or an error if the edge
+// ServiceBackupSourceOrErr returns the ServiceBackupSource value or an error if the edge
 // was not loaded in eager-loading.
-func (e S3Edges) ServiceBackupEndpointOrErr() ([]*ServiceConfig, error) {
+func (e S3Edges) ServiceBackupSourceOrErr() ([]*ServiceConfig, error) {
 	if e.loadedTypes[1] {
-		return e.ServiceBackupEndpoint, nil
+		return e.ServiceBackupSource, nil
 	}
-	return nil, &NotLoadedError{edge: "service_backup_endpoint"}
+	return nil, &NotLoadedError{edge: "service_backup_source"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -173,9 +173,9 @@ func (s *S3) QueryTeam() *TeamQuery {
 	return NewS3Client(s.config).QueryTeam(s)
 }
 
-// QueryServiceBackupEndpoint queries the "service_backup_endpoint" edge of the S3 entity.
-func (s *S3) QueryServiceBackupEndpoint() *ServiceConfigQuery {
-	return NewS3Client(s.config).QueryServiceBackupEndpoint(s)
+// QueryServiceBackupSource queries the "service_backup_source" edge of the S3 entity.
+func (s *S3) QueryServiceBackupSource() *ServiceConfigQuery {
+	return NewS3Client(s.config).QueryServiceBackupSource(s)
 }
 
 // Update returns a builder for updating this S3.

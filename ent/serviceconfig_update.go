@@ -401,23 +401,23 @@ func (scu *ServiceConfigUpdate) ClearDatabaseConfig() *ServiceConfigUpdate {
 	return scu
 }
 
-// SetS3BackupEndpointID sets the "s3_backup_endpoint_id" field.
-func (scu *ServiceConfigUpdate) SetS3BackupEndpointID(u uuid.UUID) *ServiceConfigUpdate {
-	scu.mutation.SetS3BackupEndpointID(u)
+// SetS3BackupSourceID sets the "s3_backup_source_id" field.
+func (scu *ServiceConfigUpdate) SetS3BackupSourceID(u uuid.UUID) *ServiceConfigUpdate {
+	scu.mutation.SetS3BackupSourceID(u)
 	return scu
 }
 
-// SetNillableS3BackupEndpointID sets the "s3_backup_endpoint_id" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableS3BackupEndpointID(u *uuid.UUID) *ServiceConfigUpdate {
+// SetNillableS3BackupSourceID sets the "s3_backup_source_id" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableS3BackupSourceID(u *uuid.UUID) *ServiceConfigUpdate {
 	if u != nil {
-		scu.SetS3BackupEndpointID(*u)
+		scu.SetS3BackupSourceID(*u)
 	}
 	return scu
 }
 
-// ClearS3BackupEndpointID clears the value of the "s3_backup_endpoint_id" field.
-func (scu *ServiceConfigUpdate) ClearS3BackupEndpointID() *ServiceConfigUpdate {
-	scu.mutation.ClearS3BackupEndpointID()
+// ClearS3BackupSourceID clears the value of the "s3_backup_source_id" field.
+func (scu *ServiceConfigUpdate) ClearS3BackupSourceID() *ServiceConfigUpdate {
+	scu.mutation.ClearS3BackupSourceID()
 	return scu
 }
 
@@ -563,9 +563,23 @@ func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
 }
 
-// SetS3BackupEndpoint sets the "s3_backup_endpoint" edge to the S3 entity.
-func (scu *ServiceConfigUpdate) SetS3BackupEndpoint(s *S3) *ServiceConfigUpdate {
-	return scu.SetS3BackupEndpointID(s.ID)
+// SetS3BackupSourcesID sets the "s3_backup_sources" edge to the S3 entity by ID.
+func (scu *ServiceConfigUpdate) SetS3BackupSourcesID(id uuid.UUID) *ServiceConfigUpdate {
+	scu.mutation.SetS3BackupSourcesID(id)
+	return scu
+}
+
+// SetNillableS3BackupSourcesID sets the "s3_backup_sources" edge to the S3 entity by ID if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableS3BackupSourcesID(id *uuid.UUID) *ServiceConfigUpdate {
+	if id != nil {
+		scu = scu.SetS3BackupSourcesID(*id)
+	}
+	return scu
+}
+
+// SetS3BackupSources sets the "s3_backup_sources" edge to the S3 entity.
+func (scu *ServiceConfigUpdate) SetS3BackupSources(s *S3) *ServiceConfigUpdate {
+	return scu.SetS3BackupSourcesID(s.ID)
 }
 
 // Mutation returns the ServiceConfigMutation object of the builder.
@@ -579,9 +593,9 @@ func (scu *ServiceConfigUpdate) ClearService() *ServiceConfigUpdate {
 	return scu
 }
 
-// ClearS3BackupEndpoint clears the "s3_backup_endpoint" edge to the S3 entity.
-func (scu *ServiceConfigUpdate) ClearS3BackupEndpoint() *ServiceConfigUpdate {
-	scu.mutation.ClearS3BackupEndpoint()
+// ClearS3BackupSources clears the "s3_backup_sources" edge to the S3 entity.
+func (scu *ServiceConfigUpdate) ClearS3BackupSources() *ServiceConfigUpdate {
+	scu.mutation.ClearS3BackupSources()
 	return scu
 }
 
@@ -856,12 +870,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if scu.mutation.S3BackupEndpointCleared() {
+	if scu.mutation.S3BackupSourcesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   serviceconfig.S3BackupEndpointTable,
-			Columns: []string{serviceconfig.S3BackupEndpointColumn},
+			Table:   serviceconfig.S3BackupSourcesTable,
+			Columns: []string{serviceconfig.S3BackupSourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -869,12 +883,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := scu.mutation.S3BackupEndpointIDs(); len(nodes) > 0 {
+	if nodes := scu.mutation.S3BackupSourcesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   serviceconfig.S3BackupEndpointTable,
-			Columns: []string{serviceconfig.S3BackupEndpointColumn},
+			Table:   serviceconfig.S3BackupSourcesTable,
+			Columns: []string{serviceconfig.S3BackupSourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -1272,23 +1286,23 @@ func (scuo *ServiceConfigUpdateOne) ClearDatabaseConfig() *ServiceConfigUpdateOn
 	return scuo
 }
 
-// SetS3BackupEndpointID sets the "s3_backup_endpoint_id" field.
-func (scuo *ServiceConfigUpdateOne) SetS3BackupEndpointID(u uuid.UUID) *ServiceConfigUpdateOne {
-	scuo.mutation.SetS3BackupEndpointID(u)
+// SetS3BackupSourceID sets the "s3_backup_source_id" field.
+func (scuo *ServiceConfigUpdateOne) SetS3BackupSourceID(u uuid.UUID) *ServiceConfigUpdateOne {
+	scuo.mutation.SetS3BackupSourceID(u)
 	return scuo
 }
 
-// SetNillableS3BackupEndpointID sets the "s3_backup_endpoint_id" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableS3BackupEndpointID(u *uuid.UUID) *ServiceConfigUpdateOne {
+// SetNillableS3BackupSourceID sets the "s3_backup_source_id" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableS3BackupSourceID(u *uuid.UUID) *ServiceConfigUpdateOne {
 	if u != nil {
-		scuo.SetS3BackupEndpointID(*u)
+		scuo.SetS3BackupSourceID(*u)
 	}
 	return scuo
 }
 
-// ClearS3BackupEndpointID clears the value of the "s3_backup_endpoint_id" field.
-func (scuo *ServiceConfigUpdateOne) ClearS3BackupEndpointID() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearS3BackupEndpointID()
+// ClearS3BackupSourceID clears the value of the "s3_backup_source_id" field.
+func (scuo *ServiceConfigUpdateOne) ClearS3BackupSourceID() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearS3BackupSourceID()
 	return scuo
 }
 
@@ -1434,9 +1448,23 @@ func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateO
 	return scuo.SetServiceID(s.ID)
 }
 
-// SetS3BackupEndpoint sets the "s3_backup_endpoint" edge to the S3 entity.
-func (scuo *ServiceConfigUpdateOne) SetS3BackupEndpoint(s *S3) *ServiceConfigUpdateOne {
-	return scuo.SetS3BackupEndpointID(s.ID)
+// SetS3BackupSourcesID sets the "s3_backup_sources" edge to the S3 entity by ID.
+func (scuo *ServiceConfigUpdateOne) SetS3BackupSourcesID(id uuid.UUID) *ServiceConfigUpdateOne {
+	scuo.mutation.SetS3BackupSourcesID(id)
+	return scuo
+}
+
+// SetNillableS3BackupSourcesID sets the "s3_backup_sources" edge to the S3 entity by ID if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableS3BackupSourcesID(id *uuid.UUID) *ServiceConfigUpdateOne {
+	if id != nil {
+		scuo = scuo.SetS3BackupSourcesID(*id)
+	}
+	return scuo
+}
+
+// SetS3BackupSources sets the "s3_backup_sources" edge to the S3 entity.
+func (scuo *ServiceConfigUpdateOne) SetS3BackupSources(s *S3) *ServiceConfigUpdateOne {
+	return scuo.SetS3BackupSourcesID(s.ID)
 }
 
 // Mutation returns the ServiceConfigMutation object of the builder.
@@ -1450,9 +1478,9 @@ func (scuo *ServiceConfigUpdateOne) ClearService() *ServiceConfigUpdateOne {
 	return scuo
 }
 
-// ClearS3BackupEndpoint clears the "s3_backup_endpoint" edge to the S3 entity.
-func (scuo *ServiceConfigUpdateOne) ClearS3BackupEndpoint() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearS3BackupEndpoint()
+// ClearS3BackupSources clears the "s3_backup_sources" edge to the S3 entity.
+func (scuo *ServiceConfigUpdateOne) ClearS3BackupSources() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearS3BackupSources()
 	return scuo
 }
 
@@ -1757,12 +1785,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if scuo.mutation.S3BackupEndpointCleared() {
+	if scuo.mutation.S3BackupSourcesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   serviceconfig.S3BackupEndpointTable,
-			Columns: []string{serviceconfig.S3BackupEndpointColumn},
+			Table:   serviceconfig.S3BackupSourcesTable,
+			Columns: []string{serviceconfig.S3BackupSourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -1770,12 +1798,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := scuo.mutation.S3BackupEndpointIDs(); len(nodes) > 0 {
+	if nodes := scuo.mutation.S3BackupSourcesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   serviceconfig.S3BackupEndpointTable,
-			Columns: []string{serviceconfig.S3BackupEndpointColumn},
+			Table:   serviceconfig.S3BackupSourcesTable,
+			Columns: []string{serviceconfig.S3BackupSourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),

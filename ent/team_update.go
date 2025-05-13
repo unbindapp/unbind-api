@@ -131,19 +131,19 @@ func (tu *TeamUpdate) AddProjects(p ...*Project) *TeamUpdate {
 	return tu.AddProjectIDs(ids...)
 }
 
-// AddS3EndpointIDs adds the "s3_endpoints" edge to the S3 entity by IDs.
-func (tu *TeamUpdate) AddS3EndpointIDs(ids ...uuid.UUID) *TeamUpdate {
-	tu.mutation.AddS3EndpointIDs(ids...)
+// AddS3SourceIDs adds the "s3_sources" edge to the S3 entity by IDs.
+func (tu *TeamUpdate) AddS3SourceIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.AddS3SourceIDs(ids...)
 	return tu
 }
 
-// AddS3Endpoints adds the "s3_endpoints" edges to the S3 entity.
-func (tu *TeamUpdate) AddS3Endpoints(s ...*S3) *TeamUpdate {
+// AddS3Sources adds the "s3_sources" edges to the S3 entity.
+func (tu *TeamUpdate) AddS3Sources(s ...*S3) *TeamUpdate {
 	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
-	return tu.AddS3EndpointIDs(ids...)
+	return tu.AddS3SourceIDs(ids...)
 }
 
 // AddMemberIDs adds the "members" edge to the User entity by IDs.
@@ -202,25 +202,25 @@ func (tu *TeamUpdate) RemoveProjects(p ...*Project) *TeamUpdate {
 	return tu.RemoveProjectIDs(ids...)
 }
 
-// ClearS3Endpoints clears all "s3_endpoints" edges to the S3 entity.
-func (tu *TeamUpdate) ClearS3Endpoints() *TeamUpdate {
-	tu.mutation.ClearS3Endpoints()
+// ClearS3Sources clears all "s3_sources" edges to the S3 entity.
+func (tu *TeamUpdate) ClearS3Sources() *TeamUpdate {
+	tu.mutation.ClearS3Sources()
 	return tu
 }
 
-// RemoveS3EndpointIDs removes the "s3_endpoints" edge to S3 entities by IDs.
-func (tu *TeamUpdate) RemoveS3EndpointIDs(ids ...uuid.UUID) *TeamUpdate {
-	tu.mutation.RemoveS3EndpointIDs(ids...)
+// RemoveS3SourceIDs removes the "s3_sources" edge to S3 entities by IDs.
+func (tu *TeamUpdate) RemoveS3SourceIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.RemoveS3SourceIDs(ids...)
 	return tu
 }
 
-// RemoveS3Endpoints removes "s3_endpoints" edges to S3 entities.
-func (tu *TeamUpdate) RemoveS3Endpoints(s ...*S3) *TeamUpdate {
+// RemoveS3Sources removes "s3_sources" edges to S3 entities.
+func (tu *TeamUpdate) RemoveS3Sources(s ...*S3) *TeamUpdate {
 	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
-	return tu.RemoveS3EndpointIDs(ids...)
+	return tu.RemoveS3SourceIDs(ids...)
 }
 
 // ClearMembers clears all "members" edges to the User entity.
@@ -395,12 +395,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.mutation.S3EndpointsCleared() {
+	if tu.mutation.S3SourcesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   team.S3EndpointsTable,
-			Columns: []string{team.S3EndpointsColumn},
+			Table:   team.S3SourcesTable,
+			Columns: []string{team.S3SourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -408,12 +408,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedS3EndpointsIDs(); len(nodes) > 0 && !tu.mutation.S3EndpointsCleared() {
+	if nodes := tu.mutation.RemovedS3SourcesIDs(); len(nodes) > 0 && !tu.mutation.S3SourcesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   team.S3EndpointsTable,
-			Columns: []string{team.S3EndpointsColumn},
+			Table:   team.S3SourcesTable,
+			Columns: []string{team.S3SourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -424,12 +424,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.S3EndpointsIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.S3SourcesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   team.S3EndpointsTable,
-			Columns: []string{team.S3EndpointsColumn},
+			Table:   team.S3SourcesTable,
+			Columns: []string{team.S3SourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -649,19 +649,19 @@ func (tuo *TeamUpdateOne) AddProjects(p ...*Project) *TeamUpdateOne {
 	return tuo.AddProjectIDs(ids...)
 }
 
-// AddS3EndpointIDs adds the "s3_endpoints" edge to the S3 entity by IDs.
-func (tuo *TeamUpdateOne) AddS3EndpointIDs(ids ...uuid.UUID) *TeamUpdateOne {
-	tuo.mutation.AddS3EndpointIDs(ids...)
+// AddS3SourceIDs adds the "s3_sources" edge to the S3 entity by IDs.
+func (tuo *TeamUpdateOne) AddS3SourceIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.AddS3SourceIDs(ids...)
 	return tuo
 }
 
-// AddS3Endpoints adds the "s3_endpoints" edges to the S3 entity.
-func (tuo *TeamUpdateOne) AddS3Endpoints(s ...*S3) *TeamUpdateOne {
+// AddS3Sources adds the "s3_sources" edges to the S3 entity.
+func (tuo *TeamUpdateOne) AddS3Sources(s ...*S3) *TeamUpdateOne {
 	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
-	return tuo.AddS3EndpointIDs(ids...)
+	return tuo.AddS3SourceIDs(ids...)
 }
 
 // AddMemberIDs adds the "members" edge to the User entity by IDs.
@@ -720,25 +720,25 @@ func (tuo *TeamUpdateOne) RemoveProjects(p ...*Project) *TeamUpdateOne {
 	return tuo.RemoveProjectIDs(ids...)
 }
 
-// ClearS3Endpoints clears all "s3_endpoints" edges to the S3 entity.
-func (tuo *TeamUpdateOne) ClearS3Endpoints() *TeamUpdateOne {
-	tuo.mutation.ClearS3Endpoints()
+// ClearS3Sources clears all "s3_sources" edges to the S3 entity.
+func (tuo *TeamUpdateOne) ClearS3Sources() *TeamUpdateOne {
+	tuo.mutation.ClearS3Sources()
 	return tuo
 }
 
-// RemoveS3EndpointIDs removes the "s3_endpoints" edge to S3 entities by IDs.
-func (tuo *TeamUpdateOne) RemoveS3EndpointIDs(ids ...uuid.UUID) *TeamUpdateOne {
-	tuo.mutation.RemoveS3EndpointIDs(ids...)
+// RemoveS3SourceIDs removes the "s3_sources" edge to S3 entities by IDs.
+func (tuo *TeamUpdateOne) RemoveS3SourceIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.RemoveS3SourceIDs(ids...)
 	return tuo
 }
 
-// RemoveS3Endpoints removes "s3_endpoints" edges to S3 entities.
-func (tuo *TeamUpdateOne) RemoveS3Endpoints(s ...*S3) *TeamUpdateOne {
+// RemoveS3Sources removes "s3_sources" edges to S3 entities.
+func (tuo *TeamUpdateOne) RemoveS3Sources(s ...*S3) *TeamUpdateOne {
 	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
-	return tuo.RemoveS3EndpointIDs(ids...)
+	return tuo.RemoveS3SourceIDs(ids...)
 }
 
 // ClearMembers clears all "members" edges to the User entity.
@@ -943,12 +943,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.mutation.S3EndpointsCleared() {
+	if tuo.mutation.S3SourcesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   team.S3EndpointsTable,
-			Columns: []string{team.S3EndpointsColumn},
+			Table:   team.S3SourcesTable,
+			Columns: []string{team.S3SourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -956,12 +956,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedS3EndpointsIDs(); len(nodes) > 0 && !tuo.mutation.S3EndpointsCleared() {
+	if nodes := tuo.mutation.RemovedS3SourcesIDs(); len(nodes) > 0 && !tuo.mutation.S3SourcesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   team.S3EndpointsTable,
-			Columns: []string{team.S3EndpointsColumn},
+			Table:   team.S3SourcesTable,
+			Columns: []string{team.S3SourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),
@@ -972,12 +972,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.S3EndpointsIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.S3SourcesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   team.S3EndpointsTable,
-			Columns: []string{team.S3EndpointsColumn},
+			Table:   team.S3SourcesTable,
+			Columns: []string{team.S3SourcesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(s3.FieldID, field.TypeUUID),

@@ -62,8 +62,8 @@ const (
 	FieldDefinitionVersion = "definition_version"
 	// FieldDatabaseConfig holds the string denoting the database_config field in the database.
 	FieldDatabaseConfig = "database_config"
-	// FieldS3BackupEndpointID holds the string denoting the s3_backup_endpoint_id field in the database.
-	FieldS3BackupEndpointID = "s3_backup_endpoint_id"
+	// FieldS3BackupSourceID holds the string denoting the s3_backup_source_id field in the database.
+	FieldS3BackupSourceID = "s3_backup_source_id"
 	// FieldS3BackupBucket holds the string denoting the s3_backup_bucket field in the database.
 	FieldS3BackupBucket = "s3_backup_bucket"
 	// FieldBackupSchedule holds the string denoting the backup_schedule field in the database.
@@ -82,8 +82,8 @@ const (
 	FieldVariableMounts = "variable_mounts"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
-	// EdgeS3BackupEndpoint holds the string denoting the s3_backup_endpoint edge name in mutations.
-	EdgeS3BackupEndpoint = "s3_backup_endpoint"
+	// EdgeS3BackupSources holds the string denoting the s3_backup_sources edge name in mutations.
+	EdgeS3BackupSources = "s3_backup_sources"
 	// Table holds the table name of the serviceconfig in the database.
 	Table = "service_configs"
 	// ServiceTable is the table that holds the service relation/edge.
@@ -93,13 +93,13 @@ const (
 	ServiceInverseTable = "services"
 	// ServiceColumn is the table column denoting the service relation/edge.
 	ServiceColumn = "service_id"
-	// S3BackupEndpointTable is the table that holds the s3_backup_endpoint relation/edge.
-	S3BackupEndpointTable = "service_configs"
-	// S3BackupEndpointInverseTable is the table name for the S3 entity.
+	// S3BackupSourcesTable is the table that holds the s3_backup_sources relation/edge.
+	S3BackupSourcesTable = "service_configs"
+	// S3BackupSourcesInverseTable is the table name for the S3 entity.
 	// It exists in this package in order to avoid circular dependency with the "s3" package.
-	S3BackupEndpointInverseTable = "s3_endpoints"
-	// S3BackupEndpointColumn is the table column denoting the s3_backup_endpoint relation/edge.
-	S3BackupEndpointColumn = "s3_backup_endpoint_id"
+	S3BackupSourcesInverseTable = "s3_sources"
+	// S3BackupSourcesColumn is the table column denoting the s3_backup_sources relation/edge.
+	S3BackupSourcesColumn = "s3_backup_source_id"
 )
 
 // Columns holds all SQL columns for serviceconfig fields.
@@ -127,7 +127,7 @@ var Columns = []string{
 	FieldImage,
 	FieldDefinitionVersion,
 	FieldDatabaseConfig,
-	FieldS3BackupEndpointID,
+	FieldS3BackupSourceID,
 	FieldS3BackupBucket,
 	FieldBackupSchedule,
 	FieldBackupRetentionCount,
@@ -302,9 +302,9 @@ func ByDefinitionVersion(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDefinitionVersion, opts...).ToFunc()
 }
 
-// ByS3BackupEndpointID orders the results by the s3_backup_endpoint_id field.
-func ByS3BackupEndpointID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldS3BackupEndpointID, opts...).ToFunc()
+// ByS3BackupSourceID orders the results by the s3_backup_source_id field.
+func ByS3BackupSourceID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldS3BackupSourceID, opts...).ToFunc()
 }
 
 // ByS3BackupBucket orders the results by the s3_backup_bucket field.
@@ -339,10 +339,10 @@ func ByServiceField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByS3BackupEndpointField orders the results by s3_backup_endpoint field.
-func ByS3BackupEndpointField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByS3BackupSourcesField orders the results by s3_backup_sources field.
+func ByS3BackupSourcesField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newS3BackupEndpointStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newS3BackupSourcesStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newServiceStep() *sqlgraph.Step {
@@ -352,10 +352,10 @@ func newServiceStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2O, true, ServiceTable, ServiceColumn),
 	)
 }
-func newS3BackupEndpointStep() *sqlgraph.Step {
+func newS3BackupSourcesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(S3BackupEndpointInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, S3BackupEndpointTable, S3BackupEndpointColumn),
+		sqlgraph.To(S3BackupSourcesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, S3BackupSourcesTable, S3BackupSourcesColumn),
 	)
 }

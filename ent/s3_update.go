@@ -127,19 +127,19 @@ func (s *S3Update) SetTeam(t *Team) *S3Update {
 	return s.SetTeamID(t.ID)
 }
 
-// AddServiceBackupEndpointIDs adds the "service_backup_endpoint" edge to the ServiceConfig entity by IDs.
-func (s *S3Update) AddServiceBackupEndpointIDs(ids ...uuid.UUID) *S3Update {
-	s.mutation.AddServiceBackupEndpointIDs(ids...)
+// AddServiceBackupSourceIDs adds the "service_backup_source" edge to the ServiceConfig entity by IDs.
+func (s *S3Update) AddServiceBackupSourceIDs(ids ...uuid.UUID) *S3Update {
+	s.mutation.AddServiceBackupSourceIDs(ids...)
 	return s
 }
 
-// AddServiceBackupEndpoint adds the "service_backup_endpoint" edges to the ServiceConfig entity.
-func (s *S3Update) AddServiceBackupEndpoint(v ...*ServiceConfig) *S3Update {
+// AddServiceBackupSource adds the "service_backup_source" edges to the ServiceConfig entity.
+func (s *S3Update) AddServiceBackupSource(v ...*ServiceConfig) *S3Update {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return s.AddServiceBackupEndpointIDs(ids...)
+	return s.AddServiceBackupSourceIDs(ids...)
 }
 
 // Mutation returns the S3Mutation object of the builder.
@@ -153,25 +153,25 @@ func (s *S3Update) ClearTeam() *S3Update {
 	return s
 }
 
-// ClearServiceBackupEndpoint clears all "service_backup_endpoint" edges to the ServiceConfig entity.
-func (s *S3Update) ClearServiceBackupEndpoint() *S3Update {
-	s.mutation.ClearServiceBackupEndpoint()
+// ClearServiceBackupSource clears all "service_backup_source" edges to the ServiceConfig entity.
+func (s *S3Update) ClearServiceBackupSource() *S3Update {
+	s.mutation.ClearServiceBackupSource()
 	return s
 }
 
-// RemoveServiceBackupEndpointIDs removes the "service_backup_endpoint" edge to ServiceConfig entities by IDs.
-func (s *S3Update) RemoveServiceBackupEndpointIDs(ids ...uuid.UUID) *S3Update {
-	s.mutation.RemoveServiceBackupEndpointIDs(ids...)
+// RemoveServiceBackupSourceIDs removes the "service_backup_source" edge to ServiceConfig entities by IDs.
+func (s *S3Update) RemoveServiceBackupSourceIDs(ids ...uuid.UUID) *S3Update {
+	s.mutation.RemoveServiceBackupSourceIDs(ids...)
 	return s
 }
 
-// RemoveServiceBackupEndpoint removes "service_backup_endpoint" edges to ServiceConfig entities.
-func (s *S3Update) RemoveServiceBackupEndpoint(v ...*ServiceConfig) *S3Update {
+// RemoveServiceBackupSource removes "service_backup_source" edges to ServiceConfig entities.
+func (s *S3Update) RemoveServiceBackupSource(v ...*ServiceConfig) *S3Update {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return s.RemoveServiceBackupEndpointIDs(ids...)
+	return s.RemoveServiceBackupSourceIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -288,12 +288,12 @@ func (s *S3Update) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if s.mutation.ServiceBackupEndpointCleared() {
+	if s.mutation.ServiceBackupSourceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   s3.ServiceBackupEndpointTable,
-			Columns: []string{s3.ServiceBackupEndpointColumn},
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -301,12 +301,12 @@ func (s *S3Update) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := s.mutation.RemovedServiceBackupEndpointIDs(); len(nodes) > 0 && !s.mutation.ServiceBackupEndpointCleared() {
+	if nodes := s.mutation.RemovedServiceBackupSourceIDs(); len(nodes) > 0 && !s.mutation.ServiceBackupSourceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   s3.ServiceBackupEndpointTable,
-			Columns: []string{s3.ServiceBackupEndpointColumn},
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -317,12 +317,12 @@ func (s *S3Update) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := s.mutation.ServiceBackupEndpointIDs(); len(nodes) > 0 {
+	if nodes := s.mutation.ServiceBackupSourceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   s3.ServiceBackupEndpointTable,
-			Columns: []string{s3.ServiceBackupEndpointColumn},
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -450,19 +450,19 @@ func (so *S3UpdateOne) SetTeam(t *Team) *S3UpdateOne {
 	return so.SetTeamID(t.ID)
 }
 
-// AddServiceBackupEndpointIDs adds the "service_backup_endpoint" edge to the ServiceConfig entity by IDs.
-func (so *S3UpdateOne) AddServiceBackupEndpointIDs(ids ...uuid.UUID) *S3UpdateOne {
-	so.mutation.AddServiceBackupEndpointIDs(ids...)
+// AddServiceBackupSourceIDs adds the "service_backup_source" edge to the ServiceConfig entity by IDs.
+func (so *S3UpdateOne) AddServiceBackupSourceIDs(ids ...uuid.UUID) *S3UpdateOne {
+	so.mutation.AddServiceBackupSourceIDs(ids...)
 	return so
 }
 
-// AddServiceBackupEndpoint adds the "service_backup_endpoint" edges to the ServiceConfig entity.
-func (so *S3UpdateOne) AddServiceBackupEndpoint(s ...*ServiceConfig) *S3UpdateOne {
+// AddServiceBackupSource adds the "service_backup_source" edges to the ServiceConfig entity.
+func (so *S3UpdateOne) AddServiceBackupSource(s ...*ServiceConfig) *S3UpdateOne {
 	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
-	return so.AddServiceBackupEndpointIDs(ids...)
+	return so.AddServiceBackupSourceIDs(ids...)
 }
 
 // Mutation returns the S3Mutation object of the builder.
@@ -476,25 +476,25 @@ func (so *S3UpdateOne) ClearTeam() *S3UpdateOne {
 	return so
 }
 
-// ClearServiceBackupEndpoint clears all "service_backup_endpoint" edges to the ServiceConfig entity.
-func (so *S3UpdateOne) ClearServiceBackupEndpoint() *S3UpdateOne {
-	so.mutation.ClearServiceBackupEndpoint()
+// ClearServiceBackupSource clears all "service_backup_source" edges to the ServiceConfig entity.
+func (so *S3UpdateOne) ClearServiceBackupSource() *S3UpdateOne {
+	so.mutation.ClearServiceBackupSource()
 	return so
 }
 
-// RemoveServiceBackupEndpointIDs removes the "service_backup_endpoint" edge to ServiceConfig entities by IDs.
-func (so *S3UpdateOne) RemoveServiceBackupEndpointIDs(ids ...uuid.UUID) *S3UpdateOne {
-	so.mutation.RemoveServiceBackupEndpointIDs(ids...)
+// RemoveServiceBackupSourceIDs removes the "service_backup_source" edge to ServiceConfig entities by IDs.
+func (so *S3UpdateOne) RemoveServiceBackupSourceIDs(ids ...uuid.UUID) *S3UpdateOne {
+	so.mutation.RemoveServiceBackupSourceIDs(ids...)
 	return so
 }
 
-// RemoveServiceBackupEndpoint removes "service_backup_endpoint" edges to ServiceConfig entities.
-func (so *S3UpdateOne) RemoveServiceBackupEndpoint(s ...*ServiceConfig) *S3UpdateOne {
+// RemoveServiceBackupSource removes "service_backup_source" edges to ServiceConfig entities.
+func (so *S3UpdateOne) RemoveServiceBackupSource(s ...*ServiceConfig) *S3UpdateOne {
 	ids := make([]uuid.UUID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
-	return so.RemoveServiceBackupEndpointIDs(ids...)
+	return so.RemoveServiceBackupSourceIDs(ids...)
 }
 
 // Where appends a list predicates to the S3Update builder.
@@ -641,12 +641,12 @@ func (so *S3UpdateOne) sqlSave(ctx context.Context) (_node *S3, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if so.mutation.ServiceBackupEndpointCleared() {
+	if so.mutation.ServiceBackupSourceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   s3.ServiceBackupEndpointTable,
-			Columns: []string{s3.ServiceBackupEndpointColumn},
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -654,12 +654,12 @@ func (so *S3UpdateOne) sqlSave(ctx context.Context) (_node *S3, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := so.mutation.RemovedServiceBackupEndpointIDs(); len(nodes) > 0 && !so.mutation.ServiceBackupEndpointCleared() {
+	if nodes := so.mutation.RemovedServiceBackupSourceIDs(); len(nodes) > 0 && !so.mutation.ServiceBackupSourceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   s3.ServiceBackupEndpointTable,
-			Columns: []string{s3.ServiceBackupEndpointColumn},
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
@@ -670,12 +670,12 @@ func (so *S3UpdateOne) sqlSave(ctx context.Context) (_node *S3, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := so.mutation.ServiceBackupEndpointIDs(); len(nodes) > 0 {
+	if nodes := so.mutation.ServiceBackupSourceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   s3.ServiceBackupEndpointTable,
-			Columns: []string{s3.ServiceBackupEndpointColumn},
+			Table:   s3.ServiceBackupSourceTable,
+			Columns: []string{s3.ServiceBackupSourceColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID),
