@@ -181,9 +181,9 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 			return nil, fmt.Errorf("Service database name or definition is nil")
 		}
 
-		config := make(map[string]interface{})
+		var config *v1.DatabaseConfigSpec
 		if service.Edges.ServiceConfig.DatabaseConfig != nil {
-			config = service.Edges.ServiceConfig.DatabaseConfig.AsMap()
+			config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
 		}
 
 		// Marshal as string

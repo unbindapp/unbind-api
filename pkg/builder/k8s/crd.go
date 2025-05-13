@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // ServiceParams contains all parameters needed to create a v1.Service object
@@ -58,7 +57,7 @@ type ServiceParams struct {
 	// Database
 	DatabaseType          string
 	DatabaseUSDVersionRef string
-	DatabaseConfig        runtime.RawExtension
+	DatabaseConfig        *v1.DatabaseConfigSpec
 	BackupConfig          *v1.S3ConfigSpec
 
 	// Security
@@ -179,18 +178,11 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 	// Generate a sanitized service name from the repo name
 	serviceName := strings.ToLower(strings.ReplaceAll(crdName, "_", "-"))
 
-	dbConfig := runtime.RawExtension{
-		Raw: []byte("{}"),
-	}
-
+	var dbConfig *v1.DatabaseConfigSpec
 	if self.builderConfig.ServiceDatabaseConfig != "" {
 		// Parse it to validate the format
-		var parsed map[string]interface{}
-		if err := json.Unmarshal([]byte(self.builderConfig.ServiceDatabaseConfig), &parsed); err != nil {
+		if err := json.Unmarshal([]byte(self.builderConfig.ServiceDatabaseConfig), &dbConfig); err != nil {
 			return nil, nil, fmt.Errorf("failed to parse template config: %v", err)
-		}
-		dbConfig = runtime.RawExtension{
-			Raw: []byte(self.builderConfig.ServiceDatabaseConfig),
 		}
 	}
 

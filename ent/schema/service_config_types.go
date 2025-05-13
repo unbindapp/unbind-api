@@ -199,22 +199,17 @@ type DatabaseConfig struct {
 	InitDB              string `json:"initdb,omitempty" required:"false" description:"SQL commands to run to initialize the database"`
 }
 
-func (self *DatabaseConfig) AsMap() map[string]interface{} {
-	ret := make(map[string]interface{})
-
-	if self.Version != "" {
-		ret["version"] = self.Version
+func (self *DatabaseConfig) AsV1DatabaseConfig() *v1.DatabaseConfigSpec {
+	if self == nil {
+		return nil
 	}
-	if self.StorageSize != "" {
-		ret["storage"] = self.StorageSize
+	dbConfig := &v1.DatabaseConfigSpec{
+		Version:             self.Version,
+		StorageSize:         self.StorageSize,
+		DefaultDatabaseName: self.DefaultDatabaseName,
+		InitDB:              self.InitDB,
 	}
-	if self.DefaultDatabaseName != "" {
-		ret["defaultDatabaseName"] = self.DefaultDatabaseName
-	}
-	if self.InitDB != "" {
-		ret["initdb"] = self.InitDB
-	}
-	return ret
+	return dbConfig
 }
 
 //* Enums
