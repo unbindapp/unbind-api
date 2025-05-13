@@ -54,7 +54,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 create publication supabase_realtime;
 
 -- Supabase super admin
-alter user supabase_admin with superuser createdb createrole replication bypassrls password 'postgres';
+-- (postgres user is already a superuser, no need to alter)
 
 -- Supabase replication user
 create user supabase_replication_admin with login replication password 'postgres';
@@ -87,7 +87,6 @@ create user authenticator noinherit password 'postgres';
 grant anon to authenticator;
 grant authenticated to authenticator;
 grant service_role to authenticator;
-grant supabase_admin to authenticator;
 
 grant usage on schema public to postgres, anon, authenticated, service_role;
 alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role;
@@ -98,14 +97,14 @@ alter default privileges in schema public grant all on sequences to postgres, an
 grant usage on schema extensions to postgres, anon, authenticated, service_role;
 
 -- Set up namespacing
-alter user supabase_admin SET search_path TO public, extensions; -- don't include the "auth" schema
+alter user postgres SET search_path TO public, extensions; -- don't include the "auth" schema
 
--- These are required so that the users receive grants whenever "supabase_admin" creates tables/function
-alter default privileges for user supabase_admin in schema public grant all
+-- These are required so that the users receive grants whenever "postgres" creates tables/function
+alter default privileges for user postgres in schema public grant all
     on sequences to postgres, anon, authenticated, service_role;
-alter default privileges for user supabase_admin in schema public grant all
+alter default privileges for user postgres in schema public grant all
     on tables to postgres, anon, authenticated, service_role;
-alter default privileges for user supabase_admin in schema public grant all
+alter default privileges for user postgres in schema public grant all
     on functions to postgres, anon, authenticated, service_role;
 
 -- Set short statement/query timeouts for API roles
@@ -113,7 +112,7 @@ alter role anon set statement_timeout = '3s';
 alter role authenticated set statement_timeout = '8s';
 
 -- Create auth schema
-CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase_admin;
+CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION postgres;
 
 -- auth.users definition
 CREATE TABLE auth.users (
@@ -229,7 +228,7 @@ ALTER table "auth".instances OWNER TO supabase_auth_admin;
 ALTER table "auth".schema_migrations OWNER TO supabase_auth_admin;
 
 -- Storage setup
-CREATE SCHEMA IF NOT EXISTS storage AUTHORIZATION supabase_admin;
+CREATE SCHEMA IF NOT EXISTS storage AUTHORIZATION postgres;
 
 grant usage on schema storage to postgres, anon, authenticated, service_role;
 alter default privileges in schema storage grant all on tables to postgres, anon, authenticated, service_role;
@@ -345,7 +344,7 @@ ALTER function "storage".extension(text) owner to supabase_storage_admin;
 ALTER function "storage".search(text,text,int,int,int) owner to supabase_storage_admin;
 
 -- Search path adjustments
-ALTER ROLE supabase_admin SET search_path TO "$user",public,auth,extensions;
+ALTER ROLE postgres SET search_path TO "$user",public,auth,extensions;
 ALTER ROLE postgres SET search_path TO "$user",public,extensions;
 
 -- Trigger for pg_cron
@@ -371,11 +370,11 @@ BEGIN
     alter default privileges in schema cron grant all on functions to postgres with grant option;
     alter default privileges in schema cron grant all on sequences to postgres with grant option;
 
-    alter default privileges for user supabase_admin in schema cron grant all
+    alter default privileges for user postgres in schema cron grant all
         on sequences to postgres with grant option;
-    alter default privileges for user supabase_admin in schema cron grant all
+    alter default privileges for user postgres in schema cron grant all
         on tables to postgres with grant option;
-    alter default privileges for user supabase_admin in schema cron grant all
+    alter default privileges for user postgres in schema cron grant all
         on functions to postgres with grant option;
 
     grant all privileges on all tables in schema cron to postgres with grant option;
@@ -509,9 +508,9 @@ EXCEPTION WHEN OTHERS THEN
 END $$;
 
 -- Update future objects' permissions
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT ALL ON TABLES TO postgres, dashboard_user;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT ALL ON SEQUENCES TO postgres, dashboard_user;
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA realtime GRANT ALL ON ROUTINES TO postgres, dashboard_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA realtime GRANT ALL ON TABLES TO postgres, dashboard_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA realtime GRANT ALL ON SEQUENCES TO postgres, dashboard_user;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA realtime GRANT ALL ON ROUTINES TO postgres, dashboard_user;
 
 -- Safe update and session settings
 ALTER ROLE authenticator SET session_preload_libraries = 'safeupdate';
@@ -639,11 +638,11 @@ alter default privileges in schema graphql_public grant all on tables to postgre
 alter default privileges in schema graphql_public grant all on functions to postgres, anon, authenticated, service_role;
 alter default privileges in schema graphql_public grant all on sequences to postgres, anon, authenticated, service_role;
 
-alter default privileges for user supabase_admin in schema graphql_public grant all
+alter default privileges for user postgres in schema graphql_public grant all
     on sequences to postgres, anon, authenticated, service_role;
-alter default privileges for user supabase_admin in schema graphql_public grant all
+alter default privileges for user postgres in schema graphql_public grant all
     on tables to postgres, anon, authenticated, service_role;
-alter default privileges for user supabase_admin in schema graphql_public grant all
+alter default privileges for user postgres in schema graphql_public grant all
     on functions to postgres, anon, authenticated, service_role;
 
 -- Trigger upon enabling pg_graphql
@@ -810,11 +809,11 @@ BEGIN
     alter default privileges in schema cron grant all on functions to postgres with grant option;
     alter default privileges in schema cron grant all on sequences to postgres with grant option;
 
-    alter default privileges for user supabase_admin in schema cron grant all
+    alter default privileges for user postgres in schema cron grant all
         on sequences to postgres with grant option;
-    alter default privileges for user supabase_admin in schema cron grant all
+    alter default privileges for user postgres in schema cron grant all
         on tables to postgres with grant option;
-    alter default privileges for user supabase_admin in schema cron grant all
+    alter default privileges for user postgres in schema cron grant all
         on functions to postgres with grant option;
 
     grant all privileges on all tables in schema cron to postgres with grant option;
@@ -997,7 +996,7 @@ begin
 end;
 $$;
 
-alter function pgbouncer.get_auth owner to supabase_admin;
+alter function pgbouncer.get_auth owner to supabase_auth_admin;
 grant execute on function pgbouncer.get_auth(p_usename text) to postgres;
 
 -- Orioledb extension if available
@@ -1110,7 +1109,7 @@ end;
 $$;
 
 -- Disable logging for admin roles
-alter role supabase_admin set log_statement = none;
+alter role postgres set log_statement = none;
 alter role supabase_auth_admin set log_statement = none;
 alter role supabase_storage_admin set log_statement = none;
 
@@ -1132,12 +1131,9 @@ alter default privileges in schema extensions grant all on routines to postgres 
 alter default privileges in schema extensions grant all on sequences to postgres with grant option;
 
 -- Security for large objects
-alter function pg_catalog.lo_export owner to supabase_admin;
-alter function pg_catalog.lo_import(text) owner to supabase_admin;
-alter function pg_catalog.lo_import(text, oid) owner to supabase_admin;
-
--- Revoke authenticator super admin
-revoke supabase_admin from authenticator;
+alter function pg_catalog.lo_export owner to postgres;
+alter function pg_catalog.lo_import(text) owner to postgres;
+alter function pg_catalog.lo_import(text, oid) owner to postgres;
 `,
 				},
 			},
@@ -1445,7 +1441,7 @@ services:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "POSTGRES_BACKEND_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST}"},
-						TemplateString:            `postgresql://supabase_admin:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/_supabase?sslmode=disable`,
+						TemplateString:            `postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/_supabase?sslmode=disable`,
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1634,11 +1630,10 @@ sinks:
 						TargetName: "AUTH_JWT_SECRET",
 					},
 					{
-						SourceID:                  1,
-						SourceName:                "DATABASE_PASSWORD",
-						TargetName:                "DATABASE_URL",
-						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://supabase_storage_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						SourceID:       1,
+						SourceName:     "DATABASE_HOST",
+						TargetName:     "DATABASE_URL",
+						TemplateString: "postgresql://supabase_storage_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1732,11 +1727,10 @@ sinks:
 						IsHost:     true,
 					},
 					{
-						SourceID:                  1,
-						SourceName:                "DATABASE_PASSWORD",
-						TargetName:                "PGRST_DB_URI",
-						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://authenticator:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						SourceID:       1,
+						SourceName:     "DATABASE_HOST",
+						TargetName:     "PGRST_DB_URI",
+						TemplateString: "postgresql://authenticator:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1795,7 +1789,7 @@ sinks:
 					},
 					{
 						SourceID:                  1,
-						SourceName:                "DATABASE_PASSWORD",
+						SourceName:                "DATABASE_HOST",
 						TargetName:                "GOTRUE_DB_DATABASE_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
 						TemplateString:            "postgresql://supabase_auth_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
@@ -1921,11 +1915,10 @@ sinks:
 						IsHost:     true,
 					},
 					{
-						SourceID:                  1,
-						SourceName:                "DATABASE_PASSWORD",
-						TargetName:                "SUPABASE_DB_URL",
-						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://supabase_functions_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						SourceID:       1,
+						SourceName:     "DATABASE_HOST",
+						TargetName:     "SUPABASE_DB_URL",
+						TemplateString: "postgresql://supabase_functions_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 			},
