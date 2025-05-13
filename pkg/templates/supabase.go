@@ -584,6 +584,12 @@ services:
 						SourceName: "DATABASE_PORT",
 						TargetName: "DB_PORT",
 					},
+					{
+						SourceID:       1,
+						SourceName:     "DATABASE_PASSWORD",
+						TargetName:     "POSTGRES_BACKEND_URL",
+						TemplateString: `postgresql://postgres:${DATABASE_PASSWORD}@db:5432/_supabase?sslmode=disable`,
+					},
 				},
 				Variables: []schema.TemplateVariable{
 					{
@@ -620,13 +626,6 @@ services:
 					{
 						Name:  "LOGFLARE_MIN_CLUSTER_SIZE",
 						Value: "1",
-					},
-					{
-						Name: "POSTGRES_BACKEND_URL",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeStringReplace,
-						},
-						Value: "postgresql://postgres:${SERVICE_1_DATABASE_PASSWORD}}@db:5432/_supabase",
 					},
 					{
 						Name:  "POSTGRES_BACKEND_SCHEMA",
@@ -780,7 +779,7 @@ sinks:
 					{
 						SourceID:       1,
 						SourceName:     "DATABASE_PASSWORD",
-						TemplateString: "postgres://supabase_storage_admin:${DATABASE_PASSWORD}@db:5432/postgres",
+						TemplateString: "postgresql://supabase_storage_admin:${DATABASE_PASSWORD}@db:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -873,15 +872,14 @@ sinks:
 						TargetName: "PGRST_APP_SETTINGS_JWT_SECRET",
 						IsHost:     true,
 					},
+					{
+						SourceID:       1,
+						SourceName:     "DATABASE_PASSWORD",
+						TargetName:     "PGRST_DB_URI",
+						TemplateString: "postgresql://postgres:${DATABASE_PASSWORD}@db:5432/postgres?sslmode=disable",
+					},
 				},
 				Variables: []schema.TemplateVariable{
-					{
-						Name: "PGRST_DB_URI",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeStringReplace,
-						},
-						Value: "postgres://authenticator:${SERVICE_1_POSTGRES_PASSWORD}@db:5432/postgres",
-					},
 					{
 						Name:  "PGRST_DB_SCHEMAS",
 						Value: "public,storage,graphql_public",
@@ -935,6 +933,12 @@ sinks:
 						SourceName: "JWT_SECRET",
 						TargetName: "GOTRUE_JWT_SECRET",
 					},
+					{
+						SourceID:       1,
+						SourceName:     "DATABASE_PASSWORD",
+						TargetName:     "GOTRUE_DB_DATABASE_URL",
+						TemplateString: "postgresql://supabase_auth_admin:${DATABASE_PASSWORD}@db:5432/postgres?sslmode=disable",
+					},
 				},
 				Variables: []schema.TemplateVariable{
 					{
@@ -948,13 +952,6 @@ sinks:
 					{
 						Name:  "GOTRUE_DB_DRIVER",
 						Value: "postgres",
-					},
-					{
-						Name: "GOTRUE_DB_DATABASE_URL",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeStringReplace,
-						},
-						Value: "postgres://supabase_auth_admin:${SERVICE_1_POSTGRES_PASSWORD}@db:5432/postgres",
 					},
 					{
 						Name: "GOTRUE_SITE_URL",
@@ -1066,7 +1063,7 @@ sinks:
 						SourceID:       1,
 						SourceName:     "DATABASE_PASSWORD",
 						TargetName:     "SUPABASE_DB_URL",
-						TemplateString: "postgresql://postgres:${DATABASE_PASSWORD}@db:5432/postgres",
+						TemplateString: "postgresql://postgres:${DATABASE_PASSWORD}@db:5432/postgres?sslmode=disable",
 					},
 				},
 			},
