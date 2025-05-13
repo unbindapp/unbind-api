@@ -1961,11 +1961,6 @@ sinks:
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
-						SourceName: "DATABASE_PASSWORD",
-						TargetName: "POSTGRES_PASSWORD",
-					},
-					{
 						SourceID:   2,
 						TargetName: "API_EXTERNAL_URL",
 						IsHost:     true,

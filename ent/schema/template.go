@@ -202,7 +202,7 @@ type GenerateResponse struct {
 func (self *ValueGenerator) Generate(inputs map[int]string) (*GenerateResponse, error) {
 	switch self.Type {
 	case GeneratorTypePassword:
-		pwd, err := utils.GenerateSecurePassword(32)
+		pwd, err := utils.GenerateSecurePassword(32, false)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +220,7 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (*GenerateResponse, 
 			GeneratedValue: self.AddPrefix + pwd,
 		}, nil
 	case GeneratorTypePasswordBcrypt:
-		pwd, err := utils.GenerateSecurePassword(32)
+		pwd, err := utils.GenerateSecurePassword(32, false)
 		if err != nil {
 			return nil, err
 		}

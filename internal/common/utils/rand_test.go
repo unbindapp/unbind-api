@@ -131,11 +131,11 @@ func TestGenerateSlugUniqueness(t *testing.T) {
 }
 
 func TestGenerateSecurePassword(t *testing.T) {
-	// Test with real random source first
-	t.Run("real random source", func(t *testing.T) {
+	// Test complex passwords (with special characters)
+	t.Run("complex passwords", func(t *testing.T) {
 		for i := 0; i < 100; i++ { // Run multiple times to ensure consistency
 			length := 12
-			password, err := GenerateSecurePassword(length)
+			password, err := GenerateSecurePassword(length, false)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -185,10 +185,64 @@ func TestGenerateSecurePassword(t *testing.T) {
 		}
 	})
 
+	// Test simple passwords (alphanumeric only)
+	t.Run("simple passwords", func(t *testing.T) {
+		for i := 0; i < 100; i++ { // Run multiple times to ensure consistency
+			length := 12
+			password, err := GenerateSecurePassword(length, true)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if len(password) != length {
+				t.Errorf("expected password length %d, got %d", length, len(password))
+			}
+
+			// Verify password requirements
+			hasUpper := false
+			hasAlphaNumeric := false
+			firstIsLetter := false
+			hasSpecial := false
+
+			for i, c := range password {
+				char := string(c)
+
+				if strings.ContainsAny(char, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+					hasUpper = true
+				}
+
+				if strings.ContainsAny(char, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
+					hasAlphaNumeric = true
+				}
+
+				if strings.ContainsAny(char, "!@#$%^&*()_+-=[]{}|;:,.<>?") {
+					hasSpecial = true
+				}
+
+				// Check if first character is a letter
+				if i == 0 && strings.ContainsAny(char, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+					firstIsLetter = true
+				}
+			}
+
+			if !hasUpper {
+				t.Error("password missing uppercase letter")
+			}
+			if !hasAlphaNumeric {
+				t.Error("password missing alphanumeric character")
+			}
+			if !firstIsLetter {
+				t.Error("first character is not a letter")
+			}
+			if hasSpecial {
+				t.Error("simple password should not contain special characters")
+			}
+		}
+	})
+
 	t.Run("random source never duplicates", func(t *testing.T) {
 		results := make(map[string]bool)
 		for i := 0; i < 100; i++ {
-			password, err := GenerateSecurePassword(12)
+			password, err := GenerateSecurePassword(12, false)
 			assert.NoError(t, err)
 			assert.NotContains(t, results, password)
 			results[password] = true
@@ -219,6 +273,19 @@ func TestGenerateSecurePassword(t *testing.T) {
 		}
 
 		assert.Equal(t, "fuE_OHY8", password)
+	})
+
+	// Test error cases
+	t.Run("error cases", func(t *testing.T) {
+		// Test too short password
+		_, err := GenerateSecurePassword(2, false)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "password length must be at least 3")
+
+		// Test too short password with simple mode
+		_, err = GenerateSecurePassword(2, true)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "password length must be at least 3")
 	})
 }
 
