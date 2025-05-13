@@ -48,174 +48,302 @@ func supabaseTemplate() *schema.TemplateDefinition {
 					DefaultDatabaseName: "postgres",
 					Version:             "15",
 					InitDB: `
--- Create _supabase database
-CREATE DATABASE _supabase WITH OWNER postgres;
+-- Set up realtime
+create publication supabase_realtime;
 
--- Create _realtime schema
-\c _supabase
-create schema if not exists _realtime;
-alter schema _realtime owner to postgres;
+-- Supabase super admin
+alter user supabase_admin with superuser createdb createrole replication bypassrls;
 
--- Create _supavisor schema
-create schema if not exists _supavisor;
-alter schema _supavisor owner to postgres;
+-- Supabase replication user
+create user supabase_replication_admin with login replication password 'postgres';
 
--- Create _analytics schema
-create schema if not exists _analytics;
-alter schema _analytics owner to postgres;
+-- Supabase read-only user
+create role supabase_read_only_user with login bypassrls password 'postgres';
+grant pg_read_all_data to supabase_read_only_user;
 
--- Create auth schema
-create schema if not exists auth;
-alter schema auth owner to postgres;
+-- Extension namespacing
+create schema if not exists extensions;
+create extension if not exists "uuid-ossp" with schema extensions;
+create extension if not exists pgcrypto with schema extensions;
+do $$
+begin 
+    if exists (select 1 from pg_available_extensions where name = 'pgjwt') then
+        if not exists (select 1 from pg_extension where extname = 'pgjwt') then
+            if current_setting('server_version_num')::int / 10000 = 15 then
+                create extension if not exists pgjwt with schema "extensions" cascade;
+            end if;
+        end if;
+    end if;
+end $$;
 
--- Create pg_net extension and supabase_functions schema
-\c postgres
-CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
+-- Set up auth roles for the developer
+create role anon nologin noinherit;
+create role authenticated nologin noinherit;
+create role service_role nologin noinherit bypassrls;
 
--- Create supabase_functions schema
-CREATE SCHEMA supabase_functions AUTHORIZATION postgres;
-GRANT USAGE ON SCHEMA supabase_functions TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA supabase_functions GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA supabase_functions GRANT ALL ON FUNCTIONS TO postgres, anon, authenticated, service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA supabase_functions GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+create user authenticator noinherit password 'postgres';
+grant anon to authenticator;
+grant authenticated to authenticator;
+grant service_role to authenticator;
+grant supabase_admin to authenticator;
 
--- Create supabase_functions tables
-CREATE TABLE supabase_functions.migrations (
-  version text PRIMARY KEY,
-  inserted_at timestamptz NOT NULL DEFAULT NOW()
+grant usage on schema public to postgres, anon, authenticated, service_role;
+alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to postgres, anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to postgres, anon, authenticated, service_role;
+
+-- Allow Extensions to be used in the API
+grant usage on schema extensions to postgres, anon, authenticated, service_role;
+
+-- Set up namespacing
+alter user supabase_admin SET search_path TO public, extensions;
+
+-- These are required so that the users receive grants whenever "supabase_admin" creates tables/function
+alter default privileges for user supabase_admin in schema public grant all
+    on sequences to postgres, anon, authenticated, service_role;
+alter default privileges for user supabase_admin in schema public grant all
+    on tables to postgres, anon, authenticated, service_role;
+alter default privileges for user supabase_admin in schema public grant all
+    on functions to postgres, anon, authenticated, service_role;
+
+-- Set short statement/query timeouts for API roles
+alter role anon set statement_timeout = '3s';
+alter role authenticated set statement_timeout = '8s';
+
+-- Create auth schema and tables
+CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION supabase_admin;
+
+CREATE TABLE auth.users (
+    instance_id uuid NULL,
+    id uuid NOT NULL UNIQUE,
+    aud varchar(255) NULL,
+    "role" varchar(255) NULL,
+    email varchar(255) NULL UNIQUE,
+    encrypted_password varchar(255) NULL,
+    confirmed_at timestamptz NULL,
+    invited_at timestamptz NULL,
+    confirmation_token varchar(255) NULL,
+    confirmation_sent_at timestamptz NULL,
+    recovery_token varchar(255) NULL,
+    recovery_sent_at timestamptz NULL,
+    email_change_token varchar(255) NULL,
+    email_change varchar(255) NULL,
+    email_change_sent_at timestamptz NULL,
+    last_sign_in_at timestamptz NULL,
+    raw_app_meta_data jsonb NULL,
+    raw_user_meta_data jsonb NULL,
+    is_super_admin bool NULL,
+    created_at timestamptz NULL,
+    updated_at timestamptz NULL,
+    CONSTRAINT users_pkey PRIMARY KEY (id)
 );
+CREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id, email);
+CREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id);
+comment on table auth.users is 'Auth: Stores user login data within a secure schema.';
 
-CREATE TABLE supabase_functions.hooks (
-  id bigserial PRIMARY KEY,
-  hook_table_id integer NOT NULL,
-  hook_name text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT NOW(),
-  request_id bigint
+CREATE TABLE auth.refresh_tokens (
+    instance_id uuid NULL,
+    id bigserial NOT NULL,
+    "token" varchar(255) NULL,
+    user_id varchar(255) NULL,
+    revoked bool NULL,
+    created_at timestamptz NULL,
+    updated_at timestamptz NULL,
+    CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id)
 );
+CREATE INDEX refresh_tokens_instance_id_idx ON auth.refresh_tokens USING btree (instance_id);
+CREATE INDEX refresh_tokens_instance_id_user_id_idx ON auth.refresh_tokens USING btree (instance_id, user_id);
+CREATE INDEX refresh_tokens_token_idx ON auth.refresh_tokens USING btree (token);
+comment on table auth.refresh_tokens is 'Auth: Store of tokens used to refresh JWT tokens once they expire.';
 
-CREATE INDEX supabase_functions_hooks_request_id_idx ON supabase_functions.hooks USING btree (request_id);
-CREATE INDEX supabase_functions_hooks_h_table_id_h_name_idx ON supabase_functions.hooks USING btree (hook_table_id, hook_name);
+CREATE TABLE auth.instances (
+    id uuid NOT NULL,
+    uuid uuid NULL,
+    raw_base_config text NULL,
+    created_at timestamptz NULL,
+    updated_at timestamptz NULL,
+    CONSTRAINT instances_pkey PRIMARY KEY (id)
+);
+comment on table auth.instances is 'Auth: Manages users across multiple sites.';
 
--- Create supabase_functions_admin role
-DO $$
+CREATE TABLE auth.audit_log_entries (
+    instance_id uuid NULL,
+    id uuid NOT NULL,
+    payload json NULL,
+    created_at timestamptz NULL,
+    CONSTRAINT audit_log_entries_pkey PRIMARY KEY (id)
+);
+CREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id);
+comment on table auth.audit_log_entries is 'Auth: Audit trail for user actions.';
+
+CREATE TABLE auth.schema_migrations (
+    "version" varchar(255) NOT NULL,
+    CONSTRAINT schema_migrations_pkey PRIMARY KEY ("version")
+);
+comment on table auth.schema_migrations is 'Auth: Manages updates to the auth system.';
+
+INSERT INTO auth.schema_migrations (version)
+VALUES  ('20171026211738'),
+        ('20171026211808'),
+        ('20171026211834'),
+        ('20180103212743'),
+        ('20180108183307'),
+        ('20180119214651'),
+        ('20180125194653');
+
+-- Gets the User ID from the request cookie
+create or replace function auth.uid() returns uuid as $$
+  select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
+$$ language sql stable;
+
+-- Gets the User ID from the request cookie
+create or replace function auth.role() returns text as $$
+  select nullif(current_setting('request.jwt.claim.role', true), '')::text;
+$$ language sql stable;
+
+-- Gets the User email
+create or replace function auth.email() returns text as $$
+  select nullif(current_setting('request.jwt.claim.email', true), '')::text;
+$$ language sql stable;
+
+-- usage on auth functions to API roles
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+
+-- Supabase auth admin
+CREATE USER supabase_auth_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+GRANT ALL PRIVILEGES ON SCHEMA auth TO supabase_auth_admin;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA auth TO supabase_auth_admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA auth TO supabase_auth_admin;
+ALTER USER supabase_auth_admin SET search_path = "auth";
+ALTER table "auth".users OWNER TO supabase_auth_admin;
+ALTER table "auth".refresh_tokens OWNER TO supabase_auth_admin;
+ALTER table "auth".audit_log_entries OWNER TO supabase_auth_admin;
+ALTER table "auth".instances OWNER TO supabase_auth_admin;
+ALTER table "auth".schema_migrations OWNER TO supabase_auth_admin;
+
+-- Create storage schema and tables
+CREATE SCHEMA IF NOT EXISTS storage AUTHORIZATION supabase_admin;
+
+grant usage on schema storage to postgres, anon, authenticated, service_role;
+alter default privileges in schema storage grant all on tables to postgres, anon, authenticated, service_role;
+alter default privileges in schema storage grant all on functions to postgres, anon, authenticated, service_role;
+alter default privileges in schema storage grant all on sequences to postgres, anon, authenticated, service_role;
+
+CREATE TABLE "storage"."buckets" (
+    "id" text not NULL,
+    "name" text NOT NULL,
+    "owner" uuid,
+    "created_at" timestamptz DEFAULT now(),
+    "updated_at" timestamptz DEFAULT now(),
+    CONSTRAINT "buckets_owner_fkey" FOREIGN KEY ("owner") REFERENCES "auth"."users"("id"),
+    PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "bname" ON "storage"."buckets" USING BTREE ("name");
+
+CREATE TABLE "storage"."objects" (
+    "id" uuid NOT NULL DEFAULT extensions.uuid_generate_v4(),
+    "bucket_id" text,
+    "name" text,
+    "owner" uuid,
+    "created_at" timestamptz DEFAULT now(),
+    "updated_at" timestamptz DEFAULT now(),
+    "last_accessed_at" timestamptz DEFAULT now(),
+    "metadata" jsonb,
+    CONSTRAINT "objects_bucketId_fkey" FOREIGN KEY ("bucket_id") REFERENCES "storage"."buckets"("id"),
+    CONSTRAINT "objects_owner_fkey" FOREIGN KEY ("owner") REFERENCES "auth"."users"("id"),
+    PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "bucketid_objname" ON "storage"."objects" USING BTREE ("bucket_id","name");
+CREATE INDEX name_prefix_search ON storage.objects(name text_pattern_ops);
+
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+CREATE FUNCTION storage.foldername(name text)
+ RETURNS text[]
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+_parts text[];
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_roles
-    WHERE rolname = 'supabase_functions_admin'
-  )
-  THEN
-    CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION;
-  END IF;
+    select string_to_array(name, '/') into _parts;
+    return _parts[1:array_length(_parts,1)-1];
 END
-$$;
-
--- Grant privileges to supabase_functions_admin
-GRANT ALL PRIVILEGES ON SCHEMA supabase_functions TO supabase_functions_admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA supabase_functions TO supabase_functions_admin;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA supabase_functions TO supabase_functions_admin;
-ALTER USER supabase_functions_admin SET search_path = "supabase_functions";
-ALTER table "supabase_functions".migrations OWNER TO supabase_functions_admin;
-ALTER table "supabase_functions".hooks OWNER TO supabase_functions_admin;
-
--- Create http_request function
-CREATE FUNCTION supabase_functions.http_request()
-  RETURNS trigger
-  LANGUAGE plpgsql
-  AS $function$
-  DECLARE
-    request_id bigint;
-    payload jsonb;
-    url text := TG_ARGV[0]::text;
-    method text := TG_ARGV[1]::text;
-    headers jsonb DEFAULT '{}'::jsonb;
-    params jsonb DEFAULT '{}'::jsonb;
-    timeout_ms integer DEFAULT 1000;
-  BEGIN
-    IF url IS NULL OR url = 'null' THEN
-      RAISE EXCEPTION 'url argument is missing';
-    END IF;
-
-    IF method IS NULL OR method = 'null' THEN
-      RAISE EXCEPTION 'method argument is missing';
-    END IF;
-
-    IF TG_ARGV[2] IS NULL OR TG_ARGV[2] = 'null' THEN
-      headers = '{"Content-Type": "application/json"}'::jsonb;
-    ELSE
-      headers = TG_ARGV[2]::jsonb;
-    END IF;
-
-    IF TG_ARGV[3] IS NULL OR TG_ARGV[3] = 'null' THEN
-      params = '{}'::jsonb;
-    ELSE
-      params = TG_ARGV[3]::jsonb;
-    END IF;
-
-    IF TG_ARGV[4] IS NULL OR TG_ARGV[4] = 'null' THEN
-      timeout_ms = 1000;
-    ELSE
-      timeout_ms = TG_ARGV[4]::integer;
-    END IF;
-
-    CASE
-      WHEN method = 'GET' THEN
-        SELECT http_get INTO request_id FROM net.http_get(
-          url,
-          params,
-          headers,
-          timeout_ms
-        );
-      WHEN method = 'POST' THEN
-        payload = jsonb_build_object(
-          'old_record', OLD,
-          'record', NEW,
-          'type', TG_OP,
-          'table', TG_TABLE_NAME,
-          'schema', TG_TABLE_SCHEMA
-        );
-
-        SELECT http_post INTO request_id FROM net.http_post(
-          url,
-          payload,
-          params,
-          headers,
-          timeout_ms
-        );
-      ELSE
-        RAISE EXCEPTION 'method argument % is invalid', method;
-    END CASE;
-
-    INSERT INTO supabase_functions.hooks
-      (hook_table_id, hook_name, request_id)
-    VALUES
-      (TG_RELID, TG_NAME, request_id);
-
-    RETURN NEW;
-  END
 $function$;
 
--- Set up pg_net access
-DO $$
+CREATE FUNCTION storage.filename(name text)
+ RETURNS text
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+_parts text[];
 BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM pg_extension
-    WHERE extname = 'pg_net'
-  )
-  THEN
-    GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
-    ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
-    ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
-    ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
-    ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
-    REVOKE ALL ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
-    REVOKE ALL ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
-    GRANT EXECUTE ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
-    GRANT EXECUTE ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
-  END IF;
+    select string_to_array(name, '/') into _parts;
+    return _parts[array_length(_parts,1)];
 END
-$$;
+$function$;
+
+CREATE FUNCTION storage.extension(name text)
+ RETURNS text
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+_parts text[];
+_filename text;
+BEGIN
+    select string_to_array(name, '/') into _parts;
+    select _parts[array_length(_parts,1)] into _filename;
+    return split_part(_filename, '.', 2);
+END
+$function$;
+
+CREATE FUNCTION storage.search(prefix text, bucketname text, limits int DEFAULT 100, levels int DEFAULT 1, offsets int DEFAULT 0)
+ RETURNS TABLE (
+    name text,
+    id uuid,
+    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ,
+    last_accessed_at TIMESTAMPTZ,
+    metadata jsonb
+  )
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+_bucketId text;
+BEGIN
+    -- will be replaced by migrations when server starts
+    -- saving space for cloud-init
+END
+$function$;
+
+-- create migrations table
+CREATE TABLE IF NOT EXISTS storage.migrations (
+  id integer PRIMARY KEY,
+  name varchar(100) UNIQUE NOT NULL,
+  hash varchar(40) NOT NULL,
+  executed_at timestamp DEFAULT current_timestamp
+);
+
+-- Supabase storage admin
+CREATE USER supabase_storage_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+GRANT ALL PRIVILEGES ON SCHEMA storage TO supabase_storage_admin;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA storage TO supabase_storage_admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA storage TO supabase_storage_admin;
+ALTER USER supabase_storage_admin SET search_path = "storage";
+ALTER table "storage".objects owner to supabase_storage_admin;
+ALTER table "storage".buckets owner to supabase_storage_admin;
+ALTER table "storage".migrations OWNER TO supabase_storage_admin;
+ALTER function "storage".foldername(text) owner to supabase_storage_admin;
+ALTER function "storage".filename(text) owner to supabase_storage_admin;
+ALTER function "storage".extension(text) owner to supabase_storage_admin;
+ALTER function "storage".search(text,text,int,int,int) owner to supabase_storage_admin;
+
+-- Create net schema and set up pg_net
+CREATE SCHEMA IF NOT EXISTS net;
+ALTER SCHEMA net OWNER TO postgres;
+
+-- Supabase functions admin
+CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
 
 -- Create event trigger for pg_net
 CREATE OR REPLACE FUNCTION extensions.grant_pg_net_access()
@@ -231,61 +359,75 @@ BEGIN
     WHERE ext.extname = 'pg_net'
   )
   THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_roles
+      WHERE rolname = 'supabase_functions_admin'
+    )
+    THEN
+      CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
+    END IF;
+
     GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
-    ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
-    ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
-    ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
-    ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
-    REVOKE ALL ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
-    REVOKE ALL ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
-    GRANT EXECUTE ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
-    GRANT EXECUTE ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+
+    IF EXISTS (
+      SELECT FROM pg_extension
+      WHERE extname = 'pg_net'
+      AND extversion IN ('0.2', '0.6', '0.7', '0.7.1', '0.8', '0.10.0', '0.11.0')
+    ) THEN
+      ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
+      ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
+
+      ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
+      ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
+
+      REVOKE ALL ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
+      REVOKE ALL ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
+
+      GRANT EXECUTE ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+      GRANT EXECUTE ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+    END IF;
   END IF;
 END;
 $$;
 
--- Create event trigger
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_event_trigger
-    WHERE evtname = 'issue_pg_net_access'
-  ) THEN
-    CREATE EVENT TRIGGER issue_pg_net_access ON ddl_command_end WHEN TAG IN ('CREATE EXTENSION')
-    EXECUTE PROCEDURE extensions.grant_pg_net_access();
-  END IF;
-END
-$$;
+CREATE EVENT TRIGGER issue_pg_net_access ON ddl_command_end
+  WHEN TAG IN ('CREATE EXTENSION')
+  EXECUTE FUNCTION extensions.grant_pg_net_access();
 
--- Initial migrations
-INSERT INTO supabase_functions.migrations (version) VALUES ('initial');
-INSERT INTO supabase_functions.migrations (version) VALUES ('20210809183423_update_grants');
+-- Set up search paths
+ALTER ROLE supabase_admin SET search_path TO "$user",public,auth,extensions;
+ALTER ROLE postgres SET search_path TO "$user",public,extensions;
 
--- Set up security for http_request function
-ALTER function supabase_functions.http_request() SECURITY DEFINER;
-ALTER function supabase_functions.http_request() SET search_path = supabase_functions;
-REVOKE ALL ON FUNCTION supabase_functions.http_request() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION supabase_functions.http_request() TO postgres, anon, authenticated, service_role;
+-- Set timeouts
+ALTER ROLE authenticator SET statement_timeout = '8s';
+ALTER ROLE authenticator SET lock_timeout = '8s';
+ALTER ROLE supabase_auth_admin SET idle_in_transaction_session_timeout TO 60000;
 
--- Grant supabase_functions_admin to postgres
-GRANT supabase_functions_admin TO postgres;
+-- Grant roles
+grant supabase_auth_admin, supabase_storage_admin to postgres;
+grant anon, authenticated, service_role to postgres;
+grant anon, authenticated, service_role to supabase_storage_admin;
+grant authenticator to supabase_storage_admin;
 
--- Remove unused supabase_pg_net_admin role
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM pg_roles
-    WHERE rolname = 'supabase_pg_net_admin'
-  )
-  THEN
-    REASSIGN OWNED BY supabase_pg_net_admin TO postgres;
-    DROP OWNED BY supabase_pg_net_admin;
-    DROP ROLE supabase_pg_net_admin;
-  END IF;
-END
-$$;
+-- Set inheritance
+ALTER ROLE authenticated inherit;
+ALTER ROLE anon inherit;
+ALTER ROLE service_role inherit;
+
+-- Revoke unnecessary permissions
+revoke supabase_storage_admin from postgres;
+revoke create on schema storage from postgres;
+revoke all on storage.migrations from anon, authenticated, service_role, postgres;
+
+revoke supabase_auth_admin from postgres;
+revoke create on schema auth from postgres;
+revoke all on auth.schema_migrations from dashboard_user, postgres;
+
+-- Set logging
+alter role supabase_admin set log_statement = none;
+alter role supabase_auth_admin set log_statement = none;
+alter role supabase_storage_admin set log_statement = none;
 `,
 				},
 			},
@@ -593,7 +735,7 @@ services:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "POSTGRES_BACKEND_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST}"},
-						TemplateString:            `postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/_supabase?sslmode=disable`,
+						TemplateString:            `postgresql://supabase_admin:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/_supabase?sslmode=disable`,
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -786,7 +928,7 @@ sinks:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "DATABASE_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString:            "postgresql://supabase_storage_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -884,7 +1026,7 @@ sinks:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "PGRST_DB_URI",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString:            "postgresql://authenticator:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -946,7 +1088,7 @@ sinks:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "GOTRUE_DB_DATABASE_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString:            "postgresql://supabase_auth_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1073,7 +1215,7 @@ sinks:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "SUPABASE_DB_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString:            "postgresql://supabase_functions_admin:postgres@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 			},
