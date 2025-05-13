@@ -794,6 +794,84 @@ spec:
 		require.NoError(t, err)
 		assert.Len(t, objects, 1)
 	})
+
+	t.Run("PostgreSQL Dollar-Quoted String Handling", func(t *testing.T) {
+		// Create render context with initDB parameter
+		ctx := &RenderContext{
+			Name:      "test-postgres-dollar",
+			Namespace: "default",
+			TeamID:    "team1",
+			Parameters: map[string]interface{}{
+				"common": map[string]interface{}{
+					"replicas": 1,
+				},
+				"initDB": `-- Test dollar-quoted strings
+create or replace function test_func() returns text as $$
+begin
+  return 'test';
+end;
+$$ language plpgsql;
+
+-- Test nested dollar-quoted strings
+create or replace function test_nested() returns text as $outer$
+declare
+  v_text text;
+begin
+  v_text := $inner$nested$inner$;
+  return v_text;
+end;
+$outer$ language plpgsql;
+
+-- Test dollar-quoted strings with parameters
+create or replace function test_param(p_param text) returns text as $$
+begin
+  return p_param;
+end;
+$$ language plpgsql;`,
+			},
+			Definition: Definition{
+				Type:    "postgres-operator",
+				Version: "1.0.0",
+			},
+		}
+
+		// Create a template that uses the initDB parameter
+		dollarTemplate := &Definition{
+			Name:        "PostgreSQL Database",
+			Category:    DB_CATEGORY,
+			Port:        5432,
+			Description: "Standard PostgreSQL database using zalando postgres-operator",
+			Type:        "postgres-operator",
+			Version:     "1.0.0",
+			Schema:      template.Schema, // Reuse the schema from the main template
+			Content: `apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  name: {{ .Name }}
+  namespace: {{ .Namespace }}
+spec:
+  postgresql:
+    version: {{ .Parameters.version | default "17" | quote }}
+  initDB: |
+{{ .Parameters.initDB | indent 4 }}`,
+		}
+
+		// Render the template
+		result, err := renderer.Render(dollarTemplate, ctx)
+		require.NoError(t, err)
+
+		// Verify dollar-quoted strings are preserved correctly
+		assert.Contains(t, result, "as $$")
+		assert.Contains(t, result, "$$ language plpgsql")
+		assert.Contains(t, result, "as $outer$")
+		assert.Contains(t, result, "$outer$ language plpgsql")
+		assert.Contains(t, result, "$inner$nested$inner$")
+
+		// Parse to objects
+		objects, err := renderer.RenderToObjects(result)
+		require.NoError(t, err)
+		assert.Len(t, objects, 1)
+	})
 }
 
 func TestHelmRendering(t *testing.T) {
