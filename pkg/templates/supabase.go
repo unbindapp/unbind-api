@@ -76,6 +76,12 @@ begin
     end if;
 end $$;
 
+-- Create required schemas
+CREATE SCHEMA IF NOT EXISTS realtime;
+CREATE SCHEMA IF NOT EXISTS graphql_public;
+CREATE SCHEMA IF NOT EXISTS net;
+ALTER SCHEMA net OWNER TO postgres;
+
 -- Set up auth roles for the developer
 create role anon nologin noinherit;
 create role authenticated nologin noinherit;
@@ -337,14 +343,6 @@ ALTER function "storage".filename(text) owner to supabase_storage_admin;
 ALTER function "storage".extension(text) owner to supabase_storage_admin;
 ALTER function "storage".search(text,text,int,int,int) owner to supabase_storage_admin;
 
--- Create net schema and set up pg_net
-CREATE SCHEMA IF NOT EXISTS net;
-ALTER SCHEMA net OWNER TO postgres;
-
--- Supabase functions admin
-CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION PASSWORD 'postgres';
-GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
-
 -- Create event trigger for pg_net
 CREATE OR REPLACE FUNCTION extensions.grant_pg_net_access()
 RETURNS event_trigger
@@ -395,6 +393,91 @@ CREATE EVENT TRIGGER issue_pg_net_access ON ddl_command_end
   WHEN TAG IN ('CREATE EXTENSION')
   EXECUTE FUNCTION extensions.grant_pg_net_access();
 
+-- GraphQL Placeholder Entrypoint
+create or replace function graphql_public.graphql(
+    "operationName" text default null,
+    query text default null,
+    variables jsonb default null,
+    extensions jsonb default null
+)
+    returns jsonb
+    language plpgsql
+as $$
+    DECLARE
+        server_version float;
+    BEGIN
+        server_version = (SELECT (SPLIT_PART((select version()), ' ', 2))::float);
+
+        IF server_version >= 14 THEN
+            RETURN jsonb_build_object(
+                'errors', jsonb_build_array(
+                    jsonb_build_object(
+                        'message', 'pg_graphql extension is not enabled.'
+                    )
+                )
+            );
+        ELSE
+            RETURN jsonb_build_object(
+                'errors', jsonb_build_array(
+                    jsonb_build_object(
+                        'message', 'pg_graphql is only available on projects running Postgres 14 onwards.'
+                    )
+                )
+            );
+        END IF;
+    END;
+$$;
+
+grant usage on schema graphql_public to postgres, anon, authenticated, service_role;
+alter default privileges in schema graphql_public grant all on tables to postgres, anon, authenticated, service_role;
+alter default privileges in schema graphql_public grant all on functions to postgres, anon, authenticated, service_role;
+alter default privileges in schema graphql_public grant all on sequences to postgres, anon, authenticated, service_role;
+
+alter default privileges for user supabase_admin in schema graphql_public grant all
+    on sequences to postgres, anon, authenticated, service_role;
+alter default privileges for user supabase_admin in schema graphql_public grant all
+    on tables to postgres, anon, authenticated, service_role;
+alter default privileges for user supabase_admin in schema graphql_public grant all
+    on functions to postgres, anon, authenticated, service_role;
+
+-- Trigger for pg_cron
+CREATE OR REPLACE FUNCTION extensions.grant_pg_cron_access()
+RETURNS event_trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  schema_is_cron bool;
+BEGIN
+  schema_is_cron = (
+    SELECT n.nspname = 'cron'
+    FROM pg_event_trigger_ddl_commands() AS ev
+    LEFT JOIN pg_catalog.pg_namespace AS n
+      ON ev.objid = n.oid
+  );
+
+  IF schema_is_cron
+  THEN
+    grant usage on schema cron to postgres with grant option;
+
+    alter default privileges in schema cron grant all on tables to postgres with grant option;
+    alter default privileges in schema cron grant all on functions to postgres with grant option;
+    alter default privileges in schema cron grant all on sequences to postgres with grant option;
+
+    alter default privileges for user supabase_admin in schema cron grant all
+        on sequences to postgres with grant option;
+    alter default privileges for user supabase_admin in schema cron grant all
+        on tables to postgres with grant option;
+    alter default privileges for user supabase_admin in schema cron grant all
+        on functions to postgres with grant option;
+
+    grant all privileges on all tables in schema cron to postgres with grant option;
+  END IF;
+END;
+$$;
+
+CREATE EVENT TRIGGER issue_pg_cron_access ON ddl_command_end WHEN TAG in ('CREATE SCHEMA')
+EXECUTE PROCEDURE extensions.grant_pg_cron_access();
+
 -- Set up search paths
 ALTER ROLE supabase_admin SET search_path TO "$user",public,auth,extensions;
 ALTER ROLE postgres SET search_path TO "$user",public,extensions;
@@ -428,6 +511,134 @@ revoke all on auth.schema_migrations from dashboard_user, postgres;
 alter role supabase_admin set log_statement = none;
 alter role supabase_auth_admin set log_statement = none;
 alter role supabase_storage_admin set log_statement = none;
+
+-- Set up extensions and their dependencies
+DO $$
+BEGIN
+  -- Set up pg_net
+  IF EXISTS (SELECT FROM pg_extension WHERE extname = 'pg_net') THEN
+    ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY INVOKER;
+    ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY INVOKER;
+
+    REVOKE EXECUTE ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) FROM supabase_functions_admin, postgres, anon, authenticated, service_role;
+    REVOKE EXECUTE ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) FROM supabase_functions_admin, postgres, anon, authenticated, service_role;
+
+    GRANT ALL ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) TO PUBLIC;
+    GRANT ALL ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) TO PUBLIC;
+  END IF;
+
+  -- Set up pg_cron
+  IF EXISTS (SELECT FROM pg_extension WHERE extname = 'pg_cron') THEN
+    grant usage on schema cron to postgres with grant option;
+    grant all on all functions in schema cron to postgres with grant option;
+
+    alter default privileges in schema cron grant all on tables to postgres with grant option;
+    alter default privileges in schema cron grant all on functions to postgres with grant option;
+    alter default privileges in schema cron grant all on sequences to postgres with grant option;
+
+    alter default privileges for user supabase_admin in schema cron grant all
+        on sequences to postgres with grant option;
+    alter default privileges for user supabase_admin in schema cron grant all
+        on tables to postgres with grant option;
+    alter default privileges for user supabase_admin in schema cron grant all
+        on functions to postgres with grant option;
+
+    grant all privileges on all tables in schema cron to postgres with grant option;
+  END IF;
+
+  -- Set up pg_graphql
+  IF EXISTS (SELECT FROM pg_extension WHERE extname = 'pg_graphql') THEN
+    create extension if not exists pg_graphql;
+  END IF;
+
+  -- Set up orioledb
+  IF EXISTS (SELECT FROM pg_extension WHERE extname = 'orioledb') THEN
+    create extension if not exists orioledb;
+  END IF;
+
+  -- Set up pgmq
+  IF EXISTS (SELECT FROM pg_extension WHERE extname = 'pgmq') THEN
+    -- Check if the pgmq.meta table exists
+    IF EXISTS (
+      SELECT 1
+      FROM pg_catalog.pg_class c
+      JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+      WHERE n.nspname = 'pgmq'
+        AND c.relname = 'meta'
+        AND c.relkind = 'r'
+        AND (
+          SELECT array_agg(attname::text ORDER BY attname)
+          FROM pg_catalog.pg_attribute a
+          WHERE a.attnum > 0
+            AND a.attrelid = c.oid 
+        ) = array['created_at', 'is_partitioned', 'is_unlogged', 'queue_name']::text[]
+    ) THEN
+      -- Insert data into pgmq.meta for all tables matching the naming pattern
+      INSERT INTO pgmq.meta (queue_name, is_partitioned, is_unlogged, created_at)
+      SELECT
+        substring(c.relname from 3) as queue_name,
+        false as is_partitioned,
+        CASE WHEN c.relpersistence = 'u' THEN true ELSE false END as is_unlogged,
+        now() as created_at
+      FROM pg_catalog.pg_class c
+      JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+      WHERE n.nspname = 'pgmq'
+        AND c.relname like 'q_%'
+        AND c.relkind in ('r', 'p', 'u')
+      ON CONFLICT (queue_name) DO NOTHING;
+
+      -- Re-attach queue tables
+      FOR tbl IN
+        SELECT c.relname as table_name
+        FROM pg_class c
+        JOIN pg_namespace n ON c.relnamespace = n.oid
+        WHERE n.nspname = 'pgmq'
+          AND c.relkind in ('r', 'u')
+          AND (c.relname like 'q\_%' or c.relname like 'a\_%')
+          AND c.oid NOT IN (
+            SELECT d.objid
+            FROM pg_depend d
+            JOIN pg_extension e ON d.refobjid = e.oid
+            WHERE e.extname = 'pgmq'
+              AND d.classid = 'pg_class'::regclass
+              AND d.deptype = 'e'
+          )
+      LOOP
+        EXECUTE format('alter extension pgmq add table pgmq.%I', tbl.table_name);
+      END LOOP;
+    END IF;
+  END IF;
+
+  -- Set up pgsodium
+  IF EXISTS (SELECT FROM pg_extension WHERE extname = 'pgsodium') THEN
+    CREATE OR REPLACE FUNCTION pgsodium.mask_role(masked_role regrole, source_name text, view_name text)
+    RETURNS void
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    SET search_path TO ''
+    AS $function$
+    BEGIN
+      EXECUTE format(
+        'GRANT SELECT ON pgsodium.key TO %s',
+        masked_role);
+
+      EXECUTE format(
+        'GRANT pgsodium_keyiduser, pgsodium_keyholder TO %s',
+        masked_role);
+
+      EXECUTE format(
+        'GRANT ALL ON %I TO %s',
+        view_name,
+        masked_role);
+      RETURN;
+    END
+    $function$;
+  END IF;
+END $$;
+
+-- Grant additional roles
+grant pg_monitor to postgres;
+grant pg_read_all_data, pg_signal_backend to postgres;
 `,
 				},
 			},
