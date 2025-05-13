@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -180,8 +181,13 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 
 	var dbConfig *v1.DatabaseConfigSpec
 	if self.builderConfig.ServiceDatabaseConfig != "" {
+		// b64 decode first
+		decodedConifg, err := base64.StdEncoding.DecodeString(self.builderConfig.ServiceDatabaseConfig)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to decode database template config: %v", err)
+		}
 		// Parse it to validate the format
-		if err := json.Unmarshal([]byte(self.builderConfig.ServiceDatabaseConfig), &dbConfig); err != nil {
+		if err := json.Unmarshal([]byte(decodedConifg), &dbConfig); err != nil {
 			return nil, nil, fmt.Errorf("failed to parse template config: %v", err)
 		}
 	}

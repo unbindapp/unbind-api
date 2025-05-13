@@ -194,7 +194,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 
 		env["SERVICE_DATABASE_TYPE"] = *service.Database
 		env["SERVICE_DATABASE_USD_VERSION"] = *service.Edges.ServiceConfig.DefinitionVersion
-		env["SERVICE_DATABASE_CONFIG"] = string(marshalledConfig)
+		env["SERVICE_DATABASE_CONFIG"] = base64.StdEncoding.EncodeToString(marshalledConfig)
 
 		// Pass S3 backup stuff
 		if service.Edges.ServiceConfig.S3BackupBucket != nil && service.Edges.ServiceConfig.S3BackupSourceID != nil {
