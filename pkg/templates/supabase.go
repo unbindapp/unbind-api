@@ -782,7 +782,7 @@ sinks:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "DATABASE_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://supabase_storage_admin:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -942,7 +942,7 @@ sinks:
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "GOTRUE_DB_DATABASE_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
-						TemplateString:            "postgresql://supabase_auth_admin:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
