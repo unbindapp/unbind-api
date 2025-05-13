@@ -2265,12 +2265,6 @@ serve(async () => {
 //   --header 'Authorization: Bearer <anon/service_role API key>'`,
 					},
 				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name:      "functions-data",
-						MountPath: "/home/deno/functions",
-					},
-				},
 			},
 		},
 	}
