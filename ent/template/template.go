@@ -27,6 +27,8 @@ const (
 	FieldIcon = "icon"
 	// FieldKeywords holds the string denoting the keywords field in the database.
 	FieldKeywords = "keywords"
+	// FieldDisplayRank holds the string denoting the display_rank field in the database.
+	FieldDisplayRank = "display_rank"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
 	// FieldImmutable holds the string denoting the immutable field in the database.
@@ -55,6 +57,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldIcon,
 	FieldKeywords,
+	FieldDisplayRank,
 	FieldVersion,
 	FieldImmutable,
 	FieldDefinition,
@@ -77,6 +80,8 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultDisplayRank holds the default value on creation for the "display_rank" field.
+	DefaultDisplayRank uint
 	// DefaultImmutable holds the default value on creation for the "immutable" field.
 	DefaultImmutable bool
 	// DefaultID holds the default value on creation for the "id" field.
@@ -114,6 +119,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByIcon orders the results by the icon field.
 func ByIcon(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIcon, opts...).ToFunc()
+}
+
+// ByDisplayRank orders the results by the display_rank field.
+func ByDisplayRank(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDisplayRank, opts...).ToFunc()
 }
 
 // ByVersion orders the results by the version field.

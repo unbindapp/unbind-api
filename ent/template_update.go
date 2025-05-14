@@ -99,6 +99,27 @@ func (tu *TemplateUpdate) ClearKeywords() *TemplateUpdate {
 	return tu
 }
 
+// SetDisplayRank sets the "display_rank" field.
+func (tu *TemplateUpdate) SetDisplayRank(u uint) *TemplateUpdate {
+	tu.mutation.ResetDisplayRank()
+	tu.mutation.SetDisplayRank(u)
+	return tu
+}
+
+// SetNillableDisplayRank sets the "display_rank" field if the given value is not nil.
+func (tu *TemplateUpdate) SetNillableDisplayRank(u *uint) *TemplateUpdate {
+	if u != nil {
+		tu.SetDisplayRank(*u)
+	}
+	return tu
+}
+
+// AddDisplayRank adds u to the "display_rank" field.
+func (tu *TemplateUpdate) AddDisplayRank(u int) *TemplateUpdate {
+	tu.mutation.AddDisplayRank(u)
+	return tu
+}
+
 // SetVersion sets the "version" field.
 func (tu *TemplateUpdate) SetVersion(i int) *TemplateUpdate {
 	tu.mutation.ResetVersion()
@@ -263,6 +284,12 @@ func (tu *TemplateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.KeywordsCleared() {
 		_spec.ClearField(template.FieldKeywords, field.TypeJSON)
 	}
+	if value, ok := tu.mutation.DisplayRank(); ok {
+		_spec.SetField(template.FieldDisplayRank, field.TypeUint, value)
+	}
+	if value, ok := tu.mutation.AddedDisplayRank(); ok {
+		_spec.AddField(template.FieldDisplayRank, field.TypeUint, value)
+	}
 	if value, ok := tu.mutation.Version(); ok {
 		_spec.SetField(template.FieldVersion, field.TypeInt, value)
 	}
@@ -405,6 +432,27 @@ func (tuo *TemplateUpdateOne) AppendKeywords(s []string) *TemplateUpdateOne {
 // ClearKeywords clears the value of the "keywords" field.
 func (tuo *TemplateUpdateOne) ClearKeywords() *TemplateUpdateOne {
 	tuo.mutation.ClearKeywords()
+	return tuo
+}
+
+// SetDisplayRank sets the "display_rank" field.
+func (tuo *TemplateUpdateOne) SetDisplayRank(u uint) *TemplateUpdateOne {
+	tuo.mutation.ResetDisplayRank()
+	tuo.mutation.SetDisplayRank(u)
+	return tuo
+}
+
+// SetNillableDisplayRank sets the "display_rank" field if the given value is not nil.
+func (tuo *TemplateUpdateOne) SetNillableDisplayRank(u *uint) *TemplateUpdateOne {
+	if u != nil {
+		tuo.SetDisplayRank(*u)
+	}
+	return tuo
+}
+
+// AddDisplayRank adds u to the "display_rank" field.
+func (tuo *TemplateUpdateOne) AddDisplayRank(u int) *TemplateUpdateOne {
+	tuo.mutation.AddDisplayRank(u)
 	return tuo
 }
 
@@ -601,6 +649,12 @@ func (tuo *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err
 	}
 	if tuo.mutation.KeywordsCleared() {
 		_spec.ClearField(template.FieldKeywords, field.TypeJSON)
+	}
+	if value, ok := tuo.mutation.DisplayRank(); ok {
+		_spec.SetField(template.FieldDisplayRank, field.TypeUint, value)
+	}
+	if value, ok := tuo.mutation.AddedDisplayRank(); ok {
+		_spec.AddField(template.FieldDisplayRank, field.TypeUint, value)
 	}
 	if value, ok := tuo.mutation.Version(); ok {
 		_spec.SetField(template.FieldVersion, field.TypeInt, value)

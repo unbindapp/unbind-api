@@ -9,6 +9,7 @@ import (
 func minioTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "MinIO",
+		DisplayRank: uint(40000),
 		Icon:        "minio",
 		Keywords:    []string{"object storage", "file storage", "s3", "s3 compatible"},
 		Description: "S3-compatible object storage",

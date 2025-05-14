@@ -474,8 +474,12 @@ func init() {
 	template.DefaultUpdatedAt = templateDescUpdatedAt.Default.(func() time.Time)
 	// template.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	template.UpdateDefaultUpdatedAt = templateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// templateDescDisplayRank is the schema descriptor for display_rank field.
+	templateDescDisplayRank := templateFields[4].Descriptor()
+	// template.DefaultDisplayRank holds the default value on creation for the display_rank field.
+	template.DefaultDisplayRank = templateDescDisplayRank.Default.(uint)
 	// templateDescImmutable is the schema descriptor for immutable field.
-	templateDescImmutable := templateFields[5].Descriptor()
+	templateDescImmutable := templateFields[6].Descriptor()
 	// template.DefaultImmutable holds the default value on creation for the immutable field.
 	template.DefaultImmutable = templateDescImmutable.Default.(bool)
 	// templateDescID is the schema descriptor for id field.

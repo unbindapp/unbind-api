@@ -9,6 +9,7 @@ import (
 func umamiTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Umami",
+		DisplayRank: uint(100000),
 		Icon:        "umami",
 		Keywords:    []string{"analytics", "open source", "privacy-friendly", "Google Analytics", "plausible"},
 		Description: "Privacy-focused alternative to Google Analytics",

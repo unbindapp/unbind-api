@@ -33,6 +33,8 @@ type Template struct {
 	Icon string `json:"icon,omitempty"`
 	// Keywords holds the value of the "keywords" field.
 	Keywords []string `json:"keywords,omitempty"`
+	// Rank for ordering results, lower ranks higher
+	DisplayRank uint `json:"display_rank,omitempty"`
 	// Version holds the value of the "version" field.
 	Version int `json:"version,omitempty"`
 	// If true, the template cannot be modified or deleted (system bundle)
@@ -72,7 +74,7 @@ func (*Template) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case template.FieldImmutable:
 			values[i] = new(sql.NullBool)
-		case template.FieldVersion:
+		case template.FieldDisplayRank, template.FieldVersion:
 			values[i] = new(sql.NullInt64)
 		case template.FieldName, template.FieldDescription, template.FieldIcon:
 			values[i] = new(sql.NullString)
@@ -138,6 +140,12 @@ func (t *Template) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &t.Keywords); err != nil {
 					return fmt.Errorf("unmarshal field keywords: %w", err)
 				}
+			}
+		case template.FieldDisplayRank:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field display_rank", values[i])
+			} else if value.Valid {
+				t.DisplayRank = uint(value.Int64)
 			}
 		case template.FieldVersion:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -217,6 +225,9 @@ func (t *Template) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("keywords=")
 	builder.WriteString(fmt.Sprintf("%v", t.Keywords))
+	builder.WriteString(", ")
+	builder.WriteString("display_rank=")
+	builder.WriteString(fmt.Sprintf("%v", t.DisplayRank))
 	builder.WriteString(", ")
 	builder.WriteString("version=")
 	builder.WriteString(fmt.Sprintf("%v", t.Version))

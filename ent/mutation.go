@@ -17525,6 +17525,8 @@ type TemplateMutation struct {
 	icon            *string
 	keywords        *[]string
 	appendkeywords  []string
+	display_rank    *uint
+	adddisplay_rank *int
 	version         *int
 	addversion      *int
 	immutable       *bool
@@ -17887,6 +17889,62 @@ func (m *TemplateMutation) ResetKeywords() {
 	delete(m.clearedFields, template.FieldKeywords)
 }
 
+// SetDisplayRank sets the "display_rank" field.
+func (m *TemplateMutation) SetDisplayRank(u uint) {
+	m.display_rank = &u
+	m.adddisplay_rank = nil
+}
+
+// DisplayRank returns the value of the "display_rank" field in the mutation.
+func (m *TemplateMutation) DisplayRank() (r uint, exists bool) {
+	v := m.display_rank
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayRank returns the old "display_rank" field's value of the Template entity.
+// If the Template object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TemplateMutation) OldDisplayRank(ctx context.Context) (v uint, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayRank is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayRank requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayRank: %w", err)
+	}
+	return oldValue.DisplayRank, nil
+}
+
+// AddDisplayRank adds u to the "display_rank" field.
+func (m *TemplateMutation) AddDisplayRank(u int) {
+	if m.adddisplay_rank != nil {
+		*m.adddisplay_rank += u
+	} else {
+		m.adddisplay_rank = &u
+	}
+}
+
+// AddedDisplayRank returns the value that was added to the "display_rank" field in this mutation.
+func (m *TemplateMutation) AddedDisplayRank() (r int, exists bool) {
+	v := m.adddisplay_rank
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDisplayRank resets all changes to the "display_rank" field.
+func (m *TemplateMutation) ResetDisplayRank() {
+	m.display_rank = nil
+	m.adddisplay_rank = nil
+}
+
 // SetVersion sets the "version" field.
 func (m *TemplateMutation) SetVersion(i int) {
 	m.version = &i
@@ -18103,7 +18161,7 @@ func (m *TemplateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TemplateMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, template.FieldCreatedAt)
 	}
@@ -18121,6 +18179,9 @@ func (m *TemplateMutation) Fields() []string {
 	}
 	if m.keywords != nil {
 		fields = append(fields, template.FieldKeywords)
+	}
+	if m.display_rank != nil {
+		fields = append(fields, template.FieldDisplayRank)
 	}
 	if m.version != nil {
 		fields = append(fields, template.FieldVersion)
@@ -18151,6 +18212,8 @@ func (m *TemplateMutation) Field(name string) (ent.Value, bool) {
 		return m.Icon()
 	case template.FieldKeywords:
 		return m.Keywords()
+	case template.FieldDisplayRank:
+		return m.DisplayRank()
 	case template.FieldVersion:
 		return m.Version()
 	case template.FieldImmutable:
@@ -18178,6 +18241,8 @@ func (m *TemplateMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldIcon(ctx)
 	case template.FieldKeywords:
 		return m.OldKeywords(ctx)
+	case template.FieldDisplayRank:
+		return m.OldDisplayRank(ctx)
 	case template.FieldVersion:
 		return m.OldVersion(ctx)
 	case template.FieldImmutable:
@@ -18235,6 +18300,13 @@ func (m *TemplateMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetKeywords(v)
 		return nil
+	case template.FieldDisplayRank:
+		v, ok := value.(uint)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayRank(v)
+		return nil
 	case template.FieldVersion:
 		v, ok := value.(int)
 		if !ok {
@@ -18264,6 +18336,9 @@ func (m *TemplateMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TemplateMutation) AddedFields() []string {
 	var fields []string
+	if m.adddisplay_rank != nil {
+		fields = append(fields, template.FieldDisplayRank)
+	}
 	if m.addversion != nil {
 		fields = append(fields, template.FieldVersion)
 	}
@@ -18275,6 +18350,8 @@ func (m *TemplateMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TemplateMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case template.FieldDisplayRank:
+		return m.AddedDisplayRank()
 	case template.FieldVersion:
 		return m.AddedVersion()
 	}
@@ -18286,6 +18363,13 @@ func (m *TemplateMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TemplateMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case template.FieldDisplayRank:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDisplayRank(v)
+		return nil
 	case template.FieldVersion:
 		v, ok := value.(int)
 		if !ok {
@@ -18346,6 +18430,9 @@ func (m *TemplateMutation) ResetField(name string) error {
 		return nil
 	case template.FieldKeywords:
 		m.ResetKeywords()
+		return nil
+	case template.FieldDisplayRank:
+		m.ResetDisplayRank()
 		return nil
 	case template.FieldVersion:
 		m.ResetVersion()

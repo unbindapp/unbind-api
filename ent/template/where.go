@@ -81,6 +81,11 @@ func Icon(v string) predicate.Template {
 	return predicate.Template(sql.FieldEQ(FieldIcon, v))
 }
 
+// DisplayRank applies equality check predicate on the "display_rank" field. It's identical to DisplayRankEQ.
+func DisplayRank(v uint) predicate.Template {
+	return predicate.Template(sql.FieldEQ(FieldDisplayRank, v))
+}
+
 // Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
 func Version(v int) predicate.Template {
 	return predicate.Template(sql.FieldEQ(FieldVersion, v))
@@ -374,6 +379,46 @@ func KeywordsIsNil() predicate.Template {
 // KeywordsNotNil applies the NotNil predicate on the "keywords" field.
 func KeywordsNotNil() predicate.Template {
 	return predicate.Template(sql.FieldNotNull(FieldKeywords))
+}
+
+// DisplayRankEQ applies the EQ predicate on the "display_rank" field.
+func DisplayRankEQ(v uint) predicate.Template {
+	return predicate.Template(sql.FieldEQ(FieldDisplayRank, v))
+}
+
+// DisplayRankNEQ applies the NEQ predicate on the "display_rank" field.
+func DisplayRankNEQ(v uint) predicate.Template {
+	return predicate.Template(sql.FieldNEQ(FieldDisplayRank, v))
+}
+
+// DisplayRankIn applies the In predicate on the "display_rank" field.
+func DisplayRankIn(vs ...uint) predicate.Template {
+	return predicate.Template(sql.FieldIn(FieldDisplayRank, vs...))
+}
+
+// DisplayRankNotIn applies the NotIn predicate on the "display_rank" field.
+func DisplayRankNotIn(vs ...uint) predicate.Template {
+	return predicate.Template(sql.FieldNotIn(FieldDisplayRank, vs...))
+}
+
+// DisplayRankGT applies the GT predicate on the "display_rank" field.
+func DisplayRankGT(v uint) predicate.Template {
+	return predicate.Template(sql.FieldGT(FieldDisplayRank, v))
+}
+
+// DisplayRankGTE applies the GTE predicate on the "display_rank" field.
+func DisplayRankGTE(v uint) predicate.Template {
+	return predicate.Template(sql.FieldGTE(FieldDisplayRank, v))
+}
+
+// DisplayRankLT applies the LT predicate on the "display_rank" field.
+func DisplayRankLT(v uint) predicate.Template {
+	return predicate.Template(sql.FieldLT(FieldDisplayRank, v))
+}
+
+// DisplayRankLTE applies the LTE predicate on the "display_rank" field.
+func DisplayRankLTE(v uint) predicate.Template {
+	return predicate.Template(sql.FieldLTE(FieldDisplayRank, v))
 }
 
 // VersionEQ applies the EQ predicate on the "version" field.

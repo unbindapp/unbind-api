@@ -9,6 +9,7 @@ import (
 func n8nTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "n8n",
+		DisplayRank: uint(30000),
 		Icon:        "n8n",
 		Keywords:    []string{"workflow", "automation", "n8n", "queue", "low code", "low-code", "no code", "no-code", "chatbot", "ai", "llm"},
 		Description: "Powerful AI workflow automation tools",

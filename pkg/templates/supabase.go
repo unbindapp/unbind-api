@@ -9,6 +9,7 @@ import (
 func supabaseTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Supabase",
+		DisplayRank: uint(20000),
 		Icon:        "supabase",
 		Keywords:    []string{"database", "auth", "storage", "supabase", "postgres", "pocketbase"},
 		Description: "The open source Firebase alternative",

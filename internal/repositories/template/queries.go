@@ -44,9 +44,9 @@ func (self *TemplateRepository) GetAll(ctx context.Context) ([]*ent.Template, er
 		result = append(result, tmpl)
 	}
 
-	// Sort by name
+	// Sort by display rank
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].Name < result[j].Name
+		return result[i].DisplayRank < result[j].DisplayRank
 	})
 
 	return result, nil

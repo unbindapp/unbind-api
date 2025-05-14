@@ -78,6 +78,20 @@ func (tc *TemplateCreate) SetKeywords(s []string) *TemplateCreate {
 	return tc
 }
 
+// SetDisplayRank sets the "display_rank" field.
+func (tc *TemplateCreate) SetDisplayRank(u uint) *TemplateCreate {
+	tc.mutation.SetDisplayRank(u)
+	return tc
+}
+
+// SetNillableDisplayRank sets the "display_rank" field if the given value is not nil.
+func (tc *TemplateCreate) SetNillableDisplayRank(u *uint) *TemplateCreate {
+	if u != nil {
+		tc.SetDisplayRank(*u)
+	}
+	return tc
+}
+
 // SetVersion sets the "version" field.
 func (tc *TemplateCreate) SetVersion(i int) *TemplateCreate {
 	tc.mutation.SetVersion(i)
@@ -176,6 +190,10 @@ func (tc *TemplateCreate) defaults() {
 		v := template.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := tc.mutation.DisplayRank(); !ok {
+		v := template.DefaultDisplayRank
+		tc.mutation.SetDisplayRank(v)
+	}
 	if _, ok := tc.mutation.Immutable(); !ok {
 		v := template.DefaultImmutable
 		tc.mutation.SetImmutable(v)
@@ -202,6 +220,9 @@ func (tc *TemplateCreate) check() error {
 	}
 	if _, ok := tc.mutation.Icon(); !ok {
 		return &ValidationError{Name: "icon", err: errors.New(`ent: missing required field "Template.icon"`)}
+	}
+	if _, ok := tc.mutation.DisplayRank(); !ok {
+		return &ValidationError{Name: "display_rank", err: errors.New(`ent: missing required field "Template.display_rank"`)}
 	}
 	if _, ok := tc.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Template.version"`)}
@@ -271,6 +292,10 @@ func (tc *TemplateCreate) createSpec() (*Template, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Keywords(); ok {
 		_spec.SetField(template.FieldKeywords, field.TypeJSON, value)
 		_node.Keywords = value
+	}
+	if value, ok := tc.mutation.DisplayRank(); ok {
+		_spec.SetField(template.FieldDisplayRank, field.TypeUint, value)
+		_node.DisplayRank = value
 	}
 	if value, ok := tc.mutation.Version(); ok {
 		_spec.SetField(template.FieldVersion, field.TypeInt, value)
@@ -415,6 +440,24 @@ func (u *TemplateUpsert) UpdateKeywords() *TemplateUpsert {
 // ClearKeywords clears the value of the "keywords" field.
 func (u *TemplateUpsert) ClearKeywords() *TemplateUpsert {
 	u.SetNull(template.FieldKeywords)
+	return u
+}
+
+// SetDisplayRank sets the "display_rank" field.
+func (u *TemplateUpsert) SetDisplayRank(v uint) *TemplateUpsert {
+	u.Set(template.FieldDisplayRank, v)
+	return u
+}
+
+// UpdateDisplayRank sets the "display_rank" field to the value that was provided on create.
+func (u *TemplateUpsert) UpdateDisplayRank() *TemplateUpsert {
+	u.SetExcluded(template.FieldDisplayRank)
+	return u
+}
+
+// AddDisplayRank adds v to the "display_rank" field.
+func (u *TemplateUpsert) AddDisplayRank(v uint) *TemplateUpsert {
+	u.Add(template.FieldDisplayRank, v)
 	return u
 }
 
@@ -585,6 +628,27 @@ func (u *TemplateUpsertOne) UpdateKeywords() *TemplateUpsertOne {
 func (u *TemplateUpsertOne) ClearKeywords() *TemplateUpsertOne {
 	return u.Update(func(s *TemplateUpsert) {
 		s.ClearKeywords()
+	})
+}
+
+// SetDisplayRank sets the "display_rank" field.
+func (u *TemplateUpsertOne) SetDisplayRank(v uint) *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetDisplayRank(v)
+	})
+}
+
+// AddDisplayRank adds v to the "display_rank" field.
+func (u *TemplateUpsertOne) AddDisplayRank(v uint) *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.AddDisplayRank(v)
+	})
+}
+
+// UpdateDisplayRank sets the "display_rank" field to the value that was provided on create.
+func (u *TemplateUpsertOne) UpdateDisplayRank() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateDisplayRank()
 	})
 }
 
@@ -929,6 +993,27 @@ func (u *TemplateUpsertBulk) UpdateKeywords() *TemplateUpsertBulk {
 func (u *TemplateUpsertBulk) ClearKeywords() *TemplateUpsertBulk {
 	return u.Update(func(s *TemplateUpsert) {
 		s.ClearKeywords()
+	})
+}
+
+// SetDisplayRank sets the "display_rank" field.
+func (u *TemplateUpsertBulk) SetDisplayRank(v uint) *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetDisplayRank(v)
+	})
+}
+
+// AddDisplayRank adds v to the "display_rank" field.
+func (u *TemplateUpsertBulk) AddDisplayRank(v uint) *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.AddDisplayRank(v)
+	})
+}
+
+// UpdateDisplayRank sets the "display_rank" field to the value that was provided on create.
+func (u *TemplateUpsertBulk) UpdateDisplayRank() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateDisplayRank()
 	})
 }
 

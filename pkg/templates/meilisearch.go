@@ -9,6 +9,7 @@ import (
 func meiliSearchTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Meilisearch",
+		DisplayRank: uint(60000),
 		Icon:        "meilisearch",
 		Keywords:    []string{"full text search", "elasticsearch", "search engine", "ram"},
 		Description: "Fast & open source search engine",
