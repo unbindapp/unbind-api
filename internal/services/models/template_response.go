@@ -10,6 +10,7 @@ import (
 
 type TemplateShortResponse struct {
 	ID          uuid.UUID `json:"id"`
+	DisplayRank uint      `json:"display_rank"`
 	Name        string    `json:"name"`
 	Icon        string    `json:"icon"`
 	Keywords    []string  `json:"keywords" nullable:"false"`
@@ -28,6 +29,7 @@ func TransformTemplateShortEntity(entity *ent.Template) *TemplateShortResponse {
 		}
 		response = &TemplateShortResponse{
 			ID:          entity.ID,
+			DisplayRank: entity.DisplayRank,
 			Name:        entity.Name,
 			Icon:        entity.Icon,
 			Keywords:    entity.Keywords,
@@ -52,6 +54,7 @@ func TransformTemplateShortEntities(entities []*ent.Template) []*TemplateShortRe
 // TemplateWithDefinitionResponse is the response model for a template with its definition
 type TemplateWithDefinitionResponse struct {
 	ID          uuid.UUID                 `json:"id"`
+	DisplayRank uint                      `json:"display_rank"`
 	Name        string                    `json:"name"`
 	Icon        string                    `json:"icon"`
 	Keywords    []string                  `json:"keywords" nullable:"false"`
@@ -104,6 +107,7 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 		}
 		response = &TemplateWithDefinitionResponse{
 			ID:          entity.ID,
+			DisplayRank: entity.DisplayRank,
 			Name:        entity.Name,
 			Icon:        entity.Icon,
 			Keywords:    entity.Keywords,
