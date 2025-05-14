@@ -12,7 +12,7 @@ type TemplateShortResponse struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Icon        string    `json:"icon"`
-	Keywords    []string  `json:"keywords"`
+	Keywords    []string  `json:"keywords" nullable:"false"`
 	Description string    `json:"description"`
 	Version     int       `json:"version"`
 	Immutable   bool      `json:"immutable"`
@@ -23,6 +23,9 @@ type TemplateShortResponse struct {
 func TransformTemplateShortEntity(entity *ent.Template) *TemplateShortResponse {
 	response := &TemplateShortResponse{}
 	if entity != nil {
+		if entity.Keywords == nil {
+			entity.Keywords = []string{}
+		}
 		response = &TemplateShortResponse{
 			ID:          entity.ID,
 			Name:        entity.Name,
@@ -51,7 +54,7 @@ type TemplateWithDefinitionResponse struct {
 	ID          uuid.UUID                 `json:"id"`
 	Name        string                    `json:"name"`
 	Icon        string                    `json:"icon"`
-	Keywords    []string                  `json:"keywords"`
+	Keywords    []string                  `json:"keywords" nullable:"false"`
 	Description string                    `json:"description"`
 	Version     int                       `json:"version"`
 	Immutable   bool                      `json:"immutable"`
@@ -89,6 +92,9 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 		}
 	}
 	if entity != nil {
+		if entity.Keywords == nil {
+			entity.Keywords = []string{}
+		}
 		response = &TemplateWithDefinitionResponse{
 			ID:          entity.ID,
 			Name:        entity.Name,
