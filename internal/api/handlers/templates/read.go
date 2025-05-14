@@ -12,7 +12,7 @@ import (
 
 type ListTemplatesResponse struct {
 	Body struct {
-		Data []*models.TemplateShortResponse `json:"data" nullable:"false"`
+		Data []*models.TemplateWithDefinitionResponse `json:"data" nullable:"false"`
 	}
 }
 

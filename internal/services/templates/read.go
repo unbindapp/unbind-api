@@ -9,7 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *TemplatesService) GetAvailable(ctx context.Context) ([]*models.TemplateShortResponse, error) {
+func (self *TemplatesService) GetAvailable(ctx context.Context) ([]*models.TemplateWithDefinitionResponse, error) {
 	//  No special permission checks for reading these
 
 	templates, err := self.repo.Template().GetAll(ctx)
@@ -18,7 +18,7 @@ func (self *TemplatesService) GetAvailable(ctx context.Context) ([]*models.Templ
 	}
 
 	// Transform the entities into response models
-	return models.TransformTemplateShortEntities(templates), nil
+	return models.TransformTemplateEntities(templates), nil
 }
 
 func (self *TemplatesService) GetByID(ctx context.Context, id uuid.UUID) (*models.TemplateWithDefinitionResponse, error) {

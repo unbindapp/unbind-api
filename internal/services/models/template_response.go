@@ -66,6 +66,12 @@ type TemplateWithDefinitionResponse struct {
 func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionResponse {
 	response := &TemplateWithDefinitionResponse{}
 	for i := range entity.Definition.Services {
+		// Remove initDB script if present
+		if entity.Definition.Services[i].DatabaseConfig != nil {
+			entity.Definition.Services[i].InitDBReplacers = nil
+			entity.Definition.Services[i].DatabaseConfig.InitDB = ""
+		}
+
 		if entity.Definition.Services[i].VariableReferences == nil {
 			entity.Definition.Services[i].VariableReferences = []schema.TemplateVariableReference{}
 		}
