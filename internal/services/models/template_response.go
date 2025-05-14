@@ -96,6 +96,7 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 		if entity.Definition.Services[i].ProtectedVariables == nil {
 			entity.Definition.Services[i].ProtectedVariables = []string{}
 		}
+		entity.Definition.Services[i].Icon = resolveTemplateServiceIcon(entity.Definition.Services[i])
 	}
 	if entity != nil {
 		if entity.Keywords == nil {
@@ -123,4 +124,17 @@ func TransformTemplateEntities(entities []*ent.Template) []*TemplateWithDefiniti
 		responses[i] = TransformTemplateEntity(entity)
 	}
 	return responses
+}
+
+// Helper
+func resolveTemplateServiceIcon(service schema.TemplateService) string {
+	switch service.Type {
+	case schema.ServiceTypeDatabase:
+		if service.DatabaseType == nil {
+			return string(service.Type)
+		}
+		return string(*service.DatabaseType)
+	default:
+		return string(service.Type)
+	}
 }

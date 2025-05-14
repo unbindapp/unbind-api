@@ -26,7 +26,6 @@ func umamiTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
-				Icon:         "postgres",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -36,7 +35,6 @@ func umamiTemplate() *schema.TemplateDefinition {
 				DependsOn:    []int{1},
 				HostInputIDs: []int{1},
 				Name:         "Umami",
-				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("ghcr.io/umami-software/umami:postgresql-v2"),

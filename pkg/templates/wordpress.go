@@ -26,7 +26,6 @@ func wordPressTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "MySQL",
-				Icon:         string(schema.ServiceTypeDatabase),
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("mysql"),
@@ -36,7 +35,6 @@ func wordPressTemplate() *schema.TemplateDefinition {
 				DependsOn:    []int{1},
 				HostInputIDs: []int{1},
 				Name:         "Wordpress",
-				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("wordpress:6.8"),

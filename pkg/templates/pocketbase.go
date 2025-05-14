@@ -34,7 +34,6 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "PocketBase",
-				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				HostInputIDs: []int{1},

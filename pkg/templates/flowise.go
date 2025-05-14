@@ -34,7 +34,6 @@ func flowiseTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
-				Icon:         "postgres",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -50,7 +49,6 @@ func flowiseTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:           2,
-				Icon:         string(schema.ServiceTypeDockerimage),
 				DependsOn:    []int{1},
 				HostInputIDs: []int{1},
 				Name:         "Flowise",

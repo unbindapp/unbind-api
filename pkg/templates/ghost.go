@@ -26,7 +26,6 @@ func ghostTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "MySQL",
-				Icon:         "mysql",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("mysql"),
@@ -36,7 +35,6 @@ func ghostTemplate() *schema.TemplateDefinition {
 				DependsOn:    []int{1},
 				HostInputIDs: []int{1},
 				Name:         "Ghost",
-				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("ghost:5"),

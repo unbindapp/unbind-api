@@ -42,7 +42,6 @@ func supabaseTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
-				Icon:         "postgres",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -1322,7 +1321,6 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 			{
 				ID:           2,
 				Name:         "kong",
-				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("kong:2.8.1"),
@@ -1520,7 +1518,6 @@ services:
 			{
 				ID:        3,
 				Name:      "studio",
-				Icon:      string(schema.ServiceTypeDockerimage),
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
@@ -1614,7 +1611,6 @@ services:
 			{
 				ID:        4,
 				Name:      "analytics",
-				Icon:      string(schema.ServiceTypeDockerimage),
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/logflare:1.12.0"),
@@ -1807,7 +1803,6 @@ services:
 			{
 				ID:        6,
 				Name:      "storage",
-				Icon:      string(schema.ServiceTypeDockerimage),
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/storage-api:v1.22.7"),
@@ -1883,7 +1878,6 @@ services:
 			{
 				ID:         7,
 				Name:       "minio",
-				Icon:       string(schema.ServiceTypeDockerimage),
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("minio/minio"),
@@ -1932,7 +1926,6 @@ services:
 			{
 				ID:        8,
 				Name:      "rest",
-				Icon:      string(schema.ServiceTypeDockerimage),
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("postgrest/postgrest:v12.2.11"),
@@ -1979,7 +1972,6 @@ services:
 			{
 				ID:        9,
 				Name:      "auth",
-				Icon:      string(schema.ServiceTypeDockerimage),
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/gotrue:v2.171.0"),
@@ -2047,7 +2039,6 @@ services:
 			{
 				ID:        10,
 				Name:      "meta",
-				Icon:      string(schema.ServiceTypeDockerimage),
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/postgres-meta:v0.88.9"),
@@ -2093,7 +2084,6 @@ services:
 			{
 				ID:        11,
 				Name:      "functions",
-				Icon:      string(schema.ServiceTypeDockerimage),
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/edge-runtime:v1.67.4"),

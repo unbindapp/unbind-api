@@ -43,7 +43,6 @@ func minioTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "MinIO",
-				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				HostInputIDs: []int{1, 2},
