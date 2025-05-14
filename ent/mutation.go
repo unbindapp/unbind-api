@@ -29,6 +29,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/template"
@@ -63,6 +64,7 @@ const (
 	TypeS3                 = "S3"
 	TypeService            = "Service"
 	TypeServiceConfig      = "ServiceConfig"
+	TypeServiceGroup       = "ServiceGroup"
 	TypeSystemSetting      = "SystemSetting"
 	TypeTeam               = "Team"
 	TypeTemplate           = "Template"
@@ -1844,6 +1846,9 @@ type EnvironmentMutation struct {
 	project_default        map[uuid.UUID]struct{}
 	removedproject_default map[uuid.UUID]struct{}
 	clearedproject_default bool
+	service_groups         map[uuid.UUID]struct{}
+	removedservice_groups  map[uuid.UUID]struct{}
+	clearedservice_groups  bool
 	done                   bool
 	oldValue               func(context.Context) (*Environment, error)
 	predicates             []predicate.Environment
@@ -2389,6 +2394,60 @@ func (m *EnvironmentMutation) ResetProjectDefault() {
 	m.removedproject_default = nil
 }
 
+// AddServiceGroupIDs adds the "service_groups" edge to the ServiceGroup entity by ids.
+func (m *EnvironmentMutation) AddServiceGroupIDs(ids ...uuid.UUID) {
+	if m.service_groups == nil {
+		m.service_groups = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.service_groups[ids[i]] = struct{}{}
+	}
+}
+
+// ClearServiceGroups clears the "service_groups" edge to the ServiceGroup entity.
+func (m *EnvironmentMutation) ClearServiceGroups() {
+	m.clearedservice_groups = true
+}
+
+// ServiceGroupsCleared reports if the "service_groups" edge to the ServiceGroup entity was cleared.
+func (m *EnvironmentMutation) ServiceGroupsCleared() bool {
+	return m.clearedservice_groups
+}
+
+// RemoveServiceGroupIDs removes the "service_groups" edge to the ServiceGroup entity by IDs.
+func (m *EnvironmentMutation) RemoveServiceGroupIDs(ids ...uuid.UUID) {
+	if m.removedservice_groups == nil {
+		m.removedservice_groups = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.service_groups, ids[i])
+		m.removedservice_groups[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedServiceGroups returns the removed IDs of the "service_groups" edge to the ServiceGroup entity.
+func (m *EnvironmentMutation) RemovedServiceGroupsIDs() (ids []uuid.UUID) {
+	for id := range m.removedservice_groups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ServiceGroupsIDs returns the "service_groups" edge IDs in the mutation.
+func (m *EnvironmentMutation) ServiceGroupsIDs() (ids []uuid.UUID) {
+	for id := range m.service_groups {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetServiceGroups resets all changes to the "service_groups" edge.
+func (m *EnvironmentMutation) ResetServiceGroups() {
+	m.service_groups = nil
+	m.clearedservice_groups = false
+	m.removedservice_groups = nil
+}
+
 // Where appends a list predicates to the EnvironmentMutation builder.
 func (m *EnvironmentMutation) Where(ps ...predicate.Environment) {
 	m.predicates = append(m.predicates, ps...)
@@ -2650,7 +2709,7 @@ func (m *EnvironmentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *EnvironmentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.project != nil {
 		edges = append(edges, environment.EdgeProject)
 	}
@@ -2659,6 +2718,9 @@ func (m *EnvironmentMutation) AddedEdges() []string {
 	}
 	if m.project_default != nil {
 		edges = append(edges, environment.EdgeProjectDefault)
+	}
+	if m.service_groups != nil {
+		edges = append(edges, environment.EdgeServiceGroups)
 	}
 	return edges
 }
@@ -2683,18 +2745,27 @@ func (m *EnvironmentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeServiceGroups:
+		ids := make([]ent.Value, 0, len(m.service_groups))
+		for id := range m.service_groups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *EnvironmentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedservices != nil {
 		edges = append(edges, environment.EdgeServices)
 	}
 	if m.removedproject_default != nil {
 		edges = append(edges, environment.EdgeProjectDefault)
+	}
+	if m.removedservice_groups != nil {
+		edges = append(edges, environment.EdgeServiceGroups)
 	}
 	return edges
 }
@@ -2715,13 +2786,19 @@ func (m *EnvironmentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case environment.EdgeServiceGroups:
+		ids := make([]ent.Value, 0, len(m.removedservice_groups))
+		for id := range m.removedservice_groups {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *EnvironmentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedproject {
 		edges = append(edges, environment.EdgeProject)
 	}
@@ -2730,6 +2807,9 @@ func (m *EnvironmentMutation) ClearedEdges() []string {
 	}
 	if m.clearedproject_default {
 		edges = append(edges, environment.EdgeProjectDefault)
+	}
+	if m.clearedservice_groups {
+		edges = append(edges, environment.EdgeServiceGroups)
 	}
 	return edges
 }
@@ -2744,6 +2824,8 @@ func (m *EnvironmentMutation) EdgeCleared(name string) bool {
 		return m.clearedservices
 	case environment.EdgeProjectDefault:
 		return m.clearedproject_default
+	case environment.EdgeServiceGroups:
+		return m.clearedservice_groups
 	}
 	return false
 }
@@ -2771,6 +2853,9 @@ func (m *EnvironmentMutation) ResetEdge(name string) error {
 		return nil
 	case environment.EdgeProjectDefault:
 		m.ResetProjectDefault()
+		return nil
+	case environment.EdgeServiceGroups:
+		m.ResetServiceGroups()
 		return nil
 	}
 	return fmt.Errorf("unknown Environment edge %s", name)
@@ -10737,6 +10822,8 @@ type ServiceMutation struct {
 	clearedcurrent_deployment  bool
 	template                   *uuid.UUID
 	clearedtemplate            bool
+	service_group              *uuid.UUID
+	clearedservice_group       bool
 	variable_references        map[uuid.UUID]struct{}
 	removedvariable_references map[uuid.UUID]struct{}
 	clearedvariable_references bool
@@ -11542,6 +11629,55 @@ func (m *ServiceMutation) ResetTemplateInstanceID() {
 	delete(m.clearedFields, service.FieldTemplateInstanceID)
 }
 
+// SetServiceGroupID sets the "service_group_id" field.
+func (m *ServiceMutation) SetServiceGroupID(u uuid.UUID) {
+	m.service_group = &u
+}
+
+// ServiceGroupID returns the value of the "service_group_id" field in the mutation.
+func (m *ServiceMutation) ServiceGroupID() (r uuid.UUID, exists bool) {
+	v := m.service_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldServiceGroupID returns the old "service_group_id" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldServiceGroupID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldServiceGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldServiceGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldServiceGroupID: %w", err)
+	}
+	return oldValue.ServiceGroupID, nil
+}
+
+// ClearServiceGroupID clears the value of the "service_group_id" field.
+func (m *ServiceMutation) ClearServiceGroupID() {
+	m.service_group = nil
+	m.clearedFields[service.FieldServiceGroupID] = struct{}{}
+}
+
+// ServiceGroupIDCleared returns if the "service_group_id" field was cleared in this mutation.
+func (m *ServiceMutation) ServiceGroupIDCleared() bool {
+	_, ok := m.clearedFields[service.FieldServiceGroupID]
+	return ok
+}
+
+// ResetServiceGroupID resets all changes to the "service_group_id" field.
+func (m *ServiceMutation) ResetServiceGroupID() {
+	m.service_group = nil
+	delete(m.clearedFields, service.FieldServiceGroupID)
+}
+
 // ClearEnvironment clears the "environment" edge to the Environment entity.
 func (m *ServiceMutation) ClearEnvironment() {
 	m.clearedenvironment = true
@@ -11743,6 +11879,33 @@ func (m *ServiceMutation) ResetTemplate() {
 	m.clearedtemplate = false
 }
 
+// ClearServiceGroup clears the "service_group" edge to the ServiceGroup entity.
+func (m *ServiceMutation) ClearServiceGroup() {
+	m.clearedservice_group = true
+	m.clearedFields[service.FieldServiceGroupID] = struct{}{}
+}
+
+// ServiceGroupCleared reports if the "service_group" edge to the ServiceGroup entity was cleared.
+func (m *ServiceMutation) ServiceGroupCleared() bool {
+	return m.ServiceGroupIDCleared() || m.clearedservice_group
+}
+
+// ServiceGroupIDs returns the "service_group" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ServiceGroupID instead. It exists only for internal usage by the builders.
+func (m *ServiceMutation) ServiceGroupIDs() (ids []uuid.UUID) {
+	if id := m.service_group; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetServiceGroup resets all changes to the "service_group" edge.
+func (m *ServiceMutation) ResetServiceGroup() {
+	m.service_group = nil
+	m.clearedservice_group = false
+}
+
 // AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by ids.
 func (m *ServiceMutation) AddVariableReferenceIDs(ids ...uuid.UUID) {
 	if m.variable_references == nil {
@@ -11831,7 +11994,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -11880,6 +12043,9 @@ func (m *ServiceMutation) Fields() []string {
 	if m.template_instance_id != nil {
 		fields = append(fields, service.FieldTemplateInstanceID)
 	}
+	if m.service_group != nil {
+		fields = append(fields, service.FieldServiceGroupID)
+	}
 	return fields
 }
 
@@ -11920,6 +12086,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.TemplateID()
 	case service.FieldTemplateInstanceID:
 		return m.TemplateInstanceID()
+	case service.FieldServiceGroupID:
+		return m.ServiceGroupID()
 	}
 	return nil, false
 }
@@ -11961,6 +12129,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldTemplateID(ctx)
 	case service.FieldTemplateInstanceID:
 		return m.OldTemplateInstanceID(ctx)
+	case service.FieldServiceGroupID:
+		return m.OldServiceGroupID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Service field %s", name)
 }
@@ -12082,6 +12252,13 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTemplateInstanceID(v)
 		return nil
+	case service.FieldServiceGroupID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetServiceGroupID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
 }
@@ -12142,6 +12319,9 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldTemplateInstanceID) {
 		fields = append(fields, service.FieldTemplateInstanceID)
 	}
+	if m.FieldCleared(service.FieldServiceGroupID) {
+		fields = append(fields, service.FieldServiceGroupID)
+	}
 	return fields
 }
 
@@ -12182,6 +12362,9 @@ func (m *ServiceMutation) ClearField(name string) error {
 		return nil
 	case service.FieldTemplateInstanceID:
 		m.ClearTemplateInstanceID()
+		return nil
+	case service.FieldServiceGroupID:
+		m.ClearServiceGroupID()
 		return nil
 	}
 	return fmt.Errorf("unknown Service nullable field %s", name)
@@ -12239,13 +12422,16 @@ func (m *ServiceMutation) ResetField(name string) error {
 	case service.FieldTemplateInstanceID:
 		m.ResetTemplateInstanceID()
 		return nil
+	case service.FieldServiceGroupID:
+		m.ResetServiceGroupID()
+		return nil
 	}
 	return fmt.Errorf("unknown Service field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ServiceMutation) AddedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.environment != nil {
 		edges = append(edges, service.EdgeEnvironment)
 	}
@@ -12263,6 +12449,9 @@ func (m *ServiceMutation) AddedEdges() []string {
 	}
 	if m.template != nil {
 		edges = append(edges, service.EdgeTemplate)
+	}
+	if m.service_group != nil {
+		edges = append(edges, service.EdgeServiceGroup)
 	}
 	if m.variable_references != nil {
 		edges = append(edges, service.EdgeVariableReferences)
@@ -12300,6 +12489,10 @@ func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 		if id := m.template; id != nil {
 			return []ent.Value{*id}
 		}
+	case service.EdgeServiceGroup:
+		if id := m.service_group; id != nil {
+			return []ent.Value{*id}
+		}
 	case service.EdgeVariableReferences:
 		ids := make([]ent.Value, 0, len(m.variable_references))
 		for id := range m.variable_references {
@@ -12312,7 +12505,7 @@ func (m *ServiceMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ServiceMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.removeddeployments != nil {
 		edges = append(edges, service.EdgeDeployments)
 	}
@@ -12344,7 +12537,7 @@ func (m *ServiceMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ServiceMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.clearedenvironment {
 		edges = append(edges, service.EdgeEnvironment)
 	}
@@ -12362,6 +12555,9 @@ func (m *ServiceMutation) ClearedEdges() []string {
 	}
 	if m.clearedtemplate {
 		edges = append(edges, service.EdgeTemplate)
+	}
+	if m.clearedservice_group {
+		edges = append(edges, service.EdgeServiceGroup)
 	}
 	if m.clearedvariable_references {
 		edges = append(edges, service.EdgeVariableReferences)
@@ -12385,6 +12581,8 @@ func (m *ServiceMutation) EdgeCleared(name string) bool {
 		return m.clearedcurrent_deployment
 	case service.EdgeTemplate:
 		return m.clearedtemplate
+	case service.EdgeServiceGroup:
+		return m.clearedservice_group
 	case service.EdgeVariableReferences:
 		return m.clearedvariable_references
 	}
@@ -12409,6 +12607,9 @@ func (m *ServiceMutation) ClearEdge(name string) error {
 		return nil
 	case service.EdgeTemplate:
 		m.ClearTemplate()
+		return nil
+	case service.EdgeServiceGroup:
+		m.ClearServiceGroup()
 		return nil
 	}
 	return fmt.Errorf("unknown Service unique edge %s", name)
@@ -12435,6 +12636,9 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 		return nil
 	case service.EdgeTemplate:
 		m.ResetTemplate()
+		return nil
+	case service.EdgeServiceGroup:
+		m.ResetServiceGroup()
 		return nil
 	case service.EdgeVariableReferences:
 		m.ResetVariableReferences()
@@ -15118,6 +15322,639 @@ func (m *ServiceConfigMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig edge %s", name)
+}
+
+// ServiceGroupMutation represents an operation that mutates the ServiceGroup nodes in the graph.
+type ServiceGroupMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *uuid.UUID
+	created_at         *time.Time
+	updated_at         *time.Time
+	name               *string
+	clearedFields      map[string]struct{}
+	environment        *uuid.UUID
+	clearedenvironment bool
+	services           map[uuid.UUID]struct{}
+	removedservices    map[uuid.UUID]struct{}
+	clearedservices    bool
+	done               bool
+	oldValue           func(context.Context) (*ServiceGroup, error)
+	predicates         []predicate.ServiceGroup
+}
+
+var _ ent.Mutation = (*ServiceGroupMutation)(nil)
+
+// servicegroupOption allows management of the mutation configuration using functional options.
+type servicegroupOption func(*ServiceGroupMutation)
+
+// newServiceGroupMutation creates new mutation for the ServiceGroup entity.
+func newServiceGroupMutation(c config, op Op, opts ...servicegroupOption) *ServiceGroupMutation {
+	m := &ServiceGroupMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeServiceGroup,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withServiceGroupID sets the ID field of the mutation.
+func withServiceGroupID(id uuid.UUID) servicegroupOption {
+	return func(m *ServiceGroupMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ServiceGroup
+		)
+		m.oldValue = func(ctx context.Context) (*ServiceGroup, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ServiceGroup.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withServiceGroup sets the old ServiceGroup of the mutation.
+func withServiceGroup(node *ServiceGroup) servicegroupOption {
+	return func(m *ServiceGroupMutation) {
+		m.oldValue = func(context.Context) (*ServiceGroup, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ServiceGroupMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ServiceGroupMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ServiceGroup entities.
+func (m *ServiceGroupMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ServiceGroupMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ServiceGroupMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ServiceGroup.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ServiceGroupMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ServiceGroupMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ServiceGroup entity.
+// If the ServiceGroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceGroupMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ServiceGroupMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ServiceGroupMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ServiceGroupMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the ServiceGroup entity.
+// If the ServiceGroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceGroupMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ServiceGroupMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetName sets the "name" field.
+func (m *ServiceGroupMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *ServiceGroupMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the ServiceGroup entity.
+// If the ServiceGroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceGroupMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *ServiceGroupMutation) ResetName() {
+	m.name = nil
+}
+
+// SetEnvironmentID sets the "environment_id" field.
+func (m *ServiceGroupMutation) SetEnvironmentID(u uuid.UUID) {
+	m.environment = &u
+}
+
+// EnvironmentID returns the value of the "environment_id" field in the mutation.
+func (m *ServiceGroupMutation) EnvironmentID() (r uuid.UUID, exists bool) {
+	v := m.environment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnvironmentID returns the old "environment_id" field's value of the ServiceGroup entity.
+// If the ServiceGroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceGroupMutation) OldEnvironmentID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnvironmentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnvironmentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnvironmentID: %w", err)
+	}
+	return oldValue.EnvironmentID, nil
+}
+
+// ResetEnvironmentID resets all changes to the "environment_id" field.
+func (m *ServiceGroupMutation) ResetEnvironmentID() {
+	m.environment = nil
+}
+
+// ClearEnvironment clears the "environment" edge to the Environment entity.
+func (m *ServiceGroupMutation) ClearEnvironment() {
+	m.clearedenvironment = true
+	m.clearedFields[servicegroup.FieldEnvironmentID] = struct{}{}
+}
+
+// EnvironmentCleared reports if the "environment" edge to the Environment entity was cleared.
+func (m *ServiceGroupMutation) EnvironmentCleared() bool {
+	return m.clearedenvironment
+}
+
+// EnvironmentIDs returns the "environment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EnvironmentID instead. It exists only for internal usage by the builders.
+func (m *ServiceGroupMutation) EnvironmentIDs() (ids []uuid.UUID) {
+	if id := m.environment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEnvironment resets all changes to the "environment" edge.
+func (m *ServiceGroupMutation) ResetEnvironment() {
+	m.environment = nil
+	m.clearedenvironment = false
+}
+
+// AddServiceIDs adds the "services" edge to the Service entity by ids.
+func (m *ServiceGroupMutation) AddServiceIDs(ids ...uuid.UUID) {
+	if m.services == nil {
+		m.services = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.services[ids[i]] = struct{}{}
+	}
+}
+
+// ClearServices clears the "services" edge to the Service entity.
+func (m *ServiceGroupMutation) ClearServices() {
+	m.clearedservices = true
+}
+
+// ServicesCleared reports if the "services" edge to the Service entity was cleared.
+func (m *ServiceGroupMutation) ServicesCleared() bool {
+	return m.clearedservices
+}
+
+// RemoveServiceIDs removes the "services" edge to the Service entity by IDs.
+func (m *ServiceGroupMutation) RemoveServiceIDs(ids ...uuid.UUID) {
+	if m.removedservices == nil {
+		m.removedservices = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.services, ids[i])
+		m.removedservices[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedServices returns the removed IDs of the "services" edge to the Service entity.
+func (m *ServiceGroupMutation) RemovedServicesIDs() (ids []uuid.UUID) {
+	for id := range m.removedservices {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ServicesIDs returns the "services" edge IDs in the mutation.
+func (m *ServiceGroupMutation) ServicesIDs() (ids []uuid.UUID) {
+	for id := range m.services {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetServices resets all changes to the "services" edge.
+func (m *ServiceGroupMutation) ResetServices() {
+	m.services = nil
+	m.clearedservices = false
+	m.removedservices = nil
+}
+
+// Where appends a list predicates to the ServiceGroupMutation builder.
+func (m *ServiceGroupMutation) Where(ps ...predicate.ServiceGroup) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ServiceGroupMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ServiceGroupMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ServiceGroup, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ServiceGroupMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ServiceGroupMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ServiceGroup).
+func (m *ServiceGroupMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ServiceGroupMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, servicegroup.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, servicegroup.FieldUpdatedAt)
+	}
+	if m.name != nil {
+		fields = append(fields, servicegroup.FieldName)
+	}
+	if m.environment != nil {
+		fields = append(fields, servicegroup.FieldEnvironmentID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ServiceGroupMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case servicegroup.FieldCreatedAt:
+		return m.CreatedAt()
+	case servicegroup.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case servicegroup.FieldName:
+		return m.Name()
+	case servicegroup.FieldEnvironmentID:
+		return m.EnvironmentID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ServiceGroupMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case servicegroup.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case servicegroup.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case servicegroup.FieldName:
+		return m.OldName(ctx)
+	case servicegroup.FieldEnvironmentID:
+		return m.OldEnvironmentID(ctx)
+	}
+	return nil, fmt.Errorf("unknown ServiceGroup field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ServiceGroupMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case servicegroup.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case servicegroup.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case servicegroup.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case servicegroup.FieldEnvironmentID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnvironmentID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceGroup field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ServiceGroupMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ServiceGroupMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ServiceGroupMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ServiceGroup numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ServiceGroupMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ServiceGroupMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ServiceGroupMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ServiceGroup nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ServiceGroupMutation) ResetField(name string) error {
+	switch name {
+	case servicegroup.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case servicegroup.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case servicegroup.FieldName:
+		m.ResetName()
+		return nil
+	case servicegroup.FieldEnvironmentID:
+		m.ResetEnvironmentID()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceGroup field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ServiceGroupMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.environment != nil {
+		edges = append(edges, servicegroup.EdgeEnvironment)
+	}
+	if m.services != nil {
+		edges = append(edges, servicegroup.EdgeServices)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ServiceGroupMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case servicegroup.EdgeEnvironment:
+		if id := m.environment; id != nil {
+			return []ent.Value{*id}
+		}
+	case servicegroup.EdgeServices:
+		ids := make([]ent.Value, 0, len(m.services))
+		for id := range m.services {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ServiceGroupMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedservices != nil {
+		edges = append(edges, servicegroup.EdgeServices)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ServiceGroupMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case servicegroup.EdgeServices:
+		ids := make([]ent.Value, 0, len(m.removedservices))
+		for id := range m.removedservices {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ServiceGroupMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedenvironment {
+		edges = append(edges, servicegroup.EdgeEnvironment)
+	}
+	if m.clearedservices {
+		edges = append(edges, servicegroup.EdgeServices)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ServiceGroupMutation) EdgeCleared(name string) bool {
+	switch name {
+	case servicegroup.EdgeEnvironment:
+		return m.clearedenvironment
+	case servicegroup.EdgeServices:
+		return m.clearedservices
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ServiceGroupMutation) ClearEdge(name string) error {
+	switch name {
+	case servicegroup.EdgeEnvironment:
+		m.ClearEnvironment()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceGroup unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ServiceGroupMutation) ResetEdge(name string) error {
+	switch name {
+	case servicegroup.EdgeEnvironment:
+		m.ResetEnvironment()
+		return nil
+	case servicegroup.EdgeServices:
+		m.ResetServices()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceGroup edge %s", name)
 }
 
 // SystemSettingMutation represents an operation that mutates the SystemSetting nodes in the graph.

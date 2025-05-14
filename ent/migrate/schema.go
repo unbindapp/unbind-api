@@ -332,6 +332,7 @@ var (
 		{Name: "environment_id", Type: field.TypeUUID},
 		{Name: "github_installation_id", Type: field.TypeInt64, Nullable: true},
 		{Name: "current_deployment_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "service_group_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "template_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// ServicesTable holds the schema information for the "services" table.
@@ -359,8 +360,14 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "services_templates_services",
+				Symbol:     "services_service_groups_services",
 				Columns:    []*schema.Column{ServicesColumns[16]},
+				RefColumns: []*schema.Column{ServiceGroupsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "services_templates_services",
+				Columns:    []*schema.Column{ServicesColumns[17]},
 				RefColumns: []*schema.Column{TemplatesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -419,6 +426,28 @@ var (
 				Columns:    []*schema.Column{ServiceConfigsColumns[32]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// ServiceGroupsColumns holds the columns for the "service_groups" table.
+	ServiceGroupsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "environment_id", Type: field.TypeUUID},
+	}
+	// ServiceGroupsTable holds the schema information for the "service_groups" table.
+	ServiceGroupsTable = &schema.Table{
+		Name:       "service_groups",
+		Columns:    ServiceGroupsColumns,
+		PrimaryKey: []*schema.Column{ServiceGroupsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "service_groups_environments_service_groups",
+				Columns:    []*schema.Column{ServiceGroupsColumns[4]},
+				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -645,6 +674,7 @@ var (
 		S3SourcesTable,
 		ServicesTable,
 		ServiceConfigsTable,
+		ServiceGroupsTable,
 		SystemSettingsTable,
 		TeamsTable,
 		TemplatesTable,
@@ -709,7 +739,8 @@ func init() {
 	ServicesTable.ForeignKeys[0].RefTable = EnvironmentsTable
 	ServicesTable.ForeignKeys[1].RefTable = GithubInstallationsTable
 	ServicesTable.ForeignKeys[2].RefTable = DeploymentsTable
-	ServicesTable.ForeignKeys[3].RefTable = TemplatesTable
+	ServicesTable.ForeignKeys[3].RefTable = ServiceGroupsTable
+	ServicesTable.ForeignKeys[4].RefTable = TemplatesTable
 	ServicesTable.Annotation = &entsql.Annotation{
 		Table: "services",
 	}
@@ -717,6 +748,10 @@ func init() {
 	ServiceConfigsTable.ForeignKeys[1].RefTable = ServicesTable
 	ServiceConfigsTable.Annotation = &entsql.Annotation{
 		Table: "service_configs",
+	}
+	ServiceGroupsTable.ForeignKeys[0].RefTable = EnvironmentsTable
+	ServiceGroupsTable.Annotation = &entsql.Annotation{
+		Table: "service_groups",
 	}
 	SystemSettingsTable.Annotation = &entsql.Annotation{
 		Table: "system_settings",

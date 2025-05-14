@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/environment"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 )
 
 // EnvironmentCreate is the builder for creating a Environment entity.
@@ -153,6 +154,21 @@ func (ec *EnvironmentCreate) AddProjectDefault(p ...*Project) *EnvironmentCreate
 		ids[i] = p[i].ID
 	}
 	return ec.AddProjectDefaultIDs(ids...)
+}
+
+// AddServiceGroupIDs adds the "service_groups" edge to the ServiceGroup entity by IDs.
+func (ec *EnvironmentCreate) AddServiceGroupIDs(ids ...uuid.UUID) *EnvironmentCreate {
+	ec.mutation.AddServiceGroupIDs(ids...)
+	return ec
+}
+
+// AddServiceGroups adds the "service_groups" edges to the ServiceGroup entity.
+func (ec *EnvironmentCreate) AddServiceGroups(s ...*ServiceGroup) *EnvironmentCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return ec.AddServiceGroupIDs(ids...)
 }
 
 // Mutation returns the EnvironmentMutation object of the builder.
@@ -345,6 +361,22 @@ func (ec *EnvironmentCreate) createSpec() (*Environment, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.mutation.ServiceGroupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ServiceGroupsTable,
+			Columns: []string{environment.ServiceGroupsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

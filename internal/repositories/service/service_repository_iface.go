@@ -24,6 +24,7 @@ type ServiceRepositoryInterface interface {
 	SetCurrentDeployment(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, deploymentID uuid.UUID) error
 	UpdateVariableMounts(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, variableMounts []*schema.VariableMount) error
 	GetByID(ctx context.Context, serviceID uuid.UUID) (svc *ent.Service, err error)
+	GetByIDsAndEnvironment(ctx context.Context, serviceIDs []uuid.UUID, environmentID uuid.UUID) ([]*ent.Service, error)
 	GetByName(ctx context.Context, name string) (*ent.Service, error)
 	GetDatabaseType(ctx context.Context, serviceID uuid.UUID) (string, error)
 	GetDatabases(ctx context.Context) ([]*ent.Service, error)

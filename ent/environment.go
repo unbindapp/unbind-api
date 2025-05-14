@@ -50,9 +50,11 @@ type EnvironmentEdges struct {
 	Services []*Service `json:"services,omitempty"`
 	// ProjectDefault holds the value of the project_default edge.
 	ProjectDefault []*Project `json:"project_default,omitempty"`
+	// ServiceGroups holds the value of the service_groups edge.
+	ServiceGroups []*ServiceGroup `json:"service_groups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // ProjectOrErr returns the Project value or an error if the edge
@@ -82,6 +84,15 @@ func (e EnvironmentEdges) ProjectDefaultOrErr() ([]*Project, error) {
 		return e.ProjectDefault, nil
 	}
 	return nil, &NotLoadedError{edge: "project_default"}
+}
+
+// ServiceGroupsOrErr returns the ServiceGroups value or an error if the edge
+// was not loaded in eager-loading.
+func (e EnvironmentEdges) ServiceGroupsOrErr() ([]*ServiceGroup, error) {
+	if e.loadedTypes[3] {
+		return e.ServiceGroups, nil
+	}
+	return nil, &NotLoadedError{edge: "service_groups"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -193,6 +204,11 @@ func (e *Environment) QueryServices() *ServiceQuery {
 // QueryProjectDefault queries the "project_default" edge of the Environment entity.
 func (e *Environment) QueryProjectDefault() *ProjectQuery {
 	return NewEnvironmentClient(e.config).QueryProjectDefault(e)
+}
+
+// QueryServiceGroups queries the "service_groups" edge of the Environment entity.
+func (e *Environment) QueryServiceGroups() *ServiceGroupQuery {
+	return NewEnvironmentClient(e.config).QueryServiceGroups(e)
 }
 
 // Update returns a builder for updating this Environment.

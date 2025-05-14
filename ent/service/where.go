@@ -132,6 +132,11 @@ func TemplateInstanceID(v uuid.UUID) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldTemplateInstanceID, v))
 }
 
+// ServiceGroupID applies equality check predicate on the "service_group_id" field. It's identical to ServiceGroupIDEQ.
+func ServiceGroupID(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldServiceGroupID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldCreatedAt, v))
@@ -972,6 +977,36 @@ func TemplateInstanceIDNotNil() predicate.Service {
 	return predicate.Service(sql.FieldNotNull(FieldTemplateInstanceID))
 }
 
+// ServiceGroupIDEQ applies the EQ predicate on the "service_group_id" field.
+func ServiceGroupIDEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldEQ(FieldServiceGroupID, v))
+}
+
+// ServiceGroupIDNEQ applies the NEQ predicate on the "service_group_id" field.
+func ServiceGroupIDNEQ(v uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNEQ(FieldServiceGroupID, v))
+}
+
+// ServiceGroupIDIn applies the In predicate on the "service_group_id" field.
+func ServiceGroupIDIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldIn(FieldServiceGroupID, vs...))
+}
+
+// ServiceGroupIDNotIn applies the NotIn predicate on the "service_group_id" field.
+func ServiceGroupIDNotIn(vs ...uuid.UUID) predicate.Service {
+	return predicate.Service(sql.FieldNotIn(FieldServiceGroupID, vs...))
+}
+
+// ServiceGroupIDIsNil applies the IsNil predicate on the "service_group_id" field.
+func ServiceGroupIDIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldServiceGroupID))
+}
+
+// ServiceGroupIDNotNil applies the NotNil predicate on the "service_group_id" field.
+func ServiceGroupIDNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldServiceGroupID))
+}
+
 // HasEnvironment applies the HasEdge predicate on the "environment" edge.
 func HasEnvironment() predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
@@ -1102,6 +1137,29 @@ func HasTemplate() predicate.Service {
 func HasTemplateWith(preds ...predicate.Template) predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
 		step := newTemplateStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasServiceGroup applies the HasEdge predicate on the "service_group" edge.
+func HasServiceGroup() predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ServiceGroupTable, ServiceGroupColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasServiceGroupWith applies the HasEdge predicate on the "service_group" edge with a given conditions (other predicates).
+func HasServiceGroupWith(preds ...predicate.ServiceGroup) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		step := newServiceGroupStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

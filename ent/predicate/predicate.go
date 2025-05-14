@@ -51,6 +51,9 @@ type Service func(*sql.Selector)
 // ServiceConfig is the predicate function for serviceconfig builders.
 type ServiceConfig func(*sql.Selector)
 
+// ServiceGroup is the predicate function for servicegroup builders.
+type ServiceGroup func(*sql.Selector)
+
 // SystemSetting is the predicate function for systemsetting builders.
 type SystemSetting func(*sql.Selector)
 

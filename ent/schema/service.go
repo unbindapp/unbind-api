@@ -83,6 +83,7 @@ func (Service) Fields() []ent.Field {
 		field.UUID("current_deployment_id", uuid.UUID{}).Optional().Nillable().Comment("Reference the current active deployment"),
 		field.UUID("template_id", uuid.UUID{}).Optional().Nillable().Comment("Reference to the template this service was created from"),
 		field.UUID("template_instance_id", uuid.UUID{}).Optional().Nillable().Comment("Group reference of all services launched together from a template."),
+		field.UUID("service_group_id", uuid.UUID{}).Optional().Nillable().Comment("The group this service belongs to"),
 	}
 }
 
@@ -112,6 +113,8 @@ func (Service) Edges() []ent.Edge {
 			),
 		// M2O with templates
 		edge.From("template", Template.Type).Ref("services").Field("template_id").Unique(),
+		// M2O with service groups
+		edge.From("service_group", ServiceGroup.Type).Ref("services").Field("service_group_id").Unique(),
 		// O2M with variabel references
 		edge.To("variable_references", VariableReference.Type).Annotations(
 			entsql.Annotation{

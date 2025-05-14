@@ -101,6 +101,7 @@ type TemplateService struct {
 	SecurityContext    *SecurityContext            `json:"security_context,omitempty"`           // Security context for the service
 	HealthCheck        *HealthCheck                `json:"health_check,omitempty"`               // Health check configuration
 	VariablesMounts    []*VariableMount            `json:"variables_mounts" nullable:"false"`    // Variables mounts
+	ProtectedVariables []string                    `json:"protected_variables" nullable:"false"` // List of protected variables (can be edited, not deleted)
 	InitDBReplacers    map[string]string           `json:"init_db_replacers,omitempty"`          // Replacers for the init DB, will replace key with value in InitDB string
 }
 

@@ -19,6 +19,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/template"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
 )
@@ -293,6 +294,26 @@ func (su *ServiceUpdate) ClearTemplateInstanceID() *ServiceUpdate {
 	return su
 }
 
+// SetServiceGroupID sets the "service_group_id" field.
+func (su *ServiceUpdate) SetServiceGroupID(u uuid.UUID) *ServiceUpdate {
+	su.mutation.SetServiceGroupID(u)
+	return su
+}
+
+// SetNillableServiceGroupID sets the "service_group_id" field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableServiceGroupID(u *uuid.UUID) *ServiceUpdate {
+	if u != nil {
+		su.SetServiceGroupID(*u)
+	}
+	return su
+}
+
+// ClearServiceGroupID clears the value of the "service_group_id" field.
+func (su *ServiceUpdate) ClearServiceGroupID() *ServiceUpdate {
+	su.mutation.ClearServiceGroupID()
+	return su
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (su *ServiceUpdate) SetEnvironment(e *Environment) *ServiceUpdate {
 	return su.SetEnvironmentID(e.ID)
@@ -345,6 +366,11 @@ func (su *ServiceUpdate) SetCurrentDeployment(d *Deployment) *ServiceUpdate {
 // SetTemplate sets the "template" edge to the Template entity.
 func (su *ServiceUpdate) SetTemplate(t *Template) *ServiceUpdate {
 	return su.SetTemplateID(t.ID)
+}
+
+// SetServiceGroup sets the "service_group" edge to the ServiceGroup entity.
+func (su *ServiceUpdate) SetServiceGroup(s *ServiceGroup) *ServiceUpdate {
+	return su.SetServiceGroupID(s.ID)
 }
 
 // AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by IDs.
@@ -415,6 +441,12 @@ func (su *ServiceUpdate) ClearCurrentDeployment() *ServiceUpdate {
 // ClearTemplate clears the "template" edge to the Template entity.
 func (su *ServiceUpdate) ClearTemplate() *ServiceUpdate {
 	su.mutation.ClearTemplate()
+	return su
+}
+
+// ClearServiceGroup clears the "service_group" edge to the ServiceGroup entity.
+func (su *ServiceUpdate) ClearServiceGroup() *ServiceUpdate {
+	su.mutation.ClearServiceGroup()
 	return su
 }
 
@@ -752,6 +784,35 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if su.mutation.ServiceGroupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.ServiceGroupTable,
+			Columns: []string{service.ServiceGroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.ServiceGroupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.ServiceGroupTable,
+			Columns: []string{service.ServiceGroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if su.mutation.VariableReferencesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -1075,6 +1136,26 @@ func (suo *ServiceUpdateOne) ClearTemplateInstanceID() *ServiceUpdateOne {
 	return suo
 }
 
+// SetServiceGroupID sets the "service_group_id" field.
+func (suo *ServiceUpdateOne) SetServiceGroupID(u uuid.UUID) *ServiceUpdateOne {
+	suo.mutation.SetServiceGroupID(u)
+	return suo
+}
+
+// SetNillableServiceGroupID sets the "service_group_id" field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableServiceGroupID(u *uuid.UUID) *ServiceUpdateOne {
+	if u != nil {
+		suo.SetServiceGroupID(*u)
+	}
+	return suo
+}
+
+// ClearServiceGroupID clears the value of the "service_group_id" field.
+func (suo *ServiceUpdateOne) ClearServiceGroupID() *ServiceUpdateOne {
+	suo.mutation.ClearServiceGroupID()
+	return suo
+}
+
 // SetEnvironment sets the "environment" edge to the Environment entity.
 func (suo *ServiceUpdateOne) SetEnvironment(e *Environment) *ServiceUpdateOne {
 	return suo.SetEnvironmentID(e.ID)
@@ -1127,6 +1208,11 @@ func (suo *ServiceUpdateOne) SetCurrentDeployment(d *Deployment) *ServiceUpdateO
 // SetTemplate sets the "template" edge to the Template entity.
 func (suo *ServiceUpdateOne) SetTemplate(t *Template) *ServiceUpdateOne {
 	return suo.SetTemplateID(t.ID)
+}
+
+// SetServiceGroup sets the "service_group" edge to the ServiceGroup entity.
+func (suo *ServiceUpdateOne) SetServiceGroup(s *ServiceGroup) *ServiceUpdateOne {
+	return suo.SetServiceGroupID(s.ID)
 }
 
 // AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by IDs.
@@ -1197,6 +1283,12 @@ func (suo *ServiceUpdateOne) ClearCurrentDeployment() *ServiceUpdateOne {
 // ClearTemplate clears the "template" edge to the Template entity.
 func (suo *ServiceUpdateOne) ClearTemplate() *ServiceUpdateOne {
 	suo.mutation.ClearTemplate()
+	return suo
+}
+
+// ClearServiceGroup clears the "service_group" edge to the ServiceGroup entity.
+func (suo *ServiceUpdateOne) ClearServiceGroup() *ServiceUpdateOne {
+	suo.mutation.ClearServiceGroup()
 	return suo
 }
 
@@ -1557,6 +1649,35 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(template.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if suo.mutation.ServiceGroupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.ServiceGroupTable,
+			Columns: []string{service.ServiceGroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.ServiceGroupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.ServiceGroupTable,
+			Columns: []string{service.ServiceGroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

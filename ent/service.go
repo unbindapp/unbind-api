@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/template"
 )
 
@@ -57,6 +58,8 @@ type Service struct {
 	TemplateID *uuid.UUID `json:"template_id,omitempty"`
 	// Group reference of all services launched together from a template.
 	TemplateInstanceID *uuid.UUID `json:"template_instance_id,omitempty"`
+	// The group this service belongs to
+	ServiceGroupID *uuid.UUID `json:"service_group_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceQuery when eager-loading is set.
 	Edges        ServiceEdges `json:"edges"`
@@ -77,11 +80,13 @@ type ServiceEdges struct {
 	CurrentDeployment *Deployment `json:"current_deployment,omitempty"`
 	// Template holds the value of the template edge.
 	Template *Template `json:"template,omitempty"`
+	// ServiceGroup holds the value of the service_group edge.
+	ServiceGroup *ServiceGroup `json:"service_group,omitempty"`
 	// VariableReferences holds the value of the variable_references edge.
 	VariableReferences []*VariableReference `json:"variable_references,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // EnvironmentOrErr returns the Environment value or an error if the edge
@@ -148,10 +153,21 @@ func (e ServiceEdges) TemplateOrErr() (*Template, error) {
 	return nil, &NotLoadedError{edge: "template"}
 }
 
+// ServiceGroupOrErr returns the ServiceGroup value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ServiceEdges) ServiceGroupOrErr() (*ServiceGroup, error) {
+	if e.ServiceGroup != nil {
+		return e.ServiceGroup, nil
+	} else if e.loadedTypes[6] {
+		return nil, &NotFoundError{label: servicegroup.Label}
+	}
+	return nil, &NotLoadedError{edge: "service_group"}
+}
+
 // VariableReferencesOrErr returns the VariableReferences value or an error if the edge
 // was not loaded in eager-loading.
 func (e ServiceEdges) VariableReferencesOrErr() ([]*VariableReference, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[7] {
 		return e.VariableReferences, nil
 	}
 	return nil, &NotLoadedError{edge: "variable_references"}
@@ -162,7 +178,7 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case service.FieldCurrentDeploymentID, service.FieldTemplateID, service.FieldTemplateInstanceID:
+		case service.FieldCurrentDeploymentID, service.FieldTemplateID, service.FieldTemplateInstanceID, service.FieldServiceGroupID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
@@ -297,6 +313,13 @@ func (s *Service) assignValues(columns []string, values []any) error {
 				s.TemplateInstanceID = new(uuid.UUID)
 				*s.TemplateInstanceID = *value.S.(*uuid.UUID)
 			}
+		case service.FieldServiceGroupID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field service_group_id", values[i])
+			} else if value.Valid {
+				s.ServiceGroupID = new(uuid.UUID)
+				*s.ServiceGroupID = *value.S.(*uuid.UUID)
+			}
 		default:
 			s.selectValues.Set(columns[i], values[i])
 		}
@@ -338,6 +361,11 @@ func (s *Service) QueryCurrentDeployment() *DeploymentQuery {
 // QueryTemplate queries the "template" edge of the Service entity.
 func (s *Service) QueryTemplate() *TemplateQuery {
 	return NewServiceClient(s.config).QueryTemplate(s)
+}
+
+// QueryServiceGroup queries the "service_group" edge of the Service entity.
+func (s *Service) QueryServiceGroup() *ServiceGroupQuery {
+	return NewServiceClient(s.config).QueryServiceGroup(s)
 }
 
 // QueryVariableReferences queries the "variable_references" edge of the Service entity.
@@ -429,6 +457,11 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	if v := s.TemplateInstanceID; v != nil {
 		builder.WriteString("template_instance_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := s.ServiceGroupID; v != nil {
+		builder.WriteString("service_group_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')

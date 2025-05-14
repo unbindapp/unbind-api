@@ -28,6 +28,7 @@ type CreateServiceInput struct {
 	DatabaseVersion      *string
 	TemplateID           *uuid.UUID
 	TemplateInstanceID   *uuid.UUID
+	ServiceGroupID       *uuid.UUID
 }
 
 // Create the service
@@ -54,6 +55,7 @@ func (self *ServiceRepository) Create(
 		SetNillableDatabase(input.Database).
 		SetNillableTemplateID(input.TemplateID).
 		SetNillableTemplateInstanceID(input.TemplateInstanceID).
+		SetNillableServiceGroupID(input.ServiceGroupID).
 		SetNillableDatabaseVersion(input.DatabaseVersion).Save(ctx)
 }
 

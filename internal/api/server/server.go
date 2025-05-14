@@ -20,6 +20,7 @@ import (
 	metric_service "github.com/unbindapp/unbind-api/internal/services/metrics"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
+	servicegroup_service "github.com/unbindapp/unbind-api/internal/services/service_group"
 	storage_service "github.com/unbindapp/unbind-api/internal/services/storage"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
@@ -58,19 +59,20 @@ type Server struct {
 	OauthConfig          *oauth2.Config
 	UpdateManager        *updater.Updater
 	// Services
-	TeamService        *team_service.TeamService
-	ProjectService     *project_service.ProjectService
-	ServiceService     *service_service.ServiceService
-	EnvironmentService *environment_service.EnvironmentService
-	LogService         *logs_service.LogsService
-	DeploymentService  *deployments_service.DeploymentService
-	SystemService      *system_service.SystemService
-	MetricsService     *metric_service.MetricsService
-	WebhooksService    *webhooks_service.WebhooksService
-	InstanceService    *instance_service.InstanceService
-	VariablesService   *variables_service.VariablesService
-	StorageService     *storage_service.StorageService
-	TemplateService    *template_service.TemplatesService
+	TeamService         *team_service.TeamService
+	ProjectService      *project_service.ProjectService
+	ServiceService      *service_service.ServiceService
+	EnvironmentService  *environment_service.EnvironmentService
+	LogService          *logs_service.LogsService
+	DeploymentService   *deployments_service.DeploymentService
+	SystemService       *system_service.SystemService
+	MetricsService      *metric_service.MetricsService
+	WebhooksService     *webhooks_service.WebhooksService
+	InstanceService     *instance_service.InstanceService
+	VariablesService    *variables_service.VariablesService
+	StorageService      *storage_service.StorageService
+	TemplateService     *template_service.TemplatesService
+	ServiceGroupService *servicegroup_service.ServiceGroupService
 }
 
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {

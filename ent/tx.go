@@ -44,6 +44,8 @@ type Tx struct {
 	Service *ServiceClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
 	ServiceConfig *ServiceConfigClient
+	// ServiceGroup is the client for interacting with the ServiceGroup builders.
+	ServiceGroup *ServiceGroupClient
 	// SystemSetting is the client for interacting with the SystemSetting builders.
 	SystemSetting *SystemSettingClient
 	// Team is the client for interacting with the Team builders.
@@ -202,6 +204,7 @@ func (tx *Tx) init() {
 	tx.S3 = NewS3Client(tx.config)
 	tx.Service = NewServiceClient(tx.config)
 	tx.ServiceConfig = NewServiceConfigClient(tx.config)
+	tx.ServiceGroup = NewServiceGroupClient(tx.config)
 	tx.SystemSetting = NewSystemSettingClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.Template = NewTemplateClient(tx.config)

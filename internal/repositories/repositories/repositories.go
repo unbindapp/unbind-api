@@ -15,6 +15,7 @@ import (
 	project_repo "github.com/unbindapp/unbind-api/internal/repositories/project"
 	s3_repo "github.com/unbindapp/unbind-api/internal/repositories/s3"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
+	servicegroup_repo "github.com/unbindapp/unbind-api/internal/repositories/service_group"
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
 	template_repo "github.com/unbindapp/unbind-api/internal/repositories/template"
@@ -27,24 +28,25 @@ import (
 //
 //go:generate go run -mod=mod github.com/vburenin/ifacemaker -f "*.go" -i RepositoriesInterface -p repositories -s Repositories -o repositories_iface.go
 type Repositories struct {
-	db          *ent.Client
-	base        *repository.BaseRepository
-	github      github_repo.GithubRepositoryInterface
-	user        user_repo.UserRepositoryInterface
-	oauth       oauth_repo.OauthRepositoryInterface
-	group       group_repo.GroupRepositoryInterface
-	project     project_repo.ProjectRepositoryInterface
-	team        team_repo.TeamRepositoryInterface
-	permissions permissions_repo.PermissionsRepositoryInterface
-	environment environment_repo.EnvironmentRepositoryInterface
-	service     service_repo.ServiceRepositoryInterface
-	deployment  deployment_repo.DeploymentRepositoryInterface
-	system      system_repo.SystemRepositoryInterface
-	webhooks    webhook_repo.WebhookRepositoryInterface
-	variables   variable_repo.VariableRepositoryInterface
-	bootstrap   bootstrap_repo.BootstrapRepositoryInterface
-	s3          s3_repo.S3RepositoryInterface
-	template    template_repo.TemplateRepositoryInterface
+	db           *ent.Client
+	base         *repository.BaseRepository
+	github       github_repo.GithubRepositoryInterface
+	user         user_repo.UserRepositoryInterface
+	oauth        oauth_repo.OauthRepositoryInterface
+	group        group_repo.GroupRepositoryInterface
+	project      project_repo.ProjectRepositoryInterface
+	team         team_repo.TeamRepositoryInterface
+	permissions  permissions_repo.PermissionsRepositoryInterface
+	environment  environment_repo.EnvironmentRepositoryInterface
+	service      service_repo.ServiceRepositoryInterface
+	deployment   deployment_repo.DeploymentRepositoryInterface
+	system       system_repo.SystemRepositoryInterface
+	webhooks     webhook_repo.WebhookRepositoryInterface
+	variables    variable_repo.VariableRepositoryInterface
+	bootstrap    bootstrap_repo.BootstrapRepositoryInterface
+	s3           s3_repo.S3RepositoryInterface
+	template     template_repo.TemplateRepositoryInterface
+	serviceGroup servicegroup_repo.ServiceGroupRepositoryInterface
 }
 
 // NewRepositories creates a new Repositories facade
@@ -66,25 +68,27 @@ func NewRepositories(db *ent.Client) *Repositories {
 	bootstrapRepo := bootstrap_repo.NewBootstrapRepository(db)
 	s3Repo := s3_repo.NewS3Repository(db)
 	templateRepo := template_repo.NewTemplateRepository(db)
+	serviceGroupRepo := servicegroup_repo.NewServiceGroupRepository(db)
 	return &Repositories{
-		db:          db,
-		base:        base,
-		github:      githubRepo,
-		user:        userRepo,
-		oauth:       oauthRepo,
-		group:       groupRepo,
-		project:     projectRepo,
-		team:        teamRepo,
-		permissions: permissionsRepo,
-		environment: environmentRepo,
-		service:     serviceRepo,
-		deployment:  deploymentRepo,
-		system:      systemRepo,
-		webhooks:    webhooksRepo,
-		variables:   variablesRepo,
-		bootstrap:   bootstrapRepo,
-		s3:          s3Repo,
-		template:    templateRepo,
+		db:           db,
+		base:         base,
+		github:       githubRepo,
+		user:         userRepo,
+		oauth:        oauthRepo,
+		group:        groupRepo,
+		project:      projectRepo,
+		team:         teamRepo,
+		permissions:  permissionsRepo,
+		environment:  environmentRepo,
+		service:      serviceRepo,
+		deployment:   deploymentRepo,
+		system:       systemRepo,
+		webhooks:     webhooksRepo,
+		variables:    variablesRepo,
+		bootstrap:    bootstrapRepo,
+		s3:           s3Repo,
+		template:     templateRepo,
+		serviceGroup: serviceGroupRepo,
 	}
 }
 
@@ -171,6 +175,10 @@ func (r *Repositories) S3() s3_repo.S3RepositoryInterface {
 // Template returns the Template repository
 func (r *Repositories) Template() template_repo.TemplateRepositoryInterface {
 	return r.template
+}
+
+func (r *Repositories) ServiceGroup() servicegroup_repo.ServiceGroupRepositoryInterface {
+	return r.serviceGroup
 }
 
 func (r *Repositories) WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error {

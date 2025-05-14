@@ -27,6 +27,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/template"
@@ -108,6 +109,7 @@ func checkColumn(table, column string) error {
 			s3.Table:                 s3.ValidColumn,
 			service.Table:            service.ValidColumn,
 			serviceconfig.Table:      serviceconfig.ValidColumn,
+			servicegroup.Table:       servicegroup.ValidColumn,
 			systemsetting.Table:      systemsetting.ValidColumn,
 			team.Table:               team.ValidColumn,
 			template.Table:           template.ValidColumn,

@@ -1,0 +1,56 @@
+package servicegroup_repo
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/service"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
+	"github.com/unbindapp/unbind-api/internal/services/models"
+)
+
+func (self *ServiceGroupRepository) Create(ctx context.Context, tx repository.TxInterface, name string, environmentID uuid.UUID) (*ent.ServiceGroup, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	// Create service group
+	return db.ServiceGroup.Create().
+		SetName(name).
+		SetEnvironmentID(environmentID).
+		Save(ctx)
+}
+
+func (self *ServiceGroupRepository) Update(ctx context.Context, input *models.UpdateServiceGroupInput) (*ent.ServiceGroup, error) {
+	// Update service group
+	updateStmt := self.base.DB.ServiceGroup.UpdateOneID(input.ID)
+	if input.Name != nil {
+		updateStmt.SetName(*input.Name)
+	}
+	if len(input.AddServiceIDs) > 0 {
+		updateStmt.AddServiceIDs(input.AddServiceIDs...)
+	}
+	if len(input.RemoveServiceIDs) > 0 {
+		updateStmt.RemoveServiceIDs(input.AddServiceIDs...)
+	}
+	return updateStmt.Save(ctx)
+}
+
+func (self *ServiceGroupRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	if err := self.base.WithTx(ctx, func(tx repository.TxInterface) error {
+		db := tx.Client()
+		err := db.Service.Update().
+			ClearServiceGroup().
+			Where(service.ServiceGroupID(id)).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		return db.ServiceGroup.DeleteOneID(id).Exec(ctx)
+	}); err != nil {
+		return err
+	}
+	return nil
+}

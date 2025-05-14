@@ -1,4 +1,4 @@
-h1:u1XvHYlgiNe54vg7RCH4jmAsqO/LM5eUlgJtlhC8Iok=
+h1:lst0DXmu6JO7Ni2FFaG7OoDfumxVxyd7RCT0U9LJx00=
 20250502184415_initial_migration.up.sql h1:PTLVgkOWBAH1xQGGizcIFu4k36oUnVpcDDpfRrKzbYU=
 20250503163312_s3_source_to_endpoint.up.sql h1:ZZGZvzdwaq28vgb9Bayu2kl88LmrfDjOrOMhxz9ViJY=
 20250506140303_add_backup_schedules.up.sql h1:Oo4AjXHSqbThqDcv0KNTJTeKu1MZRhGQT9Vu4nsdlHA=
@@ -14,3 +14,4 @@ h1:u1XvHYlgiNe54vg7RCH4jmAsqO/LM5eUlgJtlhC8Iok=
 20250512222039_add_variable_mounts.up.sql h1:ZL9jC7GK0e4zWrR1EKRqBkrsv7nsUUXCFfZPlPFPWnU=
 20250513181131_s3_endpoint_to_source.up.sql h1:BhoIq4/ywssSwOR3hWgcfvUOVkbEqFCsvGSOkmQ9Vms=
 20250514143237_add_protected_variables.up.sql h1:mZTejbvkts3BFgXG4bHocKV6xsRIA7WX+uIBIvX3OIM=
+20250514151145_add_service_groups.up.sql h1:GCICPJ+9V1HQzNuLMqbegCkACOtosgg4gdI85jCcOLI=

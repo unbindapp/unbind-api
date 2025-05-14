@@ -16,6 +16,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 )
 
 // EnvironmentUpdate is the builder for updating Environment entities.
@@ -163,6 +164,21 @@ func (eu *EnvironmentUpdate) AddProjectDefault(p ...*Project) *EnvironmentUpdate
 	return eu.AddProjectDefaultIDs(ids...)
 }
 
+// AddServiceGroupIDs adds the "service_groups" edge to the ServiceGroup entity by IDs.
+func (eu *EnvironmentUpdate) AddServiceGroupIDs(ids ...uuid.UUID) *EnvironmentUpdate {
+	eu.mutation.AddServiceGroupIDs(ids...)
+	return eu
+}
+
+// AddServiceGroups adds the "service_groups" edges to the ServiceGroup entity.
+func (eu *EnvironmentUpdate) AddServiceGroups(s ...*ServiceGroup) *EnvironmentUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return eu.AddServiceGroupIDs(ids...)
+}
+
 // Mutation returns the EnvironmentMutation object of the builder.
 func (eu *EnvironmentUpdate) Mutation() *EnvironmentMutation {
 	return eu.mutation
@@ -214,6 +230,27 @@ func (eu *EnvironmentUpdate) RemoveProjectDefault(p ...*Project) *EnvironmentUpd
 		ids[i] = p[i].ID
 	}
 	return eu.RemoveProjectDefaultIDs(ids...)
+}
+
+// ClearServiceGroups clears all "service_groups" edges to the ServiceGroup entity.
+func (eu *EnvironmentUpdate) ClearServiceGroups() *EnvironmentUpdate {
+	eu.mutation.ClearServiceGroups()
+	return eu
+}
+
+// RemoveServiceGroupIDs removes the "service_groups" edge to ServiceGroup entities by IDs.
+func (eu *EnvironmentUpdate) RemoveServiceGroupIDs(ids ...uuid.UUID) *EnvironmentUpdate {
+	eu.mutation.RemoveServiceGroupIDs(ids...)
+	return eu
+}
+
+// RemoveServiceGroups removes "service_groups" edges to ServiceGroup entities.
+func (eu *EnvironmentUpdate) RemoveServiceGroups(s ...*ServiceGroup) *EnvironmentUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return eu.RemoveServiceGroupIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -423,6 +460,51 @@ func (eu *EnvironmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if eu.mutation.ServiceGroupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ServiceGroupsTable,
+			Columns: []string{environment.ServiceGroupsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedServiceGroupsIDs(); len(nodes) > 0 && !eu.mutation.ServiceGroupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ServiceGroupsTable,
+			Columns: []string{environment.ServiceGroupsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.ServiceGroupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ServiceGroupsTable,
+			Columns: []string{environment.ServiceGroupsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	_spec.AddModifiers(eu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -576,6 +658,21 @@ func (euo *EnvironmentUpdateOne) AddProjectDefault(p ...*Project) *EnvironmentUp
 	return euo.AddProjectDefaultIDs(ids...)
 }
 
+// AddServiceGroupIDs adds the "service_groups" edge to the ServiceGroup entity by IDs.
+func (euo *EnvironmentUpdateOne) AddServiceGroupIDs(ids ...uuid.UUID) *EnvironmentUpdateOne {
+	euo.mutation.AddServiceGroupIDs(ids...)
+	return euo
+}
+
+// AddServiceGroups adds the "service_groups" edges to the ServiceGroup entity.
+func (euo *EnvironmentUpdateOne) AddServiceGroups(s ...*ServiceGroup) *EnvironmentUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return euo.AddServiceGroupIDs(ids...)
+}
+
 // Mutation returns the EnvironmentMutation object of the builder.
 func (euo *EnvironmentUpdateOne) Mutation() *EnvironmentMutation {
 	return euo.mutation
@@ -627,6 +724,27 @@ func (euo *EnvironmentUpdateOne) RemoveProjectDefault(p ...*Project) *Environmen
 		ids[i] = p[i].ID
 	}
 	return euo.RemoveProjectDefaultIDs(ids...)
+}
+
+// ClearServiceGroups clears all "service_groups" edges to the ServiceGroup entity.
+func (euo *EnvironmentUpdateOne) ClearServiceGroups() *EnvironmentUpdateOne {
+	euo.mutation.ClearServiceGroups()
+	return euo
+}
+
+// RemoveServiceGroupIDs removes the "service_groups" edge to ServiceGroup entities by IDs.
+func (euo *EnvironmentUpdateOne) RemoveServiceGroupIDs(ids ...uuid.UUID) *EnvironmentUpdateOne {
+	euo.mutation.RemoveServiceGroupIDs(ids...)
+	return euo
+}
+
+// RemoveServiceGroups removes "service_groups" edges to ServiceGroup entities.
+func (euo *EnvironmentUpdateOne) RemoveServiceGroups(s ...*ServiceGroup) *EnvironmentUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return euo.RemoveServiceGroupIDs(ids...)
 }
 
 // Where appends a list predicates to the EnvironmentUpdate builder.
@@ -859,6 +977,51 @@ func (euo *EnvironmentUpdateOne) sqlSave(ctx context.Context) (_node *Environmen
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if euo.mutation.ServiceGroupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ServiceGroupsTable,
+			Columns: []string{environment.ServiceGroupsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedServiceGroupsIDs(); len(nodes) > 0 && !euo.mutation.ServiceGroupsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ServiceGroupsTable,
+			Columns: []string{environment.ServiceGroupsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.ServiceGroupsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   environment.ServiceGroupsTable,
+			Columns: []string{environment.ServiceGroupsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

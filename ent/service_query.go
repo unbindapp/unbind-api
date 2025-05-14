@@ -19,6 +19,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/template"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
 )
@@ -36,6 +37,7 @@ type ServiceQuery struct {
 	withDeployments        *DeploymentQuery
 	withCurrentDeployment  *DeploymentQuery
 	withTemplate           *TemplateQuery
+	withServiceGroup       *ServiceGroupQuery
 	withVariableReferences *VariableReferenceQuery
 	modifiers              []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
@@ -199,6 +201,28 @@ func (sq *ServiceQuery) QueryTemplate() *TemplateQuery {
 			sqlgraph.From(service.Table, service.FieldID, selector),
 			sqlgraph.To(template.Table, template.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, service.TemplateTable, service.TemplateColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryServiceGroup chains the current query on the "service_group" edge.
+func (sq *ServiceQuery) QueryServiceGroup() *ServiceGroupQuery {
+	query := (&ServiceGroupClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, selector),
+			sqlgraph.To(servicegroup.Table, servicegroup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, service.ServiceGroupTable, service.ServiceGroupColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -426,6 +450,7 @@ func (sq *ServiceQuery) Clone() *ServiceQuery {
 		withDeployments:        sq.withDeployments.Clone(),
 		withCurrentDeployment:  sq.withCurrentDeployment.Clone(),
 		withTemplate:           sq.withTemplate.Clone(),
+		withServiceGroup:       sq.withServiceGroup.Clone(),
 		withVariableReferences: sq.withVariableReferences.Clone(),
 		// clone intermediate query.
 		sql:       sq.sql.Clone(),
@@ -497,6 +522,17 @@ func (sq *ServiceQuery) WithTemplate(opts ...func(*TemplateQuery)) *ServiceQuery
 		opt(query)
 	}
 	sq.withTemplate = query
+	return sq
+}
+
+// WithServiceGroup tells the query-builder to eager-load the nodes that are connected to
+// the "service_group" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ServiceQuery) WithServiceGroup(opts ...func(*ServiceGroupQuery)) *ServiceQuery {
+	query := (&ServiceGroupClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withServiceGroup = query
 	return sq
 }
 
@@ -589,13 +625,14 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 	var (
 		nodes       = []*Service{}
 		_spec       = sq.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			sq.withEnvironment != nil,
 			sq.withGithubInstallation != nil,
 			sq.withServiceConfig != nil,
 			sq.withDeployments != nil,
 			sq.withCurrentDeployment != nil,
 			sq.withTemplate != nil,
+			sq.withServiceGroup != nil,
 			sq.withVariableReferences != nil,
 		}
 	)
@@ -654,6 +691,12 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Serv
 	if query := sq.withTemplate; query != nil {
 		if err := sq.loadTemplate(ctx, query, nodes, nil,
 			func(n *Service, e *Template) { n.Edges.Template = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withServiceGroup; query != nil {
+		if err := sq.loadServiceGroup(ctx, query, nodes, nil,
+			func(n *Service, e *ServiceGroup) { n.Edges.ServiceGroup = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -851,6 +894,38 @@ func (sq *ServiceQuery) loadTemplate(ctx context.Context, query *TemplateQuery, 
 	}
 	return nil
 }
+func (sq *ServiceQuery) loadServiceGroup(ctx context.Context, query *ServiceGroupQuery, nodes []*Service, init func(*Service), assign func(*Service, *ServiceGroup)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Service)
+	for i := range nodes {
+		if nodes[i].ServiceGroupID == nil {
+			continue
+		}
+		fk := *nodes[i].ServiceGroupID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(servicegroup.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "service_group_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (sq *ServiceQuery) loadVariableReferences(ctx context.Context, query *VariableReferenceQuery, nodes []*Service, init func(*Service), assign func(*Service, *VariableReference)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Service)
@@ -921,6 +996,9 @@ func (sq *ServiceQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if sq.withTemplate != nil {
 			_spec.Node.AddColumnOnce(service.FieldTemplateID)
+		}
+		if sq.withServiceGroup != nil {
+			_spec.Node.AddColumnOnce(service.FieldServiceGroupID)
 		}
 	}
 	if ps := sq.predicates; len(ps) > 0 {

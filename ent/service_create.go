@@ -19,6 +19,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/template"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
 )
@@ -215,6 +216,20 @@ func (sc *ServiceCreate) SetNillableTemplateInstanceID(u *uuid.UUID) *ServiceCre
 	return sc
 }
 
+// SetServiceGroupID sets the "service_group_id" field.
+func (sc *ServiceCreate) SetServiceGroupID(u uuid.UUID) *ServiceCreate {
+	sc.mutation.SetServiceGroupID(u)
+	return sc
+}
+
+// SetNillableServiceGroupID sets the "service_group_id" field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableServiceGroupID(u *uuid.UUID) *ServiceCreate {
+	if u != nil {
+		sc.SetServiceGroupID(*u)
+	}
+	return sc
+}
+
 // SetID sets the "id" field.
 func (sc *ServiceCreate) SetID(u uuid.UUID) *ServiceCreate {
 	sc.mutation.SetID(u)
@@ -281,6 +296,11 @@ func (sc *ServiceCreate) SetCurrentDeployment(d *Deployment) *ServiceCreate {
 // SetTemplate sets the "template" edge to the Template entity.
 func (sc *ServiceCreate) SetTemplate(t *Template) *ServiceCreate {
 	return sc.SetTemplateID(t.ID)
+}
+
+// SetServiceGroup sets the "service_group" edge to the ServiceGroup entity.
+func (sc *ServiceCreate) SetServiceGroup(s *ServiceGroup) *ServiceCreate {
+	return sc.SetServiceGroupID(s.ID)
 }
 
 // AddVariableReferenceIDs adds the "variable_references" edge to the VariableReference entity by IDs.
@@ -565,6 +585,23 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.TemplateID = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := sc.mutation.ServiceGroupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   service.ServiceGroupTable,
+			Columns: []string{service.ServiceGroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(servicegroup.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ServiceGroupID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := sc.mutation.VariableReferencesIDs(); len(nodes) > 0 {
@@ -866,6 +903,24 @@ func (u *ServiceUpsert) UpdateTemplateInstanceID() *ServiceUpsert {
 // ClearTemplateInstanceID clears the value of the "template_instance_id" field.
 func (u *ServiceUpsert) ClearTemplateInstanceID() *ServiceUpsert {
 	u.SetNull(service.FieldTemplateInstanceID)
+	return u
+}
+
+// SetServiceGroupID sets the "service_group_id" field.
+func (u *ServiceUpsert) SetServiceGroupID(v uuid.UUID) *ServiceUpsert {
+	u.Set(service.FieldServiceGroupID, v)
+	return u
+}
+
+// UpdateServiceGroupID sets the "service_group_id" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateServiceGroupID() *ServiceUpsert {
+	u.SetExcluded(service.FieldServiceGroupID)
+	return u
+}
+
+// ClearServiceGroupID clears the value of the "service_group_id" field.
+func (u *ServiceUpsert) ClearServiceGroupID() *ServiceUpsert {
+	u.SetNull(service.FieldServiceGroupID)
 	return u
 }
 
@@ -1190,6 +1245,27 @@ func (u *ServiceUpsertOne) UpdateTemplateInstanceID() *ServiceUpsertOne {
 func (u *ServiceUpsertOne) ClearTemplateInstanceID() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearTemplateInstanceID()
+	})
+}
+
+// SetServiceGroupID sets the "service_group_id" field.
+func (u *ServiceUpsertOne) SetServiceGroupID(v uuid.UUID) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetServiceGroupID(v)
+	})
+}
+
+// UpdateServiceGroupID sets the "service_group_id" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateServiceGroupID() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateServiceGroupID()
+	})
+}
+
+// ClearServiceGroupID clears the value of the "service_group_id" field.
+func (u *ServiceUpsertOne) ClearServiceGroupID() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearServiceGroupID()
 	})
 }
 
@@ -1681,6 +1757,27 @@ func (u *ServiceUpsertBulk) UpdateTemplateInstanceID() *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) ClearTemplateInstanceID() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.ClearTemplateInstanceID()
+	})
+}
+
+// SetServiceGroupID sets the "service_group_id" field.
+func (u *ServiceUpsertBulk) SetServiceGroupID(v uuid.UUID) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetServiceGroupID(v)
+	})
+}
+
+// UpdateServiceGroupID sets the "service_group_id" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateServiceGroupID() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateServiceGroupID()
+	})
+}
+
+// ClearServiceGroupID clears the value of the "service_group_id" field.
+func (u *ServiceUpsertBulk) ClearServiceGroupID() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearServiceGroupID()
 	})
 }
 

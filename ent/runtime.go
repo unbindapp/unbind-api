@@ -20,6 +20,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/template"
@@ -389,6 +390,27 @@ func init() {
 	serviceconfigDescID := serviceconfigMixinFields0[0].Descriptor()
 	// serviceconfig.DefaultID holds the default value on creation for the id field.
 	serviceconfig.DefaultID = serviceconfigDescID.Default.(func() uuid.UUID)
+	servicegroupMixin := schema.ServiceGroup{}.Mixin()
+	servicegroupMixinFields0 := servicegroupMixin[0].Fields()
+	_ = servicegroupMixinFields0
+	servicegroupMixinFields1 := servicegroupMixin[1].Fields()
+	_ = servicegroupMixinFields1
+	servicegroupFields := schema.ServiceGroup{}.Fields()
+	_ = servicegroupFields
+	// servicegroupDescCreatedAt is the schema descriptor for created_at field.
+	servicegroupDescCreatedAt := servicegroupMixinFields1[0].Descriptor()
+	// servicegroup.DefaultCreatedAt holds the default value on creation for the created_at field.
+	servicegroup.DefaultCreatedAt = servicegroupDescCreatedAt.Default.(func() time.Time)
+	// servicegroupDescUpdatedAt is the schema descriptor for updated_at field.
+	servicegroupDescUpdatedAt := servicegroupMixinFields1[1].Descriptor()
+	// servicegroup.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	servicegroup.DefaultUpdatedAt = servicegroupDescUpdatedAt.Default.(func() time.Time)
+	// servicegroup.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	servicegroup.UpdateDefaultUpdatedAt = servicegroupDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// servicegroupDescID is the schema descriptor for id field.
+	servicegroupDescID := servicegroupMixinFields0[0].Descriptor()
+	// servicegroup.DefaultID holds the default value on creation for the id field.
+	servicegroup.DefaultID = servicegroupDescID.Default.(func() uuid.UUID)
 	systemsettingMixin := schema.SystemSetting{}.Mixin()
 	systemsettingMixinFields0 := systemsettingMixin[0].Fields()
 	_ = systemsettingMixinFields0

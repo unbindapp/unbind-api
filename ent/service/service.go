@@ -49,6 +49,8 @@ const (
 	FieldTemplateID = "template_id"
 	// FieldTemplateInstanceID holds the string denoting the template_instance_id field in the database.
 	FieldTemplateInstanceID = "template_instance_id"
+	// FieldServiceGroupID holds the string denoting the service_group_id field in the database.
+	FieldServiceGroupID = "service_group_id"
 	// EdgeEnvironment holds the string denoting the environment edge name in mutations.
 	EdgeEnvironment = "environment"
 	// EdgeGithubInstallation holds the string denoting the github_installation edge name in mutations.
@@ -61,6 +63,8 @@ const (
 	EdgeCurrentDeployment = "current_deployment"
 	// EdgeTemplate holds the string denoting the template edge name in mutations.
 	EdgeTemplate = "template"
+	// EdgeServiceGroup holds the string denoting the service_group edge name in mutations.
+	EdgeServiceGroup = "service_group"
 	// EdgeVariableReferences holds the string denoting the variable_references edge name in mutations.
 	EdgeVariableReferences = "variable_references"
 	// Table holds the table name of the service in the database.
@@ -107,6 +111,13 @@ const (
 	TemplateInverseTable = "templates"
 	// TemplateColumn is the table column denoting the template relation/edge.
 	TemplateColumn = "template_id"
+	// ServiceGroupTable is the table that holds the service_group relation/edge.
+	ServiceGroupTable = "services"
+	// ServiceGroupInverseTable is the table name for the ServiceGroup entity.
+	// It exists in this package in order to avoid circular dependency with the "servicegroup" package.
+	ServiceGroupInverseTable = "service_groups"
+	// ServiceGroupColumn is the table column denoting the service_group relation/edge.
+	ServiceGroupColumn = "service_group_id"
 	// VariableReferencesTable is the table that holds the variable_references relation/edge.
 	VariableReferencesTable = "variable_references"
 	// VariableReferencesInverseTable is the table name for the VariableReference entity.
@@ -135,6 +146,7 @@ var Columns = []string{
 	FieldCurrentDeploymentID,
 	FieldTemplateID,
 	FieldTemplateInstanceID,
+	FieldServiceGroupID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -258,6 +270,11 @@ func ByTemplateInstanceID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTemplateInstanceID, opts...).ToFunc()
 }
 
+// ByServiceGroupID orders the results by the service_group_id field.
+func ByServiceGroupID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldServiceGroupID, opts...).ToFunc()
+}
+
 // ByEnvironmentField orders the results by environment field.
 func ByEnvironmentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -304,6 +321,13 @@ func ByCurrentDeploymentField(field string, opts ...sql.OrderTermOption) OrderOp
 func ByTemplateField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newTemplateStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByServiceGroupField orders the results by service_group field.
+func ByServiceGroupField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newServiceGroupStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -360,6 +384,13 @@ func newTemplateStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TemplateInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, TemplateTable, TemplateColumn),
+	)
+}
+func newServiceGroupStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ServiceGroupInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ServiceGroupTable, ServiceGroupColumn),
 	)
 }
 func newVariableReferencesStep() *sqlgraph.Step {

@@ -17,6 +17,7 @@ import (
 	project_repo "github.com/unbindapp/unbind-api/internal/repositories/project"
 	s3_repo "github.com/unbindapp/unbind-api/internal/repositories/s3"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
+	servicegroup_repo "github.com/unbindapp/unbind-api/internal/repositories/service_group"
 	system_repo "github.com/unbindapp/unbind-api/internal/repositories/system"
 	team_repo "github.com/unbindapp/unbind-api/internal/repositories/team"
 	template_repo "github.com/unbindapp/unbind-api/internal/repositories/template"
@@ -61,5 +62,6 @@ type RepositoriesInterface interface {
 	S3() s3_repo.S3RepositoryInterface
 	// Template returns the Template repository
 	Template() template_repo.TemplateRepositoryInterface
+	ServiceGroup() servicegroup_repo.ServiceGroupRepositoryInterface
 	WithTx(ctx context.Context, fn func(tx repository.TxInterface) error) error
 }

@@ -176,6 +176,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	templateInstanceID := uuid.New()
 
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		serviceGroup, err := self.repo.ServiceGroup().Create(ctx, tx, input.GroupName, input.EnvironmentID)
+		if err != nil {
+			return fmt.Errorf("failed to create service group: %w", err)
+		}
+
 		for _, templateService := range generatedTemplate.Services {
 			// Fetch DB metadata (if a database)
 			var dbVersion *string
@@ -270,6 +275,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					DatabaseVersion:    dbVersion,
 					TemplateID:         utils.ToPtr(template.ID),
 					TemplateInstanceID: utils.ToPtr(templateInstanceID),
+					ServiceGroupID:     utils.ToPtr(serviceGroup.ID),
 				})
 			if err != nil {
 				return fmt.Errorf("failed to create service: %w", err)

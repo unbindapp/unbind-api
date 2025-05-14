@@ -75,6 +75,9 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 		if entity.Definition.Services[i].Ports == nil {
 			entity.Definition.Services[i].Ports = []schema.PortSpec{}
 		}
+		if entity.Definition.Services[i].ProtectedVariables == nil {
+			entity.Definition.Services[i].ProtectedVariables = []string{}
+		}
 	}
 	if entity != nil {
 		response = &TemplateWithDefinitionResponse{

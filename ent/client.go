@@ -31,6 +31,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	"github.com/unbindapp/unbind-api/ent/systemsetting"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/template"
@@ -76,6 +77,8 @@ type Client struct {
 	Service *ServiceClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
 	ServiceConfig *ServiceConfigClient
+	// ServiceGroup is the client for interacting with the ServiceGroup builders.
+	ServiceGroup *ServiceGroupClient
 	// SystemSetting is the client for interacting with the SystemSetting builders.
 	SystemSetting *SystemSettingClient
 	// Team is the client for interacting with the Team builders.
@@ -114,6 +117,7 @@ func (c *Client) init() {
 	c.S3 = NewS3Client(c.config)
 	c.Service = NewServiceClient(c.config)
 	c.ServiceConfig = NewServiceConfigClient(c.config)
+	c.ServiceGroup = NewServiceGroupClient(c.config)
 	c.SystemSetting = NewSystemSettingClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.Template = NewTemplateClient(c.config)
@@ -227,6 +231,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		S3:                 NewS3Client(cfg),
 		Service:            NewServiceClient(cfg),
 		ServiceConfig:      NewServiceConfigClient(cfg),
+		ServiceGroup:       NewServiceGroupClient(cfg),
 		SystemSetting:      NewSystemSettingClient(cfg),
 		Team:               NewTeamClient(cfg),
 		Template:           NewTemplateClient(cfg),
@@ -267,6 +272,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		S3:                 NewS3Client(cfg),
 		Service:            NewServiceClient(cfg),
 		ServiceConfig:      NewServiceConfigClient(cfg),
+		ServiceGroup:       NewServiceGroupClient(cfg),
 		SystemSetting:      NewSystemSettingClient(cfg),
 		Team:               NewTeamClient(cfg),
 		Template:           NewTemplateClient(cfg),
@@ -304,8 +310,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
 		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team,
-		c.Template, c.User, c.VariableReference, c.Webhook,
+		c.Registry, c.S3, c.Service, c.ServiceConfig, c.ServiceGroup, c.SystemSetting,
+		c.Team, c.Template, c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -317,8 +323,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
 		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.S3, c.Service, c.ServiceConfig, c.SystemSetting, c.Team,
-		c.Template, c.User, c.VariableReference, c.Webhook,
+		c.Registry, c.S3, c.Service, c.ServiceConfig, c.ServiceGroup, c.SystemSetting,
+		c.Team, c.Template, c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -357,6 +363,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Service.mutate(ctx, m)
 	case *ServiceConfigMutation:
 		return c.ServiceConfig.mutate(ctx, m)
+	case *ServiceGroupMutation:
+		return c.ServiceGroup.mutate(ctx, m)
 	case *SystemSettingMutation:
 		return c.SystemSetting.mutate(ctx, m)
 	case *TeamMutation:
@@ -805,6 +813,22 @@ func (c *EnvironmentClient) QueryProjectDefault(e *Environment) *ProjectQuery {
 			sqlgraph.From(environment.Table, environment.FieldID, id),
 			sqlgraph.To(project.Table, project.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, environment.ProjectDefaultTable, environment.ProjectDefaultColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryServiceGroups queries the service_groups edge of a Environment.
+func (c *EnvironmentClient) QueryServiceGroups(e *Environment) *ServiceGroupQuery {
+	query := (&ServiceGroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(environment.Table, environment.FieldID, id),
+			sqlgraph.To(servicegroup.Table, servicegroup.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, environment.ServiceGroupsTable, environment.ServiceGroupsColumn),
 		)
 		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
 		return fromV, nil
@@ -2611,6 +2635,22 @@ func (c *ServiceClient) QueryTemplate(s *Service) *TemplateQuery {
 	return query
 }
 
+// QueryServiceGroup queries the service_group edge of a Service.
+func (c *ServiceClient) QueryServiceGroup(s *Service) *ServiceGroupQuery {
+	query := (&ServiceGroupClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, id),
+			sqlgraph.To(servicegroup.Table, servicegroup.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, service.ServiceGroupTable, service.ServiceGroupColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryVariableReferences queries the variable_references edge of a Service.
 func (c *ServiceClient) QueryVariableReferences(s *Service) *VariableReferenceQuery {
 	query := (&VariableReferenceClient{config: c.config}).Query()
@@ -2814,6 +2854,171 @@ func (c *ServiceConfigClient) mutate(ctx context.Context, m *ServiceConfigMutati
 		return (&ServiceConfigDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ServiceConfig mutation op: %q", m.Op())
+	}
+}
+
+// ServiceGroupClient is a client for the ServiceGroup schema.
+type ServiceGroupClient struct {
+	config
+}
+
+// NewServiceGroupClient returns a client for the ServiceGroup from the given config.
+func NewServiceGroupClient(c config) *ServiceGroupClient {
+	return &ServiceGroupClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `servicegroup.Hooks(f(g(h())))`.
+func (c *ServiceGroupClient) Use(hooks ...Hook) {
+	c.hooks.ServiceGroup = append(c.hooks.ServiceGroup, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `servicegroup.Intercept(f(g(h())))`.
+func (c *ServiceGroupClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ServiceGroup = append(c.inters.ServiceGroup, interceptors...)
+}
+
+// Create returns a builder for creating a ServiceGroup entity.
+func (c *ServiceGroupClient) Create() *ServiceGroupCreate {
+	mutation := newServiceGroupMutation(c.config, OpCreate)
+	return &ServiceGroupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ServiceGroup entities.
+func (c *ServiceGroupClient) CreateBulk(builders ...*ServiceGroupCreate) *ServiceGroupCreateBulk {
+	return &ServiceGroupCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ServiceGroupClient) MapCreateBulk(slice any, setFunc func(*ServiceGroupCreate, int)) *ServiceGroupCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ServiceGroupCreateBulk{err: fmt.Errorf("calling to ServiceGroupClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ServiceGroupCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ServiceGroupCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ServiceGroup.
+func (c *ServiceGroupClient) Update() *ServiceGroupUpdate {
+	mutation := newServiceGroupMutation(c.config, OpUpdate)
+	return &ServiceGroupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ServiceGroupClient) UpdateOne(sg *ServiceGroup) *ServiceGroupUpdateOne {
+	mutation := newServiceGroupMutation(c.config, OpUpdateOne, withServiceGroup(sg))
+	return &ServiceGroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ServiceGroupClient) UpdateOneID(id uuid.UUID) *ServiceGroupUpdateOne {
+	mutation := newServiceGroupMutation(c.config, OpUpdateOne, withServiceGroupID(id))
+	return &ServiceGroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ServiceGroup.
+func (c *ServiceGroupClient) Delete() *ServiceGroupDelete {
+	mutation := newServiceGroupMutation(c.config, OpDelete)
+	return &ServiceGroupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ServiceGroupClient) DeleteOne(sg *ServiceGroup) *ServiceGroupDeleteOne {
+	return c.DeleteOneID(sg.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ServiceGroupClient) DeleteOneID(id uuid.UUID) *ServiceGroupDeleteOne {
+	builder := c.Delete().Where(servicegroup.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ServiceGroupDeleteOne{builder}
+}
+
+// Query returns a query builder for ServiceGroup.
+func (c *ServiceGroupClient) Query() *ServiceGroupQuery {
+	return &ServiceGroupQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeServiceGroup},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ServiceGroup entity by its id.
+func (c *ServiceGroupClient) Get(ctx context.Context, id uuid.UUID) (*ServiceGroup, error) {
+	return c.Query().Where(servicegroup.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ServiceGroupClient) GetX(ctx context.Context, id uuid.UUID) *ServiceGroup {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEnvironment queries the environment edge of a ServiceGroup.
+func (c *ServiceGroupClient) QueryEnvironment(sg *ServiceGroup) *EnvironmentQuery {
+	query := (&EnvironmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sg.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(servicegroup.Table, servicegroup.FieldID, id),
+			sqlgraph.To(environment.Table, environment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, servicegroup.EnvironmentTable, servicegroup.EnvironmentColumn),
+		)
+		fromV = sqlgraph.Neighbors(sg.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryServices queries the services edge of a ServiceGroup.
+func (c *ServiceGroupClient) QueryServices(sg *ServiceGroup) *ServiceQuery {
+	query := (&ServiceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := sg.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(servicegroup.Table, servicegroup.FieldID, id),
+			sqlgraph.To(service.Table, service.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, servicegroup.ServicesTable, servicegroup.ServicesColumn),
+		)
+		fromV = sqlgraph.Neighbors(sg.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ServiceGroupClient) Hooks() []Hook {
+	return c.hooks.ServiceGroup
+}
+
+// Interceptors returns the client interceptors.
+func (c *ServiceGroupClient) Interceptors() []Interceptor {
+	return c.inters.ServiceGroup
+}
+
+func (c *ServiceGroupClient) mutate(ctx context.Context, m *ServiceGroupMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ServiceGroupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ServiceGroupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ServiceGroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ServiceGroupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ServiceGroup mutation op: %q", m.Op())
 	}
 }
 
@@ -3828,14 +4033,14 @@ type (
 	hooks struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
 		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
-		ServiceConfig, SystemSetting, Team, Template, User, VariableReference,
-		Webhook []ent.Hook
+		ServiceConfig, ServiceGroup, SystemSetting, Team, Template, User,
+		VariableReference, Webhook []ent.Hook
 	}
 	inters struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
 		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
-		ServiceConfig, SystemSetting, Team, Template, User, VariableReference,
-		Webhook []ent.Interceptor
+		ServiceConfig, ServiceGroup, SystemSetting, Team, Template, User,
+		VariableReference, Webhook []ent.Interceptor
 	}
 )
 

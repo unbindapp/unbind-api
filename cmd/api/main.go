@@ -34,6 +34,7 @@ import (
 	metrics_handler "github.com/unbindapp/unbind-api/internal/api/handlers/metrics"
 	projects_handler "github.com/unbindapp/unbind-api/internal/api/handlers/projects"
 	service_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service"
+	servicegroups_handler "github.com/unbindapp/unbind-api/internal/api/handlers/service_groups"
 	setup_handler "github.com/unbindapp/unbind-api/internal/api/handlers/setup"
 	storage_handler "github.com/unbindapp/unbind-api/internal/api/handlers/storage"
 	system_handler "github.com/unbindapp/unbind-api/internal/api/handlers/system"
@@ -65,6 +66,7 @@ import (
 	metric_service "github.com/unbindapp/unbind-api/internal/services/metrics"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
 	service_service "github.com/unbindapp/unbind-api/internal/services/service"
+	servicegroup_service "github.com/unbindapp/unbind-api/internal/services/service_group"
 	storage_service "github.com/unbindapp/unbind-api/internal/services/storage"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 	team_service "github.com/unbindapp/unbind-api/internal/services/team"
@@ -276,6 +278,7 @@ func startAPI(cfg *config.Config) {
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
 	storageService := storage_service.NewStorageService(cfg, repo, kubeClient)
 	templateService := templates_service.NewTemplatesService(cfg, repo, kubeClient, dbProvider, deploymentController)
+	serviceGroupService := servicegroup_service.NewServiceGroupService(cfg, repo)
 
 	stringCache := cache.NewStringCache(redisClient, "unbind")
 
@@ -317,6 +320,7 @@ func startAPI(cfg *config.Config) {
 		VariablesService:     variableService,
 		StorageService:       storageService,
 		TemplateService:      templateService,
+		ServiceGroupService:  serviceGroupService,
 		OauthConfig:          oauthConfig,
 	}
 
@@ -466,6 +470,15 @@ func startAPI(cfg *config.Config) {
 			next(op)
 		})
 		environments_handler.RegisterHandlers(srvImpl, environmentsGroup)
+
+		// /service_groups group
+		serviceGroupsGroup := huma.NewGroup(api, "/service_groups")
+		serviceGroupsGroup.UseMiddleware(mw.Authenticate)
+		serviceGroupsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+			op.Tags = []string{"Service Groups"}
+			next(op)
+		})
+		servicegroups_handler.RegisterHandlers(srvImpl, serviceGroupsGroup)
 
 		// /services group
 		servicesGroup := huma.NewGroup(api, "/services")

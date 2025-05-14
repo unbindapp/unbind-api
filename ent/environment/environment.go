@@ -37,6 +37,8 @@ const (
 	EdgeServices = "services"
 	// EdgeProjectDefault holds the string denoting the project_default edge name in mutations.
 	EdgeProjectDefault = "project_default"
+	// EdgeServiceGroups holds the string denoting the service_groups edge name in mutations.
+	EdgeServiceGroups = "service_groups"
 	// Table holds the table name of the environment in the database.
 	Table = "environments"
 	// ProjectTable is the table that holds the project relation/edge.
@@ -60,6 +62,13 @@ const (
 	ProjectDefaultInverseTable = "projects"
 	// ProjectDefaultColumn is the table column denoting the project_default relation/edge.
 	ProjectDefaultColumn = "default_environment_id"
+	// ServiceGroupsTable is the table that holds the service_groups relation/edge.
+	ServiceGroupsTable = "service_groups"
+	// ServiceGroupsInverseTable is the table name for the ServiceGroup entity.
+	// It exists in this package in order to avoid circular dependency with the "servicegroup" package.
+	ServiceGroupsInverseTable = "service_groups"
+	// ServiceGroupsColumn is the table column denoting the service_groups relation/edge.
+	ServiceGroupsColumn = "environment_id"
 )
 
 // Columns holds all SQL columns for environment fields.
@@ -182,6 +191,20 @@ func ByProjectDefault(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newProjectDefaultStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByServiceGroupsCount orders the results by service_groups count.
+func ByServiceGroupsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newServiceGroupsStep(), opts...)
+	}
+}
+
+// ByServiceGroups orders the results by service_groups terms.
+func ByServiceGroups(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newServiceGroupsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newProjectStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -201,5 +224,12 @@ func newProjectDefaultStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ProjectDefaultInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ProjectDefaultTable, ProjectDefaultColumn),
+	)
+}
+func newServiceGroupsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ServiceGroupsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ServiceGroupsTable, ServiceGroupsColumn),
 	)
 }

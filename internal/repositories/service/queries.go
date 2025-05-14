@@ -24,6 +24,7 @@ import (
 func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID) (svc *ent.Service, err error) {
 	svc, err = self.base.DB.Service.Query().
 		Where(service.IDEQ(serviceID)).
+		WithServiceGroup().
 		WithEnvironment(func(eq *ent.EnvironmentQuery) {
 			eq.WithProject(func(pq *ent.ProjectQuery) {
 				pq.WithTeam()
@@ -54,9 +55,22 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 	return svc, nil
 }
 
+func (self *ServiceRepository) GetByIDsAndEnvironment(ctx context.Context, serviceIDs []uuid.UUID, environmentID uuid.UUID) ([]*ent.Service, error) {
+	services, err := self.base.DB.Service.Query().
+		Where(service.IDIn(serviceIDs...), service.ServiceGroupID(environmentID)).
+		All(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return services, nil
+}
+
 func (self *ServiceRepository) GetByName(ctx context.Context, name string) (*ent.Service, error) {
 	return self.base.DB.Service.Query().
 		Where(service.NameEQ(name)).
+		WithServiceGroup().
 		WithEnvironment(func(eq *ent.EnvironmentQuery) {
 			eq.WithProject(func(pq *ent.ProjectQuery) {
 				pq.WithTeam()
@@ -107,6 +121,7 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID, withLatestDeployment bool) ([]*ent.Service, error) {
 	services, err := self.base.DB.Service.Query().
 		Where(service.EnvironmentIDEQ(environmentID)).
+		WithServiceGroup().
 		WithServiceConfig().
 		WithCurrentDeployment().
 		WithTemplate().

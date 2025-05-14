@@ -17,6 +17,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/project"
 	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 )
 
 // EnvironmentQuery is the builder for querying Environment entities.
@@ -29,6 +30,7 @@ type EnvironmentQuery struct {
 	withProject        *ProjectQuery
 	withServices       *ServiceQuery
 	withProjectDefault *ProjectQuery
+	withServiceGroups  *ServiceGroupQuery
 	modifiers          []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -125,6 +127,28 @@ func (eq *EnvironmentQuery) QueryProjectDefault() *ProjectQuery {
 			sqlgraph.From(environment.Table, environment.FieldID, selector),
 			sqlgraph.To(project.Table, project.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, environment.ProjectDefaultTable, environment.ProjectDefaultColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryServiceGroups chains the current query on the "service_groups" edge.
+func (eq *EnvironmentQuery) QueryServiceGroups() *ServiceGroupQuery {
+	query := (&ServiceGroupClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(environment.Table, environment.FieldID, selector),
+			sqlgraph.To(servicegroup.Table, servicegroup.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, environment.ServiceGroupsTable, environment.ServiceGroupsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
 		return fromU, nil
@@ -327,6 +351,7 @@ func (eq *EnvironmentQuery) Clone() *EnvironmentQuery {
 		withProject:        eq.withProject.Clone(),
 		withServices:       eq.withServices.Clone(),
 		withProjectDefault: eq.withProjectDefault.Clone(),
+		withServiceGroups:  eq.withServiceGroups.Clone(),
 		// clone intermediate query.
 		sql:       eq.sql.Clone(),
 		path:      eq.path,
@@ -364,6 +389,17 @@ func (eq *EnvironmentQuery) WithProjectDefault(opts ...func(*ProjectQuery)) *Env
 		opt(query)
 	}
 	eq.withProjectDefault = query
+	return eq
+}
+
+// WithServiceGroups tells the query-builder to eager-load the nodes that are connected to
+// the "service_groups" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EnvironmentQuery) WithServiceGroups(opts ...func(*ServiceGroupQuery)) *EnvironmentQuery {
+	query := (&ServiceGroupClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withServiceGroups = query
 	return eq
 }
 
@@ -445,10 +481,11 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	var (
 		nodes       = []*Environment{}
 		_spec       = eq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			eq.withProject != nil,
 			eq.withServices != nil,
 			eq.withProjectDefault != nil,
+			eq.withServiceGroups != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -489,6 +526,13 @@ func (eq *EnvironmentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		if err := eq.loadProjectDefault(ctx, query, nodes,
 			func(n *Environment) { n.Edges.ProjectDefault = []*Project{} },
 			func(n *Environment, e *Project) { n.Edges.ProjectDefault = append(n.Edges.ProjectDefault, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := eq.withServiceGroups; query != nil {
+		if err := eq.loadServiceGroups(ctx, query, nodes,
+			func(n *Environment) { n.Edges.ServiceGroups = []*ServiceGroup{} },
+			func(n *Environment, e *ServiceGroup) { n.Edges.ServiceGroups = append(n.Edges.ServiceGroups, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -582,6 +626,36 @@ func (eq *EnvironmentQuery) loadProjectDefault(ctx context.Context, query *Proje
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "default_environment_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (eq *EnvironmentQuery) loadServiceGroups(ctx context.Context, query *ServiceGroupQuery, nodes []*Environment, init func(*Environment), assign func(*Environment, *ServiceGroup)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Environment)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(servicegroup.FieldEnvironmentID)
+	}
+	query.Where(predicate.ServiceGroup(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(environment.ServiceGroupsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.EnvironmentID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "environment_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

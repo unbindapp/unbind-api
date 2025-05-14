@@ -44,6 +44,8 @@ func (Environment) Edges() []ent.Edge {
 		),
 		// O2O
 		edge.To("project_default", Project.Type),
+		// O2M with service_groups
+		edge.To("service_groups", ServiceGroup.Type),
 	}
 }
 
