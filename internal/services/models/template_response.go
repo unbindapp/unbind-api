@@ -66,6 +66,15 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 		if entity.Definition.Services[i].Volumes == nil {
 			entity.Definition.Services[i].Volumes = []schema.TemplateVolume{}
 		}
+		if entity.Definition.Services[i].DependsOn == nil {
+			entity.Definition.Services[i].DependsOn = []int{}
+		}
+		if entity.Definition.Services[i].HostInputIDs == nil {
+			entity.Definition.Services[i].HostInputIDs = []int{}
+		}
+		if entity.Definition.Services[i].Ports == nil {
+			entity.Definition.Services[i].Ports = []schema.PortSpec{}
+		}
 	}
 	if entity != nil {
 		response = &TemplateWithDefinitionResponse{
