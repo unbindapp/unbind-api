@@ -108,11 +108,15 @@ func n8nSimpleTemplate() *schema.TemplateDefinition {
 						Name:  "N8N_RUNNERS_ENABLED",
 						Value: "true",
 					},
+					{
+						Name:  "DB_TYPE",
+						Value: "postgresdb",
+					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
 						SourceID:   1,
-						SourceName: "DATABASE_URL",
+						SourceName: "DATABASE_DEFAULT_DB_NAME",
 						TargetName: "DB_POSTGRESDB_DATABASE",
 					},
 					{

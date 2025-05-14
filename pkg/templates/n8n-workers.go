@@ -135,12 +135,16 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 						Name:  "OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS",
 						Value: "true",
 					},
+					{
+						Name:  "DB_TYPE",
+						Value: "postgresdb",
+					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					// Postgres references (same as the simple template)
 					{
 						SourceID:   1,
-						SourceName: "DATABASE_URL",
+						SourceName: "DATABASE_DEFAULT_DB_NAME",
 						TargetName: "DB_POSTGRESDB_DATABASE",
 					},
 					{
@@ -233,12 +237,16 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 						Name:  "OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS",
 						Value: "true",
 					},
+					{
+						Name:  "DB_TYPE",
+						Value: "postgresdb",
+					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					// Postgres references (same as main)
 					{
 						SourceID:   1,
-						SourceName: "DATABASE_URL",
+						SourceName: "DATABASE_DEFAULT_DB_NAME",
 						TargetName: "DB_POSTGRESDB_DATABASE",
 					},
 					{
