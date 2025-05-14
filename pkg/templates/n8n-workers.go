@@ -127,6 +127,14 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 						Name:  "NODE_FUNCTION_ALLOW_EXTERNAL",
 						Value: "axios,qs",
 					},
+					{
+						Name:  "N8N_RUNNERS_ENABLED",
+						Value: "true",
+					},
+					{
+						Name:  "OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS",
+						Value: "true",
+					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					// Postgres references (same as the simple template)
@@ -216,6 +224,14 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 					{
 						Name:  "QUEUE_HEALTH_CHECK_PORT",
 						Value: "5679",
+					},
+					{
+						Name:  "N8N_RUNNERS_ENABLED",
+						Value: "true",
+					},
+					{
+						Name:  "OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS",
+						Value: "true",
 					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
