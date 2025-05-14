@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/predicate"
@@ -49,6 +50,52 @@ func (tu *TemplateUpdate) SetNillableName(s *string) *TemplateUpdate {
 	if s != nil {
 		tu.SetName(*s)
 	}
+	return tu
+}
+
+// SetDescription sets the "description" field.
+func (tu *TemplateUpdate) SetDescription(s string) *TemplateUpdate {
+	tu.mutation.SetDescription(s)
+	return tu
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (tu *TemplateUpdate) SetNillableDescription(s *string) *TemplateUpdate {
+	if s != nil {
+		tu.SetDescription(*s)
+	}
+	return tu
+}
+
+// SetIcon sets the "icon" field.
+func (tu *TemplateUpdate) SetIcon(s string) *TemplateUpdate {
+	tu.mutation.SetIcon(s)
+	return tu
+}
+
+// SetNillableIcon sets the "icon" field if the given value is not nil.
+func (tu *TemplateUpdate) SetNillableIcon(s *string) *TemplateUpdate {
+	if s != nil {
+		tu.SetIcon(*s)
+	}
+	return tu
+}
+
+// SetKeywords sets the "keywords" field.
+func (tu *TemplateUpdate) SetKeywords(s []string) *TemplateUpdate {
+	tu.mutation.SetKeywords(s)
+	return tu
+}
+
+// AppendKeywords appends s to the "keywords" field.
+func (tu *TemplateUpdate) AppendKeywords(s []string) *TemplateUpdate {
+	tu.mutation.AppendKeywords(s)
+	return tu
+}
+
+// ClearKeywords clears the value of the "keywords" field.
+func (tu *TemplateUpdate) ClearKeywords() *TemplateUpdate {
+	tu.mutation.ClearKeywords()
 	return tu
 }
 
@@ -199,6 +246,23 @@ func (tu *TemplateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.Name(); ok {
 		_spec.SetField(template.FieldName, field.TypeString, value)
 	}
+	if value, ok := tu.mutation.Description(); ok {
+		_spec.SetField(template.FieldDescription, field.TypeString, value)
+	}
+	if value, ok := tu.mutation.Icon(); ok {
+		_spec.SetField(template.FieldIcon, field.TypeString, value)
+	}
+	if value, ok := tu.mutation.Keywords(); ok {
+		_spec.SetField(template.FieldKeywords, field.TypeJSON, value)
+	}
+	if value, ok := tu.mutation.AppendedKeywords(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, template.FieldKeywords, value)
+		})
+	}
+	if tu.mutation.KeywordsCleared() {
+		_spec.ClearField(template.FieldKeywords, field.TypeJSON)
+	}
 	if value, ok := tu.mutation.Version(); ok {
 		_spec.SetField(template.FieldVersion, field.TypeInt, value)
 	}
@@ -295,6 +359,52 @@ func (tuo *TemplateUpdateOne) SetNillableName(s *string) *TemplateUpdateOne {
 	if s != nil {
 		tuo.SetName(*s)
 	}
+	return tuo
+}
+
+// SetDescription sets the "description" field.
+func (tuo *TemplateUpdateOne) SetDescription(s string) *TemplateUpdateOne {
+	tuo.mutation.SetDescription(s)
+	return tuo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (tuo *TemplateUpdateOne) SetNillableDescription(s *string) *TemplateUpdateOne {
+	if s != nil {
+		tuo.SetDescription(*s)
+	}
+	return tuo
+}
+
+// SetIcon sets the "icon" field.
+func (tuo *TemplateUpdateOne) SetIcon(s string) *TemplateUpdateOne {
+	tuo.mutation.SetIcon(s)
+	return tuo
+}
+
+// SetNillableIcon sets the "icon" field if the given value is not nil.
+func (tuo *TemplateUpdateOne) SetNillableIcon(s *string) *TemplateUpdateOne {
+	if s != nil {
+		tuo.SetIcon(*s)
+	}
+	return tuo
+}
+
+// SetKeywords sets the "keywords" field.
+func (tuo *TemplateUpdateOne) SetKeywords(s []string) *TemplateUpdateOne {
+	tuo.mutation.SetKeywords(s)
+	return tuo
+}
+
+// AppendKeywords appends s to the "keywords" field.
+func (tuo *TemplateUpdateOne) AppendKeywords(s []string) *TemplateUpdateOne {
+	tuo.mutation.AppendKeywords(s)
+	return tuo
+}
+
+// ClearKeywords clears the value of the "keywords" field.
+func (tuo *TemplateUpdateOne) ClearKeywords() *TemplateUpdateOne {
+	tuo.mutation.ClearKeywords()
 	return tuo
 }
 
@@ -474,6 +584,23 @@ func (tuo *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err
 	}
 	if value, ok := tuo.mutation.Name(); ok {
 		_spec.SetField(template.FieldName, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.Description(); ok {
+		_spec.SetField(template.FieldDescription, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.Icon(); ok {
+		_spec.SetField(template.FieldIcon, field.TypeString, value)
+	}
+	if value, ok := tuo.mutation.Keywords(); ok {
+		_spec.SetField(template.FieldKeywords, field.TypeJSON, value)
+	}
+	if value, ok := tuo.mutation.AppendedKeywords(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, template.FieldKeywords, value)
+		})
+	}
+	if tuo.mutation.KeywordsCleared() {
+		_spec.ClearField(template.FieldKeywords, field.TypeJSON)
 	}
 	if value, ok := tuo.mutation.Version(); ok {
 		_spec.SetField(template.FieldVersion, field.TypeInt, value)

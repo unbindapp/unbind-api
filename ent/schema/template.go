@@ -41,6 +41,9 @@ func (Template) Mixin() []ent.Mixin {
 func (Template) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name"),
+		field.String("description"),
+		field.String("icon"),
+		field.Strings("keywords").Optional(),
 		field.Int("version"),
 		field.Bool("immutable").Default(false).Comment("If true, the template cannot be modified or deleted (system bundle)"),
 		field.JSON("definition", TemplateDefinition{}),
@@ -74,7 +77,9 @@ func (Template) Annotations() []schema.Annotation {
 // TemplateDefinition represents a complete template configuration
 type TemplateDefinition struct {
 	Name        string            `json:"name"`
+	Icon        string            `json:"icon,omitempty"` // Icon name
 	Description string            `json:"description"`
+	Keywords    []string          `json:"keywords,omitempty"`
 	Version     int               `json:"version"`
 	Services    []TemplateService `json:"services" nullable:"false"`
 	Inputs      []TemplateInput   `json:"inputs" nullable:"false"`

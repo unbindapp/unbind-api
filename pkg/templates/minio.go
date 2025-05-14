@@ -8,9 +8,11 @@ import (
 // MinioTemplate returns the predefined MinIO template
 func minioTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "minio",
+		Name:        "MinIO",
+		Icon:        "minio",
+		Keywords:    []string{"object storage", "s3", "minio"},
 		Version:     1,
-		Description: "MinIO Object Storage with API and Console",
+		Description: "High-performance, S3-compatible object storage",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

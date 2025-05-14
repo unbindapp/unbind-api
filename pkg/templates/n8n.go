@@ -5,12 +5,14 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-// n8nWorkersTemplate returns the predefined n8n template with Redis queue mode and an external worker
-func n8nWorkersTemplate() *schema.TemplateDefinition {
+// n8nTemplate returns the predefined n8n template with Redis queue mode and an external worker
+func n8nTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "n8n-workers",
+		Name:        "n8n With Workers",
+		Icon:        "n8n",
+		Keywords:    []string{"workflow", "automation", "n8n", "queue", "redis", "postgres"},
 		Version:     1,
-		Description: "n8n - Workflow Automation Platform (queue mode with external worker & Redis)",
+		Description: "Powerful workflow automation software and tools",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

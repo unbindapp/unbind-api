@@ -8,9 +8,11 @@ import (
 // PocketBaseTemplate returns the predefined PocketBase template
 func pocketBaseTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "pocketbase",
+		Name:        "PocketBase",
+		Icon:        "pocketbase",
+		Keywords:    []string{"pocketbase", "database", "backend"},
 		Version:     1,
-		Description: "PocketBase - Open Source Backend in 1 file",
+		Description: "Open Source backend in 1 file",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

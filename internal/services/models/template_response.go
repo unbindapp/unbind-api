@@ -9,11 +9,14 @@ import (
 )
 
 type TemplateShortResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Version   int       `json:"version"`
-	Immutable bool      `json:"immutable"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Icon        string    `json:"icon"`
+	Keywords    []string  `json:"keywords"`
+	Description string    `json:"description"`
+	Version     int       `json:"version"`
+	Immutable   bool      `json:"immutable"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // TransformTemplateShortEntity transforms an ent.Template entity into a TemplateResponse
@@ -21,11 +24,14 @@ func TransformTemplateShortEntity(entity *ent.Template) *TemplateShortResponse {
 	response := &TemplateShortResponse{}
 	if entity != nil {
 		response = &TemplateShortResponse{
-			ID:        entity.ID,
-			Name:      entity.Name,
-			Version:   entity.Version,
-			Immutable: entity.Immutable,
-			CreatedAt: entity.CreatedAt,
+			ID:          entity.ID,
+			Name:        entity.Name,
+			Icon:        entity.Icon,
+			Keywords:    entity.Keywords,
+			Description: entity.Description,
+			Version:     entity.Version,
+			Immutable:   entity.Immutable,
+			CreatedAt:   entity.CreatedAt,
 		}
 	}
 	return response
@@ -42,12 +48,15 @@ func TransformTemplateShortEntities(entities []*ent.Template) []*TemplateShortRe
 
 // TemplateWithDefinitionResponse is the response model for a template with its definition
 type TemplateWithDefinitionResponse struct {
-	ID         uuid.UUID                 `json:"id"`
-	Name       string                    `json:"name"`
-	Version    int                       `json:"version"`
-	Immutable  bool                      `json:"immutable"`
-	Definition schema.TemplateDefinition `json:"definition"`
-	CreatedAt  time.Time                 `json:"created_at"`
+	ID          uuid.UUID                 `json:"id"`
+	Name        string                    `json:"name"`
+	Icon        string                    `json:"icon"`
+	Keywords    []string                  `json:"keywords"`
+	Description string                    `json:"description"`
+	Version     int                       `json:"version"`
+	Immutable   bool                      `json:"immutable"`
+	Definition  schema.TemplateDefinition `json:"definition"`
+	CreatedAt   time.Time                 `json:"created_at"`
 }
 
 // TransformTemplateEntity transforms an ent.Template entity into a TemplateWithDefinitionResponse
@@ -81,12 +90,15 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 	}
 	if entity != nil {
 		response = &TemplateWithDefinitionResponse{
-			ID:         entity.ID,
-			Name:       entity.Name,
-			Version:    entity.Version,
-			Definition: entity.Definition,
-			Immutable:  entity.Immutable,
-			CreatedAt:  entity.CreatedAt,
+			ID:          entity.ID,
+			Name:        entity.Name,
+			Icon:        entity.Icon,
+			Keywords:    entity.Keywords,
+			Description: entity.Description,
+			Version:     entity.Version,
+			Definition:  entity.Definition,
+			Immutable:   entity.Immutable,
+			CreatedAt:   entity.CreatedAt,
 		}
 	}
 	return response

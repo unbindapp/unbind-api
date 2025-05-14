@@ -24,8 +24,7 @@ func (self *Templater) AvailableTemplates() []*schema.TemplateDefinition {
 		umamiTemplate(),
 		wireGuardTemplate(),
 		supabaseTemplate(),
-		n8nSimpleTemplate(),
-		n8nWorkersTemplate(),
+		n8nTemplate(),
 		pocketBaseTemplate(),
 		// strapiTemplate(),
 	}

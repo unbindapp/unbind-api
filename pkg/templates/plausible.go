@@ -8,9 +8,11 @@ import (
 // PlausibleTemplate returns the predefined Plausible Analytics template
 func plausibleTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "plausible",
+		Name:        "Plausible Analytics",
+		Icon:        "plausible",
+		Keywords:    []string{"analytics", "plausible", "privacy-friendly", "postgres", "clickhouse"},
 		Version:     1,
-		Description: "Plausible Analytics - Simple, privacy-friendly Google Analytics alternative",
+		Description: "Simple, privacy-friendly Google Analytics alternative",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

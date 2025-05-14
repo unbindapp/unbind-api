@@ -60,6 +60,24 @@ func (tc *TemplateCreate) SetName(s string) *TemplateCreate {
 	return tc
 }
 
+// SetDescription sets the "description" field.
+func (tc *TemplateCreate) SetDescription(s string) *TemplateCreate {
+	tc.mutation.SetDescription(s)
+	return tc
+}
+
+// SetIcon sets the "icon" field.
+func (tc *TemplateCreate) SetIcon(s string) *TemplateCreate {
+	tc.mutation.SetIcon(s)
+	return tc
+}
+
+// SetKeywords sets the "keywords" field.
+func (tc *TemplateCreate) SetKeywords(s []string) *TemplateCreate {
+	tc.mutation.SetKeywords(s)
+	return tc
+}
+
 // SetVersion sets the "version" field.
 func (tc *TemplateCreate) SetVersion(i int) *TemplateCreate {
 	tc.mutation.SetVersion(i)
@@ -179,6 +197,12 @@ func (tc *TemplateCreate) check() error {
 	if _, ok := tc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Template.name"`)}
 	}
+	if _, ok := tc.mutation.Description(); !ok {
+		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Template.description"`)}
+	}
+	if _, ok := tc.mutation.Icon(); !ok {
+		return &ValidationError{Name: "icon", err: errors.New(`ent: missing required field "Template.icon"`)}
+	}
 	if _, ok := tc.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Template.version"`)}
 	}
@@ -235,6 +259,18 @@ func (tc *TemplateCreate) createSpec() (*Template, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Name(); ok {
 		_spec.SetField(template.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := tc.mutation.Description(); ok {
+		_spec.SetField(template.FieldDescription, field.TypeString, value)
+		_node.Description = value
+	}
+	if value, ok := tc.mutation.Icon(); ok {
+		_spec.SetField(template.FieldIcon, field.TypeString, value)
+		_node.Icon = value
+	}
+	if value, ok := tc.mutation.Keywords(); ok {
+		_spec.SetField(template.FieldKeywords, field.TypeJSON, value)
+		_node.Keywords = value
 	}
 	if value, ok := tc.mutation.Version(); ok {
 		_spec.SetField(template.FieldVersion, field.TypeInt, value)
@@ -337,6 +373,48 @@ func (u *TemplateUpsert) SetName(v string) *TemplateUpsert {
 // UpdateName sets the "name" field to the value that was provided on create.
 func (u *TemplateUpsert) UpdateName() *TemplateUpsert {
 	u.SetExcluded(template.FieldName)
+	return u
+}
+
+// SetDescription sets the "description" field.
+func (u *TemplateUpsert) SetDescription(v string) *TemplateUpsert {
+	u.Set(template.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TemplateUpsert) UpdateDescription() *TemplateUpsert {
+	u.SetExcluded(template.FieldDescription)
+	return u
+}
+
+// SetIcon sets the "icon" field.
+func (u *TemplateUpsert) SetIcon(v string) *TemplateUpsert {
+	u.Set(template.FieldIcon, v)
+	return u
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *TemplateUpsert) UpdateIcon() *TemplateUpsert {
+	u.SetExcluded(template.FieldIcon)
+	return u
+}
+
+// SetKeywords sets the "keywords" field.
+func (u *TemplateUpsert) SetKeywords(v []string) *TemplateUpsert {
+	u.Set(template.FieldKeywords, v)
+	return u
+}
+
+// UpdateKeywords sets the "keywords" field to the value that was provided on create.
+func (u *TemplateUpsert) UpdateKeywords() *TemplateUpsert {
+	u.SetExcluded(template.FieldKeywords)
+	return u
+}
+
+// ClearKeywords clears the value of the "keywords" field.
+func (u *TemplateUpsert) ClearKeywords() *TemplateUpsert {
+	u.SetNull(template.FieldKeywords)
 	return u
 }
 
@@ -458,6 +536,55 @@ func (u *TemplateUpsertOne) SetName(v string) *TemplateUpsertOne {
 func (u *TemplateUpsertOne) UpdateName() *TemplateUpsertOne {
 	return u.Update(func(s *TemplateUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *TemplateUpsertOne) SetDescription(v string) *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TemplateUpsertOne) UpdateDescription() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetIcon sets the "icon" field.
+func (u *TemplateUpsertOne) SetIcon(v string) *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetIcon(v)
+	})
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *TemplateUpsertOne) UpdateIcon() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateIcon()
+	})
+}
+
+// SetKeywords sets the "keywords" field.
+func (u *TemplateUpsertOne) SetKeywords(v []string) *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetKeywords(v)
+	})
+}
+
+// UpdateKeywords sets the "keywords" field to the value that was provided on create.
+func (u *TemplateUpsertOne) UpdateKeywords() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateKeywords()
+	})
+}
+
+// ClearKeywords clears the value of the "keywords" field.
+func (u *TemplateUpsertOne) ClearKeywords() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.ClearKeywords()
 	})
 }
 
@@ -753,6 +880,55 @@ func (u *TemplateUpsertBulk) SetName(v string) *TemplateUpsertBulk {
 func (u *TemplateUpsertBulk) UpdateName() *TemplateUpsertBulk {
 	return u.Update(func(s *TemplateUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *TemplateUpsertBulk) SetDescription(v string) *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *TemplateUpsertBulk) UpdateDescription() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// SetIcon sets the "icon" field.
+func (u *TemplateUpsertBulk) SetIcon(v string) *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetIcon(v)
+	})
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *TemplateUpsertBulk) UpdateIcon() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateIcon()
+	})
+}
+
+// SetKeywords sets the "keywords" field.
+func (u *TemplateUpsertBulk) SetKeywords(v []string) *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetKeywords(v)
+	})
+}
+
+// UpdateKeywords sets the "keywords" field to the value that was provided on create.
+func (u *TemplateUpsertBulk) UpdateKeywords() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateKeywords()
+	})
+}
+
+// ClearKeywords clears the value of the "keywords" field.
+func (u *TemplateUpsertBulk) ClearKeywords() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.ClearKeywords()
 	})
 }
 

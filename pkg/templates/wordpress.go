@@ -8,9 +8,11 @@ import (
 // WordPressTemplate returns the predefined WordPress template
 func wordPressTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "wordpress",
+		Name:        "WordPress with MySQL",
+		Icon:        "wordpress",
+		Keywords:    []string{"wordpress", "blog", "mysql"},
 		Version:     1,
-		Description: "WordPress with MySQL",
+		Description: "Blog Tool, Publishing Platform, and CMS",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

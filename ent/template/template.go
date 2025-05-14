@@ -21,6 +21,12 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
+	// FieldIcon holds the string denoting the icon field in the database.
+	FieldIcon = "icon"
+	// FieldKeywords holds the string denoting the keywords field in the database.
+	FieldKeywords = "keywords"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
 	// FieldImmutable holds the string denoting the immutable field in the database.
@@ -46,6 +52,9 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldName,
+	FieldDescription,
+	FieldIcon,
+	FieldKeywords,
 	FieldVersion,
 	FieldImmutable,
 	FieldDefinition,
@@ -95,6 +104,16 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByIcon orders the results by the icon field.
+func ByIcon(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIcon, opts...).ToFunc()
 }
 
 // ByVersion orders the results by the version field.

@@ -27,6 +27,12 @@ type Template struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Description holds the value of the "description" field.
+	Description string `json:"description,omitempty"`
+	// Icon holds the value of the "icon" field.
+	Icon string `json:"icon,omitempty"`
+	// Keywords holds the value of the "keywords" field.
+	Keywords []string `json:"keywords,omitempty"`
 	// Version holds the value of the "version" field.
 	Version int `json:"version,omitempty"`
 	// If true, the template cannot be modified or deleted (system bundle)
@@ -62,13 +68,13 @@ func (*Template) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case template.FieldDefinition:
+		case template.FieldKeywords, template.FieldDefinition:
 			values[i] = new([]byte)
 		case template.FieldImmutable:
 			values[i] = new(sql.NullBool)
 		case template.FieldVersion:
 			values[i] = new(sql.NullInt64)
-		case template.FieldName:
+		case template.FieldName, template.FieldDescription, template.FieldIcon:
 			values[i] = new(sql.NullString)
 		case template.FieldCreatedAt, template.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -112,6 +118,26 @@ func (t *Template) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				t.Name = value.String
+			}
+		case template.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				t.Description = value.String
+			}
+		case template.FieldIcon:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field icon", values[i])
+			} else if value.Valid {
+				t.Icon = value.String
+			}
+		case template.FieldKeywords:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field keywords", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &t.Keywords); err != nil {
+					return fmt.Errorf("unmarshal field keywords: %w", err)
+				}
 			}
 		case template.FieldVersion:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -182,6 +208,15 @@ func (t *Template) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(t.Name)
+	builder.WriteString(", ")
+	builder.WriteString("description=")
+	builder.WriteString(t.Description)
+	builder.WriteString(", ")
+	builder.WriteString("icon=")
+	builder.WriteString(t.Icon)
+	builder.WriteString(", ")
+	builder.WriteString("keywords=")
+	builder.WriteString(fmt.Sprintf("%v", t.Keywords))
 	builder.WriteString(", ")
 	builder.WriteString("version=")
 	builder.WriteString(fmt.Sprintf("%v", t.Version))

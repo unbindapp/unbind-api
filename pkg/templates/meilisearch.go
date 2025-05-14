@@ -8,9 +8,11 @@ import (
 // MeiliSearchTemplate returns the predefined MeiliSearch template
 func meiliSearchTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "meilisearch",
+		Name:        "Meilisearch",
+		Icon:        "meilisearch",
+		Keywords:    []string{"search", "engine"},
 		Version:     1,
-		Description: "MeiliSearch - A powerful, fast, open-source, easy to use and deploy search engine",
+		Description: "A powerful, fast, open-source, easy to use and deploy search engine",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

@@ -8,7 +8,9 @@ import (
 // supabaseTemplate returns a template definition for Supabase
 func supabaseTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "supabase",
+		Name:        "Supabase",
+		Icon:        "supabase",
+		Keywords:    []string{"database", "auth", "storage", "supabase", "postgres"},
 		Description: "The open source Firebase alternative",
 		Version:     1,
 		Inputs: []schema.TemplateInput{

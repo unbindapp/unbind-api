@@ -17521,6 +17521,10 @@ type TemplateMutation struct {
 	created_at      *time.Time
 	updated_at      *time.Time
 	name            *string
+	description     *string
+	icon            *string
+	keywords        *[]string
+	appendkeywords  []string
 	version         *int
 	addversion      *int
 	immutable       *bool
@@ -17746,6 +17750,143 @@ func (m *TemplateMutation) ResetName() {
 	m.name = nil
 }
 
+// SetDescription sets the "description" field.
+func (m *TemplateMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *TemplateMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Template entity.
+// If the Template object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TemplateMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *TemplateMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetIcon sets the "icon" field.
+func (m *TemplateMutation) SetIcon(s string) {
+	m.icon = &s
+}
+
+// Icon returns the value of the "icon" field in the mutation.
+func (m *TemplateMutation) Icon() (r string, exists bool) {
+	v := m.icon
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIcon returns the old "icon" field's value of the Template entity.
+// If the Template object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TemplateMutation) OldIcon(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIcon is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIcon requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIcon: %w", err)
+	}
+	return oldValue.Icon, nil
+}
+
+// ResetIcon resets all changes to the "icon" field.
+func (m *TemplateMutation) ResetIcon() {
+	m.icon = nil
+}
+
+// SetKeywords sets the "keywords" field.
+func (m *TemplateMutation) SetKeywords(s []string) {
+	m.keywords = &s
+	m.appendkeywords = nil
+}
+
+// Keywords returns the value of the "keywords" field in the mutation.
+func (m *TemplateMutation) Keywords() (r []string, exists bool) {
+	v := m.keywords
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKeywords returns the old "keywords" field's value of the Template entity.
+// If the Template object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TemplateMutation) OldKeywords(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKeywords is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKeywords requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKeywords: %w", err)
+	}
+	return oldValue.Keywords, nil
+}
+
+// AppendKeywords adds s to the "keywords" field.
+func (m *TemplateMutation) AppendKeywords(s []string) {
+	m.appendkeywords = append(m.appendkeywords, s...)
+}
+
+// AppendedKeywords returns the list of values that were appended to the "keywords" field in this mutation.
+func (m *TemplateMutation) AppendedKeywords() ([]string, bool) {
+	if len(m.appendkeywords) == 0 {
+		return nil, false
+	}
+	return m.appendkeywords, true
+}
+
+// ClearKeywords clears the value of the "keywords" field.
+func (m *TemplateMutation) ClearKeywords() {
+	m.keywords = nil
+	m.appendkeywords = nil
+	m.clearedFields[template.FieldKeywords] = struct{}{}
+}
+
+// KeywordsCleared returns if the "keywords" field was cleared in this mutation.
+func (m *TemplateMutation) KeywordsCleared() bool {
+	_, ok := m.clearedFields[template.FieldKeywords]
+	return ok
+}
+
+// ResetKeywords resets all changes to the "keywords" field.
+func (m *TemplateMutation) ResetKeywords() {
+	m.keywords = nil
+	m.appendkeywords = nil
+	delete(m.clearedFields, template.FieldKeywords)
+}
+
 // SetVersion sets the "version" field.
 func (m *TemplateMutation) SetVersion(i int) {
 	m.version = &i
@@ -17962,7 +18103,7 @@ func (m *TemplateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TemplateMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 9)
 	if m.created_at != nil {
 		fields = append(fields, template.FieldCreatedAt)
 	}
@@ -17971,6 +18112,15 @@ func (m *TemplateMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, template.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, template.FieldDescription)
+	}
+	if m.icon != nil {
+		fields = append(fields, template.FieldIcon)
+	}
+	if m.keywords != nil {
+		fields = append(fields, template.FieldKeywords)
 	}
 	if m.version != nil {
 		fields = append(fields, template.FieldVersion)
@@ -17995,6 +18145,12 @@ func (m *TemplateMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case template.FieldName:
 		return m.Name()
+	case template.FieldDescription:
+		return m.Description()
+	case template.FieldIcon:
+		return m.Icon()
+	case template.FieldKeywords:
+		return m.Keywords()
 	case template.FieldVersion:
 		return m.Version()
 	case template.FieldImmutable:
@@ -18016,6 +18172,12 @@ func (m *TemplateMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldUpdatedAt(ctx)
 	case template.FieldName:
 		return m.OldName(ctx)
+	case template.FieldDescription:
+		return m.OldDescription(ctx)
+	case template.FieldIcon:
+		return m.OldIcon(ctx)
+	case template.FieldKeywords:
+		return m.OldKeywords(ctx)
 	case template.FieldVersion:
 		return m.OldVersion(ctx)
 	case template.FieldImmutable:
@@ -18051,6 +18213,27 @@ func (m *TemplateMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case template.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case template.FieldIcon:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIcon(v)
+		return nil
+	case template.FieldKeywords:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKeywords(v)
 		return nil
 	case template.FieldVersion:
 		v, ok := value.(int)
@@ -18117,7 +18300,11 @@ func (m *TemplateMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *TemplateMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(template.FieldKeywords) {
+		fields = append(fields, template.FieldKeywords)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -18130,6 +18317,11 @@ func (m *TemplateMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *TemplateMutation) ClearField(name string) error {
+	switch name {
+	case template.FieldKeywords:
+		m.ClearKeywords()
+		return nil
+	}
 	return fmt.Errorf("unknown Template nullable field %s", name)
 }
 
@@ -18145,6 +18337,15 @@ func (m *TemplateMutation) ResetField(name string) error {
 		return nil
 	case template.FieldName:
 		m.ResetName()
+		return nil
+	case template.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case template.FieldIcon:
+		m.ResetIcon()
+		return nil
+	case template.FieldKeywords:
+		m.ResetKeywords()
 		return nil
 	case template.FieldVersion:
 		m.ResetVersion()

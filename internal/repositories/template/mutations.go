@@ -14,6 +14,9 @@ func (self *TemplateRepository) UpsertPredefinedTemplates(ctx context.Context) (
 	for _, template := range templates {
 		err := self.base.DB.Template.Create().
 			SetName(template.Name).
+			SetIcon(template.Icon).
+			SetDescription(template.Description).
+			SetKeywords(template.Keywords).
 			SetVersion(template.Version).
 			SetDefinition(*template).
 			SetImmutable(true).

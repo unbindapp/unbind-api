@@ -488,6 +488,9 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
+		{Name: "icon", Type: field.TypeString},
+		{Name: "keywords", Type: field.TypeJSON, Nullable: true},
 		{Name: "version", Type: field.TypeInt},
 		{Name: "immutable", Type: field.TypeBool, Default: false},
 		{Name: "definition", Type: field.TypeJSON},
@@ -501,7 +504,7 @@ var (
 			{
 				Name:    "template_name_version",
 				Unique:  true,
-				Columns: []*schema.Column{TemplatesColumns[3], TemplatesColumns[4]},
+				Columns: []*schema.Column{TemplatesColumns[3], TemplatesColumns[7]},
 			},
 		},
 	}

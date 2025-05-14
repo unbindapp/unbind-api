@@ -8,9 +8,11 @@ import (
 // WireGuardTemplate returns the predefined WireGuard template
 func wireGuardTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "wireguard",
+		Name:        "WireGuard",
+		Icon:        "wireguard",
+		Keywords:    []string{"vpn", "wireguard", "tunnel"},
 		Version:     1,
-		Description: "WireGuard VPN with web-based management interface.",
+		Description: "Fast, modern, secure VPN tunnel",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

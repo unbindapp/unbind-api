@@ -475,7 +475,7 @@ func init() {
 	// template.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	template.UpdateDefaultUpdatedAt = templateDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// templateDescImmutable is the schema descriptor for immutable field.
-	templateDescImmutable := templateFields[2].Descriptor()
+	templateDescImmutable := templateFields[5].Descriptor()
 	// template.DefaultImmutable holds the default value on creation for the immutable field.
 	template.DefaultImmutable = templateDescImmutable.Default.(bool)
 	// templateDescID is the schema descriptor for id field.
