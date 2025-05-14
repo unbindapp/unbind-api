@@ -21,7 +21,7 @@ func TransformServiceGroupEntity(entity *ent.ServiceGroup) *ServiceGroupResponse
 		response = &ServiceGroupResponse{
 			ID:            entity.ID,
 			Name:          entity.Name,
-			EnvironmentID: entity.Edges.Environment.ID,
+			EnvironmentID: entity.EnvironmentID,
 			CreatedAt:     entity.CreatedAt,
 		}
 	}
