@@ -9,7 +9,7 @@ import (
 func wordPressTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "WordPress",
-		DisplayRank: uint(10000),
+		DisplayRank: uint(70000),
 		Icon:        "wordpress",
 		Keywords:    []string{"bloggin", "cms", "content management system", "WooCommerce", "ecommerce", "website", "publishing platform", "php", "mysql"},
 		Description: "The open source publishing platform & CMS",

@@ -9,7 +9,7 @@ import (
 func ghostTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Ghost",
-		DisplayRank: uint(50000),
+		DisplayRank: uint(30000),
 		Icon:        "ghost",
 		Keywords:    []string{"blogging", "cms", "mysql"},
 		Description: "Open source blog and newsletter platform",

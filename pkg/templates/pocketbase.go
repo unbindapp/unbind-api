@@ -9,7 +9,7 @@ import (
 func pocketBaseTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "PocketBase",
-		DisplayRank: uint(80000),
+		DisplayRank: uint(20000),
 		Icon:        "pocketbase",
 		Keywords:    []string{"pocketbase", "database", "backend", "supabase", "firebase"},
 		Description: "Open source backend in 1 file",

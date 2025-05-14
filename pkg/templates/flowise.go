@@ -9,7 +9,7 @@ import (
 func flowiseTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Flowise",
-		DisplayRank: uint(70000),
+		DisplayRank: uint(90000),
 		Icon:        "flowise",
 		Keywords:    []string{"llm", "ai", "chatbot", "langchain", "flow", "workflow", "automation", "low code", "low-code", "no code", "no-code", "chatbot", "ai"},
 		Description: "Low code tool for building LLM flows",

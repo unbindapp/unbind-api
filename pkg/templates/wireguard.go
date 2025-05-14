@@ -9,7 +9,7 @@ import (
 func wireGuardTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "WireGuard",
-		DisplayRank: uint(90000),
+		DisplayRank: uint(110000),
 		Icon:        "wireguard",
 		Keywords:    []string{"wireguard", "vpn", "tcp tunnel", "udp2raw", "openvpn"},
 		Description: "Fast, modern, and open source VPN",

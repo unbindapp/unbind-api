@@ -30,6 +30,8 @@ func DetectNodeFramework(sourceDir string) enum.Framework {
 		return enum.Solid
 	case isHonoApp(sourceDir):
 		return enum.Hono
+	case isTanStackStartApp(sourceDir):
+		return enum.TanstackStart
 	case isViteApp(sourceDir):
 		return enum.Vite
 	case isExpressApp(sourceDir):
@@ -42,6 +44,14 @@ func DetectNodeFramework(sourceDir string) enum.Framework {
 // ---------------------------------------------------------------------------
 // Individual framework detectors
 // ---------------------------------------------------------------------------
+
+func isTanStackStartApp(sourceDir string) bool {
+	// Primary indicator
+	if hasDependency(sourceDir, "@tanstack/react-start") && hasScriptKeyword(sourceDir, "vinxi") {
+		return true
+	}
+	return false
+}
 
 func isViteApp(sourceDir string) bool {
 	if hasDependency(sourceDir, "vite") || hasScriptKeyword(sourceDir, "vite") {
