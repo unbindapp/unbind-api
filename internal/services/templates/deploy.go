@@ -280,6 +280,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			if err != nil {
 				return fmt.Errorf("failed to create service: %w", err)
 			}
+			createService.Edges.ServiceGroup = serviceGroup
 
 			// Create volumes
 			var pvcID *string
