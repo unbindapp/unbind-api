@@ -204,7 +204,7 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/healthz/readiness",
-					Port:                      utils.ToPtr(int32(5679)),
+					Port:                      utils.ToPtr(int32(8000)),
 					PeriodSeconds:             30,
 					TimeoutSeconds:            5,
 					StartupFailureThreshold:   5,
@@ -227,7 +227,7 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 					},
 					{
 						Name:  "QUEUE_HEALTH_CHECK_PORT",
-						Value: "5679",
+						Value: "8000",
 					},
 					{
 						Name:  "N8N_RUNNERS_ENABLED",
