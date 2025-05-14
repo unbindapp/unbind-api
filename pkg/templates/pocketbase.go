@@ -57,7 +57,7 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 					{
 						Name: "PB_ADMIN_EMAIL",
 						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypePassword,
+							Type: schema.GeneratorTypeEmail,
 						},
 					},
 					{
