@@ -8,7 +8,7 @@ import (
 // FlowiseTemplate returns the predefined Flowise template
 func flowiseTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "Flowise",
+		Name:        "FlowiseAI",
 		Icon:        "flowise",
 		Keywords:    []string{"llm", "ai", "chatbot", "langchain", "flow", "workflow", "automation", "postgres"},
 		Description: "Open source UI tool for building LLM flows with PostgreSQL backend",
