@@ -3,6 +3,7 @@ package template_repo
 import (
 	"context"
 	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -44,9 +45,12 @@ func (self *TemplateRepository) GetAll(ctx context.Context) ([]*ent.Template, er
 		result = append(result, tmpl)
 	}
 
-	// Sort by display rank
+	// Sort by DisplayRank, then alphabetically if ranks tie.
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].DisplayRank < result[j].DisplayRank
+		if result[i].DisplayRank != result[j].DisplayRank {
+			return result[i].DisplayRank < result[j].DisplayRank // lower rank first
+		}
+		return strings.ToLower(result[i].Name) < strings.ToLower(result[j].Name)
 	})
 
 	return result, nil
