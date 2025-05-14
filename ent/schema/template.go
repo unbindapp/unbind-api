@@ -214,7 +214,7 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (*GenerateResponse, 
 			domain = domain + ".com"
 		}
 		return &GenerateResponse{
-			GeneratedValue: self.AddPrefix + fmt.Sprintf("user@%s", domain),
+			GeneratedValue: self.AddPrefix + fmt.Sprintf("admin@%s", domain),
 		}, nil
 	case GeneratorTypePassword:
 		pwd, err := utils.GenerateSecurePassword(32, false)
