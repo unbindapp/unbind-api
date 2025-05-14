@@ -8,11 +8,11 @@ import (
 // UmamiTemplate returns the predefined Umami Analytics template
 func umamiTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "Umami Analytics",
+		Name:        "Umami",
 		Icon:        "umami",
-		Keywords:    []string{"analytics", "umami", "privacy-friendly", "postgres"},
+		Keywords:    []string{"analytics", "open source", "privacy-friendly", "Google Analytics", "plausible"},
+		Description: "Privacy-focused alternative to Google Analytics",
 		Version:     1,
-		Description: "A modern, privacy-focused alternative to Google Analytics",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

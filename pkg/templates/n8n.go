@@ -8,11 +8,11 @@ import (
 // n8nTemplate returns the predefined n8n template with Redis queue mode and an external worker
 func n8nTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "n8n With Workers",
+		Name:        "n8n",
 		Icon:        "n8n",
 		Keywords:    []string{"workflow", "automation", "n8n", "queue", "redis", "postgres"},
+		Description: "Powerful AI workflow automation tools",
 		Version:     1,
-		Description: "Powerful workflow automation software and tools",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
