@@ -8,9 +8,11 @@ import (
 // StrapiTemplate returns the predefined Strapi template
 func strapiTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "strapi",
+		Name:        "Strapi",
+		Icon:        "strapi",
+		Keywords:    []string{"cms", "headless cms", "content management system"},
+		Description: "Open source headless CMS",
 		Version:     1,
-		Description: "Strapi - Open-source headless CMS to build powerful APIs with built-in content management",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

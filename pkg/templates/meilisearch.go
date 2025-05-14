@@ -10,9 +10,9 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Meilisearch",
 		Icon:        "meilisearch",
-		Keywords:    []string{"search", "engine"},
+		Keywords:    []string{"full text search", "elasticsearch", "search engine", "ram"},
+		Description: "Fast & open source search engine",
 		Version:     1,
-		Description: "A powerful, fast, open-source, easy to use and deploy search engine",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

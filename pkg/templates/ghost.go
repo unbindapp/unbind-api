@@ -10,9 +10,9 @@ func ghostTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Ghost CMS with MySQL",
 		Icon:        "ghost",
-		Keywords:    []string{"blog", "cms", "mysql"},
-		Version:     1,
+		Keywords:    []string{"blogging", "cms", "mysql"},
 		Description: "Open source blog and newsletter platform",
+		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

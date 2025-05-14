@@ -10,9 +10,9 @@ func wordPressTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "WordPress with MySQL",
 		Icon:        "wordpress",
-		Keywords:    []string{"wordpress", "blog", "mysql"},
+		Keywords:    []string{"bloggin", "cms", "content management system", "WooCommerce", "ecommerce", "website", "publishing platform", "php", "mysql"},
+		Description: "The open source publishing platform & CMS",
 		Version:     1,
-		Description: "Blog Tool, Publishing Platform, and CMS",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,

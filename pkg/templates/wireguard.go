@@ -10,9 +10,9 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "WireGuard",
 		Icon:        "wireguard",
-		Keywords:    []string{"vpn", "wireguard", "tunnel"},
+		Keywords:    []string{"wireguard", "vpn", "tcp tunnel", "udp2raw", "openvpn"},
+		Description: "Fast, modern, and open source VPN",
 		Version:     1,
-		Description: "Fast, modern, secure VPN tunnel",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
