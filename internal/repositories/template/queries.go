@@ -21,17 +21,7 @@ func (self *TemplateRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent
 
 func (self *TemplateRepository) GetAll(ctx context.Context) ([]*ent.Template, error) {
 	templates, err := self.base.DB.Template.Query().
-		Select(
-			template.FieldID,
-			template.FieldName,
-			template.FieldIcon,
-			template.FieldDescription,
-			template.FieldKeywords,
-			template.FieldVersion,
-			template.FieldImmutable,
-			template.FieldCreatedAt,
-			template.FieldUpdatedAt,
-		).All(ctx)
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
