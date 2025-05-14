@@ -8,7 +8,7 @@ import (
 // GhostTemplate returns the predefined Ghost template
 func ghostTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "Ghost CMS with MySQL",
+		Name:        "Ghost",
 		Icon:        "ghost",
 		Keywords:    []string{"blogging", "cms", "mysql"},
 		Description: "Open source blog and newsletter platform",
