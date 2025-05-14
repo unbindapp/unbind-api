@@ -5,12 +5,12 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-// N8nTemplate returns the predefined n8n template
-func n8nTemplate() *schema.TemplateDefinition {
+// n8nSimpleTemplate returns the predefined n8n template
+func n8nSimpleTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
-		Name:        "n8n",
+		Name:        "n8n-simple",
 		Version:     1,
-		Description: "n8n - Workflow Automation Platform",
+		Description: "n8n - Workflow Automation Platform, with Internal Worker",
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
