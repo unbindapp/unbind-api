@@ -84,7 +84,6 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 		resolvedService := schema.TemplateService{
 			ID:                 svc.ID,
 			DependsOn:          svc.DependsOn,
-			Icon:               svc.Icon,
 			Name:               svc.Name,
 			Type:               svc.Type,
 			Builder:            svc.Builder,

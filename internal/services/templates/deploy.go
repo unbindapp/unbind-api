@@ -369,9 +369,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				HealthCheck:             templateService.HealthCheck,
 				VariableMounts:          templateService.VariablesMounts,
 			}
-			if templateService.Icon != "" {
-				createInput.Icon = utils.ToPtr(templateService.Icon)
-			}
 
 			serviceConfig, err := self.repo.Service().CreateConfig(ctx, tx, createInput)
 			if err != nil {
