@@ -68,6 +68,9 @@ type CreateServiceInput struct {
 
 	// Health check
 	HealthCheck *schema.HealthCheck `json:"health_check,omitempty" doc:"Health check configuration for the service"`
+
+	// Variable mounts
+	VariableMounts []*schema.VariableMount `json:"variable_mounts,omitempty" doc:"Mount variables as volumes"`
 }
 
 // CreateService creates a new service and its configuration
@@ -410,6 +413,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			PVCID:                   input.PVCID,
 			PVCVolumeMountPath:      input.PVCMountPath,
 			HealthCheck:             input.HealthCheck,
+			VariableMounts:          input.VariableMounts,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

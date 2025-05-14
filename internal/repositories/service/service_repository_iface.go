@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
@@ -21,6 +22,7 @@ type ServiceRepositoryInterface interface {
 	UpdateConfig(ctx context.Context, tx repository.TxInterface, input *MutateConfigInput) error
 	Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error
 	SetCurrentDeployment(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, deploymentID uuid.UUID) error
+	UpdateVariableMounts(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, variableMounts []*schema.VariableMount) error
 	GetByID(ctx context.Context, serviceID uuid.UUID) (svc *ent.Service, err error)
 	GetByName(ctx context.Context, name string) (*ent.Service, error)
 	GetDatabaseType(ctx context.Context, serviceID uuid.UUID) (string, error)

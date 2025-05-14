@@ -142,6 +142,32 @@ func (self *VariablesService) UpdateVariables(
 					}
 				}
 			}
+
+			var variableMounts []*schema.VariableMount
+			if service != nil && service.Edges.ServiceConfig != nil {
+				// Check if variable mounts were removed
+				variableMounts = service.Edges.ServiceConfig.VariableMounts
+				indexesToDelete := []int{}
+				needsUpdate := false
+				for i, variableMount := range variableMounts {
+					// Check if the variable mount is in the new variables
+					if _, ok := newVariables[variableMount.Name]; !ok {
+						needsUpdate = true
+						indexesToDelete = append(indexesToDelete, i)
+					}
+				}
+				// Remove the variable mounts that were deleted
+				for i := len(indexesToDelete) - 1; i >= 0; i-- {
+					index := indexesToDelete[i]
+					variableMounts = append(variableMounts[:index], variableMounts[index+1:]...)
+				}
+				if needsUpdate {
+					if err := self.repo.Service().UpdateVariableMounts(ctx, tx, service.ID, variableMounts); err != nil {
+						return err
+					}
+				}
+			}
+
 			_, err = self.k8s.OverwriteSecretValues(ctx, secretName, team.Namespace, newVariables, client)
 			if err != nil {
 				return err

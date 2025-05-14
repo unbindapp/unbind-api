@@ -355,3 +355,15 @@ func (self *ServiceRepository) SetCurrentDeployment(ctx context.Context, tx repo
 	}
 	return db.Service.UpdateOneID(serviceID).SetCurrentDeploymentID(deploymentID).Exec(ctx)
 }
+
+func (self *ServiceRepository) UpdateVariableMounts(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, variableMounts []*schema.VariableMount) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.ServiceConfig.Update().
+		Where(serviceconfig.ServiceID(serviceID)).
+		SetVariableMounts(variableMounts).
+		Exec(ctx)
+}

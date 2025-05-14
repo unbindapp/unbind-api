@@ -88,6 +88,13 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 			return err
 		}
 
+		// For updating var mounts
+		var variableMounts []*schema.VariableMount
+		variableMountsNeedsUpdate := false
+		if service != nil && service.Edges.ServiceConfig != nil {
+			variableMounts = service.Edges.ServiceConfig.VariableMounts
+		}
+
 		// Remove from map
 		for _, secretKey := range keys {
 			// Don't allow deletion of special database keys
@@ -102,7 +109,25 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 					secretKey.Name == "DATABASE_HTTP_PORT") {
 				continue
 			}
+			indexToDelete := -1
+			for i, variableMount := range variableMounts {
+				if variableMount.Name == secretKey.Name {
+					indexToDelete = i
+					break
+				}
+			}
+			if indexToDelete != -1 {
+				variableMountsNeedsUpdate = true
+				variableMounts = append(variableMounts[:indexToDelete], variableMounts[indexToDelete+1:]...)
+			}
 			delete(secrets, secretKey.Name)
+		}
+
+		// Update variable mounts
+		if variableMountsNeedsUpdate {
+			if err := self.repo.Service().UpdateVariableMounts(ctx, tx, service.ID, variableMounts); err != nil {
+				return err
+			}
 		}
 
 		// Update secrets
