@@ -197,7 +197,7 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 				IsPublic:   false,
 				Ports: []schema.PortSpec{
 					{
-						Port:     5679,
+						Port:     8000,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
