@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/service"
+	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -53,4 +54,15 @@ func (self *ServiceGroupRepository) Delete(ctx context.Context, id uuid.UUID) er
 		return err
 	}
 	return nil
+}
+
+func (self *ServiceGroupRepository) DeleteByEnvironmentID(ctx context.Context, tx repository.TxInterface, environmentID uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+	_, err := db.ServiceGroup.Delete().
+		Where(servicegroup.EnvironmentID(environmentID)).
+		Exec(ctx)
+	return err
 }

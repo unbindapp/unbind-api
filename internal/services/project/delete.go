@@ -101,6 +101,11 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 				}
 			}
 
+			// Delete any service groups in this environment
+			if err := self.repo.ServiceGroup().DeleteByEnvironmentID(ctx, tx, environment.ID); err != nil {
+				return err
+			}
+
 			// Delete environment
 			if err := self.k8s.DeleteSecret(ctx, environment.KubernetesSecret, team.Namespace, client); err != nil {
 				log.Error("Error deleting secret", "secret", environment.KubernetesSecret, "err", err)
