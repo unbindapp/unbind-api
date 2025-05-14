@@ -53,6 +53,20 @@ type TemplateWithDefinitionResponse struct {
 // TransformTemplateEntity transforms an ent.Template entity into a TemplateWithDefinitionResponse
 func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionResponse {
 	response := &TemplateWithDefinitionResponse{}
+	for i := range entity.Definition.Services {
+		if entity.Definition.Services[i].VariableReferences == nil {
+			entity.Definition.Services[i].VariableReferences = []schema.TemplateVariableReference{}
+		}
+		if entity.Definition.Services[i].Variables == nil {
+			entity.Definition.Services[i].Variables = []schema.TemplateVariable{}
+		}
+		if entity.Definition.Services[i].VariablesMounts == nil {
+			entity.Definition.Services[i].VariablesMounts = []*schema.VariableMount{}
+		}
+		if entity.Definition.Services[i].Volumes == nil {
+			entity.Definition.Services[i].Volumes = []schema.TemplateVolume{}
+		}
+	}
 	if entity != nil {
 		response = &TemplateWithDefinitionResponse{
 			ID:         entity.ID,
