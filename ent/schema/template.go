@@ -90,6 +90,7 @@ type TemplateService struct {
 	ID                 int                         `json:"id"`
 	DependsOn          []int                       `json:"depends_on" nullable:"false"` // IDs of services that must be started before this one
 	Name               string                      `json:"name"`
+	Icon               string                      `json:"icon"`
 	Type               ServiceType                 `json:"type"`
 	Builder            ServiceBuilder              `json:"builder"`
 	DatabaseType       *string                     `json:"database_type,omitempty"`

@@ -35,6 +35,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "MeiliSearch",
+				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				HostInputIDs: []int{1},

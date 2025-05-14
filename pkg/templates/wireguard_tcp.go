@@ -43,6 +43,7 @@ func wireGuardTCPTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "WireGuard",
+				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				HostInputIDs: []int{1},
@@ -120,6 +121,7 @@ func wireGuardTCPTemplate() *schema.TemplateDefinition {
 			{
 				ID:      2,
 				Name:    "WireGuard TCP Tunnel",
+				Icon:    string(schema.ServiceTypeDockerimage),
 				Type:    schema.ServiceTypeDockerimage,
 				Builder: schema.ServiceBuilderDocker,
 				Image:   utils.ToPtr("ghcr.io/unbindapp/udp2raw:latest"),

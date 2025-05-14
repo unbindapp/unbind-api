@@ -27,6 +27,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
+				Icon:         "postgres",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -35,6 +36,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 			{
 				ID:           2,
 				Name:         "Redis",
+				Icon:         "redis",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("redis"),
@@ -45,6 +47,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 				DependsOn:    []int{1, 2},
 				HostInputIDs: []int{1},
 				Name:         "n8n-main",
+				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("n8nio/n8n:1.93.0"),
@@ -192,6 +195,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 				ID:         4,
 				DependsOn:  []int{1, 2, 3},
 				Name:       "n8n-worker",
+				Icon:       string(schema.ServiceTypeDockerimage),
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("n8nio/n8n:1.93.0"),

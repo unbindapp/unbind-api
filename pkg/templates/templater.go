@@ -26,6 +26,7 @@ func (self *Templater) AvailableTemplates() []*schema.TemplateDefinition {
 		supabaseTemplate(),
 		n8nTemplate(),
 		pocketBaseTemplate(),
+		flowiseTemplate(),
 		// strapiTemplate(),
 	}
 }

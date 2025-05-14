@@ -34,6 +34,7 @@ func strapiTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
+				Icon:         "postgres",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -43,6 +44,7 @@ func strapiTemplate() *schema.TemplateDefinition {
 				DependsOn:    []int{1},
 				HostInputIDs: []int{1},
 				Name:         "Strapi",
+				Icon:         string(schema.ServiceTypeDockerimage),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
 				Image:        utils.ToPtr("elestio/strapi-development:v5.12.6"),

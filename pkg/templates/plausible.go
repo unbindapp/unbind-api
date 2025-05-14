@@ -26,6 +26,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
+				Icon:         "postgres",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -33,6 +34,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 			{
 				ID:           2,
 				Name:         "ClickHouse",
+				Icon:         "clickhouse",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("clickhouse"),
@@ -42,6 +44,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				DependsOn:    []int{1, 2},
 				HostInputIDs: []int{1},
 				Name:         "Plausible",
+				Icon:         string(schema.ServiceTypeDockerimage),
 				RunCommand:   utils.ToPtr("sh -c \"/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run\""),
 				Type:         schema.ServiceTypeDockerimage,
 				Builder:      schema.ServiceBuilderDocker,
