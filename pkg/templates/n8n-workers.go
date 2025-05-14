@@ -203,7 +203,7 @@ func n8nWorkersTemplate() *schema.TemplateDefinition {
 				},
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
-					Path:                      "/healthz",
+					Path:                      "/healthz/readiness",
 					Port:                      utils.ToPtr(int32(5679)),
 					PeriodSeconds:             30,
 					TimeoutSeconds:            5,
