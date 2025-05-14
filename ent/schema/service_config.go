@@ -66,6 +66,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.JSON("health_check", &HealthCheck{}).Optional().Comment("Health check configuration for the service"),
 		// Variable mount
 		field.JSON("variable_mounts", []*VariableMount{}).Optional().Comment("Mount variables as volumes"),
+		field.Strings("protected_variables").Optional().Comment("List of protected variables (can be edited, not deleted)"),
 	}
 }
 

@@ -391,6 +391,12 @@ func (scc *ServiceConfigCreate) SetVariableMounts(sm []*schema.VariableMount) *S
 	return scc
 }
 
+// SetProtectedVariables sets the "protected_variables" field.
+func (scc *ServiceConfigCreate) SetProtectedVariables(s []string) *ServiceConfigCreate {
+	scc.mutation.SetProtectedVariables(s)
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -699,6 +705,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.VariableMounts(); ok {
 		_spec.SetField(serviceconfig.FieldVariableMounts, field.TypeJSON, value)
 		_node.VariableMounts = value
+	}
+	if value, ok := scc.mutation.ProtectedVariables(); ok {
+		_spec.SetField(serviceconfig.FieldProtectedVariables, field.TypeJSON, value)
+		_node.ProtectedVariables = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1281,6 +1291,24 @@ func (u *ServiceConfigUpsert) UpdateVariableMounts() *ServiceConfigUpsert {
 // ClearVariableMounts clears the value of the "variable_mounts" field.
 func (u *ServiceConfigUpsert) ClearVariableMounts() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldVariableMounts)
+	return u
+}
+
+// SetProtectedVariables sets the "protected_variables" field.
+func (u *ServiceConfigUpsert) SetProtectedVariables(v []string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldProtectedVariables, v)
+	return u
+}
+
+// UpdateProtectedVariables sets the "protected_variables" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateProtectedVariables() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldProtectedVariables)
+	return u
+}
+
+// ClearProtectedVariables clears the value of the "protected_variables" field.
+func (u *ServiceConfigUpsert) ClearProtectedVariables() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldProtectedVariables)
 	return u
 }
 
@@ -1913,6 +1941,27 @@ func (u *ServiceConfigUpsertOne) UpdateVariableMounts() *ServiceConfigUpsertOne 
 func (u *ServiceConfigUpsertOne) ClearVariableMounts() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearVariableMounts()
+	})
+}
+
+// SetProtectedVariables sets the "protected_variables" field.
+func (u *ServiceConfigUpsertOne) SetProtectedVariables(v []string) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetProtectedVariables(v)
+	})
+}
+
+// UpdateProtectedVariables sets the "protected_variables" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateProtectedVariables() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateProtectedVariables()
+	})
+}
+
+// ClearProtectedVariables clears the value of the "protected_variables" field.
+func (u *ServiceConfigUpsertOne) ClearProtectedVariables() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearProtectedVariables()
 	})
 }
 
@@ -2712,6 +2761,27 @@ func (u *ServiceConfigUpsertBulk) UpdateVariableMounts() *ServiceConfigUpsertBul
 func (u *ServiceConfigUpsertBulk) ClearVariableMounts() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearVariableMounts()
+	})
+}
+
+// SetProtectedVariables sets the "protected_variables" field.
+func (u *ServiceConfigUpsertBulk) SetProtectedVariables(v []string) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetProtectedVariables(v)
+	})
+}
+
+// UpdateProtectedVariables sets the "protected_variables" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateProtectedVariables() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateProtectedVariables()
+	})
+}
+
+// ClearProtectedVariables clears the value of the "protected_variables" field.
+func (u *ServiceConfigUpsertBulk) ClearProtectedVariables() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearProtectedVariables()
 	})
 }
 

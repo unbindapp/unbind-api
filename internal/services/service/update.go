@@ -60,6 +60,9 @@ type UpdateServiceInput struct {
 
 	// Variable mounts
 	VariableMounts []*schema.VariableMount `json:"variable_mounts,omitempty" doc:"Mount variables as volumes"`
+
+	// Protected variables
+	ProtectedVariables *[]string `json:"protected_variables,omitempty" doc:"List of protected variables"`
 }
 
 // UpdateService updates a service and its configuration
@@ -277,6 +280,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			PVCVolumeMountPath:   input.PVCMountPath,
 			HealthCheck:          input.HealthCheck,
 			VariableMounts:       input.VariableMounts,
+			ProtectedVariables:   input.ProtectedVariables,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)

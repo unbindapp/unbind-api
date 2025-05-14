@@ -12483,6 +12483,8 @@ type ServiceConfigMutation struct {
 	health_check              **schema.HealthCheck
 	variable_mounts           *[]*schema.VariableMount
 	appendvariable_mounts     []*schema.VariableMount
+	protected_variables       *[]string
+	appendprotected_variables []string
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
@@ -14074,6 +14076,71 @@ func (m *ServiceConfigMutation) ResetVariableMounts() {
 	delete(m.clearedFields, serviceconfig.FieldVariableMounts)
 }
 
+// SetProtectedVariables sets the "protected_variables" field.
+func (m *ServiceConfigMutation) SetProtectedVariables(s []string) {
+	m.protected_variables = &s
+	m.appendprotected_variables = nil
+}
+
+// ProtectedVariables returns the value of the "protected_variables" field in the mutation.
+func (m *ServiceConfigMutation) ProtectedVariables() (r []string, exists bool) {
+	v := m.protected_variables
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProtectedVariables returns the old "protected_variables" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldProtectedVariables(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProtectedVariables is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProtectedVariables requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProtectedVariables: %w", err)
+	}
+	return oldValue.ProtectedVariables, nil
+}
+
+// AppendProtectedVariables adds s to the "protected_variables" field.
+func (m *ServiceConfigMutation) AppendProtectedVariables(s []string) {
+	m.appendprotected_variables = append(m.appendprotected_variables, s...)
+}
+
+// AppendedProtectedVariables returns the list of values that were appended to the "protected_variables" field in this mutation.
+func (m *ServiceConfigMutation) AppendedProtectedVariables() ([]string, bool) {
+	if len(m.appendprotected_variables) == 0 {
+		return nil, false
+	}
+	return m.appendprotected_variables, true
+}
+
+// ClearProtectedVariables clears the value of the "protected_variables" field.
+func (m *ServiceConfigMutation) ClearProtectedVariables() {
+	m.protected_variables = nil
+	m.appendprotected_variables = nil
+	m.clearedFields[serviceconfig.FieldProtectedVariables] = struct{}{}
+}
+
+// ProtectedVariablesCleared returns if the "protected_variables" field was cleared in this mutation.
+func (m *ServiceConfigMutation) ProtectedVariablesCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldProtectedVariables]
+	return ok
+}
+
+// ResetProtectedVariables resets all changes to the "protected_variables" field.
+func (m *ServiceConfigMutation) ResetProtectedVariables() {
+	m.protected_variables = nil
+	m.appendprotected_variables = nil
+	delete(m.clearedFields, serviceconfig.FieldProtectedVariables)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -14175,7 +14242,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 31)
+	fields := make([]string, 0, 32)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -14269,6 +14336,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.variable_mounts != nil {
 		fields = append(fields, serviceconfig.FieldVariableMounts)
 	}
+	if m.protected_variables != nil {
+		fields = append(fields, serviceconfig.FieldProtectedVariables)
+	}
 	return fields
 }
 
@@ -14339,6 +14409,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.HealthCheck()
 	case serviceconfig.FieldVariableMounts:
 		return m.VariableMounts()
+	case serviceconfig.FieldProtectedVariables:
+		return m.ProtectedVariables()
 	}
 	return nil, false
 }
@@ -14410,6 +14482,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldHealthCheck(ctx)
 	case serviceconfig.FieldVariableMounts:
 		return m.OldVariableMounts(ctx)
+	case serviceconfig.FieldProtectedVariables:
+		return m.OldProtectedVariables(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14636,6 +14710,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetVariableMounts(v)
 		return nil
+	case serviceconfig.FieldProtectedVariables:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProtectedVariables(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14756,6 +14837,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldVariableMounts) {
 		fields = append(fields, serviceconfig.FieldVariableMounts)
 	}
+	if m.FieldCleared(serviceconfig.FieldProtectedVariables) {
+		fields = append(fields, serviceconfig.FieldProtectedVariables)
+	}
 	return fields
 }
 
@@ -14832,6 +14916,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldVariableMounts:
 		m.ClearVariableMounts()
+		return nil
+	case serviceconfig.FieldProtectedVariables:
+		m.ClearProtectedVariables()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig nullable field %s", name)
@@ -14933,6 +15020,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldVariableMounts:
 		m.ResetVariableMounts()
+		return nil
+	case serviceconfig.FieldProtectedVariables:
+		m.ResetProtectedVariables()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

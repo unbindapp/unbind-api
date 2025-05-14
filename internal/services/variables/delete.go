@@ -2,6 +2,7 @@ package variables_service
 
 import (
 	"context"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -97,18 +98,13 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 
 		// Remove from map
 		for _, secretKey := range keys {
-			// Don't allow deletion of special database keys
-			if service.Type == schema.ServiceTypeDatabase &&
-				(secretKey.Name == "DATABASE_USERNAME" ||
-					secretKey.Name == "DATABASE_PASSWORD" ||
-					secretKey.Name == "DATABASE_URL" ||
-					secretKey.Name == "DATABASE_DEFAULT_DB_NAME" ||
-					secretKey.Name == "DATABASE_PORT" ||
-					secretKey.Name == "DATABASE_HOST" ||
-					secretKey.Name == "DATABASE_HTTP_URL" ||
-					secretKey.Name == "DATABASE_HTTP_PORT") {
-				continue
+			if input.Type == schema.VariableReferenceSourceTypeService {
+				if slices.Contains(service.Edges.ServiceConfig.ProtectedVariables, secretKey.Name) {
+					continue
+				}
 			}
+
+			// Delete variable mounts if they exist
 			indexToDelete := -1
 			for i, variableMount := range variableMounts {
 				if variableMount.Name == secretKey.Name {

@@ -1598,6 +1598,16 @@ func VariableMountsNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldVariableMounts))
 }
 
+// ProtectedVariablesIsNil applies the IsNil predicate on the "protected_variables" field.
+func ProtectedVariablesIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldProtectedVariables))
+}
+
+// ProtectedVariablesNotNil applies the NotNil predicate on the "protected_variables" field.
+func ProtectedVariablesNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldProtectedVariables))
+}
+
 // HasService applies the HasEdge predicate on the "service" edge.
 func HasService() predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {

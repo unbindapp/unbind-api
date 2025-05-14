@@ -78,6 +78,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	var err error
 	var dbDefinition *databases.Definition
 	var dbVersion *string
+	var protectedVariables *[]string
+
 	switch input.Type {
 	case schema.ServiceTypeGithub:
 		// Validate that if GitHub info is provided, all fields are set
@@ -95,6 +97,18 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 		input.Builder = schema.ServiceBuilderDocker
 	case schema.ServiceTypeDatabase:
+		// Fixed protected variables for databases
+		protectedVariables = &[]string{
+			"DATABASE_USERNAME",
+			"DATABASE_PASSWORD",
+			"DATABASE_HOST",
+			"DATABASE_PORT",
+			"DATABASE_DEFAULT_DB_NAME",
+			"DATABASE_URL",
+			"DATABASE_HTTP_URL",
+			"DATABASE_HTTP_PORT",
+		}
+
 		// Disallow pvc for database
 		if input.PVCID != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
@@ -414,6 +428,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			PVCVolumeMountPath:      input.PVCMountPath,
 			HealthCheck:             input.HealthCheck,
 			VariableMounts:          input.VariableMounts,
+			ProtectedVariables:      protectedVariables,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

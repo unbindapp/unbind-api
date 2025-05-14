@@ -98,48 +98,16 @@ func (self *VariablesService) UpdateVariables(
 			references = models.TransformVariableReferenceResponseEntities(referenceResp)
 		}
 
-		if behavior == models.VariableUpdateBehaviorOverwrite {
-			// make secrets
-			if service.Type == schema.ServiceTypeDatabase {
-				_, hasUsername := newVariables["DATABASE_USERNAME"]
-				_, hasPassword := newVariables["DATABASE_PASSWORD"]
-				_, hasURL := newVariables["DATABASE_URL"]
-				_, hasDefaultDB := newVariables["DATABASE_DEFAULT_DB_NAME"]
-				_, hasPort := newVariables["DATABASE_PORT"]
-				_, hasHost := newVariables["DATABASE_HOST"]
-				_, hasHttpURL := newVariables["DATABASE_HTTP_URL"]
-				_, hasHttpPort := newVariables["DATABASE_HTTP_PORT"]
-				if !hasUsername || !hasPassword || !hasURL || !hasDefaultDB || !hasPort || !hasHost {
-					// Get existing secrets
-					existingSecrets, err := self.k8s.GetSecretMap(ctx, secretName, team.Namespace, client)
-					if err != nil {
-						return err
-					}
+		if behavior == models.VariableUpdateBehaviorOverwrite && input.Type == schema.VariableReferenceSourceTypeService {
+			// Get existing secrets
+			existingSecrets, err := self.k8s.GetSecretMap(ctx, secretName, team.Namespace, client)
+			if err != nil {
+				return err
+			}
 
-					if !hasUsername && string(existingSecrets["DATABASE_USERNAME"]) != "" {
-						newVariables["DATABASE_USERNAME"] = existingSecrets["DATABASE_USERNAME"]
-					}
-					if !hasPassword && string(existingSecrets["DATABASE_PASSWORD"]) != "" {
-						newVariables["DATABASE_PASSWORD"] = existingSecrets["DATABASE_PASSWORD"]
-					}
-					if !hasURL && string(existingSecrets["DATABASE_URL"]) != "" {
-						newVariables["DATABASE_URL"] = existingSecrets["DATABASE_URL"]
-					}
-					if !hasDefaultDB && string(existingSecrets["DATABASE_DEFAULT_DB_NAME"]) != "" {
-						newVariables["DATABASE_DEFAULT_DB_NAME"] = existingSecrets["DATABASE_DEFAULT_DB_NAME"]
-					}
-					if !hasPort && string(existingSecrets["DATABASE_PORT"]) != "" {
-						newVariables["DATABASE_PORT"] = existingSecrets["DATABASE_PORT"]
-					}
-					if !hasHost && string(existingSecrets["DATABASE_HOST"]) != "" {
-						newVariables["DATABASE_HOST"] = existingSecrets["DATABASE_HOST"]
-					}
-					if !hasHttpURL && string(existingSecrets["DATABASE_HTTP_URL"]) != "" {
-						newVariables["DATABASE_HTTP_URL"] = existingSecrets["DATABASE_HTTP_URL"]
-					}
-					if !hasHttpPort && string(existingSecrets["DATABASE_HTTP_PORT"]) != "" {
-						newVariables["DATABASE_HTTP_PORT"] = existingSecrets["DATABASE_HTTP_PORT"]
-					}
+			for _, protectedVariable := range service.Edges.ServiceConfig.ProtectedVariables {
+				if _, hasProtectedVariable := newVariables[protectedVariable]; !hasProtectedVariable {
+					newVariables[protectedVariable] = existingSecrets[protectedVariable]
 				}
 			}
 

@@ -558,6 +558,24 @@ func (scu *ServiceConfigUpdate) ClearVariableMounts() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetProtectedVariables sets the "protected_variables" field.
+func (scu *ServiceConfigUpdate) SetProtectedVariables(s []string) *ServiceConfigUpdate {
+	scu.mutation.SetProtectedVariables(s)
+	return scu
+}
+
+// AppendProtectedVariables appends s to the "protected_variables" field.
+func (scu *ServiceConfigUpdate) AppendProtectedVariables(s []string) *ServiceConfigUpdate {
+	scu.mutation.AppendProtectedVariables(s)
+	return scu
+}
+
+// ClearProtectedVariables clears the value of the "protected_variables" field.
+func (scu *ServiceConfigUpdate) ClearProtectedVariables() *ServiceConfigUpdate {
+	scu.mutation.ClearProtectedVariables()
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -840,6 +858,17 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.VariableMountsCleared() {
 		_spec.ClearField(serviceconfig.FieldVariableMounts, field.TypeJSON)
+	}
+	if value, ok := scu.mutation.ProtectedVariables(); ok {
+		_spec.SetField(serviceconfig.FieldProtectedVariables, field.TypeJSON, value)
+	}
+	if value, ok := scu.mutation.AppendedProtectedVariables(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldProtectedVariables, value)
+		})
+	}
+	if scu.mutation.ProtectedVariablesCleared() {
+		_spec.ClearField(serviceconfig.FieldProtectedVariables, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1443,6 +1472,24 @@ func (scuo *ServiceConfigUpdateOne) ClearVariableMounts() *ServiceConfigUpdateOn
 	return scuo
 }
 
+// SetProtectedVariables sets the "protected_variables" field.
+func (scuo *ServiceConfigUpdateOne) SetProtectedVariables(s []string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetProtectedVariables(s)
+	return scuo
+}
+
+// AppendProtectedVariables appends s to the "protected_variables" field.
+func (scuo *ServiceConfigUpdateOne) AppendProtectedVariables(s []string) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendProtectedVariables(s)
+	return scuo
+}
+
+// ClearProtectedVariables clears the value of the "protected_variables" field.
+func (scuo *ServiceConfigUpdateOne) ClearProtectedVariables() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearProtectedVariables()
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1755,6 +1802,17 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.VariableMountsCleared() {
 		_spec.ClearField(serviceconfig.FieldVariableMounts, field.TypeJSON)
+	}
+	if value, ok := scuo.mutation.ProtectedVariables(); ok {
+		_spec.SetField(serviceconfig.FieldProtectedVariables, field.TypeJSON, value)
+	}
+	if value, ok := scuo.mutation.AppendedProtectedVariables(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldProtectedVariables, value)
+		})
+	}
+	if scuo.mutation.ProtectedVariablesCleared() {
+		_spec.ClearField(serviceconfig.FieldProtectedVariables, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

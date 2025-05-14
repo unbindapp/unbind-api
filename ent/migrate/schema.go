@@ -398,6 +398,7 @@ var (
 		{Name: "security_context", Type: field.TypeJSON, Nullable: true},
 		{Name: "health_check", Type: field.TypeJSON, Nullable: true},
 		{Name: "variable_mounts", Type: field.TypeJSON, Nullable: true},
+		{Name: "protected_variables", Type: field.TypeJSON, Nullable: true},
 		{Name: "s3_backup_source_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID, Unique: true},
 	}
@@ -409,13 +410,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_configs_s3_sources_service_backup_source",
-				Columns:    []*schema.Column{ServiceConfigsColumns[30]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[31]},
 				RefColumns: []*schema.Column{S3SourcesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "service_configs_services_service_config",
-				Columns:    []*schema.Column{ServiceConfigsColumns[31]},
+				Columns:    []*schema.Column{ServiceConfigsColumns[32]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

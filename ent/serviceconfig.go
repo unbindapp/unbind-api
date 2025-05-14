@@ -87,6 +87,8 @@ type ServiceConfig struct {
 	HealthCheck *schema.HealthCheck `json:"health_check,omitempty"`
 	// Mount variables as volumes
 	VariableMounts []*schema.VariableMount `json:"variable_mounts,omitempty"`
+	// List of protected variables (can be edited, not deleted)
+	ProtectedVariables []string `json:"protected_variables,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -133,7 +135,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case serviceconfig.FieldS3BackupSourceID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldSecurityContext, serviceconfig.FieldHealthCheck, serviceconfig.FieldVariableMounts:
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldSecurityContext, serviceconfig.FieldHealthCheck, serviceconfig.FieldVariableMounts, serviceconfig.FieldProtectedVariables:
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
@@ -378,6 +380,14 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field variable_mounts: %w", err)
 				}
 			}
+		case serviceconfig.FieldProtectedVariables:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field protected_variables", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.ProtectedVariables); err != nil {
+					return fmt.Errorf("unmarshal field protected_variables: %w", err)
+				}
+			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
 		}
@@ -544,6 +554,9 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("variable_mounts=")
 	builder.WriteString(fmt.Sprintf("%v", sc.VariableMounts))
+	builder.WriteString(", ")
+	builder.WriteString("protected_variables=")
+	builder.WriteString(fmt.Sprintf("%v", sc.ProtectedVariables))
 	builder.WriteByte(')')
 	return builder.String()
 }

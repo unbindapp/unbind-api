@@ -36,11 +36,15 @@ type ServiceConfigResponse struct {
 	HealthCheck *schema.HealthCheck `json:"health_check,omitempty"`
 	// Variable Volume Mounts
 	VariableMounts []*schema.VariableMount `json:"variable_mounts" nullable:"false"`
+	// Protected variables
+	ProtectedVariables []string `json:"protected_variables" nullable:"false"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
 func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigResponse {
-	response := &ServiceConfigResponse{}
+	response := &ServiceConfigResponse{
+		ProtectedVariables: []string{},
+	}
 	if entity != nil {
 		if entity.VariableMounts == nil {
 			entity.VariableMounts = []*schema.VariableMount{}
@@ -68,6 +72,10 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			SecurityContext:      entity.SecurityContext,
 			HealthCheck:          entity.HealthCheck,
 			VariableMounts:       entity.VariableMounts,
+			ProtectedVariables:   entity.ProtectedVariables,
+		}
+		if response.ProtectedVariables == nil {
+			response.ProtectedVariables = []string{}
 		}
 	}
 	return response
