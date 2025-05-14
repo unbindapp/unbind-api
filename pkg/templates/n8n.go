@@ -101,22 +101,12 @@ func n8nTemplate() *schema.TemplateDefinition {
 						Value: "false",
 					},
 					{
-						Name:  "N8N_BASIC_AUTH_ACTIVE",
-						Value: "true",
-					},
-					{
-						Name:  "N8N_BASIC_AUTH_USER",
-						Value: "admin",
-					},
-					{
-						Name: "N8N_BASIC_AUTH_PASSWORD",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypePassword,
-						},
-					},
-					{
 						Name:  "NODE_FUNCTION_ALLOW_EXTERNAL",
 						Value: "axios,qs",
+					},
+					{
+						Name:  "N8N_RUNNERS_ENABLED",
+						Value: "true",
 					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
