@@ -53,6 +53,20 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 					LivenessFailureThreshold:  3,
 					ReadinessFailureThreshold: 3,
 				},
+				Variables: []schema.TemplateVariable{
+					{
+						Name: "PB_ADMIN_EMAIL",
+						Generator: &schema.ValueGenerator{
+							Type: schema.GeneratorTypePassword,
+						},
+					},
+					{
+						Name: "PB_ADMIN_PASSWORD",
+						Generator: &schema.ValueGenerator{
+							Type: schema.GeneratorTypePassword,
+						},
+					},
+				},
 				Volumes: []schema.TemplateVolume{
 					{
 						Name: "pb-data",

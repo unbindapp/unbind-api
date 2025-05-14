@@ -139,6 +139,10 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 						resolvedVar.Generator = v.Generator
 						resolvedVar.Value = v.Value
 					} else {
+						// Set base domain for email generator
+						if v.Generator.Type == schema.GeneratorTypeEmail {
+							v.Generator.BaseDomain = self.cfg.ExternalUIUrl
+						}
 						res, err := v.Generator.Generate(inputs)
 						if err != nil {
 							return nil, fmt.Errorf("failed to generate value for %s: %w", v.Name, err)

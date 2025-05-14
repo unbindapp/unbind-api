@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"entgo.io/ent"
@@ -126,6 +127,7 @@ type TemplateVariableReference struct {
 type GeneratorType string
 
 const (
+	GeneratorTypeEmail          GeneratorType = "email"
 	GeneratorTypePassword       GeneratorType = "password"
 	GeneratorTypePasswordBcrypt GeneratorType = "bcrypt"
 	GeneratorTypeInput          GeneratorType = "input"
@@ -141,6 +143,7 @@ func (u GeneratorType) Schema(r huma.Registry) *huma.Schema {
 		schemaRef.Title = "GeneratorType"
 		schemaRef.Enum = append(schemaRef.Enum,
 			[]any{
+				string(GeneratorTypeEmail),
 				string(GeneratorTypePassword),
 				string(GeneratorTypePasswordBcrypt),
 				string(GeneratorTypeInput),
@@ -201,6 +204,18 @@ type GenerateResponse struct {
 
 func (self *ValueGenerator) Generate(inputs map[int]string) (*GenerateResponse, error) {
 	switch self.Type {
+	case GeneratorTypeEmail:
+		// Strip http:// or https:// from the base domain
+		// Remove port if present and add .com if no domain part is present
+		domain := strings.TrimPrefix(self.BaseDomain, "http://")
+		domain = strings.TrimPrefix(domain, "https://")
+		domain = strings.TrimSuffix(domain, "/")
+		if !strings.Contains(domain, ".") {
+			domain = domain + ".com"
+		}
+		return &GenerateResponse{
+			GeneratedValue: self.AddPrefix + fmt.Sprintf("user@%s", domain),
+		}, nil
 	case GeneratorTypePassword:
 		pwd, err := utils.GenerateSecurePassword(32, false)
 		if err != nil {
