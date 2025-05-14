@@ -24,6 +24,9 @@ func (self *TemplateRepository) GetAll(ctx context.Context) ([]*ent.Template, er
 		Select(
 			template.FieldID,
 			template.FieldName,
+			template.FieldIcon,
+			template.FieldDescription,
+			template.FieldKeywords,
 			template.FieldVersion,
 			template.FieldImmutable,
 			template.FieldCreatedAt,
