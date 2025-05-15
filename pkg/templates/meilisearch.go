@@ -5,7 +5,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-// MeiliSearchTemplate returns the predefined MeiliSearch template
+// MeilisearchTemplate returns the predefined Meilisearch template
 func meiliSearchTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Meilisearch",
@@ -19,7 +19,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 				ID:          1,
 				Name:        "API Host",
 				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the MeiliSearch API server.",
+				Description: "Hostname to use for the Meilisearch API server.",
 				Required:    true,
 				TargetPort:  utils.ToPtr(7700),
 			},
@@ -31,7 +31,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 					Name:      "meilisearch-data",
 					MountPath: "/meili_data",
 				},
-				Description: "Size of the persistent storage for MeiliSearch data.",
+				Description: "Size of the persistent storage for Meilisearch data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},
@@ -39,7 +39,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 		Services: []schema.TemplateService{
 			{
 				ID:       1,
-				Name:     "MeiliSearch",
+				Name:     "Meilisearch",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
 				InputIDs: []int{1, 2},

@@ -17,7 +17,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "Wireguard Host",
+				Name:        "WireGuard Host",
 				Type:        schema.InputTypeHost,
 				Description: "Hostname to use for the WireGuard instance.",
 				Required:    true,
@@ -25,7 +25,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:           2,
-				Name:         "Wireguard NodePort",
+				Name:         "WireGuard NodePort",
 				Type:         schema.InputTypeGeneratedNodePort,
 				PortProtocol: utils.ToPtr(schema.ProtocolUDP),
 				Description:  "NodePort to use for the WireGuard TCP tunnel.",
@@ -39,7 +39,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 					Name:      "wireguard-config",
 					MountPath: "/etc/wireguard",
 				},
-				Description: "Size of the persistent storage for Wireguard config data.",
+				Description: "Size of the persistent storage for WireGuard config data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},

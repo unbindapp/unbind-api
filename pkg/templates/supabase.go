@@ -1334,7 +1334,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 			},
 			{
 				ID:       2,
-				Name:     "kong",
+				Name:     "Kong",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
 				Image:    utils.ToPtr("kong:2.8.1"),
@@ -1530,7 +1530,7 @@ services:
 			},
 			{
 				ID:        3,
-				Name:      "studio",
+				Name:      "Studio",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
@@ -1622,7 +1622,7 @@ services:
 			},
 			{
 				ID:        4,
-				Name:      "analytics",
+				Name:      "Analytics",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/logflare:1.12.0"),
@@ -1814,7 +1814,7 @@ services:
 			// 			},
 			{
 				ID:        6,
-				Name:      "storage",
+				Name:      "Storage",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/storage-api:v1.22.7"),
@@ -1889,7 +1889,7 @@ services:
 			},
 			{
 				ID:         7,
-				Name:       "minio",
+				Name:       "MinIO",
 				InputIDs:   []int{2},
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
@@ -1929,7 +1929,7 @@ services:
 			},
 			{
 				ID:        8,
-				Name:      "rest",
+				Name:      "PostgREST",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("postgrest/postgrest:v12.2.11"),
@@ -1975,7 +1975,7 @@ services:
 			},
 			{
 				ID:        9,
-				Name:      "auth",
+				Name:      "Auth",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/gotrue:v2.171.0"),
@@ -2042,7 +2042,7 @@ services:
 			},
 			{
 				ID:        10,
-				Name:      "meta",
+				Name:      "Postgres Meta",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/postgres-meta:v0.88.9"),
@@ -2087,7 +2087,7 @@ services:
 			},
 			{
 				ID:        11,
-				Name:      "functions",
+				Name:      "Functions",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/edge-runtime:v1.67.4"),

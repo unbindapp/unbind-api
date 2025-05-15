@@ -44,7 +44,7 @@ func wordPressTemplate() *schema.TemplateDefinition {
 				ID:        2,
 				DependsOn: []int{1},
 				InputIDs:  []int{1},
-				Name:      "Wordpress",
+				Name:      "WordPress",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("wordpress:6.8"),

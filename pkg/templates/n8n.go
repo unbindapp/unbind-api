@@ -54,7 +54,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 				ID:        3,
 				DependsOn: []int{1, 2},
 				InputIDs:  []int{1},
-				Name:      "n8n-main",
+				Name:      "n8n",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("n8nio/n8n:1.93.0"),
@@ -200,7 +200,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 			{
 				ID:         4,
 				DependsOn:  []int{1, 2, 3},
-				Name:       "n8n-worker",
+				Name:       "n8n Worker",
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("n8nio/n8n:1.93.0"),
