@@ -54,33 +54,48 @@ func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMeta
 
 		// * Longhorn - we will query the Longhorn node for available storage
 		case "driver.longhorn.io":
-			list, err := self.client.Resource(schema.GroupVersionResource{
+			gvr := schema.GroupVersionResource{
 				Group:    "longhorn.io",
 				Version:  "v1beta2",
 				Resource: "nodes",
-			}).Namespace("longhorn-system").List(ctx, meta.ListOptions{})
+			}
+			list, err := self.client.Resource(gvr).
+				Namespace("longhorn-system").
+				List(ctx, meta.ListOptions{})
 			if err != nil {
 				return resp, err
 			}
-			total := resource.NewQuantity(0, resource.BinarySI)
+
+			// Track the biggest node-level free capacity
+			maxFree := resource.NewQuantity(0, resource.BinarySI)
+
 			for _, u := range list.Items {
+				nodeTotal := resource.NewQuantity(0, resource.BinarySI)
+
+				// .status.diskStatus is a map keyed by disk UUID
 				disks, _, _ := unstructured.NestedMap(u.Object, "status", "diskStatus")
 				for _, v := range disks {
 					if disk, ok := v.(map[string]interface{}); ok {
 						switch x := disk["storageAvailable"].(type) {
 						case int64:
-							total.Add(*resource.NewQuantity(x, resource.BinarySI))
+							nodeTotal.Add(*resource.NewQuantity(x, resource.BinarySI))
 						case float64:
-							total.Add(*resource.NewQuantity(int64(x), resource.BinarySI))
+							nodeTotal.Add(*resource.NewQuantity(int64(x), resource.BinarySI))
 						case string:
 							if i, err := strconv.ParseInt(x, 10, 64); err == nil {
-								total.Add(*resource.NewQuantity(i, resource.BinarySI))
+								nodeTotal.Add(*resource.NewQuantity(i, resource.BinarySI))
 							}
 						}
 					}
 				}
+
+				// Keep the largest node total seen so far
+				if nodeTotal.Cmp(*maxFree) > 0 {
+					maxFree = nodeTotal
+				}
 			}
-			resp.AllocatableBytes = total.String()
+
+			resp.AllocatableBytes = maxFree.String()
 			resp.UnableToDetectAllocatable = false
 			resp.MinimumStorageBytes = strconv.FormatInt(10*1024*1024, 10) // 10 MiB
 			resp.StorageStep = strconv.FormatInt(256*1024*1024, 10)        // 256 MiB
