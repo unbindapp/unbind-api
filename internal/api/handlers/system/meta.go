@@ -2,16 +2,25 @@ package system_handler
 
 import (
 	"context"
+	"errors"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	system_service "github.com/unbindapp/unbind-api/internal/services/system"
 )
+
+type StorageResponse struct {
+	AllocatableStorageBytes string `json:"allocatable_storage_bytes"`
+	StorageClass            string `json:"storage_class_name"`
+	UnableToGetAllocatable  bool   `json:"unable_to_get_allocatable"`
+}
 
 type SystemMeta struct {
 	ExternalIPV6   string                                 `json:"external_ipv6" nullable:"false"`
 	ExternalIPV4   string                                 `json:"external_ipv4" nullable:"false"`
+	Storage        *StorageResponse                       `json:"storage" nullable:"false"`
 	SystemSettings *system_service.SystemSettingsResponse `json:"system_settings" nullable:"false"`
 }
 
@@ -29,6 +38,15 @@ func (self *HandlerGroup) GetSystemInformation(ctx context.Context, input *serve
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
+	storage := &StorageResponse{}
+	var err error
+	storage.AllocatableStorageBytes, storage.StorageClass, err = self.srv.KubeClient.AvailableStorageBytes(ctx)
+	if err != nil {
+		if !errors.Is(err, k8s.NotLonghornError) {
+			log.Error("Unable to get available storage bytes", "err", err)
+		}
+		storage.UnableToGetAllocatable = true
+	}
 	// Get k8s IPs for load balancer server
 	ips, err := self.srv.KubeClient.GetIngressNginxIP(ctx)
 	if err != nil {
@@ -40,6 +58,7 @@ func (self *HandlerGroup) GetSystemInformation(ctx context.Context, input *serve
 	meta := &SystemMeta{
 		ExternalIPV6: ips.IPv6,
 		ExternalIPV4: ips.IPv4,
+		Storage:      storage,
 	}
 
 	// Get buildkit settings
