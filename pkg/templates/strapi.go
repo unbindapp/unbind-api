@@ -97,9 +97,9 @@ func strapiTemplate() *schema.TemplateDefinition {
 					// High trhesholds because it does some bootstrap stuff
 					PeriodSeconds:             10,
 					TimeoutSeconds:            5,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 10,
+					StartupFailureThreshold:   30,
+					LivenessFailureThreshold:  20,
+					ReadinessFailureThreshold: 20,
 				},
 				Variables: []schema.TemplateVariable{
 					{
