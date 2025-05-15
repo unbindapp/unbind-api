@@ -80,31 +80,7 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 		}
 	}
 
-	// Add a final check to clean up any host inputs
-	if err := self.validateAndCleanHostInputs(resolved, inputs); err != nil {
-		return nil, err
-	}
-
 	return resolved, nil
-}
-
-// validateAndCleanHostInputs checks if the host inputs are valid and cleans them up (remove protocol)
-func (self *Templater) validateAndCleanHostInputs(template *schema.TemplateDefinition, inputs map[int]string) error {
-	for _, input := range template.Inputs {
-		if input.Type == schema.InputTypeHost {
-			value, exists := inputs[input.ID]
-			if !exists {
-				continue
-			}
-			// Check if the value is a valid URL while cleaning it
-			cleanedValue, err := utils.CleanAndValidateHost(value)
-			if err != nil {
-				return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is of type Host but has an invalid value: %s", input.Name, err.Error()))
-			}
-			inputs[input.ID] = cleanedValue
-		}
-	}
-	return nil
 }
 
 // resolveDatabaseSizes resolves DatabaseSize inputs and attaches them to the relevant services

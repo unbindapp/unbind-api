@@ -542,15 +542,11 @@ func (self *TemplatesService) resolveHostInputs(
 
 		// 1. find a value (provided → default → "")
 		var hostVal string
-		provided := false
 		for _, u := range rawInputs {
 			if u.ID == in.ID {
-				hostVal, provided = u.Value, true
+				hostVal = u.Value
 				break
 			}
-		}
-		if !provided && in.Default != nil {
-			hostVal = *in.Default
 		}
 
 		// 2. if we still have nothing AND it's required → try generate
