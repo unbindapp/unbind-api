@@ -9,6 +9,7 @@ import (
 func strapiTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Strapi",
+		DisplayRank: uint(65000),
 		Icon:        "strapi",
 		Keywords:    []string{"cms", "headless cms", "content management system"},
 		Description: "Open source headless CMS",
