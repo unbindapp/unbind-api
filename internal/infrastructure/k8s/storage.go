@@ -2,7 +2,6 @@ package k8s
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	storagev1 "k8s.io/api/storage/v1"
@@ -12,23 +11,139 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var (
-	NotLonghornError = fmt.Errorf("not longhorn")
-)
+type StorageMetadata struct {
+	StorageClassName          string `json:"storage_class_name"`
+	AllocatableBytes          string `json:"allocatable_bytes"`
+	UnableToDetectAllocatable bool   `json:"unable_to_detect_allocatable"`
+	MinimumStorageBytes       string `json:"minimum_storage_bytes"`
+	StorageStep               string `json:"storage_step"`
+}
 
-// isLonghornDefaultStorageClass returns (true, scName, nil) when the default SC is Longhorn.
-func (self *KubeClient) isLonghornDefaultStorageClass(ctx context.Context) (bool, string, error) {
+// AvailableStorageBytes inspects the default StorageClass and returns
+// capacity / sizing metadata
+//
+// • Longhorn  – sums .status.diskStatus[*].storageAvailable live
+// • Hetzner   – 10 TiB max, 10 GiB min, 1 GiB step
+// • AWS EBS   – 64 TiB max, 1 GiB  min, 1 GiB step
+// • Azure Disk – 64 TiB max, 1 GiB  min, 1 GiB step
+// • GCP PD    – 64 TiB max, 1 GiB  min, 1 GiB step
+// • DigitalOcean Volumes – 16 TiB max, 1 GiB min, 1 GiB step
+// • Vultr Block Storage  – 10 TiB max, 10 GiB min, 1 GiB step
+// • Linode Block Storage – 16 TiB max, 10 GiB min, 1 GiB step
+//
+// Anything else falls through with UnableToDetectAllocatable=true.
+func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMetadata, error) {
+	const (
+		giB = 1 << 30 // 1 GiB  = 1 073 741 824 bytes
+		tiB = 1 << 40 // 1 TiB  = 1 099 511 627 776 bytes
+	)
+	resp := &StorageMetadata{UnableToDetectAllocatable: true}
+
 	scList, err := self.clientset.StorageV1().StorageClasses().List(ctx, meta.ListOptions{})
 	if err != nil {
-		return false, "", err
+		return resp, err
 	}
 
 	for _, sc := range scList.Items {
 		if isDefault(sc) {
-			return sc.Provisioner == "driver.longhorn.io", sc.Name, nil
+			resp.StorageClassName = sc.Name
+		}
+
+		switch sc.Provisioner {
+
+		// * Longhorn - we will query the Longhorn node for available storage
+		case "driver.longhorn.io":
+			list, err := self.client.Resource(schema.GroupVersionResource{
+				Group:    "longhorn.io",
+				Version:  "v1beta2",
+				Resource: "nodes",
+			}).Namespace("longhorn-system").List(ctx, meta.ListOptions{})
+			if err != nil {
+				return resp, err
+			}
+			total := resource.NewQuantity(0, resource.BinarySI)
+			for _, u := range list.Items {
+				disks, _, _ := unstructured.NestedMap(u.Object, "status", "diskStatus")
+				for _, v := range disks {
+					if disk, ok := v.(map[string]interface{}); ok {
+						switch x := disk["storageAvailable"].(type) {
+						case int64:
+							total.Add(*resource.NewQuantity(x, resource.BinarySI))
+						case float64:
+							total.Add(*resource.NewQuantity(int64(x), resource.BinarySI))
+						case string:
+							if i, err := strconv.ParseInt(x, 10, 64); err == nil {
+								total.Add(*resource.NewQuantity(i, resource.BinarySI))
+							}
+						}
+					}
+				}
+			}
+			resp.AllocatableBytes = total.String()
+			resp.UnableToDetectAllocatable = false
+			resp.MinimumStorageBytes = strconv.FormatInt(10*1024*1024, 10) // 10 MiB
+			resp.StorageStep = strconv.FormatInt(256*1024*1024, 10)        // 256 MiB
+			return resp, nil
+
+		// * Hetzner - predefined limits
+		case "csi.hetzner.cloud":
+			resp.AllocatableBytes = strconv.FormatInt(10*tiB, 10)    // 10 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
+
+		// * AWS EBS - predefined limits
+		case "ebs.csi.aws.com", "kubernetes.io/aws-ebs":
+			resp.AllocatableBytes = strconv.FormatInt(64*tiB, 10) // 64 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
+
+		// * Azure Disk - predefined limits
+		case "disk.csi.azure.com", "kubernetes.io/azure-disk":
+			resp.AllocatableBytes = strconv.FormatInt(64*tiB, 10) // 64 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
+
+		// * GCP PD - predefined limits
+		case "pd.csi.storage.gke.io", "pd.csi.storage.k8s.io":
+			resp.AllocatableBytes = strconv.FormatInt(64*tiB, 10) // 64 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
+
+		// * DigitalOcean Volumes - predefined limits
+		case "dobs.csi.digitalocean.com":
+			resp.AllocatableBytes = strconv.FormatInt(16*tiB, 10) // 16 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
+
+		// * Vultr Block Storage - predefined limits
+		case "csi.vultr.com":
+			resp.AllocatableBytes = strconv.FormatInt(10*tiB, 10)    // 10 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
+
+		// * Linode Block Storage - predefined limits
+		case "linodebs.csi.linode.com":
+			resp.AllocatableBytes = strconv.FormatInt(16*tiB, 10)    // 16 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
 		}
 	}
-	return false, "", fmt.Errorf("no default StorageClass found")
+	// No recognised driver – leave UnableToDetectAllocatable = true
+	return resp, nil
 }
 
 func isDefault(sc storagev1.StorageClass) bool {
@@ -39,52 +154,4 @@ func isDefault(sc storagev1.StorageClass) bool {
 		return true
 	}
 	return false
-}
-
-// AvailableStorageBytes returns the total available storage in bytes as a string.
-// Returns a string representation of the total bytes available across all Longhorn nodes.
-func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (storageBytes string, storageClass string, err error) {
-	sc, className, err := self.isLonghornDefaultStorageClass(ctx)
-	if err != nil {
-		return "", className, err
-	}
-	if !sc {
-		return "", className, NotLonghornError
-	}
-
-	gvr := schema.GroupVersionResource{
-		Group:    "longhorn.io",
-		Version:  "v1beta2",
-		Resource: "nodes",
-	}
-
-	// All Longhorn CRs live in the longhorn-system namespace.
-	list, err := self.client.Resource(gvr).Namespace("longhorn-system").List(
-		ctx, meta.ListOptions{})
-	if err != nil {
-		return "", className, err
-	}
-
-	total := resource.NewQuantity(0, resource.BinarySI)
-
-	for _, u := range list.Items {
-		// diskStatus is a map keyed by disk UUID
-		disks, _, _ := unstructured.NestedMap(u.Object, "status", "diskStatus")
-		for _, v := range disks {
-			if disk, ok := v.(map[string]interface{}); ok {
-				switch x := disk["storageAvailable"].(type) {
-				case int64:
-					total.Add(*resource.NewQuantity(x, resource.BinarySI))
-				case float64: // JSON numbers default to float64
-					total.Add(*resource.NewQuantity(int64(x), resource.BinarySI))
-				case string: // some Longhorn versions emit strings
-					if i, err := strconv.ParseInt(x, 10, 64); err == nil {
-						total.Add(*resource.NewQuantity(i, resource.BinarySI))
-					}
-				}
-			}
-		}
-	}
-
-	return total.String(), className, nil
 }
