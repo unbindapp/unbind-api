@@ -91,6 +91,18 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.GetUpdateStatus,
 	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "generate-wildcard-domain",
+			Summary:     "Generate Wildcard Domain",
+			Description: "Generate a wildcard domain for the system.",
+			Path:        "/wildcard/generate",
+			Method:      http.MethodPost,
+		},
+		handlers.GenerateWildcardDomain,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {
