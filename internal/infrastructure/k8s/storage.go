@@ -30,6 +30,7 @@ type StorageMetadata struct {
 // • DigitalOcean Volumes – 16 TiB max, 1 GiB min, 1 GiB step
 // • Vultr Block Storage  – 10 TiB max, 10 GiB min, 1 GiB step
 // • Linode Block Storage – 16 TiB max, 10 GiB min, 1 GiB step
+// • OpenStack Cinder     – 12 TiB max, 10 GiB min, 1 GiB step
 //
 // Anything else falls through with UnableToDetectAllocatable=true.
 func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMetadata, error) {
@@ -136,6 +137,13 @@ func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMeta
 		// * Linode Block Storage - predefined limits
 		case "linodebs.csi.linode.com":
 			resp.AllocatableBytes = strconv.FormatInt(16*tiB, 10)    // 16 TiB
+			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
+			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.UnableToDetectAllocatable = false
+			return resp, nil
+		// * OpenStack Cinder - predefined limits (OVH and others)
+		case "cinder.csi.openstack.org":
+			resp.AllocatableBytes = strconv.FormatInt(12*tiB, 10)    // 12 TiB
 			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
 			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
 			resp.UnableToDetectAllocatable = false
