@@ -5,13 +5,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/ent/user"
 )
 
-func (self *TeamRepository) GetAll(ctx context.Context) ([]*ent.Team, error) {
-	return self.base.DB.Team.Query().
-		All(ctx)
+func (self *TeamRepository) GetAll(ctx context.Context, authPredicate predicate.Team) ([]*ent.Team, error) {
+	q := self.base.DB.Team.Query()
+	if authPredicate != nil {
+		q = q.Where(authPredicate)
+	}
+	return q.All(ctx)
 }
 
 func (self *TeamRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Team, error) {

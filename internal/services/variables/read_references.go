@@ -6,8 +6,10 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/ent" // For environment predicates if needed
+
+	// For project predicates
+	"github.com/unbindapp/unbind-api/ent/schema" // For service predicates
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
@@ -15,70 +17,86 @@ import (
 )
 
 func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) ([]models.AvailableVariableReference, error) {
-	// ! TODO - we're going to need to change all of our permission checks to filter not reject
-	permissionChecks := []permissions_repo.PermissionCheck{
-		{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeTeam,
-			ResourceID:   teamID,
-		},
-	}
-
-	// Check permissions
-	if err := self.repo.Permissions().Check(ctx, requesterUserID, permissionChecks); err != nil {
-		return nil, err
-	}
-
-	// Get available variable references
-	team, project, environment, _, err := self.validateInputs(ctx, teamID, projectID, environmentID, serviceID)
+	team, project, currentEnvironment, currentService, err := self.validateInputs(ctx, teamID, projectID, environmentID, serviceID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Build a map of names and icons
 	kubernetesNameMap := make(map[uuid.UUID]string)
 	nameMap := make(map[uuid.UUID]string)
 	iconMap := make(map[uuid.UUID]string)
-	kubernetesNameMap[team.ID] = team.KubernetesName
-	nameMap[team.ID] = team.Name
-	iconMap[team.ID] = "team"
-	kubernetesNameMap[project.ID] = project.KubernetesName
-	nameMap[project.ID] = project.Name
-	iconMap[project.ID] = "project"
 
-	// Base secret names
-	teamSecret := team.KubernetesSecret
-	projectSecret := project.KubernetesSecret
-	environmentSecret := environment.KubernetesSecret
+	var teamSecret, projectSecret, environmentSecret string
+	accessibleServiceSecrets := make(map[uuid.UUID]string)
+	accessibleServiceIDs := []uuid.UUID{}
 
-	// They can access all service secrets in the same project
-	serviceSecrets := make(map[uuid.UUID]string)
-	var serviceIDs []uuid.UUID
-	kubernetesNameMap[environment.ID] = environment.KubernetesName
-	nameMap[environment.ID] = environment.Name
-	iconMap[environment.ID] = "environment"
-
-	// Re-fetch environment to populate edges
-	environment, err = self.repo.Environment().GetByID(ctx, environment.ID)
-	if err != nil {
-		return nil, err
+	if err := self.repo.Permissions().Check(ctx, requesterUserID, []permissions_repo.PermissionCheck{{
+		Action: schema.ActionViewer, ResourceType: schema.ResourceTypeTeam, ResourceID: team.ID,
+	}}); err == nil {
+		kubernetesNameMap[team.ID] = team.KubernetesName
+		nameMap[team.ID] = team.Name
+		iconMap[team.ID] = "team"
+		teamSecret = team.KubernetesSecret
 	}
 
-	// Re-fetch services to get icons
-	environmentServices, err := self.repo.Service().GetByEnvironmentID(ctx, environment.ID, false)
-	if err != nil {
-		return nil, err
+	if err := self.repo.Permissions().Check(ctx, requesterUserID, []permissions_repo.PermissionCheck{{
+		Action: schema.ActionViewer, ResourceType: schema.ResourceTypeProject, ResourceID: project.ID,
+	}}); err == nil {
+		kubernetesNameMap[project.ID] = project.KubernetesName
+		nameMap[project.ID] = project.Name
+		iconMap[project.ID] = "project"
+		projectSecret = project.KubernetesSecret
 	}
 
-	for _, service := range environmentServices {
-		if service.ID == serviceID {
-			continue
+	if err := self.repo.Permissions().Check(ctx, requesterUserID, []permissions_repo.PermissionCheck{{
+		Action: schema.ActionViewer, ResourceType: schema.ResourceTypeEnvironment, ResourceID: currentEnvironment.ID,
+	}}); err == nil {
+		kubernetesNameMap[currentEnvironment.ID] = currentEnvironment.KubernetesName
+		nameMap[currentEnvironment.ID] = currentEnvironment.Name
+		iconMap[currentEnvironment.ID] = "environment"
+		environmentSecret = currentEnvironment.KubernetesSecret
+	}
+
+	// Accessible services in the same project
+	if projectErr := self.repo.Permissions().Check(ctx, requesterUserID, []permissions_repo.PermissionCheck{{
+		Action: schema.ActionViewer, ResourceType: schema.ResourceTypeProject, ResourceID: project.ID,
+	}}); projectErr == nil {
+		// Fetch all environments for this project first
+		projectEnvironments, err := self.repo.Environment().GetForProject(ctx, nil, project.ID, nil) // Passing nil for authPredicate as we check env access next
+		if err != nil {
+			log.Warnf("Failed to list environments in project %s for variable references: %v", project.ID, err)
+		} else {
+			for _, env := range projectEnvironments {
+				// Check if user can view this specific environment
+				if envViewErr := self.repo.Permissions().Check(ctx, requesterUserID, []permissions_repo.PermissionCheck{{
+					Action: schema.ActionViewer, ResourceType: schema.ResourceTypeEnvironment, ResourceID: env.ID,
+				}}); envViewErr == nil {
+					environmentServices, err := self.repo.Service().GetByEnvironmentID(ctx, env.ID, nil, true) // Pass nil for service auth predicate, check individually
+					if err != nil {
+						log.Warnf("Failed to list services in environment %s for variable references: %v", env.ID, err)
+						continue
+					}
+					for _, otherService := range environmentServices {
+						if otherService.ID == currentService.ID {
+							continue
+						}
+						if err := self.repo.Permissions().Check(ctx, requesterUserID, []permissions_repo.PermissionCheck{{
+							Action: schema.ActionViewer, ResourceType: schema.ResourceTypeService, ResourceID: otherService.ID,
+						}}); err == nil {
+							accessibleServiceSecrets[otherService.ID] = otherService.KubernetesSecret
+							kubernetesNameMap[otherService.ID] = otherService.KubernetesName
+							nameMap[otherService.ID] = otherService.Name
+							if otherService.Edges.ServiceConfig != nil {
+								iconMap[otherService.ID] = otherService.Edges.ServiceConfig.Icon
+							} else {
+								iconMap[otherService.ID] = string(otherService.Type)
+							}
+							accessibleServiceIDs = append(accessibleServiceIDs, otherService.ID)
+						}
+					}
+				}
+			}
 		}
-		serviceSecrets[service.ID] = service.KubernetesSecret
-		kubernetesNameMap[service.ID] = service.KubernetesName
-		nameMap[service.ID] = service.Name
-		iconMap[service.ID] = service.Edges.ServiceConfig.Icon
-		serviceIDs = append(serviceIDs, service.ID)
 	}
 
 	client, err := self.k8s.CreateClientWithToken(bearerToken)
@@ -86,88 +104,69 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 		return nil, err
 	}
 
-	// Use WaitGroup to handle concurrent K8s operations
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-
-	// Variables to store results
 	var k8sSecrets []models.SecretData
 	var endpoints *models.EndpointDiscovery
 	var secretsErr, endpointsErr error
 
-	// Add two tasks to WaitGroup
 	wg.Add(2)
 
-	// Goroutine for getting all kubernetes secrets
 	go func() {
 		defer wg.Done()
-		secrets, err := self.k8s.GetAllSecrets(
-			ctx,
-			team.ID,
-			teamSecret,
-			project.ID,
-			projectSecret,
-			environment.ID,
-			environmentSecret,
-			serviceSecrets,
-			client,
-			team.Namespace,
-		)
-
+		secrets, sErr := self.k8s.GetAllSecrets(ctx, team.ID, teamSecret, project.ID, projectSecret, currentEnvironment.ID, environmentSecret, accessibleServiceSecrets, client, team.Namespace)
 		mu.Lock()
 		k8sSecrets = secrets
-		secretsErr = err
+		secretsErr = sErr
 		mu.Unlock()
 	}()
 
-	// Goroutine for getting all DNS/endpoints
 	go func() {
 		defer wg.Done()
-		eps, err := self.k8s.DiscoverEndpointsByLabels(
-			ctx,
-			team.Namespace,
-			map[string]string{
-				"unbind-environment": environment.ID.String(),
-			},
-			true,
-			client,
-		)
-
-		if err != nil {
-			log.Errorf("Failed to discover endpoints: %v", err)
+		if environmentSecret == "" {
+			mu.Lock()
+			endpoints = &models.EndpointDiscovery{External: []models.IngressEndpoint{}, Internal: []models.ServiceEndpoint{}}
+			mu.Unlock()
 			return
 		}
-
+		eps, epErr := self.k8s.DiscoverEndpointsByLabels(ctx, team.Namespace, map[string]string{"unbind-environment": currentEnvironment.ID.String()}, true, client)
 		mu.Lock()
-		filteredEPs := &models.EndpointDiscovery{
-			External: []models.IngressEndpoint{},
-			Internal: []models.ServiceEndpoint{},
-		}
-		for _, ep := range eps.Internal {
-			if ep.ServiceID != serviceID && slices.Contains(serviceIDs, ep.ServiceID) {
-				filteredEPs.Internal = append(filteredEPs.Internal, ep)
+		if epErr != nil {
+			log.Errorf("Failed to discover endpoints: %v", epErr)
+			endpoints = &models.EndpointDiscovery{External: []models.IngressEndpoint{}, Internal: []models.ServiceEndpoint{}}
+			endpointsErr = epErr
+		} else if eps != nil {
+			filteredEPs := &models.EndpointDiscovery{Internal: []models.ServiceEndpoint{}, External: []models.IngressEndpoint{}}
+			for _, ep := range eps.Internal {
+				if ep.ServiceID != currentService.ID && slices.Contains(accessibleServiceIDs, ep.ServiceID) {
+					filteredEPs.Internal = append(filteredEPs.Internal, ep)
+				}
 			}
-		}
-		for _, ep := range eps.External {
-			if ep.ServiceID != serviceID && slices.Contains(serviceIDs, ep.ServiceID) {
-				filteredEPs.External = append(filteredEPs.External, ep)
+			for _, ep := range eps.External {
+				if ep.ServiceID != currentService.ID && slices.Contains(accessibleServiceIDs, ep.ServiceID) {
+					filteredEPs.External = append(filteredEPs.External, ep)
+				}
 			}
+			endpoints = filteredEPs
+		} else {
+			endpoints = &models.EndpointDiscovery{External: []models.IngressEndpoint{}, Internal: []models.ServiceEndpoint{}}
 		}
-		endpoints = filteredEPs
-		endpointsErr = err
 		mu.Unlock()
 	}()
 
-	// Wait for both operations to complete
 	wg.Wait()
 
-	// Check for errors
 	if secretsErr != nil {
 		return nil, secretsErr
 	}
-
 	if endpointsErr != nil {
-		return nil, endpointsErr
+		log.Warnf("Error discovering endpoints for variable references, proceeding without them: %v", endpointsErr)
+		if endpoints == nil {
+			endpoints = &models.EndpointDiscovery{External: []models.IngressEndpoint{}, Internal: []models.ServiceEndpoint{}}
+		}
+	}
+	if endpoints == nil {
+		endpoints = &models.EndpointDiscovery{External: []models.IngressEndpoint{}, Internal: []models.ServiceEndpoint{}}
 	}
 
 	return models.TransformAvailableVariableResponse(k8sSecrets, endpoints, kubernetesNameMap, nameMap, iconMap), nil

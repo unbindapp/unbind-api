@@ -31,10 +31,8 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 		return err
 	}
 
-	// Make sure this isn't the only environment in the team
-
 	// Get services in this environment
-	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID, false)
+	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID, nil, false)
 	if err != nil {
 		return err
 	}
@@ -48,7 +46,7 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 	// Delete kubernetes resources, db resource
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Make sure this isn't the only environment in the project
-		projectEnvs, err := self.repo.Environment().GetForProject(ctx, tx, projectID)
+		projectEnvs, err := self.repo.Environment().GetForProject(ctx, tx, projectID, nil)
 		if err != nil {
 			return err
 		}
@@ -95,7 +93,7 @@ func (self *EnvironmentService) DeleteEnvironmentByID(ctx context.Context, reque
 		}
 
 		// Re-fetch environments to update project default
-		envs, err := self.repo.Environment().GetForProject(ctx, tx, projectID)
+		envs, err := self.repo.Environment().GetForProject(ctx, tx, projectID, nil)
 		if err != nil {
 			log.Warnf("Error fetching environments for project %s: %v", projectID, err)
 		}

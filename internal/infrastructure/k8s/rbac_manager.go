@@ -37,7 +37,7 @@ func (self *RBACManager) SyncGroupToK8s(ctx context.Context, group *ent.Group) e
 		teams := []*ent.Team{}
 		if permission.ResourceSelector.Superuser {
 			// get all teams
-			teams, err = self.repo.Team().GetAll(ctx)
+			teams, err = self.repo.Team().GetAll(ctx, nil)
 			if err != nil {
 				return fmt.Errorf("failed to get all teams: %w", err)
 			}
@@ -356,7 +356,7 @@ func (self *RBACManager) DeleteK8sRBAC(ctx context.Context, group *ent.Group) er
 		// Get teams
 		if permission.ResourceSelector.Superuser {
 			// get all teams
-			teams, err = self.repo.Team().GetAll(ctx)
+			teams, err = self.repo.Team().GetAll(ctx, nil)
 			if err != nil {
 				return fmt.Errorf("failed to get all teams: %w", err)
 			}

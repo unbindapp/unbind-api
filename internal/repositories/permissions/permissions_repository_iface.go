@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	entSchema "github.com/unbindapp/unbind-api/ent/schema"
 )
@@ -23,6 +24,21 @@ type PermissionsRepositoryInterface interface {
 	DeletePermission(ctx context.Context, permissionID uuid.UUID) error
 	// GetPermissionsByGroup gets all permissions for a group
 	GetPermissionsByGroup(ctx context.Context, groupID uuid.UUID) ([]*ent.Permission, error)
+	// GetAccessibleProjectPredicates returns Ent predicates for filtering projects
+	// that the user has the given action permission for.
+	// Returns nil predicate and nil error if user is superuser for projects or access is broadly granted (matches all).
+	// Returns a predicate that matches nothing if no access is found.
+	// Returns an error if an issue occurs.
+	GetAccessibleProjectPredicates(ctx context.Context, userID uuid.UUID, action entSchema.PermittedAction) (predicate.Project, error)
+	// GetAccessibleTeamPredicates returns Ent predicates for filtering teams
+	// that the user has the given action permission for.
+	GetAccessibleTeamPredicates(ctx context.Context, userID uuid.UUID, action entSchema.PermittedAction) (predicate.Team, error)
+	// GetAccessibleEnvironmentPredicates returns Ent predicates for filtering environments.
+	// It can be scoped by an optional projectID.
+	GetAccessibleEnvironmentPredicates(ctx context.Context, userID uuid.UUID, action entSchema.PermittedAction, projectID *uuid.UUID) (predicate.Environment, error)
+	// GetAccessibleServicePredicates returns Ent predicates for filtering services.
+	// It can be scoped by an optional environmentID.
+	GetAccessibleServicePredicates(ctx context.Context, userID uuid.UUID, action entSchema.PermittedAction, environmentID *uuid.UUID) (predicate.Service, error)
 	Create(ctx context.Context, action schema.PermittedAction, resourceType schema.ResourceType, selector schema.ResourceSelector) (*ent.Permission, error)
 	AddToGroup(ctx context.Context, groupID, permissionID uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error

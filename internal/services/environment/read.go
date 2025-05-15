@@ -2,6 +2,7 @@ package environment_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -48,35 +49,29 @@ func (self *EnvironmentService) GetEnvironmentByID(ctx context.Context, requeste
 
 // Get all environments in a project
 func (self *EnvironmentService) GetEnvironmentsByProjectID(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID, projectID uuid.UUID) ([]*models.EnvironmentResponse, error) {
-	permissionChecks := []permissions_repo.PermissionCheck{
-		{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeProject,
-			ResourceID:   projectID,
-		},
+	// Step 1: Get accessible environment predicates for the user, scoped to the projectID.
+	envPreds, err := self.repo.Permissions().GetAccessibleEnvironmentPredicates(ctx, requesterUserID, schema.ActionViewer, &projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting accessible environment predicates: %w", err)
 	}
 
-	// Check permissions
-	if err := self.repo.Permissions().Check(ctx, requesterUserID, permissionChecks); err != nil {
-		return nil, err
-	}
-
-	// Verify inputs
+	// Step 2: Verify parent project and team consistency (important for URL integrity and clear errors).
 	project, err := self.repo.Project().GetByID(ctx, projectID)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
 		}
-		return nil, err
+		return nil, fmt.Errorf("error fetching project %s: %w", projectID, err)
 	}
 	if project.TeamID != teamID {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Project does not belong to the team")
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Project not found")
 	}
 
-	// Query environmetns
-	envs, err := self.repo.Environment().GetForProject(ctx, nil, projectID)
+	// Step 3: Query environments using the repository method, passing the auth predicate.
+	// The GetForProject method already filters by projectID.
+	envs, err := self.repo.Environment().GetForProject(ctx, nil, projectID, envPreds)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching environments for project %s: %w", projectID, err)
 	}
 
 	// Convert to response

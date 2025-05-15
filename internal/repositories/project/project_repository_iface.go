@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/predicate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -20,5 +21,5 @@ type ProjectRepositoryInterface interface {
 	Delete(ctx context.Context, tx repository.TxInterface, projectID uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.Project, error)
 	GetTeamID(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
-	GetByTeam(ctx context.Context, teamID uuid.UUID, sortField models.SortByField, sortOrder models.SortOrder) ([]*ent.Project, error)
+	GetByTeam(ctx context.Context, teamID uuid.UUID, authPredicate predicate.Project, sortField models.SortByField, sortOrder models.SortOrder) ([]*ent.Project, error)
 }

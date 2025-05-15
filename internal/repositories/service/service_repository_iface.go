@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
@@ -29,7 +30,7 @@ type ServiceRepositoryInterface interface {
 	GetDatabaseType(ctx context.Context, serviceID uuid.UUID) (string, error)
 	GetDatabases(ctx context.Context) ([]*ent.Service, error)
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
-	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID, withLatestDeployment bool) ([]*ent.Service, error)
+	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID, authPredicate predicate.Service, withLatestDeployment bool) ([]*ent.Service, error)
 	GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error)
 	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error)
 	GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error)

@@ -2,6 +2,7 @@ package team_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -13,28 +14,15 @@ import (
 
 // ListTeams retrieves all teams the user has permission to view
 func (self *TeamService) ListTeams(ctx context.Context, userID uuid.UUID, bearerToken string) ([]*models.TeamResponse, error) {
-	// Start with a base query
-	query := self.repo.Ent().Team.Query()
-
-	permissionChecks := []permissions_repo.PermissionCheck{
-		// Has permission to read system resources
-		{
-			Action:       schema.ActionViewer,
-			ResourceType: schema.ResourceTypeSystem,
-		},
-	}
-	if err := self.repo.Permissions().Check(
-		ctx,
-		userID,
-		permissionChecks,
-	); err != nil {
-		return nil, err
-	}
-
-	// Execute the query
-	dbTeams, err := query.All(ctx)
+	teamPreds, err := self.repo.Permissions().GetAccessibleTeamPredicates(ctx, userID, schema.ActionViewer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting accessible team predicates: %w", err)
+	}
+
+	// Get teams from repository, applying the permission predicate
+	dbTeams, err := self.repo.Team().GetAll(ctx, teamPreds)
+	if err != nil {
+		return nil, fmt.Errorf("error getting all teams: %w", err)
 	}
 
 	// ! Doesn't work with Role/RoleBinding

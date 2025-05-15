@@ -12,6 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/githubapp"
 	"github.com/unbindapp/unbind-api/ent/githubinstallation"
+	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
@@ -118,16 +119,20 @@ func (self *ServiceRepository) GetByInstallationIDAndRepoName(ctx context.Contex
 		All(ctx)
 }
 
-func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID, withLatestDeployment bool) ([]*ent.Service, error) {
-	services, err := self.base.DB.Service.Query().
+func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID, authPredicate predicate.Service, withLatestDeployment bool) ([]*ent.Service, error) {
+	q := self.base.DB.Service.Query().
 		Where(service.EnvironmentIDEQ(environmentID)).
 		WithServiceGroup().
 		WithServiceConfig().
 		WithCurrentDeployment().
 		WithTemplate().
-		Order(ent.Desc(service.FieldCreatedAt)).
-		All(ctx)
+		Order(ent.Desc(service.FieldCreatedAt))
 
+	if authPredicate != nil {
+		q = q.Where(authPredicate)
+	}
+
+	services, err := q.All(ctx)
 	if err != nil {
 		return nil, err
 	}

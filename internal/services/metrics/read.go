@@ -33,7 +33,7 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 		sumBy = prometheus.MetricsFilterSumByService
 		metricsFilters.EnvironmentID = environment.ID
 		// Get services in this environment
-		services, err := self.repo.Service().GetByEnvironmentID(ctx, environment.ID, false)
+		services, err := self.repo.Service().GetByEnvironmentID(ctx, environment.ID, nil, false)
 		if err != nil {
 			return nil, err
 		}

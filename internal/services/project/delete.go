@@ -62,7 +62,7 @@ func (self *ProjectService) DeleteProject(ctx context.Context, requesterUserID u
 		return err
 	}
 
-	environments, err := self.repo.Environment().GetForProject(ctx, nil, input.ProjectID)
+	environments, err := self.repo.Environment().GetForProject(ctx, nil, input.ProjectID, nil)
 	if err != nil {
 		return err
 	}
