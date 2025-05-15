@@ -26,6 +26,8 @@ type ServiceGroup struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name of the service group
 	Name string `json:"name,omitempty"`
+	// Description of the service group
+	Description *string `json:"description,omitempty"`
 	// Reference to the environment this service group belongs to
 	EnvironmentID uuid.UUID `json:"environment_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -70,7 +72,7 @@ func (*ServiceGroup) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case servicegroup.FieldName:
+		case servicegroup.FieldName, servicegroup.FieldDescription:
 			values[i] = new(sql.NullString)
 		case servicegroup.FieldCreatedAt, servicegroup.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -114,6 +116,13 @@ func (sg *ServiceGroup) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				sg.Name = value.String
+			}
+		case servicegroup.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				sg.Description = new(string)
+				*sg.Description = value.String
 			}
 		case servicegroup.FieldEnvironmentID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -175,6 +184,11 @@ func (sg *ServiceGroup) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(sg.Name)
+	builder.WriteString(", ")
+	if v := sg.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("environment_id=")
 	builder.WriteString(fmt.Sprintf("%v", sg.EnvironmentID))

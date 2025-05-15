@@ -4,6 +4,7 @@ import "github.com/google/uuid"
 
 type CreateServiceGroupInput struct {
 	Name          string    `json:"name" required:"true" doc:"The name of the service group" minLength:"1"`
+	Description   *string   `json:"description,omitempty" required:"false" doc:"The description of the service group"`
 	TeamID        uuid.UUID `json:"team_id" required:"true" format:"uuid"`
 	ProjectID     uuid.UUID `json:"project_id" required:"true" format:"uuid"`
 	EnvironmentID uuid.UUID `json:"environment_id" required:"true" format:"uuid"`
@@ -12,6 +13,7 @@ type CreateServiceGroupInput struct {
 type UpdateServiceGroupInput struct {
 	ID               uuid.UUID   `json:"id" required:"true" format:"uuid"`
 	Name             *string     `json:"name" required:"false" doc:"The name of the service group" minLength:"1"`
+	Description      *string     `json:"description,omitempty" required:"false" doc:"The description of the service group"`
 	TeamID           uuid.UUID   `json:"team_id" required:"true" format:"uuid"`
 	ProjectID        uuid.UUID   `json:"project_id" required:"true" format:"uuid"`
 	EnvironmentID    uuid.UUID   `json:"environment_id" required:"true" format:"uuid"`

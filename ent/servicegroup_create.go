@@ -60,6 +60,20 @@ func (sgc *ServiceGroupCreate) SetName(s string) *ServiceGroupCreate {
 	return sgc
 }
 
+// SetDescription sets the "description" field.
+func (sgc *ServiceGroupCreate) SetDescription(s string) *ServiceGroupCreate {
+	sgc.mutation.SetDescription(s)
+	return sgc
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (sgc *ServiceGroupCreate) SetNillableDescription(s *string) *ServiceGroupCreate {
+	if s != nil {
+		sgc.SetDescription(*s)
+	}
+	return sgc
+}
+
 // SetEnvironmentID sets the "environment_id" field.
 func (sgc *ServiceGroupCreate) SetEnvironmentID(u uuid.UUID) *ServiceGroupCreate {
 	sgc.mutation.SetEnvironmentID(u)
@@ -214,6 +228,10 @@ func (sgc *ServiceGroupCreate) createSpec() (*ServiceGroup, *sqlgraph.CreateSpec
 		_spec.SetField(servicegroup.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
+	if value, ok := sgc.mutation.Description(); ok {
+		_spec.SetField(servicegroup.FieldDescription, field.TypeString, value)
+		_node.Description = &value
+	}
 	if nodes := sgc.mutation.EnvironmentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -323,6 +341,24 @@ func (u *ServiceGroupUpsert) UpdateName() *ServiceGroupUpsert {
 	return u
 }
 
+// SetDescription sets the "description" field.
+func (u *ServiceGroupUpsert) SetDescription(v string) *ServiceGroupUpsert {
+	u.Set(servicegroup.FieldDescription, v)
+	return u
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ServiceGroupUpsert) UpdateDescription() *ServiceGroupUpsert {
+	u.SetExcluded(servicegroup.FieldDescription)
+	return u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *ServiceGroupUpsert) ClearDescription() *ServiceGroupUpsert {
+	u.SetNull(servicegroup.FieldDescription)
+	return u
+}
+
 // SetEnvironmentID sets the "environment_id" field.
 func (u *ServiceGroupUpsert) SetEnvironmentID(v uuid.UUID) *ServiceGroupUpsert {
 	u.Set(servicegroup.FieldEnvironmentID, v)
@@ -411,6 +447,27 @@ func (u *ServiceGroupUpsertOne) SetName(v string) *ServiceGroupUpsertOne {
 func (u *ServiceGroupUpsertOne) UpdateName() *ServiceGroupUpsertOne {
 	return u.Update(func(s *ServiceGroupUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *ServiceGroupUpsertOne) SetDescription(v string) *ServiceGroupUpsertOne {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ServiceGroupUpsertOne) UpdateDescription() *ServiceGroupUpsertOne {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *ServiceGroupUpsertOne) ClearDescription() *ServiceGroupUpsertOne {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.ClearDescription()
 	})
 }
 
@@ -671,6 +728,27 @@ func (u *ServiceGroupUpsertBulk) SetName(v string) *ServiceGroupUpsertBulk {
 func (u *ServiceGroupUpsertBulk) UpdateName() *ServiceGroupUpsertBulk {
 	return u.Update(func(s *ServiceGroupUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetDescription sets the "description" field.
+func (u *ServiceGroupUpsertBulk) SetDescription(v string) *ServiceGroupUpsertBulk {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.SetDescription(v)
+	})
+}
+
+// UpdateDescription sets the "description" field to the value that was provided on create.
+func (u *ServiceGroupUpsertBulk) UpdateDescription() *ServiceGroupUpsertBulk {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.UpdateDescription()
+	})
+}
+
+// ClearDescription clears the value of the "description" field.
+func (u *ServiceGroupUpsertBulk) ClearDescription() *ServiceGroupUpsertBulk {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.ClearDescription()
 	})
 }
 

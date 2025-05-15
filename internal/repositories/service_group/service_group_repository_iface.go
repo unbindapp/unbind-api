@@ -13,7 +13,7 @@ import (
 
 // ServiceGroupRepositoryInterface ...
 type ServiceGroupRepositoryInterface interface {
-	Create(ctx context.Context, tx repository.TxInterface, name string, environmentID uuid.UUID) (*ent.ServiceGroup, error)
+	Create(ctx context.Context, tx repository.TxInterface, name string, description *string, environmentID uuid.UUID) (*ent.ServiceGroup, error)
 	Update(ctx context.Context, input *models.UpdateServiceGroupInput) (*ent.ServiceGroup, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	DeleteByEnvironmentID(ctx context.Context, tx repository.TxInterface, environmentID uuid.UUID) error

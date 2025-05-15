@@ -52,6 +52,26 @@ func (sgu *ServiceGroupUpdate) SetNillableName(s *string) *ServiceGroupUpdate {
 	return sgu
 }
 
+// SetDescription sets the "description" field.
+func (sgu *ServiceGroupUpdate) SetDescription(s string) *ServiceGroupUpdate {
+	sgu.mutation.SetDescription(s)
+	return sgu
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (sgu *ServiceGroupUpdate) SetNillableDescription(s *string) *ServiceGroupUpdate {
+	if s != nil {
+		sgu.SetDescription(*s)
+	}
+	return sgu
+}
+
+// ClearDescription clears the value of the "description" field.
+func (sgu *ServiceGroupUpdate) ClearDescription() *ServiceGroupUpdate {
+	sgu.mutation.ClearDescription()
+	return sgu
+}
+
 // SetEnvironmentID sets the "environment_id" field.
 func (sgu *ServiceGroupUpdate) SetEnvironmentID(u uuid.UUID) *ServiceGroupUpdate {
 	sgu.mutation.SetEnvironmentID(u)
@@ -186,6 +206,12 @@ func (sgu *ServiceGroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := sgu.mutation.Name(); ok {
 		_spec.SetField(servicegroup.FieldName, field.TypeString, value)
 	}
+	if value, ok := sgu.mutation.Description(); ok {
+		_spec.SetField(servicegroup.FieldDescription, field.TypeString, value)
+	}
+	if sgu.mutation.DescriptionCleared() {
+		_spec.ClearField(servicegroup.FieldDescription, field.TypeString)
+	}
 	if sgu.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -299,6 +325,26 @@ func (sguo *ServiceGroupUpdateOne) SetNillableName(s *string) *ServiceGroupUpdat
 	if s != nil {
 		sguo.SetName(*s)
 	}
+	return sguo
+}
+
+// SetDescription sets the "description" field.
+func (sguo *ServiceGroupUpdateOne) SetDescription(s string) *ServiceGroupUpdateOne {
+	sguo.mutation.SetDescription(s)
+	return sguo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (sguo *ServiceGroupUpdateOne) SetNillableDescription(s *string) *ServiceGroupUpdateOne {
+	if s != nil {
+		sguo.SetDescription(*s)
+	}
+	return sguo
+}
+
+// ClearDescription clears the value of the "description" field.
+func (sguo *ServiceGroupUpdateOne) ClearDescription() *ServiceGroupUpdateOne {
+	sguo.mutation.ClearDescription()
 	return sguo
 }
 
@@ -465,6 +511,12 @@ func (sguo *ServiceGroupUpdateOne) sqlSave(ctx context.Context) (_node *ServiceG
 	}
 	if value, ok := sguo.mutation.Name(); ok {
 		_spec.SetField(servicegroup.FieldName, field.TypeString, value)
+	}
+	if value, ok := sguo.mutation.Description(); ok {
+		_spec.SetField(servicegroup.FieldDescription, field.TypeString, value)
+	}
+	if sguo.mutation.DescriptionCleared() {
+		_spec.ClearField(servicegroup.FieldDescription, field.TypeString)
 	}
 	if sguo.mutation.EnvironmentCleared() {
 		edge := &sqlgraph.EdgeSpec{
