@@ -66,3 +66,40 @@ func (self *HandlerGroup) GenerateWildcardDomain(ctx context.Context, input *Gen
 	output.Body.Data = domain
 	return output, nil
 }
+
+// * Check collision
+type CheckUniqueDomainInput struct {
+	server.BaseAuthInput
+	domain string `query:"domain" required:"true" description:"Domain to check for uniqueness"`
+}
+
+type CollisionOutput struct {
+	IsUnique bool `json:"collisions" doc:"The number of collisions"`
+}
+
+type CheckUniqueDomainOutput struct {
+	Body struct {
+		Data *CollisionOutput `json:"data" doc:"The generated wildcard domain"  nullable:"false"`
+	}
+}
+
+func (self *HandlerGroup) CheckForDomainCollision(ctx context.Context, input *CheckUniqueDomainInput) (output *CheckUniqueDomainOutput, err error) {
+	// Sanitize and clean
+	cleanedDomain, err := utils.CleanAndValidateHost(input.domain)
+	if err != nil {
+		return nil, huma.Error400BadRequest("Invalid domain")
+	}
+
+	// Check for collisions
+	domainCount, err := self.srv.Repository.Service().CountDomainCollisons(ctx, nil, cleanedDomain)
+	if err != nil {
+		log.Error("failed to count domain collisions", "error", err)
+		return nil, huma.Error500InternalServerError("An unknown error occured")
+	}
+
+	output = &CheckUniqueDomainOutput{}
+	output.Body.Data = &CollisionOutput{
+		IsUnique: domainCount == 0,
+	}
+	return output, nil
+}

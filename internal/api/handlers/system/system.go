@@ -103,6 +103,18 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.GenerateWildcardDomain,
 	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "check-unique-domain",
+			Summary:     "Check Unique Domain",
+			Description: "Check if the domain is unique within our system.",
+			Path:        "/domain/check",
+			Method:      http.MethodGet,
+		},
+		handlers.CheckForDomainCollision,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {
