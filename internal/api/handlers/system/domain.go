@@ -74,7 +74,7 @@ type CheckUniqueDomainInput struct {
 }
 
 type CollisionOutput struct {
-	IsUnique bool `json:"collisions" doc:"The number of collisions"`
+	IsUnique bool `json:"is_unique" doc:"True if the domain is unique, false otherwise"`
 }
 
 type CheckUniqueDomainOutput struct {
