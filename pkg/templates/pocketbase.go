@@ -23,9 +23,13 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 				Required:    true,
 			},
 			{
-				ID:          2,
-				Name:        "Storage Size",
-				Type:        schema.InputTypeVolumeSize,
+				ID:   2,
+				Name: "Storage Size",
+				Type: schema.InputTypeVolumeSize,
+				Volume: &schema.TemplateVolume{
+					Name:      "pb-data",
+					MountPath: "/pb_data",
+				},
 				Description: "Size of the persistent storage for PocketBase data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
@@ -33,19 +37,18 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
-				Name:         "PocketBase",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				HostInputIDs: []int{1},
-				Image:        utils.ToPtr("ghcr.io/unbindapp/pocketbase:v0.28.1"),
+				ID:       1,
+				Name:     "PocketBase",
+				Type:     schema.ServiceTypeDockerimage,
+				Builder:  schema.ServiceBuilderDocker,
+				InputIDs: []int{1},
+				Image:    utils.ToPtr("ghcr.io/unbindapp/pocketbase:v0.28.1"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     8090,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/api/health",
@@ -68,15 +71,6 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 						Generator: &schema.ValueGenerator{
 							Type: schema.GeneratorTypePassword,
 						},
-					},
-				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name: "pb-data",
-						Size: schema.TemplateVolumeSize{
-							FromInputID: 2,
-						},
-						MountPath: "/pb_data",
 					},
 				},
 			},

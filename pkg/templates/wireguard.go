@@ -24,16 +24,21 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(51821), // Target TCP port
 			},
 			{
-				ID:          2,
-				Name:        "Wireguard TCP NodePort",
-				Type:        schema.InputTypeNodePort,
-				Description: "NodePort to use for the WireGuard TCP tunnel.",
-				Required:    true,
+				ID:           2,
+				Name:         "Wireguard NodePort",
+				Type:         schema.InputTypeGeneratedNodePort,
+				PortProtocol: utils.ToPtr(schema.ProtocolUDP),
+				Description:  "NodePort to use for the WireGuard TCP tunnel.",
+				Hidden:       true,
 			},
 			{
-				ID:          3,
-				Name:        "Storage Size",
-				Type:        schema.InputTypeVolumeSize,
+				ID:   3,
+				Name: "Storage Size",
+				Type: schema.InputTypeVolumeSize,
+				Volume: &schema.TemplateVolume{
+					Name:      "wireguard-config",
+					MountPath: "/etc/wireguard",
+				},
 				Description: "Size of the persistent storage for Wireguard config data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
@@ -42,24 +47,18 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 		Services: []schema.TemplateService{
 			// WireGuard Service
 			{
-				ID:           1,
-				Name:         "WireGuard",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				HostInputIDs: []int{1},
-				Image:        utils.ToPtr("ghcr.io/wg-easy/wg-easy:14"),
+				ID:       1,
+				Name:     "WireGuard",
+				Type:     schema.ServiceTypeDockerimage,
+				Builder:  schema.ServiceBuilderDocker,
+				InputIDs: []int{1, 2, 3},
+				Image:    utils.ToPtr("ghcr.io/wg-easy/wg-easy:14"),
 				Ports: []schema.PortSpec{
-					{
-						IsNodePort:      true,
-						InputTemplateID: utils.ToPtr(2),
-						Protocol:        utils.ToPtr(schema.ProtocolUDP),
-					},
 					{
 						Port:     51821,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true, // Not directly exposed, use TCP proxy instead
 				Variables: []schema.TemplateVariable{
 					{
 						Name: "WG_HOST",
@@ -100,15 +99,6 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 					{
 						Name:  "UI_CHART_TYPE",
 						Value: "1",
-					},
-				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name: "wireguard-config",
-						Size: schema.TemplateVolumeSize{
-							FromInputID: 3,
-						},
-						MountPath: "/etc/wireguard",
 					},
 				},
 				SecurityContext: &schema.SecurityContext{

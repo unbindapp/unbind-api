@@ -24,9 +24,13 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(8000),
 			},
 			{
-				ID:          2,
-				Name:        "Storage Size",
-				Type:        schema.InputTypeVolumeSize,
+				ID:   2,
+				Name: "Storage Size",
+				Type: schema.InputTypeVolumeSize,
+				Volume: &schema.TemplateVolume{
+					Name:      "minio-data",
+					MountPath: "/data",
+				},
 				Description: "Size of the persistent storage for Supabase storage service.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
@@ -34,15 +38,24 @@ func supabaseTemplate() *schema.TemplateDefinition {
 			{
 				ID:          3,
 				Name:        "Internal Password",
-				Type:        schema.InputTypePassword,
-				Description: "Password for the internal accounts that supabase creates, generated if not provided.",
+				Type:        schema.InputTypeGeneratedPassword,
+				Description: "Password for the internal accounts that supabase creates",
+				Hidden:      true,
+			},
+			{
+				ID:          4,
+				Name:        "Database Size",
+				Type:        schema.InputTypeDatabaseSize,
+				Description: "Size of the persistent storage for PostgreSQL database.",
 				Required:    true,
+				Default:     utils.ToPtr("1Gi"),
 			},
 		},
 		Services: []schema.TemplateService{
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
+				InputIDs:     []int{4},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -1320,13 +1333,12 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				},
 			},
 			{
-				ID:           2,
-				Name:         "kong",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("kong:2.8.1"),
-				HostInputIDs: []int{1},
-				IsPublic:     true,
+				ID:       2,
+				Name:     "kong",
+				Type:     schema.ServiceTypeDockerimage,
+				Builder:  schema.ServiceBuilderDocker,
+				Image:    utils.ToPtr("kong:2.8.1"),
+				InputIDs: []int{1},
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,
@@ -1529,7 +1541,6 @@ services:
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: false,
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/api/platform/profile",
@@ -1879,6 +1890,7 @@ services:
 			{
 				ID:         7,
 				Name:       "minio",
+				InputIDs:   []int{2},
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("minio/minio"),
@@ -1912,15 +1924,6 @@ services:
 						Generator: &schema.ValueGenerator{
 							Type: schema.GeneratorTypePassword,
 						},
-					},
-				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name: "minio-data",
-						Size: schema.TemplateVolumeSize{
-							FromInputID: 2,
-						},
-						MountPath: "/data",
 					},
 				},
 			},

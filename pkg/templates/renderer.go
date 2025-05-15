@@ -2,14 +2,34 @@ package templates
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inputs map[int]string, kubeNameMap map[int]string, namespace string) (*schema.TemplateDefinition, error) {
 	resolved, err := self.resolveGeneratedVariables(template, inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Resolve volumes
+	resolved, err = self.resolveVolumes(resolved, inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Resolve node ports
+	resolved, err = self.resolveNodePorts(resolved, inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Resolve database sizes
+	resolved, err = self.resolveDatabaseSizes(resolved, inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +83,135 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 	return resolved, nil
 }
 
+// resolveDatabaseSizes resolves DatabaseSize inputs and attaches them to the relevant services
+func (self *Templater) resolveDatabaseSizes(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+	// We need to see if we have inputs of type DatabaseSize
+	databaseSizeInputsMap := make(map[int]schema.TemplateInput)
+	for _, input := range template.Inputs {
+		if input.Type == schema.InputTypeDatabaseSize {
+			databaseSizeInputsMap[input.ID] = input
+		}
+	}
+
+	if len(databaseSizeInputsMap) == 0 {
+		return template, nil
+	}
+
+	// Attach to relevant services
+	for i := range template.Services {
+		for _, inputID := range template.Services[i].InputIDs {
+			if input, ok := databaseSizeInputsMap[inputID]; ok {
+				// Check if the service has a database defined
+				if template.Services[i].DatabaseConfig == nil {
+					template.Services[i].DatabaseConfig = &schema.DatabaseConfig{}
+				}
+
+				size := inputs[inputID]
+				// Verify size
+				if _, err := utils.ValidateStorageQuantity(size); err != nil {
+					return template, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is of type DatabaseSize but has an invalid size: %s", input.Name, err.Error()))
+				}
+
+				// Add the size to the database config
+				template.Services[i].DatabaseConfig.StorageSize = size
+			}
+		}
+	}
+
+	return template, nil
+}
+
+// resolveNodePorts resolves NodePort inputs and attaches them to the relevant services
+func (self *Templater) resolveNodePorts(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+	// We need to see if we have inputs of type NodePort
+	nodePortInputsMap := make(map[int]schema.TemplateInput)
+	for _, input := range template.Inputs {
+		if input.Type == schema.InputTypeGeneratedNodePort {
+			nodePortInputsMap[input.ID] = input
+		}
+	}
+
+	if len(nodePortInputsMap) == 0 {
+		return template, nil
+	}
+	// {
+	// 	IsNodePort:      true,
+	// 	InputTemplateID: utils.ToPtr(2),
+	// 	Protocol:        utils.ToPtr(schema.ProtocolUDP),
+	// },
+	// Attach to relevant services
+	for i := range template.Services {
+		for _, inputID := range template.Services[i].InputIDs {
+			if input, ok := nodePortInputsMap[inputID]; ok {
+				// Parse as int32
+				asInt, err := strconv.Atoi(inputs[inputID])
+				if err != nil {
+					return template, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is of type NodePort but has an invalid value: %s", input.Name, err.Error()))
+				}
+
+				protocol := utils.ToPtr(schema.ProtocolTCP)
+				if input.PortProtocol != nil {
+					protocol = input.PortProtocol
+				}
+
+				template.Services[i].Ports = append(template.Services[i].Ports, schema.PortSpec{
+					IsNodePort: true,
+					NodePort:   utils.ToPtr(int32(asInt)),
+					Port:       int32(asInt),
+					Protocol:   protocol,
+				})
+			}
+		}
+	}
+
+	return template, nil
+}
+
+// resolveVolumes resolves VolumeSize inputs and attaches them to the relevant services
+func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+	// We need to see if we have inputs of type VolumeSize
+	volumeSizeInputsMap := make(map[int]schema.TemplateInput)
+	for _, input := range template.Inputs {
+		if input.Type == schema.InputTypeVolumeSize {
+			if input.Volume == nil {
+				return template, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is of type VolumeSize but has no volume defined", input.Name))
+			}
+			volumeSizeInputsMap[input.ID] = input
+		}
+	}
+
+	if len(volumeSizeInputsMap) == 0 {
+		return template, nil
+	}
+
+	// Attach to relevant services
+	for i := range template.Services {
+		for _, inputID := range template.Services[i].InputIDs {
+			if input, ok := volumeSizeInputsMap[inputID]; ok {
+				// Check if the service has a volume defined
+				if template.Services[i].Volumes == nil {
+					template.Services[i].Volumes = []schema.TemplateVolume{}
+				}
+
+				size := inputs[inputID]
+				// Verify size
+				if _, err := utils.ValidateStorageQuantity(size); err != nil {
+					return template, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is of type VolumeSize but has an invalid size: %s", input.Name, err.Error()))
+				}
+
+				// Add the volume to the service
+				template.Services[i].Volumes = append(template.Services[i].Volumes, schema.TemplateVolume{
+					Name:      input.Volume.Name,
+					Size:      size,
+					MountPath: input.Volume.MountPath,
+				})
+			}
+		}
+	}
+
+	return template, nil
+}
+
 // resolveGeneratedVariables creates a new TemplateDefinition with all generated variables resolved to their values
 func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
 	// Create a deep copy of the template
@@ -91,8 +240,7 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 			DatabaseConfig:     svc.DatabaseConfig,
 			Image:              svc.Image,
 			Ports:              svc.Ports,
-			IsPublic:           svc.IsPublic,
-			HostInputIDs:       svc.HostInputIDs,
+			InputIDs:           svc.InputIDs,
 			RunCommand:         svc.RunCommand,
 			Volumes:            svc.Volumes,
 			Variables:          svc.Variables,
@@ -110,8 +258,8 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 		if resolvedService.Ports == nil {
 			resolvedService.Ports = []schema.PortSpec{}
 		}
-		if resolvedService.HostInputIDs == nil {
-			resolvedService.HostInputIDs = []int{}
+		if resolvedService.InputIDs == nil {
+			resolvedService.InputIDs = []int{}
 		}
 		if resolvedService.VariableReferences == nil {
 			resolvedService.VariableReferences = []schema.TemplateVariableReference{}

@@ -11,7 +11,6 @@ import (
 
 // * Custom kubernetes-like types
 type PortSpec struct {
-	InputTemplateID *int `json:"input_template_id,omitempty" required:"false" doc:"For template port inputs"`
 	// Will create a node port (public) service
 	IsNodePort bool   `json:"is_nodeport" required:"false"`
 	NodePort   *int32 `json:"node_port,omitempty" required:"false"`

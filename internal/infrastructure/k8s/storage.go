@@ -156,6 +156,7 @@ func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMeta
 			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
+
 		// * OpenStack Cinder - predefined limits (OVH and others)
 		case "cinder.csi.openstack.org":
 			resp.AllocatableBytes = strconv.FormatInt(12*tiB, 10)    // 12 TiB

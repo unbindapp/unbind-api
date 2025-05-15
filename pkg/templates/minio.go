@@ -32,9 +32,13 @@ func minioTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(9001),
 			},
 			{
-				ID:          3,
-				Name:        "Storage Size",
-				Type:        schema.InputTypeVolumeSize,
+				ID:   3,
+				Name: "Storage Size",
+				Type: schema.InputTypeVolumeSize,
+				Volume: &schema.TemplateVolume{
+					Name:      "minio-data",
+					MountPath: "/data",
+				},
 				Description: "Size of the persistent storage for MinIO data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
@@ -42,12 +46,12 @@ func minioTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
-				Name:         "MinIO",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				HostInputIDs: []int{1, 2},
-				Image:        utils.ToPtr("minio/minio:latest"),
+				ID:       1,
+				Name:     "MinIO",
+				Type:     schema.ServiceTypeDockerimage,
+				Builder:  schema.ServiceBuilderDocker,
+				InputIDs: []int{1, 2, 3},
+				Image:    utils.ToPtr("minio/minio:latest"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,
@@ -58,7 +62,6 @@ func minioTemplate() *schema.TemplateDefinition {
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic:   true,
 				RunCommand: utils.ToPtr("minio server /data --console-address ':9001'"),
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeExec,
@@ -95,15 +98,6 @@ func minioTemplate() *schema.TemplateDefinition {
 							InputID:   2,
 							AddPrefix: "https://",
 						},
-					},
-				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name: "minio-data",
-						Size: schema.TemplateVolumeSize{
-							FromInputID: 3,
-						},
-						MountPath: "/data",
 					},
 				},
 			},

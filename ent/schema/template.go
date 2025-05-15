@@ -99,8 +99,7 @@ type TemplateService struct {
 	DatabaseConfig     *DatabaseConfig             `json:"database_config,omitempty"` // Database configuration
 	Image              *string                     `json:"image,omitempty"`
 	Ports              []PortSpec                  `json:"ports" nullable:"false"` // Ports to expose
-	IsPublic           bool                        `json:"is_public"`
-	HostInputIDs       []int                       `json:"host_input_ids,omitempty"` // IDs of inputs that are hostnames
+	InputIDs           []int                       `json:"input_ids,omitempty"`    // IDs of inputs that are hostnames
 	RunCommand         *string                     `json:"run_command,omitempty"`
 	Volumes            []TemplateVolume            `json:"volumes" nullable:"false"`             // Volumes to mount
 	Variables          []TemplateVariable          `json:"variables" nullable:"false"`           // Variables this service needs
@@ -325,11 +324,12 @@ func (self *ValueGenerator) Generate(inputs map[int]string) (*GenerateResponse, 
 type TemplateInputType string
 
 const (
-	InputTypeVariable   TemplateInputType = "variable"
-	InputTypeHost       TemplateInputType = "host"
-	InputTypeVolumeSize TemplateInputType = "volume_size"
-	InputTypeNodePort   TemplateInputType = "node_port"
-	InputTypePassword   TemplateInputType = "password"
+	InputTypeVariable          TemplateInputType = "variable"
+	InputTypeHost              TemplateInputType = "host"
+	InputTypeVolumeSize        TemplateInputType = "volume_size"
+	InputTypeDatabaseSize      TemplateInputType = "database_size"
+	InputTypeGeneratedNodePort TemplateInputType = "generated_node_port"
+	InputTypeGeneratedPassword TemplateInputType = "generated-password"
 )
 
 // Register enum in OpenAPI specification
@@ -343,8 +343,9 @@ func (u TemplateInputType) Schema(r huma.Registry) *huma.Schema {
 				string(InputTypeVariable),
 				string(InputTypeHost),
 				string(InputTypeVolumeSize),
-				string(InputTypeNodePort),
-				string(InputTypePassword),
+				string(InputTypeDatabaseSize),
+				string(InputTypeGeneratedNodePort),
+				string(InputTypeGeneratedPassword),
 			}...)
 		r.Map()["TemplateInputType"] = schemaRef
 	}
@@ -353,22 +354,21 @@ func (u TemplateInputType) Schema(r huma.Registry) *huma.Schema {
 
 // TemplateInput represents a user input field in the template
 type TemplateInput struct {
-	ID          int               `json:"id"`
-	Name        string            `json:"name"`
-	Type        TemplateInputType `json:"type"`
-	Description string            `json:"description"`
-	Default     *string           `json:"default,omitempty"`
-	Required    bool              `json:"required"`
-	TargetPort  *int              `json:"target_port,omitempty"`
+	ID           int               `json:"id"`
+	Name         string            `json:"name"`
+	Type         TemplateInputType `json:"type"`
+	Volume       *TemplateVolume   `json:"volume,omitempty"`
+	PortProtocol *Protocol         `json:"port_protocol,omitempty"` // Protocol for the port
+	Description  string            `json:"description"`
+	Default      *string           `json:"default,omitempty"`
+	Required     bool              `json:"required"`
+	Hidden       bool              `json:"hidden"`
+	TargetPort   *int              `json:"target_port,omitempty"`
 }
 
 // TemplateVolume represents a volume configuration in the template
 type TemplateVolume struct {
-	Name      string             `json:"name"`
-	Size      TemplateVolumeSize `json:"size"`
-	MountPath string             `json:"mountPath"`
-}
-
-type TemplateVolumeSize struct {
-	FromInputID int `json:"from_input_id"`
+	Name      string `json:"name"`
+	Size      string `json:"size"`
+	MountPath string `json:"mountPath"`
 }

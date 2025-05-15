@@ -22,37 +22,49 @@ func strapiTemplate() *schema.TemplateDefinition {
 				Required:    true,
 			},
 			{
-				ID:          2,
-				Name:        "Storage Size",
-				Type:        schema.InputTypeVolumeSize,
+				ID:   2,
+				Name: "Storage Size",
+				Type: schema.InputTypeVolumeSize,
+				Volume: &schema.TemplateVolume{
+					Name:      "strapi-upload-data",
+					MountPath: "/opt/app/public/uploads",
+				},
 				Description: "Size of the persistent storage for Strapi uploads.",
 				Required:    true,
 				Default:     utils.ToPtr("512Mi"),
+			},
+			{
+				ID:          3,
+				Name:        "Database Size",
+				Type:        schema.InputTypeDatabaseSize,
+				Description: "Size of the persistent storage for PostgreSQL database.",
+				Required:    true,
+				Default:     utils.ToPtr("1Gi"),
 			},
 		},
 		Services: []schema.TemplateService{
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
+				InputIDs:     []int{3},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 			},
 			{
-				ID:           2,
-				DependsOn:    []int{1},
-				HostInputIDs: []int{1},
-				Name:         "Strapi",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("elestio/strapi-development:v5.12.6"),
+				ID:        2,
+				DependsOn: []int{1},
+				InputIDs:  []int{1, 2},
+				Name:      "Strapi",
+				Type:      schema.ServiceTypeDockerimage,
+				Builder:   schema.ServiceBuilderDocker,
+				Image:     utils.ToPtr("elestio/strapi-development:v5.12.6"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     1337,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
 				Variables: []schema.TemplateVariable{
 					{
 						Name:  "DATABASE_CLIENT",
@@ -116,15 +128,6 @@ func strapiTemplate() *schema.TemplateDefinition {
 						SourceID:   1,
 						SourceName: "DATABASE_HOST",
 						TargetName: "DATABASE_HOST",
-					},
-				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name: "strapi-upload-data",
-						Size: schema.TemplateVolumeSize{
-							FromInputID: 2,
-						},
-						MountPath: "/opt/app/public/uploads",
 					},
 				},
 			},

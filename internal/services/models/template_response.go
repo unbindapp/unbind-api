@@ -90,8 +90,8 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 		if entity.Definition.Services[i].DependsOn == nil {
 			entity.Definition.Services[i].DependsOn = []int{}
 		}
-		if entity.Definition.Services[i].HostInputIDs == nil {
-			entity.Definition.Services[i].HostInputIDs = []int{}
+		if entity.Definition.Services[i].InputIDs == nil {
+			entity.Definition.Services[i].InputIDs = []int{}
 		}
 		if entity.Definition.Services[i].Ports == nil {
 			entity.Definition.Services[i].Ports = []schema.PortSpec{}

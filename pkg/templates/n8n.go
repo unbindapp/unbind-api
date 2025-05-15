@@ -22,12 +22,21 @@ func n8nTemplate() *schema.TemplateDefinition {
 				Description: "Hostname to use for the n8n instance.",
 				Required:    true,
 			},
+			{
+				ID:          2,
+				Name:        "Database Size",
+				Type:        schema.InputTypeDatabaseSize,
+				Description: "Size of the persistent storage for PostgreSQL database.",
+				Required:    true,
+				Default:     utils.ToPtr("1Gi"),
+			},
 		},
 		Services: []schema.TemplateService{
 			// PostgreSQL service (workflow metadata & credentials store)
 			{
 				ID:           1,
 				Name:         "PostgreSQL",
+				InputIDs:     []int{2},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
@@ -42,20 +51,19 @@ func n8nTemplate() *schema.TemplateDefinition {
 			},
 			// Main n8n process (API / UI)
 			{
-				ID:           3,
-				DependsOn:    []int{1, 2},
-				HostInputIDs: []int{1},
-				Name:         "n8n-main",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("n8nio/n8n:1.93.0"),
+				ID:        3,
+				DependsOn: []int{1, 2},
+				InputIDs:  []int{1},
+				Name:      "n8n-main",
+				Type:      schema.ServiceTypeDockerimage,
+				Builder:   schema.ServiceBuilderDocker,
+				Image:     utils.ToPtr("n8nio/n8n:1.93.0"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     5678,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/healthz",
@@ -197,7 +205,6 @@ func n8nTemplate() *schema.TemplateDefinition {
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("n8nio/n8n:1.93.0"),
 				RunCommand: utils.ToPtr("n8n worker"),
-				IsPublic:   false,
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,

@@ -22,30 +22,38 @@ func ghostTemplate() *schema.TemplateDefinition {
 				Description: "Hostname to use for the Ghost instance.",
 				Required:    true,
 			},
+			{
+				ID:          2,
+				Name:        "Database Size",
+				Type:        schema.InputTypeDatabaseSize,
+				Description: "Size of the persistent storage for MySQL database.",
+				Required:    true,
+				Default:     utils.ToPtr("1Gi"),
+			},
 		},
 		Services: []schema.TemplateService{
 			{
 				ID:           1,
 				Name:         "MySQL",
+				InputIDs:     []int{2},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("mysql"),
 			},
 			{
-				ID:           2,
-				DependsOn:    []int{1},
-				HostInputIDs: []int{1},
-				Name:         "Ghost",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				Image:        utils.ToPtr("ghost:5"),
+				ID:        2,
+				DependsOn: []int{1},
+				InputIDs:  []int{1},
+				Name:      "Ghost",
+				Type:      schema.ServiceTypeDockerimage,
+				Builder:   schema.ServiceBuilderDocker,
+				Image:     utils.ToPtr("ghost:5"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     2368,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
 				// ! Ghost doesn't have a good health check endpoint?
 				Variables: []schema.TemplateVariable{
 					{

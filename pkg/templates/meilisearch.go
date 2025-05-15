@@ -24,9 +24,13 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(7700),
 			},
 			{
-				ID:          2,
-				Name:        "Storage Size",
-				Type:        schema.InputTypeVolumeSize,
+				ID:   2,
+				Name: "Storage Size",
+				Type: schema.InputTypeVolumeSize,
+				Volume: &schema.TemplateVolume{
+					Name:      "meilisearch-data",
+					MountPath: "/meili_data",
+				},
 				Description: "Size of the persistent storage for MeiliSearch data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
@@ -34,19 +38,18 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
-				Name:         "MeiliSearch",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
-				HostInputIDs: []int{1},
-				Image:        utils.ToPtr("getmeili/meilisearch:v1.14"),
+				ID:       1,
+				Name:     "MeiliSearch",
+				Type:     schema.ServiceTypeDockerimage,
+				Builder:  schema.ServiceBuilderDocker,
+				InputIDs: []int{1, 2},
+				Image:    utils.ToPtr("getmeili/meilisearch:v1.14"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     7700,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 				},
-				IsPublic: true,
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/health",
@@ -71,15 +74,6 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 					{
 						Name:  "MEILI_ENV",
 						Value: "production",
-					},
-				},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name: "meilisearch-data",
-						Size: schema.TemplateVolumeSize{
-							FromInputID: 2,
-						},
-						MountPath: "/meili_data",
 					},
 				},
 			},

@@ -64,7 +64,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 	// * Validate all non-host inputs
 	for _, defInput := range template.Definition.Inputs {
-		if defInput.Type == schema.InputTypeHost || defInput.Type == schema.InputTypeNodePort {
+		if defInput.Type == schema.InputTypeHost || defInput.Type == schema.InputTypeGeneratedNodePort {
 			continue
 		}
 
@@ -82,7 +82,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		if !exists {
 			if defInput.Default != nil {
 				value = *defInput.Default
-			} else if defInput.Type == schema.InputTypePassword {
+			} else if defInput.Type == schema.InputTypeGeneratedPassword {
 				// Generate a password
 				pwd, err := utils.GenerateSecurePassword(32, true)
 				if err != nil {
@@ -103,7 +103,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	portMap := make(map[int]int32)
 	portInputCount := 0
 	for _, defInput := range template.Definition.Inputs {
-		if defInput.Type == schema.InputTypeNodePort {
+		if defInput.Type == schema.InputTypeGeneratedNodePort {
 			portInputCount++
 			// Ignore if input already exists
 			for _, input := range input.Inputs {
@@ -152,7 +152,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 	// Make sure we have all our hosts
 	for _, svc := range generatedTemplate.Services {
-		for _, id := range svc.HostInputIDs {
+		for _, id := range svc.InputIDs {
+			// Skip if this is not a Type host input
+			if !self.isHostInput(&template.Definition, id) {
+				continue
+			}
 			if _, ok := hostInputMap[id]; !ok {
 				return nil, errdefs.NewCustomError(
 					errdefs.ErrTypeInvalidInput,
@@ -225,6 +229,8 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					templateService.DatabaseConfig = &schema.DatabaseConfig{
 						Version: *dbVersion,
 					}
+				} else {
+					templateService.DatabaseConfig.Version = *dbVersion
 				}
 			}
 
@@ -286,17 +292,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			var pvcID *string
 			var pvcMountPath *string
 			for _, volume := range templateService.Volumes {
-				// Get size from input ID
-				size, exists := validatedInputs[volume.Size.FromInputID]
-				if !exists {
-					return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "size input not found")
-				}
-				// Parse size
-				_, err = utils.ValidateStorageQuantity(size)
-				if err != nil {
-					return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
-				}
-
 				// Build labels to set
 				labels := map[string]string{
 					"unbind-team":        input.TeamID.String(),
@@ -316,7 +311,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					pvcName,
 					volume.Name,
 					labels,
-					size,
+					volume.Size,
 					[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 					nil,
 					client,
@@ -328,22 +323,12 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				pvcMountPath = utils.ToPtr(volume.MountPath)
 			}
 
-			var ports []schema.PortSpec
-			for _, port := range templateService.Ports {
-				// Check if we have an input value
-				if port.InputTemplateID != nil {
-					// Get the value from the input map
-					portValue := portMap[*port.InputTemplateID]
-					if port.IsNodePort {
-						port.NodePort = utils.ToPtr(portValue)
-					}
-					port.Port = portValue
-				}
-				ports = append(ports, port)
-			}
-
 			var hosts []v1.HostSpec
-			for _, hostInputID := range templateService.HostInputIDs {
+			for _, hostInputID := range templateService.InputIDs {
+				// Skip if this is not a Type host input
+				if !self.isHostInput(&template.Definition, hostInputID) {
+					continue
+				}
 				hostSpec, exists := hostInputMap[hostInputID]
 				if !exists {
 					return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "host input not found")
@@ -352,13 +337,20 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			}
 
 			// Create the service config
+			var isPublic *bool
+			for _, inputID := range templateService.InputIDs {
+				if self.isHostInput(&template.Definition, inputID) {
+					isPublic = utils.ToPtr(true)
+					break
+				}
+			}
 			createInput := &service_repo.MutateConfigInput{
 				ServiceID:               createService.ID,
 				Builder:                 utils.ToPtr(templateService.Builder),
-				Ports:                   ports,
+				Ports:                   templateService.Ports,
 				Hosts:                   hosts,
 				Replicas:                utils.ToPtr[int32](1),
-				Public:                  &templateService.IsPublic,
+				Public:                  isPublic,
 				DatabaseConfig:          templateService.DatabaseConfig,
 				Image:                   templateService.Image,
 				CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
@@ -567,7 +559,11 @@ func (self *TemplatesService) resolveHostInputs(
 			genForSvc := (*schema.TemplateService)(nil)
 			var targetPort *int32
 			for _, svc := range tmpl.Services {
-				for _, id := range svc.HostInputIDs {
+				for _, id := range svc.InputIDs {
+					// skip if this is not a Type host input
+					if !self.isHostInput(tmpl, id) {
+						continue
+					}
 					if id == in.ID {
 						genForSvc = &svc
 						break
@@ -616,7 +612,11 @@ func (self *TemplatesService) resolveHostInputs(
 				port = &p
 			} else {
 				for _, svc := range tmpl.Services {
-					for _, id := range svc.HostInputIDs {
+					for _, id := range svc.InputIDs {
+						// skip if this is not a Type host input
+						if !self.isHostInput(tmpl, id) {
+							continue
+						}
 						if id == in.ID && len(svc.Ports) > 0 {
 							port = &svc.Ports[0].Port
 							break
@@ -632,6 +632,15 @@ func (self *TemplatesService) resolveHostInputs(
 		}
 	}
 	return hostSpecByID, valueByID, nil
+}
+
+func (self *TemplatesService) isHostInput(def *schema.TemplateDefinition, inputID int) bool {
+	for _, defInput := range def.Inputs {
+		if inputID == defInput.ID {
+			return defInput.Type == schema.InputTypeHost
+		}
+	}
+	return false
 }
 
 func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec, targetPort *int32) (*v1.HostSpec, error) {
