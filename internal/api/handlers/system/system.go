@@ -97,8 +97,8 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		huma.Operation{
 			OperationID: "generate-wildcard-domain",
 			Summary:     "Generate Wildcard Domain",
-			Description: "Generate a wildcard domain for the system.",
-			Path:        "/wildcard/generate",
+			Description: "Generate a wildcard domain for the system - given a base name.",
+			Path:        "/domain/generate",
 			Method:      http.MethodPost,
 		},
 		handlers.GenerateWildcardDomain,
