@@ -21,6 +21,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldIcon holds the string denoting the icon field in the database.
+	FieldIcon = "icon"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldEnvironmentID holds the string denoting the environment_id field in the database.
@@ -53,6 +55,7 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldName,
+	FieldIcon,
 	FieldDescription,
 	FieldEnvironmentID,
 }
@@ -99,6 +102,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByIcon orders the results by the icon field.
+func ByIcon(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIcon, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.

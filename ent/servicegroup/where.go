@@ -71,6 +71,11 @@ func Name(v string) predicate.ServiceGroup {
 	return predicate.ServiceGroup(sql.FieldEQ(FieldName, v))
 }
 
+// Icon applies equality check predicate on the "icon" field. It's identical to IconEQ.
+func Icon(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldEQ(FieldIcon, v))
+}
+
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.ServiceGroup {
 	return predicate.ServiceGroup(sql.FieldEQ(FieldDescription, v))
@@ -224,6 +229,81 @@ func NameEqualFold(v string) predicate.ServiceGroup {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.ServiceGroup {
 	return predicate.ServiceGroup(sql.FieldContainsFold(FieldName, v))
+}
+
+// IconEQ applies the EQ predicate on the "icon" field.
+func IconEQ(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldEQ(FieldIcon, v))
+}
+
+// IconNEQ applies the NEQ predicate on the "icon" field.
+func IconNEQ(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldNEQ(FieldIcon, v))
+}
+
+// IconIn applies the In predicate on the "icon" field.
+func IconIn(vs ...string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldIn(FieldIcon, vs...))
+}
+
+// IconNotIn applies the NotIn predicate on the "icon" field.
+func IconNotIn(vs ...string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldNotIn(FieldIcon, vs...))
+}
+
+// IconGT applies the GT predicate on the "icon" field.
+func IconGT(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldGT(FieldIcon, v))
+}
+
+// IconGTE applies the GTE predicate on the "icon" field.
+func IconGTE(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldGTE(FieldIcon, v))
+}
+
+// IconLT applies the LT predicate on the "icon" field.
+func IconLT(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldLT(FieldIcon, v))
+}
+
+// IconLTE applies the LTE predicate on the "icon" field.
+func IconLTE(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldLTE(FieldIcon, v))
+}
+
+// IconContains applies the Contains predicate on the "icon" field.
+func IconContains(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldContains(FieldIcon, v))
+}
+
+// IconHasPrefix applies the HasPrefix predicate on the "icon" field.
+func IconHasPrefix(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldHasPrefix(FieldIcon, v))
+}
+
+// IconHasSuffix applies the HasSuffix predicate on the "icon" field.
+func IconHasSuffix(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldHasSuffix(FieldIcon, v))
+}
+
+// IconIsNil applies the IsNil predicate on the "icon" field.
+func IconIsNil() predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldIsNull(FieldIcon))
+}
+
+// IconNotNil applies the NotNil predicate on the "icon" field.
+func IconNotNil() predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldNotNull(FieldIcon))
+}
+
+// IconEqualFold applies the EqualFold predicate on the "icon" field.
+func IconEqualFold(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldEqualFold(FieldIcon, v))
+}
+
+// IconContainsFold applies the ContainsFold predicate on the "icon" field.
+func IconContainsFold(v string) predicate.ServiceGroup {
+	return predicate.ServiceGroup(sql.FieldContainsFold(FieldIcon, v))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.

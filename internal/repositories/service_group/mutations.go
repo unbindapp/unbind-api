@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
-func (self *ServiceGroupRepository) Create(ctx context.Context, tx repository.TxInterface, name string, description *string, environmentID uuid.UUID) (*ent.ServiceGroup, error) {
+func (self *ServiceGroupRepository) Create(ctx context.Context, tx repository.TxInterface, name string, icon, description *string, environmentID uuid.UUID) (*ent.ServiceGroup, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
@@ -19,6 +19,7 @@ func (self *ServiceGroupRepository) Create(ctx context.Context, tx repository.Tx
 	// Create service group
 	return db.ServiceGroup.Create().
 		SetName(name).
+		SetNillableIcon(icon).
 		SetNillableDescription(description).
 		SetEnvironmentID(environmentID).
 		Save(ctx)
@@ -29,6 +30,13 @@ func (self *ServiceGroupRepository) Update(ctx context.Context, input *models.Up
 	updateStmt := self.base.DB.ServiceGroup.UpdateOneID(input.ID)
 	if input.Name != nil {
 		updateStmt.SetName(*input.Name)
+	}
+	if input.Icon != nil {
+		if *input.Icon == "" {
+			updateStmt.ClearIcon()
+		} else {
+			updateStmt.SetIcon(*input.Icon)
+		}
 	}
 	if input.Description != nil {
 		if *input.Description == "" {

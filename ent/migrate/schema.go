@@ -435,6 +435,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
+		{Name: "icon", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "environment_id", Type: field.TypeUUID},
 	}
@@ -446,7 +447,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "service_groups_environments_service_groups",
-				Columns:    []*schema.Column{ServiceGroupsColumns[5]},
+				Columns:    []*schema.Column{ServiceGroupsColumns[6]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

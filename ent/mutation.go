@@ -15333,6 +15333,7 @@ type ServiceGroupMutation struct {
 	created_at         *time.Time
 	updated_at         *time.Time
 	name               *string
+	icon               *string
 	description        *string
 	clearedFields      map[string]struct{}
 	environment        *uuid.UUID
@@ -15557,6 +15558,55 @@ func (m *ServiceGroupMutation) ResetName() {
 	m.name = nil
 }
 
+// SetIcon sets the "icon" field.
+func (m *ServiceGroupMutation) SetIcon(s string) {
+	m.icon = &s
+}
+
+// Icon returns the value of the "icon" field in the mutation.
+func (m *ServiceGroupMutation) Icon() (r string, exists bool) {
+	v := m.icon
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIcon returns the old "icon" field's value of the ServiceGroup entity.
+// If the ServiceGroup object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceGroupMutation) OldIcon(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIcon is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIcon requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIcon: %w", err)
+	}
+	return oldValue.Icon, nil
+}
+
+// ClearIcon clears the value of the "icon" field.
+func (m *ServiceGroupMutation) ClearIcon() {
+	m.icon = nil
+	m.clearedFields[servicegroup.FieldIcon] = struct{}{}
+}
+
+// IconCleared returns if the "icon" field was cleared in this mutation.
+func (m *ServiceGroupMutation) IconCleared() bool {
+	_, ok := m.clearedFields[servicegroup.FieldIcon]
+	return ok
+}
+
+// ResetIcon resets all changes to the "icon" field.
+func (m *ServiceGroupMutation) ResetIcon() {
+	m.icon = nil
+	delete(m.clearedFields, servicegroup.FieldIcon)
+}
+
 // SetDescription sets the "description" field.
 func (m *ServiceGroupMutation) SetDescription(s string) {
 	m.description = &s
@@ -15757,7 +15807,7 @@ func (m *ServiceGroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceGroupMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, servicegroup.FieldCreatedAt)
 	}
@@ -15766,6 +15816,9 @@ func (m *ServiceGroupMutation) Fields() []string {
 	}
 	if m.name != nil {
 		fields = append(fields, servicegroup.FieldName)
+	}
+	if m.icon != nil {
+		fields = append(fields, servicegroup.FieldIcon)
 	}
 	if m.description != nil {
 		fields = append(fields, servicegroup.FieldDescription)
@@ -15787,6 +15840,8 @@ func (m *ServiceGroupMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case servicegroup.FieldName:
 		return m.Name()
+	case servicegroup.FieldIcon:
+		return m.Icon()
 	case servicegroup.FieldDescription:
 		return m.Description()
 	case servicegroup.FieldEnvironmentID:
@@ -15806,6 +15861,8 @@ func (m *ServiceGroupMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldUpdatedAt(ctx)
 	case servicegroup.FieldName:
 		return m.OldName(ctx)
+	case servicegroup.FieldIcon:
+		return m.OldIcon(ctx)
 	case servicegroup.FieldDescription:
 		return m.OldDescription(ctx)
 	case servicegroup.FieldEnvironmentID:
@@ -15839,6 +15896,13 @@ func (m *ServiceGroupMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case servicegroup.FieldIcon:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIcon(v)
 		return nil
 	case servicegroup.FieldDescription:
 		v, ok := value.(string)
@@ -15884,6 +15948,9 @@ func (m *ServiceGroupMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ServiceGroupMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(servicegroup.FieldIcon) {
+		fields = append(fields, servicegroup.FieldIcon)
+	}
 	if m.FieldCleared(servicegroup.FieldDescription) {
 		fields = append(fields, servicegroup.FieldDescription)
 	}
@@ -15901,6 +15968,9 @@ func (m *ServiceGroupMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ServiceGroupMutation) ClearField(name string) error {
 	switch name {
+	case servicegroup.FieldIcon:
+		m.ClearIcon()
+		return nil
 	case servicegroup.FieldDescription:
 		m.ClearDescription()
 		return nil
@@ -15920,6 +15990,9 @@ func (m *ServiceGroupMutation) ResetField(name string) error {
 		return nil
 	case servicegroup.FieldName:
 		m.ResetName()
+		return nil
+	case servicegroup.FieldIcon:
+		m.ResetIcon()
 		return nil
 	case servicegroup.FieldDescription:
 		m.ResetDescription()

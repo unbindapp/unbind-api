@@ -10,6 +10,7 @@ import (
 type ServiceGroupResponse struct {
 	ID            uuid.UUID `json:"id"`
 	Name          string    `json:"name"`
+	Icon          string    `json:"icon,omitempty"`
 	Description   *string   `json:"description,omitempty"`
 	EnvironmentID uuid.UUID `json:"environment_id"`
 	CreatedAt     time.Time `json:"created_at"`
@@ -22,6 +23,7 @@ func TransformServiceGroupEntity(entity *ent.ServiceGroup) *ServiceGroupResponse
 		response = &ServiceGroupResponse{
 			ID:            entity.ID,
 			Name:          entity.Name,
+			Icon:          entity.Icon,
 			Description:   entity.Description,
 			EnvironmentID: entity.EnvironmentID,
 			CreatedAt:     entity.CreatedAt,
