@@ -17,16 +17,16 @@ func plausibleTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "Host",
+				Name:        "Domain",
 				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the Plausible Analytics instance.",
+				Description: "The domain to use for the Plausible instance.",
 				Required:    true,
 			},
 			{
 				ID:          2,
 				Name:        "PostgreSQL Database Size",
 				Type:        schema.InputTypeDatabaseSize,
-				Description: "Size of the persistent storage for PostgreSQL database.",
+				Description: "Size of the persistent storage for the PostgreSQL database.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},
@@ -34,7 +34,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				ID:          3,
 				Name:        "Clickhouse Database Size",
 				Type:        schema.InputTypeDatabaseSize,
-				Description: "Size of the persistent storage for Clickhouse database.",
+				Description: "Size of the persistent storage for the Clickhouse database.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},

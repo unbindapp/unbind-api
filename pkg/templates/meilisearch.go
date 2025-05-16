@@ -17,9 +17,9 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "API Host",
+				Name:        "Domain (API)",
 				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the Meilisearch API server.",
+				Description: "The domain to use for the Meilisearch API.",
 				Required:    true,
 				TargetPort:  utils.ToPtr(7700),
 			},
@@ -31,7 +31,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 					Name:      "meilisearch-data",
 					MountPath: "/meili_data",
 				},
-				Description: "Size of the persistent storage for Meilisearch data.",
+				Description: "Size of the storage for the Meilisearch data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},

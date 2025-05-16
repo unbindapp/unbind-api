@@ -17,9 +17,9 @@ func flowiseTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "Host",
+				Name:        "Domain",
 				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the Flowise instance.",
+				Description: "The domain to use for the Flowise instance.",
 				Required:    true,
 			},
 			{
@@ -30,7 +30,7 @@ func flowiseTemplate() *schema.TemplateDefinition {
 					Name:      "flowise-data",
 					MountPath: "/root/.flowise",
 				},
-				Description: "Size of the persistent storage for Flowise data.",
+				Description: "Size of the storage for the Flowise app data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},
@@ -38,7 +38,7 @@ func flowiseTemplate() *schema.TemplateDefinition {
 				ID:          3,
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
-				Description: "Size of the persistent storage for PostgreSQL database.",
+				Description: "Size of the storage for the PostgreSQL database.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},

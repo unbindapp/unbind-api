@@ -17,9 +17,9 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "Host",
+				Name:        "Domain",
 				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the PocketBase instance.",
+				Description: "The domain to use for the PocketBase instance.",
 				Required:    true,
 			},
 			{
@@ -30,7 +30,7 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 					Name:      "pb-data",
 					MountPath: "/pb_data",
 				},
-				Description: "Size of the persistent storage for PocketBase data.",
+				Description: "Size of the storage for the PocketBase data.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},

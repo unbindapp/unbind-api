@@ -17,16 +17,16 @@ func wordPressTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "Host",
+				Name:        "Domain",
 				Type:        schema.InputTypeHost,
-				Description: "Hostname to use for the WordPress instance.",
+				Description: "The domain to use for the WordPress instance.",
 				Required:    true,
 			},
 			{
 				ID:          2,
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
-				Description: "Size of the persistent storage for MySQL database.",
+				Description: "Size of the storage for the MySQL database.",
 				Required:    true,
 				Default:     utils.ToPtr("1Gi"),
 			},
