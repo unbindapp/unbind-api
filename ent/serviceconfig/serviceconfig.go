@@ -185,7 +185,7 @@ func BuilderValidator(b schema.ServiceBuilder) error {
 // RailpackProviderValidator is a validator for the "railpack_provider" field enum values. It is called by the builders before save.
 func RailpackProviderValidator(rp enum.Provider) error {
 	switch rp {
-	case "node", "deno", "go", "java", "php", "python", "ruby", "rust", "elixir", "staticfile", "unknown":
+	case "node", "deno", "bun", "go", "java", "php", "python", "ruby", "rust", "elixir", "staticfile", "unknown":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for railpack_provider field: %q", rp)

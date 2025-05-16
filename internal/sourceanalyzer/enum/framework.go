@@ -29,7 +29,7 @@ func DetectFramework(provider Provider, ctx *generate.GenerateContext) Framework
 			case "remix":
 				return Remix
 			case "bun":
-				return Bun
+				return BunFW
 			case "express":
 				return Express
 			}
@@ -104,7 +104,7 @@ const (
 	CRA           Framework = "cra"
 	Angular       Framework = "angular"
 	Remix         Framework = "remix"
-	Bun           Framework = "bun"
+	BunFW         Framework = "bun"
 	Express       Framework = "express"
 	Sveltekit     Framework = "sveltekit"
 	Svelte        Framework = "svelte"
@@ -132,7 +132,7 @@ const (
 )
 
 var allFrameworks = []Framework{
-	Next, Astro, Vite, CRA, Angular, Remix, Bun, Express, Sveltekit, Svelte, Solid, Hono, TanstackStart,
+	Next, Astro, Vite, CRA, Angular, Remix, BunFW, Express, Sveltekit, Svelte, Solid, Hono, TanstackStart,
 	PythonFramework, Django, Flask, FastAPI, FastHTML,
 	Gin,
 	SpringBoot,
