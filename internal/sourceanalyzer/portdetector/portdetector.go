@@ -38,7 +38,7 @@ func (self *PortDetector) DetectPort() (*int, error) {
 		// Infer only for some frameworks
 		switch self.Framework {
 		// Node
-		case enum.Next, enum.CRA, enum.Express, enum.Hono, enum.Remix:
+		case enum.Next, enum.CRA, enum.Express, enum.Hono, enum.Remix, enum.TanstackStart:
 			port = utils.ToPtr(3000)
 		case enum.Astro:
 			port = utils.ToPtr(4321)

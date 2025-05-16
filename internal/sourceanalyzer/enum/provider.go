@@ -19,6 +19,8 @@ func ParseProvider(detectedProviders []string) Provider {
 		return Node
 	case "deno":
 		return Deno
+	case "bun":
+		return Bun
 	case "golang":
 		return Go
 	case "java":
@@ -46,6 +48,7 @@ type Provider string
 const (
 	Node            Provider = "node"
 	Deno            Provider = "deno"
+	Bun             Provider = "bun"
 	Go              Provider = "go"
 	Java            Provider = "java"
 	PHP             Provider = "php"
@@ -57,7 +60,7 @@ const (
 	UnknownProvider Provider = "unknown"
 )
 
-var allProviders = []Provider{Node, Deno, Go, Java, PHP, Python, Ruby, Rust, Elixir, Staticfile, UnknownProvider}
+var allProviders = []Provider{Node, Deno, Bun, Go, Java, PHP, Python, Ruby, Rust, Elixir, Staticfile, UnknownProvider}
 
 // Values provides list valid values for Enum.
 func (Provider) Values() (kinds []string) {
