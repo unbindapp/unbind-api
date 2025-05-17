@@ -24,7 +24,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:          2,
-				Name:        "PostgreSQL Database Size",
+				Name:        "PostgreSQL Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
 				Required:    true,
@@ -32,7 +32,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:          3,
-				Name:        "Clickhouse Database Size",
+				Name:        "Clickhouse Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the Clickhouse database.",
 				Required:    true,
