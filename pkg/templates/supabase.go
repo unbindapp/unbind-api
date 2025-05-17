@@ -46,7 +46,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				ID:          4,
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
-				Description: "Size of the storage the for PostgreSQL database.",
+				Description: "Size of the storage for the PostgreSQL database.",
 				Required:    true,
 				Default:     utils.ToPtr("1"),
 			},
