@@ -326,9 +326,9 @@ type TemplateInputType string
 const (
 	InputTypeVariable          TemplateInputType = "variable"
 	InputTypeHost              TemplateInputType = "host"
-	InputTypeVolumeSize        TemplateInputType = "volume_size"
-	InputTypeDatabaseSize      TemplateInputType = "database_size"
-	InputTypeGeneratedNodePort TemplateInputType = "generated_node_port"
+	InputTypeVolumeSize        TemplateInputType = "volume-size"
+	InputTypeDatabaseSize      TemplateInputType = "database-size"
+	InputTypeGeneratedNodePort TemplateInputType = "generated-node-port"
 	InputTypeGeneratedPassword TemplateInputType = "generated-password"
 )
 
