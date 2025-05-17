@@ -33,7 +33,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				},
 				Description: "Size of the storage for the Supabase storage service.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("1"),
 			},
 			{
 				ID:          3,
@@ -48,7 +48,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for PostgreSQL database.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("1"),
 			},
 		},
 		Services: []schema.TemplateService{

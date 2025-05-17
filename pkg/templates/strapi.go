@@ -64,7 +64,7 @@ func strapiTemplate() *schema.TemplateDefinition {
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("1"),
 			},
 		},
 		Services: []schema.TemplateService{

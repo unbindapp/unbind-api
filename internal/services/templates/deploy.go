@@ -311,7 +311,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					pvcName,
 					volume.Name,
 					labels,
-					volume.Size,
+					volume.SizeGB,
 					[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 					nil,
 					client,

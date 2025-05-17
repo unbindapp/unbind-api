@@ -22,7 +22,7 @@ import (
 type PVCInfo struct {
 	ID                 string                     `json:"id"`
 	Name               string                     `json:"name"`
-	Size               string                     `json:"size"` // e.g., "10Gi"
+	SizeGB             string                     `json:"size"` // e.g., "10"
 	TeamID             uuid.UUID                  `json:"team_id"`
 	ProjectID          *uuid.UUID                 `json:"project_id,omitempty"`
 	EnvironmentID      *uuid.UUID                 `json:"environment_id,omitempty"`
@@ -213,9 +213,15 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 
 	projectIDStr := pvcLabels[projectLabel]
 	environmentIDStr := pvcLabels[environmentLabel]
-	size := ""
+	sizeGBValue := ""
 	if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
-		size = storageRequest.String()
+		bytesValue := storageRequest.Value()
+		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
+		sizeGBValue = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
+		// if gbValue is a whole number, remove .00
+		if strings.HasSuffix(sizeGBValue, ".00") {
+			sizeGBValue = strings.TrimSuffix(sizeGBValue, ".00")
+		}
 	}
 
 	var boundToServiceID *uuid.UUID
@@ -272,7 +278,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	return &PVCInfo{
 		ID:                 pvc.Name,
 		Name:               displayname,
-		Size:               size,
+		SizeGB:             sizeGBValue,
 		TeamID:             teamID,
 		ProjectID:          projectID,
 		EnvironmentID:      environmentID,
@@ -332,9 +338,15 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		if displayName == "" {
 			displayName = pvc.Name
 		}
-		size := ""
+		sizeGBValue := ""
 		if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
-			size = storageRequest.String()
+			bytesValue := storageRequest.Value()
+			gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
+			sizeGBValue = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
+			// if gbValue is a whole number, remove .00
+			if strings.HasSuffix(sizeGBValue, ".00") {
+				sizeGBValue = strings.TrimSuffix(sizeGBValue, ".00")
+			}
 		}
 
 		var boundToServiceID *uuid.UUID
@@ -392,7 +404,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		result = append(result, PVCInfo{
 			ID:                 pvc.Name,
 			Name:               displayName,
-			Size:               size,
+			SizeGB:             sizeGBValue,
 			TeamID:             teamID,
 			ProjectID:          projectID,
 			EnvironmentID:      environmentID,

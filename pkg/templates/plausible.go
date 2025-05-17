@@ -28,7 +28,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the persistent storage for the PostgreSQL database.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("1"),
 			},
 			{
 				ID:          3,
@@ -36,7 +36,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the persistent storage for the Clickhouse database.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("1"),
 			},
 		},
 		Services: []schema.TemplateService{

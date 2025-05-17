@@ -369,6 +369,6 @@ type TemplateInput struct {
 // TemplateVolume represents a volume configuration in the template
 type TemplateVolume struct {
 	Name      string `json:"name"`
-	Size      string `json:"size"`
+	SizeGB    string `json:"size_gb"`
 	MountPath string `json:"mountPath"`
 }

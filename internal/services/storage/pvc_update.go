@@ -12,7 +12,7 @@ import (
 )
 
 func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.UpdatePVCInput) (*k8s.PVCInfo, error) {
-	if input.Size == nil || input.Name == nil {
+	if input.SizeGB == nil || input.Name == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Size or Name are required")
 	}
 
@@ -49,14 +49,16 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 	}
 
 	// Size validation
-	if input.Size != nil {
+	if input.SizeGB != nil {
 		// Parse size
-		newSize, err := utils.ValidateStorageQuantity(*input.Size)
+		*input.SizeGB = *input.SizeGB + "Gi"
+		newSize, err := utils.ValidateStorageQuantity(*input.SizeGB)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}
 
-		existingSize, err := utils.ValidateStorageQuantity(pvc.Size)
+		pvc.SizeGB = pvc.SizeGB + "Gi"
+		existingSize, err := utils.ValidateStorageQuantity(pvc.SizeGB)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}
@@ -71,7 +73,7 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 		team.Namespace,
 		input.ID,
 		input.Name,
-		input.Size,
+		input.SizeGB,
 		client,
 	)
 }

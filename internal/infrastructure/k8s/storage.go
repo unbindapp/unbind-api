@@ -2,7 +2,9 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 	"strconv"
+	"strings"
 
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -13,10 +15,10 @@ import (
 
 type StorageMetadata struct {
 	StorageClassName          string `json:"storage_class_name"`
-	AllocatableBytes          string `json:"allocatable_bytes"`
+	AllocatableGB             string `json:"allocatable_bytes_gb"`
 	UnableToDetectAllocatable bool   `json:"unable_to_detect_allocatable"`
-	MinimumStorageBytes       string `json:"minimum_storage_bytes"`
-	StorageStep               string `json:"storage_step"`
+	MinimumStorageGB          string `json:"minimum_storage_gb"`
+	StorageStepGB             string `json:"storage_step_gb"`
 }
 
 // AvailableStorageBytes inspects the default StorageClass and returns
@@ -95,73 +97,79 @@ func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMeta
 				}
 			}
 
-			resp.AllocatableBytes = maxFree.String()
+			gbValue := float64(maxFree.Value()) / (1024 * 1024 * 1024)
+			sizeGBValue := fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
+			// if gbValue is a whole number, remove .00
+			if strings.HasSuffix(sizeGBValue, ".00") {
+				sizeGBValue = strings.TrimSuffix(sizeGBValue, ".00")
+			}
+			resp.AllocatableGB = sizeGBValue
 			resp.UnableToDetectAllocatable = false
-			resp.MinimumStorageBytes = strconv.FormatInt(10*1024*1024, 10) // 10 MiB
-			resp.StorageStep = strconv.FormatInt(256*1024*1024, 10)        // 256 MiB
+			resp.MinimumStorageGB = "0.10"
+			resp.StorageStepGB = "0.25" // 256 MiB
 			return resp, nil
 
 		// * Hetzner - predefined limits
 		case "csi.hetzner.cloud":
-			resp.AllocatableBytes = strconv.FormatInt(10*tiB, 10)    // 10 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.AllocatableGB = "10000" // 10 TiB
+			resp.MinimumStorageGB = "10" // 10 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 
 		// * AWS EBS - predefined limits
 		case "ebs.csi.aws.com", "kubernetes.io/aws-ebs":
-			resp.AllocatableBytes = strconv.FormatInt(64*tiB, 10) // 64 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.AllocatableGB = "64000" // 64 TiB
+			resp.MinimumStorageGB = "1"  // 1 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 
 		// * Azure Disk - predefined limits
 		case "disk.csi.azure.com", "kubernetes.io/azure-disk":
-			resp.AllocatableBytes = strconv.FormatInt(64*tiB, 10) // 64 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.AllocatableGB = "64000" // 64 TiB
+			resp.MinimumStorageGB = "1"  // 1 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 
 		// * GCP PD - predefined limits
 		case "pd.csi.storage.gke.io", "pd.csi.storage.k8s.io":
-			resp.AllocatableBytes = strconv.FormatInt(64*tiB, 10) // 64 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.AllocatableGB = "64000" // 64 TiB
+			resp.MinimumStorageGB = "1"  // 1 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 
 		// * DigitalOcean Volumes - predefined limits
 		case "dobs.csi.digitalocean.com":
-			resp.AllocatableBytes = strconv.FormatInt(16*tiB, 10) // 16 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(giB, 10) // 1 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)         // 1 GiB
+			resp.AllocatableGB = "16000" // 16 TiB
+			resp.MinimumStorageGB = "1"  // 1 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 
 		// * Vultr Block Storage - predefined limits
 		case "csi.vultr.com":
-			resp.AllocatableBytes = strconv.FormatInt(10*tiB, 10)    // 10 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.AllocatableGB = "10000" // 10 TiB
+			resp.MinimumStorageGB = "10" // 10 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 
 		// * Linode Block Storage - predefined limits
 		case "linodebs.csi.linode.com":
-			resp.AllocatableBytes = strconv.FormatInt(16*tiB, 10)    // 16 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.AllocatableGB = "16000" // 16 TiB
+			resp.MinimumStorageGB = "10" // 10 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 
 		// * OpenStack Cinder - predefined limits (OVH and others)
 		case "cinder.csi.openstack.org":
-			resp.AllocatableBytes = strconv.FormatInt(12*tiB, 10)    // 12 TiB
-			resp.MinimumStorageBytes = strconv.FormatInt(10*giB, 10) // 10 GiB
-			resp.StorageStep = strconv.FormatInt(giB, 10)            // 1 GiB
+			resp.AllocatableGB = "12000" // 12 TiB
+			resp.MinimumStorageGB = "10" // 10 GiB
+			resp.StorageStepGB = "1"     // 1 GiB
 			resp.UnableToDetectAllocatable = false
 			return resp, nil
 		}
