@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/unbindapp/unbind-api/internal/services/models"
@@ -16,16 +17,18 @@ import (
 
 // Integrate storage management with internal permissions and kubernetes RBAC
 type StorageService struct {
-	cfg  *config.Config
-	repo repositories.RepositoriesInterface
-	k8s  *k8s.KubeClient
+	cfg        *config.Config
+	repo       repositories.RepositoriesInterface
+	k8s        *k8s.KubeClient
+	promClient *prometheus.PrometheusClient
 }
 
-func NewStorageService(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient) *StorageService {
+func NewStorageService(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient, promClient *prometheus.PrometheusClient) *StorageService {
 	return &StorageService{
-		cfg:  cfg,
-		repo: repo,
-		k8s:  k8sClient,
+		cfg:        cfg,
+		repo:       repo,
+		k8s:        k8sClient,
+		promClient: promClient,
 	}
 }
 

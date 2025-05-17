@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,7 +23,8 @@ import (
 type PVCInfo struct {
 	ID                 string                     `json:"id"`
 	Name               string                     `json:"name"`
-	SizeGB             string                     `json:"size"` // e.g., "10"
+	UsedGB             *float64                   `json:"used_gb,omitempty"` // e.g., "10"
+	SizeGB             float64                    `json:"size_gb"`           // e.g., "10"
 	TeamID             uuid.UUID                  `json:"team_id"`
 	ProjectID          *uuid.UUID                 `json:"project_id,omitempty"`
 	EnvironmentID      *uuid.UUID                 `json:"environment_id,omitempty"`
@@ -213,14 +215,19 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 
 	projectIDStr := pvcLabels[projectLabel]
 	environmentIDStr := pvcLabels[environmentLabel]
-	sizeGBValue := ""
+	sizeGBValueStr := ""
+	var sizeGBValue float64
 	if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
 		bytesValue := storageRequest.Value()
 		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
-		sizeGBValue = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
+		sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
 		// if gbValue is a whole number, remove .00
-		if strings.HasSuffix(sizeGBValue, ".00") {
-			sizeGBValue = strings.TrimSuffix(sizeGBValue, ".00")
+		if strings.HasSuffix(sizeGBValueStr, ".00") {
+			sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
+		}
+		sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse sizeGBValue '%s': %w", sizeGBValueStr, err)
 		}
 	}
 
@@ -338,14 +345,19 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		if displayName == "" {
 			displayName = pvc.Name
 		}
-		sizeGBValue := ""
+		sizeGBValueStr := ""
+		var sizeGBValue float64
 		if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
 			bytesValue := storageRequest.Value()
 			gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
-			sizeGBValue = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
+			sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
 			// if gbValue is a whole number, remove .00
-			if strings.HasSuffix(sizeGBValue, ".00") {
-				sizeGBValue = strings.TrimSuffix(sizeGBValue, ".00")
+			if strings.HasSuffix(sizeGBValueStr, ".00") {
+				sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
+			}
+			sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
+			if err != nil {
+				continue
 			}
 		}
 

@@ -57,8 +57,7 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}
 
-		pvc.SizeGB = pvc.SizeGB + "Gi"
-		existingSize, err := utils.ValidateStorageQuantity(pvc.SizeGB)
+		existingSize, err := utils.ValidateStorageQuantityGB(pvc.SizeGB)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}

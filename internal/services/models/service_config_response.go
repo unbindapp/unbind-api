@@ -28,8 +28,10 @@ type ServiceConfigResponse struct {
 	BackupSchedule       string     `json:"backup_schedule"`
 	BackupRetentionCount int        `json:"backup_retention_count"`
 	// Volume
-	PVCID              *string `json:"pvc_id,omitempty"`
-	PVCVolumeMountPath *string `json:"pvc_volume_mount_path,omitempty"`
+	PVCID              *string  `json:"pvc_id,omitempty"`
+	PVCVolumeMountPath *string  `json:"pvc_volume_mount_path,omitempty"`
+	PVCCapacityGB      *float64 `json:"pvc_capacity_gb,omitempty"`
+	PVCUsedGB          *float64 `json:"pvc_used_gb,omitempty"`
 	// Security context
 	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 	// Health check

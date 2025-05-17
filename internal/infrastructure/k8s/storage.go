@@ -15,7 +15,7 @@ import (
 
 type StorageMetadata struct {
 	StorageClassName          string `json:"storage_class_name"`
-	AllocatableGB             string `json:"allocatable_bytes_gb"`
+	AllocatableGB             string `json:"allocatable_gb"`
 	UnableToDetectAllocatable bool   `json:"unable_to_detect_allocatable"`
 	MinimumStorageGB          string `json:"minimum_storage_gb"`
 	StorageStepGB             string `json:"storage_step_gb"`

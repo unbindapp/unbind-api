@@ -12,6 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/s3"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
@@ -33,9 +34,18 @@ type ServiceService struct {
 	dbProvider           *databases.DatabaseProvider
 	webhookService       *webhooks_service.WebhooksService
 	variableService      *variables_service.VariablesService
+	promClient           *prometheus.PrometheusClient
 }
 
-func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterface, githubClient *github.GithubClient, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController, dbProvider *databases.DatabaseProvider, webhookService *webhooks_service.WebhooksService, variableService *variables_service.VariablesService) *ServiceService {
+func NewServiceService(cfg *config.Config,
+	repo repositories.RepositoriesInterface,
+	githubClient *github.GithubClient,
+	k8s *k8s.KubeClient,
+	deploymentController *deployctl.DeploymentController,
+	dbProvider *databases.DatabaseProvider,
+	webhookService *webhooks_service.WebhooksService,
+	variableService *variables_service.VariablesService,
+	promClient *prometheus.PrometheusClient) *ServiceService {
 	return &ServiceService{
 		cfg:                  cfg,
 		repo:                 repo,
@@ -45,6 +55,7 @@ func NewServiceService(cfg *config.Config, repo repositories.RepositoriesInterfa
 		dbProvider:           dbProvider,
 		webhookService:       webhookService,
 		variableService:      variableService,
+		promClient:           promClient,
 	}
 }
 
