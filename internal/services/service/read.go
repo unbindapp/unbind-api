@@ -44,8 +44,8 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// Figure out all of the PVCs in the list
 	var pvcIDs []string
 	for _, service := range resp {
-		if service.Config.PVCID != nil {
-			pvcIDs = append(pvcIDs, *service.Config.PVCID)
+		for _, vol := range service.Config.Volumes {
+			pvcIDs = append(pvcIDs, vol.ID)
 		}
 	}
 
@@ -67,10 +67,10 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 
 	// Add stats to the response
 	for i := range resp {
-		if resp[i].Config.PVCID != nil {
-			if stat, ok := mapStats[*resp[i].Config.PVCID]; ok {
-				resp[i].Config.PVCCapacityGB = stat.CapacityGB
-				resp[i].Config.PVCUsedGB = stat.UsedGB
+		for j := range resp[i].Config.Volumes {
+			if stat, ok := mapStats[resp[i].Config.Volumes[j].ID]; ok {
+				resp[i].Config.Volumes[j].SizeGB = stat.CapacityGB
+				resp[i].Config.Volumes[j].UsedGB = stat.UsedGB
 			}
 		}
 	}
@@ -115,8 +115,8 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 
 	// Figure out all of the PVCs in the list
 	var pvcIDs []string
-	if resp.Config.PVCID != nil {
-		pvcIDs = append(pvcIDs, *resp.Config.PVCID)
+	for _, vol := range resp.Config.Volumes {
+		pvcIDs = append(pvcIDs, vol.ID)
 	}
 
 	// Query prometheus
@@ -136,10 +136,10 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 	}
 
 	// Add stats to the response
-	if resp.Config.PVCID != nil {
-		if stat, ok := mapStats[*resp.Config.PVCID]; ok {
-			resp.Config.PVCCapacityGB = stat.CapacityGB
-			resp.Config.PVCUsedGB = stat.UsedGB
+	for i := range resp.Config.Volumes {
+		if stat, ok := mapStats[resp.Config.Volumes[i].ID]; ok {
+			resp.Config.Volumes[i].SizeGB = stat.CapacityGB
+			resp.Config.Volumes[i].UsedGB = stat.UsedGB
 		}
 	}
 

@@ -345,31 +345,9 @@ func (scc *ServiceConfigCreate) SetNillableBackupRetentionCount(i *int) *Service
 	return scc
 }
 
-// SetVolumeName sets the "volume_name" field.
-func (scc *ServiceConfigCreate) SetVolumeName(s string) *ServiceConfigCreate {
-	scc.mutation.SetVolumeName(s)
-	return scc
-}
-
-// SetNillableVolumeName sets the "volume_name" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableVolumeName(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetVolumeName(*s)
-	}
-	return scc
-}
-
-// SetVolumeMountPath sets the "volume_mount_path" field.
-func (scc *ServiceConfigCreate) SetVolumeMountPath(s string) *ServiceConfigCreate {
-	scc.mutation.SetVolumeMountPath(s)
-	return scc
-}
-
-// SetNillableVolumeMountPath sets the "volume_mount_path" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableVolumeMountPath(s *string) *ServiceConfigCreate {
-	if s != nil {
-		scc.SetVolumeMountPath(*s)
-	}
+// SetVolumes sets the "volumes" field.
+func (scc *ServiceConfigCreate) SetVolumes(sv []schema.ServiceVolume) *ServiceConfigCreate {
+	scc.mutation.SetVolumes(sv)
 	return scc
 }
 
@@ -686,13 +664,9 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldBackupRetentionCount, field.TypeInt, value)
 		_node.BackupRetentionCount = value
 	}
-	if value, ok := scc.mutation.VolumeName(); ok {
-		_spec.SetField(serviceconfig.FieldVolumeName, field.TypeString, value)
-		_node.VolumeName = &value
-	}
-	if value, ok := scc.mutation.VolumeMountPath(); ok {
-		_spec.SetField(serviceconfig.FieldVolumeMountPath, field.TypeString, value)
-		_node.VolumeMountPath = &value
+	if value, ok := scc.mutation.Volumes(); ok {
+		_spec.SetField(serviceconfig.FieldVolumes, field.TypeJSON, value)
+		_node.Volumes = value
 	}
 	if value, ok := scc.mutation.SecurityContext(); ok {
 		_spec.SetField(serviceconfig.FieldSecurityContext, field.TypeJSON, value)
@@ -1204,39 +1178,21 @@ func (u *ServiceConfigUpsert) AddBackupRetentionCount(v int) *ServiceConfigUpser
 	return u
 }
 
-// SetVolumeName sets the "volume_name" field.
-func (u *ServiceConfigUpsert) SetVolumeName(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldVolumeName, v)
+// SetVolumes sets the "volumes" field.
+func (u *ServiceConfigUpsert) SetVolumes(v []schema.ServiceVolume) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldVolumes, v)
 	return u
 }
 
-// UpdateVolumeName sets the "volume_name" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateVolumeName() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldVolumeName)
+// UpdateVolumes sets the "volumes" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateVolumes() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldVolumes)
 	return u
 }
 
-// ClearVolumeName clears the value of the "volume_name" field.
-func (u *ServiceConfigUpsert) ClearVolumeName() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldVolumeName)
-	return u
-}
-
-// SetVolumeMountPath sets the "volume_mount_path" field.
-func (u *ServiceConfigUpsert) SetVolumeMountPath(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldVolumeMountPath, v)
-	return u
-}
-
-// UpdateVolumeMountPath sets the "volume_mount_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateVolumeMountPath() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldVolumeMountPath)
-	return u
-}
-
-// ClearVolumeMountPath clears the value of the "volume_mount_path" field.
-func (u *ServiceConfigUpsert) ClearVolumeMountPath() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldVolumeMountPath)
+// ClearVolumes clears the value of the "volumes" field.
+func (u *ServiceConfigUpsert) ClearVolumes() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldVolumes)
 	return u
 }
 
@@ -1839,45 +1795,24 @@ func (u *ServiceConfigUpsertOne) UpdateBackupRetentionCount() *ServiceConfigUpse
 	})
 }
 
-// SetVolumeName sets the "volume_name" field.
-func (u *ServiceConfigUpsertOne) SetVolumeName(v string) *ServiceConfigUpsertOne {
+// SetVolumes sets the "volumes" field.
+func (u *ServiceConfigUpsertOne) SetVolumes(v []schema.ServiceVolume) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetVolumeName(v)
+		s.SetVolumes(v)
 	})
 }
 
-// UpdateVolumeName sets the "volume_name" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateVolumeName() *ServiceConfigUpsertOne {
+// UpdateVolumes sets the "volumes" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateVolumes() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateVolumeName()
+		s.UpdateVolumes()
 	})
 }
 
-// ClearVolumeName clears the value of the "volume_name" field.
-func (u *ServiceConfigUpsertOne) ClearVolumeName() *ServiceConfigUpsertOne {
+// ClearVolumes clears the value of the "volumes" field.
+func (u *ServiceConfigUpsertOne) ClearVolumes() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearVolumeName()
-	})
-}
-
-// SetVolumeMountPath sets the "volume_mount_path" field.
-func (u *ServiceConfigUpsertOne) SetVolumeMountPath(v string) *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetVolumeMountPath(v)
-	})
-}
-
-// UpdateVolumeMountPath sets the "volume_mount_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateVolumeMountPath() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateVolumeMountPath()
-	})
-}
-
-// ClearVolumeMountPath clears the value of the "volume_mount_path" field.
-func (u *ServiceConfigUpsertOne) ClearVolumeMountPath() *ServiceConfigUpsertOne {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearVolumeMountPath()
+		s.ClearVolumes()
 	})
 }
 
@@ -2659,45 +2594,24 @@ func (u *ServiceConfigUpsertBulk) UpdateBackupRetentionCount() *ServiceConfigUps
 	})
 }
 
-// SetVolumeName sets the "volume_name" field.
-func (u *ServiceConfigUpsertBulk) SetVolumeName(v string) *ServiceConfigUpsertBulk {
+// SetVolumes sets the "volumes" field.
+func (u *ServiceConfigUpsertBulk) SetVolumes(v []schema.ServiceVolume) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetVolumeName(v)
+		s.SetVolumes(v)
 	})
 }
 
-// UpdateVolumeName sets the "volume_name" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateVolumeName() *ServiceConfigUpsertBulk {
+// UpdateVolumes sets the "volumes" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateVolumes() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateVolumeName()
+		s.UpdateVolumes()
 	})
 }
 
-// ClearVolumeName clears the value of the "volume_name" field.
-func (u *ServiceConfigUpsertBulk) ClearVolumeName() *ServiceConfigUpsertBulk {
+// ClearVolumes clears the value of the "volumes" field.
+func (u *ServiceConfigUpsertBulk) ClearVolumes() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearVolumeName()
-	})
-}
-
-// SetVolumeMountPath sets the "volume_mount_path" field.
-func (u *ServiceConfigUpsertBulk) SetVolumeMountPath(v string) *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetVolumeMountPath(v)
-	})
-}
-
-// UpdateVolumeMountPath sets the "volume_mount_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateVolumeMountPath() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateVolumeMountPath()
-	})
-}
-
-// ClearVolumeMountPath clears the value of the "volume_mount_path" field.
-func (u *ServiceConfigUpsertBulk) ClearVolumeMountPath() *ServiceConfigUpsertBulk {
-	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearVolumeMountPath()
+		s.ClearVolumes()
 	})
 }
 

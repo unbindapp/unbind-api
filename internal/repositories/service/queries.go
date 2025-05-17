@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/deployment"
@@ -344,18 +346,9 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 				Ports:      schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports),
 				RunCommand: service.Edges.ServiceConfig.RunCommand,
 				Public:     service.Edges.ServiceConfig.IsPublic,
-				Volumes:    []v1.VolumeSpec{},
+				Volumes:    schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes),
 			},
 		},
-	}
-
-	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
-		newCrd.Spec.Config.Volumes = []v1.VolumeSpec{
-			{
-				Name:      *service.Edges.ServiceConfig.VolumeName,
-				MountPath: *service.Edges.ServiceConfig.VolumeMountPath,
-			},
-		}
 	}
 
 	// Changing builder requires a new build
@@ -379,7 +372,13 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 // See if volume is in use
 func (self *ServiceRepository) IsVolumeInUse(ctx context.Context, volumeName string) (bool, error) {
 	services, err := self.base.DB.ServiceConfig.Query().
-		Where(serviceconfig.VolumeNameEqualFold(volumeName)).
+		Where(func(s *sql.Selector) {
+			s.Where(sqljson.ValueEQ(
+				s.C(serviceconfig.FieldVolumes),
+				volumeName,
+				sqljson.Path("id"),
+			))
+		}).
 		All(ctx)
 	if err != nil {
 		return false, err

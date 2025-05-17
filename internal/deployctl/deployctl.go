@@ -170,9 +170,13 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	}
 
 	// Volumes
-	if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
-		env["SERVICE_VOLUME_NAME"] = *service.Edges.ServiceConfig.VolumeName
-		env["SERVICE_VOLUME_MOUNT_PATH"] = *service.Edges.ServiceConfig.VolumeMountPath
+	if len(service.Edges.ServiceConfig.Volumes) > 0 {
+		// Serialize and b64 encode
+		marshalled, err := json.Marshal(schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes))
+		if err != nil {
+			return nil, err
+		}
+		env["SERVICE_VOLUMES"] = base64.StdEncoding.EncodeToString(marshalled)
 	}
 
 	if service.Type == schema.ServiceTypeDatabase {

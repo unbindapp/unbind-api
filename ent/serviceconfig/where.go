@@ -158,16 +158,6 @@ func BackupRetentionCount(v int) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldBackupRetentionCount, v))
 }
 
-// VolumeName applies equality check predicate on the "volume_name" field. It's identical to VolumeNameEQ.
-func VolumeName(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldVolumeName, v))
-}
-
-// VolumeMountPath applies equality check predicate on the "volume_mount_path" field. It's identical to VolumeMountPathEQ.
-func VolumeMountPath(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldVolumeMountPath, v))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldCreatedAt, v))
@@ -1418,154 +1408,14 @@ func BackupRetentionCountLTE(v int) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldLTE(FieldBackupRetentionCount, v))
 }
 
-// VolumeNameEQ applies the EQ predicate on the "volume_name" field.
-func VolumeNameEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldVolumeName, v))
+// VolumesIsNil applies the IsNil predicate on the "volumes" field.
+func VolumesIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldVolumes))
 }
 
-// VolumeNameNEQ applies the NEQ predicate on the "volume_name" field.
-func VolumeNameNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldVolumeName, v))
-}
-
-// VolumeNameIn applies the In predicate on the "volume_name" field.
-func VolumeNameIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldVolumeName, vs...))
-}
-
-// VolumeNameNotIn applies the NotIn predicate on the "volume_name" field.
-func VolumeNameNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldVolumeName, vs...))
-}
-
-// VolumeNameGT applies the GT predicate on the "volume_name" field.
-func VolumeNameGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldVolumeName, v))
-}
-
-// VolumeNameGTE applies the GTE predicate on the "volume_name" field.
-func VolumeNameGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldVolumeName, v))
-}
-
-// VolumeNameLT applies the LT predicate on the "volume_name" field.
-func VolumeNameLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldVolumeName, v))
-}
-
-// VolumeNameLTE applies the LTE predicate on the "volume_name" field.
-func VolumeNameLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldVolumeName, v))
-}
-
-// VolumeNameContains applies the Contains predicate on the "volume_name" field.
-func VolumeNameContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldVolumeName, v))
-}
-
-// VolumeNameHasPrefix applies the HasPrefix predicate on the "volume_name" field.
-func VolumeNameHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldVolumeName, v))
-}
-
-// VolumeNameHasSuffix applies the HasSuffix predicate on the "volume_name" field.
-func VolumeNameHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldVolumeName, v))
-}
-
-// VolumeNameIsNil applies the IsNil predicate on the "volume_name" field.
-func VolumeNameIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldVolumeName))
-}
-
-// VolumeNameNotNil applies the NotNil predicate on the "volume_name" field.
-func VolumeNameNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldVolumeName))
-}
-
-// VolumeNameEqualFold applies the EqualFold predicate on the "volume_name" field.
-func VolumeNameEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldVolumeName, v))
-}
-
-// VolumeNameContainsFold applies the ContainsFold predicate on the "volume_name" field.
-func VolumeNameContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldVolumeName, v))
-}
-
-// VolumeMountPathEQ applies the EQ predicate on the "volume_mount_path" field.
-func VolumeMountPathEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathNEQ applies the NEQ predicate on the "volume_mount_path" field.
-func VolumeMountPathNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathIn applies the In predicate on the "volume_mount_path" field.
-func VolumeMountPathIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldVolumeMountPath, vs...))
-}
-
-// VolumeMountPathNotIn applies the NotIn predicate on the "volume_mount_path" field.
-func VolumeMountPathNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldVolumeMountPath, vs...))
-}
-
-// VolumeMountPathGT applies the GT predicate on the "volume_mount_path" field.
-func VolumeMountPathGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathGTE applies the GTE predicate on the "volume_mount_path" field.
-func VolumeMountPathGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathLT applies the LT predicate on the "volume_mount_path" field.
-func VolumeMountPathLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathLTE applies the LTE predicate on the "volume_mount_path" field.
-func VolumeMountPathLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathContains applies the Contains predicate on the "volume_mount_path" field.
-func VolumeMountPathContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathHasPrefix applies the HasPrefix predicate on the "volume_mount_path" field.
-func VolumeMountPathHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathHasSuffix applies the HasSuffix predicate on the "volume_mount_path" field.
-func VolumeMountPathHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathIsNil applies the IsNil predicate on the "volume_mount_path" field.
-func VolumeMountPathIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldVolumeMountPath))
-}
-
-// VolumeMountPathNotNil applies the NotNil predicate on the "volume_mount_path" field.
-func VolumeMountPathNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldVolumeMountPath))
-}
-
-// VolumeMountPathEqualFold applies the EqualFold predicate on the "volume_mount_path" field.
-func VolumeMountPathEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldVolumeMountPath, v))
-}
-
-// VolumeMountPathContainsFold applies the ContainsFold predicate on the "volume_mount_path" field.
-func VolumeMountPathContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldVolumeMountPath, v))
+// VolumesNotNil applies the NotNil predicate on the "volumes" field.
+func VolumesNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldVolumes))
 }
 
 // SecurityContextIsNil applies the IsNil predicate on the "security_context" field.

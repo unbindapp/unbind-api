@@ -289,8 +289,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			createService.Edges.ServiceGroup = serviceGroup
 
 			// Create volumes
-			var pvcID *string
-			var pvcMountPath *string
+			var volumes *[]schema.ServiceVolume
 			for _, volume := range templateService.Volumes {
 				// Build labels to set
 				labels := map[string]string{
@@ -319,8 +318,15 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				if err != nil {
 					return err
 				}
-				pvcID = utils.ToPtr(pvc.ID)
-				pvcMountPath = utils.ToPtr(volume.MountPath)
+
+				// Append
+				if volumes == nil {
+					volumes = &[]schema.ServiceVolume{}
+				}
+				*volumes = append(*volumes, schema.ServiceVolume{
+					ID:        pvc.ID,
+					MountPath: volume.MountPath,
+				})
 			}
 
 			var hosts []v1.HostSpec
@@ -354,8 +360,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				DatabaseConfig:          templateService.DatabaseConfig,
 				Image:                   templateService.Image,
 				CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
-				PVCID:                   pvcID,
-				PVCVolumeMountPath:      pvcMountPath,
+				Volumes:                 volumes,
 				RunCommand:              templateService.RunCommand,
 				SecurityContext:         templateService.SecurityContext,
 				HealthCheck:             templateService.HealthCheck,

@@ -1,4 +1,4 @@
-h1:aU9KdTPZcqsrRcxLLzWGINtMsIZdSuKWxdiQ6PT/K/g=
+h1:4ToTld3w2KSVWpAee0IrHn7CI36KabTJ7QEqZBN6mU4=
 20250502184415_initial_migration.up.sql h1:PTLVgkOWBAH1xQGGizcIFu4k36oUnVpcDDpfRrKzbYU=
 20250503163312_s3_source_to_endpoint.up.sql h1:ZZGZvzdwaq28vgb9Bayu2kl88LmrfDjOrOMhxz9ViJY=
 20250506140303_add_backup_schedules.up.sql h1:Oo4AjXHSqbThqDcv0KNTJTeKu1MZRhGQT9Vu4nsdlHA=
@@ -19,3 +19,4 @@ h1:aU9KdTPZcqsrRcxLLzWGINtMsIZdSuKWxdiQ6PT/K/g=
 20250514215813_add_display_rank.up.sql h1:sHPo+LuvrCp7XUODmIVlPg1oNZNckkoyB70CeUFxBQo=
 20250514235957_add_service_group_description.up.sql h1:yWSEVZ95/SrkpFr82Q1kZAP+GOx8Tl6icHJNY2VSZpM=
 20250516214417_add_service_group_icon.up.sql h1:RVokgF+REL179/I+nyl4CNBbRhr9YFCjcGTXCNveKUY=
+20250517205249_support_multi_volume.up.sql h1:MFZUc11wj4uQ3CSr8dc/cAllgfCVYGadeSfh8NWjyI4=

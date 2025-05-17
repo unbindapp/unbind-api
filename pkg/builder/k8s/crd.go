@@ -52,8 +52,7 @@ type ServiceParams struct {
 	RunCommand       string
 
 	// Volume
-	VolumeClaimName string
-	VolumeMountPath string
+	Volumes []v1.VolumeSpec
 
 	// Database
 	DatabaseType          string
@@ -124,19 +123,11 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 		Image:          params.Image,
 		HealthCheck:    params.HealthCheck,
 		VariableMounts: params.VariableMounts,
+		Volumes:        params.Volumes,
 	}
 
 	if params.RunCommand != "" {
 		service.Spec.Config.RunCommand = utils.ToPtr(params.RunCommand)
-	}
-
-	if params.VolumeClaimName != "" && params.VolumeMountPath != "" {
-		service.Spec.Config.Volumes = []v1.VolumeSpec{
-			{
-				Name:      params.VolumeClaimName,
-				MountPath: params.VolumeMountPath,
-			},
-		}
 	}
 
 	// Add host configuration if provided
@@ -203,6 +194,18 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		i++
 	}
 
+	// Unmarshal and b64 decode volumes
+	var volumes []v1.VolumeSpec
+	if self.builderConfig.ServiceVolumes != "" {
+		decodedVolumes, err := base64.StdEncoding.DecodeString(self.builderConfig.ServiceVolumes)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to decode volumes: %v", err)
+		}
+		if err := json.Unmarshal([]byte(decodedVolumes), &volumes); err != nil {
+			return nil, nil, fmt.Errorf("failed to parse volumes: %v", err)
+		}
+	}
+
 	params := ServiceParams{
 		Name:             serviceName,
 		DisplayName:      serviceName,
@@ -234,8 +237,7 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		// ImagePullSecrets
 		ImagePullSecrets: strings.Split(self.builderConfig.ImagePullSecrets, ","),
 		// Volume
-		VolumeClaimName: self.builderConfig.ServiceVolumeName,
-		VolumeMountPath: self.builderConfig.ServiceVolumeMountPath,
+		Volumes: volumes,
 		// Security context
 		SecurityContext: securityContext,
 		// Health check
