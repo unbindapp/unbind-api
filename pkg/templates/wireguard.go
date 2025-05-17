@@ -41,7 +41,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				},
 				Description: "Size of the storage for the WireGuard config data.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("1"),
 			},
 		},
 		Services: []schema.TemplateService{

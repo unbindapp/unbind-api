@@ -269,14 +269,14 @@ func startAPI(cfg *config.Config) {
 	// Create services
 	teamService := team_service.NewTeamService(repo, kubeClient)
 	projectService := project_service.NewProjectService(cfg, repo, kubeClient, webhooksService, deploymentController)
-	serviceService := service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController, dbProvider, webhooksService, variableService)
+	serviceService := service_service.NewServiceService(cfg, repo, githubClient, kubeClient, deploymentController, dbProvider, webhooksService, variableService, promClient)
 	environmentService := environment_service.NewEnvironmentService(repo, kubeClient, deploymentController)
 	logService := logs_service.NewLogsService(repo, kubeClient, lokiQuerier)
 	deploymentService := deployments_service.NewDeploymentService(repo, kubeClient, deploymentController, githubClient, lokiQuerier, registry.NewImageChecker(cfg, repo, kubeClient), variableService)
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings)
 	metricsService := metric_service.NewMetricService(promClient, repo)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
-	storageService := storage_service.NewStorageService(cfg, repo, kubeClient)
+	storageService := storage_service.NewStorageService(cfg, repo, kubeClient, promClient)
 	templateService := templates_service.NewTemplatesService(cfg, repo, kubeClient, dbProvider, deploymentController)
 	serviceGroupService := servicegroup_service.NewServiceGroupService(cfg, repo)
 

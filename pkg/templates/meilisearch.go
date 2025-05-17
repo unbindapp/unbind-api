@@ -33,7 +33,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 				},
 				Description: "Size of the storage for the Meilisearch data.",
 				Required:    true,
-				Default:     utils.ToPtr("1Gi"),
+				Default:     utils.ToPtr("1"),
 			},
 		},
 		Services: []schema.TemplateService{

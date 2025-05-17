@@ -24,7 +24,8 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 	}
 
 	// Parse size
-	_, err = utils.ValidateStorageQuantity(input.Size)
+	input.SizeGB = input.SizeGB + "Gi"
+	_, err = utils.ValidateStorageQuantity(input.SizeGB)
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
@@ -53,7 +54,7 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 		kubernetesName,
 		input.Name,
 		labels,
-		input.Size,
+		input.SizeGB,
 		[]v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
 		nil,
 		client,

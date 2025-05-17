@@ -193,7 +193,7 @@ func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, input
 					template.Services[i].Volumes = []schema.TemplateVolume{}
 				}
 
-				size := inputs[inputID]
+				size := inputs[inputID] + "Gi"
 				// Verify size
 				if _, err := utils.ValidateStorageQuantity(size); err != nil {
 					return template, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is of type VolumeSize but has an invalid size: %s", input.Name, err.Error()))
@@ -202,7 +202,7 @@ func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, input
 				// Add the volume to the service
 				template.Services[i].Volumes = append(template.Services[i].Volumes, schema.TemplateVolume{
 					Name:      input.Volume.Name,
-					Size:      size,
+					SizeGB:    size,
 					MountPath: input.Volume.MountPath,
 				})
 			}
