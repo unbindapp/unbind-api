@@ -232,6 +232,7 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 	for i, svc := range template.Services {
 		resolvedService := schema.TemplateService{
 			ID:                 svc.ID,
+			Icon:               svc.Icon,
 			DependsOn:          svc.DependsOn,
 			Name:               svc.Name,
 			Type:               svc.Type,

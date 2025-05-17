@@ -60,6 +60,20 @@ func (sgc *ServiceGroupCreate) SetName(s string) *ServiceGroupCreate {
 	return sgc
 }
 
+// SetIcon sets the "icon" field.
+func (sgc *ServiceGroupCreate) SetIcon(s string) *ServiceGroupCreate {
+	sgc.mutation.SetIcon(s)
+	return sgc
+}
+
+// SetNillableIcon sets the "icon" field if the given value is not nil.
+func (sgc *ServiceGroupCreate) SetNillableIcon(s *string) *ServiceGroupCreate {
+	if s != nil {
+		sgc.SetIcon(*s)
+	}
+	return sgc
+}
+
 // SetDescription sets the "description" field.
 func (sgc *ServiceGroupCreate) SetDescription(s string) *ServiceGroupCreate {
 	sgc.mutation.SetDescription(s)
@@ -228,6 +242,10 @@ func (sgc *ServiceGroupCreate) createSpec() (*ServiceGroup, *sqlgraph.CreateSpec
 		_spec.SetField(servicegroup.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
+	if value, ok := sgc.mutation.Icon(); ok {
+		_spec.SetField(servicegroup.FieldIcon, field.TypeString, value)
+		_node.Icon = value
+	}
 	if value, ok := sgc.mutation.Description(); ok {
 		_spec.SetField(servicegroup.FieldDescription, field.TypeString, value)
 		_node.Description = &value
@@ -341,6 +359,24 @@ func (u *ServiceGroupUpsert) UpdateName() *ServiceGroupUpsert {
 	return u
 }
 
+// SetIcon sets the "icon" field.
+func (u *ServiceGroupUpsert) SetIcon(v string) *ServiceGroupUpsert {
+	u.Set(servicegroup.FieldIcon, v)
+	return u
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *ServiceGroupUpsert) UpdateIcon() *ServiceGroupUpsert {
+	u.SetExcluded(servicegroup.FieldIcon)
+	return u
+}
+
+// ClearIcon clears the value of the "icon" field.
+func (u *ServiceGroupUpsert) ClearIcon() *ServiceGroupUpsert {
+	u.SetNull(servicegroup.FieldIcon)
+	return u
+}
+
 // SetDescription sets the "description" field.
 func (u *ServiceGroupUpsert) SetDescription(v string) *ServiceGroupUpsert {
 	u.Set(servicegroup.FieldDescription, v)
@@ -447,6 +483,27 @@ func (u *ServiceGroupUpsertOne) SetName(v string) *ServiceGroupUpsertOne {
 func (u *ServiceGroupUpsertOne) UpdateName() *ServiceGroupUpsertOne {
 	return u.Update(func(s *ServiceGroupUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetIcon sets the "icon" field.
+func (u *ServiceGroupUpsertOne) SetIcon(v string) *ServiceGroupUpsertOne {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.SetIcon(v)
+	})
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *ServiceGroupUpsertOne) UpdateIcon() *ServiceGroupUpsertOne {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.UpdateIcon()
+	})
+}
+
+// ClearIcon clears the value of the "icon" field.
+func (u *ServiceGroupUpsertOne) ClearIcon() *ServiceGroupUpsertOne {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.ClearIcon()
 	})
 }
 
@@ -728,6 +785,27 @@ func (u *ServiceGroupUpsertBulk) SetName(v string) *ServiceGroupUpsertBulk {
 func (u *ServiceGroupUpsertBulk) UpdateName() *ServiceGroupUpsertBulk {
 	return u.Update(func(s *ServiceGroupUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetIcon sets the "icon" field.
+func (u *ServiceGroupUpsertBulk) SetIcon(v string) *ServiceGroupUpsertBulk {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.SetIcon(v)
+	})
+}
+
+// UpdateIcon sets the "icon" field to the value that was provided on create.
+func (u *ServiceGroupUpsertBulk) UpdateIcon() *ServiceGroupUpsertBulk {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.UpdateIcon()
+	})
+}
+
+// ClearIcon clears the value of the "icon" field.
+func (u *ServiceGroupUpsertBulk) ClearIcon() *ServiceGroupUpsertBulk {
+	return u.Update(func(s *ServiceGroupUpsert) {
+		s.ClearIcon()
 	})
 }
 

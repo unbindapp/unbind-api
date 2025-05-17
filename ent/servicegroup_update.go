@@ -52,6 +52,26 @@ func (sgu *ServiceGroupUpdate) SetNillableName(s *string) *ServiceGroupUpdate {
 	return sgu
 }
 
+// SetIcon sets the "icon" field.
+func (sgu *ServiceGroupUpdate) SetIcon(s string) *ServiceGroupUpdate {
+	sgu.mutation.SetIcon(s)
+	return sgu
+}
+
+// SetNillableIcon sets the "icon" field if the given value is not nil.
+func (sgu *ServiceGroupUpdate) SetNillableIcon(s *string) *ServiceGroupUpdate {
+	if s != nil {
+		sgu.SetIcon(*s)
+	}
+	return sgu
+}
+
+// ClearIcon clears the value of the "icon" field.
+func (sgu *ServiceGroupUpdate) ClearIcon() *ServiceGroupUpdate {
+	sgu.mutation.ClearIcon()
+	return sgu
+}
+
 // SetDescription sets the "description" field.
 func (sgu *ServiceGroupUpdate) SetDescription(s string) *ServiceGroupUpdate {
 	sgu.mutation.SetDescription(s)
@@ -206,6 +226,12 @@ func (sgu *ServiceGroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := sgu.mutation.Name(); ok {
 		_spec.SetField(servicegroup.FieldName, field.TypeString, value)
 	}
+	if value, ok := sgu.mutation.Icon(); ok {
+		_spec.SetField(servicegroup.FieldIcon, field.TypeString, value)
+	}
+	if sgu.mutation.IconCleared() {
+		_spec.ClearField(servicegroup.FieldIcon, field.TypeString)
+	}
 	if value, ok := sgu.mutation.Description(); ok {
 		_spec.SetField(servicegroup.FieldDescription, field.TypeString, value)
 	}
@@ -325,6 +351,26 @@ func (sguo *ServiceGroupUpdateOne) SetNillableName(s *string) *ServiceGroupUpdat
 	if s != nil {
 		sguo.SetName(*s)
 	}
+	return sguo
+}
+
+// SetIcon sets the "icon" field.
+func (sguo *ServiceGroupUpdateOne) SetIcon(s string) *ServiceGroupUpdateOne {
+	sguo.mutation.SetIcon(s)
+	return sguo
+}
+
+// SetNillableIcon sets the "icon" field if the given value is not nil.
+func (sguo *ServiceGroupUpdateOne) SetNillableIcon(s *string) *ServiceGroupUpdateOne {
+	if s != nil {
+		sguo.SetIcon(*s)
+	}
+	return sguo
+}
+
+// ClearIcon clears the value of the "icon" field.
+func (sguo *ServiceGroupUpdateOne) ClearIcon() *ServiceGroupUpdateOne {
+	sguo.mutation.ClearIcon()
 	return sguo
 }
 
@@ -511,6 +557,12 @@ func (sguo *ServiceGroupUpdateOne) sqlSave(ctx context.Context) (_node *ServiceG
 	}
 	if value, ok := sguo.mutation.Name(); ok {
 		_spec.SetField(servicegroup.FieldName, field.TypeString, value)
+	}
+	if value, ok := sguo.mutation.Icon(); ok {
+		_spec.SetField(servicegroup.FieldIcon, field.TypeString, value)
+	}
+	if sguo.mutation.IconCleared() {
+		_spec.ClearField(servicegroup.FieldIcon, field.TypeString)
 	}
 	if value, ok := sguo.mutation.Description(); ok {
 		_spec.SetField(servicegroup.FieldDescription, field.TypeString, value)

@@ -26,6 +26,8 @@ type ServiceGroup struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name of the service group
 	Name string `json:"name,omitempty"`
+	// Icon holds the value of the "icon" field.
+	Icon string `json:"icon,omitempty"`
 	// Description of the service group
 	Description *string `json:"description,omitempty"`
 	// Reference to the environment this service group belongs to
@@ -72,7 +74,7 @@ func (*ServiceGroup) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case servicegroup.FieldName, servicegroup.FieldDescription:
+		case servicegroup.FieldName, servicegroup.FieldIcon, servicegroup.FieldDescription:
 			values[i] = new(sql.NullString)
 		case servicegroup.FieldCreatedAt, servicegroup.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -116,6 +118,12 @@ func (sg *ServiceGroup) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				sg.Name = value.String
+			}
+		case servicegroup.FieldIcon:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field icon", values[i])
+			} else if value.Valid {
+				sg.Icon = value.String
 			}
 		case servicegroup.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -184,6 +192,9 @@ func (sg *ServiceGroup) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(sg.Name)
+	builder.WriteString(", ")
+	builder.WriteString("icon=")
+	builder.WriteString(sg.Icon)
 	builder.WriteString(", ")
 	if v := sg.Description; v != nil {
 		builder.WriteString("description=")
