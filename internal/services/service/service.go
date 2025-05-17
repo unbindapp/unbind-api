@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
@@ -17,6 +18,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	"github.com/unbindapp/unbind-api/internal/services/models"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
@@ -189,6 +191,45 @@ func (self *ServiceService) validatePVC(ctx context.Context, teamID, projectID, 
 
 	if pvc.EnvironmentID != nil && *pvc.EnvironmentID != environmentID {
 		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC not found")
+	}
+
+	return nil
+}
+
+// Add prom metrics to volume
+func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, services []*models.ServiceResponse) error {
+	// Figure out all of the PVCs in the list
+	var pvcIDs []string
+	for _, service := range services {
+		for _, vol := range service.Config.Volumes {
+			pvcIDs = append(pvcIDs, vol.ID)
+		}
+	}
+
+	// Query prometheus
+	if len(pvcIDs) == 0 {
+		return nil
+	}
+
+	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs)
+	if err != nil {
+		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+		return nil
+	}
+
+	mapStats := make(map[string]prometheus.PVCVolumeStats)
+	for _, stat := range stats {
+		mapStats[stat.PVCName] = stat
+	}
+
+	// Add stats to the response
+	for i := range services {
+		for j := range services[i].Config.Volumes {
+			if stat, ok := mapStats[services[i].Config.Volumes[j].ID]; ok {
+				services[i].Config.Volumes[j].SizeGB = stat.CapacityGB
+				services[i].Config.Volumes[j].UsedGB = stat.UsedGB
+			}
+		}
 	}
 
 	return nil

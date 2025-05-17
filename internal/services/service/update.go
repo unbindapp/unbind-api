@@ -444,5 +444,12 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 	}()
 
-	return models.TransformServiceEntity(service), nil
+	resp := models.TransformServiceEntity(service)
+	respArr := []*models.ServiceResponse{resp}
+
+	if err := self.addPromMetricsToServiceVolumes(ctx, respArr); err != nil {
+		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+	}
+
+	return respArr[0], nil
 }
