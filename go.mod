@@ -36,7 +36,6 @@ require (
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/stretchr/testify v1.10.0
 	github.com/tonistiigi/fsutil v0.0.0-20250318190121-d73a4b3b8a7e
-	github.com/valkey-io/valkey-go v1.0.56
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/oauth2 v0.29.0
 	gopkg.in/yaml.v2 v2.4.0

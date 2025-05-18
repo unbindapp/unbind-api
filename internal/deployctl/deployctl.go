@@ -266,7 +266,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 			return nil, err
 		}
 
-		if !canAccess || err != nil {
+		if !canAccess {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Repository not accessible with the specified GitHub installation")
 		}
 
@@ -692,8 +692,6 @@ func (self *DeploymentController) processDependentJob(ctx context.Context, item 
 		return self.dependentQueue.Enqueue(ctx, item.ID, item.Data)
 	}
 
-	// Fake delay
-	time.Sleep(60 * time.Second)
 	// If dependencies are ready, enqueue to the real deployment queue
 	_, err := self.EnqueueDeploymentJob(ctx, item.Data)
 	return err
