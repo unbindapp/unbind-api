@@ -16,14 +16,14 @@ func plausibleTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the Plausible instance.",
 				Required:    true,
 			},
 			{
-				ID:          2,
+				ID:          "input_postgresql_size",
 				Name:        "PostgreSQL Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
@@ -31,7 +31,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Default:     utils.ToPtr("1"),
 			},
 			{
-				ID:          3,
+				ID:          "input_clickhouse_size",
 				Name:        "Clickhouse Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the Clickhouse database.",
@@ -41,25 +41,25 @@ func plausibleTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
+				ID:           "service_postgresql",
 				Name:         "PostgreSQL",
-				InputIDs:     []int{2},
+				InputIDs:     []string{"input_postgresql_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 			},
 			{
-				ID:           2,
+				ID:           "service_clickhouse",
 				Name:         "ClickHouse",
-				InputIDs:     []int{3},
+				InputIDs:     []string{"input_clickhouse_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("clickhouse"),
 			},
 			{
-				ID:         3,
-				DependsOn:  []int{1, 2},
-				InputIDs:   []int{1},
+				ID:         "service_plausible",
+				DependsOn:  []string{"service_postgresql", "service_clickhouse"},
+				InputIDs:   []string{"input_domain"},
 				Name:       "Plausible",
 				RunCommand: utils.ToPtr("sh -c \"/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run\""),
 				Type:       schema.ServiceTypeDockerimage,
@@ -90,7 +90,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 						Name: "BASE_URL",
 						Generator: &schema.ValueGenerator{
 							Type:      schema.GeneratorTypeInput,
-							InputID:   1,
+							InputID:   "input_domain",
 							AddPrefix: "https://",
 						},
 					},
@@ -106,13 +106,13 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				VariableReferences: []schema.TemplateVariableReference{
 					// PostgreSQL references
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_URL",
 						TargetName: "DATABASE_URL",
 					},
 					// ClickHouse references
 					{
-						SourceID:   2,
+						SourceID:   "service_clickhouse",
 						SourceName: "DATABASE_HTTP_URL",
 						TargetName: "CLICKHOUSE_DATABASE_URL",
 					},

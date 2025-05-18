@@ -17,7 +17,7 @@ func TestResolveTemplate(t *testing.T) {
 		Version:     1,
 		Services: []schema.TemplateService{
 			{
-				ID:      1,
+				ID:      "service_testservice",
 				Name:    "TestService",
 				Type:    schema.ServiceTypeDockerimage,
 				Builder: schema.ServiceBuilderDocker,
@@ -37,7 +37,7 @@ func TestResolveTemplate(t *testing.T) {
 						Generator: &schema.ValueGenerator{
 							Type: schema.GeneratorTypeStringReplace,
 						},
-						Value: "postgres://user:${SERVICE_1_GENERATED_PASSWORD}@${SERVICE_1_KUBE_NAME}.${NAMESPACE}:5432/postgres",
+						Value: "postgres://user:${SERVICE_TESTSERVICE_GENERATED_PASSWORD}@${SERVICE_TESTSERVICE_KUBE_NAME}.${NAMESPACE}:5432/postgres",
 					},
 				},
 			},
@@ -49,9 +49,9 @@ func TestResolveTemplate(t *testing.T) {
 	})
 
 	// Test template resolution
-	inputs := map[int]string{}
-	kubeNameMap := map[int]string{
-		1: "test-service",
+	inputs := map[string]string{}
+	kubeNameMap := map[string]string{
+		"service_testservice": "test-service",
 	}
 	namespace := "test-namespace"
 

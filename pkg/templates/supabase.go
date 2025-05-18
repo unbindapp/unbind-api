@@ -16,7 +16,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the Supabase instance.",
@@ -24,7 +24,7 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(8000),
 			},
 			{
-				ID:   2,
+				ID:   "input_storage_size",
 				Name: "Storage Size",
 				Type: schema.InputTypeVolumeSize,
 				Volume: &schema.TemplateVolume{
@@ -36,14 +36,14 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				Default:     utils.ToPtr("1"),
 			},
 			{
-				ID:          3,
+				ID:          "input_internal_password",
 				Name:        "Internal Password",
 				Type:        schema.InputTypeGeneratedPassword,
 				Description: "Password for the internal accounts that supabase creates",
 				Hidden:      true,
 			},
 			{
-				ID:          4,
+				ID:          "input_database_size",
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
@@ -53,14 +53,14 @@ func supabaseTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
+				ID:           "service_postgresql",
 				Name:         "PostgreSQL",
-				InputIDs:     []int{4},
+				InputIDs:     []string{"input_database_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 				InitDBReplacers: map[string]string{
-					"${REPLACEME}": "INPUT_3_VALUE",
+					"${REPLACEME}": "INPUT_INTERNAL_PASSWORD_VALUE",
 				},
 				DatabaseConfig: &schema.DatabaseConfig{
 					DefaultDatabaseName: "postgres",
@@ -1333,12 +1333,12 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				},
 			},
 			{
-				ID:       2,
+				ID:       "service_kong",
 				Name:     "Kong",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
 				Image:    utils.ToPtr("kong:2.8.1"),
-				InputIDs: []int{1},
+				InputIDs: []string{"input_domain"},
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,
@@ -1410,10 +1410,10 @@ consumers:
   - username: DASHBOARD
   - username: anon
     keyauth_credentials:
-      - key: ${SERVICE_2_SUPABASE_ANON_KEY}
+      - key: ${SERVICE_KONG_SUPABASE_ANON_KEY}
   - username: service_role
     keyauth_credentials:
-      - key: ${SERVICE_2_SUPABASE_SERVICE_KEY}
+      - key: ${SERVICE_KONG_SUPABASE_SERVICE_KEY}
 
 acls:
   - consumer: anon
@@ -1423,12 +1423,12 @@ acls:
 
 basicauth_credentials:
 - consumer: DASHBOARD
-  username: ${SERVICE_2_DASHBOARD_USERNAME}
-  password: ${SERVICE_2_DASHBOARD_PASSWORD}
+  username: ${SERVICE_KONG_DASHBOARD_USERNAME}
+  password: ${SERVICE_KONG_DASHBOARD_PASSWORD}
 
 services:
   - name: auth-v1-open
-    url: http://${SERVICE_9_KUBE_NAME}.${NAMESPACE}:9999/verify
+    url: http://${SERVICE_AUTH_KUBE_NAME}.${NAMESPACE}:9999/verify
     routes:
       - name: auth-v1-open
         strip_path: true
@@ -1437,7 +1437,7 @@ services:
     plugins:
       - name: cors
   - name: auth-v1
-    url: http://${SERVICE_9_KUBE_NAME}.${NAMESPACE}:9999/
+    url: http://${SERVICE_AUTH_KUBE_NAME}.${NAMESPACE}:9999/
     routes:
       - name: auth-v1-all
         strip_path: true
@@ -1455,7 +1455,7 @@ services:
             - admin
             - anon
   - name: rest-v1
-    url: http://${SERVICE_8_KUBE_NAME}.${NAMESPACE}:3000/
+    url: http://${SERVICE_POSTGREST_KUBE_NAME}.${NAMESPACE}:3000/
     routes:
       - name: rest-v1-all
         strip_path: true
@@ -1473,7 +1473,7 @@ services:
             - admin
             - anon
   - name: storage-v1
-    url: http://${SERVICE_6_KUBE_NAME}.${NAMESPACE}:5000/
+    url: http://${SERVICE_STORAGE_KUBE_NAME}.${NAMESPACE}:5000/
     routes:
       - name: storage-v1-all
         strip_path: true
@@ -1482,7 +1482,7 @@ services:
     plugins:
       - name: cors
   - name: functions-v1
-    url: http://${SERVICE_11_KUBE_NAME}.${NAMESPACE}:9000/
+    url: http://${SERVICE_FUNCTIONS_KUBE_NAME}.${NAMESPACE}:9000/
     routes:
       - name: functions-v1-all
         strip_path: true
@@ -1491,14 +1491,14 @@ services:
     plugins:
       - name: cors
   - name: analytics-v1
-    url: http://${SERVICE_4_KUBE_NAME}.${NAMESPACE}:4000/
+    url: http://${SERVICE_ANALYTICS_KUBE_NAME}.${NAMESPACE}:4000/
     routes:
       - name: analytics-v1-all
         strip_path: true
         paths:
           - /analytics/v1/
   - name: meta
-    url: http://${SERVICE_10_KUBE_NAME}.${NAMESPACE}:8080/
+    url: http://${SERVICE_POSTGRES_META_KUBE_NAME}.${NAMESPACE}:8080/
     routes:
       - name: meta-all
         strip_path: true
@@ -1514,12 +1514,12 @@ services:
           allow:
             - admin
   - name: dashboard
-    url: http://${SERVICE_3_KUBE_NAME}.${NAMESPACE}:3000/
+    url: http://${SERVICE_STUDIO_KUBE_NAME}.${NAMESPACE}:3000/
     routes:
       - name: dashboard-all
         strip_path: true
         paths:
-          - /
+          - / 
     plugins:
       - name: cors
       - name: basic-auth
@@ -1529,12 +1529,12 @@ services:
 				},
 			},
 			{
-				ID:        3,
+				ID:        "service_studio",
 				Name:      "Studio",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
-				DependsOn: []int{1, 2},
+				DependsOn: []string{"service_postgresql", "service_kong"},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,
@@ -1553,42 +1553,42 @@ services:
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "POSTGRES_PASSWORD",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						TargetName: "SUPABASE_URL",
 						IsHost:     true,
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "SUPABASE_ANON_KEY",
 						TargetName: "SUPABASE_ANON_KEY",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "SUPABASE_SERVICE_KEY",
 						TargetName: "SUPABASE_SERVICE_KEY",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "JWT_SECRET",
 						TargetName: "AUTH_JWT_SECRET",
 					},
 					{
-						SourceID:   4,
+						SourceID:   "service_analytics",
 						SourceName: "LOGFLARE_API_KEY",
 						TargetName: "LOGFLARE_API_KEY",
 					},
 					{
-						SourceID:   4,
+						SourceID:   "service_analytics",
 						TargetName: "LOGFLARE_URL",
 						IsHost:     true,
 					},
 					{
-						SourceID:   10,
+						SourceID:   "service_postgres_meta",
 						TargetName: "STUDIO_PG_META_URL",
 						IsHost:     true,
 					},
@@ -1598,7 +1598,7 @@ services:
 						Name: "SUPABASE_PUBLIC_URL",
 						Generator: &schema.ValueGenerator{
 							Type:      schema.GeneratorTypeInput,
-							InputID:   1,
+							InputID:   "input_domain",
 							AddPrefix: "https://",
 						},
 					},
@@ -1621,12 +1621,12 @@ services:
 				},
 			},
 			{
-				ID:        4,
+				ID:        "service_analytics",
 				Name:      "Analytics",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/logflare:1.12.0"),
-				DependsOn: []int{1},
+				DependsOn: []string{"service_postgresql"},
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/health",
@@ -1645,22 +1645,22 @@ services:
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "DB_PASSWORD",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_HOST",
 						TargetName: "DB_HOSTNAME",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PORT",
 						TargetName: "DB_PORT",
 					},
 					{
-						SourceID:                  1,
+						SourceID:                  "service_postgresql",
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "POSTGRES_BACKEND_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},
@@ -1713,112 +1713,13 @@ services:
 					},
 				},
 			},
-			// * Disabling vector because it should be a DaemonSet
-			// * And it should have the VECTOR_NODE_NAME variable
-			// * Neither of which are supported by unbind-operator currently
-			// 			{
-			// 				ID:        5,
-			// 				Name:      "vector",
-			// 				Type:      schema.ServiceTypeDockerimage,
-			// 				Builder:   schema.ServiceBuilderDocker,
-			// 				Image:     utils.ToPtr("timberio/vector:0.28.1-alpine"),
-			// 				DependsOn: []int{4},
-			// 				HealthCheck: &schema.HealthCheck{
-			// 					Type:                      schema.HealthCheckTypeHTTP,
-			// 					Path:                      "/health",
-			// 					Port:                      utils.ToPtr(int32(9001)),
-			// 					PeriodSeconds:             5,
-			// 					TimeoutSeconds:            5,
-			// 					StartupFailureThreshold:   3,
-			// 					LivenessFailureThreshold:  3,
-			// 					ReadinessFailureThreshold: 3,
-			// 				},
-			// 				RunCommand: utils.ToPtr("/usr/local/bin/vector --config /etc/vector/vector.yml"),
-			// 				VariablesMounts: []*schema.VariableMount{
-			// 					{
-			// 						Name: "vector.yml",
-			// 						Path: "/etc/vector/vector.yml",
-			// 					},
-			// 				},
-			// 				VariableReferences: []schema.TemplateVariableReference{
-			// 					{
-			// 						SourceID:   4,
-			// 						SourceName: "LOGFLARE_API_KEY",
-			// 						TargetName: "LOGFLARE_API_KEY",
-			// 					},
-			// 				},
-			// 				Variables: []schema.TemplateVariable{
-			// 					{
-			// 						Name: "vector.yml",
-			// 						Generator: &schema.ValueGenerator{
-			// 							Type: schema.GeneratorTypeStringReplace,
-			// 						},
-			// 						Value: `api:
-			//   enabled: true
-			//   address: 0.0.0.0:9001               # Vector API / playground
-
-			// sources:
-			//   k8s_logs:                           # new source id
-			//     type: kubernetes_logs
-			//     # (optional) keep Vector from logging itself; you can also label the pod
-			//     extra_label_selector: "app!=vector"
-
-			// transforms:
-			//   project_logs:
-			//     type: remap
-			//     inputs:
-			//       - k8s_logs
-			//     source: |-
-			//       .project        = "default"
-			//       .event_message  = del(.message)
-
-			//       # kubernetes_logs puts the container name under .kubernetes.*
-			//       .appname        = del(.kubernetes.container_name)
-
-			//       # drop lots of noisy fields
-			//       del(.kubernetes.container_image)
-			//       del(.kubernetes.pod_uid)
-			//       del(.kubernetes.pod_name)
-			//       del(.kubernetes.namespace_name)
-			//       del(.kubernetes.pod_labels)
-			//       del(.kubernetes.namespace_labels)
-			//       del(.source_type)
-			//       del(.stream)
-
-			//   router:
-			//     type: route
-			//     inputs:
-			//       - project_logs
-			//     route:
-			//       kong:      'starts_with(string!(.appname), "kong")'
-			//       auth:      'starts_with(string!(.appname), "auth")'
-			//       rest:      'starts_with(string!(.appname), "rest")'
-			//       realtime:  'starts_with(string!(.appname), "realtime")'
-			//       storage:   'starts_with(string!(.appname), "storage")'
-			//       functions: 'starts_with(string!(.appname), "functions")'
-			//       db:        'starts_with(string!(.appname), "db")'
-
-			// sinks:
-			//   logflare:
-			//     type: http
-			//     inputs:
-			//       - router.*
-			//     encoding:
-			//       codec: json
-			//     method: post
-			//     request:
-			//       retry_max_duration_secs: 10
-			//     uri: http://${SERVICE_4_KUBE_NAME}.${NAMESPACE}:4000/api/logs?source_name=supabase.logs&api_key=${SERVICE_4_LOGFLARE_API_KEY}`,
-			// 					},
-			// 				},
-			// 			},
 			{
-				ID:        6,
+				ID:        "service_storage",
 				Name:      "Storage",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/storage-api:v1.22.7"),
-				DependsOn: []int{1, 7},
+				DependsOn: []string{"service_postgresql", "service_minio"},
 				Ports: []schema.PortSpec{
 					{
 						Port:     5000,
@@ -1837,35 +1738,35 @@ services:
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "POSTGRES_PASSWORD",
 					},
 					{
-						SourceID:   7,
+						SourceID:   "service_minio",
 						SourceName: "MINIO_ROOT_USER",
 						TargetName: "AWS_ACCESS_KEY_ID",
 					},
 					{
-						SourceID:   7,
+						SourceID:   "service_minio",
 						SourceName: "MINIO_ROOT_PASSWORD",
 						TargetName: "AWS_SECRET_ACCESS_KEY",
 					},
 					{
-						SourceID:   7,
+						SourceID:   "service_minio",
 						TargetName: "STORAGE_S3_ENDPOINT",
 						IsHost:     true,
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "JWT_SECRET",
 						TargetName: "AUTH_JWT_SECRET",
 					},
 					{
-						SourceID:       1,
+						SourceID:       "service_postgresql",
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "DATABASE_URL",
-						TemplateString: "postgresql://supabase_storage_admin:${INPUT_3_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://supabase_storage_admin:${INPUT_INTERNAL_PASSWORD_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1888,9 +1789,9 @@ services:
 				},
 			},
 			{
-				ID:         7,
+				ID:         "service_minio",
 				Name:       "MinIO",
-				InputIDs:   []int{2},
+				InputIDs:   []string{"input_storage_size"},
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("minio/minio"),
@@ -1928,34 +1829,34 @@ services:
 				},
 			},
 			{
-				ID:        8,
+				ID:        "service_postgrest",
 				Name:      "PostgREST",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("postgrest/postgrest:v12.2.11"),
-				DependsOn: []int{1},
+				DependsOn: []string{"service_postgresql"},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "POSTGRES_PASSWORD",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "JWT_SECRET",
 						TargetName: "PGRST_JWT_SECRET",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "JWT_SECRET",
 						TargetName: "PGRST_APP_SETTINGS_JWT_SECRET",
 						IsHost:     true,
 					},
 					{
-						SourceID:       1,
+						SourceID:       "service_postgresql",
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "PGRST_DB_URI",
-						TemplateString: "postgresql://authenticator:${INPUT_3_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://authenticator:${INPUT_INTERNAL_PASSWORD_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -1974,12 +1875,12 @@ services:
 				},
 			},
 			{
-				ID:        9,
+				ID:        "service_auth",
 				Name:      "Auth",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/gotrue:v2.171.0"),
-				DependsOn: []int{1},
+				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{
 						Port:     9999,
@@ -1998,20 +1899,20 @@ services:
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						TargetName: "API_EXTERNAL_URL",
 						IsHost:     true,
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "JWT_SECRET",
 						TargetName: "GOTRUE_JWT_SECRET",
 					},
 					{
-						SourceID:       1,
+						SourceID:       "service_postgresql",
 						SourceName:     "DATABASE_HOST",
 						TargetName:     "GOTRUE_DB_DATABASE_URL",
-						TemplateString: "postgresql://supabase_auth_admin:${INPUT_3_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
+						TemplateString: "postgresql://supabase_auth_admin:${INPUT_INTERNAL_PASSWORD_VALUE}@${DATABASE_HOST}:5432/postgres?sslmode=disable",
 					},
 				},
 				Variables: []schema.TemplateVariable{
@@ -2031,7 +1932,7 @@ services:
 						Name: "GOTRUE_SITE_URL",
 						Generator: &schema.ValueGenerator{
 							Type:    schema.GeneratorTypeInput,
-							InputID: 2,
+							InputID: "input_domain",
 						},
 					},
 					{
@@ -2041,12 +1942,12 @@ services:
 				},
 			},
 			{
-				ID:        10,
+				ID:        "service_postgres_meta",
 				Name:      "Postgres Meta",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/postgres-meta:v0.88.9"),
-				DependsOn: []int{1},
+				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{
 						Port:     8080,
@@ -2055,17 +1956,17 @@ services:
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "PG_META_DB_PASSWORD",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_HOST",
 						TargetName: "PG_META_DB_HOST",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PORT",
 						TargetName: "PG_META_DB_PORT",
 					},
@@ -2086,12 +1987,12 @@ services:
 				},
 			},
 			{
-				ID:        11,
+				ID:        "service_functions",
 				Name:      "Functions",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/edge-runtime:v1.67.4"),
-				DependsOn: []int{1, 2},
+				DependsOn: []string{"service_postgresql", "service_kong"},
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,
@@ -2120,32 +2021,32 @@ services:
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "POSTGRES_PASSWORD",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "JWT_SECRET",
 						TargetName: "JWT_SECRET",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "SUPABASE_ANON_KEY",
 						TargetName: "SUPABASE_ANON_KEY",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						SourceName: "SUPABASE_SERVICE_KEY",
 						TargetName: "SUPABASE_SERVICE_ROLE_KEY",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_kong",
 						TargetName: "SUPABASE_URL",
 						IsHost:     true,
 					},
 					{
-						SourceID:                  1,
+						SourceID:                  "service_postgresql",
 						SourceName:                "DATABASE_PASSWORD",
 						TargetName:                "SUPABASE_DB_URL",
 						AdditionalTemplateSources: []string{"DATABASE_HOST"},

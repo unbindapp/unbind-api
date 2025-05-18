@@ -88,10 +88,10 @@ func TransformTemplateEntity(entity *ent.Template) *TemplateWithDefinitionRespon
 			entity.Definition.Services[i].Volumes = []schema.TemplateVolume{}
 		}
 		if entity.Definition.Services[i].DependsOn == nil {
-			entity.Definition.Services[i].DependsOn = []int{}
+			entity.Definition.Services[i].DependsOn = []string{}
 		}
 		if entity.Definition.Services[i].InputIDs == nil {
-			entity.Definition.Services[i].InputIDs = []int{}
+			entity.Definition.Services[i].InputIDs = []string{}
 		}
 		if entity.Definition.Services[i].Ports == nil {
 			entity.Definition.Services[i].Ports = []schema.PortSpec{}

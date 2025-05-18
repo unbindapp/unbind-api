@@ -16,14 +16,14 @@ func wordPressTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the WordPress instance.",
 				Required:    true,
 			},
 			{
-				ID:          2,
+				ID:          "input_database_size",
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the MySQL database.",
@@ -33,17 +33,17 @@ func wordPressTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
+				ID:           "service_mysql",
 				Name:         "MySQL",
-				InputIDs:     []int{2},
+				InputIDs:     []string{"input_database_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("mysql"),
 			},
 			{
-				ID:        2,
-				DependsOn: []int{1},
-				InputIDs:  []int{1},
+				ID:        "service_wordpress",
+				DependsOn: []string{"service_mysql"},
+				InputIDs:  []string{"input_domain"},
 				Name:      "WordPress",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
@@ -66,22 +66,22 @@ func wordPressTemplate() *schema.TemplateDefinition {
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_mysql",
 						SourceName: "DATABASE_USERNAME",
 						TargetName: "WORDPRESS_DB_USER",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_mysql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "WORDPRESS_DB_PASSWORD",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_mysql",
 						SourceName: "DATABASE_DEFAULT_DB_NAME",
 						TargetName: "WORDPRESS_DB_NAME",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_mysql",
 						SourceName: "DATABASE_HOST",
 						TargetName: "WORDPRESS_DB_HOST",
 					},

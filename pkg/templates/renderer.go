@@ -10,7 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inputs map[int]string, kubeNameMap map[int]string, namespace string) (*schema.TemplateDefinition, error) {
+func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inputs map[string]string, kubeNameMap map[string]string, namespace string) (*schema.TemplateDefinition, error) {
 	resolved, err := self.resolveGeneratedVariables(template, inputs)
 	if err != nil {
 		return nil, err
@@ -40,15 +40,15 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 	for _, service := range resolved.Services {
 		for _, variable := range service.Variables {
 			if variable.Value != "" && (variable.Generator == nil || variable.Generator.Type != schema.GeneratorTypeStringReplace) {
-				stringReplaceMap[fmt.Sprintf("SERVICE_%d_%s", service.ID, variable.Name)] = variable.Value
+				stringReplaceMap[fmt.Sprintf("%s_%s", strings.ToUpper(service.ID), variable.Name)] = variable.Value
 			}
 		}
 	}
 	for k, v := range kubeNameMap {
-		stringReplaceMap[fmt.Sprintf("SERVICE_%d_KUBE_NAME", k)] = v
+		stringReplaceMap[fmt.Sprintf("%s_KUBE_NAME", strings.ToUpper(k))] = v
 	}
 	for k, v := range inputs {
-		stringReplaceMap[fmt.Sprintf("INPUT_%d_VALUE", k)] = v
+		stringReplaceMap[fmt.Sprintf("%s_VALUE", strings.ToUpper(k))] = v
 	}
 
 	// Execute string replace on all StringReplace variables
@@ -84,9 +84,9 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 }
 
 // resolveDatabaseSizes resolves DatabaseSize inputs and attaches them to the relevant services
-func (self *Templater) resolveDatabaseSizes(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+func (self *Templater) resolveDatabaseSizes(template *schema.TemplateDefinition, inputs map[string]string) (*schema.TemplateDefinition, error) {
 	// We need to see if we have inputs of type DatabaseSize
-	databaseSizeInputsMap := make(map[int]schema.TemplateInput)
+	databaseSizeInputsMap := make(map[string]schema.TemplateInput)
 	for _, input := range template.Inputs {
 		if input.Type == schema.InputTypeDatabaseSize {
 			databaseSizeInputsMap[input.ID] = input
@@ -122,9 +122,9 @@ func (self *Templater) resolveDatabaseSizes(template *schema.TemplateDefinition,
 }
 
 // resolveNodePorts resolves NodePort inputs and attaches them to the relevant services
-func (self *Templater) resolveNodePorts(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+func (self *Templater) resolveNodePorts(template *schema.TemplateDefinition, inputs map[string]string) (*schema.TemplateDefinition, error) {
 	// We need to see if we have inputs of type NodePort
-	nodePortInputsMap := make(map[int]schema.TemplateInput)
+	nodePortInputsMap := make(map[string]schema.TemplateInput)
 	for _, input := range template.Inputs {
 		if input.Type == schema.InputTypeGeneratedNodePort {
 			nodePortInputsMap[input.ID] = input
@@ -168,9 +168,9 @@ func (self *Templater) resolveNodePorts(template *schema.TemplateDefinition, inp
 }
 
 // resolveVolumes resolves VolumeSize inputs and attaches them to the relevant services
-func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, inputs map[string]string) (*schema.TemplateDefinition, error) {
 	// We need to see if we have inputs of type VolumeSize
-	volumeSizeInputsMap := make(map[int]schema.TemplateInput)
+	volumeSizeInputsMap := make(map[string]schema.TemplateInput)
 	for _, input := range template.Inputs {
 		if input.Type == schema.InputTypeVolumeSize {
 			if input.Volume == nil {
@@ -213,7 +213,7 @@ func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, input
 }
 
 // resolveGeneratedVariables creates a new TemplateDefinition with all generated variables resolved to their values
-func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefinition, inputs map[int]string) (*schema.TemplateDefinition, error) {
+func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefinition, inputs map[string]string) (*schema.TemplateDefinition, error) {
 	// Create a deep copy of the template
 	resolved := &schema.TemplateDefinition{
 		Name:        template.Name,
@@ -254,13 +254,13 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 
 		// Initialize all slices if nil
 		if resolvedService.DependsOn == nil {
-			resolvedService.DependsOn = []int{}
+			resolvedService.DependsOn = []string{}
 		}
 		if resolvedService.Ports == nil {
 			resolvedService.Ports = []schema.PortSpec{}
 		}
 		if resolvedService.InputIDs == nil {
-			resolvedService.InputIDs = []int{}
+			resolvedService.InputIDs = []string{}
 		}
 		if resolvedService.VariableReferences == nil {
 			resolvedService.VariableReferences = []schema.TemplateVariableReference{}

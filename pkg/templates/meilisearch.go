@@ -16,7 +16,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the Meilisearch API.",
@@ -24,7 +24,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(7700),
 			},
 			{
-				ID:   2,
+				ID:   "input_storage_size",
 				Name: "Storage Size",
 				Type: schema.InputTypeVolumeSize,
 				Volume: &schema.TemplateVolume{
@@ -38,11 +38,11 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:       1,
+				ID:       "service_meilisearch",
 				Name:     "Meilisearch",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
-				InputIDs: []int{1, 2},
+				InputIDs: []string{"input_domain", "input_storage_size"},
 				Image:    utils.ToPtr("getmeili/meilisearch:v1.14"),
 				Ports: []schema.PortSpec{
 					{

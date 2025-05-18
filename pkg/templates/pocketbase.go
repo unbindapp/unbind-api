@@ -16,14 +16,14 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the PocketBase instance.",
 				Required:    true,
 			},
 			{
-				ID:   2,
+				ID:   "input_storage_size",
 				Name: "Storage Size",
 				Type: schema.InputTypeVolumeSize,
 				Volume: &schema.TemplateVolume{
@@ -37,11 +37,11 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:       1,
+				ID:       "service_pocketbase",
 				Name:     "PocketBase",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
-				InputIDs: []int{1},
+				InputIDs: []string{"input_domain"},
 				Image:    utils.ToPtr("ghcr.io/unbindapp/pocketbase:v0.28.1"),
 				Ports: []schema.PortSpec{
 					{

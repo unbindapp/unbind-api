@@ -16,14 +16,14 @@ func umamiTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the Umami instance.",
 				Required:    true,
 			},
 			{
-				ID:          2,
+				ID:          "input_database_size",
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
@@ -33,17 +33,17 @@ func umamiTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
+				ID:           "service_postgresql",
 				Name:         "PostgreSQL",
-				InputIDs:     []int{2},
+				InputIDs:     []string{"input_database_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 			},
 			{
-				ID:        2,
-				DependsOn: []int{1},
-				InputIDs:  []int{1},
+				ID:        "service_umami",
+				DependsOn: []string{"service_postgresql"},
+				InputIDs:  []string{"input_domain"},
 				Name:      "Umami",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
@@ -79,7 +79,7 @@ func umamiTemplate() *schema.TemplateDefinition {
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_URL",
 						TargetName: "DATABASE_URL",
 					},

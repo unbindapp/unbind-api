@@ -16,7 +16,7 @@ func minioTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain_api",
 				Name:        "Domain (API)",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the MinIO API.",
@@ -24,7 +24,7 @@ func minioTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(9000),
 			},
 			{
-				ID:          2,
+				ID:          "input_domain_ui",
 				Name:        "Domain (UI)",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the MinIO UI.",
@@ -32,7 +32,7 @@ func minioTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(9001),
 			},
 			{
-				ID:   3,
+				ID:   "input_storage_size",
 				Name: "Storage Size",
 				Type: schema.InputTypeVolumeSize,
 				Volume: &schema.TemplateVolume{
@@ -46,11 +46,11 @@ func minioTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:       1,
+				ID:       "service_minio",
 				Name:     "MinIO",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
-				InputIDs: []int{1, 2, 3},
+				InputIDs: []string{"input_domain_api", "input_domain_ui", "input_storage_size"},
 				Image:    utils.ToPtr("minio/minio:latest"),
 				Ports: []schema.PortSpec{
 					{
@@ -87,7 +87,7 @@ func minioTemplate() *schema.TemplateDefinition {
 						Name: "MINIO_SERVER_URL",
 						Generator: &schema.ValueGenerator{
 							Type:      schema.GeneratorTypeInput,
-							InputID:   1,
+							InputID:   "input_domain_api",
 							AddPrefix: "https://",
 						},
 					},
@@ -95,7 +95,7 @@ func minioTemplate() *schema.TemplateDefinition {
 						Name: "MINIO_BROWSER_REDIRECT_URL",
 						Generator: &schema.ValueGenerator{
 							Type:      schema.GeneratorTypeInput,
-							InputID:   2,
+							InputID:   "input_domain_ui",
 							AddPrefix: "https://",
 						},
 					},

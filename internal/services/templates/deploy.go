@@ -55,9 +55,8 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	// Validate template inputs and handle hosts
-	validatedInputs := make(map[int]string)
-	hostInputMap, validatedInputs, err :=
-		self.resolveHostInputs(ctx, &template.Definition, input.Inputs)
+	validatedInputs := make(map[string]string)
+	hostInputMap, validatedInputs, err := self.resolveHostInputs(ctx, &template.Definition, input.Inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +70,9 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		// Get value from provided inputs or use default
 		var value string
 		var exists bool
-		for _, input := range input.Inputs {
-			if input.ID == defInput.ID {
-				value = input.Value
+		for _, inputValue := range input.Inputs {
+			if inputValue.ID == defInput.ID {
+				value = inputValue.Value
 				exists = true
 				break
 			}
@@ -100,18 +99,18 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	// Generate node ports for node port inputs
-	portMap := make(map[int]int32)
+	portMap := make(map[string]int32)
 	portInputCount := 0
 	for _, defInput := range template.Definition.Inputs {
 		if defInput.Type == schema.InputTypeGeneratedNodePort {
 			portInputCount++
 			// Ignore if input already exists
-			for _, input := range input.Inputs {
-				if input.ID == defInput.ID {
+			for _, inputValue := range input.Inputs {
+				if inputValue.ID == defInput.ID {
 					// Parse as int32
-					port, err := strconv.Atoi(input.Value)
+					port, err := strconv.Atoi(inputValue.Value)
 					if err != nil {
-						return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("invalid node port %s for input %d", input.Value, input.ID))
+						return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("invalid node port %s for input %s", inputValue.Value, inputValue.ID))
 					}
 					portMap[defInput.ID] = int32(port)
 					break
@@ -133,7 +132,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	// Parse and generate variables
-	kubeNameMap := make(map[int]string)
+	kubeNameMap := make(map[string]string)
 
 	// Generate kube name map
 	for _, service := range template.Definition.Services {
@@ -160,7 +159,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			if _, ok := hostInputMap[id]; !ok {
 				return nil, errdefs.NewCustomError(
 					errdefs.ErrTypeInvalidInput,
-					fmt.Sprintf("service %q references unresolved host input ID %d", svc.Name, id))
+					fmt.Sprintf("service %q references unresolved host input ID %s", svc.Name, id))
 			}
 		}
 	}
@@ -174,7 +173,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	// Create services
 	var secretNames []string
 	var newServices []*ent.Service
-	dbServiceMap := make(map[int]*ent.Service)
+	dbServiceMap := make(map[string]*ent.Service)
 
 	// Generate a launch ID
 	templateInstanceID := uuid.New()
@@ -536,9 +535,9 @@ func (self *TemplatesService) resolveHostInputs(
 	ctx context.Context,
 	tmpl *schema.TemplateDefinition,
 	rawInputs []models.TemplateInputValue,
-) (map[int]v1.HostSpec, map[int]string, error) {
-	hostSpecByID := make(map[int]v1.HostSpec)
-	valueByID := make(map[int]string)
+) (map[string]v1.HostSpec, map[string]string, error) {
+	hostSpecByID := make(map[string]v1.HostSpec)
+	valueByID := make(map[string]string)
 
 	for _, in := range tmpl.Inputs {
 		if in.Type != schema.InputTypeHost {
@@ -635,7 +634,7 @@ func (self *TemplatesService) resolveHostInputs(
 	return hostSpecByID, valueByID, nil
 }
 
-func (self *TemplatesService) isHostInput(def *schema.TemplateDefinition, inputID int) bool {
+func (self *TemplatesService) isHostInput(def *schema.TemplateDefinition, inputID string) bool {
 	for _, defInput := range def.Inputs {
 		if inputID == defInput.ID {
 			return defInput.Type == schema.InputTypeHost

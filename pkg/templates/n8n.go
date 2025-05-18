@@ -16,14 +16,14 @@ func n8nTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the n8n instance.",
 				Required:    true,
 			},
 			{
-				ID:          2,
+				ID:          "input_database_size",
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
@@ -34,16 +34,16 @@ func n8nTemplate() *schema.TemplateDefinition {
 		Services: []schema.TemplateService{
 			// PostgreSQL service (workflow metadata & credentials store)
 			{
-				ID:           1,
+				ID:           "service_postgresql",
 				Name:         "PostgreSQL",
-				InputIDs:     []int{2},
+				InputIDs:     []string{"input_database_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 			},
 			// Redis service (queue backend)
 			{
-				ID:           2,
+				ID:           "service_redis",
 				Name:         "Redis",
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
@@ -51,9 +51,9 @@ func n8nTemplate() *schema.TemplateDefinition {
 			},
 			// Main n8n process (API / UI)
 			{
-				ID:        3,
-				DependsOn: []int{1, 2},
-				InputIDs:  []int{1},
+				ID:        "service_n8n",
+				DependsOn: []string{"service_postgresql", "service_redis"},
+				InputIDs:  []string{"input_domain"},
 				Name:      "n8n",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
@@ -80,14 +80,14 @@ func n8nTemplate() *schema.TemplateDefinition {
 						Name: "N8N_HOST",
 						Generator: &schema.ValueGenerator{
 							Type:    schema.GeneratorTypeInput,
-							InputID: 1,
+							InputID: "input_domain",
 						},
 					},
 					{
 						Name: "N8N_EDITOR_BASE_URL",
 						Generator: &schema.ValueGenerator{
 							Type:      schema.GeneratorTypeInput,
-							InputID:   1,
+							InputID:   "input_domain",
 							AddPrefix: "https://",
 						},
 					},
@@ -95,7 +95,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 						Name: "VUE_APP_URL_BASE_API",
 						Generator: &schema.ValueGenerator{
 							Type:      schema.GeneratorTypeInput,
-							InputID:   1,
+							InputID:   "input_domain",
 							AddPrefix: "https://",
 						},
 					},
@@ -103,7 +103,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 						Name: "WEBHOOK_TUNNEL_URL",
 						Generator: &schema.ValueGenerator{
 							Type:      schema.GeneratorTypeInput,
-							InputID:   1,
+							InputID:   "input_domain",
 							AddPrefix: "https://",
 						},
 					},
@@ -154,43 +154,43 @@ func n8nTemplate() *schema.TemplateDefinition {
 				VariableReferences: []schema.TemplateVariableReference{
 					// Postgres references (same as the simple template)
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_DEFAULT_DB_NAME",
 						TargetName: "DB_POSTGRESDB_DATABASE",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_HOST",
 						TargetName: "DB_POSTGRESDB_HOST",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PORT",
 						TargetName: "DB_POSTGRESDB_PORT",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_USERNAME",
 						TargetName: "DB_POSTGRESDB_USER",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "DB_POSTGRESDB_PASSWORD",
 					},
 					// Redis references
 					{
-						SourceID:   2,
+						SourceID:   "service_redis",
 						SourceName: "DATABASE_HOST",
 						TargetName: "QUEUE_BULL_REDIS_HOST",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_redis",
 						SourceName: "DATABASE_PORT",
 						TargetName: "QUEUE_BULL_REDIS_PORT",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_redis",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "QUEUE_BULL_REDIS_PASSWORD",
 					},
@@ -198,8 +198,8 @@ func n8nTemplate() *schema.TemplateDefinition {
 			},
 			// External n8n worker (executes jobs from the queue)
 			{
-				ID:         4,
-				DependsOn:  []int{1, 2, 3},
+				ID:         "service_n8n_worker",
+				DependsOn:  []string{"service_postgresql", "service_redis", "service_n8n"},
 				Name:       "n8n Worker",
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
@@ -255,49 +255,49 @@ func n8nTemplate() *schema.TemplateDefinition {
 				VariableReferences: []schema.TemplateVariableReference{
 					// Postgres references (same as main)
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_DEFAULT_DB_NAME",
 						TargetName: "DB_POSTGRESDB_DATABASE",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_HOST",
 						TargetName: "DB_POSTGRESDB_HOST",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PORT",
 						TargetName: "DB_POSTGRESDB_PORT",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_USERNAME",
 						TargetName: "DB_POSTGRESDB_USER",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "DB_POSTGRESDB_PASSWORD",
 					},
 					// Redis references
 					{
-						SourceID:   2,
+						SourceID:   "service_redis",
 						SourceName: "DATABASE_HOST",
 						TargetName: "QUEUE_BULL_REDIS_HOST",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_redis",
 						SourceName: "DATABASE_PORT",
 						TargetName: "QUEUE_BULL_REDIS_PORT",
 					},
 					{
-						SourceID:   2,
+						SourceID:   "service_redis",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "QUEUE_BULL_REDIS_PASSWORD",
 					},
 					// N8N references
 					{
-						SourceID:   3,
+						SourceID:   "service_n8n",
 						SourceName: "N8N_ENCRYPTION_KEY",
 						TargetName: "N8N_ENCRYPTION_KEY",
 					},

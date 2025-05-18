@@ -89,8 +89,8 @@ type TemplateDefinition struct {
 
 // TemplateService represents a service within a template
 type TemplateService struct {
-	ID                 int                         `json:"id"`
-	DependsOn          []int                       `json:"depends_on" nullable:"false"` // IDs of services that must be started before this one
+	ID                 string                      `json:"id"`
+	DependsOn          []string                    `json:"depends_on" nullable:"false"` // IDs of services that must be started before this one
 	Name               string                      `json:"name"`
 	Icon               string                      `json:"icon"`
 	Type               ServiceType                 `json:"type"`
@@ -99,7 +99,7 @@ type TemplateService struct {
 	DatabaseConfig     *DatabaseConfig             `json:"database_config,omitempty"` // Database configuration
 	Image              *string                     `json:"image,omitempty"`
 	Ports              []PortSpec                  `json:"ports" nullable:"false"` // Ports to expose
-	InputIDs           []int                       `json:"input_ids,omitempty"`    // IDs of inputs that are hostnames
+	InputIDs           []string                    `json:"input_ids,omitempty"`    // IDs of inputs that are hostnames
 	RunCommand         *string                     `json:"run_command,omitempty"`
 	Volumes            []TemplateVolume            `json:"volumes" nullable:"false"`             // Volumes to mount
 	Variables          []TemplateVariable          `json:"variables" nullable:"false"`           // Variables this service needs
@@ -121,7 +121,7 @@ type TemplateVariable struct {
 
 // TenokateVariableReference represents a reference to a variable in a template
 type TemplateVariableReference struct {
-	SourceID                  int      `json:"source_id"`
+	SourceID                  string   `json:"source_id"`
 	TargetName                string   `json:"target_name"`                 // Name of the variable
 	SourceName                string   `json:"source_name"`                 // Name of the variable
 	AdditionalTemplateSources []string `json:"additional_template_sources"` // Additional template sources to resolve the variable
@@ -173,7 +173,7 @@ type JWTParams struct {
 // ValueGenerator represents how to generate a value
 type ValueGenerator struct {
 	Type       GeneratorType  `json:"type"`
-	InputID    int            `json:"input_id,omitempty"`    // For input
+	InputID    string         `json:"input_id,omitempty"`    // For input
 	BaseDomain string         `json:"base_domain,omitempty"` // For email
 	AddPrefix  string         `json:"add_prefix,omitempty"`  // Add a prefix to the generated value
 	HashType   *ValueHashType `json:"hash_type,omitempty"`   // Hash the generated value
@@ -209,7 +209,7 @@ type GenerateResponse struct {
 	JWTValues      map[string]string `json:"jwt_values"`
 }
 
-func (self *ValueGenerator) Generate(inputs map[int]string) (*GenerateResponse, error) {
+func (self *ValueGenerator) Generate(inputs map[string]string) (*GenerateResponse, error) {
 	switch self.Type {
 	case GeneratorTypeEmail:
 		// Strip http:// or https:// from the base domain
@@ -354,7 +354,7 @@ func (u TemplateInputType) Schema(r huma.Registry) *huma.Schema {
 
 // TemplateInput represents a user input field in the template
 type TemplateInput struct {
-	ID           int               `json:"id"`
+	ID           string            `json:"id"`
 	Name         string            `json:"name"`
 	Type         TemplateInputType `json:"type"`
 	Volume       *TemplateVolume   `json:"volume,omitempty"`

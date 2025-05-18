@@ -16,7 +16,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "Hostname to use for the WireGuard instance.",
@@ -24,7 +24,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(51821), // Target TCP port
 			},
 			{
-				ID:           2,
+				ID:           "input_nodeport",
 				Name:         "NodePort",
 				Type:         schema.InputTypeGeneratedNodePort,
 				PortProtocol: utils.ToPtr(schema.ProtocolUDP),
@@ -32,7 +32,7 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				Hidden:       true,
 			},
 			{
-				ID:   3,
+				ID:   "input_storage_size",
 				Name: "Storage Size",
 				Type: schema.InputTypeVolumeSize,
 				Volume: &schema.TemplateVolume{
@@ -47,11 +47,11 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 		Services: []schema.TemplateService{
 			// WireGuard Service
 			{
-				ID:       1,
+				ID:       "service_wireguard",
 				Name:     "WireGuard",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
-				InputIDs: []int{1, 2, 3},
+				InputIDs: []string{"input_domain", "input_nodeport", "input_storage_size"},
 				Image:    utils.ToPtr("ghcr.io/wg-easy/wg-easy:14"),
 				Ports: []schema.PortSpec{
 					{
@@ -64,14 +64,14 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 						Name: "WG_HOST",
 						Generator: &schema.ValueGenerator{
 							Type:    schema.GeneratorTypeInput,
-							InputID: 1,
+							InputID: "input_domain",
 						},
 					},
 					{
 						Name: "WG_PORT",
 						Generator: &schema.ValueGenerator{
 							Type:    schema.GeneratorTypeInput,
-							InputID: 2,
+							InputID: "input_nodeport",
 						},
 					},
 					{

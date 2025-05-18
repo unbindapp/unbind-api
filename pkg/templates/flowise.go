@@ -16,14 +16,14 @@ func flowiseTemplate() *schema.TemplateDefinition {
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
-				ID:          1,
+				ID:          "input_domain",
 				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the Flowise instance.",
 				Required:    true,
 			},
 			{
-				ID:   2,
+				ID:   "input_storage_size",
 				Name: "Storage Size",
 				Type: schema.InputTypeVolumeSize,
 				Volume: &schema.TemplateVolume{
@@ -35,7 +35,7 @@ func flowiseTemplate() *schema.TemplateDefinition {
 				Default:     utils.ToPtr("1"),
 			},
 			{
-				ID:          3,
+				ID:          "input_database_size",
 				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
@@ -45,17 +45,17 @@ func flowiseTemplate() *schema.TemplateDefinition {
 		},
 		Services: []schema.TemplateService{
 			{
-				ID:           1,
+				ID:           "service_postgresql",
 				Name:         "PostgreSQL",
-				InputIDs:     []int{3},
+				InputIDs:     []string{"input_database_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("postgres"),
 			},
 			{
-				ID:         2,
-				DependsOn:  []int{1},
-				InputIDs:   []int{1, 2},
+				ID:         "service_flowise",
+				DependsOn:  []string{"service_postgresql"},
+				InputIDs:   []string{"input_domain", "input_storage_size"},
 				Name:       "Flowise",
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
@@ -119,27 +119,27 @@ func flowiseTemplate() *schema.TemplateDefinition {
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_HOST",
 						TargetName: "DATABASE_HOST",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PORT",
 						TargetName: "DATABASE_PORT",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_DEFAULT_DB_NAME",
 						TargetName: "DATABASE_NAME",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_USERNAME",
 						TargetName: "DATABASE_USER",
 					},
 					{
-						SourceID:   1,
+						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "DATABASE_PASSWORD",
 					},

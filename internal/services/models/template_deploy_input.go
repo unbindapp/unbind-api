@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 // For template inputs specifically
 type TemplateInputValue struct {
-	ID    int    `json:"id"`
+	ID    string `json:"id"`
 	Value string `json:"value"`
 }
 
