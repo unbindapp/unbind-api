@@ -24,19 +24,11 @@ func n8nTemplate() *schema.TemplateDefinition {
 			},
 			{
 				ID:          "input_database_size",
-				Name:        "Database Size (PostgreSQL)",
+				Name:        "Database Size",
 				Type:        schema.InputTypeDatabaseSize,
 				Description: "Size of the storage for the PostgreSQL database.",
 				Required:    true,
 				Default:     utils.ToPtr("1"),
-			},
-			{
-				ID:          "input_redis_database_size",
-				Name:        "Database Size (Redis)",
-				Type:        schema.InputTypeDatabaseSize,
-				Description: "Size of the storage for the Redis database.",
-				Required:    true,
-				Default:     utils.ToPtr("0.25"),
 			},
 		},
 		Services: []schema.TemplateService{
@@ -53,10 +45,12 @@ func n8nTemplate() *schema.TemplateDefinition {
 			{
 				ID:           "service_redis",
 				Name:         "Redis",
-				InputIDs:     []string{"input_redis_database_size"},
 				Type:         schema.ServiceTypeDatabase,
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("redis"),
+				DatabaseConfig: &schema.DatabaseConfig{
+					StorageSize: "1",
+				},
 			},
 			// Main n8n process (API / UI)
 			{
