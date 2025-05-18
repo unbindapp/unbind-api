@@ -215,14 +215,8 @@ func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, input
 // resolveGeneratedVariables creates a new TemplateDefinition with all generated variables resolved to their values
 func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefinition, inputs map[string]string) (*schema.TemplateDefinition, error) {
 	// Create a deep copy of the template
-	resolved := &schema.TemplateDefinition{
-		Name:        template.Name,
-		Description: template.Description,
-		Icon:        template.Icon,
-		Version:     template.Version,
-		Services:    make([]schema.TemplateService, len(template.Services)),
-		Inputs:      template.Inputs,
-	}
+	resolved := &schema.TemplateDefinition{}
+	resolved = template
 
 	// Ensure Inputs is initialized if nil
 	if resolved.Inputs == nil {
@@ -231,27 +225,8 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 
 	// Copy and resolve each service
 	for i, svc := range template.Services {
-		resolvedService := schema.TemplateService{
-			ID:                 svc.ID,
-			Icon:               svc.Icon,
-			DependsOn:          svc.DependsOn,
-			Name:               svc.Name,
-			Type:               svc.Type,
-			Builder:            svc.Builder,
-			DatabaseType:       svc.DatabaseType,
-			DatabaseConfig:     svc.DatabaseConfig,
-			Image:              svc.Image,
-			Ports:              svc.Ports,
-			InputIDs:           svc.InputIDs,
-			RunCommand:         svc.RunCommand,
-			Volumes:            svc.Volumes,
-			Variables:          svc.Variables,
-			VariableReferences: svc.VariableReferences,
-			SecurityContext:    svc.SecurityContext,
-			HealthCheck:        svc.HealthCheck,
-			VariablesMounts:    svc.VariablesMounts,
-			InitDBReplacers:    svc.InitDBReplacers,
-		}
+		resolvedService := schema.TemplateService{}
+		resolvedService = svc
 
 		// Initialize all slices if nil
 		if resolvedService.DependsOn == nil {
