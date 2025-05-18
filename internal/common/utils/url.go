@@ -127,7 +127,7 @@ func CleanAndValidateHost(host string) (string, error) {
 	}
 
 	// Check for invalid characters
-	if strings.ContainsAny(host, "!@#$%^&*()_+{}|:\"<>?[]\\;',./") {
+	if strings.ContainsAny(host, "!@#$%^&*()_+{}|:\"<>?[]\\;',") {
 		return "", fmt.Errorf("invalid domain: contains invalid characters")
 	}
 
