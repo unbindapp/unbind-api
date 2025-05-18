@@ -8,10 +8,12 @@ ALTER TABLE "group_permissions" DROP CONSTRAINT "group_permissions_permission_id
 ALTER TABLE "webhooks" DROP CONSTRAINT "webhooks_teams_team_webhooks", DROP CONSTRAINT "webhooks_projects_project_webhooks";
 -- reverse: modify "variable_references" table
 ALTER TABLE "variable_references" DROP CONSTRAINT "variable_references_services_variable_references";
+-- reverse: modify "service_groups" table
+ALTER TABLE "service_groups" DROP CONSTRAINT "service_groups_environments_service_groups";
 -- reverse: modify "service_configs" table
 ALTER TABLE "service_configs" DROP CONSTRAINT "service_configs_services_service_config", DROP CONSTRAINT "service_configs_s3_sources_service_backup_source";
 -- reverse: modify "services" table
-ALTER TABLE "services" DROP CONSTRAINT "services_github_installations_services", DROP CONSTRAINT "services_environments_services", DROP CONSTRAINT "services_deployments_current_deployment";
+ALTER TABLE "services" DROP CONSTRAINT "services_templates_services", DROP CONSTRAINT "services_service_groups_services", DROP CONSTRAINT "services_github_installations_services", DROP CONSTRAINT "services_environments_services", DROP CONSTRAINT "services_deployments_current_deployment";
 -- reverse: modify "s3_sources" table
 ALTER TABLE "s3_sources" DROP CONSTRAINT "s3_sources_teams_s3_sources";
 -- reverse: modify "projects" table
@@ -44,6 +46,10 @@ DROP TABLE "variable_references";
 DROP INDEX "users_email_key";
 -- reverse: create "users" table
 DROP TABLE "users";
+-- reverse: create index "template_name_version" to table: "templates"
+DROP INDEX "template_name_version";
+-- reverse: create "templates" table
+DROP TABLE "templates";
 -- reverse: create index "teams_namespace_key" to table: "teams"
 DROP INDEX "teams_namespace_key";
 -- reverse: create index "teams_kubernetes_name_key" to table: "teams"
@@ -52,6 +58,8 @@ DROP INDEX "teams_kubernetes_name_key";
 DROP TABLE "teams";
 -- reverse: create "system_settings" table
 DROP TABLE "system_settings";
+-- reverse: create "service_groups" table
+DROP TABLE "service_groups";
 -- reverse: create index "service_configs_service_id_key" to table: "service_configs"
 DROP INDEX "service_configs_service_id_key";
 -- reverse: create "service_configs" table
@@ -88,6 +96,8 @@ DROP TABLE "groups";
 DROP INDEX "githubinstallation_github_app_id";
 -- reverse: create "github_installations" table
 DROP TABLE "github_installations";
+-- reverse: create index "github_apps_uuid_key" to table: "github_apps"
+DROP INDEX "github_apps_uuid_key";
 -- reverse: create "github_apps" table
 DROP TABLE "github_apps";
 -- reverse: create index "environments_kubernetes_name_key" to table: "environments"
