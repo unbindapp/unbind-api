@@ -24,6 +24,14 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				TargetPort:  utils.ToPtr(8000),
 			},
 			{
+				ID:          "input_database_size",
+				Name:        "Database Size",
+				Type:        schema.InputTypeDatabaseSize,
+				Description: "Size of the storage for the PostgreSQL database.",
+				Required:    true,
+				Default:     utils.ToPtr("1"),
+			},
+			{
 				ID:   "input_storage_size",
 				Name: "Storage Size",
 				Type: schema.InputTypeVolumeSize,
@@ -41,14 +49,6 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				Type:        schema.InputTypeGeneratedPassword,
 				Description: "Password for the internal accounts that supabase creates",
 				Hidden:      true,
-			},
-			{
-				ID:          "input_database_size",
-				Name:        "Database Size",
-				Type:        schema.InputTypeDatabaseSize,
-				Description: "Size of the storage for the PostgreSQL database.",
-				Required:    true,
-				Default:     utils.ToPtr("1"),
 			},
 		},
 		Services: []schema.TemplateService{
