@@ -35,6 +35,8 @@ const (
 	FieldCommitMessage = "commit_message"
 	// FieldCommitAuthor holds the string denoting the commit_author field in the database.
 	FieldCommitAuthor = "commit_author"
+	// FieldQueuedAt holds the string denoting the queued_at field in the database.
+	FieldQueuedAt = "queued_at"
 	// FieldStartedAt holds the string denoting the started_at field in the database.
 	FieldStartedAt = "started_at"
 	// FieldCompletedAt holds the string denoting the completed_at field in the database.
@@ -74,6 +76,7 @@ var Columns = []string{
 	FieldCommitSha,
 	FieldCommitMessage,
 	FieldCommitAuthor,
+	FieldQueuedAt,
 	FieldStartedAt,
 	FieldCompletedAt,
 	FieldKubernetesJobName,
@@ -109,7 +112,7 @@ var (
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s schema.DeploymentStatus) error {
 	switch s {
-	case "queued", "building", "succeeded", "cancelled", "failed":
+	case "pending", "queued", "building", "succeeded", "cancelled", "failed":
 		return nil
 	default:
 		return fmt.Errorf("deployment: invalid enum value for status field: %q", s)
@@ -174,6 +177,11 @@ func ByCommitSha(opts ...sql.OrderTermOption) OrderOption {
 // ByCommitMessage orders the results by the commit_message field.
 func ByCommitMessage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCommitMessage, opts...).ToFunc()
+}
+
+// ByQueuedAt orders the results by the queued_at field.
+func ByQueuedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldQueuedAt, opts...).ToFunc()
 }
 
 // ByStartedAt orders the results by the started_at field.

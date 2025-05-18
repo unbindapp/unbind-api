@@ -87,6 +87,11 @@ func CommitMessage(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldCommitMessage, v))
 }
 
+// QueuedAt applies equality check predicate on the "queued_at" field. It's identical to QueuedAtEQ.
+func QueuedAt(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldQueuedAt, v))
+}
+
 // StartedAt applies equality check predicate on the "started_at" field. It's identical to StartedAtEQ.
 func StartedAt(v time.Time) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldStartedAt, v))
@@ -510,6 +515,56 @@ func CommitAuthorIsNil() predicate.Deployment {
 // CommitAuthorNotNil applies the NotNil predicate on the "commit_author" field.
 func CommitAuthorNotNil() predicate.Deployment {
 	return predicate.Deployment(sql.FieldNotNull(FieldCommitAuthor))
+}
+
+// QueuedAtEQ applies the EQ predicate on the "queued_at" field.
+func QueuedAtEQ(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldQueuedAt, v))
+}
+
+// QueuedAtNEQ applies the NEQ predicate on the "queued_at" field.
+func QueuedAtNEQ(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldQueuedAt, v))
+}
+
+// QueuedAtIn applies the In predicate on the "queued_at" field.
+func QueuedAtIn(vs ...time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldQueuedAt, vs...))
+}
+
+// QueuedAtNotIn applies the NotIn predicate on the "queued_at" field.
+func QueuedAtNotIn(vs ...time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldQueuedAt, vs...))
+}
+
+// QueuedAtGT applies the GT predicate on the "queued_at" field.
+func QueuedAtGT(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldQueuedAt, v))
+}
+
+// QueuedAtGTE applies the GTE predicate on the "queued_at" field.
+func QueuedAtGTE(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldQueuedAt, v))
+}
+
+// QueuedAtLT applies the LT predicate on the "queued_at" field.
+func QueuedAtLT(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldQueuedAt, v))
+}
+
+// QueuedAtLTE applies the LTE predicate on the "queued_at" field.
+func QueuedAtLTE(v time.Time) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldQueuedAt, v))
+}
+
+// QueuedAtIsNil applies the IsNil predicate on the "queued_at" field.
+func QueuedAtIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldQueuedAt))
+}
+
+// QueuedAtNotNil applies the NotNil predicate on the "queued_at" field.
+func QueuedAtNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldQueuedAt))
 }
 
 // StartedAtEQ applies the EQ predicate on the "started_at" field.

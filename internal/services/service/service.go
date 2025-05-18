@@ -3,7 +3,6 @@ package service_service
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
@@ -231,22 +230,6 @@ func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, 
 				services[i].Config.Volumes[j].UsedGB = stat.UsedGB
 			}
 		}
-	}
-
-	return nil
-}
-
-// Attach queue data to services
-func (self *ServiceService) attachQueueDataToServices(ctx context.Context, services []*models.ServiceResponse) error {
-	// Attach queue items
-	queuedServices, err := self.deploymentController.GetServicesInQueue(ctx)
-	if err != nil {
-		log.Error("failed to get services in queue", "error", err)
-		return err
-	}
-
-	for i := range services {
-		services[i].HasDeploymentInQueue = slices.Contains(queuedServices, services[i].ID)
 	}
 
 	return nil

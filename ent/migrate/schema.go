@@ -25,12 +25,13 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "building", "succeeded", "cancelled", "failed"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "queued", "building", "succeeded", "cancelled", "failed"}},
 		{Name: "source", Type: field.TypeEnum, Enums: []string{"manual", "git"}, Default: "manual"},
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "commit_sha", Type: field.TypeString, Nullable: true},
 		{Name: "commit_message", Type: field.TypeString, Nullable: true},
 		{Name: "commit_author", Type: field.TypeJSON, Nullable: true},
+		{Name: "queued_at", Type: field.TypeTime, Nullable: true},
 		{Name: "started_at", Type: field.TypeTime, Nullable: true},
 		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "kubernetes_job_name", Type: field.TypeString, Nullable: true},
@@ -48,7 +49,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "deployments_services_deployments",
-				Columns:    []*schema.Column{DeploymentsColumns[16]},
+				Columns:    []*schema.Column{DeploymentsColumns[17]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},

@@ -13,7 +13,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (self *DeploymentRepository) Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error) {
+func (self *DeploymentRepository) Create(ctx context.Context,
+	tx repository.TxInterface,
+	serviceID uuid.UUID,
+	CommitSHA,
+	CommitMessage string,
+	committer *schema.GitCommitter,
+	source schema.DeploymentSource,
+	initialStatus schema.DeploymentStatus) (*ent.Deployment, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
@@ -21,7 +28,7 @@ func (self *DeploymentRepository) Create(ctx context.Context, tx repository.TxIn
 
 	c := db.Deployment.Create().
 		SetServiceID(serviceID).
-		SetStatus(schema.DeploymentStatusQueued).
+		SetStatus(initialStatus).
 		SetSource(source).
 		SetCommitAuthor(committer)
 	if CommitSHA != "" {
@@ -30,7 +37,22 @@ func (self *DeploymentRepository) Create(ctx context.Context, tx repository.TxIn
 	if CommitMessage != "" {
 		c.SetCommitMessage(CommitMessage)
 	}
+	if initialStatus == schema.DeploymentStatusQueued {
+		c.SetQueuedAt(time.Now())
+	}
 	return c.Save(ctx)
+}
+
+func (self *DeploymentRepository) MarkQueued(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, queuedAt time.Time) (*ent.Deployment, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	return db.Deployment.UpdateOneID(deploymentID).
+		SetStatus(schema.DeploymentStatusQueued).
+		SetQueuedAt(queuedAt).
+		Save(ctx)
 }
 
 func (self *DeploymentRepository) MarkStarted(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, startedAt time.Time) (*ent.Deployment, error) {

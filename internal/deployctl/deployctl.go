@@ -32,6 +32,8 @@ const DEPENDENT_SERVICES_QUEUE_KEY = "unbind:dependent-services:queue"
 
 // The request to deploy a service, includes environment for builder image
 type DeploymentJobRequest struct {
+	// If job has already been created in pending
+	ExistingJobID *uuid.UUID              `json:"existing_job_id"`
 	ServiceID     uuid.UUID               `json:"service_id"`
 	Source        schema.DeploymentSource `json:"source"`
 	CommitSHA     string                  `json:"commit_sha"`
@@ -113,30 +115,6 @@ func (self *DeploymentController) startStatusSynchronizer() {
 			}
 		}
 	}
-}
-
-// Get queues and return a slice of service IDs in queue
-func (self *DeploymentController) GetServicesInQueue(ctx context.Context) ([]uuid.UUID, error) {
-	// Get all items in the queue
-	items, err := self.jobQueue.GetAll(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read queue: %w", err)
-	}
-	itemsInDependentQueue, err := self.dependentQueue.GetAll(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read dependent queue: %w", err)
-	}
-
-	// Extract service IDs from the items
-	serviceIDs := make([]uuid.UUID, len(items)+len(itemsInDependentQueue))
-	for i, item := range items {
-		serviceIDs[i] = item.Data.ServiceID
-	}
-	for i, item := range itemsInDependentQueue {
-		serviceIDs[i+len(items)] = item.Data.ServiceID
-	}
-
-	return serviceIDs, nil
 }
 
 // Populate build environment, take tag separately so we can use it to build from tag
@@ -393,18 +371,35 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 	}
 
 	// Create a record in the database
-	job, err = self.repo.Deployment().Create(
-		ctx,
-		nil,
-		req.ServiceID,
-		req.CommitSHA,
-		req.CommitMessage,
-		req.Committer,
-		req.Source,
-	)
+	if req.ExistingJobID != nil {
+		job, err = self.repo.Deployment().GetByID(ctx, *req.ExistingJobID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
+			}
+			return nil, fmt.Errorf("failed to get existing job: %w", err)
+		}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to create deployment record: %w", err)
+		// Update the job status as queued
+		job, err = self.repo.Deployment().MarkQueued(ctx, nil, *req.ExistingJobID, time.Now())
+		if err != nil {
+			return nil, fmt.Errorf("failed to mark job as queued: %w", err)
+		}
+	} else {
+		job, err = self.repo.Deployment().Create(
+			ctx,
+			nil,
+			req.ServiceID,
+			req.CommitSHA,
+			req.CommitMessage,
+			req.Committer,
+			req.Source,
+			schema.DeploymentStatusQueued,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to create deployment record: %w", err)
+		}
 	}
 
 	req.Environment["SERVICE_DEPLOYMENT_ID"] = job.ID.String()
@@ -703,6 +698,20 @@ func (self *DeploymentController) AreDependenciesReady(ctx context.Context, serv
 
 // EnqueueDependentDeployment adds a deployment to the dependent services queue
 func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context, req DeploymentJobRequest) error {
+	// Create as pending
+	job, err := self.repo.Deployment().Create(
+		ctx,
+		nil,
+		req.ServiceID,
+		req.CommitSHA,
+		req.CommitMessage,
+		req.Committer,
+		req.Source,
+		schema.DeploymentStatusPending)
+	if err != nil {
+		return fmt.Errorf("failed to create dependent deployment record: %w", err)
+	}
+	req.ExistingJobID = utils.ToPtr(job.ID)
 	// Add to the dependent queue
 	return self.dependentQueue.Enqueue(ctx, uuid.New().String(), req)
 }

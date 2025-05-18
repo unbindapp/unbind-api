@@ -15,7 +15,8 @@ import (
 
 // DeploymentRepositoryInterface ...
 type DeploymentRepositoryInterface interface {
-	Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource) (*ent.Deployment, error)
+	Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource, initialStatus schema.DeploymentStatus) (*ent.Deployment, error)
+	MarkQueued(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, queuedAt time.Time) (*ent.Deployment, error)
 	MarkStarted(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, startedAt time.Time) (*ent.Deployment, error)
 	MarkFailed(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, message string, failedAt time.Time) (*ent.Deployment, error)
 	MarkSucceeded(ctx context.Context, tx repository.TxInterface, deploymentID uuid.UUID, completedAt time.Time) (*ent.Deployment, error)

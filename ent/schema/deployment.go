@@ -18,6 +18,7 @@ import (
 type DeploymentStatus string
 
 const (
+	DeploymentStatusPending   DeploymentStatus = "pending"
 	DeploymentStatusQueued    DeploymentStatus = "queued"
 	DeploymentStatusBuilding  DeploymentStatus = "building"
 	DeploymentStatusSucceeded DeploymentStatus = "succeeded"
@@ -26,6 +27,7 @@ const (
 )
 
 var allDeploymentStatuses = []DeploymentStatus{
+	DeploymentStatusPending,
 	DeploymentStatusQueued,
 	DeploymentStatusBuilding,
 	DeploymentStatusSucceeded,
@@ -126,6 +128,9 @@ func (Deployment) Fields() []ent.Field {
 			Nillable(),
 		field.JSON("commit_author", &GitCommitter{}).
 			Optional(),
+		field.Time("queued_at").
+			Optional().
+			Nillable(),
 		field.Time("started_at").
 			Optional().
 			Nillable(),

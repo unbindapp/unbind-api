@@ -129,6 +129,20 @@ func (dc *DeploymentCreate) SetCommitAuthor(sc *schema.GitCommitter) *Deployment
 	return dc
 }
 
+// SetQueuedAt sets the "queued_at" field.
+func (dc *DeploymentCreate) SetQueuedAt(t time.Time) *DeploymentCreate {
+	dc.mutation.SetQueuedAt(t)
+	return dc
+}
+
+// SetNillableQueuedAt sets the "queued_at" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableQueuedAt(t *time.Time) *DeploymentCreate {
+	if t != nil {
+		dc.SetQueuedAt(*t)
+	}
+	return dc
+}
+
 // SetStartedAt sets the "started_at" field.
 func (dc *DeploymentCreate) SetStartedAt(t time.Time) *DeploymentCreate {
 	dc.mutation.SetStartedAt(t)
@@ -396,6 +410,10 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)
 		_node.CommitAuthor = value
 	}
+	if value, ok := dc.mutation.QueuedAt(); ok {
+		_spec.SetField(deployment.FieldQueuedAt, field.TypeTime, value)
+		_node.QueuedAt = &value
+	}
 	if value, ok := dc.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)
 		_node.StartedAt = &value
@@ -610,6 +628,24 @@ func (u *DeploymentUpsert) UpdateCommitAuthor() *DeploymentUpsert {
 // ClearCommitAuthor clears the value of the "commit_author" field.
 func (u *DeploymentUpsert) ClearCommitAuthor() *DeploymentUpsert {
 	u.SetNull(deployment.FieldCommitAuthor)
+	return u
+}
+
+// SetQueuedAt sets the "queued_at" field.
+func (u *DeploymentUpsert) SetQueuedAt(v time.Time) *DeploymentUpsert {
+	u.Set(deployment.FieldQueuedAt, v)
+	return u
+}
+
+// UpdateQueuedAt sets the "queued_at" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateQueuedAt() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldQueuedAt)
+	return u
+}
+
+// ClearQueuedAt clears the value of the "queued_at" field.
+func (u *DeploymentUpsert) ClearQueuedAt() *DeploymentUpsert {
+	u.SetNull(deployment.FieldQueuedAt)
 	return u
 }
 
@@ -927,6 +963,27 @@ func (u *DeploymentUpsertOne) UpdateCommitAuthor() *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) ClearCommitAuthor() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearCommitAuthor()
+	})
+}
+
+// SetQueuedAt sets the "queued_at" field.
+func (u *DeploymentUpsertOne) SetQueuedAt(v time.Time) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetQueuedAt(v)
+	})
+}
+
+// UpdateQueuedAt sets the "queued_at" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateQueuedAt() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateQueuedAt()
+	})
+}
+
+// ClearQueuedAt clears the value of the "queued_at" field.
+func (u *DeploymentUpsertOne) ClearQueuedAt() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearQueuedAt()
 	})
 }
 
@@ -1432,6 +1489,27 @@ func (u *DeploymentUpsertBulk) UpdateCommitAuthor() *DeploymentUpsertBulk {
 func (u *DeploymentUpsertBulk) ClearCommitAuthor() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearCommitAuthor()
+	})
+}
+
+// SetQueuedAt sets the "queued_at" field.
+func (u *DeploymentUpsertBulk) SetQueuedAt(v time.Time) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetQueuedAt(v)
+	})
+}
+
+// UpdateQueuedAt sets the "queued_at" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateQueuedAt() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateQueuedAt()
+	})
+}
+
+// ClearQueuedAt clears the value of the "queued_at" field.
+func (u *DeploymentUpsertBulk) ClearQueuedAt() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearQueuedAt()
 	})
 }
 

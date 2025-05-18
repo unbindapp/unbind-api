@@ -153,6 +153,26 @@ func (du *DeploymentUpdate) ClearCommitAuthor() *DeploymentUpdate {
 	return du
 }
 
+// SetQueuedAt sets the "queued_at" field.
+func (du *DeploymentUpdate) SetQueuedAt(t time.Time) *DeploymentUpdate {
+	du.mutation.SetQueuedAt(t)
+	return du
+}
+
+// SetNillableQueuedAt sets the "queued_at" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableQueuedAt(t *time.Time) *DeploymentUpdate {
+	if t != nil {
+		du.SetQueuedAt(*t)
+	}
+	return du
+}
+
+// ClearQueuedAt clears the value of the "queued_at" field.
+func (du *DeploymentUpdate) ClearQueuedAt() *DeploymentUpdate {
+	du.mutation.ClearQueuedAt()
+	return du
+}
+
 // SetStartedAt sets the "started_at" field.
 func (du *DeploymentUpdate) SetStartedAt(t time.Time) *DeploymentUpdate {
 	du.mutation.SetStartedAt(t)
@@ -407,6 +427,12 @@ func (du *DeploymentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if du.mutation.CommitAuthorCleared() {
 		_spec.ClearField(deployment.FieldCommitAuthor, field.TypeJSON)
 	}
+	if value, ok := du.mutation.QueuedAt(); ok {
+		_spec.SetField(deployment.FieldQueuedAt, field.TypeTime, value)
+	}
+	if du.mutation.QueuedAtCleared() {
+		_spec.ClearField(deployment.FieldQueuedAt, field.TypeTime)
+	}
 	if value, ok := du.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)
 	}
@@ -617,6 +643,26 @@ func (duo *DeploymentUpdateOne) SetCommitAuthor(sc *schema.GitCommitter) *Deploy
 // ClearCommitAuthor clears the value of the "commit_author" field.
 func (duo *DeploymentUpdateOne) ClearCommitAuthor() *DeploymentUpdateOne {
 	duo.mutation.ClearCommitAuthor()
+	return duo
+}
+
+// SetQueuedAt sets the "queued_at" field.
+func (duo *DeploymentUpdateOne) SetQueuedAt(t time.Time) *DeploymentUpdateOne {
+	duo.mutation.SetQueuedAt(t)
+	return duo
+}
+
+// SetNillableQueuedAt sets the "queued_at" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableQueuedAt(t *time.Time) *DeploymentUpdateOne {
+	if t != nil {
+		duo.SetQueuedAt(*t)
+	}
+	return duo
+}
+
+// ClearQueuedAt clears the value of the "queued_at" field.
+func (duo *DeploymentUpdateOne) ClearQueuedAt() *DeploymentUpdateOne {
+	duo.mutation.ClearQueuedAt()
 	return duo
 }
 
@@ -903,6 +949,12 @@ func (duo *DeploymentUpdateOne) sqlSave(ctx context.Context) (_node *Deployment,
 	}
 	if duo.mutation.CommitAuthorCleared() {
 		_spec.ClearField(deployment.FieldCommitAuthor, field.TypeJSON)
+	}
+	if value, ok := duo.mutation.QueuedAt(); ok {
+		_spec.SetField(deployment.FieldQueuedAt, field.TypeTime, value)
+	}
+	if duo.mutation.QueuedAtCleared() {
+		_spec.ClearField(deployment.FieldQueuedAt, field.TypeTime)
 	}
 	if value, ok := duo.mutation.StartedAt(); ok {
 		_spec.SetField(deployment.FieldStartedAt, field.TypeTime, value)

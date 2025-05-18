@@ -30,7 +30,6 @@ type ServiceResponse struct {
 	Template                 *TemplateShortResponse `json:"template,omitempty"`
 	TemplateInstanceID       *uuid.UUID             `json:"template_instance_id,omitempty"`
 	ServiceGroup             *ServiceGroupResponse  `json:"service_group,omitempty"`
-	HasDeploymentInQueue     bool                   `json:"has_deployment_in_queue"`
 }
 
 // TransformServiceEntity transforms an ent.Service entity into a ServiceResponse

@@ -41,6 +41,8 @@ type Deployment struct {
 	CommitMessage *string `json:"commit_message,omitempty"`
 	// CommitAuthor holds the value of the "commit_author" field.
 	CommitAuthor *schema.GitCommitter `json:"commit_author,omitempty"`
+	// QueuedAt holds the value of the "queued_at" field.
+	QueuedAt *time.Time `json:"queued_at,omitempty"`
 	// StartedAt holds the value of the "started_at" field.
 	StartedAt *time.Time `json:"started_at,omitempty"`
 	// CompletedAt holds the value of the "completed_at" field.
@@ -92,7 +94,7 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus, deployment.FieldImage:
 			values[i] = new(sql.NullString)
-		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt, deployment.FieldStartedAt, deployment.FieldCompletedAt:
+		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt, deployment.FieldQueuedAt, deployment.FieldStartedAt, deployment.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
 		case deployment.FieldID, deployment.FieldServiceID:
 			values[i] = new(uuid.UUID)
@@ -174,6 +176,13 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &d.CommitAuthor); err != nil {
 					return fmt.Errorf("unmarshal field commit_author: %w", err)
 				}
+			}
+		case deployment.FieldQueuedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field queued_at", values[i])
+			} else if value.Valid {
+				d.QueuedAt = new(time.Time)
+				*d.QueuedAt = value.Time
 			}
 		case deployment.FieldStartedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -293,6 +302,11 @@ func (d *Deployment) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("commit_author=")
 	builder.WriteString(fmt.Sprintf("%v", d.CommitAuthor))
+	builder.WriteString(", ")
+	if v := d.QueuedAt; v != nil {
+		builder.WriteString("queued_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	if v := d.StartedAt; v != nil {
 		builder.WriteString("started_at=")

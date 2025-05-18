@@ -413,6 +413,7 @@ type DeploymentMutation struct {
 	commit_sha            *string
 	commit_message        *string
 	commit_author         **schema.GitCommitter
+	queued_at             *time.Time
 	started_at            *time.Time
 	completed_at          *time.Time
 	kubernetes_job_name   *string
@@ -909,6 +910,55 @@ func (m *DeploymentMutation) ResetCommitAuthor() {
 	delete(m.clearedFields, deployment.FieldCommitAuthor)
 }
 
+// SetQueuedAt sets the "queued_at" field.
+func (m *DeploymentMutation) SetQueuedAt(t time.Time) {
+	m.queued_at = &t
+}
+
+// QueuedAt returns the value of the "queued_at" field in the mutation.
+func (m *DeploymentMutation) QueuedAt() (r time.Time, exists bool) {
+	v := m.queued_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQueuedAt returns the old "queued_at" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldQueuedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQueuedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQueuedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQueuedAt: %w", err)
+	}
+	return oldValue.QueuedAt, nil
+}
+
+// ClearQueuedAt clears the value of the "queued_at" field.
+func (m *DeploymentMutation) ClearQueuedAt() {
+	m.queued_at = nil
+	m.clearedFields[deployment.FieldQueuedAt] = struct{}{}
+}
+
+// QueuedAtCleared returns if the "queued_at" field was cleared in this mutation.
+func (m *DeploymentMutation) QueuedAtCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldQueuedAt]
+	return ok
+}
+
+// ResetQueuedAt resets all changes to the "queued_at" field.
+func (m *DeploymentMutation) ResetQueuedAt() {
+	m.queued_at = nil
+	delete(m.clearedFields, deployment.FieldQueuedAt)
+}
+
 // SetStartedAt sets the "started_at" field.
 func (m *DeploymentMutation) SetStartedAt(t time.Time) {
 	m.started_at = &t
@@ -1320,7 +1370,7 @@ func (m *DeploymentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeploymentMutation) Fields() []string {
-	fields := make([]string, 0, 16)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, deployment.FieldCreatedAt)
 	}
@@ -1347,6 +1397,9 @@ func (m *DeploymentMutation) Fields() []string {
 	}
 	if m.commit_author != nil {
 		fields = append(fields, deployment.FieldCommitAuthor)
+	}
+	if m.queued_at != nil {
+		fields = append(fields, deployment.FieldQueuedAt)
 	}
 	if m.started_at != nil {
 		fields = append(fields, deployment.FieldStartedAt)
@@ -1395,6 +1448,8 @@ func (m *DeploymentMutation) Field(name string) (ent.Value, bool) {
 		return m.CommitMessage()
 	case deployment.FieldCommitAuthor:
 		return m.CommitAuthor()
+	case deployment.FieldQueuedAt:
+		return m.QueuedAt()
 	case deployment.FieldStartedAt:
 		return m.StartedAt()
 	case deployment.FieldCompletedAt:
@@ -1436,6 +1491,8 @@ func (m *DeploymentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCommitMessage(ctx)
 	case deployment.FieldCommitAuthor:
 		return m.OldCommitAuthor(ctx)
+	case deployment.FieldQueuedAt:
+		return m.OldQueuedAt(ctx)
 	case deployment.FieldStartedAt:
 		return m.OldStartedAt(ctx)
 	case deployment.FieldCompletedAt:
@@ -1521,6 +1578,13 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCommitAuthor(v)
+		return nil
+	case deployment.FieldQueuedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQueuedAt(v)
 		return nil
 	case deployment.FieldStartedAt:
 		v, ok := value.(time.Time)
@@ -1628,6 +1692,9 @@ func (m *DeploymentMutation) ClearedFields() []string {
 	if m.FieldCleared(deployment.FieldCommitAuthor) {
 		fields = append(fields, deployment.FieldCommitAuthor)
 	}
+	if m.FieldCleared(deployment.FieldQueuedAt) {
+		fields = append(fields, deployment.FieldQueuedAt)
+	}
 	if m.FieldCleared(deployment.FieldStartedAt) {
 		fields = append(fields, deployment.FieldStartedAt)
 	}
@@ -1671,6 +1738,9 @@ func (m *DeploymentMutation) ClearField(name string) error {
 		return nil
 	case deployment.FieldCommitAuthor:
 		m.ClearCommitAuthor()
+		return nil
+	case deployment.FieldQueuedAt:
+		m.ClearQueuedAt()
 		return nil
 	case deployment.FieldStartedAt:
 		m.ClearStartedAt()
@@ -1724,6 +1794,9 @@ func (m *DeploymentMutation) ResetField(name string) error {
 		return nil
 	case deployment.FieldCommitAuthor:
 		m.ResetCommitAuthor()
+		return nil
+	case deployment.FieldQueuedAt:
+		m.ResetQueuedAt()
 		return nil
 	case deployment.FieldStartedAt:
 		m.ResetStartedAt()
