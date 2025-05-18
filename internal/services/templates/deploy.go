@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -214,8 +215,10 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					}
 				}
 
-				// ! TODO - validate validity
 				if templateService.DatabaseConfig != nil && templateService.DatabaseConfig.Version != "" {
+					if len(versionProperty.Enum) > 0 && !slices.Contains(versionProperty.Enum, templateService.DatabaseConfig.Version) {
+						return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("Database version %s not found for %s", templateService.DatabaseConfig.Version, *templateService.DatabaseType))
+					}
 					dbVersion = utils.ToPtr(templateService.DatabaseConfig.Version)
 				}
 

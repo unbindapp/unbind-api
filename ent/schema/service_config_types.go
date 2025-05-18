@@ -215,6 +215,7 @@ type DatabaseConfig struct {
 	StorageSize         string `json:"storage,omitempty" required:"false" description:"Storage size for the database"`
 	DefaultDatabaseName string `json:"defaultDatabaseName,omitempty" required:"false" description:"Default database name"`
 	InitDB              string `json:"initdb,omitempty" required:"false" description:"SQL commands to run to initialize the database"`
+	WalLevel            string `json:"walLevel,omitempty" required:"false" description:"PostgreSQL WAL level"`
 }
 
 func (self *DatabaseConfig) AsV1DatabaseConfig() *v1.DatabaseConfigSpec {
@@ -226,6 +227,7 @@ func (self *DatabaseConfig) AsV1DatabaseConfig() *v1.DatabaseConfigSpec {
 		StorageSize:         self.StorageSize,
 		DefaultDatabaseName: self.DefaultDatabaseName,
 		InitDB:              self.InitDB,
+		WalLevel:            self.WalLevel,
 	}
 	return dbConfig
 }
