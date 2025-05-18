@@ -1,6 +1,34 @@
 # Docker file for github actions CI build
 FROM stablecog/ubuntu:22.04
 
+# Install mise for railpack
+ARG MISE_VERSION=2025.3.0
+ARG MISE_DIR=/tmp/railpack/mise
+ARG MISE_BIN=${MISE_DIR}/mise-${MISE_VERSION}
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    mkdir -p "${MISE_DIR}" && \
+    \
+    # Detect host architecture and map to the correct asset name
+    ARCH="$(uname -m)"; \
+    case "${ARCH}" in \
+      x86_64)   MISE_ASSET="linux-x64"  ;; \
+      aarch64|arm64) MISE_ASSET="linux-arm64" ;; \
+      armv7l)   MISE_ASSET="linux-armv7" ;; \
+      *) echo "Unsupported architecture: ${ARCH}" && exit 1 ;; \
+    esac && \
+    \
+    # Download the statically-linked binary that matches the platform
+    curl -L -o "${MISE_BIN}" \
+      "https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/mise-v${MISE_VERSION}-${MISE_ASSET}" && \
+    chmod +x "${MISE_BIN}" && \
+    ln -sf "${MISE_BIN}" /usr/local/bin/mise && \
+    \
+    # Clean up build deps to minimise final image size
+    apt-get purge -y --auto-remove curl && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY ./internal/oauth2server/template/* /app/template/
 COPY ./ent/migrate/migrations/* /app/migrations/
 COPY ./cmd/api/api /app/api
