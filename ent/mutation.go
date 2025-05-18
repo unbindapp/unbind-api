@@ -12681,8 +12681,8 @@ type ServiceConfigMutation struct {
 	backup_schedule           *string
 	backup_retention_count    *int
 	addbackup_retention_count *int
-	volume_name               *string
-	volume_mount_path         *string
+	volumes                   *[]schema.ServiceVolume
+	appendvolumes             []schema.ServiceVolume
 	security_context          **schema.SecurityContext
 	health_check              **schema.HealthCheck
 	variable_mounts           *[]*schema.VariableMount
@@ -14019,102 +14019,69 @@ func (m *ServiceConfigMutation) ResetBackupRetentionCount() {
 	m.addbackup_retention_count = nil
 }
 
-// SetVolumeName sets the "volume_name" field.
-func (m *ServiceConfigMutation) SetVolumeName(s string) {
-	m.volume_name = &s
+// SetVolumes sets the "volumes" field.
+func (m *ServiceConfigMutation) SetVolumes(sv []schema.ServiceVolume) {
+	m.volumes = &sv
+	m.appendvolumes = nil
 }
 
-// VolumeName returns the value of the "volume_name" field in the mutation.
-func (m *ServiceConfigMutation) VolumeName() (r string, exists bool) {
-	v := m.volume_name
+// Volumes returns the value of the "volumes" field in the mutation.
+func (m *ServiceConfigMutation) Volumes() (r []schema.ServiceVolume, exists bool) {
+	v := m.volumes
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldVolumeName returns the old "volume_name" field's value of the ServiceConfig entity.
+// OldVolumes returns the old "volumes" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldVolumeName(ctx context.Context) (v *string, err error) {
+func (m *ServiceConfigMutation) OldVolumes(ctx context.Context) (v []schema.ServiceVolume, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldVolumeName is only allowed on UpdateOne operations")
+		return v, errors.New("OldVolumes is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldVolumeName requires an ID field in the mutation")
+		return v, errors.New("OldVolumes requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldVolumeName: %w", err)
+		return v, fmt.Errorf("querying old value for OldVolumes: %w", err)
 	}
-	return oldValue.VolumeName, nil
+	return oldValue.Volumes, nil
 }
 
-// ClearVolumeName clears the value of the "volume_name" field.
-func (m *ServiceConfigMutation) ClearVolumeName() {
-	m.volume_name = nil
-	m.clearedFields[serviceconfig.FieldVolumeName] = struct{}{}
+// AppendVolumes adds sv to the "volumes" field.
+func (m *ServiceConfigMutation) AppendVolumes(sv []schema.ServiceVolume) {
+	m.appendvolumes = append(m.appendvolumes, sv...)
 }
 
-// VolumeNameCleared returns if the "volume_name" field was cleared in this mutation.
-func (m *ServiceConfigMutation) VolumeNameCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldVolumeName]
+// AppendedVolumes returns the list of values that were appended to the "volumes" field in this mutation.
+func (m *ServiceConfigMutation) AppendedVolumes() ([]schema.ServiceVolume, bool) {
+	if len(m.appendvolumes) == 0 {
+		return nil, false
+	}
+	return m.appendvolumes, true
+}
+
+// ClearVolumes clears the value of the "volumes" field.
+func (m *ServiceConfigMutation) ClearVolumes() {
+	m.volumes = nil
+	m.appendvolumes = nil
+	m.clearedFields[serviceconfig.FieldVolumes] = struct{}{}
+}
+
+// VolumesCleared returns if the "volumes" field was cleared in this mutation.
+func (m *ServiceConfigMutation) VolumesCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldVolumes]
 	return ok
 }
 
-// ResetVolumeName resets all changes to the "volume_name" field.
-func (m *ServiceConfigMutation) ResetVolumeName() {
-	m.volume_name = nil
-	delete(m.clearedFields, serviceconfig.FieldVolumeName)
-}
-
-// SetVolumeMountPath sets the "volume_mount_path" field.
-func (m *ServiceConfigMutation) SetVolumeMountPath(s string) {
-	m.volume_mount_path = &s
-}
-
-// VolumeMountPath returns the value of the "volume_mount_path" field in the mutation.
-func (m *ServiceConfigMutation) VolumeMountPath() (r string, exists bool) {
-	v := m.volume_mount_path
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldVolumeMountPath returns the old "volume_mount_path" field's value of the ServiceConfig entity.
-// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldVolumeMountPath(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldVolumeMountPath is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldVolumeMountPath requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldVolumeMountPath: %w", err)
-	}
-	return oldValue.VolumeMountPath, nil
-}
-
-// ClearVolumeMountPath clears the value of the "volume_mount_path" field.
-func (m *ServiceConfigMutation) ClearVolumeMountPath() {
-	m.volume_mount_path = nil
-	m.clearedFields[serviceconfig.FieldVolumeMountPath] = struct{}{}
-}
-
-// VolumeMountPathCleared returns if the "volume_mount_path" field was cleared in this mutation.
-func (m *ServiceConfigMutation) VolumeMountPathCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldVolumeMountPath]
-	return ok
-}
-
-// ResetVolumeMountPath resets all changes to the "volume_mount_path" field.
-func (m *ServiceConfigMutation) ResetVolumeMountPath() {
-	m.volume_mount_path = nil
-	delete(m.clearedFields, serviceconfig.FieldVolumeMountPath)
+// ResetVolumes resets all changes to the "volumes" field.
+func (m *ServiceConfigMutation) ResetVolumes() {
+	m.volumes = nil
+	m.appendvolumes = nil
+	delete(m.clearedFields, serviceconfig.FieldVolumes)
 }
 
 // SetSecurityContext sets the "security_context" field.
@@ -14446,7 +14413,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 32)
+	fields := make([]string, 0, 31)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -14525,11 +14492,8 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.backup_retention_count != nil {
 		fields = append(fields, serviceconfig.FieldBackupRetentionCount)
 	}
-	if m.volume_name != nil {
-		fields = append(fields, serviceconfig.FieldVolumeName)
-	}
-	if m.volume_mount_path != nil {
-		fields = append(fields, serviceconfig.FieldVolumeMountPath)
+	if m.volumes != nil {
+		fields = append(fields, serviceconfig.FieldVolumes)
 	}
 	if m.security_context != nil {
 		fields = append(fields, serviceconfig.FieldSecurityContext)
@@ -14603,10 +14567,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.BackupSchedule()
 	case serviceconfig.FieldBackupRetentionCount:
 		return m.BackupRetentionCount()
-	case serviceconfig.FieldVolumeName:
-		return m.VolumeName()
-	case serviceconfig.FieldVolumeMountPath:
-		return m.VolumeMountPath()
+	case serviceconfig.FieldVolumes:
+		return m.Volumes()
 	case serviceconfig.FieldSecurityContext:
 		return m.SecurityContext()
 	case serviceconfig.FieldHealthCheck:
@@ -14676,10 +14638,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldBackupSchedule(ctx)
 	case serviceconfig.FieldBackupRetentionCount:
 		return m.OldBackupRetentionCount(ctx)
-	case serviceconfig.FieldVolumeName:
-		return m.OldVolumeName(ctx)
-	case serviceconfig.FieldVolumeMountPath:
-		return m.OldVolumeMountPath(ctx)
+	case serviceconfig.FieldVolumes:
+		return m.OldVolumes(ctx)
 	case serviceconfig.FieldSecurityContext:
 		return m.OldSecurityContext(ctx)
 	case serviceconfig.FieldHealthCheck:
@@ -14879,19 +14839,12 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetBackupRetentionCount(v)
 		return nil
-	case serviceconfig.FieldVolumeName:
-		v, ok := value.(string)
+	case serviceconfig.FieldVolumes:
+		v, ok := value.([]schema.ServiceVolume)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetVolumeName(v)
-		return nil
-	case serviceconfig.FieldVolumeMountPath:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetVolumeMountPath(v)
+		m.SetVolumes(v)
 		return nil
 	case serviceconfig.FieldSecurityContext:
 		v, ok := value.(*schema.SecurityContext)
@@ -15026,11 +14979,8 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldS3BackupBucket) {
 		fields = append(fields, serviceconfig.FieldS3BackupBucket)
 	}
-	if m.FieldCleared(serviceconfig.FieldVolumeName) {
-		fields = append(fields, serviceconfig.FieldVolumeName)
-	}
-	if m.FieldCleared(serviceconfig.FieldVolumeMountPath) {
-		fields = append(fields, serviceconfig.FieldVolumeMountPath)
+	if m.FieldCleared(serviceconfig.FieldVolumes) {
+		fields = append(fields, serviceconfig.FieldVolumes)
 	}
 	if m.FieldCleared(serviceconfig.FieldSecurityContext) {
 		fields = append(fields, serviceconfig.FieldSecurityContext)
@@ -15106,11 +15056,8 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 	case serviceconfig.FieldS3BackupBucket:
 		m.ClearS3BackupBucket()
 		return nil
-	case serviceconfig.FieldVolumeName:
-		m.ClearVolumeName()
-		return nil
-	case serviceconfig.FieldVolumeMountPath:
-		m.ClearVolumeMountPath()
+	case serviceconfig.FieldVolumes:
+		m.ClearVolumes()
 		return nil
 	case serviceconfig.FieldSecurityContext:
 		m.ClearSecurityContext()
@@ -15210,11 +15157,8 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 	case serviceconfig.FieldBackupRetentionCount:
 		m.ResetBackupRetentionCount()
 		return nil
-	case serviceconfig.FieldVolumeName:
-		m.ResetVolumeName()
-		return nil
-	case serviceconfig.FieldVolumeMountPath:
-		m.ResetVolumeMountPath()
+	case serviceconfig.FieldVolumes:
+		m.ResetVolumes()
 		return nil
 	case serviceconfig.FieldSecurityContext:
 		m.ResetSecurityContext()

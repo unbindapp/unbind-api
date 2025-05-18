@@ -70,10 +70,8 @@ const (
 	FieldBackupSchedule = "backup_schedule"
 	// FieldBackupRetentionCount holds the string denoting the backup_retention_count field in the database.
 	FieldBackupRetentionCount = "backup_retention_count"
-	// FieldVolumeName holds the string denoting the volume_name field in the database.
-	FieldVolumeName = "volume_name"
-	// FieldVolumeMountPath holds the string denoting the volume_mount_path field in the database.
-	FieldVolumeMountPath = "volume_mount_path"
+	// FieldVolumes holds the string denoting the volumes field in the database.
+	FieldVolumes = "volumes"
 	// FieldSecurityContext holds the string denoting the security_context field in the database.
 	FieldSecurityContext = "security_context"
 	// FieldHealthCheck holds the string denoting the health_check field in the database.
@@ -133,8 +131,7 @@ var Columns = []string{
 	FieldS3BackupBucket,
 	FieldBackupSchedule,
 	FieldBackupRetentionCount,
-	FieldVolumeName,
-	FieldVolumeMountPath,
+	FieldVolumes,
 	FieldSecurityContext,
 	FieldHealthCheck,
 	FieldVariableMounts,
@@ -323,16 +320,6 @@ func ByBackupSchedule(opts ...sql.OrderTermOption) OrderOption {
 // ByBackupRetentionCount orders the results by the backup_retention_count field.
 func ByBackupRetentionCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBackupRetentionCount, opts...).ToFunc()
-}
-
-// ByVolumeName orders the results by the volume_name field.
-func ByVolumeName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldVolumeName, opts...).ToFunc()
-}
-
-// ByVolumeMountPath orders the results by the volume_mount_path field.
-func ByVolumeMountPath(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldVolumeMountPath, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.

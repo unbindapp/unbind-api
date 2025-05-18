@@ -63,8 +63,7 @@ type CreateServiceInput struct {
 	BackupRetentionCount *int                   `json:"backup_retention,omitempty" required:"false" doc:"Number of base backups to retain, e.g. 3"`
 
 	// PVC
-	PVCID        *string `json:"pvc_id,omitempty" required:"false" doc:"ID of the PVC to use for the service"`
-	PVCMountPath *string `json:"pvc_mount_path,omitempty" required:"false" doc:"Mount path for the PVC"`
+	Volumes *[]schema.ServiceVolume `json:"volumes,omitempty" required:"false" doc:"Volumes to mount in the service"`
 
 	// Health check
 	HealthCheck *schema.HealthCheck `json:"health_check,omitempty" doc:"Health check configuration for the service"`
@@ -110,7 +109,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Disallow pvc for database
-		if input.PVCID != nil {
+		if input.Volumes != nil && len(*input.Volumes) > 0 {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
 				"PVC is not supported for database services")
 		}
@@ -189,13 +188,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// PVC validation, requires a path
-	if input.PVCID != nil {
-		if input.PVCMountPath == nil {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC mount path is required")
-		}
-		// Validate unix-style path
-		if !utils.IsValidUnixPath(*input.PVCMountPath) {
-			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid PVC mount path")
+	if input.Volumes != nil {
+		for _, volume := range *input.Volumes {
+			if !utils.IsValidUnixPath(volume.MountPath) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid PVC mount path")
+			}
 		}
 	}
 
@@ -296,8 +293,13 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// Check if PVC is in use by a service
-	if input.PVCID != nil {
-		self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, *input.PVCID, project.Edges.Team.Namespace, client)
+	if input.Volumes != nil {
+		for _, volume := range *input.Volumes {
+			err = self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, volume.ID, project.Edges.Team.Namespace, client)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	// Verify backup sources (for databases)
@@ -424,8 +426,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			S3BackupBucket:          input.S3BackupBucket,
 			BackupSchedule:          input.BackupSchedule,
 			BackupRetentionCount:    input.BackupRetentionCount,
-			PVCID:                   input.PVCID,
-			PVCVolumeMountPath:      input.PVCMountPath,
+			Volumes:                 input.Volumes,
 			HealthCheck:             input.HealthCheck,
 			VariableMounts:          input.VariableMounts,
 			ProtectedVariables:      protectedVariables,
@@ -500,5 +501,13 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 	}()
 
-	return models.TransformServiceEntity(service), nil
+	resp := models.TransformServiceEntity(service)
+
+	respArr := []*models.ServiceResponse{resp}
+
+	if err := self.addPromMetricsToServiceVolumes(ctx, respArr); err != nil {
+		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+	}
+
+	return respArr[0], nil
 }

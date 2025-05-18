@@ -12,7 +12,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -72,15 +71,7 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 			}
 			deployment.ResourceDefinition.Spec.EnvVars = envVars
 			// Set volume data to current
-			deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{}
-			if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
-				deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{
-					{
-						Name:      *service.Edges.ServiceConfig.VolumeName,
-						MountPath: *service.Edges.ServiceConfig.VolumeMountPath,
-					},
-				}
-			}
+			deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
 			// We can just, re-deploy the existing CRD spec
 			// Deploy to kubernetes
 			_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
@@ -109,15 +100,8 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 		if err != nil {
 			return nil, err
 		}
-		deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{}
-		if service.Edges.ServiceConfig.VolumeName != nil && service.Edges.ServiceConfig.VolumeMountPath != nil {
-			deployment.ResourceDefinition.Spec.Config.Volumes = []v1.VolumeSpec{
-				{
-					Name:      *service.Edges.ServiceConfig.VolumeName,
-					MountPath: *service.Edges.ServiceConfig.VolumeMountPath,
-				},
-			}
-		}
+		deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
+
 		_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
 		if err != nil {
 			// Mark failed

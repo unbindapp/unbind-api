@@ -58,8 +58,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("backup_schedule").Default("5 5 * * *").Comment("Cron expression for the backup schedule"),
 		field.Int("backup_retention_count").Default(3).Comment("Number of base backups to retain"),
 		// Volume
-		field.String("volume_name").Optional().Nillable().Comment("Volume name to use for the service"),
-		field.String("volume_mount_path").Optional().Nillable().Comment("Volume mount path for the service"),
+		field.JSON("volumes", []ServiceVolume{}).Optional().Comment("Volumes to mount in the service"),
 		// Security context
 		field.JSON("security_context", &SecurityContext{}).Optional().Comment("Security context for the service containers."),
 		// Health check

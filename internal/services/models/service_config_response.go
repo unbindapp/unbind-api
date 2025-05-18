@@ -28,10 +28,7 @@ type ServiceConfigResponse struct {
 	BackupSchedule       string     `json:"backup_schedule"`
 	BackupRetentionCount int        `json:"backup_retention_count"`
 	// Volume
-	PVCID              *string  `json:"pvc_id,omitempty"`
-	PVCVolumeMountPath *string  `json:"pvc_volume_mount_path,omitempty"`
-	PVCCapacityGB      *float64 `json:"pvc_capacity_gb,omitempty"`
-	PVCUsedGB          *float64 `json:"pvc_used_gb,omitempty"`
+	Volumes []schema.ServiceVolume `json:"volumes,omitempty"`
 	// Security context
 	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 	// Health check
@@ -69,8 +66,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			S3BackupBucket:       entity.S3BackupBucket,
 			BackupSchedule:       entity.BackupSchedule,
 			BackupRetentionCount: entity.BackupRetentionCount,
-			PVCID:                entity.VolumeName,
-			PVCVolumeMountPath:   entity.VolumeMountPath,
+			Volumes:              entity.Volumes,
 			SecurityContext:      entity.SecurityContext,
 			HealthCheck:          entity.HealthCheck,
 			VariableMounts:       entity.VariableMounts,

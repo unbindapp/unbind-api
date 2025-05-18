@@ -85,12 +85,11 @@ type MutateConfigInput struct {
 	S3BackupBucket          *string
 	BackupSchedule          *string
 	BackupRetentionCount    *int
-	PVCID                   *string
-	PVCVolumeMountPath      *string
 	SecurityContext         *schema.SecurityContext
 	HealthCheck             *schema.HealthCheck
 	VariableMounts          []*schema.VariableMount
 	ProtectedVariables      *[]string
+	Volumes                 *[]schema.ServiceVolume
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -147,9 +146,11 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableS3BackupSourceID(input.S3BackupSourceID).
 		SetNillableS3BackupBucket(input.S3BackupBucket).
 		SetNillableBackupSchedule(input.BackupSchedule).
-		SetNillableVolumeName(input.PVCID).
-		SetNillableVolumeMountPath(input.PVCVolumeMountPath).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.Volumes != nil {
+		c.SetVolumes(*input.Volumes)
+	}
 
 	if input.ProtectedVariables != nil {
 		c.SetProtectedVariables(*input.ProtectedVariables)
@@ -270,21 +271,8 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 	}
 
-	if input.PVCID != nil {
-		if *input.PVCID == "" {
-			upd.ClearVolumeName()
-			upd.ClearVolumeMountPath()
-		} else {
-			upd.SetVolumeName(*input.PVCID)
-		}
-	}
-
-	if input.PVCVolumeMountPath != nil {
-		if *input.PVCVolumeMountPath == "" {
-			upd.ClearVolumeMountPath()
-		} else {
-			upd.SetVolumeMountPath(*input.PVCVolumeMountPath)
-		}
+	if input.Volumes != nil {
+		upd.SetVolumes(*input.Volumes)
 	}
 
 	if input.GitBranch != nil {

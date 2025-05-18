@@ -9,7 +9,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -41,41 +40,10 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// Convert to response
 	resp := models.TransformServiceEntities(services)
 
-	// Figure out all of the PVCs in the list
-	var pvcIDs []string
-	for _, service := range resp {
-		if service.Config.PVCID != nil {
-			pvcIDs = append(pvcIDs, *service.Config.PVCID)
-		}
-	}
-
-	// Query prometheus
-	if len(pvcIDs) == 0 {
-		return resp, nil
-	}
-
-	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs)
-	if err != nil {
+	if err := self.addPromMetricsToServiceVolumes(ctx, resp); err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
-		return resp, nil
 	}
 
-	mapStats := make(map[string]prometheus.PVCVolumeStats)
-	for _, stat := range stats {
-		mapStats[stat.PVCName] = stat
-	}
-
-	// Add stats to the response
-	for i := range resp {
-		if resp[i].Config.PVCID != nil {
-			if stat, ok := mapStats[*resp[i].Config.PVCID]; ok {
-				resp[i].Config.PVCCapacityGB = stat.CapacityGB
-				resp[i].Config.PVCUsedGB = stat.UsedGB
-			}
-		}
-	}
-
-	// Return the response
 	return resp, nil
 }
 
@@ -113,36 +81,11 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 	// Convert to response
 	resp := models.TransformServiceEntity(service)
 
-	// Figure out all of the PVCs in the list
-	var pvcIDs []string
-	if resp.Config.PVCID != nil {
-		pvcIDs = append(pvcIDs, *resp.Config.PVCID)
-	}
+	respArr := []*models.ServiceResponse{resp}
 
-	// Query prometheus
-	if len(pvcIDs) == 0 {
-		return resp, nil
-	}
-
-	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs)
-	if err != nil {
+	if err := self.addPromMetricsToServiceVolumes(ctx, respArr); err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
-		return resp, nil
 	}
 
-	mapStats := make(map[string]prometheus.PVCVolumeStats)
-	for _, stat := range stats {
-		mapStats[stat.PVCName] = stat
-	}
-
-	// Add stats to the response
-	if resp.Config.PVCID != nil {
-		if stat, ok := mapStats[*resp.Config.PVCID]; ok {
-			resp.Config.PVCCapacityGB = stat.CapacityGB
-			resp.Config.PVCUsedGB = stat.UsedGB
-		}
-	}
-
-	// Return the response
-	return resp, nil
+	return respArr[0], nil
 }

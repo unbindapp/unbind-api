@@ -92,6 +92,25 @@ func AsV1VariableMounts(mounts []*VariableMount) []v1.VariableMountSpec {
 	return v1Mounts
 }
 
+// * For volumes
+type ServiceVolume struct {
+	ID        string   `json:"id" required:"true" doc:"ID of the volume, pvc name in kubernetes"`
+	MountPath string   `json:"mount_path" required:"true" doc:"Path to mount the volume (e.g. /mnt/data)"`
+	SizeGB    *float64 `json:"size_gb,omitempty" required:"false" doc:"Size of the volume in GB"`
+	UsedGB    *float64 `json:"used_gb,omitempty" required:"false" doc:"Used size of the volume in GB"`
+}
+
+func AsV1Volumes(volumes []ServiceVolume) []v1.VolumeSpec {
+	v1Volumes := make([]v1.VolumeSpec, len(volumes))
+	for i, volume := range volumes {
+		v1Volumes[i] = v1.VolumeSpec{
+			Name:      volume.ID,
+			MountPath: volume.MountPath,
+		}
+	}
+	return v1Volumes
+}
+
 // * Health check compatible with unbind-operator
 type HealthCheckType string
 

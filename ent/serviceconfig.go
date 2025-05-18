@@ -77,10 +77,8 @@ type ServiceConfig struct {
 	BackupSchedule string `json:"backup_schedule,omitempty"`
 	// Number of base backups to retain
 	BackupRetentionCount int `json:"backup_retention_count,omitempty"`
-	// Volume name to use for the service
-	VolumeName *string `json:"volume_name,omitempty"`
-	// Volume mount path for the service
-	VolumeMountPath *string `json:"volume_mount_path,omitempty"`
+	// Volumes to mount in the service
+	Volumes []schema.ServiceVolume `json:"volumes,omitempty"`
 	// Security context for the service containers.
 	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 	// Health check configuration for the service
@@ -135,13 +133,13 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case serviceconfig.FieldS3BackupSourceID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldSecurityContext, serviceconfig.FieldHealthCheck, serviceconfig.FieldVariableMounts, serviceconfig.FieldProtectedVariables:
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldVolumes, serviceconfig.FieldSecurityContext, serviceconfig.FieldHealthCheck, serviceconfig.FieldVariableMounts, serviceconfig.FieldProtectedVariables:
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas, serviceconfig.FieldBackupRetentionCount:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldInstallCommand, serviceconfig.FieldBuildCommand, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket, serviceconfig.FieldBackupSchedule, serviceconfig.FieldVolumeName, serviceconfig.FieldVolumeMountPath:
+		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerfilePath, serviceconfig.FieldDockerfileContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldInstallCommand, serviceconfig.FieldBuildCommand, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket, serviceconfig.FieldBackupSchedule:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -342,19 +340,13 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.BackupRetentionCount = int(value.Int64)
 			}
-		case serviceconfig.FieldVolumeName:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field volume_name", values[i])
-			} else if value.Valid {
-				sc.VolumeName = new(string)
-				*sc.VolumeName = value.String
-			}
-		case serviceconfig.FieldVolumeMountPath:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field volume_mount_path", values[i])
-			} else if value.Valid {
-				sc.VolumeMountPath = new(string)
-				*sc.VolumeMountPath = value.String
+		case serviceconfig.FieldVolumes:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field volumes", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.Volumes); err != nil {
+					return fmt.Errorf("unmarshal field volumes: %w", err)
+				}
 			}
 		case serviceconfig.FieldSecurityContext:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -536,15 +528,8 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString("backup_retention_count=")
 	builder.WriteString(fmt.Sprintf("%v", sc.BackupRetentionCount))
 	builder.WriteString(", ")
-	if v := sc.VolumeName; v != nil {
-		builder.WriteString("volume_name=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := sc.VolumeMountPath; v != nil {
-		builder.WriteString("volume_mount_path=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("volumes=")
+	builder.WriteString(fmt.Sprintf("%v", sc.Volumes))
 	builder.WriteString(", ")
 	builder.WriteString("security_context=")
 	builder.WriteString(fmt.Sprintf("%v", sc.SecurityContext))
