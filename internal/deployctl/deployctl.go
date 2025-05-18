@@ -697,7 +697,7 @@ func (self *DeploymentController) AreDependenciesReady(ctx context.Context, serv
 }
 
 // EnqueueDependentDeployment adds a deployment to the dependent services queue
-func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context, req DeploymentJobRequest) error {
+func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context, req DeploymentJobRequest) (*ent.Deployment, error) {
 	// Create as pending
 	job, err := self.repo.Deployment().Create(
 		ctx,
@@ -709,9 +709,9 @@ func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context
 		req.Source,
 		schema.DeploymentStatusPending)
 	if err != nil {
-		return fmt.Errorf("failed to create dependent deployment record: %w", err)
+		return nil, fmt.Errorf("failed to create dependent deployment record: %w", err)
 	}
 	req.ExistingJobID = utils.ToPtr(job.ID)
 	// Add to the dependent queue
-	return self.dependentQueue.Enqueue(ctx, uuid.New().String(), req)
+	return job, self.dependentQueue.Enqueue(ctx, uuid.New().String(), req)
 }

@@ -523,15 +523,25 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		}
 
 		// If service has dependencies, add to dependent queue
+		var deployment *ent.Deployment
 		if len(service.VariableReferences) > 0 {
-			err = self.deployCtl.EnqueueDependentDeployment(ctx, deployReq)
+			deployment, err = self.deployCtl.EnqueueDependentDeployment(ctx, deployReq)
 		} else {
 			// Otherwise deploy immediately
-			_, err = self.deployCtl.EnqueueDeploymentJob(ctx, deployReq)
+			deployment, err = self.deployCtl.EnqueueDeploymentJob(ctx, deployReq)
 		}
 
 		if err != nil {
 			return nil, err
+		}
+
+		// Find it in newServices
+		for i := range newServices {
+			if newServices[i].ID == dbService.ID {
+				newServices[i].Edges.CurrentDeployment = deployment
+				newServices[i].Edges.Deployments = []*ent.Deployment{deployment}
+				break
+			}
 		}
 	}
 
