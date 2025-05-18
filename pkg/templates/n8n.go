@@ -52,6 +52,113 @@ func n8nTemplate() *schema.TemplateDefinition {
 					StorageSize: "0.25",
 				},
 			},
+			// External n8n worker (executes jobs from the queue)
+			{
+				ID:         "service_n8n_worker",
+				DependsOn:  []string{"service_postgresql", "service_redis", "service_n8n"},
+				Name:       "n8n Worker",
+				Type:       schema.ServiceTypeDockerimage,
+				Builder:    schema.ServiceBuilderDocker,
+				Image:      utils.ToPtr("n8nio/n8n:1.93.0"),
+				RunCommand: utils.ToPtr("n8n worker"),
+				Ports: []schema.PortSpec{
+					{
+						Port:     8000,
+						Protocol: utils.ToPtr(schema.ProtocolTCP),
+					},
+				},
+				HealthCheck: &schema.HealthCheck{
+					Type:                      schema.HealthCheckTypeHTTP,
+					Path:                      "/healthz/readiness",
+					Port:                      utils.ToPtr(int32(8000)),
+					PeriodSeconds:             30,
+					TimeoutSeconds:            5,
+					StartupFailureThreshold:   5,
+					LivenessFailureThreshold:  5,
+					ReadinessFailureThreshold: 3,
+				},
+				Variables: []schema.TemplateVariable{
+					// Queue mode for worker
+					{
+						Name:  "EXECUTIONS_MODE",
+						Value: "queue",
+					},
+					{
+						Name:  "N8N_WORKER_ID",
+						Value: "worker-1",
+					},
+					{
+						Name:  "QUEUE_HEALTH_CHECK_ACTIVE",
+						Value: "true",
+					},
+					{
+						Name:  "QUEUE_HEALTH_CHECK_PORT",
+						Value: "8000",
+					},
+					{
+						Name:  "N8N_RUNNERS_ENABLED",
+						Value: "true",
+					},
+					{
+						Name:  "OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS",
+						Value: "true",
+					},
+					{
+						Name:  "DB_TYPE",
+						Value: "postgresdb",
+					},
+				},
+				VariableReferences: []schema.TemplateVariableReference{
+					// Postgres references (same as main)
+					{
+						SourceID:   "service_postgresql",
+						SourceName: "DATABASE_DEFAULT_DB_NAME",
+						TargetName: "DB_POSTGRESDB_DATABASE",
+					},
+					{
+						SourceID:   "service_postgresql",
+						SourceName: "DATABASE_HOST",
+						TargetName: "DB_POSTGRESDB_HOST",
+					},
+					{
+						SourceID:   "service_postgresql",
+						SourceName: "DATABASE_PORT",
+						TargetName: "DB_POSTGRESDB_PORT",
+					},
+					{
+						SourceID:   "service_postgresql",
+						SourceName: "DATABASE_USERNAME",
+						TargetName: "DB_POSTGRESDB_USER",
+					},
+					{
+						SourceID:   "service_postgresql",
+						SourceName: "DATABASE_PASSWORD",
+						TargetName: "DB_POSTGRESDB_PASSWORD",
+					},
+					// Redis references
+					{
+						SourceID:   "service_redis",
+						SourceName: "DATABASE_HOST",
+						TargetName: "QUEUE_BULL_REDIS_HOST",
+					},
+					{
+						SourceID:   "service_redis",
+						SourceName: "DATABASE_PORT",
+						TargetName: "QUEUE_BULL_REDIS_PORT",
+					},
+					{
+						SourceID:   "service_redis",
+						SourceName: "DATABASE_PASSWORD",
+						TargetName: "QUEUE_BULL_REDIS_PASSWORD",
+					},
+					// N8N references
+					{
+						SourceID:   "service_n8n",
+						SourceName: "N8N_ENCRYPTION_KEY",
+						TargetName: "N8N_ENCRYPTION_KEY",
+					},
+				},
+			},
 			// Main n8n process (API / UI)
 			{
 				ID:        "service_n8n",
@@ -196,113 +303,6 @@ func n8nTemplate() *schema.TemplateDefinition {
 						SourceID:   "service_redis",
 						SourceName: "DATABASE_PASSWORD",
 						TargetName: "QUEUE_BULL_REDIS_PASSWORD",
-					},
-				},
-			},
-			// External n8n worker (executes jobs from the queue)
-			{
-				ID:         "service_n8n_worker",
-				DependsOn:  []string{"service_postgresql", "service_redis", "service_n8n"},
-				Name:       "n8n Worker",
-				Type:       schema.ServiceTypeDockerimage,
-				Builder:    schema.ServiceBuilderDocker,
-				Image:      utils.ToPtr("n8nio/n8n:1.93.0"),
-				RunCommand: utils.ToPtr("n8n worker"),
-				Ports: []schema.PortSpec{
-					{
-						Port:     8000,
-						Protocol: utils.ToPtr(schema.ProtocolTCP),
-					},
-				},
-				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
-					Path:                      "/healthz/readiness",
-					Port:                      utils.ToPtr(int32(8000)),
-					PeriodSeconds:             30,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   5,
-					LivenessFailureThreshold:  5,
-					ReadinessFailureThreshold: 3,
-				},
-				Variables: []schema.TemplateVariable{
-					// Queue mode for worker
-					{
-						Name:  "EXECUTIONS_MODE",
-						Value: "queue",
-					},
-					{
-						Name:  "N8N_WORKER_ID",
-						Value: "worker-1",
-					},
-					{
-						Name:  "QUEUE_HEALTH_CHECK_ACTIVE",
-						Value: "true",
-					},
-					{
-						Name:  "QUEUE_HEALTH_CHECK_PORT",
-						Value: "8000",
-					},
-					{
-						Name:  "N8N_RUNNERS_ENABLED",
-						Value: "true",
-					},
-					{
-						Name:  "OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS",
-						Value: "true",
-					},
-					{
-						Name:  "DB_TYPE",
-						Value: "postgresdb",
-					},
-				},
-				VariableReferences: []schema.TemplateVariableReference{
-					// Postgres references (same as main)
-					{
-						SourceID:   "service_postgresql",
-						SourceName: "DATABASE_DEFAULT_DB_NAME",
-						TargetName: "DB_POSTGRESDB_DATABASE",
-					},
-					{
-						SourceID:   "service_postgresql",
-						SourceName: "DATABASE_HOST",
-						TargetName: "DB_POSTGRESDB_HOST",
-					},
-					{
-						SourceID:   "service_postgresql",
-						SourceName: "DATABASE_PORT",
-						TargetName: "DB_POSTGRESDB_PORT",
-					},
-					{
-						SourceID:   "service_postgresql",
-						SourceName: "DATABASE_USERNAME",
-						TargetName: "DB_POSTGRESDB_USER",
-					},
-					{
-						SourceID:   "service_postgresql",
-						SourceName: "DATABASE_PASSWORD",
-						TargetName: "DB_POSTGRESDB_PASSWORD",
-					},
-					// Redis references
-					{
-						SourceID:   "service_redis",
-						SourceName: "DATABASE_HOST",
-						TargetName: "QUEUE_BULL_REDIS_HOST",
-					},
-					{
-						SourceID:   "service_redis",
-						SourceName: "DATABASE_PORT",
-						TargetName: "QUEUE_BULL_REDIS_PORT",
-					},
-					{
-						SourceID:   "service_redis",
-						SourceName: "DATABASE_PASSWORD",
-						TargetName: "QUEUE_BULL_REDIS_PASSWORD",
-					},
-					// N8N references
-					{
-						SourceID:   "service_n8n",
-						SourceName: "N8N_ENCRYPTION_KEY",
-						TargetName: "N8N_ENCRYPTION_KEY",
 					},
 				},
 			},
