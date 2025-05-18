@@ -218,6 +218,7 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 	resolved := &schema.TemplateDefinition{
 		Name:        template.Name,
 		Description: template.Description,
+		Icon:        template.Icon,
 		Version:     template.Version,
 		Services:    make([]schema.TemplateService, len(template.Services)),
 		Inputs:      template.Inputs,
