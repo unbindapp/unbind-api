@@ -447,8 +447,14 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	resp := models.TransformServiceEntity(service)
 	respArr := []*models.ServiceResponse{resp}
 
+	// Add prom volume metrics
 	if err := self.addPromMetricsToServiceVolumes(ctx, respArr); err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+	}
+
+	// Add queue data
+	if err := self.attachQueueDataToServices(ctx, respArr); err != nil {
+		log.Errorf("Failed to get queue data: %v", err)
 	}
 
 	return respArr[0], nil

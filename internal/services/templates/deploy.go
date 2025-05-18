@@ -535,7 +535,20 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		}
 	}
 
-	return models.TransformServiceEntities(newServices), nil
+	services := models.TransformServiceEntities(newServices)
+
+	// Attach queue items
+	queuedServices, err := self.deployCtl.GetServicesInQueue(ctx)
+	if err != nil {
+		log.Error("failed to get services in queue", "error", err)
+		return nil, err
+	}
+
+	for i := range services {
+		services[i].HasDeploymentInQueue = slices.Contains(queuedServices, services[i].ID)
+	}
+
+	return services, nil
 }
 
 // returns: map[inputID]HostSpec, map[inputID]string (value to hand to the templater)

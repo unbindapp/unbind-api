@@ -115,6 +115,30 @@ func (self *DeploymentController) startStatusSynchronizer() {
 	}
 }
 
+// Get queues and return a slice of service IDs in queue
+func (self *DeploymentController) GetServicesInQueue(ctx context.Context) ([]uuid.UUID, error) {
+	// Get all items in the queue
+	items, err := self.jobQueue.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read queue: %w", err)
+	}
+	itemsInDependentQueue, err := self.dependentQueue.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read dependent queue: %w", err)
+	}
+
+	// Extract service IDs from the items
+	serviceIDs := make([]uuid.UUID, len(items)+len(itemsInDependentQueue))
+	for i, item := range items {
+		serviceIDs[i] = item.Data.ServiceID
+	}
+	for i, item := range itemsInDependentQueue {
+		serviceIDs[i+len(items)] = item.Data.ServiceID
+	}
+
+	return serviceIDs, nil
+}
+
 // Populate build environment, take tag separately so we can use it to build from tag
 func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string) (map[string]string, error) {
 	// Get the service

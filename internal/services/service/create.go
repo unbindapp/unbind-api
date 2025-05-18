@@ -510,5 +510,10 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 	}
 
+	// Add queue data
+	if err := self.attachQueueDataToServices(ctx, respArr); err != nil {
+		log.Errorf("Failed to get queue data: %v", err)
+	}
+
 	return respArr[0], nil
 }
