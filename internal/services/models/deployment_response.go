@@ -14,14 +14,15 @@ type DeploymentResponse struct {
 	Status        schema.DeploymentStatus `json:"status"`
 	JobName       string                  `json:"job_name"`
 	Error         string                  `json:"error,omitempty"`
-	StartedAt     *time.Time              `json:"started_at,omitempty"`
-	CompletedAt   *time.Time              `json:"completed_at,omitempty"`
 	Attempts      int                     `json:"attempts"`
 	CommitSHA     *string                 `json:"commit_sha,omitempty" required:"false"`
 	CommitMessage *string                 `json:"commit_message,omitempty" required:"false"`
 	CommitAuthor  *schema.GitCommitter    `json:"commit_author,omitempty" required:"false"`
 	Image         *string                 `json:"image,omitempty" required:"false"`
 	CreatedAt     time.Time               `json:"created_at"`
+	QueuedAt      *time.Time              `json:"queued_at,omitempty"`
+	StartedAt     *time.Time              `json:"started_at,omitempty"`
+	CompletedAt   *time.Time              `json:"completed_at,omitempty"`
 	UpdatedAt     time.Time               `json:"updated_at"`
 }
 
@@ -35,14 +36,15 @@ func TransformDeploymentEntity(entity *ent.Deployment) *DeploymentResponse {
 			Status:        entity.Status,
 			JobName:       entity.KubernetesJobName,
 			Error:         entity.Error,
-			StartedAt:     entity.StartedAt,
-			CompletedAt:   entity.CompletedAt,
 			Attempts:      entity.Attempts,
 			CommitSHA:     entity.CommitSha,
 			CommitMessage: entity.CommitMessage,
 			CommitAuthor:  entity.CommitAuthor,
 			Image:         entity.Image,
 			CreatedAt:     entity.CreatedAt,
+			QueuedAt:      entity.QueuedAt,
+			StartedAt:     entity.StartedAt,
+			CompletedAt:   entity.CompletedAt,
 			UpdatedAt:     entity.UpdatedAt,
 		}
 	}
