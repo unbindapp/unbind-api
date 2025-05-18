@@ -49,7 +49,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("redis"),
 				DatabaseConfig: &schema.DatabaseConfig{
-					StorageSize: "1",
+					StorageSize: "0.25",
 				},
 			},
 			// Main n8n process (API / UI)
