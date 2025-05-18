@@ -679,7 +679,7 @@ func (self *DeploymentController) processDependentJob(ctx context.Context, item 
 	}
 
 	// Fake delay
-	time.Sleep(120 * time.Second)
+	time.Sleep(60 * time.Second)
 	// If dependencies are ready, enqueue to the real deployment queue
 	_, err := self.EnqueueDeploymentJob(ctx, item.Data)
 	return err
