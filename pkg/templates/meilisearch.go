@@ -17,7 +17,7 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          1,
-				Name:        "Domain (API)",
+				Name:        "Domain",
 				Type:        schema.InputTypeHost,
 				Description: "The domain to use for the Meilisearch API.",
 				Required:    true,
