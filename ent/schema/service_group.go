@@ -27,7 +27,7 @@ func (ServiceGroup) Mixin() []ent.Mixin {
 func (ServiceGroup) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").Comment("Name of the service group"),
-		field.String("icon").Optional(),
+		field.String("icon").Optional().Nillable(),
 		field.String("description").Optional().Nillable().Comment("Description of the service group"),
 		field.UUID("environment_id", uuid.UUID{}).Comment("Reference to the environment this service group belongs to"),
 	}

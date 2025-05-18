@@ -27,7 +27,7 @@ type ServiceGroup struct {
 	// Name of the service group
 	Name string `json:"name,omitempty"`
 	// Icon holds the value of the "icon" field.
-	Icon string `json:"icon,omitempty"`
+	Icon *string `json:"icon,omitempty"`
 	// Description of the service group
 	Description *string `json:"description,omitempty"`
 	// Reference to the environment this service group belongs to
@@ -123,7 +123,8 @@ func (sg *ServiceGroup) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field icon", values[i])
 			} else if value.Valid {
-				sg.Icon = value.String
+				sg.Icon = new(string)
+				*sg.Icon = value.String
 			}
 		case servicegroup.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -193,8 +194,10 @@ func (sg *ServiceGroup) String() string {
 	builder.WriteString("name=")
 	builder.WriteString(sg.Name)
 	builder.WriteString(", ")
-	builder.WriteString("icon=")
-	builder.WriteString(sg.Icon)
+	if v := sg.Icon; v != nil {
+		builder.WriteString("icon=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	if v := sg.Description; v != nil {
 		builder.WriteString("description=")

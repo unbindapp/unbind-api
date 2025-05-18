@@ -244,7 +244,7 @@ func (sgc *ServiceGroupCreate) createSpec() (*ServiceGroup, *sqlgraph.CreateSpec
 	}
 	if value, ok := sgc.mutation.Icon(); ok {
 		_spec.SetField(servicegroup.FieldIcon, field.TypeString, value)
-		_node.Icon = value
+		_node.Icon = &value
 	}
 	if value, ok := sgc.mutation.Description(); ok {
 		_spec.SetField(servicegroup.FieldDescription, field.TypeString, value)

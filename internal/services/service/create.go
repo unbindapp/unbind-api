@@ -146,6 +146,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				input.DatabaseConfig.StorageSize = "1Gi" // Default to 1Gi
 			} else {
 				// Validate
+				input.DatabaseConfig.StorageSize = utils.EnsureSuffix(input.DatabaseConfig.StorageSize, "Gi")
 				_, err := resource.ParseQuantity(input.DatabaseConfig.StorageSize)
 				if err != nil {
 					return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,

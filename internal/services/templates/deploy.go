@@ -231,6 +231,11 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				} else {
 					templateService.DatabaseConfig.Version = *dbVersion
 				}
+
+				// Validate storage quantity
+				if templateService.DatabaseConfig.StorageSize != "" {
+					templateService.DatabaseConfig.StorageSize = utils.EnsureSuffix(templateService.DatabaseConfig.StorageSize, "Gi")
+				}
 			}
 
 			kubernetesName, ok := kubeNameMap[templateService.ID]
