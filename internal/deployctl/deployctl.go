@@ -523,6 +523,10 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 	if err != nil {
 		return fmt.Errorf("failed to get jobs from queue: %w", err)
 	}
+	queuedDependentJobs, err := self.dependentQueue.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get dependent jobs from queue: %w", err)
+	}
 
 	// Keep track of job IDs to mark as cancelled
 	var jobIDsToCancel []uuid.UUID
@@ -532,6 +536,16 @@ func (self *DeploymentController) CancelExistingJobs(ctx context.Context, servic
 		if item.Data.ServiceID == serviceID {
 			// Remove from queue
 			if err := self.jobQueue.Remove(ctx, item.ID); err != nil {
+				log.Errorf("Failed to remove job %s from queue: %v", item.ID, err)
+			}
+			idParsed, _ := uuid.Parse(item.ID)
+			jobIDsToCancel = append(jobIDsToCancel, idParsed)
+		}
+	}
+	for _, item := range queuedDependentJobs {
+		if item.Data.ServiceID == serviceID {
+			// Remove from queue
+			if err := self.dependentQueue.Remove(ctx, item.ID); err != nil {
 				log.Errorf("Failed to remove job %s from queue: %v", item.ID, err)
 			}
 			idParsed, _ := uuid.Parse(item.ID)
