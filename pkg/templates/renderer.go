@@ -250,6 +250,10 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 				v := &svc.Variables[j] // Get a pointer to modify directly
 
 				if v.Generator != nil {
+					if v.Generator.Type == schema.GeneratorTypeStringReplace {
+						// Skip string replace as it's handled later
+						continue
+					}
 					// Set base domain for email generator
 					if v.Generator.Type == schema.GeneratorTypeEmail {
 						v.Generator.BaseDomain = self.cfg.ExternalUIUrl
