@@ -1334,202 +1334,6 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				},
 			},
 			{
-				ID:       "service_kong",
-				Name:     "Kong",
-				Type:     schema.ServiceTypeDockerimage,
-				Builder:  schema.ServiceBuilderDocker,
-				Image:    utils.ToPtr("kong:2.8.1"),
-				InputIDs: []string{"input_domain"},
-				Ports: []schema.PortSpec{
-					{
-						Port:     8000,
-						Protocol: utils.ToPtr(schema.ProtocolTCP),
-					},
-				},
-				VariablesMounts: []*schema.VariableMount{
-					{
-						Name: "kong.yml",
-						Path: "/home/kong/kong.yml",
-					},
-				},
-				Variables: []schema.TemplateVariable{
-					{
-						Name:  "KONG_DATABASE",
-						Value: "off",
-					},
-					{
-						Name:  "KONG_DNS_ORDER",
-						Value: "LAST,A,CNAME",
-					},
-					{
-						Name:  "KONG_PLUGINS",
-						Value: "request-transformer,cors,key-auth,acl,basic-auth",
-					},
-					{
-						Name:  "KONG_NGINX_PROXY_PROXY_BUFFER_SIZE",
-						Value: "160k",
-					},
-					{
-						Name:  "KONG_NGINX_PROXY_PROXY_BUFFERS",
-						Value: "64 160k",
-					},
-					{
-						Name:  "KONG_DECLARATIVE_CONFIG",
-						Value: "/home/kong/kong.yml",
-					},
-					{
-						Name: "GENERATED_JWT_VARIABLES",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeJWT,
-							JWTParams: &schema.JWTParams{
-								Issuer:           "supabase",
-								SecretOutputKey:  "JWT_SECRET",
-								AnonOutputKey:    "SUPABASE_ANON_KEY",
-								ServiceOutputKey: "SUPABASE_SERVICE_KEY",
-							},
-						},
-					},
-					{
-						Name:  "DASHBOARD_USERNAME",
-						Value: "admin",
-					},
-					{
-						Name: "DASHBOARD_PASSWORD",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypePassword,
-						},
-					},
-					{
-						Name: "kong.yml",
-						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeStringReplace,
-						},
-						Value: `_format_version: '2.1'
-_transform: true
-
-consumers:
-  - username: DASHBOARD
-  - username: anon
-    keyauth_credentials:
-      - key: ${SERVICE_KONG_SUPABASE_ANON_KEY}
-  - username: service_role
-    keyauth_credentials:
-      - key: ${SERVICE_KONG_SUPABASE_SERVICE_KEY}
-
-acls:
-  - consumer: anon
-    group: anon
-  - consumer: service_role
-    group: admin
-
-basicauth_credentials:
-- consumer: DASHBOARD
-  username: ${SERVICE_KONG_DASHBOARD_USERNAME}
-  password: ${SERVICE_KONG_DASHBOARD_PASSWORD}
-
-services:
-  - name: auth-v1-open
-    url: http://${SERVICE_AUTH_KUBE_NAME}.${NAMESPACE}:9999/verify
-    routes:
-      - name: auth-v1-open
-        strip_path: true
-        paths:
-          - /auth/v1/verify
-    plugins:
-      - name: cors
-  - name: auth-v1
-    url: http://${SERVICE_AUTH_KUBE_NAME}.${NAMESPACE}:9999/
-    routes:
-      - name: auth-v1-all
-        strip_path: true
-        paths:
-          - /auth/v1/
-    plugins:
-      - name: cors
-      - name: key-auth
-        config:
-          hide_credentials: false
-      - name: acl
-        config:
-          hide_groups_header: true
-          allow:
-            - admin
-            - anon
-  - name: rest-v1
-    url: http://${SERVICE_POSTGREST_KUBE_NAME}.${NAMESPACE}:3000/
-    routes:
-      - name: rest-v1-all
-        strip_path: true
-        paths:
-          - /rest/v1/
-    plugins:
-      - name: cors
-      - name: key-auth
-        config:
-          hide_credentials: true
-      - name: acl
-        config:
-          hide_groups_header: true
-          allow:
-            - admin
-            - anon
-  - name: storage-v1
-    url: http://${SERVICE_STORAGE_KUBE_NAME}.${NAMESPACE}:5000/
-    routes:
-      - name: storage-v1-all
-        strip_path: true
-        paths:
-          - /storage/v1/
-    plugins:
-      - name: cors
-  - name: functions-v1
-    url: http://${SERVICE_FUNCTIONS_KUBE_NAME}.${NAMESPACE}:9000/
-    routes:
-      - name: functions-v1-all
-        strip_path: true
-        paths:
-          - /functions/v1/
-    plugins:
-      - name: cors
-  - name: analytics-v1
-    url: http://${SERVICE_ANALYTICS_KUBE_NAME}.${NAMESPACE}:4000/
-    routes:
-      - name: analytics-v1-all
-        strip_path: true
-        paths:
-          - /analytics/v1/
-  - name: meta
-    url: http://${SERVICE_POSTGRES_META_KUBE_NAME}.${NAMESPACE}:8080/
-    routes:
-      - name: meta-all
-        strip_path: true
-        paths:
-          - /pg/
-    plugins:
-      - name: key-auth
-        config:
-          hide_credentials: false
-      - name: acl
-        config:
-          hide_groups_header: true
-          allow:
-            - admin
-  - name: dashboard
-    url: http://${SERVICE_STUDIO_KUBE_NAME}.${NAMESPACE}:3000/
-    routes:
-      - name: dashboard-all
-        strip_path: true
-        paths:
-          - / 
-    plugins:
-      - name: cors
-      - name: basic-auth
-        config:
-          hide_credentials: true`,
-					},
-				},
-			},
-			{
 				ID:        "service_studio",
 				Name:      "Studio",
 				Type:      schema.ServiceTypeDockerimage,
@@ -2174,6 +1978,202 @@ serve(async () => {
 // To invoke:
 // curl 'http://localhost:<KONG_HTTP_PORT>/functions/v1/hello' \\
 //   --header 'Authorization: Bearer <anon/service_role API key>'`,
+					},
+				},
+			},
+			{
+				ID:       "service_kong",
+				Name:     "Kong",
+				Type:     schema.ServiceTypeDockerimage,
+				Builder:  schema.ServiceBuilderDocker,
+				Image:    utils.ToPtr("kong:2.8.1"),
+				InputIDs: []string{"input_domain"},
+				Ports: []schema.PortSpec{
+					{
+						Port:     8000,
+						Protocol: utils.ToPtr(schema.ProtocolTCP),
+					},
+				},
+				VariablesMounts: []*schema.VariableMount{
+					{
+						Name: "kong.yml",
+						Path: "/home/kong/kong.yml",
+					},
+				},
+				Variables: []schema.TemplateVariable{
+					{
+						Name:  "KONG_DATABASE",
+						Value: "off",
+					},
+					{
+						Name:  "KONG_DNS_ORDER",
+						Value: "LAST,A,CNAME",
+					},
+					{
+						Name:  "KONG_PLUGINS",
+						Value: "request-transformer,cors,key-auth,acl,basic-auth",
+					},
+					{
+						Name:  "KONG_NGINX_PROXY_PROXY_BUFFER_SIZE",
+						Value: "160k",
+					},
+					{
+						Name:  "KONG_NGINX_PROXY_PROXY_BUFFERS",
+						Value: "64 160k",
+					},
+					{
+						Name:  "KONG_DECLARATIVE_CONFIG",
+						Value: "/home/kong/kong.yml",
+					},
+					{
+						Name: "GENERATED_JWT_VARIABLES",
+						Generator: &schema.ValueGenerator{
+							Type: schema.GeneratorTypeJWT,
+							JWTParams: &schema.JWTParams{
+								Issuer:           "supabase",
+								SecretOutputKey:  "JWT_SECRET",
+								AnonOutputKey:    "SUPABASE_ANON_KEY",
+								ServiceOutputKey: "SUPABASE_SERVICE_KEY",
+							},
+						},
+					},
+					{
+						Name:  "DASHBOARD_USERNAME",
+						Value: "admin",
+					},
+					{
+						Name: "DASHBOARD_PASSWORD",
+						Generator: &schema.ValueGenerator{
+							Type: schema.GeneratorTypePassword,
+						},
+					},
+					{
+						Name: "kong.yml",
+						Generator: &schema.ValueGenerator{
+							Type: schema.GeneratorTypeStringReplace,
+						},
+						Value: `_format_version: '2.1'
+_transform: true
+
+consumers:
+  - username: DASHBOARD
+  - username: anon
+    keyauth_credentials:
+      - key: ${SERVICE_KONG_SUPABASE_ANON_KEY}
+  - username: service_role
+    keyauth_credentials:
+      - key: ${SERVICE_KONG_SUPABASE_SERVICE_KEY}
+
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: service_role
+    group: admin
+
+basicauth_credentials:
+- consumer: DASHBOARD
+  username: ${SERVICE_KONG_DASHBOARD_USERNAME}
+  password: ${SERVICE_KONG_DASHBOARD_PASSWORD}
+
+services:
+  - name: auth-v1-open
+    url: http://${SERVICE_AUTH_KUBE_NAME}.${NAMESPACE}:9999/verify
+    routes:
+      - name: auth-v1-open
+        strip_path: true
+        paths:
+          - /auth/v1/verify
+    plugins:
+      - name: cors
+  - name: auth-v1
+    url: http://${SERVICE_AUTH_KUBE_NAME}.${NAMESPACE}:9999/
+    routes:
+      - name: auth-v1-all
+        strip_path: true
+        paths:
+          - /auth/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+  - name: rest-v1
+    url: http://${SERVICE_POSTGREST_KUBE_NAME}.${NAMESPACE}:3000/
+    routes:
+      - name: rest-v1-all
+        strip_path: true
+        paths:
+          - /rest/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+  - name: storage-v1
+    url: http://${SERVICE_STORAGE_KUBE_NAME}.${NAMESPACE}:5000/
+    routes:
+      - name: storage-v1-all
+        strip_path: true
+        paths:
+          - /storage/v1/
+    plugins:
+      - name: cors
+  - name: functions-v1
+    url: http://${SERVICE_FUNCTIONS_KUBE_NAME}.${NAMESPACE}:9000/
+    routes:
+      - name: functions-v1-all
+        strip_path: true
+        paths:
+          - /functions/v1/
+    plugins:
+      - name: cors
+  - name: analytics-v1
+    url: http://${SERVICE_ANALYTICS_KUBE_NAME}.${NAMESPACE}:4000/
+    routes:
+      - name: analytics-v1-all
+        strip_path: true
+        paths:
+          - /analytics/v1/
+  - name: meta
+    url: http://${SERVICE_POSTGRES_META_KUBE_NAME}.${NAMESPACE}:8080/
+    routes:
+      - name: meta-all
+        strip_path: true
+        paths:
+          - /pg/
+    plugins:
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+  - name: dashboard
+    url: http://${SERVICE_STUDIO_KUBE_NAME}.${NAMESPACE}:3000/
+    routes:
+      - name: dashboard-all
+        strip_path: true
+        paths:
+          - / 
+    plugins:
+      - name: cors
+      - name: basic-auth
+        config:
+          hide_credentials: true`,
 					},
 				},
 			},
