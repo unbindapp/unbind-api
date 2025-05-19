@@ -80,11 +80,11 @@ func formbricksTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/",
 					Port:                      utils.ToPtr(int32(3000)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            20,
-					StartupFailureThreshold:   10,
+					PeriodSeconds:             10,
+					TimeoutSeconds:            30,
+					StartupFailureThreshold:   20,
 					LivenessFailureThreshold:  10,
-					ReadinessFailureThreshold: 10,
+					ReadinessFailureThreshold: 20,
 				},
 				Variables: []schema.TemplateVariable{
 					{
@@ -135,6 +135,10 @@ func formbricksTemplate() *schema.TemplateDefinition {
 					{
 						Name:  "S3_FORCE_PATH_STYLE",
 						Value: "0",
+					},
+					{
+						Name:  "IS_FORMBRICKS_CLOUD",
+						Value: "false",
 					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
