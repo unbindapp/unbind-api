@@ -506,7 +506,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 	respArr := []*models.ServiceResponse{resp}
 
-	if err := self.addPromMetricsToServiceVolumes(ctx, respArr); err != nil {
+	if err := self.addPromMetricsToServiceVolumes(ctx, project.Edges.Team.Namespace, respArr); err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 	}
 

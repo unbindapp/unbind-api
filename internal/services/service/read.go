@@ -23,7 +23,7 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 
 	// Step 2: Verify parent inputs (team, project, environment) for integrity and clear error messages.
 	// The VerifyInputs method already checks existence and relationships.
-	_, _, err = self.VerifyInputs(ctx, teamID, projectID, environmentID)
+	_, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
 	if err != nil {
 		// VerifyInputs already returns specific errors like NotFound or InvalidInput
 		return nil, err
@@ -40,7 +40,7 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// Convert to response
 	resp := models.TransformServiceEntities(services)
 
-	if err := self.addPromMetricsToServiceVolumes(ctx, resp); err != nil {
+	if err := self.addPromMetricsToServiceVolumes(ctx, project.Edges.Team.Namespace, resp); err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 	}
 
@@ -64,7 +64,7 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 	}
 
 	// Verify inputs
-	_, _, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
+	_, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 
 	respArr := []*models.ServiceResponse{resp}
 
-	if err := self.addPromMetricsToServiceVolumes(ctx, respArr); err != nil {
+	if err := self.addPromMetricsToServiceVolumes(ctx, project.Edges.Team.Namespace, respArr); err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 	}
 

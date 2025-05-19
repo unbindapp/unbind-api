@@ -197,12 +197,29 @@ func (self *ServiceService) validatePVC(ctx context.Context, teamID, projectID, 
 }
 
 // Add prom metrics to volume
-func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, services []*models.ServiceResponse) error {
+func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, namespace string, services []*models.ServiceResponse) error {
 	// Figure out all of the PVCs in the list
 	var pvcIDs []string
-	for _, service := range services {
+	for i, service := range services {
 		for _, vol := range service.Config.Volumes {
 			pvcIDs = append(pvcIDs, vol.ID)
+		}
+
+		if service.Type == schema.ServiceTypeDatabase {
+			// Find the PVCs with serive ID label
+			pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
+				"unbind-service": service.ID.String(),
+			}, self.k8s.GetInternalClient())
+			if err != nil {
+				log.Errorf("Failed to list PVCs: %v", err)
+			}
+			for _, pvc := range pvcs {
+				services[i].Config.Volumes = append(services[i].Config.Volumes, schema.ServiceVolume{
+					MountPath: "/database",
+					ID:        pvc.Name,
+				})
+				pvcIDs = append(pvcIDs, pvc.Name)
+			}
 		}
 	}
 

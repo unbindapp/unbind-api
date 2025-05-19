@@ -448,7 +448,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	respArr := []*models.ServiceResponse{resp}
 
 	// Add prom volume metrics
-	if err := self.addPromMetricsToServiceVolumes(ctx, respArr); err != nil {
+	if err := self.addPromMetricsToServiceVolumes(ctx, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, respArr); err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 	}
 
