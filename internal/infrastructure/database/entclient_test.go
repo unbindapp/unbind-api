@@ -9,7 +9,8 @@ import (
 func TestNewEntClient(t *testing.T) {
 	dbconn, _ := GetSqlDbConn(nil, true)
 
-	client, err := NewEntClient(dbconn)
+	client, sqlDB, err := NewEntClient(dbconn)
 	assert.Nil(t, err)
+	assert.NotNil(t, sqlDB)
 	assert.NotNil(t, client)
 }

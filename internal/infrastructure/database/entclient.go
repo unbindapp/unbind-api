@@ -9,12 +9,12 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func NewEntClient(connInfo SqlDBConn) (*ent.Client, error) {
+func NewEntClient(connInfo SqlDBConn) (*ent.Client, *sql.DB, error) {
 	db, err := sql.Open(connInfo.Driver(), connInfo.DSN())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	drv := entsql.OpenDB(connInfo.Dialect(), db)
-	return ent.NewClient(ent.Driver(drv)), nil
+	return ent.NewClient(ent.Driver(drv)), db, nil
 }

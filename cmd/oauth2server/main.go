@@ -41,7 +41,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, redis *redis.Clie
 		log.Fatalf("Failed to get database connection info: %v", err)
 	}
 	// Initialize ent client
-	db, err := database.NewEntClient(dbConnInfo)
+	db, _, err := database.NewEntClient(dbConnInfo)
 	if err != nil {
 		log.Fatalf("Failed to create ent client: %v", err)
 	}

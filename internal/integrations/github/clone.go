@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	charmLog "github.com/charmbracelet/log"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -219,7 +218,7 @@ func (self *GithubClient) CloneRepository(ctx context.Context, appID, installati
 }
 
 type loggerOutput struct {
-	logger *charmLog.Logger
+	logger *log.Logger
 }
 
 func (l *loggerOutput) Write(p []byte) (n int, err error) {

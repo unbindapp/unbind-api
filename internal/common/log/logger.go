@@ -2,55 +2,51 @@ package log
 
 import (
 	"os"
+	"sync"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
+	cblog "github.com/charmbracelet/log"
 )
 
-var logger *log.Logger
+// Logger embeds the Charm Logger and adds Printf/Fatalf
+type Logger struct{ *cblog.Logger }
 
-func GetLogger() *log.Logger {
-	if logger == nil {
-		styles := log.DefaultStyles()
-		styles.Levels[log.FatalLevel] = lipgloss.NewStyle().SetString("FATAL")
-		styles.Levels[log.ErrorLevel] = lipgloss.NewStyle().SetString("ERROR")
-		styles.Levels[log.WarnLevel] = lipgloss.NewStyle().SetString("WARN")
-		styles.Levels[log.InfoLevel] = lipgloss.NewStyle().SetString("INFO")
-		logger = log.New(os.Stderr)
-		logger.SetStyles(styles)
-		logger.SetReportTimestamp(false)
-	}
+// Printf routes goose/info-style logs through Infof.
+func (l *Logger) Printf(format string, v ...interface{}) { l.Infof(format, v...) }
+
+// Fatalf keeps goose’s contract of exiting the program.
+func (l *Logger) Fatalf(format string, v ...interface{}) { l.Fatalf(format, v...) }
+
+var (
+	logger     *Logger
+	initLogger sync.Once
+)
+
+// GetLogger returns a logger instance
+func GetLogger() *Logger {
+	initLogger.Do(func() {
+		styles := cblog.DefaultStyles()
+		styles.Levels[cblog.FatalLevel] = lipgloss.NewStyle().SetString("FATAL")
+		styles.Levels[cblog.ErrorLevel] = lipgloss.NewStyle().SetString("ERROR")
+		styles.Levels[cblog.WarnLevel] = lipgloss.NewStyle().SetString("WARN")
+		styles.Levels[cblog.InfoLevel] = lipgloss.NewStyle().SetString("INFO")
+
+		base := cblog.New(os.Stderr)
+		base.SetStyles(styles)
+		base.SetReportTimestamp(false)
+
+		logger = &Logger{base}
+	})
 	return logger
 }
 
-func Info(msg interface{}, keyvals ...interface{}) {
-	GetLogger().Info(msg, keyvals...)
-}
+// * Convenience wrappers
 
-func Infof(format string, args ...any) {
-	GetLogger().Infof(format, args...)
-}
-
-func Error(msg interface{}, keyvals ...interface{}) {
-	GetLogger().Error(msg, keyvals...)
-}
-
-func Errorf(format string, args ...any) {
-	GetLogger().Errorf(format, args...)
-}
-
-func Warn(msg interface{}, keyvals ...interface{}) {
-	GetLogger().Warn(msg, keyvals...)
-}
-
-func Warnf(format string, args ...any) {
-	GetLogger().Warnf(format, args...)
-}
-
-func Fatal(msg interface{}, keyvals ...interface{}) {
-	GetLogger().Fatal(msg, keyvals...)
-}
-
-func Fatalf(format string, args ...any) {
-	GetLogger().Fatalf(format, args...)
-}
+func Info(msg interface{}, keyvals ...interface{})  { GetLogger().Info(msg, keyvals...) }
+func Infof(format string, v ...interface{})         { GetLogger().Infof(format, v...) }
+func Warn(msg interface{}, keyvals ...interface{})  { GetLogger().Warn(msg, keyvals...) }
+func Warnf(format string, v ...interface{})         { GetLogger().Warnf(format, v...) }
+func Error(msg interface{}, keyvals ...interface{}) { GetLogger().Error(msg, keyvals...) }
+func Errorf(format string, v ...interface{})        { GetLogger().Errorf(format, v...) }
+func Fatal(msg interface{}, keyvals ...interface{}) { GetLogger().Fatal(msg, keyvals...) }
+func Fatalf(format string, v ...interface{})        { GetLogger().Fatalf(format, v...) }

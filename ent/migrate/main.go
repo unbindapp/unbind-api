@@ -22,7 +22,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/migrate"
 )
 
-func regenerateChecksum(directory *sqltool.GolangMigrateDir) error {
+func regenerateChecksum(directory *sqltool.GooseDir) error {
 	hashFile, err := directory.Checksum()
 	if err != nil {
 		return fmt.Errorf("failed to generate checksum: %w", err)
@@ -45,7 +45,7 @@ func main() {
 	// Define migrations directory relative to main.go
 	migrationsDir := filepath.Join(thisFile, "../migrations")
 
-	goMigrateDir, err := sqltool.NewGolangMigrateDir(migrationsDir)
+	gooseDir, err := sqltool.NewGooseDir(migrationsDir)
 	if err != nil {
 		fmt.Printf("Error creating atlas directory: %v\n", err)
 		os.Exit(1)
@@ -65,7 +65,7 @@ func main() {
 	// * Handle checksum regeneration
 	if *checksum {
 		// Regenerate checksum
-		if err := regenerateChecksum(goMigrateDir); err != nil {
+		if err := regenerateChecksum(gooseDir); err != nil {
 			fmt.Printf("Error regenerating checksum: %v\n", err)
 			os.Exit(1)
 		}
@@ -83,19 +83,20 @@ func main() {
 
 	/// * Create migration
 	// Keep track of files we started with
-	startingFiles, err := goMigrateDir.Files()
+	startingFiles, err := gooseDir.Files()
 	if err != nil {
 		fmt.Printf("Error getting files: %v\n", err)
 		return
 	}
 
 	opts := []schema.MigrateOption{
-		schema.WithDir(goMigrateDir),
+		schema.WithDir(gooseDir),
 		schema.WithMigrationMode(schema.ModeReplay),
 		schema.WithDialect(dialect.Postgres),
 		schema.WithDropColumn(true),
 		schema.WithDropIndex(true),
 		schema.WithIndent("  "),
+		schema.WithFormatter(sqltool.GooseFormatter),
 	}
 
 	// Setup embedded postgres
@@ -129,7 +130,7 @@ func main() {
 		return
 	}
 
-	afterFiles, err := goMigrateDir.Files()
+	afterFiles, err := gooseDir.Files()
 	if err != nil {
 		fmt.Printf("Error getting files: %v\n", err)
 		return

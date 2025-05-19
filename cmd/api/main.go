@@ -18,11 +18,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/go-co-op/gocron/v2"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/gorilla/schema"
+	_ "github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
+	"github.com/pressly/goose/v3"
 	"github.com/redis/go-redis/v9"
 	"github.com/unbindapp/unbind-api/config"
 	auth_handler "github.com/unbindapp/unbind-api/internal/api/handlers/auth"
@@ -188,11 +187,11 @@ func startAPI(cfg *config.Config) {
 	}
 	log.Infof("Using PostgreSQL database %s@%s:%d", cfg.PostgresUser, cfg.PostgresHost, cfg.PostgresPort)
 	// Initialize ent client
-	db, err := database.NewEntClient(dbConnInfo)
+	db, sqlDB, err := database.NewEntClient(dbConnInfo)
 	if err != nil {
 		log.Fatalf("Failed to create ent client: %v", err)
 	}
-	log.Info("🦋 Running migrations...")
+	log.Info("🪿 Running migrations...")
 
 	// Auto-apply migrations from migrations directory
 	migrationDir := "/app/migrations"
@@ -203,17 +202,16 @@ func startAPI(cfg *config.Config) {
 			log.Fatalf("Migrations directory not found: %v", err)
 		}
 	}
-	m, err := migrate.New(
-		fmt.Sprintf("file://%s", migrationDir),
-		dbConnInfo.DSN(),
-	)
-	if err != nil {
-		log.Fatalf("Failed to create migration instance: %v", err)
+
+	goose.SetLogger(log.GetLogger())
+	if err := goose.SetDialect("postgres"); err != nil {
+		log.Fatalf("🪿 goose dialect error: %v", err)
 	}
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		log.Fatalf("Failed to apply migrations: %v", err)
+
+	if err := goose.Up(sqlDB, migrationDir); err != nil {
+		log.Fatalf("🪿 goose up err: %v", err)
 	}
-	log.Info("🦋 Migrations applied successfully")
+	log.Info("🪿 Migrations applied successfully")
 
 	repo := repositories.NewRepositories(db)
 
