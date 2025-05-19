@@ -208,7 +208,7 @@ func startAPI(cfg *config.Config) {
 		log.Fatalf("🪿 goose dialect error: %v", err)
 	}
 
-	if err := goose.Up(sqlDB, migrationDir); err != nil {
+	if err := goose.Up(sqlDB, migrationDir, goose.WithAllowMissing()); err != nil {
 		log.Fatalf("🪿 goose up err: %v", err)
 	}
 	log.Info("🪿 Migrations applied successfully")
