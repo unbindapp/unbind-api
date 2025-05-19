@@ -554,6 +554,24 @@ func (scu *ServiceConfigUpdate) ClearProtectedVariables() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetInitContainers sets the "init_containers" field.
+func (scu *ServiceConfigUpdate) SetInitContainers(sc []*schema.InitContainer) *ServiceConfigUpdate {
+	scu.mutation.SetInitContainers(sc)
+	return scu
+}
+
+// AppendInitContainers appends sc to the "init_containers" field.
+func (scu *ServiceConfigUpdate) AppendInitContainers(sc []*schema.InitContainer) *ServiceConfigUpdate {
+	scu.mutation.AppendInitContainers(sc)
+	return scu
+}
+
+// ClearInitContainers clears the value of the "init_containers" field.
+func (scu *ServiceConfigUpdate) ClearInitContainers() *ServiceConfigUpdate {
+	scu.mutation.ClearInitContainers()
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -846,6 +864,17 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.ProtectedVariablesCleared() {
 		_spec.ClearField(serviceconfig.FieldProtectedVariables, field.TypeJSON)
+	}
+	if value, ok := scu.mutation.InitContainers(); ok {
+		_spec.SetField(serviceconfig.FieldInitContainers, field.TypeJSON, value)
+	}
+	if value, ok := scu.mutation.AppendedInitContainers(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldInitContainers, value)
+		})
+	}
+	if scu.mutation.InitContainersCleared() {
+		_spec.ClearField(serviceconfig.FieldInitContainers, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1445,6 +1474,24 @@ func (scuo *ServiceConfigUpdateOne) ClearProtectedVariables() *ServiceConfigUpda
 	return scuo
 }
 
+// SetInitContainers sets the "init_containers" field.
+func (scuo *ServiceConfigUpdateOne) SetInitContainers(sc []*schema.InitContainer) *ServiceConfigUpdateOne {
+	scuo.mutation.SetInitContainers(sc)
+	return scuo
+}
+
+// AppendInitContainers appends sc to the "init_containers" field.
+func (scuo *ServiceConfigUpdateOne) AppendInitContainers(sc []*schema.InitContainer) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendInitContainers(sc)
+	return scuo
+}
+
+// ClearInitContainers clears the value of the "init_containers" field.
+func (scuo *ServiceConfigUpdateOne) ClearInitContainers() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearInitContainers()
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1767,6 +1814,17 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.ProtectedVariablesCleared() {
 		_spec.ClearField(serviceconfig.FieldProtectedVariables, field.TypeJSON)
+	}
+	if value, ok := scuo.mutation.InitContainers(); ok {
+		_spec.SetField(serviceconfig.FieldInitContainers, field.TypeJSON, value)
+	}
+	if value, ok := scuo.mutation.AppendedInitContainers(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, serviceconfig.FieldInitContainers, value)
+		})
+	}
+	if scuo.mutation.InitContainersCleared() {
+		_spec.ClearField(serviceconfig.FieldInitContainers, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

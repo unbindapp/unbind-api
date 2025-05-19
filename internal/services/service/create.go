@@ -70,6 +70,9 @@ type CreateServiceInput struct {
 
 	// Variable mounts
 	VariableMounts []*schema.VariableMount `json:"variable_mounts,omitempty" doc:"Mount variables as volumes"`
+
+	// Init containers
+	InitContainers []*schema.InitContainer `json:"init_containers,omitempty" doc:"Init containers to run before the main container"`
 }
 
 // CreateService creates a new service and its configuration
@@ -431,6 +434,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			HealthCheck:             input.HealthCheck,
 			VariableMounts:          input.VariableMounts,
 			ProtectedVariables:      protectedVariables,
+			InitContainers:          input.InitContainers,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

@@ -12762,6 +12762,8 @@ type ServiceConfigMutation struct {
 	appendvariable_mounts     []*schema.VariableMount
 	protected_variables       *[]string
 	appendprotected_variables []string
+	init_containers           *[]*schema.InitContainer
+	appendinit_containers     []*schema.InitContainer
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
@@ -14385,6 +14387,71 @@ func (m *ServiceConfigMutation) ResetProtectedVariables() {
 	delete(m.clearedFields, serviceconfig.FieldProtectedVariables)
 }
 
+// SetInitContainers sets the "init_containers" field.
+func (m *ServiceConfigMutation) SetInitContainers(sc []*schema.InitContainer) {
+	m.init_containers = &sc
+	m.appendinit_containers = nil
+}
+
+// InitContainers returns the value of the "init_containers" field in the mutation.
+func (m *ServiceConfigMutation) InitContainers() (r []*schema.InitContainer, exists bool) {
+	v := m.init_containers
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInitContainers returns the old "init_containers" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldInitContainers(ctx context.Context) (v []*schema.InitContainer, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInitContainers is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInitContainers requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInitContainers: %w", err)
+	}
+	return oldValue.InitContainers, nil
+}
+
+// AppendInitContainers adds sc to the "init_containers" field.
+func (m *ServiceConfigMutation) AppendInitContainers(sc []*schema.InitContainer) {
+	m.appendinit_containers = append(m.appendinit_containers, sc...)
+}
+
+// AppendedInitContainers returns the list of values that were appended to the "init_containers" field in this mutation.
+func (m *ServiceConfigMutation) AppendedInitContainers() ([]*schema.InitContainer, bool) {
+	if len(m.appendinit_containers) == 0 {
+		return nil, false
+	}
+	return m.appendinit_containers, true
+}
+
+// ClearInitContainers clears the value of the "init_containers" field.
+func (m *ServiceConfigMutation) ClearInitContainers() {
+	m.init_containers = nil
+	m.appendinit_containers = nil
+	m.clearedFields[serviceconfig.FieldInitContainers] = struct{}{}
+}
+
+// InitContainersCleared returns if the "init_containers" field was cleared in this mutation.
+func (m *ServiceConfigMutation) InitContainersCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldInitContainers]
+	return ok
+}
+
+// ResetInitContainers resets all changes to the "init_containers" field.
+func (m *ServiceConfigMutation) ResetInitContainers() {
+	m.init_containers = nil
+	m.appendinit_containers = nil
+	delete(m.clearedFields, serviceconfig.FieldInitContainers)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -14486,7 +14553,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 31)
+	fields := make([]string, 0, 32)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -14580,6 +14647,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.protected_variables != nil {
 		fields = append(fields, serviceconfig.FieldProtectedVariables)
 	}
+	if m.init_containers != nil {
+		fields = append(fields, serviceconfig.FieldInitContainers)
+	}
 	return fields
 }
 
@@ -14650,6 +14720,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.VariableMounts()
 	case serviceconfig.FieldProtectedVariables:
 		return m.ProtectedVariables()
+	case serviceconfig.FieldInitContainers:
+		return m.InitContainers()
 	}
 	return nil, false
 }
@@ -14721,6 +14793,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldVariableMounts(ctx)
 	case serviceconfig.FieldProtectedVariables:
 		return m.OldProtectedVariables(ctx)
+	case serviceconfig.FieldInitContainers:
+		return m.OldInitContainers(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -14947,6 +15021,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetProtectedVariables(v)
 		return nil
+	case serviceconfig.FieldInitContainers:
+		v, ok := value.([]*schema.InitContainer)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInitContainers(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -15067,6 +15148,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldProtectedVariables) {
 		fields = append(fields, serviceconfig.FieldProtectedVariables)
 	}
+	if m.FieldCleared(serviceconfig.FieldInitContainers) {
+		fields = append(fields, serviceconfig.FieldInitContainers)
+	}
 	return fields
 }
 
@@ -15143,6 +15227,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldProtectedVariables:
 		m.ClearProtectedVariables()
+		return nil
+	case serviceconfig.FieldInitContainers:
+		m.ClearInitContainers()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig nullable field %s", name)
@@ -15244,6 +15331,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldProtectedVariables:
 		m.ResetProtectedVariables()
+		return nil
+	case serviceconfig.FieldInitContainers:
+		m.ResetInitContainers()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

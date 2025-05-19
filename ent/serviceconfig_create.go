@@ -375,6 +375,12 @@ func (scc *ServiceConfigCreate) SetProtectedVariables(s []string) *ServiceConfig
 	return scc
 }
 
+// SetInitContainers sets the "init_containers" field.
+func (scc *ServiceConfigCreate) SetInitContainers(sc []*schema.InitContainer) *ServiceConfigCreate {
+	scc.mutation.SetInitContainers(sc)
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -683,6 +689,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.ProtectedVariables(); ok {
 		_spec.SetField(serviceconfig.FieldProtectedVariables, field.TypeJSON, value)
 		_node.ProtectedVariables = value
+	}
+	if value, ok := scc.mutation.InitContainers(); ok {
+		_spec.SetField(serviceconfig.FieldInitContainers, field.TypeJSON, value)
+		_node.InitContainers = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1265,6 +1275,24 @@ func (u *ServiceConfigUpsert) UpdateProtectedVariables() *ServiceConfigUpsert {
 // ClearProtectedVariables clears the value of the "protected_variables" field.
 func (u *ServiceConfigUpsert) ClearProtectedVariables() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldProtectedVariables)
+	return u
+}
+
+// SetInitContainers sets the "init_containers" field.
+func (u *ServiceConfigUpsert) SetInitContainers(v []*schema.InitContainer) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldInitContainers, v)
+	return u
+}
+
+// UpdateInitContainers sets the "init_containers" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateInitContainers() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldInitContainers)
+	return u
+}
+
+// ClearInitContainers clears the value of the "init_containers" field.
+func (u *ServiceConfigUpsert) ClearInitContainers() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldInitContainers)
 	return u
 }
 
@@ -1897,6 +1925,27 @@ func (u *ServiceConfigUpsertOne) UpdateProtectedVariables() *ServiceConfigUpsert
 func (u *ServiceConfigUpsertOne) ClearProtectedVariables() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearProtectedVariables()
+	})
+}
+
+// SetInitContainers sets the "init_containers" field.
+func (u *ServiceConfigUpsertOne) SetInitContainers(v []*schema.InitContainer) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetInitContainers(v)
+	})
+}
+
+// UpdateInitContainers sets the "init_containers" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateInitContainers() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateInitContainers()
+	})
+}
+
+// ClearInitContainers clears the value of the "init_containers" field.
+func (u *ServiceConfigUpsertOne) ClearInitContainers() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearInitContainers()
 	})
 }
 
@@ -2696,6 +2745,27 @@ func (u *ServiceConfigUpsertBulk) UpdateProtectedVariables() *ServiceConfigUpser
 func (u *ServiceConfigUpsertBulk) ClearProtectedVariables() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearProtectedVariables()
+	})
+}
+
+// SetInitContainers sets the "init_containers" field.
+func (u *ServiceConfigUpsertBulk) SetInitContainers(v []*schema.InitContainer) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetInitContainers(v)
+	})
+}
+
+// UpdateInitContainers sets the "init_containers" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateInitContainers() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateInitContainers()
+	})
+}
+
+// ClearInitContainers clears the value of the "init_containers" field.
+func (u *ServiceConfigUpsertBulk) ClearInitContainers() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearInitContainers()
 	})
 }
 

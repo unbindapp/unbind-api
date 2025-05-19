@@ -170,6 +170,23 @@ func (self *HealthCheck) AsV1HealthCheck() *v1.HealthCheckSpec {
 	return healthCheck
 }
 
+// * Init containers
+type InitContainer struct {
+	Image   string `json:"image" required:"true" doc:"Image of the init container"`
+	Command string `json:"command" required:"true" doc:"Command to run in the init container"`
+}
+
+func AsV1InitContainers(initContainers []*InitContainer) []v1.InitContainerSpec {
+	v1InitContainers := make([]v1.InitContainerSpec, len(initContainers))
+	for i, initContainer := range initContainers {
+		v1InitContainers[i] = v1.InitContainerSpec{
+			Image:   initContainer.Image,
+			Command: initContainer.Command,
+		}
+	}
+	return v1InitContainers
+}
+
 // * Kubernetes Security context
 type Capability string
 

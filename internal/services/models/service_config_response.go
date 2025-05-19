@@ -37,6 +37,8 @@ type ServiceConfigResponse struct {
 	VariableMounts []*schema.VariableMount `json:"variable_mounts" nullable:"false"`
 	// Protected variables
 	ProtectedVariables []string `json:"protected_variables" nullable:"false"`
+	// Init containers
+	InitContainers []*schema.InitContainer `json:"init_containers" nullable:"false"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -50,6 +52,9 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 		}
 		if entity.Volumes == nil {
 			entity.Volumes = []schema.ServiceVolume{}
+		}
+		if entity.InitContainers == nil {
+			entity.InitContainers = []*schema.InitContainer{}
 		}
 		response = &ServiceConfigResponse{
 			GitBranch:            entity.GitBranch,
@@ -74,6 +79,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			HealthCheck:          entity.HealthCheck,
 			VariableMounts:       entity.VariableMounts,
 			ProtectedVariables:   entity.ProtectedVariables,
+			InitContainers:       entity.InitContainers,
 		}
 		if response.ProtectedVariables == nil {
 			response.ProtectedVariables = []string{}

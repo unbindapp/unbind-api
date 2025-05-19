@@ -1458,6 +1458,16 @@ func ProtectedVariablesNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldProtectedVariables))
 }
 
+// InitContainersIsNil applies the IsNil predicate on the "init_containers" field.
+func InitContainersIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldInitContainers))
+}
+
+// InitContainersNotNil applies the NotNil predicate on the "init_containers" field.
+func InitContainersNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldInitContainers))
+}
+
 // HasService applies the HasEdge predicate on the "service" edge.
 func HasService() predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {

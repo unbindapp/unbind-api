@@ -181,6 +181,16 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_VOLUMES"] = base64.StdEncoding.EncodeToString(marshalled)
 	}
 
+	// Init containers
+	if len(service.Edges.ServiceConfig.InitContainers) > 0 {
+		// Serialize and b64 encode
+		marshalled, err := json.Marshal(schema.AsV1InitContainers(service.Edges.ServiceConfig.InitContainers))
+		if err != nil {
+			return nil, err
+		}
+		env["SERVICE_INIT_CONTAINERS"] = base64.StdEncoding.EncodeToString(marshalled)
+	}
+
 	if service.Type == schema.ServiceTypeDatabase {
 		if service.Database == nil ||
 			service.Edges.ServiceConfig.DefinitionVersion == nil {

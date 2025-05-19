@@ -73,6 +73,8 @@ type Config struct {
 	// Volume data
 	ServiceVolumes        string `env:"SERVICE_VOLUMES"`         // Json serialized schema.ServiceVolume
 	ServiceVariableMounts string `env:"SERVICE_VARIABLE_MOUNTS"` // Json serialized map[string]string
+	// Init containers
+	ServiceInitContainers string `env:"SERVICE_INIT_CONTAINERS"`
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

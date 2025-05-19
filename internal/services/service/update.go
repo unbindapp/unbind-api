@@ -62,6 +62,9 @@ type UpdateServiceInput struct {
 
 	// Protected variables
 	ProtectedVariables *[]string `json:"protected_variables,omitempty" doc:"List of protected variables"`
+
+	// Init containers
+	InitContainers []*schema.InitContainer `json:"init_containers,omitempty" doc:"List of init containers"`
 }
 
 // UpdateService updates a service and its configuration
@@ -282,6 +285,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			HealthCheck:          input.HealthCheck,
 			VariableMounts:       input.VariableMounts,
 			ProtectedVariables:   input.ProtectedVariables,
+			InitContainers:       input.InitContainers,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)

@@ -372,6 +372,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				SecurityContext:         templateService.SecurityContext,
 				HealthCheck:             templateService.HealthCheck,
 				VariableMounts:          templateService.VariablesMounts,
+				InitContainers:          templateService.InitContainers,
 			}
 
 			serviceConfig, err := self.repo.Service().CreateConfig(ctx, tx, createInput)

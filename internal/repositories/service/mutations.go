@@ -90,6 +90,7 @@ type MutateConfigInput struct {
 	VariableMounts          []*schema.VariableMount
 	ProtectedVariables      *[]string
 	Volumes                 *[]schema.ServiceVolume
+	InitContainers          []*schema.InitContainer
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -147,6 +148,10 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableS3BackupBucket(input.S3BackupBucket).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.InitContainers != nil {
+		c.SetInitContainers(input.InitContainers)
+	}
 
 	if input.Volumes != nil {
 		c.SetVolumes(*input.Volumes)
@@ -224,6 +229,14 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableS3BackupSourceID(input.S3BackupSourceID).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
+
+	if input.InitContainers != nil {
+		if len(input.InitContainers) > 0 {
+			upd.SetInitContainers(input.InitContainers)
+		} else {
+			upd.ClearInitContainers()
+		}
+	}
 
 	if input.ProtectedVariables != nil {
 		upd.SetProtectedVariables(*input.ProtectedVariables)

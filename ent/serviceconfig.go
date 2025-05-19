@@ -87,6 +87,8 @@ type ServiceConfig struct {
 	VariableMounts []*schema.VariableMount `json:"variable_mounts,omitempty"`
 	// List of protected variables (can be edited, not deleted)
 	ProtectedVariables []string `json:"protected_variables,omitempty"`
+	// Init containers to run before the main container
+	InitContainers []*schema.InitContainer `json:"init_containers,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceConfigQuery when eager-loading is set.
 	Edges        ServiceConfigEdges `json:"edges"`
@@ -133,7 +135,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case serviceconfig.FieldS3BackupSourceID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldVolumes, serviceconfig.FieldSecurityContext, serviceconfig.FieldHealthCheck, serviceconfig.FieldVariableMounts, serviceconfig.FieldProtectedVariables:
+		case serviceconfig.FieldHosts, serviceconfig.FieldPorts, serviceconfig.FieldDatabaseConfig, serviceconfig.FieldVolumes, serviceconfig.FieldSecurityContext, serviceconfig.FieldHealthCheck, serviceconfig.FieldVariableMounts, serviceconfig.FieldProtectedVariables, serviceconfig.FieldInitContainers:
 			values[i] = new([]byte)
 		case serviceconfig.FieldAutoDeploy, serviceconfig.FieldIsPublic:
 			values[i] = new(sql.NullBool)
@@ -380,6 +382,14 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field protected_variables: %w", err)
 				}
 			}
+		case serviceconfig.FieldInitContainers:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field init_containers", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &sc.InitContainers); err != nil {
+					return fmt.Errorf("unmarshal field init_containers: %w", err)
+				}
+			}
 		default:
 			sc.selectValues.Set(columns[i], values[i])
 		}
@@ -542,6 +552,9 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("protected_variables=")
 	builder.WriteString(fmt.Sprintf("%v", sc.ProtectedVariables))
+	builder.WriteString(", ")
+	builder.WriteString("init_containers=")
+	builder.WriteString(fmt.Sprintf("%v", sc.InitContainers))
 	builder.WriteByte(')')
 	return builder.String()
 }

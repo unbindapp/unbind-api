@@ -104,6 +104,7 @@ type TemplateService struct {
 	Volumes            []TemplateVolume            `json:"volumes" nullable:"false"`             // Volumes to mount
 	Variables          []TemplateVariable          `json:"variables" nullable:"false"`           // Variables this service needs
 	VariableReferences []TemplateVariableReference `json:"variable_references" nullable:"false"` // Variables this service needs
+	InitContainers     []*InitContainer            `json:"init_containers,omitempty"`            // Init containers to run before the service
 	SecurityContext    *SecurityContext            `json:"security_context,omitempty"`           // Security context for the service
 	HealthCheck        *HealthCheck                `json:"health_check,omitempty"`               // Health check configuration
 	VariablesMounts    []*VariableMount            `json:"variables_mounts" nullable:"false"`    // Variables mounts

@@ -68,6 +68,9 @@ type ServiceParams struct {
 
 	// Variable mounts
 	VariableMounts []v1.VariableMountSpec
+
+	// Init containers
+	InitContainers []v1.InitContainerSpec
 }
 
 // CreateServiceObject creates a new v1.Service object with the provided parameters
@@ -124,6 +127,7 @@ func CreateServiceObject(params ServiceParams) (*v1.Service, error) {
 		HealthCheck:    params.HealthCheck,
 		VariableMounts: params.VariableMounts,
 		Volumes:        params.Volumes,
+		InitContainers: params.InitContainers,
 	}
 
 	if params.RunCommand != "" {
@@ -206,6 +210,18 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		}
 	}
 
+	// Unmarshal and b64 decode init containers
+	var initContainers []v1.InitContainerSpec
+	if self.builderConfig.ServiceInitContainers != "" {
+		decodedInitContainers, err := base64.StdEncoding.DecodeString(self.builderConfig.ServiceInitContainers)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to decode init containers: %v", err)
+		}
+		if err := json.Unmarshal([]byte(decodedInitContainers), &initContainers); err != nil {
+			return nil, nil, fmt.Errorf("failed to parse init containers: %v", err)
+		}
+	}
+
 	params := ServiceParams{
 		Name:             serviceName,
 		DisplayName:      serviceName,
@@ -244,6 +260,8 @@ func (self *K8SClient) DeployImage(ctx context.Context, crdName, image string, a
 		HealthCheck: healthCheck,
 		// Variable mounts
 		VariableMounts: variableMounts,
+		// Init containers
+		InitContainers: initContainers,
 	}
 
 	if self.builderConfig.ServiceDatabaseBackupSecretName != "" &&
