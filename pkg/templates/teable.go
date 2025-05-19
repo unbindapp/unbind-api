@@ -70,12 +70,6 @@ func teableTemplate() *schema.TemplateDefinition {
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("ghcr.io/teableio/teable:latest"),
 				DependsOn: []string{"service_postgres", "service_redis"},
-				Volumes: []schema.TemplateVolume{
-					{
-						Name:      "teable_data",
-						MountPath: "/app/.assets",
-					},
-				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,
