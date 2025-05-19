@@ -42,11 +42,11 @@ func GetLogger() *Logger {
 
 // * Convenience wrappers
 
-func Info(msg interface{}, keyvals ...interface{})  { GetLogger().Info(msg, keyvals...) }
-func Infof(format string, v ...interface{})         { GetLogger().Infof(format, v...) }
-func Warn(msg interface{}, keyvals ...interface{})  { GetLogger().Warn(msg, keyvals...) }
-func Warnf(format string, v ...interface{})         { GetLogger().Warnf(format, v...) }
-func Error(msg interface{}, keyvals ...interface{}) { GetLogger().Error(msg, keyvals...) }
-func Errorf(format string, v ...interface{})        { GetLogger().Errorf(format, v...) }
+func Info(msg interface{}, keyvals ...interface{})  { GetLogger().Logger.Info(msg, keyvals...) }
+func Infof(format string, v ...interface{})         { GetLogger().Logger.Infof(format, v...) }
+func Warn(msg interface{}, keyvals ...interface{})  { GetLogger().Logger.Warn(msg, keyvals...) }
+func Warnf(format string, v ...interface{})         { GetLogger().Logger.Warnf(format, v...) }
+func Error(msg interface{}, keyvals ...interface{}) { GetLogger().Logger.Error(msg, keyvals...) }
+func Errorf(format string, v ...interface{})        { GetLogger().Logger.Errorf(format, v...) }
 func Fatal(msg interface{}, keyvals ...interface{}) { GetLogger().Logger.Fatal(msg, keyvals...) }
 func Fatalf(format string, v ...interface{})        { GetLogger().Logger.Fatalf(format, v...) }
