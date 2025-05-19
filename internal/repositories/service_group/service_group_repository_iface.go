@@ -15,8 +15,10 @@ import (
 type ServiceGroupRepositoryInterface interface {
 	Create(ctx context.Context, tx repository.TxInterface, name string, icon, description *string, environmentID uuid.UUID) (*ent.ServiceGroup, error)
 	Update(ctx context.Context, input *models.UpdateServiceGroupInput) (*ent.ServiceGroup, error)
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, tx repository.TxInterface, id uuid.UUID) error
 	DeleteByEnvironmentID(ctx context.Context, tx repository.TxInterface, environmentID uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*ent.ServiceGroup, error)
 	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID) ([]*ent.ServiceGroup, error)
+	// Get all services in a service group
+	GetServices(ctx context.Context, id uuid.UUID) ([]*ent.Service, error)
 }

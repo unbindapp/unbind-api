@@ -276,7 +276,7 @@ func startAPI(cfg *config.Config) {
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
 	storageService := storage_service.NewStorageService(cfg, repo, kubeClient, promClient)
 	templateService := templates_service.NewTemplatesService(cfg, repo, kubeClient, dbProvider, deploymentController)
-	serviceGroupService := servicegroup_service.NewServiceGroupService(cfg, repo)
+	serviceGroupService := servicegroup_service.NewServiceGroupService(cfg, repo, kubeClient, deploymentController)
 
 	stringCache := cache.NewStringCache(redisClient, "unbind")
 

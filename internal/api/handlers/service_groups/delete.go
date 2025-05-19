@@ -2,6 +2,7 @@ package servicegroups_handler
 
 import (
 	"context"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -27,8 +28,9 @@ func (self *HandlerGroup) DeleteServiceGroup(ctx context.Context, input *DeleteS
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
+	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
 
-	err := self.srv.ServiceGroupService.DeleteServiceGroup(ctx, user.ID, input.Body)
+	err := self.srv.ServiceGroupService.DeleteServiceGroup(ctx, user.ID, bearerToken, input.Body)
 	if err != nil {
 		return nil, self.handleErr(err)
 	}

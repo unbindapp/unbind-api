@@ -7,19 +7,25 @@ import (
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/deployctl"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 
 // Integrate service management with internal permissions and kubernetes RBAC
 type ServiceGroupService struct {
-	cfg  *config.Config
-	repo repositories.RepositoriesInterface
+	cfg       *config.Config
+	repo      repositories.RepositoriesInterface
+	k8s       *k8s.KubeClient
+	deployCtl *deployctl.DeploymentController
 }
 
-func NewServiceGroupService(cfg *config.Config, repo repositories.RepositoriesInterface) *ServiceGroupService {
+func NewServiceGroupService(cfg *config.Config, repo repositories.RepositoriesInterface, k8s *k8s.KubeClient, deployCtl *deployctl.DeploymentController) *ServiceGroupService {
 	return &ServiceGroupService{
-		cfg:  cfg,
-		repo: repo,
+		cfg:       cfg,
+		repo:      repo,
+		k8s:       k8s,
+		deployCtl: deployCtl,
 	}
 }
 

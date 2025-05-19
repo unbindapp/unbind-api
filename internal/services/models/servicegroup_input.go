@@ -24,10 +24,11 @@ type UpdateServiceGroupInput struct {
 }
 
 type DeleteServiceGroupInput struct {
-	ID            uuid.UUID `json:"id" required:"true" doc:"The ID of the service group" format:"uuid"`
-	TeamID        uuid.UUID `json:"team_id" required:"true" doc:"The ID of the team" format:"uuid"`
-	ProjectID     uuid.UUID `json:"project_id" required:"true" doc:"The ID of the project" format:"uuid"`
-	EnvironmentID uuid.UUID `json:"environment_id" required:"true" doc:"The ID of the environment" format:"uuid"`
+	ID             uuid.UUID `json:"id" required:"true" doc:"The ID of the service group" format:"uuid"`
+	TeamID         uuid.UUID `json:"team_id" required:"true" doc:"The ID of the team" format:"uuid"`
+	ProjectID      uuid.UUID `json:"project_id" required:"true" doc:"The ID of the project" format:"uuid"`
+	EnvironmentID  uuid.UUID `json:"environment_id" required:"true" doc:"The ID of the environment" format:"uuid"`
+	DeleteServices bool      `json:"delete_services" required:"false" doc:"Whether to delete the services in the service group"`
 }
 
 type GetServiceGroupInput struct {

@@ -54,22 +54,21 @@ func (self *ServiceGroupRepository) Update(ctx context.Context, input *models.Up
 	return updateStmt.Save(ctx)
 }
 
-func (self *ServiceGroupRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	if err := self.base.WithTx(ctx, func(tx repository.TxInterface) error {
-		db := tx.Client()
-		err := db.Service.Update().
-			ClearServiceGroup().
-			Where(service.ServiceGroupID(id)).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
+func (self *ServiceGroupRepository) Delete(ctx context.Context, tx repository.TxInterface, id uuid.UUID) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
 
-		return db.ServiceGroup.DeleteOneID(id).Exec(ctx)
-	}); err != nil {
+	err := db.Service.Update().
+		ClearServiceGroup().
+		Where(service.ServiceGroupID(id)).
+		Exec(ctx)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	return db.ServiceGroup.DeleteOneID(id).Exec(ctx)
 }
 
 func (self *ServiceGroupRepository) DeleteByEnvironmentID(ctx context.Context, tx repository.TxInterface, environmentID uuid.UUID) error {
