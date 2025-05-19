@@ -68,7 +68,7 @@ func formbricksTemplate() *schema.TemplateDefinition {
 				},
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
-					Path:                      "/",
+					Path:                      "/health",
 					Port:                      utils.ToPtr(int32(3000)),
 					PeriodSeconds:             10,
 					TimeoutSeconds:            30,
@@ -129,6 +129,10 @@ func formbricksTemplate() *schema.TemplateDefinition {
 					{
 						Name:  "IS_FORMBRICKS_CLOUD",
 						Value: "0",
+					},
+					{
+						Name:  "NODE_ENV",
+						Value: "production",
 					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
