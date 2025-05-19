@@ -53,23 +53,13 @@ func formbricksTemplate() *schema.TemplateDefinition {
 				DatabaseType: utils.ToPtr("postgres"),
 			},
 			{
-				ID:           "service_redis",
-				Name:         "Redis",
-				Type:         schema.ServiceTypeDatabase,
-				Builder:      schema.ServiceBuilderDatabase,
-				DatabaseType: utils.ToPtr("redis"),
-				DatabaseConfig: &schema.DatabaseConfig{
-					StorageSize: "0.25",
-				},
-			},
-			{
 				ID:        "service_formbricks",
 				Name:      "Formbricks",
 				InputIDs:  []string{"input_domain", "input_storage_size"},
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("ghcr.io/formbricks/formbricks:v3.11.0"),
-				DependsOn: []string{"service_postgresql", "service_redis"},
+				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,
@@ -146,16 +136,6 @@ func formbricksTemplate() *schema.TemplateDefinition {
 						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_URL",
 						TargetName: "DATABASE_URL",
-					},
-					{
-						SourceID:   "service_redis",
-						SourceName: "DATABASE_URL",
-						TargetName: "REDIS_URL",
-					},
-					{
-						SourceID:   "service_redis",
-						SourceName: "DATABASE_URL",
-						TargetName: "REDIS_HTTP_URL",
 					},
 				},
 			},
