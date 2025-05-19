@@ -28,12 +28,8 @@ func (self *PrometheusClient) GetPVCsVolumeStats(ctx context.Context, pvcNames [
 	query := fmt.Sprintf(`
 (
   label_replace(
-    (
-      kubelet_volume_stats_used_bytes{persistentvolumeclaim=~"%s"} / 1024 / 1024 / 1024
-    )
-    or
-    (
-      0 * kube_persistentvolumeclaim_resource_requests_storage_bytes{persistentvolumeclaim=~"%s"}
+    max by (persistentvolumeclaim) (
+      kubelet_volume_stats_used_bytes{persistentvolumeclaim=~"%s", job="kubelet"} / 1024 / 1024 / 1024
     ),
     "kind", "used", "persistentvolumeclaim", ".*"
   )
@@ -41,17 +37,15 @@ func (self *PrometheusClient) GetPVCsVolumeStats(ctx context.Context, pvcNames [
 or
 (
   label_replace(
-    (
-      kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"%s"} / 1024 / 1024 / 1024
-    )
-    or
-    (
-      kube_persistentvolumeclaim_resource_requests_storage_bytes{persistentvolumeclaim=~"%s"} / 1024 / 1024 / 1024
-    ),
+    max by (persistentvolumeclaim) (
+      (kubelet_volume_stats_capacity_bytes{persistentvolumeclaim=~"%s", job="kubelet"} / 1024 / 1024 / 1024)
+      or
+      (kube_persistentvolumeclaim_resource_requests_storage_bytes{persistentvolumeclaim=~"%s", job="kubelet"} / 1024 / 1024 / 1024)
+    ), 
     "kind", "capacity", "persistentvolumeclaim", ".*"
   )
 )
-`, pvcRegex, pvcRegex, pvcRegex, pvcRegex)
+`, pvcRegex, pvcRegex, pvcRegex)
 
 	result, warnings, err := self.api.Query(ctx, query, time.Now())
 	if err != nil {
