@@ -138,7 +138,7 @@ func formbricksTemplate() *schema.TemplateDefinition {
 					},
 					{
 						Name:  "IS_FORMBRICKS_CLOUD",
-						Value: "false",
+						Value: "0",
 					},
 				},
 				VariableReferences: []schema.TemplateVariableReference{
