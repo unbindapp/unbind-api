@@ -55,8 +55,8 @@ func teableTemplate() *schema.TemplateDefinition {
 			{
 				ID:           "service_redis",
 				Name:         "Redis",
-				Type:         schema.ServiceTypeDockerimage,
-				Builder:      schema.ServiceBuilderDocker,
+				Type:         schema.ServiceTypeDatabase,
+				Builder:      schema.ServiceBuilderDatabase,
 				DatabaseType: utils.ToPtr("redis"),
 				DatabaseConfig: &schema.DatabaseConfig{
 					StorageSize: "0.25",
