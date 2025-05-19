@@ -87,7 +87,7 @@ func listmonkTemplate() *schema.TemplateDefinition {
 					{
 						SourceID:   "service_postgresql",
 						SourceName: "DATABASE_DEFAULT_DB_NAME",
-						TargetName: "LISTMONK_db__name",
+						TargetName: "LISTMONK_db__database",
 					},
 					{
 						SourceID:   "service_postgresql",
