@@ -48,5 +48,5 @@ func Warn(msg interface{}, keyvals ...interface{})  { GetLogger().Warn(msg, keyv
 func Warnf(format string, v ...interface{})         { GetLogger().Warnf(format, v...) }
 func Error(msg interface{}, keyvals ...interface{}) { GetLogger().Error(msg, keyvals...) }
 func Errorf(format string, v ...interface{})        { GetLogger().Errorf(format, v...) }
-func Fatal(msg interface{}, keyvals ...interface{}) { GetLogger().Fatal(msg, keyvals...) }
-func Fatalf(format string, v ...interface{})        { GetLogger().Fatalf(format, v...) }
+func Fatal(msg interface{}, keyvals ...interface{}) { GetLogger().Logger.Fatal(msg, keyvals...) }
+func Fatalf(format string, v ...interface{})        { GetLogger().Logger.Fatalf(format, v...) }
