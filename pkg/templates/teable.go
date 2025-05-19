@@ -65,7 +65,7 @@ func teableTemplate() *schema.TemplateDefinition {
 			{
 				ID:        "service_teable",
 				Name:      "Teable",
-				InputIDs:  []string{"input_domain", "input_teable_size", "input_postgres_password", "input_redis_password", "input_secret_key"},
+				InputIDs:  []string{"input_domain", "input_teable_size"},
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("ghcr.io/teableio/teable:latest"),
