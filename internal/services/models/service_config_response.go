@@ -28,7 +28,7 @@ type ServiceConfigResponse struct {
 	BackupSchedule       string     `json:"backup_schedule"`
 	BackupRetentionCount int        `json:"backup_retention_count"`
 	// Volume
-	Volumes []schema.ServiceVolume `json:"volumes,omitempty"`
+	Volumes []schema.ServiceVolume `json:"volumes" nullable:"false"`
 	// Security context
 	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 	// Health check
@@ -47,6 +47,9 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 	if entity != nil {
 		if entity.VariableMounts == nil {
 			entity.VariableMounts = []*schema.VariableMount{}
+		}
+		if entity.Volumes == nil {
+			entity.Volumes = []schema.ServiceVolume{}
 		}
 		response = &ServiceConfigResponse{
 			GitBranch:            entity.GitBranch,

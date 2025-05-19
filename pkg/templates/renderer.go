@@ -302,31 +302,3 @@ func (self *Templater) resolveGeneratedVariables(template *schema.TemplateDefini
 
 	return template, nil
 }
-
-// ProcessTemplateInputs processes the template inputs and returns a map of resolved values
-func (self *Templater) ProcessTemplateInputs(template *schema.TemplateDefinition, values map[string]string) (map[string]string, error) {
-	result := make(map[string]string)
-
-	for _, input := range template.Inputs {
-		// Skip host type as it's handled separately
-		if input.Type == schema.InputTypeHost {
-			continue
-		}
-
-		// Get value from provided values or use default
-		value, exists := values[input.Name]
-		if !exists {
-			if input.Default != nil {
-				value = *input.Default
-			} else if input.Required {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("input %s is required", input.Name))
-			} else {
-				continue
-			}
-		}
-
-		result[input.Name] = value
-	}
-
-	return result, nil
-}

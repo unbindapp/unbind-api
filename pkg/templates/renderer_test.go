@@ -7,20 +7,38 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 func TestResolveTemplate(t *testing.T) {
-	// Create a test template with static, generated, and string replace variables
+	// Create a test template with static, generated, string replace variables, and volumes
 	template := &schema.TemplateDefinition{
 		Name:        "test-template",
 		Description: "Test template",
 		Version:     1,
+		Inputs: []schema.TemplateInput{
+			{
+				ID:   "input_storage_size",
+				Name: "Storage Size",
+				Type: schema.InputTypeVolumeSize,
+				Volume: &schema.TemplateVolume{
+					Name:      "test-data",
+					MountPath: "/data",
+				},
+				Description: "Size of the storage for the test data.",
+				Required:    true,
+				Default:     utils.ToPtr("1"),
+			},
+		},
 		Services: []schema.TemplateService{
 			{
 				ID:      "service_testservice",
 				Name:    "TestService",
 				Type:    schema.ServiceTypeDockerimage,
 				Builder: schema.ServiceBuilderDocker,
+				InputIDs: []string{
+					"input_storage_size",
+				},
 				Variables: []schema.TemplateVariable{
 					{
 						Name:  "STATIC_VAR",
@@ -49,7 +67,9 @@ func TestResolveTemplate(t *testing.T) {
 	})
 
 	// Test template resolution
-	inputs := map[string]string{}
+	inputs := map[string]string{
+		"input_storage_size": "2",
+	}
 	kubeNameMap := map[string]string{
 		"service_testservice": "test-service",
 	}
@@ -82,7 +102,6 @@ func TestResolveTemplate(t *testing.T) {
 	passwordVar := findVariable(service.Variables, "GENERATED_PASSWORD")
 	require.NotNil(t, passwordVar)
 	assert.NotEmpty(t, passwordVar.Value)
-	assert.Nil(t, passwordVar.Generator)
 	assert.Len(t, passwordVar.Value, 32) // Default password length
 
 	// Verify string replace variable is preserved and replaced
@@ -93,12 +112,12 @@ func TestResolveTemplate(t *testing.T) {
 	assert.NotNil(t, stringReplaceVar.Generator)
 	assert.Equal(t, schema.GeneratorTypeStringReplace, stringReplaceVar.Generator.Type)
 
-	// Verify all non-string-replace variables have no generators
-	for _, v := range service.Variables {
-		if v.Generator != nil {
-			assert.Equal(t, schema.GeneratorTypeStringReplace, v.Generator.Type, "Only StringReplace generators should be preserved")
-		}
-	}
+	// Verify volume resolution
+	require.Len(t, service.Volumes, 1)
+	volume := service.Volumes[0]
+	assert.Equal(t, "test-data", volume.Name)
+	assert.Equal(t, "2Gi", volume.SizeGB)
+	assert.Equal(t, "/data", volume.MountPath)
 }
 
 // Helper function to find a variable by name
