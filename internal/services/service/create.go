@@ -372,6 +372,18 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			}
 		}
 
+		// Validate hosts
+		for _, host := range hosts {
+			// Count domain collisions
+			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host)
+			if err != nil {
+				return fmt.Errorf("failed to count domain collisions: %w", err)
+			}
+			if domainCount > 0 {
+				return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("domain %s already in use", host.Host))
+			}
+		}
+
 		if project == nil {
 			log.Errorf("Project not found")
 			return fmt.Errorf("Project not found")

@@ -258,6 +258,17 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 				input.Hosts = append(input.Hosts, *generatedHost)
 			}
 		}
+		// Validate hosts
+		for _, host := range input.Hosts {
+			// Count domain collisions
+			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host)
+			if err != nil {
+				return fmt.Errorf("failed to count domain collisions: %w", err)
+			}
+			if domainCount > 0 {
+				return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("domain %s already in use", host.Host))
+			}
+		}
 
 		// Update the service config
 		updateInput := &service_repo.MutateConfigInput{
