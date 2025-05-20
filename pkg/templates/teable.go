@@ -11,8 +11,8 @@ func teableTemplate() *schema.TemplateDefinition {
 		Name:        "Teable",
 		DisplayRank: uint(90500),
 		Icon:        "teable",
-		Keywords:    []string{"airtable", "teable", "database", "visual", "interface", "relational", "postgresql"},
-		Description: "Teable is a powerful visual interface built on relational databases (PostgreSQL).",
+		Keywords:    []string{"airtable", "teable", "no-code", "no code", "database", "visual", "interface", "relational", "postgresql"},
+		Description: "Airtable alternative that turns databases into spreadsheets.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{

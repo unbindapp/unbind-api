@@ -12,7 +12,7 @@ func listmonkTemplate() *schema.TemplateDefinition {
 		DisplayRank: uint(105000),
 		Icon:        "listmonk",
 		Keywords:    []string{"newsletter", "email", "mailing list", "campaign", "marketing", "smtp"},
-		Description: "High-performance, self-hosted newsletter and mailing list manager",
+		Description: "Newsletter and mailing list manager.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{

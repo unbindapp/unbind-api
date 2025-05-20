@@ -11,8 +11,8 @@ func nocodbTemplate() *schema.TemplateDefinition {
 		Name:        "NocoDB",
 		DisplayRank: uint(60200),
 		Icon:        "nocodb",
-		Keywords:    []string{"low code", "no code", "database", "spreadsheet", "airtable alternative", "api builder"},
-		Description: "Open source Airtable alternative. Turns any SQL database into a smart spreadsheet.",
+		Keywords:    []string{"low code", "no code", "no-code", "database", "spreadsheet", "airtable alternative", "api builder"},
+		Description: "Airtable alternative that turns databases into spreadsheets.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{

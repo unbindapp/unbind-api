@@ -12,7 +12,7 @@ func appsmithTemplate() *schema.TemplateDefinition {
 		DisplayRank: uint(60400),
 		Icon:        "appsmith",
 		Keywords:    []string{"low code", "no code", "app builder", "internal tools", "dashboard", "automation"},
-		Description: "Open source platform to build admin panels, internal tools, and dashboards",
+		Description: "Build admin panels, internal tools, and dashboards",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
