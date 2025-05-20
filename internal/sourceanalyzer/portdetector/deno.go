@@ -101,6 +101,7 @@ func (pd *PortDetector) fromDenoJSON(root string) *int {
 
 func (pd *PortDetector) scanDenoSource(root string) (*int, error) {
 	var port *int
+	var hasServe bool
 
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -122,6 +123,11 @@ func (pd *PortDetector) scanDenoSource(root string) (*int, error) {
 		data, _ := os.ReadFile(path)
 		txt := string(data)
 
+		// Check for Deno.serve without an explicit port
+		if strings.Contains(txt, "Deno.serve") {
+			hasServe = true
+		}
+
 		switch {
 		case matchPort(txt, denoRe.EnvGet, &port):
 		case matchPort(txt, denoRe.ServeOption, &port):
@@ -137,6 +143,12 @@ func (pd *PortDetector) scanDenoSource(root string) (*int, error) {
 
 	if err != nil && err != fs.SkipAll {
 		return nil, err
+	}
+
+	// If we found Deno.serve but no explicit port, return default port 8000
+	if hasServe && port == nil {
+		defaultPort := 8000
+		port = &defaultPort
 	}
 	return port, nil
 }
