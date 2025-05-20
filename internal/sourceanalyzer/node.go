@@ -10,15 +10,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
-var nodeFiles = []string{
-	"package.json",
-}
-
-var denoFiles = []string{
-	"deno.json",
-	"deno.jsonc",
-}
-
 // FrameworkDetector handles framework detection for different providers
 type FrameworkDetector struct {
 	provider  enum.Provider
