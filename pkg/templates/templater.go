@@ -31,7 +31,6 @@ func (self *Templater) AvailableTemplates() []*schema.TemplateDefinition {
 		appsmithTemplate(),
 		nocodbTemplate(),
 		teableTemplate(),
-		teableTemplate(),
 		formbricksTemplate(),
 	}
 }
