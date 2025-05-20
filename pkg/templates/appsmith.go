@@ -42,7 +42,7 @@ func appsmithTemplate() *schema.TemplateDefinition {
 				Name:     "Appsmith",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
-				Image:    utils.ToPtr("appsmith/appsmith-ce:release"),
+				Image:    utils.ToPtr("appsmith/appsmith-ee:release"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     80,
