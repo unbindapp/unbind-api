@@ -10,31 +10,46 @@ import (
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 )
 
-// DetectNodeFramework inspects the project at sourceDir and returns the detected
-// framework in priority order, falling back to Express and finally UnknownFramework.
-//
-// Detection now uses **layered heuristics**:
-//  1. Primary dependencies (package.json dependencies or devDependencies)
-//  2. Scripts section keywords (e.g. "svelte-kit", "vite", "solid-start")
-//  3. Presence of canonical config files (e.g. svelte.config.js, vite.config.ts)
-//  4. Fallback source‑code regexes (Express + Hono)
-//
-// Order is important – the first match wins.
-func DetectNodeFramework(sourceDir string) enum.Framework {
+var nodeFiles = []string{
+	"package.json",
+}
+
+var denoFiles = []string{
+	"deno.json",
+	"deno.jsonc",
+}
+
+// FrameworkDetector handles framework detection for different providers
+type FrameworkDetector struct {
+	provider  enum.Provider
+	sourceDir string
+}
+
+// NewFrameworkDetector creates a new FrameworkDetector instance
+func NewFrameworkDetector(provider enum.Provider, sourceDir string) *FrameworkDetector {
+	return &FrameworkDetector{
+		provider:  provider,
+		sourceDir: sourceDir,
+	}
+}
+
+// DetectFramework inspects the project and returns the detected framework
+func DetectFramework(provider enum.Provider, sourceDir string) enum.Framework {
+	fd := NewFrameworkDetector(provider, sourceDir)
 	switch {
-	case isSvelteKitApp(sourceDir):
+	case fd.isSvelteKitApp():
 		return enum.Sveltekit
-	case isSvelteApp(sourceDir):
+	case fd.isSvelteApp():
 		return enum.Svelte
-	case isSolidApp(sourceDir):
+	case fd.isSolidApp():
 		return enum.Solid
-	case isHonoApp(sourceDir):
+	case fd.isHonoApp():
 		return enum.Hono
-	case isTanStackStartApp(sourceDir):
+	case fd.isTanStackStartApp():
 		return enum.TanstackStart
-	case isViteApp(sourceDir):
+	case fd.isViteApp():
 		return enum.Vite
-	case isExpressApp(sourceDir):
+	case fd.isExpressApp():
 		return enum.Express
 	default:
 		return enum.UnknownFramework
@@ -45,51 +60,51 @@ func DetectNodeFramework(sourceDir string) enum.Framework {
 // Individual framework detectors
 // ---------------------------------------------------------------------------
 
-func isTanStackStartApp(sourceDir string) bool {
+func (fd *FrameworkDetector) isTanStackStartApp() bool {
 	// Primary indicator
-	if hasDependency(sourceDir, "@tanstack/react-start") && hasScriptKeyword(sourceDir, "vinxi") {
+	if fd.hasDependency("@tanstack/react-start") && fd.hasScriptKeyword("vinxi") {
 		return true
 	}
 	return false
 }
 
-func isViteApp(sourceDir string) bool {
-	if hasDependency(sourceDir, "vite") || hasScriptKeyword(sourceDir, "vite") {
+func (fd *FrameworkDetector) isViteApp() bool {
+	if fd.hasDependency("vite") || fd.hasScriptKeyword("vite") {
 		return true
 	}
-	return hasAnyFile(sourceDir, []string{"vite.config.js", "vite.config.ts", "vite.config.mjs", "vite.config.cjs"})
+	return fd.hasAnyFile([]string{"vite.config.js", "vite.config.ts", "vite.config.mjs", "vite.config.cjs"})
 }
 
-func isSvelteKitApp(sourceDir string) bool {
-	if hasDependency(sourceDir, "@sveltejs/kit") || hasScriptKeyword(sourceDir, "svelte-kit") {
+func (fd *FrameworkDetector) isSvelteKitApp() bool {
+	if fd.hasDependency("@sveltejs/kit") || fd.hasScriptKeyword("svelte-kit") {
 		return true
 	}
 	// SvelteKit always has a svelte.config.* file in root
-	return hasAnyFile(sourceDir, []string{"svelte.config.js", "svelte.config.ts", "svelte.config.cjs", "svelte.config.mjs"})
+	return fd.hasAnyFile([]string{"svelte.config.js", "svelte.config.ts", "svelte.config.cjs", "svelte.config.mjs"})
 }
 
-func isSvelteApp(sourceDir string) bool {
+func (fd *FrameworkDetector) isSvelteApp() bool {
 	// Must contain svelte, but we already checked for kit above
-	if hasDependency(sourceDir, "svelte") || hasScriptKeyword(sourceDir, "svelte") {
+	if fd.hasDependency("svelte") || fd.hasScriptKeyword("svelte") {
 		return true
 	}
 	// Svelte projects may also ship a svelte.config.*
-	return hasAnyFile(sourceDir, []string{"svelte.config.js", "svelte.config.ts", "svelte.config.cjs", "svelte.config.mjs"})
+	return fd.hasAnyFile([]string{"svelte.config.js", "svelte.config.ts", "svelte.config.cjs", "svelte.config.mjs"})
 }
 
-func isSolidApp(sourceDir string) bool {
-	if hasDependency(sourceDir, "solid-js") || hasDependency(sourceDir, "solid-start") {
+func (fd *FrameworkDetector) isSolidApp() bool {
+	if fd.hasDependency("solid-js") || fd.hasDependency("solid-start") {
 		return true
 	}
-	return hasScriptKeyword(sourceDir, "solid-start") || hasAnyFile(sourceDir, []string{"solid.config.ts", "solid.config.js"})
+	return fd.hasScriptKeyword("solid-start") || fd.hasAnyFile([]string{"solid.config.ts", "solid.config.js"})
 }
 
-func isHonoApp(sourceDir string) bool {
-	if hasDependency(sourceDir, "hono") {
+func (fd *FrameworkDetector) isHonoApp() bool {
+	if fd.hasDependency("hono") {
 		return true
 	}
 	// Fast source scan: look for `new Hono()` in TypeScript / JavaScript files
-	tsFiles, _ := utils.FindFilesWithExclusions(sourceDir, "*.{ts,js,tsx,jsx}", []string{"node_modules", ".git"})
+	tsFiles, _ := utils.FindFilesWithExclusions(fd.sourceDir, "*.{ts,js,tsx,jsx}", []string{"node_modules", ".git"})
 	honoInit := regexp.MustCompile(`(?m)new\s+Hono\s*\(`)
 	for _, f := range tsFiles {
 		if content, err := utils.ReadFile(f); err == nil && honoInit.Match([]byte(content)) {
@@ -100,20 +115,23 @@ func isHonoApp(sourceDir string) bool {
 }
 
 // ---------------------------------------------------------------------------
-// Express detector (existing logic kept, now internal helper)
+// Express detector
 // ---------------------------------------------------------------------------
 
-// isExpressApp checks if the Node.js app uses Express.js
-func isExpressApp(sourceDir string) bool {
+func (fd *FrameworkDetector) isExpressApp() bool {
+	if fd.provider == enum.Deno {
+		return false // Express is Node.js only
+	}
+
 	// Check for express in package.json dependencies
-	packageJSONPath := filepath.Join(sourceDir, "package.json")
+	packageJSONPath := filepath.Join(fd.sourceDir, "package.json")
 	if utils.FileExists(packageJSONPath) {
 		content, err := utils.ReadFile(packageJSONPath)
 		if err == nil {
 			// Check if express is listed as a dependency
 			if strings.Contains(content, "\"express\":") || strings.Contains(content, "'express':") {
 				// Look for express app initialization pattern in JavaScript files
-				jsFiles, err := utils.FindFilesWithExclusions(sourceDir, "*.js", []string{"node_modules", ".git"})
+				jsFiles, err := utils.FindFilesWithExclusions(fd.sourceDir, "*.js", []string{"node_modules", ".git"})
 				if err == nil {
 					// Patterns to look for in source code
 					expressInitRegex := regexp.MustCompile(`(?m)(const|let|var)\s+(\w+)\s*=\s*require\s*\(\s*['"]express['"]\s*\)`)
@@ -145,9 +163,52 @@ func isExpressApp(sourceDir string) bool {
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-// hasDependency opens package.json and checks for the specified dependency string.
-func hasDependency(sourceDir, dep string) bool {
-	packageJSONPath := filepath.Join(sourceDir, "package.json")
+func (fd *FrameworkDetector) hasDenoDependency(dep string) bool {
+	for _, fname := range []string{"deno.json", "deno.jsonc"} {
+		denoJSONPath := filepath.Join(fd.sourceDir, fname)
+		if !utils.FileExists(denoJSONPath) {
+			continue
+		}
+
+		content, err := utils.ReadFile(denoJSONPath)
+		if err != nil {
+			continue
+		}
+		// Check in imports section
+		if strings.Contains(content, "\""+dep+"\":") || strings.Contains(content, "'"+dep+"':") {
+			return true
+		}
+	}
+	return false
+}
+
+func (fd *FrameworkDetector) hasDenoScriptKeyword(kw string) bool {
+	for _, fname := range []string{"deno.json", "deno.jsonc"} {
+		denoJSONPath := filepath.Join(fd.sourceDir, fname)
+		if !utils.FileExists(denoJSONPath) {
+			continue
+		}
+
+		content, err := utils.ReadFile(denoJSONPath)
+		if err != nil {
+			continue
+		}
+		// A quick heuristic – any occurrence within tasks is good enough
+		taskRegex := regexp.MustCompile(`"tasks"\s*:\s*{[\s\S]*?}`)
+		m := taskRegex.Find([]byte(content))
+		if m != nil && strings.Contains(string(m), kw) {
+			return true
+		}
+	}
+	return false
+}
+
+func (fd *FrameworkDetector) hasDependency(dep string) bool {
+	if fd.provider == enum.Deno {
+		return fd.hasDenoDependency(dep)
+	}
+
+	packageJSONPath := filepath.Join(fd.sourceDir, "package.json")
 	if !utils.FileExists(packageJSONPath) {
 		return false
 	}
@@ -160,9 +221,12 @@ func hasDependency(sourceDir, dep string) bool {
 	return strings.Contains(content, "\""+dep+"\":") || strings.Contains(content, "'"+dep+"':")
 }
 
-// hasScriptKeyword scans the package.json "scripts" section for the given keyword.
-func hasScriptKeyword(sourceDir, kw string) bool {
-	packageJSONPath := filepath.Join(sourceDir, "package.json")
+func (fd *FrameworkDetector) hasScriptKeyword(kw string) bool {
+	if fd.provider == enum.Deno {
+		return fd.hasDenoScriptKeyword(kw)
+	}
+
+	packageJSONPath := filepath.Join(fd.sourceDir, "package.json")
 	if !utils.FileExists(packageJSONPath) {
 		return false
 	}
@@ -180,10 +244,9 @@ func hasScriptKeyword(sourceDir, kw string) bool {
 	return strings.Contains(string(m), kw)
 }
 
-// hasAnyFile returns true if any file in files exists in sourceDir.
-func hasAnyFile(sourceDir string, files []string) bool {
+func (fd *FrameworkDetector) hasAnyFile(files []string) bool {
 	for _, f := range files {
-		if utils.FileExists(filepath.Join(sourceDir, f)) {
+		if utils.FileExists(filepath.Join(fd.sourceDir, f)) {
 			return true
 		}
 	}

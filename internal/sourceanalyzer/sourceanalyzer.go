@@ -63,8 +63,8 @@ func AnalyzeSourceCode(sourceDir string) (*AnalysisResult, error) {
 	}
 
 	// Check for express as railpack doesn't return it, also drill down into vite because we might get more specific
-	if slices.Contains([]enum.Provider{enum.Node, enum.Bun}, detectedProvider) && (detectedFramework == enum.UnknownFramework || detectedFramework == enum.Vite) {
-		detectedFramework = DetectNodeFramework(sourceDir)
+	if slices.Contains([]enum.Provider{enum.Node, enum.Bun, enum.Deno}, detectedProvider) && (detectedFramework == enum.UnknownFramework || detectedFramework == enum.Vite) {
+		detectedFramework = DetectFramework(detectedProvider, sourceDir)
 	}
 
 	// Detect port
