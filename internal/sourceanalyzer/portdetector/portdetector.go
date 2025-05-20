@@ -14,7 +14,7 @@ type PortDetector struct {
 func (self *PortDetector) DetectPort() (*int, error) {
 	var port *int
 	switch self.Provider {
-	case enum.Node:
+	case enum.Node, enum.Bun:
 		port, _ = self.DetectNodePort(self.SourceDir)
 	case enum.Deno:
 		port, _ = self.DetectDenoPort(self.SourceDir)
