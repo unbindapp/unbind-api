@@ -12,7 +12,7 @@ func minioTemplate() *schema.TemplateDefinition {
 		DisplayRank: uint(60000),
 		Icon:        "minio",
 		Keywords:    []string{"object storage", "file storage", "s3", "s3 compatible"},
-		Description: "S3-compatible object storage",
+		Description: "S3-compatible object storage.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{

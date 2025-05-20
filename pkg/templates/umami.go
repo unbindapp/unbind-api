@@ -12,7 +12,7 @@ func umamiTemplate() *schema.TemplateDefinition {
 		DisplayRank: uint(100000),
 		Icon:        "umami",
 		Keywords:    []string{"analytics", "open source", "privacy-friendly", "Google Analytics", "plausible"},
-		Description: "Privacy-focused alternative to Google Analytics",
+		Description: "Privacy-focused Google Analytics alternative.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{

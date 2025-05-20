@@ -12,7 +12,7 @@ func wordPressTemplate() *schema.TemplateDefinition {
 		DisplayRank: uint(70000),
 		Icon:        "wordpress",
 		Keywords:    []string{"bloggin", "cms", "content management system", "WooCommerce", "ecommerce", "website", "publishing platform", "php", "mysql"},
-		Description: "The open source publishing platform & CMS",
+		Description: "The open source publishing platform & CMS.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{

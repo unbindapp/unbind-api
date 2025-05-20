@@ -12,7 +12,7 @@ func ghostTemplate() *schema.TemplateDefinition {
 		DisplayRank: uint(30000),
 		Icon:        "ghost",
 		Keywords:    []string{"blogging", "cms", "mysql"},
-		Description: "Open source blog and newsletter platform",
+		Description: "Open source blog and newsletter platform.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
 			{
