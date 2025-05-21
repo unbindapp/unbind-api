@@ -63,12 +63,6 @@ func (ru *RegistryUpdate) SetNillableKubernetesSecret(s *string) *RegistryUpdate
 	return ru
 }
 
-// ClearKubernetesSecret clears the value of the "kubernetes_secret" field.
-func (ru *RegistryUpdate) ClearKubernetesSecret() *RegistryUpdate {
-	ru.mutation.ClearKubernetesSecret()
-	return ru
-}
-
 // SetIsDefault sets the "is_default" field.
 func (ru *RegistryUpdate) SetIsDefault(b bool) *RegistryUpdate {
 	ru.mutation.SetIsDefault(b)
@@ -161,9 +155,6 @@ func (ru *RegistryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ru.mutation.KubernetesSecret(); ok {
 		_spec.SetField(registry.FieldKubernetesSecret, field.TypeString, value)
 	}
-	if ru.mutation.KubernetesSecretCleared() {
-		_spec.ClearField(registry.FieldKubernetesSecret, field.TypeString)
-	}
 	if value, ok := ru.mutation.IsDefault(); ok {
 		_spec.SetField(registry.FieldIsDefault, field.TypeBool, value)
 	}
@@ -220,12 +211,6 @@ func (ruo *RegistryUpdateOne) SetNillableKubernetesSecret(s *string) *RegistryUp
 	if s != nil {
 		ruo.SetKubernetesSecret(*s)
 	}
-	return ruo
-}
-
-// ClearKubernetesSecret clears the value of the "kubernetes_secret" field.
-func (ruo *RegistryUpdateOne) ClearKubernetesSecret() *RegistryUpdateOne {
-	ruo.mutation.ClearKubernetesSecret()
 	return ruo
 }
 
@@ -350,9 +335,6 @@ func (ruo *RegistryUpdateOne) sqlSave(ctx context.Context) (_node *Registry, err
 	}
 	if value, ok := ruo.mutation.KubernetesSecret(); ok {
 		_spec.SetField(registry.FieldKubernetesSecret, field.TypeString, value)
-	}
-	if ruo.mutation.KubernetesSecretCleared() {
-		_spec.ClearField(registry.FieldKubernetesSecret, field.TypeString)
 	}
 	if value, ok := ruo.mutation.IsDefault(); ok {
 		_spec.SetField(registry.FieldIsDefault, field.TypeBool, value)

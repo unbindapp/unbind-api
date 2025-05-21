@@ -115,6 +115,66 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		},
 		handlers.CheckForDomainCollision,
 	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "create-registry",
+			Summary:     "Create Registry",
+			Description: "Create a new registry.",
+			Path:        "/registries/create",
+			Method:      http.MethodPost,
+		},
+		handlers.CreateRegistry,
+	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "delete-registry",
+			Summary:     "Delete Registry",
+			Description: "Delete a registry.",
+			Path:        "/registries/delete",
+			Method:      http.MethodDelete,
+		},
+		handlers.DeleteRegistry,
+	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-registry",
+			Summary:     "Get Registry",
+			Description: "Get a registry.",
+			Path:        "/registries/get",
+			Method:      http.MethodGet,
+		},
+		handlers.GetRegistry,
+	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "list-registries",
+			Summary:     "List Registries",
+			Description: "List all registries.",
+			Path:        "/registries/list",
+			Method:      http.MethodGet,
+		},
+		handlers.ListRegistries,
+	)
+
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "set-default-registry",
+			Summary:     "Set Default Registry",
+			Description: "Set the default registry.",
+			Path:        "/registries/set-default",
+			Method:      http.MethodPost,
+		},
+		handlers.SetDefaultRegistry,
+	)
 }
 
 func (self *HandlerGroup) handleErr(err error) error {

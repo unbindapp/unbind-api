@@ -9690,7 +9690,7 @@ func (m *RegistryMutation) KubernetesSecret() (r string, exists bool) {
 // OldKubernetesSecret returns the old "kubernetes_secret" field's value of the Registry entity.
 // If the Registry object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RegistryMutation) OldKubernetesSecret(ctx context.Context) (v *string, err error) {
+func (m *RegistryMutation) OldKubernetesSecret(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldKubernetesSecret is only allowed on UpdateOne operations")
 	}
@@ -9704,22 +9704,9 @@ func (m *RegistryMutation) OldKubernetesSecret(ctx context.Context) (v *string, 
 	return oldValue.KubernetesSecret, nil
 }
 
-// ClearKubernetesSecret clears the value of the "kubernetes_secret" field.
-func (m *RegistryMutation) ClearKubernetesSecret() {
-	m.kubernetes_secret = nil
-	m.clearedFields[registry.FieldKubernetesSecret] = struct{}{}
-}
-
-// KubernetesSecretCleared returns if the "kubernetes_secret" field was cleared in this mutation.
-func (m *RegistryMutation) KubernetesSecretCleared() bool {
-	_, ok := m.clearedFields[registry.FieldKubernetesSecret]
-	return ok
-}
-
 // ResetKubernetesSecret resets all changes to the "kubernetes_secret" field.
 func (m *RegistryMutation) ResetKubernetesSecret() {
 	m.kubernetes_secret = nil
-	delete(m.clearedFields, registry.FieldKubernetesSecret)
 }
 
 // SetIsDefault sets the "is_default" field.
@@ -9918,11 +9905,7 @@ func (m *RegistryMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *RegistryMutation) ClearedFields() []string {
-	var fields []string
-	if m.FieldCleared(registry.FieldKubernetesSecret) {
-		fields = append(fields, registry.FieldKubernetesSecret)
-	}
-	return fields
+	return nil
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -9935,11 +9918,6 @@ func (m *RegistryMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *RegistryMutation) ClearField(name string) error {
-	switch name {
-	case registry.FieldKubernetesSecret:
-		m.ClearKubernetesSecret()
-		return nil
-	}
 	return fmt.Errorf("unknown Registry nullable field %s", name)
 }
 

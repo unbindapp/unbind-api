@@ -5,16 +5,20 @@ package system_repo
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
 // SystemRepositoryInterface ...
 type SystemRepositoryInterface interface {
-	CreateRegistry(ctx context.Context, tx repository.TxInterface, host string, kubernetesSecret *string, isDefault bool) (*ent.Registry, error)
+	CreateRegistry(ctx context.Context, tx repository.TxInterface, host string, kubernetesSecret string, isDefault bool) (*ent.Registry, error)
 	GetDefaultRegistry(ctx context.Context) (*ent.Registry, error)
+	SetDefaultRegistry(ctx context.Context, id uuid.UUID) (*ent.Registry, error)
 	GetImagePullSecrets(ctx context.Context) ([]string, error)
+	GetRegistry(ctx context.Context, id uuid.UUID) (*ent.Registry, error)
 	GetAllRegistries(ctx context.Context) ([]*ent.Registry, error)
+	DeleteRegistry(ctx context.Context, id uuid.UUID) error
 	GetSystemSettings(ctx context.Context, tx repository.TxInterface) (*ent.SystemSetting, error)
 	UpdateSystemSettings(ctx context.Context, input *SystemSettingUpdateInput) (settings *ent.SystemSetting, err error)
 }

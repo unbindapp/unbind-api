@@ -22,18 +22,18 @@ type DeploymentService struct {
 	deploymentController *deployctl.DeploymentController
 	githubClient         *github.GithubClient
 	lokiQuerier          *loki.LokiLogQuerier
-	imageChecker         *registry.ImageChecker
+	registryTester       *registry.RegistryTester
 	variableService      *variables_service.VariablesService
 }
 
-func NewDeploymentService(repo repositories.RepositoriesInterface, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController, githubClient *github.GithubClient, lokiQuerier *loki.LokiLogQuerier, imageChecker *registry.ImageChecker, variableService *variables_service.VariablesService) *DeploymentService {
+func NewDeploymentService(repo repositories.RepositoriesInterface, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController, githubClient *github.GithubClient, lokiQuerier *loki.LokiLogQuerier, registryTester *registry.RegistryTester, variableService *variables_service.VariablesService) *DeploymentService {
 	return &DeploymentService{
 		repo:                 repo,
 		k8s:                  k8s,
 		deploymentController: deploymentController,
 		githubClient:         githubClient,
 		lokiQuerier:          lokiQuerier,
-		imageChecker:         imageChecker,
+		registryTester:       registryTester,
 		variableService:      variableService,
 	}
 }

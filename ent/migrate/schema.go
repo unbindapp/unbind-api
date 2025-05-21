@@ -280,7 +280,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "host", Type: field.TypeString},
-		{Name: "kubernetes_secret", Type: field.TypeString, Nullable: true},
+		{Name: "kubernetes_secret", Type: field.TypeString},
 		{Name: "is_default", Type: field.TypeBool},
 	}
 	// RegistriesTable holds the schema information for the "registries" table.

@@ -176,13 +176,13 @@ func (self *Bootstrapper) bootstrapRegistry(ctx context.Context) error {
 			}
 
 			// Create registry
-			_, err = self.repos.System().CreateRegistry(ctx, tx, registryHost, &secretName, true)
+			_, err = self.repos.System().CreateRegistry(ctx, tx, registryHost, secretName, true)
 			if err != nil {
 				return fmt.Errorf("failed to create registry: %w", err)
 			}
 
 			// Get teams so we can copy secret
-			teams, err := self.repos.Ent().Team.Query().All(ctx)
+			teams, err := tx.Client().Team.Query().All(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to query teams: %w", err)
 			}

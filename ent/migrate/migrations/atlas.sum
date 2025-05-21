@@ -1,3 +1,4 @@
-h1:p7d+GIN+s9QSQbKpsV4C+wNHjyKDCUnUNwRLMxWv+PQ=
+h1:iSo3Pjo72TSEZ3vx23tWJEUGn9I7d5+wH2pxmMJel7Q=
 20250519010757_initial_migration.sql h1:94lMwKemoNX/ichD+2Vzb7GmOHXVj4qVTfeBInQAe0g=
 20250519163449_add_init_containers.sql h1:7bt+zCbtmlYr1QDztgka0R5wUxdjD7XYUkrhL9GYYIQ=
+20250521202532_non_nillable_kubernetes_secret.sql h1:eDpMWyeBXh5cG4poavaUMeYs5QXddFBBIyYlxc+nq64=

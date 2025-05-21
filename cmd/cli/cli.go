@@ -424,10 +424,7 @@ func (self *cli) syncSecrets() {
 		}
 
 		for _, r := range registries {
-			if r.KubernetesSecret == nil {
-				continue
-			}
-			_, err := self.k8s.CopySecret(context.Background(), *r.KubernetesSecret, self.cfg.SystemNamespace, t.Namespace, client)
+			_, err := self.k8s.CopySecret(context.Background(), r.KubernetesSecret, self.cfg.SystemNamespace, t.Namespace, client)
 			if err != nil {
 				fmt.Printf("Error copying secret to team %s: %v\n", t.KubernetesName, err)
 				return

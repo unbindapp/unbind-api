@@ -65,7 +65,7 @@ func (Registry) Fields() []ent.Field {
 
 			return nil
 		}),
-		field.String("kubernetes_secret").Optional().Nillable().
+		field.String("kubernetes_secret").
 			Comment(
 				"The name of the kubernetes registry credentials secret, should be located in the unbind system namespace",
 			),

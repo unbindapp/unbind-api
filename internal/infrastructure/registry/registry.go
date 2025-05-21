@@ -13,17 +13,17 @@ import (
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 )
 
-// ImageChecker provides methods to check if an image can be pulled from configured registries
-type ImageChecker struct {
+// RegistryTester provides methods to check if an image can be pulled from configured registries and to test registry credentials
+type RegistryTester struct {
 	cfg        *config.Config
 	repo       repositories.RepositoriesInterface
 	kubeClient *k8s.KubeClient
 	httpClient *http.Client
 }
 
-// NewImageChecker creates a new ImageChecker instance
-func NewImageChecker(cfg *config.Config, repo repositories.RepositoriesInterface, kubeClient *k8s.KubeClient) *ImageChecker {
-	return &ImageChecker{
+// NewRegistryTester creates a new RegistryTester instance (renamed from NewImageChecker)
+func NewRegistryTester(cfg *config.Config, repo repositories.RepositoriesInterface, kubeClient *k8s.KubeClient) *RegistryTester {
+	return &RegistryTester{
 		cfg:        cfg,
 		repo:       repo,
 		kubeClient: kubeClient,
@@ -79,7 +79,7 @@ func ParseImageString(image string) (registry, imageName, tag string) {
 }
 
 // CanPullImage checks if the given image can be pulled using any of the configured registries
-func (self *ImageChecker) CanPullImage(ctx context.Context, image string) (bool, error) {
+func (self *RegistryTester) CanPullImage(ctx context.Context, image string) (bool, error) {
 	// Parse the image string
 	registryHost, imageName, tag := ParseImageString(image)
 
@@ -98,12 +98,7 @@ func (self *ImageChecker) CanPullImage(ctx context.Context, image string) (bool,
 	// Find matching registry and try with its credentials
 	for _, registry := range registries {
 		if registry.Host == registryHost {
-			// Get credentials from secret
-			if registry.KubernetesSecret == nil {
-				continue // Skip if no secret configured
-			}
-
-			secret, err := self.kubeClient.GetSecret(ctx, *registry.KubernetesSecret, self.cfg.SystemNamespace, self.kubeClient.GetInternalClient())
+			secret, err := self.kubeClient.GetSecret(ctx, registry.KubernetesSecret, self.cfg.SystemNamespace, self.kubeClient.GetInternalClient())
 			if err != nil {
 				continue // Skip if can't get secret
 			}
@@ -132,7 +127,7 @@ func (self *ImageChecker) CanPullImage(ctx context.Context, image string) (bool,
 }
 
 // checkImageExistsInRegistry checks if an image exists in a specific registry using the registry API
-func (self *ImageChecker) checkImageExistsInRegistry(ctx context.Context, registryHost, imageName, tag, username, password string) (bool, error) {
+func (self *RegistryTester) checkImageExistsInRegistry(ctx context.Context, registryHost, imageName, tag, username, password string) (bool, error) {
 	// Normalize Docker Hub registry URL
 	registryURL := registryHost
 	if registryHost == "docker.io" {
@@ -160,7 +155,7 @@ func (self *ImageChecker) checkImageExistsInRegistry(ctx context.Context, regist
 }
 
 // getDockerHubToken obtains a token for Docker Hub
-func (self *ImageChecker) getDockerHubToken(ctx context.Context, imageName, username, password string) (string, error) {
+func (self *RegistryTester) getDockerHubToken(ctx context.Context, imageName, username, password string) (string, error) {
 	url := fmt.Sprintf("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", imageName)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -195,7 +190,7 @@ func (self *ImageChecker) getDockerHubToken(ctx context.Context, imageName, user
 }
 
 // checkManifestWithToken checks if an image manifest exists using a bearer token
-func (self *ImageChecker) checkManifestWithToken(ctx context.Context, registryURL, imageName, tag, token string) (bool, error) {
+func (self *RegistryTester) checkManifestWithToken(ctx context.Context, registryURL, imageName, tag, token string) (bool, error) {
 	url := fmt.Sprintf("%s/%s/manifests/%s", registryURL, imageName, tag)
 
 	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
@@ -217,7 +212,7 @@ func (self *ImageChecker) checkManifestWithToken(ctx context.Context, registryUR
 }
 
 // checkManifestWithBasicAuth checks if an image manifest exists using basic auth
-func (self *ImageChecker) checkManifestWithBasicAuth(ctx context.Context, registryURL, imageName, tag, username, password string) (bool, error) {
+func (self *RegistryTester) checkManifestWithBasicAuth(ctx context.Context, registryURL, imageName, tag, username, password string) (bool, error) {
 	url := fmt.Sprintf("%s/%s/manifests/%s", registryURL, imageName, tag)
 
 	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
@@ -238,4 +233,47 @@ func (self *ImageChecker) checkManifestWithBasicAuth(ctx context.Context, regist
 
 	// Image exists if we get 200 OK
 	return resp.StatusCode == http.StatusOK, nil
+}
+
+// TestRegistryCredentials tests if the provided credentials are valid for a given registry (docker.io, ghcr, quay, or arbitrary URL)
+func (self *RegistryTester) TestRegistryCredentials(ctx context.Context, registryHost, username, password string) (bool, error) {
+	// We'll try to access a known endpoint that requires authentication
+	// For Docker Hub, GHCR, Quay, and generic registries, we'll attempt to list repositories or get a token
+
+	var testImage, testTag string
+	// Use a common public image for test, e.g. "library/busybox" for docker.io
+	switch {
+	case registryHost == "docker.io":
+		testImage = "library/busybox"
+		testTag = "latest"
+		// Try to get a token with credentials
+		token, err := self.getDockerHubToken(ctx, testImage, username, password)
+		if err != nil || token == "" {
+			return false, nil
+		}
+		// Try to access manifest with token
+		ok, err := self.checkManifestWithToken(ctx, "https://index.docker.io/v2", testImage, testTag, token)
+		return ok, err
+	case strings.Contains(registryHost, "ghcr.io"):
+		testImage = "github/super-linter"
+		testTag = "latest"
+		registryURL := "https://ghcr.io/v2"
+		return self.checkManifestWithBasicAuth(ctx, registryURL, testImage, testTag, username, password)
+	case strings.Contains(registryHost, "quay.io"):
+		testImage = "quay/busybox"
+		testTag = "latest"
+		registryURL := "https://quay.io/v2"
+		return self.checkManifestWithBasicAuth(ctx, registryURL, testImage, testTag, username, password)
+	default:
+		// For arbitrary registries, try to access a manifest for a common image
+		registryURL := registryHost
+		if !strings.HasPrefix(registryHost, "http") {
+			registryURL = "https://" + registryHost + "/v2"
+		} else {
+			registryURL = registryHost + "/v2"
+		}
+		testImage = "busybox"
+		testTag = "latest"
+		return self.checkManifestWithBasicAuth(ctx, registryURL, testImage, testTag, username, password)
+	}
 }

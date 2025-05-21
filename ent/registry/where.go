@@ -280,16 +280,6 @@ func KubernetesSecretHasSuffix(v string) predicate.Registry {
 	return predicate.Registry(sql.FieldHasSuffix(FieldKubernetesSecret, v))
 }
 
-// KubernetesSecretIsNil applies the IsNil predicate on the "kubernetes_secret" field.
-func KubernetesSecretIsNil() predicate.Registry {
-	return predicate.Registry(sql.FieldIsNull(FieldKubernetesSecret))
-}
-
-// KubernetesSecretNotNil applies the NotNil predicate on the "kubernetes_secret" field.
-func KubernetesSecretNotNil() predicate.Registry {
-	return predicate.Registry(sql.FieldNotNull(FieldKubernetesSecret))
-}
-
 // KubernetesSecretEqualFold applies the EqualFold predicate on the "kubernetes_secret" field.
 func KubernetesSecretEqualFold(v string) predicate.Registry {
 	return predicate.Registry(sql.FieldEqualFold(FieldKubernetesSecret, v))

@@ -61,7 +61,7 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	}
 
 	if deployment.Image != nil && deployment.ResourceDefinition != nil {
-		canPullImage, _ := self.imageChecker.CanPullImage(ctx, *deployment.Image)
+		canPullImage, _ := self.registryTester.CanPullImage(ctx, *deployment.Image)
 
 		if canPullImage {
 			// Update env

@@ -443,18 +443,16 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 
 	// Get credentials if applicable
 	var username, password string
-	if registry.KubernetesSecret != nil {
-		credentials, err := self.k8s.GetSecret(ctx, *registry.KubernetesSecret, self.cfg.SystemNamespace, self.k8s.GetInternalClient())
-		if err != nil {
-			return nil, self.failWithErr(ctx, "Error getting registry credentials", job.ID, err)
-		}
-		username, password, err = self.k8s.ParseRegistryCredentials(credentials)
-		if err != nil {
-			return nil, self.failWithErr(ctx, "Error parsing registry credentials", job.ID, err)
-		}
-		req.Environment["CONTAINER_REGISTRY_USER"] = username
-		req.Environment["CONTAINER_REGISTRY_PASSWORD"] = password
+	credentials, err := self.k8s.GetSecret(ctx, registry.KubernetesSecret, self.cfg.SystemNamespace, self.k8s.GetInternalClient())
+	if err != nil {
+		return nil, self.failWithErr(ctx, "Error getting registry credentials", job.ID, err)
 	}
+	username, password, err = self.k8s.ParseRegistryCredentials(credentials)
+	if err != nil {
+		return nil, self.failWithErr(ctx, "Error parsing registry credentials", job.ID, err)
+	}
+	req.Environment["CONTAINER_REGISTRY_USER"] = username
+	req.Environment["CONTAINER_REGISTRY_PASSWORD"] = password
 
 	// Add image pull secrets
 	pullSecrets, err := self.repo.System().GetImagePullSecrets(ctx)

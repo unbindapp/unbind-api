@@ -64,14 +64,6 @@ func (rc *RegistryCreate) SetKubernetesSecret(s string) *RegistryCreate {
 	return rc
 }
 
-// SetNillableKubernetesSecret sets the "kubernetes_secret" field if the given value is not nil.
-func (rc *RegistryCreate) SetNillableKubernetesSecret(s *string) *RegistryCreate {
-	if s != nil {
-		rc.SetKubernetesSecret(*s)
-	}
-	return rc
-}
-
 // SetIsDefault sets the "is_default" field.
 func (rc *RegistryCreate) SetIsDefault(b bool) *RegistryCreate {
 	rc.mutation.SetIsDefault(b)
@@ -157,6 +149,9 @@ func (rc *RegistryCreate) check() error {
 			return &ValidationError{Name: "host", err: fmt.Errorf(`ent: validator failed for field "Registry.host": %w`, err)}
 		}
 	}
+	if _, ok := rc.mutation.KubernetesSecret(); !ok {
+		return &ValidationError{Name: "kubernetes_secret", err: errors.New(`ent: missing required field "Registry.kubernetes_secret"`)}
+	}
 	if _, ok := rc.mutation.IsDefault(); !ok {
 		return &ValidationError{Name: "is_default", err: errors.New(`ent: missing required field "Registry.is_default"`)}
 	}
@@ -210,7 +205,7 @@ func (rc *RegistryCreate) createSpec() (*Registry, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := rc.mutation.KubernetesSecret(); ok {
 		_spec.SetField(registry.FieldKubernetesSecret, field.TypeString, value)
-		_node.KubernetesSecret = &value
+		_node.KubernetesSecret = value
 	}
 	if value, ok := rc.mutation.IsDefault(); ok {
 		_spec.SetField(registry.FieldIsDefault, field.TypeBool, value)
@@ -301,12 +296,6 @@ func (u *RegistryUpsert) SetKubernetesSecret(v string) *RegistryUpsert {
 // UpdateKubernetesSecret sets the "kubernetes_secret" field to the value that was provided on create.
 func (u *RegistryUpsert) UpdateKubernetesSecret() *RegistryUpsert {
 	u.SetExcluded(registry.FieldKubernetesSecret)
-	return u
-}
-
-// ClearKubernetesSecret clears the value of the "kubernetes_secret" field.
-func (u *RegistryUpsert) ClearKubernetesSecret() *RegistryUpsert {
-	u.SetNull(registry.FieldKubernetesSecret)
 	return u
 }
 
@@ -412,13 +401,6 @@ func (u *RegistryUpsertOne) SetKubernetesSecret(v string) *RegistryUpsertOne {
 func (u *RegistryUpsertOne) UpdateKubernetesSecret() *RegistryUpsertOne {
 	return u.Update(func(s *RegistryUpsert) {
 		s.UpdateKubernetesSecret()
-	})
-}
-
-// ClearKubernetesSecret clears the value of the "kubernetes_secret" field.
-func (u *RegistryUpsertOne) ClearKubernetesSecret() *RegistryUpsertOne {
-	return u.Update(func(s *RegistryUpsert) {
-		s.ClearKubernetesSecret()
 	})
 }
 
@@ -693,13 +675,6 @@ func (u *RegistryUpsertBulk) SetKubernetesSecret(v string) *RegistryUpsertBulk {
 func (u *RegistryUpsertBulk) UpdateKubernetesSecret() *RegistryUpsertBulk {
 	return u.Update(func(s *RegistryUpsert) {
 		s.UpdateKubernetesSecret()
-	})
-}
-
-// ClearKubernetesSecret clears the value of the "kubernetes_secret" field.
-func (u *RegistryUpsertBulk) ClearKubernetesSecret() *RegistryUpsertBulk {
-	return u.Update(func(s *RegistryUpsert) {
-		s.ClearKubernetesSecret()
 	})
 }
 

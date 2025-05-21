@@ -26,7 +26,7 @@ type Registry struct {
 	// Host holds the value of the "host" field.
 	Host string `json:"host,omitempty"`
 	// The name of the kubernetes registry credentials secret, should be located in the unbind system namespace
-	KubernetesSecret *string `json:"kubernetes_secret,omitempty"`
+	KubernetesSecret string `json:"kubernetes_secret,omitempty"`
 	// If true, this is the registry that will be used for internal CI/CD
 	IsDefault    bool `json:"is_default,omitempty"`
 	selectValues sql.SelectValues
@@ -88,8 +88,7 @@ func (r *Registry) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field kubernetes_secret", values[i])
 			} else if value.Valid {
-				r.KubernetesSecret = new(string)
-				*r.KubernetesSecret = value.String
+				r.KubernetesSecret = value.String
 			}
 		case registry.FieldIsDefault:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -142,10 +141,8 @@ func (r *Registry) String() string {
 	builder.WriteString("host=")
 	builder.WriteString(r.Host)
 	builder.WriteString(", ")
-	if v := r.KubernetesSecret; v != nil {
-		builder.WriteString("kubernetes_secret=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("kubernetes_secret=")
+	builder.WriteString(r.KubernetesSecret)
 	builder.WriteString(", ")
 	builder.WriteString("is_default=")
 	builder.WriteString(fmt.Sprintf("%v", r.IsDefault))
