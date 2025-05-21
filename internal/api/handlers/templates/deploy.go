@@ -17,7 +17,7 @@ type TemplateDeployInput struct {
 
 type TemplateDeployResponse struct {
 	Body struct {
-		Data []*models.ServiceResponse `json:"data" required:"true"`
+		Data []*models.ServiceResponse `json:"data" nullable:"false"`
 	}
 }
 
