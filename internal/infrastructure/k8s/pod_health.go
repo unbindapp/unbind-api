@@ -14,6 +14,49 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// EventType represents different types of pod/container events
+type EventType string
+
+const (
+	EventTypeOOMKilled        EventType = "OOMKilled"
+	EventTypeCrashLoopBackOff EventType = "CrashLoopBackOff"
+	EventTypeContainerCreated EventType = "ContainerCreated"
+	EventTypeContainerStarted EventType = "ContainerStarted"
+	EventTypeContainerStopped EventType = "ContainerStopped"
+	EventTypeNodeNotReady     EventType = "NodeNotReady"
+	EventTypeSchedulingFailed EventType = "SchedulingFailed"
+	EventTypeUnknown          EventType = "Unknown"
+)
+
+// Register enum in OpenAPI specification
+func (e EventType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["EventType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "EventType")
+		schemaRef.Title = "EventType"
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeOOMKilled))
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeCrashLoopBackOff))
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeContainerCreated))
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeContainerStarted))
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeContainerStopped))
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeNodeNotReady))
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeSchedulingFailed))
+		schemaRef.Enum = append(schemaRef.Enum, string(EventTypeUnknown))
+		r.Map()["EventType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/EventType"}
+}
+
+// EventRecord represents a single event with its details
+type EventRecord struct {
+	Type      EventType `json:"type"`
+	Timestamp string    `json:"timestamp"`
+	Message   string    `json:"message,omitempty"`
+	Count     int32     `json:"count,omitempty"`
+	FirstSeen string    `json:"firstSeen,omitempty"`
+	LastSeen  string    `json:"lastSeen,omitempty"`
+	Reason    string    `json:"reason,omitempty"`
+}
+
 // GetPodContainerStatusByLabels returns pods and their instance status information matching the provided labels
 func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]PodContainerStatus, error) {
 	// Get pods by labels
@@ -48,10 +91,20 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 			podStatus.StartTime = pod.Status.StartTime.Format(time.RFC3339)
 		}
 
+		// Get pod events
+		podEvents, err := k.getPodEvents(ctx, namespace, pod.Name, client)
+		if err != nil {
+			// Log the error but continue processing
+			fmt.Printf("Warning: failed to get events for pod %s: %v\n", pod.Name, err)
+		}
+
 		// Process regular instances
 		hasCrashing := false
 		for _, container := range pod.Status.ContainerStatuses {
 			instanceStatus := extractContainerStatus(container)
+			// Add container-specific events
+			instanceStatus.Events = filterEventsByContainer(podEvents, container.Name)
+
 			if instanceStatus.IsCrashing {
 				hasCrashing = true
 			}
@@ -61,6 +114,9 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 		// Process instance dependencies
 		for _, container := range pod.Status.InitContainerStatuses {
 			instanceStatus := extractContainerStatus(container)
+			// Add container-specific events
+			instanceStatus.Events = filterEventsByContainer(podEvents, container.Name)
+
 			if instanceStatus.IsCrashing {
 				hasCrashing = true
 			}
@@ -75,19 +131,109 @@ func (k *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespac
 	return result, nil
 }
 
+// getPodEvents retrieves events for a specific pod
+func (k *KubeClient) getPodEvents(ctx context.Context, namespace, podName string, client *kubernetes.Clientset) ([]EventRecord, error) {
+	// Field selector to filter events for a specific pod
+	fieldSelector := fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s,involvedObject.kind=Pod", podName, namespace)
+
+	// Get events
+	events, err := client.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fieldSelector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list events: %w", err)
+	}
+
+	result := make([]EventRecord, 0, len(events.Items))
+
+	for _, event := range events.Items {
+		eventType := mapEventType(event.Reason, event.Message)
+
+		record := EventRecord{
+			Type:      eventType,
+			Timestamp: event.LastTimestamp.Format(time.RFC3339),
+			Message:   event.Message,
+			Count:     event.Count,
+			Reason:    event.Reason,
+		}
+
+		if !event.FirstTimestamp.IsZero() {
+			record.FirstSeen = event.FirstTimestamp.Format(time.RFC3339)
+		}
+
+		if !event.LastTimestamp.IsZero() {
+			record.LastSeen = event.LastTimestamp.Format(time.RFC3339)
+		}
+
+		result = append(result, record)
+	}
+
+	return result, nil
+}
+
+// mapEventType maps Kubernetes event reasons to our EventType enum
+func mapEventType(reason, message string) EventType {
+	reasonLower := strings.ToLower(reason)
+	messageLower := strings.ToLower(message)
+
+	switch {
+	case strings.Contains(reasonLower, "oom") || strings.Contains(messageLower, "out of memory"):
+		return EventTypeOOMKilled
+	case strings.Contains(reasonLower, "backoff") || strings.Contains(reasonLower, "crashloop"):
+		return EventTypeCrashLoopBackOff
+	case strings.Contains(reasonLower, "created"):
+		return EventTypeContainerCreated
+	case strings.Contains(reasonLower, "started"):
+		return EventTypeContainerStarted
+	case strings.Contains(reasonLower, "killed") || strings.Contains(reasonLower, "stopped"):
+		return EventTypeContainerStopped
+	case strings.Contains(reasonLower, "nodenotready"):
+		return EventTypeNodeNotReady
+	case strings.Contains(reasonLower, "failedscheduling"):
+		return EventTypeSchedulingFailed
+	default:
+		return EventTypeUnknown
+	}
+}
+
+// filterEventsByContainer filters pod events to only include those relevant to a specific container
+func filterEventsByContainer(events []EventRecord, containerName string) []EventRecord {
+	result := make([]EventRecord, 0)
+
+	for _, event := range events {
+		// Check if the event message contains the container name
+		// This is a heuristic since Kubernetes events don't always clearly indicate which container they belong to
+		if strings.Contains(event.Message, containerName) {
+			result = append(result, event)
+		}
+	}
+
+	return result
+}
+
 // extractContainerStatus extracts status details from a container status
 func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 	status := InstanceStatus{
 		KubernetesName: container.Name,
 		Ready:          container.Ready,
 		RestartCount:   container.RestartCount,
-		IsCrashing:     false, // Default to false, will check crash conditions below
+		IsCrashing:     false,           // Default to false, will check crash conditions below
+		Events:         []EventRecord{}, // Initialize empty events array
 	}
 
 	// Determine container state
 	switch {
 	case container.State.Running != nil:
 		status.State = ContainerStateRunning
+
+		// Add event for running container
+		if container.State.Running.StartedAt.Time != (time.Time{}) {
+			status.Events = append(status.Events, EventRecord{
+				Type:      EventTypeContainerStarted,
+				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
+				Message:   fmt.Sprintf("Container %s started", container.Name),
+			})
+		}
 	case container.State.Waiting != nil:
 		status.State = ContainerStateWaiting
 		status.StateReason = container.State.Waiting.Reason
@@ -97,12 +243,36 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 		if strings.EqualFold(container.State.Waiting.Reason, "CrashLoopBackOff") {
 			status.IsCrashing = true
 			status.CrashLoopReason = container.State.Waiting.Message
+
+			// Add CrashLoopBackOff event
+			status.Events = append(status.Events, EventRecord{
+				Type:      EventTypeCrashLoopBackOff,
+				Timestamp: time.Now().Format(time.RFC3339), // No timestamp in waiting state, use current time
+				Message:   container.State.Waiting.Message,
+				Reason:    container.State.Waiting.Reason,
+			})
 		}
 	case container.State.Terminated != nil:
 		status.State = ContainerStateTerminated
 		status.StateReason = container.State.Terminated.Reason
 		status.StateMessage = container.State.Terminated.Message
 		status.LastExitCode = container.State.Terminated.ExitCode
+
+		// Add terminated event
+		terminatedEvent := EventRecord{
+			Timestamp: container.State.Terminated.FinishedAt.Format(time.RFC3339),
+			Message:   container.State.Terminated.Message,
+			Reason:    container.State.Terminated.Reason,
+		}
+
+		// Check if OOMKilled
+		if strings.EqualFold(container.State.Terminated.Reason, "OOMKilled") {
+			terminatedEvent.Type = EventTypeOOMKilled
+		} else {
+			terminatedEvent.Type = EventTypeContainerStopped
+		}
+
+		status.Events = append(status.Events, terminatedEvent)
 
 		// Check if container terminated with non-zero exit code
 		if container.State.Terminated.ExitCode != 0 {
@@ -122,6 +292,22 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 			term.Message,
 			term.FinishedAt.Format(time.RFC3339),
 		)
+
+		// Add last termination event
+		lastTermEvent := EventRecord{
+			Timestamp: term.FinishedAt.Format(time.RFC3339),
+			Message:   term.Message,
+			Reason:    term.Reason,
+		}
+
+		// Check if OOMKilled
+		if strings.EqualFold(term.Reason, "OOMKilled") {
+			lastTermEvent.Type = EventTypeOOMKilled
+		} else {
+			lastTermEvent.Type = EventTypeContainerStopped
+		}
+
+		status.Events = append(status.Events, lastTermEvent)
 
 		// High restart count and non-zero exit code
 		if container.RestartCount > 3 && term.ExitCode != 0 {
@@ -149,6 +335,7 @@ type InstanceStatus struct {
 	LastTermination string         `json:"lastTermination,omitempty"`
 	IsCrashing      bool           `json:"isCrashing"`
 	CrashLoopReason string         `json:"crashLoopReason,omitempty"`
+	Events          []EventRecord  `json:"events,omitempty" nullable:"false"`
 }
 
 // PodContainerStatus contains information about a pod and its instances
@@ -178,6 +365,7 @@ type SimpleHealthStatus struct {
 type SimpleInstanceStatus struct {
 	KubernetesName string         `json:"kubernetes_name"`
 	Status         ContainerState `json:"status"` // "Running", "Waiting", "Terminated"
+	Events         []EventRecord  `json:"events,omitempty" nullable:"false"`
 }
 
 // * Enums
@@ -343,6 +531,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 			allInstances = append(allInstances, SimpleInstanceStatus{
 				KubernetesName: instance.KubernetesName,
 				Status:         instance.State,
+				Events:         instance.Events,
 			})
 		}
 	}

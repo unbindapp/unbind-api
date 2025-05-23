@@ -2,6 +2,7 @@ package system_repo
 
 import (
 	"context"
+	"strings"
 
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -39,8 +40,17 @@ func (self *SystemRepository) UpdateSystemSettings(ctx context.Context, input *S
 		}
 
 		// Update system settings
-		m := tx.Client().SystemSetting.UpdateOneID(settings.ID).
-			SetNillableWildcardBaseURL(input.WildcardDomain)
+		m := tx.Client().SystemSetting.UpdateOneID(settings.ID)
+
+		if input.WildcardDomain != nil {
+			if *input.WildcardDomain == "" {
+				m.ClearWildcardBaseURL()
+			} else {
+				d := strings.TrimPrefix(*input.WildcardDomain, "https://")
+				d = strings.TrimPrefix(*input.WildcardDomain, "http://")
+				m.SetWildcardBaseURL(d)
+			}
+		}
 
 		if input.BuildkitSettings != nil {
 			m.SetBuildkitSettings(input.BuildkitSettings)
