@@ -275,7 +275,7 @@ func startAPI(cfg *config.Config) {
 	logService := logs_service.NewLogsService(repo, kubeClient, lokiQuerier)
 	deploymentService := deployments_service.NewDeploymentService(repo, kubeClient, deploymentController, githubClient, lokiQuerier, registryTester, variableService)
 	systemService := system_service.NewSystemService(cfg, repo, buildkitSettings, registryTester, kubeClient)
-	metricsService := metric_service.NewMetricService(promClient, repo)
+	metricsService := metric_service.NewMetricService(promClient, repo, kubeClient)
 	instanceService := instance_service.NewInstanceService(cfg, repo, kubeClient)
 	storageService := storage_service.NewStorageService(cfg, repo, kubeClient, promClient)
 	templateService := templates_service.NewTemplatesService(cfg, repo, kubeClient, dbProvider, deploymentController)

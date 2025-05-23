@@ -47,7 +47,7 @@ func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.U
 	}
 
 	// Query prometheus
-	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcNames)
+	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcNames, team.Namespace, self.k8s.GetInternalClient())
 	if err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 		return pvcs, nil
@@ -103,7 +103,7 @@ func (self *StorageService) GetPVC(ctx context.Context, requesterUserID uuid.UUI
 	}
 
 	// Get used GB from prometheus
-	stats, err := self.promClient.GetPVCsVolumeStats(ctx, []string{pvc.ID})
+	stats, err := self.promClient.GetPVCsVolumeStats(ctx, []string{pvc.ID}, team.Namespace, self.k8s.GetInternalClient())
 	if err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 		return pvc, nil

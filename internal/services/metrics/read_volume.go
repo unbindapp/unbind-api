@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/services/models"
 )
@@ -23,6 +25,15 @@ func (self *MetricsService) GetVolumeMetrics(ctx context.Context, requesterUserI
 
 	// Check permissions
 	if err := self.repo.Permissions().Check(ctx, requesterUserID, permissionChecks); err != nil {
+		return nil, err
+	}
+
+	// Get team
+	team, err := self.repo.Team().GetByID(ctx, input.TeamID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Team not found")
+		}
 		return nil, err
 	}
 
@@ -60,7 +71,7 @@ func (self *MetricsService) GetVolumeMetrics(ctx context.Context, requesterUserI
 	})
 
 	// Get metrics
-	rawMetrics, err := self.promClient.GetVolumeStatsWithHistory(ctx, input.PVCID, start, end, step)
+	rawMetrics, err := self.promClient.GetVolumeStatsWithHistory(ctx, input.PVCID, start, end, step, team.Namespace, self.k8s.GetInternalClient())
 	if err != nil {
 		return nil, fmt.Errorf("error getting metrics: %w", err)
 	}

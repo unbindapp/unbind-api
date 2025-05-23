@@ -7,6 +7,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
@@ -17,12 +18,14 @@ import (
 type MetricsService struct {
 	promClient *prometheus.PrometheusClient
 	repo       repositories.RepositoriesInterface
+	k8s        *k8s.KubeClient
 }
 
-func NewMetricService(promClient *prometheus.PrometheusClient, repo repositories.RepositoriesInterface) *MetricsService {
+func NewMetricService(promClient *prometheus.PrometheusClient, repo repositories.RepositoriesInterface, k8s *k8s.KubeClient) *MetricsService {
 	return &MetricsService{
 		promClient: promClient,
 		repo:       repo,
+		k8s:        k8s,
 	}
 }
 

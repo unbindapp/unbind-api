@@ -228,7 +228,7 @@ func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, 
 		return nil
 	}
 
-	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs)
+	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs, namespace, self.k8s.GetInternalClient())
 	if err != nil {
 		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
 		return nil
