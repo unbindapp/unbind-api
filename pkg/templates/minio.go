@@ -11,7 +11,7 @@ func minioTemplate() *schema.TemplateDefinition {
 		Name:        "MinIO",
 		DisplayRank: uint(60000),
 		Icon:        "minio",
-		Keywords:    []string{"object storage", "file storage", "s3", "s3 compatible"},
+		Keywords:    []string{"object storage", "file storage", "s3", "s3 compatible", "r2", "aws", "cloudflare"},
 		Description: "S3-compatible object storage.",
 		Version:     1,
 		Inputs: []schema.TemplateInput{
