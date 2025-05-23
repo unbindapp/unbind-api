@@ -99,6 +99,10 @@ func minioTemplate() *schema.TemplateDefinition {
 							AddPrefix: "https://",
 						},
 					},
+					{
+						Name:  "MINIO_BROWSER_REDIRECT",
+						Value: "false",
+					},
 				},
 			},
 		},
