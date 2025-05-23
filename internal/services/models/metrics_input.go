@@ -48,3 +48,11 @@ type MetricsQueryInput struct {
 	Start         time.Time   `query:"start" required:"false" doc:"Start time for the query, defaults to 1 week ago"`
 	End           time.Time   `query:"end" required:"false" doc:"End time for the query, defaults to now"`
 }
+
+// MetricsVolumeQueryInput defines the query parameters for prometheus PVC queries
+type MetricsVolumeQueryInput struct {
+	TeamID uuid.UUID `query:"team_id" required:"true"`
+	PVCID  string    `query:"pvc_id" required:"true"`
+	Start  time.Time `query:"start" required:"false" doc:"Start time for the query, defaults to 1 week ago"`
+	End    time.Time `query:"end" required:"false" doc:"End time for the query, defaults to now"`
+}

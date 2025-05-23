@@ -68,3 +68,33 @@ func (self *HandlerGroup) GetNodeMetrics(ctx context.Context, input *GetNodeMetr
 	resp.Body.Data = metrics
 	return resp, nil
 }
+
+// Volume metrics
+type GetVolumeMetricsInput struct {
+	server.BaseAuthInput
+	models.MetricsVolumeQueryInput
+}
+
+type GetVolumeMetricsResponse struct {
+	Body struct {
+		Data *models.VolumeMetricsResult `json:"data"`
+	}
+}
+
+func (self *HandlerGroup) GetVolumeMetrics(ctx context.Context, input *GetVolumeMetricsInput) (*GetVolumeMetricsResponse, error) {
+	// Get caller
+	user, found := self.srv.GetUserFromContext(ctx)
+	if !found {
+		log.Error("Error getting user from context")
+		return nil, huma.Error401Unauthorized("Unable to retrieve user")
+	}
+
+	metrics, err := self.srv.MetricsService.GetVolumeMetrics(ctx, user.ID, &input.MetricsVolumeQueryInput)
+	if err != nil {
+		return nil, self.handleErr(err)
+	}
+
+	resp := &GetVolumeMetricsResponse{}
+	resp.Body.Data = metrics
+	return resp, nil
+}

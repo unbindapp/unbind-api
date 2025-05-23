@@ -34,13 +34,24 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	huma.Register(
 		grp,
 		huma.Operation{
-			OperationID: "get-syste,-metrics",
+			OperationID: "get-system-metrics",
 			Summary:     "Get System Metrics",
 			Description: "Get system level metrics - e.g. Node, Cluster, Region",
 			Path:        "/get-system",
 			Method:      http.MethodGet,
 		},
 		handlers.GetNodeMetrics,
+	)
+	huma.Register(
+		grp,
+		huma.Operation{
+			OperationID: "get-volume-metrics",
+			Summary:     "Get Volume Metrics",
+			Description: "Get volume level metrics - e.g. PVC",
+			Path:        "/get-volume",
+			Method:      http.MethodGet,
+		},
+		handlers.GetVolumeMetrics,
 	)
 }
 

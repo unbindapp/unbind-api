@@ -33,6 +33,20 @@ type MetricsResult struct {
 	Metrics      MetricsMapEntry `json:"metrics" nullable:"false"`
 }
 
+// VolumeMetricsResult is the structure for volume-specific metrics
+type VolumeMetricsResult struct {
+	Step    time.Duration  `json:"step"`
+	PVCName string         `json:"pvc_name"`
+	Stats   PVCStats       `json:"stats"`
+	History []MetricDetail `json:"history" nullable:"false"`
+}
+
+// PVCStats holds current volume statistics
+type PVCStats struct {
+	UsedGB     *float64 `json:"used_gb,omitempty"`
+	CapacityGB *float64 `json:"capacity_gb,omitempty"`
+}
+
 func TransformMetricsEntity(metrics map[string]*prometheus.ResourceMetrics, step time.Duration, sumBy prometheus.MetricsFilterSumBy) *MetricsResult {
 	brokenDownBy := MetricsTypeService
 	switch sumBy {
@@ -153,4 +167,39 @@ func aggregateMetricsByTime(metrics map[string]*prometheus.ResourceMetrics, metr
 	}
 
 	return result
+}
+
+// Transform VolumeStatsWithHistory into VolumeMetricsResult
+func TransformVolumeStatsEntity(volumeStats *prometheus.VolumeStatsWithHistory, step time.Duration) *VolumeMetricsResult {
+	if volumeStats == nil {
+		return &VolumeMetricsResult{
+			Step:    step,
+			PVCName: "",
+			Stats:   PVCStats{},
+			History: []MetricDetail{},
+		}
+	}
+
+	// Convert history to MetricDetail format
+	history := make([]MetricDetail, len(volumeStats.History))
+	for i, sample := range volumeStats.History {
+		value := float64(sample.Value)
+		history[i] = MetricDetail{
+			Timestamp: sample.Timestamp.Time(),
+			Value:     value,
+			Breakdown: map[string]*float64{
+				volumeStats.Stats.PVCName: utils.ToPtr(value),
+			},
+		}
+	}
+
+	return &VolumeMetricsResult{
+		Step:    step,
+		PVCName: volumeStats.Stats.PVCName,
+		Stats: PVCStats{
+			UsedGB:     volumeStats.Stats.UsedGB,
+			CapacityGB: volumeStats.Stats.CapacityGB,
+		},
+		History: history,
+	}
 }

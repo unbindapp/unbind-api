@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
 
@@ -14,6 +15,12 @@ type PVCVolumeStats struct {
 	PVCName    string   `json:"pvc_name"`
 	UsedGB     *float64 `json:"used_gb,omitempty"`
 	CapacityGB *float64 `json:"capacity_gb,omitempty"`
+}
+
+// VolumeStatsWithHistory combines current PVC stats with historical usage data.
+type VolumeStatsWithHistory struct {
+	Stats   PVCVolumeStats     `json:"stats"`
+	History []model.SamplePair `json:"history"`
 }
 
 // GetPVCsVolumeStats queries Prometheus for volume usage and capacity for a list of PVCs.
@@ -114,4 +121,58 @@ or
 	}
 
 	return finalStats, nil
+}
+
+// GetVolumeStatsWithHistory gets both current PVC stats and historical usage data for a specific volume.
+// This is equivalent to the diskQuery but targeted at a specific volume by name.
+func (self *PrometheusClient) GetVolumeStatsWithHistory(
+	ctx context.Context,
+	pvcName string,
+	start time.Time,
+	end time.Time,
+	step time.Duration,
+) (*VolumeStatsWithHistory, error) {
+	// Get current stats using existing method
+	stats, err := self.GetPVCsVolumeStats(ctx, []string{pvcName})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get PVC stats: %w", err)
+	}
+
+	var pvcStats PVCVolumeStats
+	if len(stats) > 0 {
+		pvcStats = stats[0]
+	} else {
+		// No stats found, but still create entry with the name
+		pvcStats = PVCVolumeStats{PVCName: pvcName}
+	}
+
+	// Get historical data using a query similar to diskQuery but for specific PVC
+	r := v1.Range{
+		Start: start,
+		End:   end,
+		Step:  step,
+	}
+
+	// Historical usage query for the specific PVC - similar to diskQuery logic
+	historyQuery := fmt.Sprintf(`
+		max by (persistentvolumeclaim) (
+			kubelet_volume_stats_used_bytes{persistentvolumeclaim="%s"}
+		)
+	`, pvcName)
+
+	result, _, err := self.api.QueryRange(ctx, historyQuery, r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query volume history for PVC %s: %w", pvcName, err)
+	}
+
+	history := []model.SamplePair{}
+	if matrix, ok := result.(model.Matrix); ok && len(matrix) > 0 {
+		// Since we filter by specific PVC name, there should be at most one series
+		history = matrix[0].Values
+	}
+
+	return &VolumeStatsWithHistory{
+		Stats:   pvcStats,
+		History: history,
+	}, nil
 }
