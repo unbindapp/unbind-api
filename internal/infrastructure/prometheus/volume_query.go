@@ -132,7 +132,16 @@ func (self *PrometheusClient) getPVCFromK8s(ctx context.Context, namespace, pvcN
 		return nil, err
 	}
 
-	// Get capacity from PVC spec
+	// First try to get capacity from PVC stats
+	if pvc.Status.Capacity != nil {
+		if capacity, ok := pvc.Status.Capacity[corev1.ResourceStorage]; ok {
+			bytesValue := capacity.Value()
+			gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
+			return &gbValue, nil
+		}
+	}
+
+	// Fall back to requests if capacity is not set
 	if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
 		bytesValue := storageRequest.Value()
 		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
