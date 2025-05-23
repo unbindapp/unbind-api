@@ -15,7 +15,7 @@ type PortSpec struct {
 	IsNodePort bool   `json:"is_nodeport" required:"false"`
 	NodePort   *int32 `json:"node_port,omitempty" required:"false"`
 	// Port is the container port to expose
-	Port     int32     `json:"port"`
+	Port     int32     `json:"port" min:"1" max:"65535"`
 	Protocol *Protocol `json:"protocol,omitempty" required:"false"`
 }
 
