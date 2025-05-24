@@ -76,9 +76,6 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 		if response.VariableMounts == nil {
 			response.VariableMounts = []*schema.VariableMount{}
 		}
-		if response.Volumes == nil {
-			response.Volumes = []PVCInfo{}
-		}
 		if response.InitContainers == nil {
 			response.InitContainers = []*schema.InitContainer{}
 		}
