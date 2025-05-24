@@ -9,7 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // ProjectRepositoryInterface ...

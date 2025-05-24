@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *WebhookRepository) Create(ctx context.Context, input *models.WebhookCreateInput) (*ent.Webhook, error) {

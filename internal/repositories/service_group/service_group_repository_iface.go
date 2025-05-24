@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // ServiceGroupRepositoryInterface ...

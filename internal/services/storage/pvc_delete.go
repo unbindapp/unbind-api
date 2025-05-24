@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *StorageService) DeletePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.DeletePVCInput) error {

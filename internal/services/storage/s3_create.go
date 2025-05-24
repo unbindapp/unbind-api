@@ -14,7 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/s3"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *StorageService) CreateS3StorageBackend(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.S3BackendCreateInput) (*models.S3Response, error) {

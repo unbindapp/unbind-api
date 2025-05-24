@@ -7,12 +7,11 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
-func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.ListPVCInput) ([]k8s.PVCInfo, error) {
+func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.ListPVCInput) ([]models.PVCInfo, error) {
 	team, _, _, err := self.validatePermissionsAndParseInputs(ctx, schema.ActionViewer, requesterUserID, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID)
 	if err != nil {
 		return nil, err
@@ -69,7 +68,7 @@ func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.U
 	return pvcs, nil
 }
 
-func (self *StorageService) GetPVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.GetPVCInput) (*k8s.PVCInfo, error) {
+func (self *StorageService) GetPVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.GetPVCInput) (*models.PVCInfo, error) {
 	team, _, _, err := self.validatePermissionsAndParseInputs(ctx, schema.ActionViewer, requesterUserID, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID)
 	if err != nil {
 		return nil, err

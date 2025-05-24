@@ -8,12 +8,11 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 	v1 "k8s.io/api/core/v1"
 )
 
-func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.CreatePVCInput) (*k8s.PVCInfo, error) {
+func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.CreatePVCInput) (*models.PVCInfo, error) {
 	team, _, _, err := self.validatePermissionsAndParseInputs(ctx, schema.ActionEditor, requesterUserID, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID)
 	if err != nil {
 		return nil, err

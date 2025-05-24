@@ -8,7 +8,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/variablereference"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *VariableRepository) UpdateReferences(ctx context.Context, tx repository.TxInterface, behavior models.VariableUpdateBehavior, targetServiceID uuid.UUID, items []*models.VariableReferenceInputItem) ([]*ent.VariableReference, error) {

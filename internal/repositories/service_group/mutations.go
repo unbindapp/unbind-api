@@ -8,7 +8,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/servicegroup"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *ServiceGroupRepository) Create(ctx context.Context, tx repository.TxInterface, name string, icon, description *string, environmentID uuid.UUID) (*ent.ServiceGroup, error) {

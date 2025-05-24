@@ -10,10 +10,10 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
-	"github.com/unbindapp/unbind-api/internal/services/models"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -459,13 +459,23 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 	}()
 
-	resp := models.TransformServiceEntity(service)
-	respArr := []*models.ServiceResponse{resp}
-
-	// Add prom volume metrics
-	if err := self.addPromMetricsToServiceVolumes(ctx, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, respArr); err != nil {
-		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+	// Get volume map
+	namespace := service.Edges.Environment.Edges.Project.Edges.Team.Namespace
+	teamID := service.Edges.Environment.Edges.Project.Edges.Team.ID
+	volumeMap, err := self.getVolumesForServices(ctx, namespace, teamID, []*ent.Service{
+		service,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return respArr[0], nil
+	// Convert to response
+	resp := models.TransformServiceEntity(service)
+
+	// Attach volumes
+	if volume, ok := volumeMap[service.ID]; ok {
+		resp.Config.Volumes = volume
+	}
+
+	return resp, nil
 }

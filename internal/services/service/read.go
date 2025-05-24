@@ -8,9 +8,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/services/models"
 )
 
 // Get all services in an environment
@@ -37,11 +36,18 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 		return nil, fmt.Errorf("error fetching services for environment %s: %w", environmentID, err)
 	}
 
+	// Get volume map
+	volumeMap, err := self.getVolumesForServices(ctx, project.Edges.Team.Namespace, project.Edges.Team.ID, services)
+	if err != nil {
+		return nil, err
+	}
+
 	// Convert to response
 	resp := models.TransformServiceEntities(services)
 
-	if err := self.addPromMetricsToServiceVolumes(ctx, project.Edges.Team.Namespace, resp); err != nil {
-		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+	// Attach volumes
+	for i := range resp {
+		resp[i].Config.Volumes = volumeMap[resp[i].ID]
 	}
 
 	return resp, nil
@@ -78,14 +84,21 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 		return nil, err
 	}
 
+	// Get volume map
+	volumeMap, err := self.getVolumesForServices(ctx, project.Edges.Team.Namespace, project.Edges.Team.ID, []*ent.Service{
+		service,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// Convert to response
 	resp := models.TransformServiceEntity(service)
 
-	respArr := []*models.ServiceResponse{resp}
-
-	if err := self.addPromMetricsToServiceVolumes(ctx, project.Edges.Team.Namespace, respArr); err != nil {
-		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+	// Attach volumes
+	if volume, ok := volumeMap[service.ID]; ok {
+		resp.Config.Volumes = volume
 	}
 
-	return respArr[0], nil
+	return resp, nil
 }

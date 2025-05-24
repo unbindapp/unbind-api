@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.LogStreamInput, send sse.Sender) error {

@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // Integrate logs management with internal permissions and kubernetes RBAC

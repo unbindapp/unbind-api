@@ -7,8 +7,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 type ListPVCInput struct {
@@ -18,7 +17,7 @@ type ListPVCInput struct {
 
 type ListPVCResponse struct {
 	Body struct {
-		Data []k8s.PVCInfo `json:"data" nullable:"false"`
+		Data []models.PVCInfo `json:"data" nullable:"false"`
 	}
 }
 
@@ -36,7 +35,7 @@ func (self *HandlerGroup) ListPVCs(ctx context.Context, input *ListPVCInput) (*L
 		return nil, self.handleErr(err)
 	}
 	if len(pvcs) == 0 {
-		pvcs = []k8s.PVCInfo{}
+		pvcs = []models.PVCInfo{}
 	}
 
 	response := &ListPVCResponse{}
@@ -52,7 +51,7 @@ type GetPVCInput struct {
 
 type GetPVCResponse struct {
 	Body struct {
-		Data *k8s.PVCInfo `json:"data"`
+		Data *models.PVCInfo `json:"data"`
 	}
 }
 

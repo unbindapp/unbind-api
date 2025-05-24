@@ -11,7 +11,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/registry"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 )
 

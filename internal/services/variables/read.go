@@ -8,7 +8,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *VariablesService) GetVariables(ctx context.Context, userID uuid.UUID, bearerToken string, input models.BaseVariablesInput) (*models.VariableResponse, error) {

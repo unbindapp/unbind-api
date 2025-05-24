@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *ServiceGroupService) CreateServiceGroup(ctx context.Context, requesterUserID uuid.UUID, input *models.CreateServiceGroupInput) (*models.ServiceGroupResponse, error) {

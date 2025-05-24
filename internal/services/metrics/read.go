@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
-	"github.com/unbindapp/unbind-api/internal/services/models"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid.UUID, input *models.MetricsQueryInput) (*models.MetricsResult, error) {

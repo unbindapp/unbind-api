@@ -16,9 +16,9 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/s3"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	"github.com/unbindapp/unbind-api/internal/services/models"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
@@ -196,58 +196,69 @@ func (self *ServiceService) validatePVC(ctx context.Context, teamID, projectID, 
 	return nil
 }
 
-// Add prom metrics to volume
-func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, namespace string, services []*models.ServiceResponse) error {
-	// Figure out all of the PVCs in the list
+// Add volumes to service config
+func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace string, teamID uuid.UUID, services []*ent.Service) (map[uuid.UUID][]models.PVCInfo, error) {
+	// Figure out all of the PVCs in the list and map them to services
 	var pvcIDs []string
-	for i, service := range services {
-		for _, vol := range service.Config.Volumes {
+	serviceVolumes := make(map[uuid.UUID][]schema.ServiceVolume) // Map service ID to volumes
+
+	for _, service := range services {
+		var volumes []schema.ServiceVolume
+		for _, vol := range service.Edges.ServiceConfig.Volumes {
 			pvcIDs = append(pvcIDs, vol.ID)
+			volumes = append(volumes, vol)
 		}
-
-		if service.Type == schema.ServiceTypeDatabase {
-			// Find the PVCs with serive ID label
-			pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
-				"unbind-service": service.ID.String(),
-			}, self.k8s.GetInternalClient())
-			if err != nil {
-				log.Errorf("Failed to list PVCs: %v", err)
-			}
-			for _, pvc := range pvcs {
-				services[i].Config.Volumes = append(services[i].Config.Volumes, schema.ServiceVolume{
-					MountPath: "/database",
-					ID:        pvc.Name,
-				})
-				pvcIDs = append(pvcIDs, pvc.Name)
-			}
-		}
+		serviceVolumes[service.ID] = volumes
 	}
 
-	// Query prometheus
-	if len(pvcIDs) == 0 {
-		return nil
-	}
-
-	stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs, namespace, self.k8s.GetInternalClient())
+	// Get the PVCs
+	pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
+		"unbind-team": teamID.String(),
+	}, self.k8s.GetInternalClient())
 	if err != nil {
-		log.Errorf("Failed to get PVC stats from prometheus: %v", err)
-		return nil
+		return nil, err
 	}
 
-	mapStats := make(map[string]*prometheus.PVCVolumeStats)
-	for _, stat := range stats {
-		mapStats[stat.PVCName] = stat
+	// Create a map of PVC ID to PVC for easy lookup
+	pvcMap := make(map[string]models.PVCInfo)
+	for _, pvc := range pvcs {
+		pvcMap[pvc.ID] = pvc
 	}
 
-	// Add stats to the response
-	for i := range services {
-		for j := range services[i].Config.Volumes {
-			if stat, ok := mapStats[services[i].Config.Volumes[j].ID]; ok {
-				services[i].Config.Volumes[j].CapacityGB = stat.CapacityGB
-				services[i].Config.Volumes[j].UsedGB = stat.UsedGB
+	// Get prom stats (don't fail if this errors)
+	var pvcStats map[string]*prometheus.PVCVolumeStats
+	if len(pvcIDs) > 0 {
+		stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs, namespace, self.k8s.GetInternalClient())
+		if err != nil {
+			log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+			pvcStats = make(map[string]*prometheus.PVCVolumeStats) // Empty map so we can still proceed
+		} else {
+			pvcStats = make(map[string]*prometheus.PVCVolumeStats)
+			for _, stat := range stats {
+				pvcStats[stat.PVCName] = stat
 			}
 		}
 	}
 
-	return nil
+	// Build the result map
+	result := make(map[uuid.UUID][]models.PVCInfo)
+	for serviceID, volumes := range serviceVolumes {
+		var servicePVCs []models.PVCInfo
+		for _, volume := range volumes {
+			if pvc, exists := pvcMap[volume.ID]; exists {
+				// Add mount path from service config
+				pvc.MountPath = &volume.MountPath
+
+				// Add prometheus stats if available
+				if stat, hasStats := pvcStats[pvc.ID]; hasStats {
+					pvc.UsedGB = stat.UsedGB
+					// CapacityGB should already be set from the PVC itself
+				}
+				servicePVCs = append(servicePVCs, pvc)
+			}
+		}
+		result[serviceID] = servicePVCs
+	}
+
+	return result, nil
 }

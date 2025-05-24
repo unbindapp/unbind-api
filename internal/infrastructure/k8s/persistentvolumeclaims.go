@@ -3,63 +3,19 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/models"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
-
-// PVCInfo holds prettier information about a PVC.
-type PVCInfo struct {
-	ID                 string                     `json:"id"`
-	Name               string                     `json:"name"`
-	UsedGB             *float64                   `json:"used_gb,omitempty"` // e.g., "10"
-	CapacityGB         float64                    `json:"capacity_gb"`       // e.g., "10"
-	TeamID             uuid.UUID                  `json:"team_id"`
-	ProjectID          *uuid.UUID                 `json:"project_id,omitempty"`
-	EnvironmentID      *uuid.UUID                 `json:"environment_id,omitempty"`
-	MountedOnServiceID *uuid.UUID                 `json:"mounted_on_service_id,omitempty"`
-	Status             PersistentVolumeClaimPhase `json:"status"` // e.g., "Bound", "Pending"
-	IsDatabase         bool                       `json:"is_database"`
-	IsAvailable        bool                       `json:"is_available"`
-	CanDelete          bool                       `json:"can_delete"`
-	CreatedAt          time.Time                  `json:"created_at"`
-}
-
-// Enum for PVC status
-type PersistentVolumeClaimPhase string
-
-const (
-	ClaimPending PersistentVolumeClaimPhase = "Pending"
-	ClaimBound   PersistentVolumeClaimPhase = "Bound"
-	ClaimLost    PersistentVolumeClaimPhase = "Lost"
-)
-
-// Register enum in OpenAPI specification
-// https://github.com/danielgtaylor/huma/issues/621
-func (u PersistentVolumeClaimPhase) Schema(r huma.Registry) *huma.Schema {
-	if r.Map()["PersistentVolumeClaimPhase"] == nil {
-		schemaRef := r.Schema(reflect.TypeOf(""), true, "PersistentVolumeClaimPhase")
-		schemaRef.Title = "PersistentVolumeClaimPhase"
-		schemaRef.Enum = append(schemaRef.Enum, []any{
-			string(ClaimPending),
-			string(ClaimBound),
-			string(ClaimLost),
-		}...)
-		r.Map()["PersistentVolumeClaimPhase"] = schemaRef
-	}
-	return &huma.Schema{Ref: "#/components/schemas/PersistentVolumeClaimPhase"}
-}
 
 // CreatePersistentVolumeClaim creates a new PersistentVolumeClaim in the specified namespace.
 func (self *KubeClient) CreatePersistentVolumeClaim(
@@ -72,7 +28,7 @@ func (self *KubeClient) CreatePersistentVolumeClaim(
 	accessModes []corev1.PersistentVolumeAccessMode,
 	storageClassName *string,
 	client *kubernetes.Clientset,
-) (*PVCInfo, error) {
+) (*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -129,7 +85,7 @@ func (self *KubeClient) UpdatePersistentVolumeClaim(
 	pvcName string,
 	newSize *string,
 	client *kubernetes.Clientset,
-) (*PVCInfo, error) {
+) (*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -165,7 +121,7 @@ func (self *KubeClient) UpdatePersistentVolumeClaim(
 }
 
 // GetPersistentVolumeClaim retrieves a specific PersistentVolumeClaim by its name and namespace.
-func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) (*PVCInfo, error) {
+func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) (*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -273,7 +229,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	// Check if PVC can be deleted (no owners and not in use)
 	canDelete := len(pvc.OwnerReferences) == 0 && !isBound
 
-	return &PVCInfo{
+	return &models.PVCInfo{
 		ID:                 pvc.Name,
 		Name:               displayname,
 		CapacityGB:         sizeGBValue,
@@ -281,7 +237,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 		ProjectID:          projectID,
 		EnvironmentID:      environmentID,
 		MountedOnServiceID: boundToServiceID,
-		Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
+		Status:             models.PersistentVolumeClaimPhase(pvc.Status.Phase),
 		IsDatabase:         isDatabase,
 		IsAvailable:        canDelete,
 		CanDelete:          canDelete,
@@ -290,7 +246,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 }
 
 // ListPersistentVolumeClaims lists all PersistentVolumeClaims in a given namespace, optionally filtered by a label selector,
-func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]PVCInfo, error) {
+func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -307,7 +263,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		return nil, fmt.Errorf("failed to list PersistentVolumeClaims in namespace '%s' with selector '%s': %w", namespace, listOptions.LabelSelector, err)
 	}
 
-	var result []PVCInfo
+	var result []models.PVCInfo
 	const (
 		teamLabel        = "unbind-team"
 		projectLabel     = "unbind-project"
@@ -404,7 +360,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		// Check if PVC can be deleted (no owners and not in use)
 		canDelete := len(pvc.OwnerReferences) == 0 && !isBound
 
-		result = append(result, PVCInfo{
+		result = append(result, models.PVCInfo{
 			ID:                 pvc.Name,
 			Name:               displayName,
 			CapacityGB:         sizeGBValue,
@@ -412,7 +368,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 			ProjectID:          projectID,
 			EnvironmentID:      environmentID,
 			MountedOnServiceID: boundToServiceID,
-			Status:             PersistentVolumeClaimPhase(pvc.Status.Phase),
+			Status:             models.PersistentVolumeClaimPhase(pvc.Status.Phase),
 			IsDatabase:         isDatabase,
 			IsAvailable:        canDelete,
 			CanDelete:          canDelete,
@@ -421,7 +377,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 	}
 
 	// Sort the result by CreatedAt in descending order
-	slices.SortFunc(result, func(a, b PVCInfo) int {
+	slices.SortFunc(result, func(a, b models.PVCInfo) int {
 		if a.CreatedAt.After(b.CreatedAt) {
 			return -1
 		} else if a.CreatedAt.Before(b.CreatedAt) {
@@ -506,7 +462,7 @@ func (self *KubeClient) GetPodsUsingPVC(ctx context.Context, namespace string, p
 // ResizePersistentVolumeClaim updates the requested storage size of an existing PVC.
 // Note: The StorageClass must support volume expansion (allowVolumeExpansion: true).
 // The actual resize is handled by the storage provisioner.
-func (self *KubeClient) ResizePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, newSize string, client *kubernetes.Clientset) (*PVCInfo, error) {
+func (self *KubeClient) ResizePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, newSize string, client *kubernetes.Clientset) (*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}

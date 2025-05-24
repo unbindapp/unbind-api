@@ -8,7 +8,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	ent "github.com/unbindapp/unbind-api/ent"
 
-	models "github.com/unbindapp/unbind-api/internal/services/models"
+	models "github.com/unbindapp/unbind-api/internal/models"
 
 	schema "github.com/unbindapp/unbind-api/ent/schema"
 
