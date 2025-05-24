@@ -3,7 +3,6 @@ package service_service
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -46,20 +45,13 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// Convert to response
 	resp := models.TransformServiceEntities(services)
 
-	for _, service := range resp {
-		log.Printf("RESP VOLUMES BEFORE: %v", service.Config.Volumes)
-	}
-
+	// Attach volumes
 	if len(volumeMap) > 0 {
-		// Attach volumes
 		for i := range resp {
-			resp[i].Config.Volumes = volumeMap[resp[i].ID]
-			log.Printf("RESP VOLUME ID: %v", volumeMap[resp[i].ID])
+			if volumeMap[resp[i].ID] != nil {
+				resp[i].Config.Volumes = volumeMap[resp[i].ID]
+			}
 		}
-	}
-
-	for _, service := range resp {
-		log.Printf("RESP VOLUMES AFTER: %v", service.Config.Volumes)
 	}
 
 	return resp, nil

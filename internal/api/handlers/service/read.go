@@ -46,9 +46,6 @@ func (self *HandlerGroup) ListServices(ctx context.Context, input *ListServiceIn
 	resp := &ListServiceResponse{}
 	resp.Body.Data = services
 
-	for _, service := range resp.Body.Data {
-		log.Infof("LIST SERVICES RESPONSE Volumes: %v", service.Config.Volumes)
-	}
 	return resp, nil
 }
 
