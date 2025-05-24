@@ -234,7 +234,7 @@ func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, 
 		return nil
 	}
 
-	mapStats := make(map[string]prometheus.PVCVolumeStats)
+	mapStats := make(map[string]*prometheus.PVCVolumeStats)
 	for _, stat := range stats {
 		mapStats[stat.PVCName] = stat
 	}

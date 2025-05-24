@@ -62,12 +62,11 @@ type CreatePVCInput struct {
 // * Update
 type UpdatePVCInput struct {
 	Type          PvcScope  `json:"type" required:"true"`
-	Name          *string   `json:"name" required:"false" minLength:"1" maxLength:"63" format:"regex" pattern:"^([A-Za-z0-9]([-A-Za-z0-9_.]*[A-Za-z0-9])?)$" doc:"Name of the PVC"`
 	TeamID        uuid.UUID `json:"team_id" required:"true" format:"uuid"`
 	ProjectID     uuid.UUID `json:"project_id" required:"false" format:"uuid"`
 	EnvironmentID uuid.UUID `json:"environment_id" required:"false" format:"uuid"`
 	ID            string    `json:"id" required:"true"`
-	SizeGB        *string   `json:"size_gb" required:"false" doc:"Size of the PVC in GB (e.g., '10')"`
+	CapacityGB    *float64  `json:"capacity_gb" required:"false" doc:"Size of the PVC in GB (e.g., '10')"`
 }
 
 // * Delete

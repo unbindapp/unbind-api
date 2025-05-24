@@ -24,7 +24,7 @@ type PVCInfo struct {
 	ID                 string                     `json:"id"`
 	Name               string                     `json:"name"`
 	UsedGB             *float64                   `json:"used_gb,omitempty"` // e.g., "10"
-	SizeGB             float64                    `json:"size_gb"`           // e.g., "10"
+	CapacityGB         float64                    `json:"capacity_gb"`       // e.g., "10"
 	TeamID             uuid.UUID                  `json:"team_id"`
 	ProjectID          *uuid.UUID                 `json:"project_id,omitempty"`
 	EnvironmentID      *uuid.UUID                 `json:"environment_id,omitempty"`
@@ -127,7 +127,6 @@ func (self *KubeClient) UpdatePersistentVolumeClaim(
 	ctx context.Context,
 	namespace string,
 	pvcName string,
-	newName *string,
 	newSize *string,
 	client *kubernetes.Clientset,
 ) (*PVCInfo, error) {
@@ -137,9 +136,6 @@ func (self *KubeClient) UpdatePersistentVolumeClaim(
 	if pvcName == "" {
 		return nil, fmt.Errorf("pvcName cannot be empty")
 	}
-	if newName == nil && newSize == nil {
-		return nil, fmt.Errorf("at least one of newName or newSize must be provided")
-	}
 
 	// Get the existing PVC
 	pvc, err := client.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, pvcName, metav1.GetOptions{})
@@ -148,11 +144,6 @@ func (self *KubeClient) UpdatePersistentVolumeClaim(
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, fmt.Sprintf("PersistentVolumeClaim '%s' not found", pvcName))
 		}
 		return nil, fmt.Errorf("failed to get PersistentVolumeClaim '%s' in namespace '%s': %w", pvcName, namespace, err)
-	}
-
-	// Update the PVC name if provided
-	if newName != nil {
-		pvc.Labels["pvc-display-name"] = *newName
 	}
 
 	// Update the PVC size if provided
@@ -285,7 +276,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	return &PVCInfo{
 		ID:                 pvc.Name,
 		Name:               displayname,
-		SizeGB:             sizeGBValue,
+		CapacityGB:         sizeGBValue,
 		TeamID:             teamID,
 		ProjectID:          projectID,
 		EnvironmentID:      environmentID,
@@ -416,7 +407,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		result = append(result, PVCInfo{
 			ID:                 pvc.Name,
 			Name:               displayName,
-			SizeGB:             sizeGBValue,
+			CapacityGB:         sizeGBValue,
 			TeamID:             teamID,
 			ProjectID:          projectID,
 			EnvironmentID:      environmentID,

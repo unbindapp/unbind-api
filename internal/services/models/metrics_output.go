@@ -44,7 +44,7 @@ type VolumeMetricsResult struct {
 // PVCStats holds current volume statistics
 type PVCStats struct {
 	UsedGB     *float64 `json:"used_gb,omitempty"`
-	CapacityGB *float64 `json:"capacity_gb,omitempty"`
+	CapacityGB float64  `json:"capacity_gb,omitempty"`
 }
 
 func TransformMetricsEntity(metrics map[string]*prometheus.ResourceMetrics, step time.Duration, sumBy prometheus.MetricsFilterSumBy) *MetricsResult {

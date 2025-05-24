@@ -18,20 +18,20 @@ import (
 type PVCVolumeStats struct {
 	PVCName    string   `json:"pvc_name"`
 	UsedGB     *float64 `json:"used_gb,omitempty"`
-	CapacityGB *float64 `json:"capacity_gb,omitempty"`
+	CapacityGB float64  `json:"capacity_gb,omitempty"`
 }
 
 // VolumeStatsWithHistory combines current PVC stats with historical usage data.
 type VolumeStatsWithHistory struct {
-	Stats   PVCVolumeStats     `json:"stats"`
+	Stats   *PVCVolumeStats    `json:"stats"`
 	History []model.SamplePair `json:"history"`
 }
 
 // GetPVCsVolumeStats queries Prometheus for volume usage and capacity for a list of PVCs.
 // If no data is found in Prometheus (unattached volumes), it falls back to the Kubernetes API.
-func (self *PrometheusClient) GetPVCsVolumeStats(ctx context.Context, pvcNames []string, namespace string, client *kubernetes.Clientset) ([]PVCVolumeStats, error) {
+func (self *PrometheusClient) GetPVCsVolumeStats(ctx context.Context, pvcNames []string, namespace string, client *kubernetes.Clientset) ([]*PVCVolumeStats, error) {
 	if len(pvcNames) == 0 {
-		return []PVCVolumeStats{}, nil
+		return []*PVCVolumeStats{}, nil
 	}
 
 	pvcRegex := strings.Join(pvcNames, "|")
@@ -57,7 +57,7 @@ or
     "kind", "capacity", "persistentvolumeclaim", ".*"
   )
 )
-`, pvcRegex, pvcRegex, pvcRegex)
+`, pvcRegex)
 
 	result, _, err := self.api.Query(ctx, query, time.Now())
 	if err != nil {
@@ -99,25 +99,18 @@ or
 		switch kind {
 		case "used":
 			statEntry.UsedGB = utils.ToPtr(value)
-		case "capacity":
-			statEntry.CapacityGB = utils.ToPtr(value)
 		}
 	}
 
-	finalStats := make([]PVCVolumeStats, len(pvcNames))
-	for i, name := range pvcNames {
-		if data, found := statsMap[name]; found {
-			finalStats[i] = *data
-		} else {
-			// No data, may not be attached
-			finalStats[i] = PVCVolumeStats{PVCName: name}
-
-			// Try to get PVC info from K8s API if client is provided
-			if client != nil && namespace != "" {
-				if pvcInfo, err := self.getPVCFromK8s(ctx, namespace, name, client); err == nil {
-					finalStats[i].CapacityGB = pvcInfo
+	finalStats := make([]*PVCVolumeStats, len(pvcNames))
+	// Batch process missing PVCs if client is provided
+	if pvcCapacities, err := self.getPVCsFromK8s(ctx, namespace, pvcNames, client); err == nil {
+		for i, name := range pvcNames {
+			if capacity, found := pvcCapacities[name]; found && capacity != nil {
+				finalStats[i], ok = statsMap[name]
+				if ok {
+					finalStats[i].CapacityGB = *capacity
 				}
-				// ! TODO - PVC may not exist?
 			}
 		}
 	}
@@ -125,30 +118,53 @@ or
 	return finalStats, nil
 }
 
-// Helper function to get PVC capacity from Kubernetes API
-func (self *PrometheusClient) getPVCFromK8s(ctx context.Context, namespace, pvcName string, client *kubernetes.Clientset) (*float64, error) {
-	pvc, err := client.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, pvcName, metav1.GetOptions{})
+// Helper function to get PVC capacities from Kubernetes API for multiple PVCs
+func (self *PrometheusClient) getPVCsFromK8s(ctx context.Context, namespace string, pvcNames []string, client *kubernetes.Clientset) (map[string]*float64, error) {
+	results := make(map[string]*float64)
+
+	// Create a set of requested PVC names for efficient lookup
+	requestedPVCs := make(map[string]bool)
+	for _, name := range pvcNames {
+		requestedPVCs[name] = true
+		results[name] = nil // Initialize with nil
+	}
+
+	// Single API call to list all PVCs in the namespace
+	pvcList, err := client.CoreV1().PersistentVolumeClaims(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return results, err
 	}
 
-	// First try to get capacity from PVC stats
-	if pvc.Status.Capacity != nil {
-		if capacity, ok := pvc.Status.Capacity[corev1.ResourceStorage]; ok {
-			bytesValue := capacity.Value()
-			gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
-			return &gbValue, nil
+	// Filter and process only the requested PVCs
+	for _, pvc := range pvcList.Items {
+		if !requestedPVCs[pvc.Name] {
+			continue // Skip PVCs we didn't request
 		}
+
+		var capacity *float64
+
+		// First try to get capacity from PVC status
+		if pvc.Status.Capacity != nil {
+			if capacityQuantity, ok := pvc.Status.Capacity[corev1.ResourceStorage]; ok {
+				bytesValue := capacityQuantity.Value()
+				gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
+				capacity = &gbValue
+			}
+		}
+
+		// Fall back to requests if capacity is not set
+		if capacity == nil {
+			if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
+				bytesValue := storageRequest.Value()
+				gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
+				capacity = &gbValue
+			}
+		}
+
+		results[pvc.Name] = capacity
 	}
 
-	// Fall back to requests if capacity is not set
-	if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
-		bytesValue := storageRequest.Value()
-		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
-		return &gbValue, nil
-	}
-
-	return nil, fmt.Errorf("no storage request found in PVC")
+	return results, nil
 }
 
 // GetVolumeStatsWithHistory gets both current PVC stats and historical usage data for a specific volume.
@@ -193,7 +209,7 @@ func (self *PrometheusClient) GetVolumeStatsWithHistory(
 		history = matrix[0].Values
 	}
 
-	var pvcStats PVCVolumeStats
+	var pvcStats *PVCVolumeStats
 	if len(stats) > 0 {
 		pvcStats = stats[0]
 	}

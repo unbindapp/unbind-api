@@ -2,6 +2,7 @@ package storage_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -12,8 +13,8 @@ import (
 )
 
 func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.UpdatePVCInput) (*k8s.PVCInfo, error) {
-	if input.SizeGB == nil && input.Name == nil {
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Size or Name are required")
+	if input.CapacityGB == nil {
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Size is required")
 	}
 
 	// Validate permissions and parse inputs
@@ -49,15 +50,16 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 	}
 
 	// Size validation
-	if input.SizeGB != nil {
+	var newCapacity *string
+	if input.CapacityGB != nil {
 		// Parse size
-		*input.SizeGB = utils.EnsureSuffix(*input.SizeGB, "Gi")
-		newSize, err := utils.ValidateStorageQuantity(*input.SizeGB)
+		newCapacity = utils.ToPtr(fmt.Sprintf("%dGi", *input.CapacityGB))
+		newSize, err := utils.ValidateStorageQuantity(*newCapacity)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}
 
-		existingSize, err := utils.ValidateStorageQuantityGB(pvc.SizeGB)
+		existingSize, err := utils.ValidateStorageQuantityGB(pvc.CapacityGB)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 		}
@@ -71,8 +73,7 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 	return self.k8s.UpdatePersistentVolumeClaim(ctx,
 		team.Namespace,
 		input.ID,
-		input.Name,
-		input.SizeGB,
+		newCapacity,
 		client,
 	)
 }

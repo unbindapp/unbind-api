@@ -54,7 +54,7 @@ func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.U
 	}
 
 	// Make a map
-	pvcStats := make(map[string]prometheus.PVCVolumeStats)
+	pvcStats := make(map[string]*prometheus.PVCVolumeStats)
 	for _, stat := range stats {
 		pvcStats[stat.PVCName] = stat
 	}
@@ -110,7 +110,7 @@ func (self *StorageService) GetPVC(ctx context.Context, requesterUserID uuid.UUI
 	}
 
 	// Make a map
-	pvcStats := make(map[string]prometheus.PVCVolumeStats)
+	pvcStats := make(map[string]*prometheus.PVCVolumeStats)
 	for _, stat := range stats {
 		pvcStats[stat.PVCName] = stat
 	}
