@@ -25,7 +25,7 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 	}
 
 	// Parse size
-	sizeStr := fmt.Sprintf("%dGi", input.CapacityGB)
+	sizeStr := fmt.Sprintf("%fGi", input.CapacityGB)
 	_, err = utils.ValidateStorageQuantity(sizeStr)
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())

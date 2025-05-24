@@ -53,7 +53,7 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 	var newCapacity *string
 	if input.CapacityGB != nil {
 		// Parse size
-		newCapacity = utils.ToPtr(fmt.Sprintf("%dGi", *input.CapacityGB))
+		newCapacity = utils.ToPtr(fmt.Sprintf("%fGi", *input.CapacityGB))
 		newSize, err := utils.ValidateStorageQuantity(*newCapacity)
 		if err != nil {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
