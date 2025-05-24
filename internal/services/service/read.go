@@ -47,7 +47,7 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	resp := models.TransformServiceEntities(services)
 
 	for _, service := range resp {
-		log.Printf("RESP VOLUMES: %v", service.Config.Volumes)
+		log.Printf("RESP VOLUMES BEFORE: %v", service.Config.Volumes)
 	}
 
 	if len(volumeMap) > 0 {
@@ -56,6 +56,10 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 			resp[i].Config.Volumes = volumeMap[resp[i].ID]
 			log.Printf("RESP VOLUME ID: %v", volumeMap[resp[i].ID])
 		}
+	}
+
+	for _, service := range resp {
+		log.Printf("RESP VOLUMES AFTER: %v", service.Config.Volumes)
 	}
 
 	return resp, nil
