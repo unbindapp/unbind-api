@@ -56,7 +56,7 @@ type CreatePVCInput struct {
 	TeamID        uuid.UUID `json:"team_id" required:"true" format:"uuid"`
 	ProjectID     uuid.UUID `json:"project_id" required:"false" format:"uuid"`
 	EnvironmentID uuid.UUID `json:"environment_id" required:"false" format:"uuid"`
-	SizeGB        string    `json:"size" required:"true" doc:"Size of the PVC (e.g., '10')"`
+	SizeGB        string    `json:"size_gb" required:"true" doc:"Size of the PVC in GB (e.g., '10')"`
 }
 
 // * Update
@@ -67,7 +67,7 @@ type UpdatePVCInput struct {
 	ProjectID     uuid.UUID `json:"project_id" required:"false" format:"uuid"`
 	EnvironmentID uuid.UUID `json:"environment_id" required:"false" format:"uuid"`
 	ID            string    `json:"id" required:"true"`
-	SizeGB        *string   `json:"size" required:"false" doc:"Size of the PVC (e.g., '10')"`
+	SizeGB        *string   `json:"size_gb" required:"false" doc:"Size of the PVC in GB (e.g., '10')"`
 }
 
 // * Delete
