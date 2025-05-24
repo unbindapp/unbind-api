@@ -48,8 +48,9 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// Attach volumes
 	if len(volumeMap) > 0 {
 		for i := range resp {
-			if volumeMap[resp[i].ID] != nil {
-				resp[i].Config.Volumes = volumeMap[resp[i].ID]
+			volumes := volumeMap[resp[i].ID]
+			if volumes != nil {
+				resp[i].Config.Volumes = volumes
 			}
 		}
 	}
@@ -100,8 +101,9 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 	resp := models.TransformServiceEntity(service)
 
 	// Attach volumes
-	if volume, ok := volumeMap[service.ID]; ok {
-		resp.Config.Volumes = volume
+	volumes := volumeMap[service.ID]
+	if volumes != nil {
+		resp.Config.Volumes = volumes
 	}
 
 	return resp, nil
