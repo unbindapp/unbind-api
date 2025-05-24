@@ -11,7 +11,7 @@ import (
 // PVCInfo holds prettier information about a PVC.
 type PVCInfo struct {
 	ID                 string                     `json:"id"`
-	Name               string                     `json:"name"`
+	Type               PvcScope                   `json:"type"`
 	MountPath          *string                    `json:"mount_path,omitempty"`
 	UsedGB             *float64                   `json:"used_gb,omitempty"` // e.g., "10"
 	CapacityGB         float64                    `json:"capacity_gb"`       // e.g., "10"

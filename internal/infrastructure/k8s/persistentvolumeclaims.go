@@ -145,10 +145,6 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	)
 
 	pvcLabels := pvc.GetLabels()
-	displayname := pvcLabels["pvc-display-name"]
-	if displayname == "" {
-		displayname = pvc.Name
-	}
 	teamIDStr := pvcLabels[teamLabel]
 	// Skip if the PVC doesn't have the unbind-team label
 	if teamIDStr == "" {
@@ -229,9 +225,17 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	// Check if PVC can be deleted (no owners and not in use)
 	canDelete := len(pvc.OwnerReferences) == 0 && !isBound
 
+	// Get type
+	pvcType := models.PvcScopeTeam
+	if projectID != nil && environmentID != nil {
+		pvcType = models.PvcScopeEnvironment
+	} else if projectID != nil {
+		pvcType = models.PvcScopeProject
+	}
+
 	return &models.PVCInfo{
 		ID:                 pvc.Name,
-		Name:               displayname,
+		Type:               pvcType,
 		CapacityGB:         sizeGBValue,
 		TeamID:             teamID,
 		ProjectID:          projectID,
@@ -360,9 +364,17 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		// Check if PVC can be deleted (no owners and not in use)
 		canDelete := len(pvc.OwnerReferences) == 0 && !isBound
 
+		// Figure out type
+		pvcType := models.PvcScopeTeam
+		if projectID != nil && environmentID != nil {
+			pvcType = models.PvcScopeEnvironment
+		} else if projectID != nil {
+			pvcType = models.PvcScopeProject
+		}
+
 		result = append(result, models.PVCInfo{
 			ID:                 pvc.Name,
-			Name:               displayName,
+			Type:               pvcType,
 			CapacityGB:         sizeGBValue,
 			TeamID:             teamID,
 			ProjectID:          projectID,
