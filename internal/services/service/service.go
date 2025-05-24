@@ -211,6 +211,10 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 		serviceVolumes[service.ID] = volumes
 	}
 
+	if len(pvcIDs) == 0 {
+		return nil, nil // No PVCs to process
+	}
+
 	// Get the PVCs
 	pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
 		"unbind-team": teamID.String(),

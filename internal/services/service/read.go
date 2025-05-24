@@ -45,9 +45,11 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// Convert to response
 	resp := models.TransformServiceEntities(services)
 
-	// Attach volumes
-	for i := range resp {
-		resp[i].Config.Volumes = volumeMap[resp[i].ID]
+	if len(volumeMap) > 0 {
+		// Attach volumes
+		for i := range resp {
+			resp[i].Config.Volumes = volumeMap[resp[i].ID]
+		}
 	}
 
 	return resp, nil
