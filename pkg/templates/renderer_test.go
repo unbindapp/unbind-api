@@ -116,7 +116,7 @@ func TestResolveTemplate(t *testing.T) {
 	require.Len(t, service.Volumes, 1)
 	volume := service.Volumes[0]
 	assert.Equal(t, "test-data", volume.Name)
-	assert.Equal(t, "2Gi", volume.SizeGB)
+	assert.Equal(t, "2Gi", volume.CapacityGB)
 	assert.Equal(t, "/data", volume.MountPath)
 }
 

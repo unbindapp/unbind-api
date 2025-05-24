@@ -2,6 +2,7 @@ package storage_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -24,8 +25,8 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 	}
 
 	// Parse size
-	input.SizeGB = utils.EnsureSuffix(input.SizeGB, "Gi")
-	_, err = utils.ValidateStorageQuantity(input.SizeGB)
+	sizeStr := fmt.Sprintf("%dGi", input.CapacityGB)
+	_, err = utils.ValidateStorageQuantity(sizeStr)
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
@@ -54,7 +55,7 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 		kubernetesName,
 		input.Name,
 		labels,
-		input.SizeGB,
+		sizeStr,
 		[]v1.PersistentVolumeAccessMode{v1.ReadWriteOnce},
 		nil,
 		client,

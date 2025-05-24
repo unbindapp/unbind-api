@@ -201,9 +201,9 @@ func (self *Templater) resolveVolumes(template *schema.TemplateDefinition, input
 
 				// Add the volume to the service
 				template.Services[i].Volumes = append(template.Services[i].Volumes, schema.TemplateVolume{
-					Name:      input.Volume.Name,
-					SizeGB:    size,
-					MountPath: input.Volume.MountPath,
+					Name:       input.Volume.Name,
+					CapacityGB: size,
+					MountPath:  input.Volume.MountPath,
 				})
 			}
 		}

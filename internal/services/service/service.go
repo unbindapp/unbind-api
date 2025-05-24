@@ -243,7 +243,7 @@ func (self *ServiceService) addPromMetricsToServiceVolumes(ctx context.Context, 
 	for i := range services {
 		for j := range services[i].Config.Volumes {
 			if stat, ok := mapStats[services[i].Config.Volumes[j].ID]; ok {
-				services[i].Config.Volumes[j].SizeGB = stat.CapacityGB
+				services[i].Config.Volumes[j].CapacityGB = stat.CapacityGB
 				services[i].Config.Volumes[j].UsedGB = stat.UsedGB
 			}
 		}
