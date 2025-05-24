@@ -12,7 +12,7 @@ import (
 )
 
 func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.UpdatePVCInput) (*k8s.PVCInfo, error) {
-	if input.SizeGB == nil || input.Name == nil {
+	if input.SizeGB == nil && input.Name == nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Size or Name are required")
 	}
 
