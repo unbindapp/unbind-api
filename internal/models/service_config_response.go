@@ -43,19 +43,8 @@ type ServiceConfigResponse struct {
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
 func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigResponse {
-	response := &ServiceConfigResponse{
-		ProtectedVariables: []string{},
-	}
+	response := &ServiceConfigResponse{}
 	if entity != nil {
-		if entity.VariableMounts == nil {
-			entity.VariableMounts = []*schema.VariableMount{}
-		}
-		if entity.Volumes == nil {
-			entity.Volumes = []schema.ServiceVolume{}
-		}
-		if entity.InitContainers == nil {
-			entity.InitContainers = []*schema.InitContainer{}
-		}
 		response = &ServiceConfigResponse{
 			GitBranch:            entity.GitBranch,
 			GitTag:               entity.GitTag,
@@ -83,6 +72,15 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 		}
 		if response.ProtectedVariables == nil {
 			response.ProtectedVariables = []string{}
+		}
+		if response.VariableMounts == nil {
+			response.VariableMounts = []*schema.VariableMount{}
+		}
+		if response.Volumes == nil {
+			response.Volumes = []PVCInfo{}
+		}
+		if response.InitContainers == nil {
+			response.InitContainers = []*schema.InitContainer{}
 		}
 	}
 	return response
