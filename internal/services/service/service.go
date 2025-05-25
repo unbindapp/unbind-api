@@ -3,6 +3,7 @@ package service_service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
@@ -215,6 +216,7 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 		return nil, nil // No PVCs to process
 	}
 
+	s := time.Now()
 	// Get the PVCs
 	pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
 		"unbind-team": teamID.String(),
@@ -222,6 +224,7 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("listPersistentVolumeClaims took %d", time.Since(s).Milliseconds())
 
 	// Create a map of PVC ID to PVC for easy lookup
 	pvcMap := make(map[string]models.PVCInfo)
@@ -230,6 +233,7 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 	}
 
 	// Get prom stats (don't fail if this errors)
+	s = time.Now()
 	var pvcStats map[string]*prometheus.PVCVolumeStats
 	if len(pvcIDs) > 0 {
 		stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs, namespace, self.k8s.GetInternalClient())
@@ -243,6 +247,7 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 			}
 		}
 	}
+	log.Infof("getPVCsVolumeStats took %d", time.Since(s).Milliseconds())
 
 	// Build the result map
 	result := make(map[uuid.UUID][]models.PVCInfo)
