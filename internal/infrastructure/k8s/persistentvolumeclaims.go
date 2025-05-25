@@ -315,18 +315,26 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		}
 		sizeGBValueStr := ""
 		var sizeGBValue float64
-		if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
-			bytesValue := storageRequest.Value()
-			gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
-			sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
-			// if gbValue is a whole number, remove .00
-			if strings.HasSuffix(sizeGBValueStr, ".00") {
-				sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
+		var bytesValue int64
+		if pvc.Status.Capacity != nil {
+			if capacityQuantity, ok := pvc.Status.Capacity[corev1.ResourceStorage]; ok {
+				bytesValue = capacityQuantity.Value()
 			}
-			sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
-			if err != nil {
-				continue
+		} else {
+			// Fallback to requests if capacity is not set
+			if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
+				bytesValue = storageRequest.Value()
 			}
+		}
+		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
+		sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
+		// if gbValue is a whole number, remove .00
+		if strings.HasSuffix(sizeGBValueStr, ".00") {
+			sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
+		}
+		sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
+		if err != nil {
+			continue
 		}
 
 		var boundToServiceID *uuid.UUID
