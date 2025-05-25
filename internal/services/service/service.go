@@ -257,7 +257,14 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 		}
 	}
 
-	// 4) Build the result map and attach mount paths and usage stats
+	// 4) Get PVC metadata for all volumes
+	pvcMetadata, err := self.repo.System().GetPVCMetadata(ctx, nil, pvcNames)
+	if err != nil {
+		log.Errorf("Failed to get PVC metadata: %v", err)
+		return nil, err
+	}
+
+	// 5) Build the result map and attach mount paths and usage stats
 	result := make(map[uuid.UUID][]models.PVCInfo)
 
 	// Initialize empty slices for all services
@@ -288,6 +295,18 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 					pvc.MountPath = utils.ToPtr(volumeMount.MountPath)
 				}
 			}
+		}
+
+		// Attach metadata
+		if metadata, ok := pvcMetadata[pvc.ID]; ok {
+			if metadata.Name != nil {
+				pvc.Name = *metadata.Name
+			} else {
+				pvc.Name = pvc.ID
+			}
+			pvc.Description = metadata.Description
+		} else {
+			pvc.Name = pvc.ID
 		}
 
 		// Add to result
