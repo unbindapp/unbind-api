@@ -32,6 +32,8 @@ type Tx struct {
 	Oauth2Code *Oauth2CodeClient
 	// Oauth2Token is the client for interacting with the Oauth2Token builders.
 	Oauth2Token *Oauth2TokenClient
+	// PVCMetadata is the client for interacting with the PVCMetadata builders.
+	PVCMetadata *PVCMetadataClient
 	// Permission is the client for interacting with the Permission builders.
 	Permission *PermissionClient
 	// Project is the client for interacting with the Project builders.
@@ -198,6 +200,7 @@ func (tx *Tx) init() {
 	tx.JWTKey = NewJWTKeyClient(tx.config)
 	tx.Oauth2Code = NewOauth2CodeClient(tx.config)
 	tx.Oauth2Token = NewOauth2TokenClient(tx.config)
+	tx.PVCMetadata = NewPVCMetadataClient(tx.config)
 	tx.Permission = NewPermissionClient(tx.config)
 	tx.Project = NewProjectClient(tx.config)
 	tx.Registry = NewRegistryClient(tx.config)

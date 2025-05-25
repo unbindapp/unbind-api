@@ -7,6 +7,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/models"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
 func (self *StorageService) DeletePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.DeletePVCInput) error {
@@ -46,5 +47,15 @@ func (self *StorageService) DeletePVC(ctx context.Context, requesterUserID uuid.
 		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "PVC cannot be deleted")
 	}
 
-	return self.k8s.DeletePersistentVolumeClaim(ctx, team.Namespace, pvc.ID, client)
+	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		err := self.repo.System().DeletePVCMetadata(ctx, tx, pvc.ID)
+		if err != nil {
+			return err
+		}
+		return self.k8s.DeletePersistentVolumeClaim(ctx, team.Namespace, pvc.ID, client)
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

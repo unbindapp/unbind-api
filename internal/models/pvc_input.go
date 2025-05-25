@@ -52,7 +52,8 @@ type GetPVCInput struct {
 // * Create
 type CreatePVCInput struct {
 	Type          PvcScope  `json:"type" required:"true"`
-	Name          string    `json:"name" required:"true" minLength:"1" maxLength:"63" format:"regex" pattern:"^([A-Za-z0-9]([-A-Za-z0-9_.]*[A-Za-z0-9])?)$" doc:"Name of the PVC"`
+	Name          string    `json:"name" required:"true" minLength:"1"`
+	Description   *string   `json:"description,omitempty" required:"false"`
 	TeamID        uuid.UUID `json:"team_id" required:"true" format:"uuid"`
 	ProjectID     uuid.UUID `json:"project_id" required:"false" format:"uuid"`
 	EnvironmentID uuid.UUID `json:"environment_id" required:"false" format:"uuid"`
@@ -61,6 +62,8 @@ type CreatePVCInput struct {
 
 // * Update
 type UpdatePVCInput struct {
+	Name          *string   `json:"name" required:"false" minLength:"1"`
+	Description   *string   `json:"description,omitempty" required:"false"`
 	Type          PvcScope  `json:"type" required:"true"`
 	TeamID        uuid.UUID `json:"team_id" required:"true" format:"uuid"`
 	ProjectID     uuid.UUID `json:"project_id" required:"false" format:"uuid"`

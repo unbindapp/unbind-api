@@ -23,6 +23,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/pvcmetadata"
 	"github.com/unbindapp/unbind-api/ent/registry"
 	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -103,6 +104,7 @@ func checkColumn(table, column string) error {
 			jwtkey.Table:             jwtkey.ValidColumn,
 			oauth2code.Table:         oauth2code.ValidColumn,
 			oauth2token.Table:        oauth2token.ValidColumn,
+			pvcmetadata.Table:        pvcmetadata.ValidColumn,
 			permission.Table:         permission.ValidColumn,
 			project.Table:            project.ValidColumn,
 			registry.Table:           registry.ValidColumn,

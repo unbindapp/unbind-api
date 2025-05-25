@@ -7,6 +7,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
@@ -65,6 +66,40 @@ func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.U
 		}
 	}
 
+	// Get mount paths for PVCs
+	pathMap, err := self.repo.Service().GetPVCMountPaths(ctx, pvcNames)
+	if err != nil {
+		log.Errorf("Failed to get mount paths for PVCs  %v", err)
+		return pvcs, nil
+	}
+
+	for i := range pvcs {
+		if path, ok := pathMap[pvcs[i].ID]; ok {
+			pvcs[i].MountPath = utils.ToPtr(path)
+		}
+	}
+
+	// Get PVC metadata
+	pvcMetadata, err := self.repo.System().GetPVCMetadata(ctx, nil, pvcNames)
+	if err != nil {
+		log.Errorf("Failed to get PVC metadata: %v", err)
+		return nil, err
+	}
+
+	// Attach metadata to PVCs
+	for i := range pvcs {
+		if metadata, ok := pvcMetadata[pvcs[i].ID]; ok {
+			if metadata.Name != nil {
+				pvcs[i].Name = *metadata.Name
+			} else {
+				pvcs[i].Name = pvcs[i].ID
+			}
+			pvcs[i].Description = metadata.Description
+		} else {
+			pvcs[i].Name = pvcs[i].ID
+		}
+	}
+
 	return pvcs, nil
 }
 
@@ -117,6 +152,36 @@ func (self *StorageService) GetPVC(ctx context.Context, requesterUserID uuid.UUI
 	// Add the stats to the PVC
 	if stat, ok := pvcStats[pvc.ID]; ok {
 		pvc.UsedGB = stat.UsedGB
+	}
+
+	// Get mount paths for PVCs
+	pathMap, err := self.repo.Service().GetPVCMountPaths(ctx, []string{pvc.ID})
+	if err != nil {
+		log.Errorf("Failed to get mount paths for PVC %s: %v", pvc.ID, err)
+		return pvc, nil
+	}
+
+	if path, ok := pathMap[pvc.ID]; ok {
+		pvc.MountPath = utils.ToPtr(path)
+	}
+
+	// Get PVC metadata
+	pvcMetadata, err := self.repo.System().GetPVCMetadata(ctx, nil, []string{pvc.ID})
+	if err != nil {
+		log.Errorf("Failed to get PVC metadata: %v", err)
+		return nil, err
+	}
+
+	// Attach metadata to PVC
+	if metadata, ok := pvcMetadata[pvc.ID]; ok {
+		if metadata.Name != nil {
+			pvc.Name = *metadata.Name
+		} else {
+			pvc.Name = pvc.ID
+		}
+		pvc.Description = metadata.Description
+	} else {
+		pvc.Name = pvc.ID
 	}
 
 	return pvc, nil

@@ -15,6 +15,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/pvcmetadata"
 	"github.com/unbindapp/unbind-api/ent/registry"
 	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -220,6 +221,27 @@ func init() {
 	oauth2tokenDescID := oauth2tokenMixinFields0[0].Descriptor()
 	// oauth2token.DefaultID holds the default value on creation for the id field.
 	oauth2token.DefaultID = oauth2tokenDescID.Default.(func() uuid.UUID)
+	pvcmetadataMixin := schema.PVCMetadata{}.Mixin()
+	pvcmetadataMixinFields0 := pvcmetadataMixin[0].Fields()
+	_ = pvcmetadataMixinFields0
+	pvcmetadataMixinFields1 := pvcmetadataMixin[1].Fields()
+	_ = pvcmetadataMixinFields1
+	pvcmetadataFields := schema.PVCMetadata{}.Fields()
+	_ = pvcmetadataFields
+	// pvcmetadataDescCreatedAt is the schema descriptor for created_at field.
+	pvcmetadataDescCreatedAt := pvcmetadataMixinFields1[0].Descriptor()
+	// pvcmetadata.DefaultCreatedAt holds the default value on creation for the created_at field.
+	pvcmetadata.DefaultCreatedAt = pvcmetadataDescCreatedAt.Default.(func() time.Time)
+	// pvcmetadataDescUpdatedAt is the schema descriptor for updated_at field.
+	pvcmetadataDescUpdatedAt := pvcmetadataMixinFields1[1].Descriptor()
+	// pvcmetadata.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	pvcmetadata.DefaultUpdatedAt = pvcmetadataDescUpdatedAt.Default.(func() time.Time)
+	// pvcmetadata.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	pvcmetadata.UpdateDefaultUpdatedAt = pvcmetadataDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// pvcmetadataDescID is the schema descriptor for id field.
+	pvcmetadataDescID := pvcmetadataMixinFields0[0].Descriptor()
+	// pvcmetadata.DefaultID holds the default value on creation for the id field.
+	pvcmetadata.DefaultID = pvcmetadataDescID.Default.(func() uuid.UUID)
 	permissionMixin := schema.Permission{}.Mixin()
 	permissionMixinFields0 := permissionMixin[0].Fields()
 	_ = permissionMixinFields0

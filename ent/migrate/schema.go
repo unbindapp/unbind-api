@@ -226,6 +226,21 @@ var (
 			},
 		},
 	}
+	// PvcMetadataColumns holds the columns for the "pvc_metadata" table.
+	PvcMetadataColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "pvc_id", Type: field.TypeString, Unique: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+	}
+	// PvcMetadataTable holds the schema information for the "pvc_metadata" table.
+	PvcMetadataTable = &schema.Table{
+		Name:       "pvc_metadata",
+		Columns:    PvcMetadataColumns,
+		PrimaryKey: []*schema.Column{PvcMetadataColumns[0]},
+	}
 	// PermissionsColumns holds the columns for the "permissions" table.
 	PermissionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -675,6 +690,7 @@ var (
 		JwtKeysTable,
 		Oauth2CodesTable,
 		Oauth2TokensTable,
+		PvcMetadataTable,
 		PermissionsTable,
 		ProjectsTable,
 		RegistriesTable,
@@ -727,6 +743,9 @@ func init() {
 	Oauth2TokensTable.ForeignKeys[0].RefTable = UsersTable
 	Oauth2TokensTable.Annotation = &entsql.Annotation{
 		Table: "oauth2_tokens",
+	}
+	PvcMetadataTable.Annotation = &entsql.Annotation{
+		Table: "pvc_metadata",
 	}
 	PermissionsTable.Annotation = &entsql.Annotation{
 		Table: "permissions",

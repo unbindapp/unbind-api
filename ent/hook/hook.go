@@ -117,6 +117,18 @@ func (f Oauth2TokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.Oauth2TokenMutation", m)
 }
 
+// The PVCMetadataFunc type is an adapter to allow the use of ordinary
+// function as PVCMetadata mutator.
+type PVCMetadataFunc func(context.Context, *ent.PVCMetadataMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PVCMetadataFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PVCMetadataMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PVCMetadataMutation", m)
+}
+
 // The PermissionFunc type is an adapter to allow the use of ordinary
 // function as Permission mutator.
 type PermissionFunc func(context.Context, *ent.PermissionMutation) (ent.Value, error)

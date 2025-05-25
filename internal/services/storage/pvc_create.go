@@ -48,8 +48,20 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 		return nil, err
 	}
 
+	// Create metadata
+	err = self.repo.System().UpsertPVCMetadata(
+		ctx,
+		nil,
+		kubernetesName,
+		utils.ToPtr(input.Name),
+		input.Description,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Get the PVCs
-	return self.k8s.CreatePersistentVolumeClaim(ctx,
+	createdPvc, err := self.k8s.CreatePersistentVolumeClaim(ctx,
 		team.Namespace,
 		kubernetesName,
 		input.Name,
@@ -59,4 +71,11 @@ func (self *StorageService) CreatePVC(ctx context.Context, requesterUserID uuid.
 		nil,
 		client,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	createdPvc.Name = input.Name
+	createdPvc.Description = input.Description
+	return createdPvc, nil
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/oauth2token"
 	"github.com/unbindapp/unbind-api/ent/permission"
 	"github.com/unbindapp/unbind-api/ent/project"
+	"github.com/unbindapp/unbind-api/ent/pvcmetadata"
 	"github.com/unbindapp/unbind-api/ent/registry"
 	"github.com/unbindapp/unbind-api/ent/s3"
 	"github.com/unbindapp/unbind-api/ent/service"
@@ -65,6 +66,8 @@ type Client struct {
 	Oauth2Code *Oauth2CodeClient
 	// Oauth2Token is the client for interacting with the Oauth2Token builders.
 	Oauth2Token *Oauth2TokenClient
+	// PVCMetadata is the client for interacting with the PVCMetadata builders.
+	PVCMetadata *PVCMetadataClient
 	// Permission is the client for interacting with the Permission builders.
 	Permission *PermissionClient
 	// Project is the client for interacting with the Project builders.
@@ -111,6 +114,7 @@ func (c *Client) init() {
 	c.JWTKey = NewJWTKeyClient(c.config)
 	c.Oauth2Code = NewOauth2CodeClient(c.config)
 	c.Oauth2Token = NewOauth2TokenClient(c.config)
+	c.PVCMetadata = NewPVCMetadataClient(c.config)
 	c.Permission = NewPermissionClient(c.config)
 	c.Project = NewProjectClient(c.config)
 	c.Registry = NewRegistryClient(c.config)
@@ -225,6 +229,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		JWTKey:             NewJWTKeyClient(cfg),
 		Oauth2Code:         NewOauth2CodeClient(cfg),
 		Oauth2Token:        NewOauth2TokenClient(cfg),
+		PVCMetadata:        NewPVCMetadataClient(cfg),
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
 		Registry:           NewRegistryClient(cfg),
@@ -266,6 +271,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		JWTKey:             NewJWTKeyClient(cfg),
 		Oauth2Code:         NewOauth2CodeClient(cfg),
 		Oauth2Token:        NewOauth2TokenClient(cfg),
+		PVCMetadata:        NewPVCMetadataClient(cfg),
 		Permission:         NewPermissionClient(cfg),
 		Project:            NewProjectClient(cfg),
 		Registry:           NewRegistryClient(cfg),
@@ -309,9 +315,9 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
-		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.S3, c.Service, c.ServiceConfig, c.ServiceGroup, c.SystemSetting,
-		c.Team, c.Template, c.User, c.VariableReference, c.Webhook,
+		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.PVCMetadata, c.Permission,
+		c.Project, c.Registry, c.S3, c.Service, c.ServiceConfig, c.ServiceGroup,
+		c.SystemSetting, c.Team, c.Template, c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -322,9 +328,9 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Bootstrap, c.Deployment, c.Environment, c.GithubApp, c.GithubInstallation,
-		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.Permission, c.Project,
-		c.Registry, c.S3, c.Service, c.ServiceConfig, c.ServiceGroup, c.SystemSetting,
-		c.Team, c.Template, c.User, c.VariableReference, c.Webhook,
+		c.Group, c.JWTKey, c.Oauth2Code, c.Oauth2Token, c.PVCMetadata, c.Permission,
+		c.Project, c.Registry, c.S3, c.Service, c.ServiceConfig, c.ServiceGroup,
+		c.SystemSetting, c.Team, c.Template, c.User, c.VariableReference, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -351,6 +357,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Oauth2Code.mutate(ctx, m)
 	case *Oauth2TokenMutation:
 		return c.Oauth2Token.mutate(ctx, m)
+	case *PVCMetadataMutation:
+		return c.PVCMetadata.mutate(ctx, m)
 	case *PermissionMutation:
 		return c.Permission.mutate(ctx, m)
 	case *ProjectMutation:
@@ -1784,6 +1792,139 @@ func (c *Oauth2TokenClient) mutate(ctx context.Context, m *Oauth2TokenMutation) 
 		return (&Oauth2TokenDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Oauth2Token mutation op: %q", m.Op())
+	}
+}
+
+// PVCMetadataClient is a client for the PVCMetadata schema.
+type PVCMetadataClient struct {
+	config
+}
+
+// NewPVCMetadataClient returns a client for the PVCMetadata from the given config.
+func NewPVCMetadataClient(c config) *PVCMetadataClient {
+	return &PVCMetadataClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pvcmetadata.Hooks(f(g(h())))`.
+func (c *PVCMetadataClient) Use(hooks ...Hook) {
+	c.hooks.PVCMetadata = append(c.hooks.PVCMetadata, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pvcmetadata.Intercept(f(g(h())))`.
+func (c *PVCMetadataClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PVCMetadata = append(c.inters.PVCMetadata, interceptors...)
+}
+
+// Create returns a builder for creating a PVCMetadata entity.
+func (c *PVCMetadataClient) Create() *PVCMetadataCreate {
+	mutation := newPVCMetadataMutation(c.config, OpCreate)
+	return &PVCMetadataCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PVCMetadata entities.
+func (c *PVCMetadataClient) CreateBulk(builders ...*PVCMetadataCreate) *PVCMetadataCreateBulk {
+	return &PVCMetadataCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PVCMetadataClient) MapCreateBulk(slice any, setFunc func(*PVCMetadataCreate, int)) *PVCMetadataCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PVCMetadataCreateBulk{err: fmt.Errorf("calling to PVCMetadataClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PVCMetadataCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PVCMetadataCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PVCMetadata.
+func (c *PVCMetadataClient) Update() *PVCMetadataUpdate {
+	mutation := newPVCMetadataMutation(c.config, OpUpdate)
+	return &PVCMetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PVCMetadataClient) UpdateOne(pm *PVCMetadata) *PVCMetadataUpdateOne {
+	mutation := newPVCMetadataMutation(c.config, OpUpdateOne, withPVCMetadata(pm))
+	return &PVCMetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PVCMetadataClient) UpdateOneID(id uuid.UUID) *PVCMetadataUpdateOne {
+	mutation := newPVCMetadataMutation(c.config, OpUpdateOne, withPVCMetadataID(id))
+	return &PVCMetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PVCMetadata.
+func (c *PVCMetadataClient) Delete() *PVCMetadataDelete {
+	mutation := newPVCMetadataMutation(c.config, OpDelete)
+	return &PVCMetadataDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PVCMetadataClient) DeleteOne(pm *PVCMetadata) *PVCMetadataDeleteOne {
+	return c.DeleteOneID(pm.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PVCMetadataClient) DeleteOneID(id uuid.UUID) *PVCMetadataDeleteOne {
+	builder := c.Delete().Where(pvcmetadata.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PVCMetadataDeleteOne{builder}
+}
+
+// Query returns a query builder for PVCMetadata.
+func (c *PVCMetadataClient) Query() *PVCMetadataQuery {
+	return &PVCMetadataQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePVCMetadata},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PVCMetadata entity by its id.
+func (c *PVCMetadataClient) Get(ctx context.Context, id uuid.UUID) (*PVCMetadata, error) {
+	return c.Query().Where(pvcmetadata.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PVCMetadataClient) GetX(ctx context.Context, id uuid.UUID) *PVCMetadata {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PVCMetadataClient) Hooks() []Hook {
+	return c.hooks.PVCMetadata
+}
+
+// Interceptors returns the client interceptors.
+func (c *PVCMetadataClient) Interceptors() []Interceptor {
+	return c.inters.PVCMetadata
+}
+
+func (c *PVCMetadataClient) mutate(ctx context.Context, m *PVCMetadataMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PVCMetadataCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PVCMetadataUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PVCMetadataUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PVCMetadataDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PVCMetadata mutation op: %q", m.Op())
 	}
 }
 
@@ -4032,14 +4173,14 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 type (
 	hooks struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
-		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
-		ServiceConfig, ServiceGroup, SystemSetting, Team, Template, User,
+		JWTKey, Oauth2Code, Oauth2Token, PVCMetadata, Permission, Project, Registry,
+		S3, Service, ServiceConfig, ServiceGroup, SystemSetting, Team, Template, User,
 		VariableReference, Webhook []ent.Hook
 	}
 	inters struct {
 		Bootstrap, Deployment, Environment, GithubApp, GithubInstallation, Group,
-		JWTKey, Oauth2Code, Oauth2Token, Permission, Project, Registry, S3, Service,
-		ServiceConfig, ServiceGroup, SystemSetting, Team, Template, User,
+		JWTKey, Oauth2Code, Oauth2Token, PVCMetadata, Permission, Project, Registry,
+		S3, Service, ServiceConfig, ServiceGroup, SystemSetting, Team, Template, User,
 		VariableReference, Webhook []ent.Interceptor
 	}
 )

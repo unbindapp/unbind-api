@@ -33,6 +33,9 @@ type Oauth2Code func(*sql.Selector)
 // Oauth2Token is the predicate function for oauth2token builders.
 type Oauth2Token func(*sql.Selector)
 
+// PVCMetadata is the predicate function for pvcmetadata builders.
+type PVCMetadata func(*sql.Selector)
+
 // Permission is the predicate function for permission builders.
 type Permission func(*sql.Selector)
 

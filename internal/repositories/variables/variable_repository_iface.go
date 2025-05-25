@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
-	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/models"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
 // VariableRepositoryInterface ...

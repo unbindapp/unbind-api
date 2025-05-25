@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
 func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.UpdatePVCInput) (*models.PVCInfo, error) {
@@ -69,10 +70,45 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 		}
 	}
 
-	return self.k8s.UpdatePersistentVolumeClaim(ctx,
-		team.Namespace,
-		input.ID,
-		newCapacity,
-		client,
-	)
+	var updatedPvc *models.PVCInfo
+	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
+		err := self.repo.System().UpsertPVCMetadata(ctx, tx, pvc.ID, input.Name, input.Description)
+		if err != nil {
+			return err
+		}
+
+		updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
+			team.Namespace,
+			pvc.ID,
+			newCapacity,
+			client,
+		)
+
+		if err != nil {
+			return err
+		}
+
+		// Get latest metadata
+		pvcMetadata, err := self.repo.System().GetPVCMetadata(ctx, tx, []string{pvc.ID})
+		if err != nil {
+			return err
+		}
+
+		if metadata, ok := pvcMetadata[pvc.ID]; ok {
+			if metadata.Name != nil {
+				updatedPvc.Name = *metadata.Name
+			} else {
+				updatedPvc.Name = pvc.ID
+			}
+			updatedPvc.Description = metadata.Description
+		} else {
+			updatedPvc.Name = pvc.ID
+		}
+		return nil
+
+	}); err != nil {
+		return nil, err
+	}
+
+	return updatedPvc, nil
 }

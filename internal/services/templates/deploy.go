@@ -15,10 +15,10 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
-	"github.com/unbindapp/unbind-api/internal/models"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/unbindapp/unbind-api/pkg/templates"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
@@ -311,6 +311,18 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					return err
 				}
 
+				// Create metadata
+				err = self.repo.System().UpsertPVCMetadata(
+					ctx,
+					tx,
+					pvcName,
+					utils.ToPtr(volume.Name),
+					nil,
+				)
+				if err != nil {
+					return err
+				}
+
 				// Get the PVCs
 				pvc, err := self.k8s.CreatePersistentVolumeClaim(ctx,
 					project.Edges.Team.Namespace,
@@ -325,6 +337,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				if err != nil {
 					return err
 				}
+				pvc.Name = volume.Name
 
 				// Append
 				if volumes == nil {
