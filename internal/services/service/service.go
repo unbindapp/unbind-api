@@ -247,7 +247,6 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 			} else if stats == nil {
 				log.Info("No PVC stats found in prometheus")
 			} else {
-				pvcStats = make(map[string]*prometheus.PVCVolumeStats)
 				for _, stat := range stats {
 					pvcStats[stat.PVCName] = stat
 				}
