@@ -3,7 +3,6 @@ package service_service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/config"
@@ -230,8 +229,6 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 	pvcChan := make(chan pvcResult, 1)
 	statsChan := make(chan statsResult, 1)
 
-	s := time.Now()
-
 	// Get PVCs in parallel
 	go func() {
 		pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
@@ -263,8 +260,6 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 	// Wait for both operations to complete
 	pvcRes := <-pvcChan
 	statsRes := <-statsChan
-
-	log.Infof("listPersistentVolumeClaims and getPVCsVolumeStats in parallel took %d ms", time.Since(s).Milliseconds())
 
 	// Check for PVC error (this is the critical one)
 	if pvcRes.err != nil {

@@ -3,13 +3,11 @@ package service_service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
@@ -38,13 +36,11 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 		return nil, fmt.Errorf("error fetching services for environment %s: %w", environmentID, err)
 	}
 
-	s := time.Now()
 	// Get volume map
 	volumeMap, err := self.getVolumesForServices(ctx, project.Edges.Team.Namespace, project.Edges.Team.ID, services)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("getVolumesForServices took %d", time.Since(s).Milliseconds())
 
 	// Convert to response
 	resp := models.TransformServiceEntities(services)
