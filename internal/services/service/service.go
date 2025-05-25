@@ -271,12 +271,6 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 		return nil, pvcRes.err
 	}
 
-	// Handle stats result - ensure we have a valid stats map
-	pvcStats := statsRes.stats
-	if pvcStats == nil {
-		pvcStats = make(map[string]*prometheus.PVCVolumeStats)
-	}
-
 	// Create a map of PVC ID to PVC for easy lookup
 	pvcMap := make(map[string]models.PVCInfo)
 	for _, pvc := range pvcRes.pvcs {
@@ -293,9 +287,11 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 				pvc.MountPath = &volume.MountPath
 
 				// Add prometheus stats if available
-				if stat, hasStats := pvcStats[pvc.ID]; hasStats {
-					pvc.UsedGB = stat.UsedGB
-					// CapacityGB should already be set from the PVC itself
+				if statsRes.stats != nil {
+					if stat, hasStats := statsRes.stats[pvc.ID]; hasStats {
+						pvc.UsedGB = stat.UsedGB
+						// CapacityGB should already be set from the PVC itself
+					}
 				}
 				servicePVCs = append(servicePVCs, pvc)
 			}
