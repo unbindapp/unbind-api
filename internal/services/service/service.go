@@ -239,12 +239,13 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 
 	// Get prometheus stats in parallel
 	go func() {
-		var pvcStats map[string]*prometheus.PVCVolumeStats
+		pvcStats := make(map[string]*prometheus.PVCVolumeStats)
 		if len(pvcIDs) > 0 {
 			stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs, namespace, self.k8s.GetInternalClient())
 			if err != nil {
 				log.Errorf("Failed to get PVC stats from prometheus: %v", err)
-				pvcStats = make(map[string]*prometheus.PVCVolumeStats) // Empty map so we can still proceed
+			} else if stats == nil {
+				log.Info("No PVC stats found in prometheus")
 			} else {
 				pvcStats = make(map[string]*prometheus.PVCVolumeStats)
 				for _, stat := range stats {
