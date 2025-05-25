@@ -17,7 +17,7 @@ type ListPVCInput struct {
 
 type ListPVCResponse struct {
 	Body struct {
-		Data []models.PVCInfo `json:"data" nullable:"false"`
+		Data []*models.PVCInfo `json:"data" nullable:"false"`
 	}
 }
 
@@ -35,7 +35,7 @@ func (self *HandlerGroup) ListPVCs(ctx context.Context, input *ListPVCInput) (*L
 		return nil, self.handleErr(err)
 	}
 	if len(pvcs) == 0 {
-		pvcs = []models.PVCInfo{}
+		pvcs = []*models.PVCInfo{}
 	}
 
 	response := &ListPVCResponse{}

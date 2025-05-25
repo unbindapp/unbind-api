@@ -12,7 +12,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/models"
 )
 
-func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.ListPVCInput) ([]models.PVCInfo, error) {
+func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.ListPVCInput) ([]*models.PVCInfo, error) {
 	team, _, _, err := self.validatePermissionsAndParseInputs(ctx, schema.ActionViewer, requesterUserID, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (self *StorageService) ListPVCs(ctx context.Context, requesterUserID uuid.U
 	}
 
 	// Get mount paths for PVCs
-	pathMap, err := self.repo.Service().GetPVCMountPaths(ctx, pvcNames)
+	pathMap, err := self.repo.Service().GetPVCMountPaths(ctx, pvcs)
 	if err != nil {
 		log.Errorf("Failed to get mount paths for PVCs  %v", err)
 		return pvcs, nil
@@ -155,7 +155,7 @@ func (self *StorageService) GetPVC(ctx context.Context, requesterUserID uuid.UUI
 	}
 
 	// Get mount paths for PVCs
-	pathMap, err := self.repo.Service().GetPVCMountPaths(ctx, []string{pvc.ID})
+	pathMap, err := self.repo.Service().GetPVCMountPaths(ctx, []*models.PVCInfo{pvc})
 	if err != nil {
 		log.Errorf("Failed to get mount paths for PVC %s: %v", pvc.ID, err)
 		return pvc, nil

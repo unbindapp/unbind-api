@@ -250,7 +250,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 }
 
 // ListPersistentVolumeClaims lists all PersistentVolumeClaims in a given namespace, optionally filtered by a label selector,
-func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]models.PVCInfo, error) {
+func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -284,7 +284,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		}
 	}
 
-	var result []models.PVCInfo
+	var result []*models.PVCInfo
 	const (
 		teamLabel        = "unbind-team"
 		projectLabel     = "unbind-project"
@@ -394,7 +394,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 			pvcType = models.PvcScopeProject
 		}
 
-		result = append(result, models.PVCInfo{
+		result = append(result, &models.PVCInfo{
 			ID:                 pvc.Name,
 			Type:               pvcType,
 			CapacityGB:         sizeGBValue,
@@ -411,7 +411,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 	}
 
 	// Sort the result by CreatedAt in descending order
-	slices.SortFunc(result, func(a, b models.PVCInfo) int {
+	slices.SortFunc(result, func(a, b *models.PVCInfo) int {
 		if a.CreatedAt.After(b.CreatedAt) {
 			return -1
 		} else if a.CreatedAt.Before(b.CreatedAt) {

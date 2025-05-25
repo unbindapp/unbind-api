@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/predicate"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
@@ -40,5 +41,5 @@ type ServiceRepositoryInterface interface {
 	// See if volume is in use
 	IsVolumeInUse(ctx context.Context, volumeName string) (bool, error)
 	// Get PVC mount paths by IDs
-	GetPVCMountPaths(ctx context.Context, pvcIDs []string) (map[string]string, error)
+	GetPVCMountPaths(ctx context.Context, pvcs []*models.PVCInfo) (map[string]string, error)
 }

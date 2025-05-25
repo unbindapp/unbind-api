@@ -197,7 +197,7 @@ func (self *ServiceService) validatePVC(ctx context.Context, teamID, projectID, 
 }
 
 // Add volumes to service config
-func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace string, teamID uuid.UUID, services []*ent.Service) (map[uuid.UUID][]models.PVCInfo, error) {
+func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace string, teamID uuid.UUID, services []*ent.Service) (map[uuid.UUID][]*models.PVCInfo, error) {
 	if len(services) == 0 {
 		return nil, nil
 	}
@@ -217,7 +217,7 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 	}
 
 	// 2) Filter PVCs to ones mounted on the services we're interested in
-	var relevantPVCs []models.PVCInfo
+	var relevantPVCs []*models.PVCInfo
 	var pvcNames []string
 
 	for _, pvc := range allPVCs {
@@ -233,9 +233,9 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 
 	if len(relevantPVCs) == 0 {
 		// No PVCs mounted on these services
-		result := make(map[uuid.UUID][]models.PVCInfo)
+		result := make(map[uuid.UUID][]*models.PVCInfo)
 		for _, service := range services {
-			result[service.ID] = []models.PVCInfo{}
+			result[service.ID] = []*models.PVCInfo{}
 		}
 		return result, nil
 	}
@@ -265,11 +265,11 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 	}
 
 	// 5) Build the result map and attach mount paths and usage stats
-	result := make(map[uuid.UUID][]models.PVCInfo)
+	result := make(map[uuid.UUID][]*models.PVCInfo)
 
 	// Initialize empty slices for all services
 	for _, service := range services {
-		result[service.ID] = []models.PVCInfo{}
+		result[service.ID] = []*models.PVCInfo{}
 	}
 
 	// Process each relevant PVC
@@ -286,8 +286,14 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 
 		// Attach mount path
 		if service.Type == schema.ServiceTypeDatabase {
-			// For database services, use /database as mount path (since we don't store it ourself)
-			pvc.MountPath = utils.ToPtr("/database")
+			// For database services, use /database as mount path (since we don't store it ourselves)
+			// Guess based on db type though
+			if service.Database != nil {
+				pvc.MountPath = utils.InferOperatorPVCMountPath(*service.Database)
+			}
+			if pvc.MountPath == nil {
+				pvc.MountPath = utils.ToPtr("/database")
+			}
 		} else {
 			// For other services, use mount path from service config
 			for _, volumeMount := range service.Edges.ServiceConfig.Volumes {

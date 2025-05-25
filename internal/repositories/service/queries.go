@@ -20,6 +20,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
@@ -387,17 +388,19 @@ func (self *ServiceRepository) IsVolumeInUse(ctx context.Context, volumeName str
 }
 
 // Get PVC mount paths by IDs
-func (self *ServiceRepository) GetPVCMountPaths(ctx context.Context, pvcIDs []string) (map[string]string, error) {
+func (self *ServiceRepository) GetPVCMountPaths(ctx context.Context, pvcs []*models.PVCInfo) (map[string]string, error) {
 	mountPaths := make(map[string]string)
 
 	// Query all services that use these PVCs
+	pvcIDs := make([]string, len(pvcs))
 	serviceConfigs, err := self.base.DB.Service.Query().
 		QueryServiceConfig().
 		Where(
 			func(s *sql.Selector) {
-				pvcIDsAny := make([]any, len(pvcIDs))
-				for i, id := range pvcIDs {
-					pvcIDsAny[i] = id
+				pvcIDsAny := make([]any, len(pvcs))
+				for i, pvc := range pvcs {
+					pvcIDsAny[i] = pvc.ID
+					pvcIDs[i] = pvc.ID
 				}
 				s.Where(sqljson.ValueIn(
 					s.C(serviceconfig.FieldVolumes),
@@ -421,6 +424,39 @@ func (self *ServiceRepository) GetPVCMountPaths(ctx context.Context, pvcIDs []st
 				continue
 			}
 			mountPaths[volume.ID] = volume.MountPath
+		}
+	}
+
+	// Process database PVCs
+	var databaseServiceIDs []uuid.UUID
+	for _, pvc := range pvcs {
+		if pvc.IsDatabase && pvc.MountedOnServiceID != nil {
+			databaseServiceIDs = append(databaseServiceIDs, *pvc.MountedOnServiceID)
+		}
+	}
+
+	// Query services that have database PVCs mounted
+	if len(databaseServiceIDs) > 0 {
+		databaseServices, err := self.base.DB.Service.Query().
+			Select(service.FieldDatabase).
+			Where(service.IDIn(databaseServiceIDs...), service.DatabaseNotNil()).
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, svc := range databaseServices {
+			mountPath := utils.InferOperatorPVCMountPath(*svc.Database)
+			if mountPath == nil {
+				mountPath = utils.ToPtr("/database")
+			}
+
+			// Attach to PVC
+			for i := range pvcs {
+				if pvcs[i].MountedOnServiceID != nil && *pvcs[i].MountedOnServiceID == svc.ID {
+					mountPaths[pvcs[i].ID] = *mountPath
+				}
+			}
 		}
 	}
 

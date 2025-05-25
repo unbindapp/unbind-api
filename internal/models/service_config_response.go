@@ -28,7 +28,7 @@ type ServiceConfigResponse struct {
 	BackupSchedule       string     `json:"backup_schedule"`
 	BackupRetentionCount int        `json:"backup_retention_count"`
 	// Volume
-	Volumes []PVCInfo `json:"volumes" nullable:"false"`
+	Volumes []*PVCInfo `json:"volumes" nullable:"false"`
 	// Security context
 	SecurityContext *schema.SecurityContext `json:"security_context,omitempty"`
 	// Health check
@@ -68,7 +68,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			VariableMounts:       entity.VariableMounts,
 			ProtectedVariables:   entity.ProtectedVariables,
 			InitContainers:       entity.InitContainers,
-			Volumes:              []PVCInfo{},
+			Volumes:              []*PVCInfo{},
 		}
 		if response.ProtectedVariables == nil {
 			response.ProtectedVariables = []string{}
