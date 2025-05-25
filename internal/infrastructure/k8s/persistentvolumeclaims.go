@@ -267,6 +267,23 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		return nil, fmt.Errorf("failed to list PersistentVolumeClaims in namespace '%s' with selector '%s': %w", namespace, listOptions.LabelSelector, err)
 	}
 
+	// List all pods ONCE and build a map of PVC -> Pods using it
+	podList, err := client.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list pods in namespace '%s': %w", namespace, err)
+	}
+
+	// Build map: PVC name -> list of pods using it
+	pvcToPods := make(map[string][]corev1.Pod)
+	for _, pod := range podList.Items {
+		for _, volume := range pod.Spec.Volumes {
+			if volume.PersistentVolumeClaim != nil {
+				pvcName := volume.PersistentVolumeClaim.ClaimName
+				pvcToPods[pvcName] = append(pvcToPods[pvcName], pod)
+			}
+		}
+	}
+
 	var result []models.PVCInfo
 	const (
 		teamLabel        = "unbind-team"
@@ -316,12 +333,9 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		isDatabase := false
 
 		// Rule 2: If bound to pods, they must have unbind-service label
-		pods, err := self.GetPodsUsingPVC(ctx, pvc.Namespace, pvc.Name, client)
-		if err != nil {
-			continue
-		}
-
+		pods := pvcToPods[pvc.Name]
 		isBound := len(pods) > 0
+
 		for _, pod := range pods {
 			// Check if pod has database label
 			// unbind/usd-category : databases
