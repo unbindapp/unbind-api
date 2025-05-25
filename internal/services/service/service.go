@@ -216,38 +216,66 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 		return nil, nil // No PVCs to process
 	}
 
-	s := time.Now()
-	// Get the PVCs
-	pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
-		"unbind-team": teamID.String(),
-	}, self.k8s.GetInternalClient())
-	if err != nil {
-		return nil, err
+	// Use channels and goroutines to parallelize the two operations
+	type pvcResult struct {
+		pvcs []models.PVCInfo
+		err  error
 	}
-	log.Infof("listPersistentVolumeClaims took %d", time.Since(s).Milliseconds())
+
+	type statsResult struct {
+		stats map[string]*prometheus.PVCVolumeStats
+		err   error
+	}
+
+	pvcChan := make(chan pvcResult, 1)
+	statsChan := make(chan statsResult, 1)
+
+	s := time.Now()
+
+	// Get PVCs in parallel
+	go func() {
+		pvcs, err := self.k8s.ListPersistentVolumeClaims(ctx, namespace, map[string]string{
+			"unbind-team": teamID.String(),
+		}, self.k8s.GetInternalClient())
+		pvcChan <- pvcResult{pvcs: pvcs, err: err}
+	}()
+
+	// Get prometheus stats in parallel
+	go func() {
+		var pvcStats map[string]*prometheus.PVCVolumeStats
+		if len(pvcIDs) > 0 {
+			stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs, namespace, self.k8s.GetInternalClient())
+			if err != nil {
+				log.Errorf("Failed to get PVC stats from prometheus: %v", err)
+				pvcStats = make(map[string]*prometheus.PVCVolumeStats) // Empty map so we can still proceed
+			} else {
+				pvcStats = make(map[string]*prometheus.PVCVolumeStats)
+				for _, stat := range stats {
+					pvcStats[stat.PVCName] = stat
+				}
+			}
+		} else {
+			pvcStats = make(map[string]*prometheus.PVCVolumeStats)
+		}
+		statsChan <- statsResult{stats: pvcStats, err: nil} // We handle errors above, so always return nil error
+	}()
+
+	// Wait for both operations to complete
+	pvcRes := <-pvcChan
+	statsRes := <-statsChan
+
+	log.Infof("listPersistentVolumeClaims and getPVCsVolumeStats in parallel took %d ms", time.Since(s).Milliseconds())
+
+	// Check for PVC error (this is the critical one)
+	if pvcRes.err != nil {
+		return nil, pvcRes.err
+	}
 
 	// Create a map of PVC ID to PVC for easy lookup
 	pvcMap := make(map[string]models.PVCInfo)
-	for _, pvc := range pvcs {
+	for _, pvc := range pvcRes.pvcs {
 		pvcMap[pvc.ID] = pvc
 	}
-
-	// Get prom stats (don't fail if this errors)
-	s = time.Now()
-	var pvcStats map[string]*prometheus.PVCVolumeStats
-	if len(pvcIDs) > 0 {
-		stats, err := self.promClient.GetPVCsVolumeStats(ctx, pvcIDs, namespace, self.k8s.GetInternalClient())
-		if err != nil {
-			log.Errorf("Failed to get PVC stats from prometheus: %v", err)
-			pvcStats = make(map[string]*prometheus.PVCVolumeStats) // Empty map so we can still proceed
-		} else {
-			pvcStats = make(map[string]*prometheus.PVCVolumeStats)
-			for _, stat := range stats {
-				pvcStats[stat.PVCName] = stat
-			}
-		}
-	}
-	log.Infof("getPVCsVolumeStats took %d", time.Since(s).Milliseconds())
 
 	// Build the result map
 	result := make(map[uuid.UUID][]models.PVCInfo)
@@ -259,7 +287,7 @@ func (self *ServiceService) getVolumesForServices(ctx context.Context, namespace
 				pvc.MountPath = &volume.MountPath
 
 				// Add prometheus stats if available
-				if stat, hasStats := pvcStats[pvc.ID]; hasStats {
+				if stat, hasStats := statsRes.stats[pvc.ID]; hasStats {
 					pvc.UsedGB = stat.UsedGB
 					// CapacityGB should already be set from the PVC itself
 				}
