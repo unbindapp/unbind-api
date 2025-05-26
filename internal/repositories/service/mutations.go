@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
@@ -377,5 +378,40 @@ func (self *ServiceRepository) UpdateVariableMounts(ctx context.Context, tx repo
 	return db.ServiceConfig.Update().
 		Where(serviceconfig.ServiceID(serviceID)).
 		SetVariableMounts(variableMounts).
+		Exec(ctx)
+}
+
+func (self *ServiceRepository) UpdateDatabaseStorageSize(
+	ctx context.Context,
+	tx repository.TxInterface,
+	serviceID uuid.UUID,
+	newSize string,
+) error {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	newSize = utils.EnsureSuffix(newSize, "Gi")
+
+	svcConfig, err := db.Service.Query().
+		Where(service.IDEQ(serviceID)).
+		QueryServiceConfig().
+		Only(ctx)
+	if err != nil {
+		return err
+	}
+
+	if svcConfig.DatabaseConfig != nil {
+		svcConfig.DatabaseConfig.StorageSize = newSize
+	} else {
+		svcConfig.DatabaseConfig = &schema.DatabaseConfig{
+			StorageSize: newSize,
+		}
+	}
+
+	return db.ServiceConfig.Update().
+		Where(serviceconfig.IDEQ(svcConfig.ID)).
+		SetDatabaseConfig(svcConfig.DatabaseConfig).
 		Exec(ctx)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
@@ -71,7 +72,18 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 		}
 	}
 
-	var updatedPvc *models.PVCInfo
+	var targetService *ent.Service
+	if pvc.MountedOnServiceID != nil {
+		targetService, err = self.repo.Service().GetByID(ctx, *pvc.MountedOnServiceID)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Service not found")
+			}
+			return nil, err
+		}
+	}
+
+	updatedPvc := pvc
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		err := self.repo.System().UpsertPVCMetadata(ctx, tx, pvc.ID, input.Name, input.Description)
 		if err != nil {
@@ -79,18 +91,34 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 		}
 
 		if input.CapacityGB != nil {
-			updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
-				team.Namespace,
-				pvc.ID,
-				newCapacity,
-				client,
-			)
-		} else {
-			updatedPvc, err = self.k8s.GetPersistentVolumeClaim(ctx,
-				team.Namespace,
-				pvc.ID,
-				client,
-			)
+			// If database, then update database spec
+			if updatedPvc.IsDatabase && updatedPvc.MountedOnServiceID != nil {
+				// Update the database spec with new size
+				err = self.repo.Service().UpdateDatabaseStorageSize(
+					ctx,
+					tx,
+					*updatedPvc.MountedOnServiceID,
+					*newCapacity,
+				)
+				if err != nil {
+					log.Errorf("Failed to update database storage size: %v", err)
+					return err
+				}
+
+				// Now deploy the new database
+				err = self.svcService.EnqueueFullBuildDeployments(ctx, []*ent.Service{targetService})
+				if err != nil {
+					log.Errorf("Failed to enqueue full build deployments for service %s: %v", targetService.ID, err)
+					return err
+				}
+			} else {
+				updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
+					team.Namespace,
+					pvc.ID,
+					newCapacity,
+					client,
+				)
+			}
 		}
 
 		if err != nil {
