@@ -43,4 +43,6 @@ type ServiceRepositoryInterface interface {
 	IsVolumeInUse(ctx context.Context, volumeName string) (bool, error)
 	// Get PVC mount paths by IDs
 	GetPVCMountPaths(ctx context.Context, pvcs []*models.PVCInfo) (map[string]string, error)
+	// Get database config for a service
+	GetDatabaseConfig(ctx context.Context, serviceID uuid.UUID) (*schema.DatabaseConfig, error)
 }

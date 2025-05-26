@@ -462,3 +462,17 @@ func (self *ServiceRepository) GetPVCMountPaths(ctx context.Context, pvcs []*mod
 
 	return mountPaths, nil
 }
+
+// Get database config for a service
+func (self *ServiceRepository) GetDatabaseConfig(ctx context.Context, serviceID uuid.UUID) (*schema.DatabaseConfig, error) {
+	svcConfig, err := self.base.DB.Service.Query().
+		Where(service.IDEQ(serviceID)).
+		QueryServiceConfig().
+		Select(serviceconfig.FieldDatabaseConfig).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return svcConfig.DatabaseConfig, nil
+}

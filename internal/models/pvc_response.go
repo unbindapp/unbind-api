@@ -24,6 +24,7 @@ type PVCInfo struct {
 	Status             PersistentVolumeClaimPhase `json:"status"` // e.g., "Bound", "Pending"
 	IsDatabase         bool                       `json:"is_database"`
 	IsAvailable        bool                       `json:"is_available"`
+	IsPendingResize    bool                       `json:"is_pending_resize"`
 	CanDelete          bool                       `json:"can_delete"`
 	CreatedAt          time.Time                  `json:"created_at"`
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -160,18 +161,30 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	environmentIDStr := pvcLabels[environmentLabel]
 	sizeGBValueStr := ""
 	var sizeGBValue float64
+	var bytesValueCapacity int64
+	var bytesValueRequest int64
+	var bytesValue int64
+	if pvc.Status.Capacity != nil {
+		if capacityQuantity, ok := pvc.Status.Capacity[corev1.ResourceStorage]; ok {
+			bytesValue = capacityQuantity.Value()
+			bytesValueCapacity = bytesValue
+		}
+	}
 	if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
-		bytesValue := storageRequest.Value()
-		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
-		sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
-		// if gbValue is a whole number, remove .00
-		if strings.HasSuffix(sizeGBValueStr, ".00") {
-			sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
+		if pvc.Status.Capacity == nil {
+			bytesValue = storageRequest.Value()
 		}
-		sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse sizeGBValue '%s': %w", sizeGBValueStr, err)
-		}
+		bytesValueRequest = storageRequest.Value()
+	}
+	gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
+	sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
+	// if gbValue is a whole number, remove .00
+	if strings.HasSuffix(sizeGBValueStr, ".00") {
+		sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
+	}
+	sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse sizeGBValue '%s': %w", sizeGBValueStr, err)
 	}
 
 	var boundToServiceID *uuid.UUID
@@ -233,9 +246,31 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 		pvcType = models.PvcScopeProject
 	}
 
+	isPendingResize := bytesValueRequest > bytesValueCapacity
+
+	// If a database, query the DB config
+	if isDatabase && boundToServiceID != nil {
+		dbSvcConfig, err := self.repo.Service().GetDatabaseConfig(ctx, *boundToServiceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get database config for service '%s': %w", boundToServiceID.String(), err)
+		}
+		if dbSvcConfig != nil && dbSvcConfig.StorageSize != "" {
+			// Parse storage size
+			sizeGB := utils.EnsureSuffix(dbSvcConfig.StorageSize, "Gi")
+			qty, err := resource.ParseQuantity(sizeGB)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse storage size '%s' for service '%s': %w", sizeGB, boundToServiceID.String(), err)
+			}
+			if qty.Value() > bytesValueCapacity {
+				isPendingResize = true
+			}
+		}
+	}
+
 	return &models.PVCInfo{
 		ID:                 pvc.Name,
 		Type:               pvcType,
+		IsPendingResize:    isPendingResize,
 		CapacityGB:         sizeGBValue,
 		TeamID:             teamID,
 		ProjectID:          projectID,
@@ -315,16 +350,20 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		}
 		sizeGBValueStr := ""
 		var sizeGBValue float64
+		var bytesValueCapacity int64
+		var bytesValueRequest int64
 		var bytesValue int64
 		if pvc.Status.Capacity != nil {
 			if capacityQuantity, ok := pvc.Status.Capacity[corev1.ResourceStorage]; ok {
 				bytesValue = capacityQuantity.Value()
+				bytesValueCapacity = bytesValue
 			}
-		} else {
-			// Fallback to requests if capacity is not set
-			if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
+		}
+		if storageRequest, ok := pvc.Spec.Resources.Requests[corev1.ResourceStorage]; ok {
+			if pvc.Status.Capacity == nil {
 				bytesValue = storageRequest.Value()
 			}
+			bytesValueRequest = storageRequest.Value()
 		}
 		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
 		sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
@@ -394,9 +433,31 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 			pvcType = models.PvcScopeProject
 		}
 
+		isPendingResize := bytesValueRequest > bytesValueCapacity
+
+		// If a databsae, query the DB config
+		if isDatabase && boundToServiceID != nil {
+			dbSvcConfig, err := self.repo.Service().GetDatabaseConfig(ctx, *boundToServiceID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get database config for service '%s': %w", boundToServiceID.String(), err)
+			}
+			if dbSvcConfig != nil && dbSvcConfig.StorageSize != "" {
+				// Parse storage size
+				sizeGB := utils.EnsureSuffix(dbSvcConfig.StorageSize, "Gi")
+				qty, err := resource.ParseQuantity(sizeGB)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse storage size '%s' for service '%s': %w", sizeGB, boundToServiceID.String(), err)
+				}
+				if qty.Value() > bytesValueCapacity {
+					isPendingResize = true
+				}
+			}
+		}
+
 		result = append(result, &models.PVCInfo{
 			ID:                 pvc.Name,
 			Type:               pvcType,
+			IsPendingResize:    isPendingResize,
 			CapacityGB:         sizeGBValue,
 			TeamID:             teamID,
 			ProjectID:          projectID,
