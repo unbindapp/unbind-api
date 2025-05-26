@@ -68,7 +68,7 @@ func (self *DeploymentRepository) ExistsInTeam(ctx context.Context, deploymentID
 func (self *DeploymentRepository) GetLastSuccessfulDeployment(ctx context.Context, serviceID uuid.UUID) (*ent.Deployment, error) {
 	return self.base.DB.Deployment.Query().
 		Where(deployment.ServiceIDEQ(serviceID)).
-		Where(deployment.StatusEQ(schema.DeploymentStatusSucceeded)).
+		Where(deployment.StatusEQ(schema.DeploymentStatusBuildSucceeded)).
 		Order(ent.Desc(deployment.FieldCreatedAt)).
 		First(ctx)
 }

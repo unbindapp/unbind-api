@@ -47,7 +47,7 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 		return nil, err
 	}
 	// Get the latest successful deployment for the service, if needed
-	if len(svc.Edges.Deployments) == 0 || svc.Edges.Deployments[0].Status != schema.DeploymentStatusSucceeded {
+	if len(svc.Edges.Deployments) == 0 || svc.Edges.Deployments[0].Status != schema.DeploymentStatusBuildSucceeded {
 		lastSuccessfulDeployment, err := self.deploymentRepo.GetLastSuccessfulDeployment(ctx, svc.ID)
 		if err != nil && !ent.IsNotFound(err) {
 			return nil, err
@@ -155,7 +155,7 @@ func (self *ServiceRepository) GetByEnvironmentID(ctx context.Context, environme
 
 			if latestDeployment != nil {
 				svc.Edges.Deployments = []*ent.Deployment{latestDeployment}
-				if latestDeployment.Status != schema.DeploymentStatusSucceeded {
+				if latestDeployment.Status != schema.DeploymentStatusBuildSucceeded {
 					// Get last successful deployment if the latest one is not successful
 					lastSuccessfulDeployment, err := self.deploymentRepo.GetLastSuccessfulDeployment(ctx, svc.ID)
 					if err != nil && !ent.IsNotFound(err) {

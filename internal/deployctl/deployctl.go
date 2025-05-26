@@ -404,7 +404,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 			req.CommitMessage,
 			req.Committer,
 			req.Source,
-			schema.DeploymentStatusQueued,
+			schema.DeploymentStatusBuildQueued,
 		)
 
 		if err != nil {
@@ -658,7 +658,7 @@ func (self *DeploymentController) processJob(ctx context.Context, item *queue.Qu
 // SyncJobStatuses synchronizes the status of all processing jobs with Kubernetes
 func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 	// Get all job marked running status
-	jobs, err := self.repo.Deployment().GetJobsByStatus(ctx, schema.DeploymentStatusBuilding)
+	jobs, err := self.repo.Deployment().GetJobsByStatus(ctx, schema.DeploymentStatusBuildRunning)
 	if err != nil {
 		return fmt.Errorf("failed to query processing jobs: %w", err)
 	}
@@ -729,7 +729,7 @@ func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context
 		req.CommitMessage,
 		req.Committer,
 		req.Source,
-		schema.DeploymentStatusPending)
+		schema.DeploymentStatusBuildPending)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dependent deployment record: %w", err)
 	}

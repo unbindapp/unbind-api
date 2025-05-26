@@ -329,7 +329,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	var newDeployment *ent.Deployment
 	if len(deployments) > 0 {
 		newDeployment = deployments[0]
-		if newDeployment.Status == schema.DeploymentStatusSucceeded {
+		if newDeployment.Status == schema.DeploymentStatusBuildSucceeded {
 			service.Edges.CurrentDeployment = newDeployment
 		}
 		service.Edges.Deployments = []*ent.Deployment{

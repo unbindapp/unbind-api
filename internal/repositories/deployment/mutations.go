@@ -37,7 +37,7 @@ func (self *DeploymentRepository) Create(ctx context.Context,
 	if CommitMessage != "" {
 		c.SetCommitMessage(CommitMessage)
 	}
-	if initialStatus == schema.DeploymentStatusQueued {
+	if initialStatus == schema.DeploymentStatusBuildQueued {
 		c.SetQueuedAt(time.Now())
 	}
 	return c.Save(ctx)
@@ -50,7 +50,7 @@ func (self *DeploymentRepository) MarkQueued(ctx context.Context, tx repository.
 	}
 
 	return db.Deployment.UpdateOneID(deploymentID).
-		SetStatus(schema.DeploymentStatusQueued).
+		SetStatus(schema.DeploymentStatusBuildQueued).
 		SetQueuedAt(queuedAt).
 		Save(ctx)
 }
@@ -62,7 +62,7 @@ func (self *DeploymentRepository) MarkStarted(ctx context.Context, tx repository
 	}
 
 	return db.Deployment.UpdateOneID(deploymentID).
-		SetStatus(schema.DeploymentStatusBuilding).
+		SetStatus(schema.DeploymentStatusBuildRunning).
 		// ! TODO - retry deployments?
 		SetAttempts(1).
 		SetStartedAt(startedAt).
@@ -77,9 +77,9 @@ func (self *DeploymentRepository) MarkFailed(ctx context.Context, tx repository.
 
 	return db.Deployment.UpdateOneID(deploymentID).
 		Where(
-			deployment.StatusNotIn(schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
+			deployment.StatusNotIn(schema.DeploymentStatusBuildCancelled, schema.DeploymentStatusBuildSucceeded),
 		).
-		SetStatus(schema.DeploymentStatusFailed).
+		SetStatus(schema.DeploymentStatusBuildFailed).
 		SetCompletedAt(failedAt).
 		SetError(message).
 		Save(ctx)
@@ -92,7 +92,7 @@ func (self *DeploymentRepository) MarkSucceeded(ctx context.Context, tx reposito
 	}
 
 	return db.Deployment.UpdateOneID(deploymentID).
-		SetStatus(schema.DeploymentStatusSucceeded).
+		SetStatus(schema.DeploymentStatusBuildSucceeded).
 		SetCompletedAt(completedAt).
 		Save(ctx)
 }
@@ -100,12 +100,12 @@ func (self *DeploymentRepository) MarkSucceeded(ctx context.Context, tx reposito
 // Cancels all jobs that are not in a finished state
 func (self *DeploymentRepository) MarkCancelledExcept(ctx context.Context, serviceID uuid.UUID, deploymentID uuid.UUID) error {
 	return self.base.DB.Deployment.Update().
-		SetStatus(schema.DeploymentStatusCancelled).
+		SetStatus(schema.DeploymentStatusBuildCancelled).
 		SetCompletedAt(time.Now()).
 		Where(
 			deployment.ServiceIDEQ(serviceID),
 			deployment.IDNEQ(deploymentID),
-			deployment.StatusNotIn(schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
+			deployment.StatusNotIn(schema.DeploymentStatusBuildFailed, schema.DeploymentStatusBuildCancelled, schema.DeploymentStatusBuildSucceeded),
 		).
 		Exec(ctx)
 }
@@ -113,11 +113,11 @@ func (self *DeploymentRepository) MarkCancelledExcept(ctx context.Context, servi
 // Mark cancelled by IDs
 func (self *DeploymentRepository) MarkAsCancelled(ctx context.Context, jobIDs []uuid.UUID) error {
 	return self.base.DB.Deployment.Update().
-		SetStatus(schema.DeploymentStatusCancelled).
+		SetStatus(schema.DeploymentStatusBuildCancelled).
 		SetCompletedAt(time.Now()).
 		Where(
 			deployment.IDIn(jobIDs...),
-			deployment.StatusNotIn(schema.DeploymentStatusBuilding, schema.DeploymentStatusFailed, schema.DeploymentStatusCancelled, schema.DeploymentStatusSucceeded),
+			deployment.StatusNotIn(schema.DeploymentStatusBuildRunning, schema.DeploymentStatusBuildFailed, schema.DeploymentStatusBuildCancelled, schema.DeploymentStatusBuildSucceeded),
 		).
 		Exec(ctx)
 }
@@ -161,7 +161,7 @@ func (self *DeploymentRepository) CreateCopy(ctx context.Context, tx repository.
 
 	return db.Deployment.Create().
 		SetServiceID(deployment.ServiceID).
-		SetStatus(schema.DeploymentStatusQueued).
+		SetStatus(schema.DeploymentStatusBuildQueued).
 		SetNillableCommitSha(deployment.CommitSha).
 		SetNillableCommitMessage(deployment.CommitMessage).
 		SetCommitAuthor(deployment.CommitAuthor).

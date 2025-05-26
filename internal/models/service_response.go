@@ -73,7 +73,7 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 				if lastDeployment == nil || deployment.CreatedAt.After(lastDeployment.CreatedAt) {
 					lastDeployment = deployment
 				}
-				if deployment.Status == schema.DeploymentStatusSucceeded {
+				if deployment.Status == schema.DeploymentStatusBuildSucceeded {
 					if lastSuccessfulDeployment == nil || deployment.CreatedAt.After(lastSuccessfulDeployment.CreatedAt) {
 						lastSuccessfulDeployment = deployment
 					}

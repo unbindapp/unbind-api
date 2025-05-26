@@ -122,7 +122,7 @@ func (self *ServiceService) deployAdhocService(ctx context.Context, service *ent
 			commitMessage,
 			service.Edges.CurrentDeployment.CommitAuthor,
 			service.Edges.CurrentDeployment.Source,
-			schema.DeploymentStatusQueued,
+			schema.DeploymentStatusBuildQueued,
 		)
 		if err != nil {
 			return err

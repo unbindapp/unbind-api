@@ -18,21 +18,28 @@ import (
 type DeploymentStatus string
 
 const (
-	DeploymentStatusPending   DeploymentStatus = "pending"
-	DeploymentStatusQueued    DeploymentStatus = "queued"
-	DeploymentStatusBuilding  DeploymentStatus = "building"
-	DeploymentStatusSucceeded DeploymentStatus = "succeeded"
-	DeploymentStatusCancelled DeploymentStatus = "cancelled"
-	DeploymentStatusFailed    DeploymentStatus = "failed"
+	DeploymentStatusBuildPending   DeploymentStatus = "build-pending"
+	DeploymentStatusBuildQueued    DeploymentStatus = "build-queued"
+	DeploymentStatusBuildRunning   DeploymentStatus = "build-running"
+	DeploymentStatusBuildSucceeded DeploymentStatus = "build-succeeded"
+	DeploymentStatusBuildCancelled DeploymentStatus = "build-cancelled"
+	DeploymentStatusBuildFailed    DeploymentStatus = "build-failed"
+	// * POD/Instance related
+	DeploymentStatusActive   DeploymentStatus = "active"   // Running and healthy
+	DeploymentStatusWaiting  DeploymentStatus = "waiting"  // Waiting for resources or other conditions
+	DeploymentStatusCrashing DeploymentStatus = "crashing" // Pod is crashing or failing in a loop
 )
 
 var allDeploymentStatuses = []DeploymentStatus{
-	DeploymentStatusPending,
-	DeploymentStatusQueued,
-	DeploymentStatusBuilding,
-	DeploymentStatusSucceeded,
-	DeploymentStatusCancelled,
-	DeploymentStatusFailed,
+	DeploymentStatusBuildPending,
+	DeploymentStatusBuildQueued,
+	DeploymentStatusBuildRunning,
+	DeploymentStatusBuildSucceeded,
+	DeploymentStatusBuildCancelled,
+	DeploymentStatusBuildFailed,
+	DeploymentStatusActive,
+	DeploymentStatusWaiting,
+	DeploymentStatusCrashing,
 }
 
 // Values provides list valid values for Enum.
