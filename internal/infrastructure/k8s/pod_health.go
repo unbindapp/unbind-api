@@ -15,9 +15,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// GetPodContainerStatusByLabels returns pods and their instance status information matching the provided labels
 func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]PodContainerStatus, error) {
-	// Get pods by labels
 	pods, err := self.GetPodsByLabels(ctx, namespace, labels, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods: %w", err)
@@ -25,7 +23,6 @@ func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, names
 
 	result := make([]PodContainerStatus, 0, len(pods.Items))
 
-	// Extract instance status information for each pod
 	for _, pod := range pods.Items {
 		serviceID, _ := uuid.Parse(pod.Labels["unbind-service"])
 		environmentID, _ := uuid.Parse(pod.Labels["unbind-environment"])
@@ -49,19 +46,16 @@ func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, names
 			podStatus.StartTime = pod.Status.StartTime.Format(time.RFC3339)
 		}
 
-		// Get pod events
 		podEvents, err := self.getPodEvents(ctx, namespace, pod.Name, client)
 		if err != nil {
-			// Log the error but continue processing
 			fmt.Printf("Warning: failed to get events for pod %s: %v\n", pod.Name, err)
 		}
 
-		// Process regular instances
 		hasCrashing := false
 		for _, container := range pod.Status.ContainerStatuses {
 			instanceStatus := extractContainerStatus(container)
-			// Add container-specific events
-			instanceStatus.Events = filterEventsByContainer(podEvents, container.Name)
+			filteredEvents := filterEventsByContainer(podEvents, container.Name)
+			instanceStatus.Events = append(instanceStatus.Events, filteredEvents...)
 
 			if instanceStatus.IsCrashing {
 				hasCrashing = true
@@ -69,11 +63,10 @@ func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, names
 			podStatus.Instances = append(podStatus.Instances, instanceStatus)
 		}
 
-		// Process instance dependencies
 		for _, container := range pod.Status.InitContainerStatuses {
 			instanceStatus := extractContainerStatus(container)
-			// Add container-specific events
-			instanceStatus.Events = filterEventsByContainer(podEvents, container.Name)
+			filteredEvents := filterEventsByContainer(podEvents, container.Name)
+			instanceStatus.Events = append(instanceStatus.Events, filteredEvents...)
 
 			if instanceStatus.IsCrashing {
 				hasCrashing = true
@@ -89,91 +82,67 @@ func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, names
 	return result, nil
 }
 
-// getPodEvents retrieves events for a specific pod and its containers
 func (self *KubeClient) getPodEvents(ctx context.Context, namespace, podName string, client *kubernetes.Clientset) ([]models.EventRecord, error) {
-	// Get pod-level events
-	podFieldSelector := fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s,involvedObject.kind=Pod", podName, namespace)
+	result := make([]models.EventRecord, 0)
 
-	podEvents, err := client.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{
-		FieldSelector: podFieldSelector,
+	eventsV1, err := client.EventsV1().Events(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("regarding.name=%s,regarding.namespace=%s,regarding.kind=Pod", podName, namespace),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list pod events: %w", err)
 	}
 
-	result := make([]models.EventRecord, 0, len(podEvents.Items))
-
-	// Process pod-level events
-	for _, event := range podEvents.Items {
-		eventType := mapEventType(event.Reason, event.Message)
+	for _, event := range eventsV1.Items {
+		eventType := mapEventType(event.Reason, event.Note)
 
 		record := models.EventRecord{
 			Type:      eventType,
-			Timestamp: event.LastTimestamp.Format(time.RFC3339),
-			Message:   event.Message,
-			Count:     event.Count,
+			Timestamp: event.EventTime.Format(time.RFC3339),
+			Message:   event.Note,
+			Count:     event.Series.Count,
 			Reason:    event.Reason,
 		}
 
-		if !event.FirstTimestamp.IsZero() {
-			record.FirstSeen = event.FirstTimestamp.Format(time.RFC3339)
-		}
-
-		if !event.LastTimestamp.IsZero() {
-			record.LastSeen = event.LastTimestamp.Format(time.RFC3339)
+		if !event.EventTime.IsZero() {
+			record.FirstSeen = event.EventTime.Format(time.RFC3339)
+			record.LastSeen = event.EventTime.Format(time.RFC3339)
 		}
 
 		result = append(result, record)
 	}
 
-	// Also get events for all objects in the namespace that might be related to this pod
-	// This includes container events that reference the pod
-	allEvents, err := client.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{})
+	allEventsV1, err := client.EventsV1().Events(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		// Log warning but continue with pod events only
-		fmt.Printf("Warning: failed to get all events for namespace %s: %v\n", namespace, err)
 		return result, nil
 	}
 
-	// Filter events that are related to this pod (either directly or through containers)
-	for _, event := range allEvents.Items {
-		// Skip if we already processed this event as a pod event
-		if event.InvolvedObject.Kind == "Pod" && event.InvolvedObject.Name == podName {
+	for _, event := range allEventsV1.Items {
+		if event.Regarding.Kind == "Pod" && event.Regarding.Name == podName {
 			continue
 		}
 
-		// Include events that mention the pod name in the message or are container events
-		// that likely belong to this pod
 		isRelated := false
-
-		// Check if event message mentions the pod name
-		if strings.Contains(event.Message, podName) {
+		if strings.Contains(event.Note, podName) {
 			isRelated = true
 		}
-
-		// Check if it's a container event that belongs to this pod
-		// Container events often have names like "podname-containername" or similar patterns
-		if event.InvolvedObject.Kind == "Container" && strings.HasPrefix(event.InvolvedObject.Name, podName) {
+		if event.Regarding.Kind == "Container" && strings.HasPrefix(event.Regarding.Name, podName) {
 			isRelated = true
 		}
 
 		if isRelated {
-			eventType := mapEventType(event.Reason, event.Message)
+			eventType := mapEventType(event.Reason, event.Note)
 
 			record := models.EventRecord{
 				Type:      eventType,
-				Timestamp: event.LastTimestamp.Format(time.RFC3339),
-				Message:   event.Message,
-				Count:     event.Count,
+				Timestamp: event.EventTime.Format(time.RFC3339),
+				Message:   event.Note,
+				Count:     event.Series.Count,
 				Reason:    event.Reason,
 			}
 
-			if !event.FirstTimestamp.IsZero() {
-				record.FirstSeen = event.FirstTimestamp.Format(time.RFC3339)
-			}
-
-			if !event.LastTimestamp.IsZero() {
-				record.LastSeen = event.LastTimestamp.Format(time.RFC3339)
+			if !event.EventTime.IsZero() {
+				record.FirstSeen = event.EventTime.Format(time.RFC3339)
+				record.LastSeen = event.EventTime.Format(time.RFC3339)
 			}
 
 			result = append(result, record)
@@ -183,7 +152,6 @@ func (self *KubeClient) getPodEvents(ctx context.Context, namespace, podName str
 	return result, nil
 }
 
-// mapEventType maps Kubernetes event reasons to our EventType enum
 func mapEventType(reason, message string) models.EventType {
 	reasonLower := strings.ToLower(reason)
 	messageLower := strings.ToLower(message)
@@ -198,7 +166,7 @@ func mapEventType(reason, message string) models.EventType {
 	case strings.Contains(reasonLower, "started") || reasonLower == "started":
 		return models.EventTypeContainerStarted
 	case strings.Contains(reasonLower, "pulled") || strings.Contains(messageLower, "successfully pulled image"):
-		return models.EventTypeContainerCreated // Image pulled is part of container creation process
+		return models.EventTypeContainerCreated
 	case strings.Contains(reasonLower, "killing") || strings.Contains(reasonLower, "killed") || strings.Contains(reasonLower, "stopped"):
 		return models.EventTypeContainerStopped
 	case strings.Contains(reasonLower, "nodenotready"):
@@ -206,28 +174,24 @@ func mapEventType(reason, message string) models.EventType {
 	case strings.Contains(reasonLower, "failedscheduling"):
 		return models.EventTypeSchedulingFailed
 	case strings.Contains(reasonLower, "failed") || strings.Contains(messageLower, "failed"):
-		return models.EventTypeUnknown // Keep as unknown but still capture failed events
+		return models.EventTypeUnknown
 	default:
 		return models.EventTypeUnknown
 	}
 }
 
-// filterEventsByContainer filters pod events to only include those relevant to a specific container
 func filterEventsByContainer(events []models.EventRecord, containerName string) []models.EventRecord {
 	result := make([]models.EventRecord, 0)
 
 	for _, event := range events {
-		// Include event if it mentions the container name
 		if strings.Contains(event.Message, containerName) {
 			result = append(result, event)
 			continue
 		}
 
-		// Include common container lifecycle events even if they don't mention the specific container name
 		reasonLower := strings.ToLower(event.Reason)
 		messageLower := strings.ToLower(event.Message)
 
-		// Include events that are typically container-related
 		if strings.Contains(reasonLower, "created") ||
 			strings.Contains(reasonLower, "started") ||
 			strings.Contains(reasonLower, "pulled") ||
@@ -239,7 +203,6 @@ func filterEventsByContainer(events []models.EventRecord, containerName string) 
 			continue
 		}
 
-		// Include error/warning events that might affect the container
 		if event.Type == models.EventTypeOOMKilled ||
 			event.Type == models.EventTypeCrashLoopBackOff ||
 			event.Type == models.EventTypeContainerStopped ||
@@ -253,61 +216,78 @@ func filterEventsByContainer(events []models.EventRecord, containerName string) 
 	return result
 }
 
-// extractContainerStatus extracts status details from a container status
+// extractContainerStatus infers some events from the container status, since Events API may not always have old events
 func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 	status := InstanceStatus{
 		KubernetesName: container.Name,
 		Ready:          container.Ready,
 		RestartCount:   container.RestartCount,
-		IsCrashing:     false,                  // Default to false, will check crash conditions below
-		Events:         []models.EventRecord{}, // Initialize empty events array
+		IsCrashing:     false,
+		Events:         []models.EventRecord{},
 	}
 
-	// Determine container state
 	switch {
 	case container.State.Running != nil:
 		status.State = ContainerStateRunning
 
-		// Add event for running container
 		if container.State.Running.StartedAt.Time != (time.Time{}) {
 			status.Events = append(status.Events, models.EventRecord{
 				Type:      models.EventTypeContainerStarted,
 				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
-				Message:   fmt.Sprintf("Container %s started", container.Name),
+				Message:   fmt.Sprintf("Container %s started at %s", container.Name, container.State.Running.StartedAt.Format(time.RFC3339)),
+				Reason:    "Started",
 			})
 		}
+
+		if container.RestartCount > 0 {
+			status.Events = append(status.Events, models.EventRecord{
+				Type:      models.EventTypeContainerCreated,
+				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
+				Message:   fmt.Sprintf("Container %s restarted (restart count: %d)", container.Name, container.RestartCount),
+				Reason:    "Created",
+			})
+		} else {
+			status.Events = append(status.Events, models.EventRecord{
+				Type:      models.EventTypeContainerCreated,
+				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
+				Message:   fmt.Sprintf("Container %s created and started", container.Name),
+				Reason:    "Created",
+			})
+		}
+
 	case container.State.Waiting != nil:
 		status.State = ContainerStateWaiting
 		status.StateReason = container.State.Waiting.Reason
 		status.StateMessage = container.State.Waiting.Message
 
-		// Check for CrashLoopBackOff condition
+		status.Events = append(status.Events, models.EventRecord{
+			Type:      models.EventTypeUnknown,
+			Timestamp: time.Now().Format(time.RFC3339),
+			Message:   fmt.Sprintf("Container %s is waiting: %s", container.Name, container.State.Waiting.Message),
+			Reason:    container.State.Waiting.Reason,
+		})
+
 		if strings.EqualFold(container.State.Waiting.Reason, "CrashLoopBackOff") {
 			status.IsCrashing = true
 			status.CrashLoopReason = container.State.Waiting.Message
 
-			// Add CrashLoopBackOff event
-			status.Events = append(status.Events, models.EventRecord{
-				Type:      models.EventTypeCrashLoopBackOff,
-				Timestamp: time.Now().Format(time.RFC3339), // No timestamp in waiting state, use current time
-				Message:   container.State.Waiting.Message,
-				Reason:    container.State.Waiting.Reason,
-			})
+			if len(status.Events) > 0 {
+				status.Events[len(status.Events)-1].Type = models.EventTypeCrashLoopBackOff
+			}
 		}
+
 	case container.State.Terminated != nil:
 		status.State = ContainerStateTerminated
 		status.StateReason = container.State.Terminated.Reason
 		status.StateMessage = container.State.Terminated.Message
 		status.LastExitCode = container.State.Terminated.ExitCode
 
-		// Add terminated event
 		terminatedEvent := models.EventRecord{
 			Timestamp: container.State.Terminated.FinishedAt.Format(time.RFC3339),
-			Message:   container.State.Terminated.Message,
+			Message:   fmt.Sprintf("Container %s terminated with exit code %d: %s", container.Name, container.State.Terminated.ExitCode, container.State.Terminated.Message),
 			Reason:    container.State.Terminated.Reason,
 		}
 
-		// Check if OOMKilled
 		if strings.EqualFold(container.State.Terminated.Reason, "OOMKilled") {
 			terminatedEvent.Type = models.EventTypeOOMKilled
 		} else {
@@ -316,7 +296,6 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 
 		status.Events = append(status.Events, terminatedEvent)
 
-		// Check if container terminated with non-zero exit code
 		if container.State.Terminated.ExitCode != 0 {
 			status.IsCrashing = true
 			status.CrashLoopReason = fmt.Sprintf("Terminated with exit code: %d, reason: %s",
@@ -324,7 +303,6 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 		}
 	}
 
-	// Get information about last termination if available
 	if container.LastTerminationState.Terminated != nil {
 		term := container.LastTerminationState.Terminated
 		status.LastTermination = fmt.Sprintf(
@@ -335,14 +313,12 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 			term.FinishedAt.Format(time.RFC3339),
 		)
 
-		// Add last termination event
 		lastTermEvent := models.EventRecord{
 			Timestamp: term.FinishedAt.Format(time.RFC3339),
-			Message:   term.Message,
+			Message:   fmt.Sprintf("Container %s previous termination: exit code %d, %s", container.Name, term.ExitCode, term.Message),
 			Reason:    term.Reason,
 		}
 
-		// Check if OOMKilled
 		if strings.EqualFold(term.Reason, "OOMKilled") {
 			lastTermEvent.Type = models.EventTypeOOMKilled
 		} else {
@@ -351,12 +327,14 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 
 		status.Events = append(status.Events, lastTermEvent)
 
-		// High restart count and non-zero exit code
 		if container.RestartCount > 3 && term.ExitCode != 0 {
-			status.IsCrashing = true
-			if status.CrashLoopReason == "" {
-				status.CrashLoopReason = fmt.Sprintf("Frequent restarts (%d) with exit code: %d",
-					container.RestartCount, term.ExitCode)
+			recentThreshold := time.Now().Add(-10 * time.Minute)
+			if term.FinishedAt.Time.After(recentThreshold) {
+				status.IsCrashing = true
+				if status.CrashLoopReason == "" {
+					status.CrashLoopReason = fmt.Sprintf("Frequent restarts (%d) with recent termination at %s (exit code: %d)",
+						container.RestartCount, term.FinishedAt.Format(time.RFC3339), term.ExitCode)
+				}
 			}
 		}
 	}
@@ -364,8 +342,6 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 	return status
 }
 
-// * Models
-// InstanceStatus contains information about an instance's state
 type InstanceStatus struct {
 	KubernetesName  string               `json:"kubernetes_name"`
 	Ready           bool                 `json:"ready"`
@@ -380,11 +356,10 @@ type InstanceStatus struct {
 	Events          []models.EventRecord `json:"events,omitempty" nullable:"false"`
 }
 
-// PodContainerStatus contains information about a pod and its instances
 type PodContainerStatus struct {
 	KubernetesName       string           `json:"kubernetes_name"`
 	Namespace            string           `json:"namespace"`
-	Phase                PodPhase         `json:"phase"` // Pending, Running, Succeeded, Failed, Unknown
+	Phase                PodPhase         `json:"phase"`
 	PodIP                string           `json:"podIP,omitempty"`
 	StartTime            string           `json:"startTime,omitempty"`
 	HasCrashingInstances bool             `json:"hasCrashingInstances"`
@@ -396,21 +371,18 @@ type PodContainerStatus struct {
 	ServiceID            uuid.UUID        `json:"service_id"`
 }
 
-// SimpleHealthStatus provides a simplified view of instance health
 type SimpleHealthStatus struct {
 	Health            InstanceHealth         `json:"health"`
 	ExpectedInstances int                    `json:"expectedInstances"`
 	Instances         []SimpleInstanceStatus `json:"instances"`
 }
 
-// SimpleInstanceStatus provides basic instance status information
 type SimpleInstanceStatus struct {
 	KubernetesName string               `json:"kubernetes_name"`
-	Status         ContainerState       `json:"status"` // "Running", "Waiting", "Terminated"
+	Status         ContainerState       `json:"status"`
 	Events         []models.EventRecord `json:"events,omitempty" nullable:"false"`
 }
 
-// * Enums
 type ContainerState string
 
 const (
@@ -419,8 +391,6 @@ const (
 	ContainerStateTerminated ContainerState = "Terminated"
 )
 
-// Register enum in OpenAPI specification
-// https://github.com/danielgtaylor/huma/issues/621
 func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
 	if r.Map()["ContainerState"] == nil {
 		schemaRef := r.Schema(reflect.TypeOf(""), true, "ContainerState")
@@ -433,7 +403,6 @@ func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/ContainerState"}
 }
 
-// Overall health one
 type InstanceHealth string
 
 const (
@@ -442,8 +411,6 @@ const (
 	InstanceHealthUnhealthy InstanceHealth = "unhealthy"
 )
 
-// Register enum in OpenAPI specification
-// https://github.com/danielgtaylor/huma/issues/621
 func (u InstanceHealth) Schema(r huma.Registry) *huma.Schema {
 	if r.Map()["InstanceHealth"] == nil {
 		schemaRef := r.Schema(reflect.TypeOf(""), true, "InstanceHealth")
@@ -456,10 +423,8 @@ func (u InstanceHealth) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/InstanceHealth"}
 }
 
-// Direct copy of corev1.PodPhase, but so we can attach openapi schema to it
 type PodPhase string
 
-// These are the valid statuses of pods.
 const (
 	PodPending   PodPhase = "Pending"
 	PodRunning   PodPhase = "Running"
@@ -476,8 +441,6 @@ var allPodPhases = []corev1.PodPhase{
 	corev1.PodUnknown,
 }
 
-// Register enum in OpenAPI specification
-// https://github.com/danielgtaylor/huma/issues/621
 func (u PodPhase) Schema(r huma.Registry) *huma.Schema {
 	if r.Map()["PodPhase"] == nil {
 		schemaRef := r.Schema(reflect.TypeOf(""), true, "PodPhase")
@@ -490,15 +453,12 @@ func (u PodPhase) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/PodPhase"}
 }
 
-// GetExpectedInstances determines the expected number of instances based on the parent resource
 func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string, podName string, client *kubernetes.Clientset) (int, error) {
-	// Get the pod to find its owner reference
 	pod, err := client.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
 		return 0, fmt.Errorf("failed to get pod: %w", err)
 	}
 
-	// Look for owner references
 	for _, ownerRef := range pod.OwnerReferences {
 		switch ownerRef.Kind {
 		case "StatefulSet":
@@ -523,7 +483,6 @@ func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string,
 			return int(*rs.Spec.Replicas), nil
 
 		case "DaemonSet":
-			// For DaemonSets, the expected count is the number of nodes that match the node selector
 			ds, err := client.AppsV1().DaemonSets(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
 			if err != nil {
 				return 0, fmt.Errorf("failed to get daemonset: %w", err)
@@ -532,13 +491,10 @@ func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string,
 		}
 	}
 
-	// If no owner reference found or it's a standalone pod, return 1
 	return 1, nil
 }
 
-// GetSimpleHealthStatus gets a simplified health status for all pods matching the labels
 func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*SimpleHealthStatus, error) {
-	// Get all pods matching the labels
 	podStatuses, err := self.GetPodContainerStatusByLabels(ctx, namespace, labels, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pod statuses: %w", err)
@@ -552,13 +508,11 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 		}, nil
 	}
 
-	// Get expected instances from the first pod (they should all have the same parent)
 	expectedInstances, err := self.GetExpectedInstances(ctx, podStatuses[0].Namespace, podStatuses[0].KubernetesName, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get expected instances: %w", err)
 	}
 
-	// Determine overall health
 	health := InstanceHealthHealthy
 	hasCrashing := false
 	allInstances := make([]SimpleInstanceStatus, 0)
@@ -568,7 +522,6 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 			hasCrashing = true
 		}
 
-		// Add all instances from this pod
 		for _, instance := range podStatus.Instances {
 			allInstances = append(allInstances, SimpleInstanceStatus{
 				KubernetesName: instance.KubernetesName,
