@@ -135,6 +135,7 @@ func (self *DeploymentService) AttachInstanceDataToCurrent(ctx context.Context, 
 	targetDeployment.Status = instanceData.Status
 	targetDeployment.InstanceEvents = instanceData.InstanceEvents
 	targetDeployment.CrashingReasons = instanceData.CrashingReasons
+	targetDeployment.InstanceRestarts = instanceData.Restarts
 
 	return targetDeployment, nil
 }

@@ -16,6 +16,7 @@ type ServiceInstanceData struct {
 	ServiceID       uuid.UUID
 	Status          schema.DeploymentStatus
 	InstanceEvents  []models.EventRecord
+	Restarts        int32
 	CrashingReasons []string
 }
 
@@ -74,6 +75,7 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 	unknownCount := 0
 	events := []models.EventRecord{}
 	crashingReasons := []string{}
+	restartCount := int32(0)
 
 	// Process each pod status
 	for _, status := range statuses {
@@ -90,6 +92,11 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 
 		// Process container instances
 		for _, instance := range status.Instances {
+			restartCount += instance.RestartCount
+			// Always collect events from all containers
+			events = append(events, instance.Events...)
+
+			// Handle crashing containers
 			if instance.IsCrashing {
 				crashingCount++
 				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
@@ -99,8 +106,17 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 				case k8s.ContainerStateWaiting:
 					pendingCount++
 				}
+			}
+		}
 
-				events = append(events, instance.Events...)
+		// Also process instance dependencies (init containers)
+		for _, instance := range status.InstanceDependencies {
+			events = append(events, instance.Events...)
+
+			// Handle crashing init containers
+			if instance.IsCrashing {
+				crashingCount++
+				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
 			}
 		}
 	}
@@ -121,6 +137,7 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 		Status:          targetStatus,
 		InstanceEvents:  events,
 		CrashingReasons: crashingReasons,
+		Restarts:        restartCount,
 	}
 }
 
@@ -135,6 +152,7 @@ func (self *DeploymentService) AttachInstanceDataToDeploymentResponses(deploymen
 			deployments[i].Status = instanceData.Status
 			deployments[i].InstanceEvents = instanceData.InstanceEvents
 			deployments[i].CrashingReasons = instanceData.CrashingReasons
+			deployments[i].InstanceRestarts = instanceData.Restarts
 		} else {
 			if deployments[i].Status == schema.DeploymentStatusBuildSucceeded {
 				deployments[i].Status = schema.DeploymentStatusRemoved
@@ -156,6 +174,7 @@ func (self *DeploymentService) AttachInstanceDataToServiceResponse(service *mode
 		service.CurrentDeployment.Status = instanceData.Status
 		service.CurrentDeployment.InstanceEvents = instanceData.InstanceEvents
 		service.CurrentDeployment.CrashingReasons = instanceData.CrashingReasons
+		service.CurrentDeployment.InstanceRestarts = instanceData.Restarts
 	}
 
 	// Attach to last deployment if it's the current one
@@ -164,6 +183,7 @@ func (self *DeploymentService) AttachInstanceDataToServiceResponse(service *mode
 		service.LastDeployment.Status = instanceData.Status
 		service.LastDeployment.InstanceEvents = instanceData.InstanceEvents
 		service.LastDeployment.CrashingReasons = instanceData.CrashingReasons
+		service.LastDeployment.InstanceRestarts = instanceData.Restarts
 	}
 
 	return instanceData
