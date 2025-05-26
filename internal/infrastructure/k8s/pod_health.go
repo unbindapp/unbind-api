@@ -162,7 +162,7 @@ func (self *KubeClient) getBatchPodEvents(ctx context.Context, namespace string,
 				Type:      eventType,
 				Timestamp: event.EventTime.Format(time.RFC3339),
 				Message:   event.Note,
-				Count:     0,
+				Count:     1,
 				Reason:    event.Reason,
 			}
 			if event.Series != nil {
