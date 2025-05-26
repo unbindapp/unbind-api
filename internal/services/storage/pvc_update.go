@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
@@ -77,12 +78,20 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 			return err
 		}
 
-		updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
-			team.Namespace,
-			pvc.ID,
-			newCapacity,
-			client,
-		)
+		if input.CapacityGB != nil {
+			updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
+				team.Namespace,
+				pvc.ID,
+				newCapacity,
+				client,
+			)
+		} else {
+			updatedPvc, err = self.k8s.GetPersistentVolumeClaim(ctx,
+				team.Namespace,
+				pvc.ID,
+				client,
+			)
+		}
 
 		if err != nil {
 			return err
@@ -108,6 +117,20 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 
 	}); err != nil {
 		return nil, err
+	}
+
+	// Restart pods if needed
+	if input.CapacityGB != nil && updatedPvc.MountedOnServiceID != nil {
+		err = self.k8s.RollingRestartPodsByLabel(
+			ctx,
+			team.Namespace,
+			"unbind-service",
+			(*updatedPvc.MountedOnServiceID).String(),
+			client,
+		)
+		if err != nil {
+			log.Error(ctx, "Failed to restart pods after resizing volume: %v", err)
+		}
 	}
 
 	return updatedPvc, nil
