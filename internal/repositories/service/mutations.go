@@ -386,7 +386,7 @@ func (self *ServiceRepository) UpdateDatabaseStorageSize(
 	tx repository.TxInterface,
 	serviceID uuid.UUID,
 	newSize string,
-) error {
+) (*schema.DatabaseConfig, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
@@ -399,7 +399,7 @@ func (self *ServiceRepository) UpdateDatabaseStorageSize(
 		QueryServiceConfig().
 		Only(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if svcConfig.DatabaseConfig != nil {
@@ -410,8 +410,11 @@ func (self *ServiceRepository) UpdateDatabaseStorageSize(
 		}
 	}
 
-	return db.ServiceConfig.Update().
-		Where(serviceconfig.IDEQ(svcConfig.ID)).
+	updatedCfg, err := db.ServiceConfig.UpdateOneID(svcConfig.ID).
 		SetDatabaseConfig(svcConfig.DatabaseConfig).
-		Exec(ctx)
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return updatedCfg.DatabaseConfig, nil
 }

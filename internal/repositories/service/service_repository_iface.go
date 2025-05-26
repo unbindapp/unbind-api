@@ -25,7 +25,7 @@ type ServiceRepositoryInterface interface {
 	Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error
 	SetCurrentDeployment(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, deploymentID uuid.UUID) error
 	UpdateVariableMounts(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, variableMounts []*schema.VariableMount) error
-	UpdateDatabaseStorageSize(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, newSize string) error
+	UpdateDatabaseStorageSize(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, newSize string) (*schema.DatabaseConfig, error)
 	GetByID(ctx context.Context, serviceID uuid.UUID) (svc *ent.Service, err error)
 	GetByIDsAndEnvironment(ctx context.Context, serviceIDs []uuid.UUID, environmentID uuid.UUID) ([]*ent.Service, error)
 	GetByName(ctx context.Context, name string) (*ent.Service, error)
