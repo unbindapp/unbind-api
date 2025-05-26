@@ -83,6 +83,9 @@ rules:
   - apiGroups: ["longhorn.io"]
     resources: ["volumes", "volumeattachments", "engines", "replicas", "settings", "nodes"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["events.k8s.io"]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
 ---
 # ClusterRoleBinding for role management
 apiVersion: rbac.authorization.k8s.io/v1
@@ -148,9 +151,6 @@ rules:
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["roles", "rolebindings"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: ["events.k8s.io"]
-    resources: ["events"]
-    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
