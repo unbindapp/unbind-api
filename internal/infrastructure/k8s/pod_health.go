@@ -89,22 +89,22 @@ func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, names
 	return result, nil
 }
 
-// getPodEvents retrieves events for a specific pod
+// getPodEvents retrieves events for a specific pod and its containers
 func (self *KubeClient) getPodEvents(ctx context.Context, namespace, podName string, client *kubernetes.Clientset) ([]models.EventRecord, error) {
-	// Field selector to filter events for a specific pod
-	fieldSelector := fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s,involvedObject.kind=Pod", podName, namespace)
+	// Get pod-level events
+	podFieldSelector := fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=%s,involvedObject.kind=Pod", podName, namespace)
 
-	// Get events
-	events, err := client.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{
-		FieldSelector: fieldSelector,
+	podEvents, err := client.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: podFieldSelector,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list events: %w", err)
+		return nil, fmt.Errorf("failed to list pod events: %w", err)
 	}
 
-	result := make([]models.EventRecord, 0, len(events.Items))
+	result := make([]models.EventRecord, 0, len(podEvents.Items))
 
-	for _, event := range events.Items {
+	// Process pod-level events
+	for _, event := range podEvents.Items {
 		eventType := mapEventType(event.Reason, event.Message)
 
 		record := models.EventRecord{
@@ -126,6 +126,60 @@ func (self *KubeClient) getPodEvents(ctx context.Context, namespace, podName str
 		result = append(result, record)
 	}
 
+	// Also get events for all objects in the namespace that might be related to this pod
+	// This includes container events that reference the pod
+	allEvents, err := client.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		// Log warning but continue with pod events only
+		fmt.Printf("Warning: failed to get all events for namespace %s: %v\n", namespace, err)
+		return result, nil
+	}
+
+	// Filter events that are related to this pod (either directly or through containers)
+	for _, event := range allEvents.Items {
+		// Skip if we already processed this event as a pod event
+		if event.InvolvedObject.Kind == "Pod" && event.InvolvedObject.Name == podName {
+			continue
+		}
+
+		// Include events that mention the pod name in the message or are container events
+		// that likely belong to this pod
+		isRelated := false
+
+		// Check if event message mentions the pod name
+		if strings.Contains(event.Message, podName) {
+			isRelated = true
+		}
+
+		// Check if it's a container event that belongs to this pod
+		// Container events often have names like "podname-containername" or similar patterns
+		if event.InvolvedObject.Kind == "Container" && strings.HasPrefix(event.InvolvedObject.Name, podName) {
+			isRelated = true
+		}
+
+		if isRelated {
+			eventType := mapEventType(event.Reason, event.Message)
+
+			record := models.EventRecord{
+				Type:      eventType,
+				Timestamp: event.LastTimestamp.Format(time.RFC3339),
+				Message:   event.Message,
+				Count:     event.Count,
+				Reason:    event.Reason,
+			}
+
+			if !event.FirstTimestamp.IsZero() {
+				record.FirstSeen = event.FirstTimestamp.Format(time.RFC3339)
+			}
+
+			if !event.LastTimestamp.IsZero() {
+				record.LastSeen = event.LastTimestamp.Format(time.RFC3339)
+			}
+
+			result = append(result, record)
+		}
+	}
+
 	return result, nil
 }
 
@@ -139,16 +193,20 @@ func mapEventType(reason, message string) models.EventType {
 		return models.EventTypeOOMKilled
 	case strings.Contains(reasonLower, "backoff") || strings.Contains(reasonLower, "crashloop"):
 		return models.EventTypeCrashLoopBackOff
-	case strings.Contains(reasonLower, "created"):
+	case strings.Contains(reasonLower, "created") || reasonLower == "created":
 		return models.EventTypeContainerCreated
-	case strings.Contains(reasonLower, "started"):
+	case strings.Contains(reasonLower, "started") || reasonLower == "started":
 		return models.EventTypeContainerStarted
-	case strings.Contains(reasonLower, "killed") || strings.Contains(reasonLower, "stopped"):
+	case strings.Contains(reasonLower, "pulled") || strings.Contains(messageLower, "successfully pulled image"):
+		return models.EventTypeContainerCreated // Image pulled is part of container creation process
+	case strings.Contains(reasonLower, "killing") || strings.Contains(reasonLower, "killed") || strings.Contains(reasonLower, "stopped"):
 		return models.EventTypeContainerStopped
 	case strings.Contains(reasonLower, "nodenotready"):
 		return models.EventTypeNodeNotReady
 	case strings.Contains(reasonLower, "failedscheduling"):
 		return models.EventTypeSchedulingFailed
+	case strings.Contains(reasonLower, "failed") || strings.Contains(messageLower, "failed"):
+		return models.EventTypeUnknown // Keep as unknown but still capture failed events
 	default:
 		return models.EventTypeUnknown
 	}
@@ -159,9 +217,35 @@ func filterEventsByContainer(events []models.EventRecord, containerName string) 
 	result := make([]models.EventRecord, 0)
 
 	for _, event := range events {
-		// Check if the event message contains the container name
-		// This is a heuristic since Kubernetes events don't always clearly indicate which container they belong to
+		// Include event if it mentions the container name
 		if strings.Contains(event.Message, containerName) {
+			result = append(result, event)
+			continue
+		}
+
+		// Include common container lifecycle events even if they don't mention the specific container name
+		reasonLower := strings.ToLower(event.Reason)
+		messageLower := strings.ToLower(event.Message)
+
+		// Include events that are typically container-related
+		if strings.Contains(reasonLower, "created") ||
+			strings.Contains(reasonLower, "started") ||
+			strings.Contains(reasonLower, "pulled") ||
+			strings.Contains(reasonLower, "killing") ||
+			strings.Contains(reasonLower, "preempting") ||
+			strings.Contains(messageLower, "container") ||
+			strings.Contains(messageLower, "image") {
+			result = append(result, event)
+			continue
+		}
+
+		// Include error/warning events that might affect the container
+		if event.Type == models.EventTypeOOMKilled ||
+			event.Type == models.EventTypeCrashLoopBackOff ||
+			event.Type == models.EventTypeContainerStopped ||
+			strings.Contains(messageLower, "failed") ||
+			strings.Contains(messageLower, "error") ||
+			strings.Contains(messageLower, "warning") {
 			result = append(result, event)
 		}
 	}

@@ -112,7 +112,7 @@ var (
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s schema.DeploymentStatus) error {
 	switch s {
-	case "build-pending", "build-queued", "build-running", "build-succeeded", "build-cancelled", "build-failed", "active", "waiting", "crashing":
+	case "build-pending", "build-queued", "build-running", "build-succeeded", "build-cancelled", "build-failed", "active", "waiting", "crashing", "removed":
 		return nil
 	default:
 		return fmt.Errorf("deployment: invalid enum value for status field: %q", s)

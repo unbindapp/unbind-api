@@ -8,6 +8,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
@@ -53,6 +54,16 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 				resp[i].Config.Volumes = volumes
 			}
 		}
+	}
+
+	// Attach instance data efficiently for all services in the environment
+	if len(services) > 0 {
+		instanceDataMap, err := self.deploymentService.AttachInstanceDataToServices(ctx, services, project.Edges.Team.Namespace)
+		if err != nil {
+			log.Error("Error attaching instance data to services", "err", err, "environment_id", environmentID)
+			return nil, err
+		}
+		self.deploymentService.AttachInstanceDataToServiceResponses(resp, instanceDataMap)
 	}
 
 	return resp, nil
@@ -104,6 +115,16 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 	volumes := volumeMap[service.ID]
 	if volumes != nil {
 		resp.Config.Volumes = volumes
+	}
+
+	// Attach instance data for this single service
+	if service.Edges.CurrentDeployment != nil {
+		instanceDataMap, err := self.deploymentService.AttachInstanceDataToServices(ctx, []*ent.Service{service}, project.Edges.Team.Namespace)
+		if err != nil {
+			log.Error("Error attaching instance data to service", "err", err, "service_id", serviceID)
+			return nil, err
+		}
+		self.deploymentService.AttachInstanceDataToServiceResponse(resp, instanceDataMap)
 	}
 
 	return resp, nil

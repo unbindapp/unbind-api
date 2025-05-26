@@ -9,7 +9,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
@@ -49,7 +48,7 @@ func (self *DeploymentService) GetDeploymentsForService(ctx context.Context, req
 	// Transform response
 	resp := models.TransformDeploymentEntities(deployments)
 
-	currentDeployment, err := self.attachInstanceDataToCurrent(ctx, resp, service)
+	currentDeployment, err := self.AttachInstanceDataToCurrent(ctx, resp, service)
 	if err != nil {
 		log.Error("Error attaching instance data to current deployment", "err", err, "service_id", service.ID)
 		return nil, nil, nil, err
@@ -93,15 +92,20 @@ func (self *DeploymentService) GetDeploymentByID(ctx context.Context, requesterU
 
 	if service.CurrentDeploymentID != nil && *service.CurrentDeploymentID == deployment.ID {
 		// If this is the current deployment, attach instance data
-		return self.attachInstanceDataToCurrent(ctx, []*models.DeploymentResponse{models.TransformDeploymentEntity(deployment)}, service)
+		return self.AttachInstanceDataToCurrent(ctx, []*models.DeploymentResponse{models.TransformDeploymentEntity(deployment)}, service)
 	}
 
-	// Get build jobs
-	return models.TransformDeploymentEntity(deployment), nil
+	transformed := models.TransformDeploymentEntity(deployment)
+	if service.CurrentDeploymentID != nil && transformed.Status == schema.DeploymentStatusBuildSucceeded {
+		// If this has been built and a different deployment is active, infer it was removed
+		transformed.Status = schema.DeploymentStatusRemoved
+	}
+
+	return transformed, nil
 }
 
 // Attach instance data
-func (self *DeploymentService) attachInstanceDataToCurrent(ctx context.Context, deployments []*models.DeploymentResponse, service *ent.Service) (*models.DeploymentResponse, error) {
+func (self *DeploymentService) AttachInstanceDataToCurrent(ctx context.Context, deployments []*models.DeploymentResponse, service *ent.Service) (*models.DeploymentResponse, error) {
 	if service.Edges.CurrentDeployment == nil {
 		return nil, nil
 	}
@@ -121,72 +125,16 @@ func (self *DeploymentService) attachInstanceDataToCurrent(ctx context.Context, 
 		return targetDeployment, err
 	}
 
-	// Get target status
-	targetStatus := schema.DeploymentStatusWaiting
+	// Use the shared utility to calculate instance data
+	instanceData := self.calculateInstanceData(statuses, service.Edges.ServiceConfig.Replicas)
 
-	// Get expected replicas
-	expectedContainerCount := service.Edges.ServiceConfig.Replicas
+	// Attach data to deployment responses using the shared utility
+	self.AttachInstanceDataToDeploymentResponses(deployments, instanceData, service.Edges.CurrentDeployment.ID)
 
-	pendingCount := 0
-	failedCount := 0
-	runningCount := int32(0)
-	crashingCount := 0
-	unknownCount := 0
-	restarts := int32(0)
-	events := []models.EventRecord{}
-	crashingReasons := []string{}
-	for _, status := range statuses {
-		switch status.Phase {
-		case k8s.PodPending:
-			pendingCount++
-		case k8s.PodFailed:
-			failedCount++
-		case k8s.PodRunning:
-			runningCount++
-		default:
-			unknownCount++
-		}
-
-		for _, instance := range status.Instances {
-			restarts += instance.RestartCount
-			if instance.IsCrashing {
-				crashingCount++
-				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
-				switch instance.State {
-				case k8s.ContainerStateRunning:
-					runningCount++
-				case k8s.ContainerStateWaiting:
-					pendingCount++
-				}
-
-				events = append(events, instance.Events...)
-			}
-		}
-	}
-
-	// Determine target status based on counts
-	if failedCount > 0 {
-		targetStatus = schema.DeploymentStatusCrashing
-	} else if crashingCount > 0 {
-		targetStatus = schema.DeploymentStatusCrashing
-	} else if pendingCount > 0 || unknownCount > 0 {
-		targetStatus = schema.DeploymentStatusWaiting
-	} else if runningCount >= expectedContainerCount {
-		targetStatus = schema.DeploymentStatusActive
-	}
-
-	// Attach data to deployment
-	for i := range deployments {
-		if deployments[i].ID == targetDeployment.ID {
-			deployments[i].Status = targetStatus
-			targetDeployment.Status = targetStatus
-			deployments[i].InstanceEvents = events
-			targetDeployment.InstanceEvents = events
-			deployments[i].CrashingReasons = crashingReasons
-			targetDeployment.CrashingReasons = crashingReasons
-			break
-		}
-	}
+	// Update the target deployment with the calculated data
+	targetDeployment.Status = instanceData.Status
+	targetDeployment.InstanceEvents = instanceData.InstanceEvents
+	targetDeployment.CrashingReasons = instanceData.CrashingReasons
 
 	return targetDeployment, nil
 }

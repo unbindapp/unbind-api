@@ -19,6 +19,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
+	deployments_service "github.com/unbindapp/unbind-api/internal/services/deployments"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
@@ -37,6 +38,7 @@ type ServiceService struct {
 	webhookService       *webhooks_service.WebhooksService
 	variableService      *variables_service.VariablesService
 	promClient           *prometheus.PrometheusClient
+	deploymentService    *deployments_service.DeploymentService
 }
 
 func NewServiceService(cfg *config.Config,
@@ -47,7 +49,8 @@ func NewServiceService(cfg *config.Config,
 	dbProvider *databases.DatabaseProvider,
 	webhookService *webhooks_service.WebhooksService,
 	variableService *variables_service.VariablesService,
-	promClient *prometheus.PrometheusClient) *ServiceService {
+	promClient *prometheus.PrometheusClient,
+	deploymentService *deployments_service.DeploymentService) *ServiceService {
 	return &ServiceService{
 		cfg:                  cfg,
 		repo:                 repo,
@@ -58,6 +61,7 @@ func NewServiceService(cfg *config.Config,
 		webhookService:       webhookService,
 		variableService:      variableService,
 		promClient:           promClient,
+		deploymentService:    deploymentService,
 	}
 }
 
