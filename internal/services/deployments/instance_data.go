@@ -175,13 +175,13 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 	}
 
 	// Determine target status based on counts
-	targetStatus := schema.DeploymentStatusWaiting
+	targetStatus := schema.DeploymentStatusPending
 	if failedCount > 0 {
 		targetStatus = schema.DeploymentStatusCrashing
 	} else if crashingCount > 0 {
 		targetStatus = schema.DeploymentStatusCrashing
 	} else if pendingCount > 0 || unknownCount > 0 {
-		targetStatus = schema.DeploymentStatusWaiting
+		targetStatus = schema.DeploymentStatusPending
 	} else if runningCount >= expectedReplicas {
 		targetStatus = schema.DeploymentStatusActive
 	}
