@@ -499,29 +499,29 @@ func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string,
 	}
 
 	for _, ownerRef := range pod.OwnerReferences {
-		switch ownerRef.Kind {
-		case "StatefulSet":
+		switch strings.ToLower(ownerRef.Kind) {
+		case "statefulset":
 			sts, err := client.AppsV1().StatefulSets(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
 			if err != nil {
 				return 0, fmt.Errorf("failed to get statefulset: %w", err)
 			}
 			return int(*sts.Spec.Replicas), nil
 
-		case "Deployment":
+		case "deployment":
 			deploy, err := client.AppsV1().Deployments(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
 			if err != nil {
 				return 0, fmt.Errorf("failed to get deployment: %w", err)
 			}
 			return int(*deploy.Spec.Replicas), nil
 
-		case "ReplicaSet":
+		case "replicaset":
 			rs, err := client.AppsV1().ReplicaSets(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
 			if err != nil {
 				return 0, fmt.Errorf("failed to get replicaset: %w", err)
 			}
 			return int(*rs.Spec.Replicas), nil
 
-		case "DaemonSet":
+		case "daemonset":
 			ds, err := client.AppsV1().DaemonSets(namespace).Get(ctx, ownerRef.Name, metav1.GetOptions{})
 			if err != nil {
 				return 0, fmt.Errorf("failed to get daemonset: %w", err)
