@@ -28,13 +28,17 @@ func (self *DeploymentService) AttachInstanceDataToServices(ctx context.Context,
 	}
 
 	// Get all pod statuses for the environment in a single call
-	statuses, err := self.k8s.GetPodContainerStatusByLabels(
+	// Skip events for list operations to improve performance
+	statuses, err := self.k8s.GetPodContainerStatusByLabelsWithOptions(
 		ctx,
 		namespace,
 		map[string]string{
 			"unbind-environment": services[0].EnvironmentID.String(),
 		},
 		self.k8s.GetInternalClient(),
+		k8s.PodStatusOptions{
+			IncludeEvents: false, // Skip events for better performance in list operations
+		},
 	)
 	if err != nil {
 		log.Error("Error getting pod container status for environment", "err", err, "environment_id", services[0].EnvironmentID)
@@ -59,6 +63,102 @@ func (self *DeploymentService) AttachInstanceDataToServices(ctx context.Context,
 
 		statuses := serviceStatuses[service.ID]
 		instanceData := self.calculateInstanceData(statuses, service.Edges.ServiceConfig.Replicas)
+		result[service.ID] = instanceData
+	}
+
+	return result, nil
+}
+
+// AttachInstanceDataToServicesWithEvents efficiently attaches instance data with events to multiple services
+// This version includes events and should be used for detailed views where events are needed
+func (self *DeploymentService) AttachInstanceDataToServicesWithEvents(ctx context.Context, services []*ent.Service, namespace string) (map[uuid.UUID]*ServiceInstanceData, error) {
+	if len(services) == 0 {
+		return make(map[uuid.UUID]*ServiceInstanceData), nil
+	}
+
+	// Get all pod statuses for the environment in a single call with events
+	statuses, err := self.k8s.GetPodContainerStatusByLabelsWithOptions(
+		ctx,
+		namespace,
+		map[string]string{
+			"unbind-environment": services[0].EnvironmentID.String(),
+		},
+		self.k8s.GetInternalClient(),
+		k8s.PodStatusOptions{
+			IncludeEvents: true, // Include events for detailed views
+		},
+	)
+	if err != nil {
+		log.Error("Error getting pod container status for environment", "err", err, "environment_id", services[0].EnvironmentID)
+		return nil, err
+	}
+
+	// Group statuses by service ID
+	serviceStatuses := make(map[uuid.UUID][]k8s.PodContainerStatus)
+	for _, status := range statuses {
+		// The ServiceID is already parsed and stored in the PodContainerStatus struct
+		if status.ServiceID != uuid.Nil {
+			serviceStatuses[status.ServiceID] = append(serviceStatuses[status.ServiceID], status)
+		}
+	}
+
+	// Calculate instance data for each service
+	result := make(map[uuid.UUID]*ServiceInstanceData)
+	for _, service := range services {
+		if service.Edges.CurrentDeployment == nil || service.Edges.ServiceConfig == nil {
+			continue
+		}
+
+		statuses := serviceStatuses[service.ID]
+		instanceData := self.calculateInstanceData(statuses, service.Edges.ServiceConfig.Replicas)
+		result[service.ID] = instanceData
+	}
+
+	return result, nil
+}
+
+// AttachInstanceDataToServicesLightweight efficiently attaches basic instance data without events
+// This version is optimized for service lists where events are not needed
+func (self *DeploymentService) AttachInstanceDataToServicesLightweight(ctx context.Context, services []*ent.Service, namespace string) (map[uuid.UUID]*ServiceInstanceData, error) {
+	if len(services) == 0 {
+		return make(map[uuid.UUID]*ServiceInstanceData), nil
+	}
+
+	// Get all pod statuses for the environment in a single call without events
+	statuses, err := self.k8s.GetPodContainerStatusByLabelsWithOptions(
+		ctx,
+		namespace,
+		map[string]string{
+			"unbind-environment": services[0].EnvironmentID.String(),
+		},
+		self.k8s.GetInternalClient(),
+		k8s.PodStatusOptions{
+			IncludeEvents: false, // Skip events for maximum performance
+		},
+	)
+	if err != nil {
+		log.Error("Error getting pod container status for environment", "err", err, "environment_id", services[0].EnvironmentID)
+		return nil, err
+	}
+
+	// Group statuses by service ID
+	serviceStatuses := make(map[uuid.UUID][]k8s.PodContainerStatus)
+	for _, status := range statuses {
+		// The ServiceID is already parsed and stored in the PodContainerStatus struct
+		if status.ServiceID != uuid.Nil {
+			serviceStatuses[status.ServiceID] = append(serviceStatuses[status.ServiceID], status)
+		}
+	}
+
+	// Calculate instance data for each service
+	result := make(map[uuid.UUID]*ServiceInstanceData)
+	for _, service := range services {
+		if service.Edges.CurrentDeployment == nil || service.Edges.ServiceConfig == nil {
+			continue
+		}
+
+		statuses := serviceStatuses[service.ID]
+		instanceData := self.calculateInstanceDataLightweight(statuses, service.Edges.ServiceConfig.Replicas)
 		result[service.ID] = instanceData
 	}
 
@@ -136,6 +236,77 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 	return &ServiceInstanceData{
 		Status:          targetStatus,
 		InstanceEvents:  events,
+		CrashingReasons: crashingReasons,
+		Restarts:        restartCount,
+	}
+}
+
+// calculateInstanceDataLightweight processes pod statuses without events for maximum performance
+func (self *DeploymentService) calculateInstanceDataLightweight(statuses []k8s.PodContainerStatus, expectedReplicas int32) *ServiceInstanceData {
+	// Initialize counters
+	pendingCount := 0
+	failedCount := 0
+	runningCount := int32(0)
+	crashingCount := 0
+	unknownCount := 0
+	crashingReasons := []string{}
+	restartCount := int32(0)
+
+	// Process each pod status
+	for _, status := range statuses {
+		switch status.Phase {
+		case k8s.PodPending:
+			pendingCount++
+		case k8s.PodFailed:
+			failedCount++
+		case k8s.PodRunning:
+			runningCount++
+		default:
+			unknownCount++
+		}
+
+		// Process container instances
+		for _, instance := range status.Instances {
+			restartCount += instance.RestartCount
+
+			// Handle crashing containers
+			if instance.IsCrashing {
+				crashingCount++
+				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
+				switch instance.State {
+				case k8s.ContainerStateRunning:
+					runningCount++
+				case k8s.ContainerStateWaiting:
+					pendingCount++
+				}
+			}
+		}
+
+		// Also process instance dependencies (init containers)
+		for _, instance := range status.InstanceDependencies {
+			// Handle crashing init containers
+			if instance.IsCrashing {
+				crashingCount++
+				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
+			}
+		}
+	}
+
+	// Determine target status based on counts
+	targetStatus := schema.DeploymentStatusWaiting
+	if failedCount > 0 {
+		targetStatus = schema.DeploymentStatusCrashing
+	} else if crashingCount > 0 {
+		targetStatus = schema.DeploymentStatusCrashing
+	} else if pendingCount > 0 || unknownCount > 0 {
+		targetStatus = schema.DeploymentStatusWaiting
+	} else if runningCount >= expectedReplicas {
+		targetStatus = schema.DeploymentStatusActive
+	}
+
+	return &ServiceInstanceData{
+		Status:          targetStatus,
+		InstanceEvents:  []models.EventRecord{}, // Empty events for performance
 		CrashingReasons: crashingReasons,
 		Restarts:        restartCount,
 	}

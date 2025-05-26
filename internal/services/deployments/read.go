@@ -9,6 +9,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
@@ -112,21 +113,24 @@ func (self *DeploymentService) AttachInstanceDataToCurrent(ctx context.Context, 
 	targetDeployment := models.TransformDeploymentEntity(service.Edges.CurrentDeployment)
 
 	namespace := service.Edges.Environment.Edges.Project.Edges.Team.Namespace
-	statuses, err := self.k8s.GetPodContainerStatusByLabels(
+	statuses, err := self.k8s.GetPodContainerStatusByLabelsWithOptions(
 		ctx,
 		namespace,
 		map[string]string{
 			"unbind-service": service.ID.String(),
 		},
 		self.k8s.GetInternalClient(),
+		k8s.PodStatusOptions{
+			IncludeEvents: false, // Skip events for better performance in deployment lists
+		},
 	)
 	if err != nil {
 		log.Error("Error getting pod container status", "err", err, "service_id", service.ID)
 		return targetDeployment, err
 	}
 
-	// Use the shared utility to calculate instance data
-	instanceData := self.calculateInstanceData(statuses, service.Edges.ServiceConfig.Replicas)
+	// Use the lightweight utility to calculate instance data without events
+	instanceData := self.calculateInstanceDataLightweight(statuses, service.Edges.ServiceConfig.Replicas)
 
 	// Attach data to deployment responses using the shared utility
 	self.AttachInstanceDataToDeploymentResponses(deployments, instanceData, service.Edges.CurrentDeployment.ID)
