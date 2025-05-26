@@ -15,19 +15,20 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// GetPodContainerStatusByLabels efficiently fetches pod status with optional events
+// GetPodContainerStatusByLabels efficiently fetches pod status with inferred events from container state
 func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]PodContainerStatus, error) {
 	return self.GetPodContainerStatusByLabelsWithOptions(ctx, namespace, labels, client, PodStatusOptions{
-		IncludeEvents: true,
+		IncludeKubernetesEvents: false, // Only inferred events by default
 	})
 }
 
 // PodStatusOptions controls what data to fetch for pod status
 type PodStatusOptions struct {
-	IncludeEvents bool // Whether to fetch events (expensive operation)
+	IncludeKubernetesEvents bool // Whether to fetch additional events from Kubernetes Events API (more expensive)
 }
 
 // GetPodContainerStatusByLabelsWithOptions efficiently fetches pod status with configurable options
+// Container state events are always inferred (lightweight and reliable)
 func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset, options PodStatusOptions) ([]PodContainerStatus, error) {
 	pods, err := self.GetPodsByLabels(ctx, namespace, labels, client)
 	if err != nil {
@@ -36,13 +37,13 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 
 	result := make([]PodContainerStatus, 0, len(pods.Items))
 
-	// Batch fetch events for all pods if requested
+	// Batch fetch Kubernetes Events API events for all pods if requested
 	var allEvents []models.EventRecord
-	if options.IncludeEvents && len(pods.Items) > 0 {
+	if options.IncludeKubernetesEvents && len(pods.Items) > 0 {
 		allEvents, err = self.getBatchPodEvents(ctx, namespace, pods.Items, client)
 		if err != nil {
-			// Log warning but continue without events
-			fmt.Printf("Warning: failed to get events for pods: %v\n", err)
+			// Log warning but continue without Kubernetes events
+			fmt.Printf("Warning: failed to get Kubernetes events for pods: %v\n", err)
 			allEvents = []models.EventRecord{}
 		}
 	}
@@ -70,16 +71,19 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 			podStatus.StartTime = pod.Status.StartTime.Format(time.RFC3339)
 		}
 
-		// Filter events for this specific pod
+		// Filter Kubernetes events for this specific pod if requested
 		var podEvents []models.EventRecord
-		if options.IncludeEvents {
+		if options.IncludeKubernetesEvents {
 			podEvents = filterEventsByPod(allEvents, pod.Name)
 		}
 
 		hasCrashing := false
 		for _, container := range pod.Status.ContainerStatuses {
+			// Always extract inferred events from container state (lightweight and reliable)
 			instanceStatus := extractContainerStatus(container)
-			if options.IncludeEvents {
+
+			// Optionally append additional Kubernetes Events API events
+			if options.IncludeKubernetesEvents {
 				filteredEvents := filterEventsByContainer(podEvents, container.Name)
 				instanceStatus.Events = append(instanceStatus.Events, filteredEvents...)
 			}
@@ -91,8 +95,11 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 		}
 
 		for _, container := range pod.Status.InitContainerStatuses {
+			// Always extract inferred events from container state
 			instanceStatus := extractContainerStatus(container)
-			if options.IncludeEvents {
+
+			// Optionally append additional Kubernetes Events API events
+			if options.IncludeKubernetesEvents {
 				filteredEvents := filterEventsByContainer(podEvents, container.Name)
 				instanceStatus.Events = append(instanceStatus.Events, filteredEvents...)
 			}

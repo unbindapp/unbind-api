@@ -121,7 +121,7 @@ func (self *DeploymentService) AttachInstanceDataToCurrent(ctx context.Context, 
 		},
 		self.k8s.GetInternalClient(),
 		k8s.PodStatusOptions{
-			IncludeEvents: false, // Skip events for better performance in deployment lists
+			IncludeKubernetesEvents: false, // Skip expensive Kubernetes Events API for deployment lists
 		},
 	)
 	if err != nil {
@@ -129,8 +129,8 @@ func (self *DeploymentService) AttachInstanceDataToCurrent(ctx context.Context, 
 		return targetDeployment, err
 	}
 
-	// Use the lightweight utility to calculate instance data without events
-	instanceData := self.calculateInstanceDataLightweight(statuses, service.Edges.ServiceConfig.Replicas)
+	// Use the standard utility to calculate instance data with inferred events
+	instanceData := self.calculateInstanceData(statuses, service.Edges.ServiceConfig.Replicas)
 
 	// Attach data to deployment responses using the shared utility
 	self.AttachInstanceDataToDeploymentResponses(deployments, instanceData, service.Edges.CurrentDeployment.ID)
