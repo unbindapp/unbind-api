@@ -139,7 +139,7 @@ func (self *KubeClient) getBatchPodEvents(ctx context.Context, namespace string,
 		isRelevant := false
 
 		// Check if event is directly related to one of our pods
-		if event.Regarding.Kind == "Pod" && podNames[event.Regarding.Name] {
+		if strings.EqualFold(event.Regarding.Kind, "Pod") && podNames[event.Regarding.Name] {
 			isRelevant = true
 		} else {
 			// Check if event mentions any of our pod names
@@ -148,7 +148,7 @@ func (self *KubeClient) getBatchPodEvents(ctx context.Context, namespace string,
 					isRelevant = true
 					break
 				}
-				if event.Regarding.Kind == "Container" && strings.HasPrefix(event.Regarding.Name, podName) {
+				if strings.EqualFold(event.Regarding.Kind, "Container") && strings.HasPrefix(event.Regarding.Name, podName) {
 					isRelevant = true
 					break
 				}
@@ -189,76 +189,6 @@ func filterEventsByPod(events []models.EventRecord, podName string) []models.Eve
 	}
 
 	return result
-}
-
-func (self *KubeClient) getPodEvents(ctx context.Context, namespace, podName string, client *kubernetes.Clientset) ([]models.EventRecord, error) {
-	result := make([]models.EventRecord, 0)
-
-	eventsV1, err := client.EventsV1().Events(namespace).List(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("regarding.name=%s,regarding.namespace=%s,regarding.kind=Pod", podName, namespace),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list pod events: %w", err)
-	}
-
-	for _, event := range eventsV1.Items {
-		eventType := mapEventType(event.Reason, event.Note)
-
-		record := models.EventRecord{
-			Type:      eventType,
-			Timestamp: event.EventTime.Format(time.RFC3339),
-			Message:   event.Note,
-			Count:     event.Series.Count,
-			Reason:    event.Reason,
-		}
-
-		if !event.EventTime.IsZero() {
-			record.FirstSeen = event.EventTime.Format(time.RFC3339)
-			record.LastSeen = event.EventTime.Format(time.RFC3339)
-		}
-
-		result = append(result, record)
-	}
-
-	allEventsV1, err := client.EventsV1().Events(namespace).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return result, nil
-	}
-
-	for _, event := range allEventsV1.Items {
-		if event.Regarding.Kind == "Pod" && event.Regarding.Name == podName {
-			continue
-		}
-
-		isRelated := false
-		if strings.Contains(event.Note, podName) {
-			isRelated = true
-		}
-		if event.Regarding.Kind == "Container" && strings.HasPrefix(event.Regarding.Name, podName) {
-			isRelated = true
-		}
-
-		if isRelated {
-			eventType := mapEventType(event.Reason, event.Note)
-
-			record := models.EventRecord{
-				Type:      eventType,
-				Timestamp: event.EventTime.Format(time.RFC3339),
-				Message:   event.Note,
-				Count:     event.Series.Count,
-				Reason:    event.Reason,
-			}
-
-			if !event.EventTime.IsZero() {
-				record.FirstSeen = event.EventTime.Format(time.RFC3339)
-				record.LastSeen = event.EventTime.Format(time.RFC3339)
-			}
-
-			result = append(result, record)
-		}
-	}
-
-	return result, nil
 }
 
 func mapEventType(reason, message string) models.EventType {
