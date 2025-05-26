@@ -71,7 +71,7 @@ func ValidateStorageQuantity(s string) (resource.Quantity, error) {
 // validateStorageQuantity returns the parsed Quantity
 // or an error if the string isn’t a whole-byte storage unit.
 func ValidateStorageQuantityGB(sizeGB float64) (resource.Quantity, error) {
-	s := fmt.Sprintf("%f.2fGi", sizeGB)
+	s := fmt.Sprintf("%.2fGi", sizeGB)
 	qty, err := resource.ParseQuantity(s)
 	if err != nil {
 		return resource.Quantity{}, fmt.Errorf("invalid resource quantity %q: %w", s, err)
