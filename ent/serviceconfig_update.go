@@ -19,7 +19,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfigUpdate is the builder for updating ServiceConfig entities.
@@ -205,14 +204,14 @@ func (scu *ServiceConfigUpdate) ClearGitTag() *ServiceConfigUpdate {
 }
 
 // SetHosts sets the "hosts" field.
-func (scu *ServiceConfigUpdate) SetHosts(vs []v1.HostSpec) *ServiceConfigUpdate {
-	scu.mutation.SetHosts(vs)
+func (scu *ServiceConfigUpdate) SetHosts(ss []schema.HostSpec) *ServiceConfigUpdate {
+	scu.mutation.SetHosts(ss)
 	return scu
 }
 
-// AppendHosts appends vs to the "hosts" field.
-func (scu *ServiceConfigUpdate) AppendHosts(vs []v1.HostSpec) *ServiceConfigUpdate {
-	scu.mutation.AppendHosts(vs)
+// AppendHosts appends ss to the "hosts" field.
+func (scu *ServiceConfigUpdate) AppendHosts(ss []schema.HostSpec) *ServiceConfigUpdate {
+	scu.mutation.AppendHosts(ss)
 	return scu
 }
 
@@ -1125,14 +1124,14 @@ func (scuo *ServiceConfigUpdateOne) ClearGitTag() *ServiceConfigUpdateOne {
 }
 
 // SetHosts sets the "hosts" field.
-func (scuo *ServiceConfigUpdateOne) SetHosts(vs []v1.HostSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.SetHosts(vs)
+func (scuo *ServiceConfigUpdateOne) SetHosts(ss []schema.HostSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.SetHosts(ss)
 	return scuo
 }
 
-// AppendHosts appends vs to the "hosts" field.
-func (scuo *ServiceConfigUpdateOne) AppendHosts(vs []v1.HostSpec) *ServiceConfigUpdateOne {
-	scuo.mutation.AppendHosts(vs)
+// AppendHosts appends ss to the "hosts" field.
+func (scuo *ServiceConfigUpdateOne) AppendHosts(ss []schema.HostSpec) *ServiceConfigUpdateOne {
+	scuo.mutation.AppendHosts(ss)
 	return scuo
 }
 

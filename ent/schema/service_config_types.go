@@ -10,6 +10,25 @@ import (
 )
 
 // * Custom kubernetes-like types
+type HostSpec struct {
+	Host      string `json:"host"`
+	Path      string `json:"path"`
+	Port      *int32 `json:"port,omitempty" required:"false"`
+	TlsIssued bool   `json:"tls_issued"`
+}
+
+func AsV1HostSpecs(hosts []HostSpec) []v1.HostSpec {
+	v1Hosts := make([]v1.HostSpec, len(hosts))
+	for i, host := range hosts {
+		v1Hosts[i] = v1.HostSpec{
+			Host: host.Host,
+			Path: host.Path,
+			Port: host.Port,
+		}
+	}
+	return v1Hosts
+}
+
 type PortSpec struct {
 	// Will create a node port (public) service
 	IsNodePort bool   `json:"is_nodeport" required:"false"`

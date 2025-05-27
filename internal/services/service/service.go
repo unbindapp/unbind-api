@@ -23,7 +23,6 @@ import (
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -98,7 +97,7 @@ func (self *ServiceService) VerifyInputs(ctx context.Context, teamID, projectID,
 	return environment, environment.Edges.Project, nil
 }
 
-func (self *ServiceService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec) (*v1.HostSpec, error) {
+func (self *ServiceService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec) (*schema.HostSpec, error) {
 	settings, err := self.repo.System().GetSystemSettings(ctx, tx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get system settings: %w", err)
@@ -125,7 +124,7 @@ func (self *ServiceService) generateWildcardHost(ctx context.Context, tx reposit
 		}
 	}
 
-	return &v1.HostSpec{
+	return &schema.HostSpec{
 		Host: domain,
 		Path: "/",
 		Port: utils.ToPtr(ports[0].Port),

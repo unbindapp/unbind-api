@@ -18,7 +18,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfigCreate is the builder for creating a ServiceConfig entity.
@@ -160,8 +159,8 @@ func (scc *ServiceConfigCreate) SetNillableGitTag(s *string) *ServiceConfigCreat
 }
 
 // SetHosts sets the "hosts" field.
-func (scc *ServiceConfigCreate) SetHosts(vs []v1.HostSpec) *ServiceConfigCreate {
-	scc.mutation.SetHosts(vs)
+func (scc *ServiceConfigCreate) SetHosts(ss []schema.HostSpec) *ServiceConfigCreate {
+	scc.mutation.SetHosts(ss)
 	return scc
 }
 
@@ -937,7 +936,7 @@ func (u *ServiceConfigUpsert) ClearGitTag() *ServiceConfigUpsert {
 }
 
 // SetHosts sets the "hosts" field.
-func (u *ServiceConfigUpsert) SetHosts(v []v1.HostSpec) *ServiceConfigUpsert {
+func (u *ServiceConfigUpsert) SetHosts(v []schema.HostSpec) *ServiceConfigUpsert {
 	u.Set(serviceconfig.FieldHosts, v)
 	return u
 }
@@ -1530,7 +1529,7 @@ func (u *ServiceConfigUpsertOne) ClearGitTag() *ServiceConfigUpsertOne {
 }
 
 // SetHosts sets the "hosts" field.
-func (u *ServiceConfigUpsertOne) SetHosts(v []v1.HostSpec) *ServiceConfigUpsertOne {
+func (u *ServiceConfigUpsertOne) SetHosts(v []schema.HostSpec) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetHosts(v)
 	})
@@ -2350,7 +2349,7 @@ func (u *ServiceConfigUpsertBulk) ClearGitTag() *ServiceConfigUpsertBulk {
 }
 
 // SetHosts sets the "hosts" field.
-func (u *ServiceConfigUpsertBulk) SetHosts(v []v1.HostSpec) *ServiceConfigUpsertBulk {
+func (u *ServiceConfigUpsertBulk) SetHosts(v []schema.HostSpec) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.SetHosts(v)
 	})

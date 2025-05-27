@@ -22,7 +22,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
 	"github.com/unbindapp/unbind-api/pkg/databases"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -42,7 +41,7 @@ type CreateServiceInput struct {
 	// Configuration
 	Type              schema.ServiceType    `required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
 	Builder           schema.ServiceBuilder `required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
-	Hosts             []v1.HostSpec         `json:"hosts,omitempty"`
+	Hosts             []schema.HostSpec     `json:"hosts,omitempty"`
 	Ports             []schema.PortSpec     `json:"ports,omitempty"`
 	Replicas          *int32                `minimum:"0" maximum:"10" json:"replicas,omitempty"`
 	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`

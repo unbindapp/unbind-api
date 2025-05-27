@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfig holds environment-specific configuration for a service
@@ -41,7 +40,7 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.String("git_branch").Optional().Nillable().Comment("Branch to build from"),
 		field.String("git_tag").Optional().Nillable().Comment("Tag to build from, supports glob patterns"),
 		// Generic CRD configuration
-		field.JSON("hosts", []v1.HostSpec{}).Optional().Comment("External domains and paths for the service"),
+		field.JSON("hosts", []HostSpec{}).Optional().Comment("External domains and paths for the service"),
 		field.JSON("ports", []PortSpec{}).Optional().Comment("Container ports to expose"),
 		field.Int32("replicas").Default(1).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),

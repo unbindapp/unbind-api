@@ -324,7 +324,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 
 	if len(service.Edges.ServiceConfig.Hosts) > 0 {
 		// Serialize
-		marshalled, err := json.Marshal(service.Edges.ServiceConfig.Hosts)
+		marshalled, err := json.Marshal(schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts))
 		if err != nil {
 			return nil, err
 		}

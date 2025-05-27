@@ -21,7 +21,6 @@ import (
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/unbindapp/unbind-api/pkg/templates"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -349,7 +348,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				})
 			}
 
-			var hosts []v1.HostSpec
+			var hosts []schema.HostSpec
 			for _, hostInputID := range templateService.InputIDs {
 				// Skip if this is not a Type host input
 				if !self.isHostInput(&template.Definition, hostInputID) {
@@ -584,8 +583,8 @@ func (self *TemplatesService) resolveHostInputs(
 	ctx context.Context,
 	tmpl *schema.TemplateDefinition,
 	rawInputs []models.TemplateInputValue,
-) (map[string]v1.HostSpec, map[string]string, error) {
-	hostSpecByID := make(map[string]v1.HostSpec)
+) (map[string]schema.HostSpec, map[string]string, error) {
+	hostSpecByID := make(map[string]schema.HostSpec)
 	valueByID := make(map[string]string)
 
 	for _, in := range tmpl.Inputs {
@@ -676,7 +675,7 @@ func (self *TemplatesService) resolveHostInputs(
 					}
 				}
 			}
-			hostSpecByID[in.ID] = v1.HostSpec{Host: hostVal, Path: "/", Port: port}
+			hostSpecByID[in.ID] = schema.HostSpec{Host: hostVal, Path: "/", Port: port}
 			valueByID[in.ID] = hostVal
 		}
 	}
@@ -692,7 +691,7 @@ func (self *TemplatesService) isHostInput(def *schema.TemplateDefinition, inputI
 	return false
 }
 
-func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec, targetPort *int32) (*v1.HostSpec, error) {
+func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repository.TxInterface, kubernetesName string, ports []schema.PortSpec, targetPort *int32) (*schema.HostSpec, error) {
 	settings, err := self.repo.System().GetSystemSettings(ctx, tx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get system settings: %w", err)
@@ -725,7 +724,7 @@ func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repos
 		port = utils.ToPtr(ports[0].Port)
 	}
 
-	return &v1.HostSpec{
+	return &schema.HostSpec{
 		Host: domain,
 		Path: "/",
 		Port: port,

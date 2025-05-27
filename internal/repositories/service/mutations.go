@@ -12,7 +12,6 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 type CreateServiceInput struct {
@@ -70,7 +69,7 @@ type MutateConfigInput struct {
 	GitTag                  *string
 	Icon                    *string
 	Ports                   []schema.PortSpec
-	Hosts                   []v1.HostSpec
+	Hosts                   []schema.HostSpec
 	Replicas                *int32
 	AutoDeploy              *bool
 	InstallCommand          *string

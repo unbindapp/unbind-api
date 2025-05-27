@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfigResponse defines the configuration response for a service
@@ -13,7 +12,7 @@ type ServiceConfigResponse struct {
 	GitTag         *string               `json:"git_tag,omitempty"`
 	Builder        schema.ServiceBuilder `json:"builder"`
 	Icon           string                `json:"icon"`
-	Host           []v1.HostSpec         `json:"hosts,omitempty" nullable:"false"`
+	Host           []schema.HostSpec     `json:"hosts,omitempty" nullable:"false"`
 	Port           []schema.PortSpec     `json:"ports,omitempty" nullable:"false"`
 	Replicas       int32                 `json:"replicas"`
 	AutoDeploy     bool                  `json:"auto_deploy"`

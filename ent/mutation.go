@@ -13305,8 +13305,8 @@ type ServiceConfigMutation struct {
 	railpack_framework        *enum.Framework
 	git_branch                *string
 	git_tag                   *string
-	hosts                     *[]v1.HostSpec
-	appendhosts               []v1.HostSpec
+	hosts                     *[]schema.HostSpec
+	appendhosts               []schema.HostSpec
 	ports                     *[]schema.PortSpec
 	appendports               []schema.PortSpec
 	replicas                  *int32
@@ -13922,13 +13922,13 @@ func (m *ServiceConfigMutation) ResetGitTag() {
 }
 
 // SetHosts sets the "hosts" field.
-func (m *ServiceConfigMutation) SetHosts(vs []v1.HostSpec) {
-	m.hosts = &vs
+func (m *ServiceConfigMutation) SetHosts(ss []schema.HostSpec) {
+	m.hosts = &ss
 	m.appendhosts = nil
 }
 
 // Hosts returns the value of the "hosts" field in the mutation.
-func (m *ServiceConfigMutation) Hosts() (r []v1.HostSpec, exists bool) {
+func (m *ServiceConfigMutation) Hosts() (r []schema.HostSpec, exists bool) {
 	v := m.hosts
 	if v == nil {
 		return
@@ -13939,7 +13939,7 @@ func (m *ServiceConfigMutation) Hosts() (r []v1.HostSpec, exists bool) {
 // OldHosts returns the old "hosts" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldHosts(ctx context.Context) (v []v1.HostSpec, err error) {
+func (m *ServiceConfigMutation) OldHosts(ctx context.Context) (v []schema.HostSpec, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldHosts is only allowed on UpdateOne operations")
 	}
@@ -13953,13 +13953,13 @@ func (m *ServiceConfigMutation) OldHosts(ctx context.Context) (v []v1.HostSpec, 
 	return oldValue.Hosts, nil
 }
 
-// AppendHosts adds vs to the "hosts" field.
-func (m *ServiceConfigMutation) AppendHosts(vs []v1.HostSpec) {
-	m.appendhosts = append(m.appendhosts, vs...)
+// AppendHosts adds ss to the "hosts" field.
+func (m *ServiceConfigMutation) AppendHosts(ss []schema.HostSpec) {
+	m.appendhosts = append(m.appendhosts, ss...)
 }
 
 // AppendedHosts returns the list of values that were appended to the "hosts" field in this mutation.
-func (m *ServiceConfigMutation) AppendedHosts() ([]v1.HostSpec, bool) {
+func (m *ServiceConfigMutation) AppendedHosts() ([]schema.HostSpec, bool) {
 	if len(m.appendhosts) == 0 {
 		return nil, false
 	}
@@ -15451,7 +15451,7 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		m.SetGitTag(v)
 		return nil
 	case serviceconfig.FieldHosts:
-		v, ok := value.([]v1.HostSpec)
+		v, ok := value.([]schema.HostSpec)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

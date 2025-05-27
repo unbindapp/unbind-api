@@ -16,7 +16,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/internal/sourceanalyzer/enum"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 )
 
 // ServiceConfig is the model entity for the ServiceConfig schema.
@@ -48,7 +47,7 @@ type ServiceConfig struct {
 	// Tag to build from, supports glob patterns
 	GitTag *string `json:"git_tag,omitempty"`
 	// External domains and paths for the service
-	Hosts []v1.HostSpec `json:"hosts,omitempty"`
+	Hosts []schema.HostSpec `json:"hosts,omitempty"`
 	// Container ports to expose
 	Ports []schema.PortSpec `json:"ports,omitempty"`
 	// Number of replicas for the service

@@ -442,8 +442,8 @@ func (self *KubeClient) DeleteOldVerificationIngresses(
 
 // CheckTLSStatusForHosts checks the TLS certificate status for a slice of HostSpec
 // and returns ExtendedHostSpec with TlsIssued field populated
-func (self *KubeClient) CheckTLSStatusForHosts(ctx context.Context, namespace string, hosts []v1.HostSpec, client *kubernetes.Clientset) ([]v1.HostSpec, error) {
-	var result []v1.HostSpec
+func (self *KubeClient) CheckTLSStatusForHosts(ctx context.Context, namespace string, hosts []schema.HostSpec, client *kubernetes.Clientset) ([]schema.HostSpec, error) {
+	var result []schema.HostSpec
 
 	for _, host := range hosts {
 		// Look for ingresses that might have TLS configuration for this host

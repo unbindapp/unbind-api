@@ -342,7 +342,7 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 			Builder: string(service.Edges.ServiceConfig.Builder),
 			Config: v1.ServiceConfigSpec{
 				GitBranch:  gitBranch,
-				Hosts:      service.Edges.ServiceConfig.Hosts,
+				Hosts:      schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts),
 				Replicas:   utils.ToPtr(service.Edges.ServiceConfig.Replicas),
 				Ports:      schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports),
 				RunCommand: service.Edges.ServiceConfig.RunCommand,

@@ -15,7 +15,6 @@ import (
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -32,7 +31,7 @@ type UpdateServiceInput struct {
 	GitBranch         *string                `json:"git_branch,omitempty" required:"false"`
 	GitTag            *string                `json:"git_tag,omitempty" required:"false" doc:"Tag to build from, supports glob patterns"`
 	Builder           *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
-	Hosts             []v1.HostSpec          `json:"hosts,omitempty" required:"false"`
+	Hosts             []schema.HostSpec      `json:"hosts,omitempty" required:"false"`
 	Ports             []schema.PortSpec      `json:"ports,omitempty" required:"false"`
 	Replicas          *int32                 `json:"replicas,omitempty" required:"false"`
 	AutoDeploy        *bool                  `json:"auto_deploy,omitempty" required:"false"`
