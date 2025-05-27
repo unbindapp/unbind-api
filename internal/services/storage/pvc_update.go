@@ -84,6 +84,7 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 	}
 
 	updatedPvc := pvc
+	var shouldTriggerDeployment bool
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		err := self.repo.System().UpsertPVCMetadata(ctx, tx, pvc.ID, input.Name, input.Description)
 		if err != nil {
@@ -94,7 +95,7 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 			// If database, then update database spec
 			if updatedPvc.IsDatabase && updatedPvc.MountedOnServiceID != nil {
 				// Update the database spec with new size
-				dbConfig, err := self.repo.Service().UpdateDatabaseStorageSize(
+				_, err := self.repo.Service().UpdateDatabaseStorageSize(
 					ctx,
 					tx,
 					*updatedPvc.MountedOnServiceID,
@@ -104,14 +105,9 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 					log.Errorf("Failed to update database storage size: %v", err)
 					return err
 				}
-				targetService.Edges.ServiceConfig.DatabaseConfig = dbConfig
 
-				// Now deploy the new database
-				err = self.svcService.EnqueueFullBuildDeployments(ctx, []*ent.Service{targetService})
-				if err != nil {
-					log.Errorf("Failed to enqueue full build deployments for service %s: %v", targetService.ID, err)
-					return err
-				}
+				// Mark that we should trigger deployment after transaction commits
+				shouldTriggerDeployment = true
 			} else {
 				updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
 					team.Namespace,
@@ -146,6 +142,20 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 
 	}); err != nil {
 		return nil, err
+	}
+
+	// Trigger deployment after transaction is committed
+	if shouldTriggerDeployment && targetService != nil {
+		// Re-fetch the service to get the updated database config
+		targetService, err = self.repo.Service().GetByID(ctx, *pvc.MountedOnServiceID)
+		if err != nil {
+			log.Errorf("Failed to re-fetch service after database update: %v", err)
+		} else {
+			err = self.svcService.EnqueueFullBuildDeployments(ctx, []*ent.Service{targetService})
+			if err != nil {
+				log.Errorf("Failed to enqueue full build deployments for service %s: %v", targetService.ID, err)
+			}
+		}
 	}
 
 	// Restart pods if needed
