@@ -25,6 +25,7 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// The VerifyInputs method already checks existence and relationships.
 	_, project, err := self.VerifyInputs(ctx, teamID, projectID, environmentID)
 	if err != nil {
+		log.Errorf("Error verifying inputs for environment %s: %v", environmentID, err)
 		// VerifyInputs already returns specific errors like NotFound or InvalidInput
 		return nil, err
 	}
@@ -34,12 +35,14 @@ func (self *ServiceService) GetServicesInEnvironment(ctx context.Context, reques
 	// Pass true for withLatestDeployment as per original logic.
 	services, err := self.repo.Service().GetByEnvironmentID(ctx, environmentID, servicePreds, true)
 	if err != nil {
+		log.Errorf("Error fetching services for environment %s: %v", environmentID, err)
 		return nil, fmt.Errorf("error fetching services for environment %s: %w", environmentID, err)
 	}
 
 	// Get volume map
 	volumeMap, err := self.getVolumesForServices(ctx, project.Edges.Team.Namespace, project.Edges.Team.ID, services)
 	if err != nil {
+		log.Errorf("Error getting volumes for services in environment %s: %v", environmentID, err)
 		return nil, err
 	}
 
