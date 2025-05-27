@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
@@ -217,6 +218,31 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 		}
 	}
 
+	// Fall back to checking PVC labels
+	if !isBound {
+		serviceIDStr := pvcLabels[serviceLabel]
+		if serviceIDStr != "" {
+			serviceID, err := uuid.Parse(serviceIDStr)
+			if err != nil {
+				log.Errorf("invalid service ID in PVC label '%s': %v", pvcName, err)
+			} else {
+				// Fetch from database
+				service, err := self.repo.Service().GetByID(ctx, serviceID)
+				if err != nil && !ent.IsNotFound(err) {
+					return nil, fmt.Errorf("failed to get service '%s': %w", serviceIDStr, err)
+				} else if service != nil {
+					boundToServiceID = &service.ID
+					isBound = true
+
+					// See if the service is a database
+					if service.Type == schema.ServiceTypeDatabase {
+						isDatabase = true
+					}
+				}
+			}
+		}
+	}
+
 	if isBound && boundToServiceID == nil {
 		return nil, fmt.Errorf("PVC '%s' is bound but no valid service ID found", pvcName)
 	}
@@ -267,6 +293,11 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 				isPendingResize = true
 			}
 		}
+	}
+
+	// Assume PVC not created yet
+	if bytesValueCapacity == 0 {
+		isPendingResize = false
 	}
 
 	return &models.PVCInfo{
