@@ -270,15 +270,32 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 
 	switch {
 	case container.State.Running != nil:
-		status.State = ContainerStateRunning
+		// Container is running, but check if it's ready
+		if container.Ready {
+			status.State = ContainerStateRunning
+		} else {
+			// Container is running but not ready (likely failing readiness probes)
+			status.State = ContainerStateWaiting
+			status.StateReason = "NotReady"
+			status.StateMessage = "Container is running but not ready (readiness probe may be failing)"
+		}
 
 		if container.State.Running.StartedAt.Time != (time.Time{}) {
-			status.Events = append(status.Events, models.EventRecord{
-				Type:      models.EventTypeContainerStarted,
-				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
-				Message:   fmt.Sprintf("Container %s started at %s", container.Name, container.State.Running.StartedAt.Format(time.RFC3339)),
-				Reason:    "Started",
-			})
+			if container.Ready {
+				status.Events = append(status.Events, models.EventRecord{
+					Type:      models.EventTypeContainerStarted,
+					Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
+					Message:   fmt.Sprintf("Container %s started at %s", container.Name, container.State.Running.StartedAt.Format(time.RFC3339)),
+					Reason:    "Started",
+				})
+			} else {
+				status.Events = append(status.Events, models.EventRecord{
+					Type:      models.EventTypeUnknown,
+					Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
+					Message:   fmt.Sprintf("Container %s started but not ready (readiness probe failing)", container.Name),
+					Reason:    "NotReady",
+				})
+			}
 		}
 
 		if container.RestartCount > 0 {
@@ -296,6 +313,7 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 				Reason:    "Created",
 			})
 		}
+
 	case container.State.Waiting != nil:
 		status.State = ContainerStateWaiting
 		status.StateReason = container.State.Waiting.Reason
