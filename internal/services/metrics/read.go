@@ -92,7 +92,7 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	return models.TransformMetricsEntity(rawMetrics, step, sumBy), nil
 }
 
-func chooseStep(duration time.Duration, targetSteps int, steps []time.Duration) time.Duration {
+func chooseStep(duration time.Duration, targetSteps int64, steps []time.Duration) time.Duration {
 	if len(steps) == 0 {
 		return 1 * time.Hour
 	}
@@ -101,8 +101,8 @@ func chooseStep(duration time.Duration, targetSteps int, steps []time.Duration) 
 	bestDiff := math.MaxFloat64
 
 	for _, step := range steps {
-		count := float64(duration) / float64(step)
-		diff := math.Abs(count - float64(targetSteps))
+		count := duration.Milliseconds() / step.Milliseconds()
+		diff := math.Abs(float64(count - targetSteps))
 		if diff < bestDiff {
 			bestDiff = diff
 			bestStep = step
