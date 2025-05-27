@@ -389,7 +389,7 @@ func (self *ServiceRepository) IsVolumeInUse(ctx context.Context, volumeName str
 
 // Get services using a PVC
 func (self *ServiceRepository) GetServicesUsingPVC(ctx context.Context, pvcID string) ([]*ent.Service, error) {
-	return self.base.DB.Service.Query().
+	return self.base.DB.ServiceConfig.Query().
 		Where(
 			func(s *sql.Selector) {
 				s.Where(sqljson.ValueEQ(
@@ -399,6 +399,7 @@ func (self *ServiceRepository) GetServicesUsingPVC(ctx context.Context, pvcID st
 				))
 			},
 		).
+		QueryService().
 		All(ctx)
 }
 
