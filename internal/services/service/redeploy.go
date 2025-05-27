@@ -205,8 +205,8 @@ func (self *ServiceService) createCRDFromService(service *ent.Service) *v1.Servi
 	crdToDeploy := &v1.Service{}
 
 	// For databsae fetch the crd from the current deployment
-	if service.Type == schema.ServiceTypeDatabase && service.Edges.CurrentDeployment != nil {
-		crdToDeploy = service.Edges.CurrentDeployment.ResourceDefinition.DeepCopy()
+	if service.Type == schema.ServiceTypeDatabase && service.Edges.CurrentDeployment != nil && service.Edges.CurrentDeployment.ResourceDefinition != nil {
+		crdToDeploy = service.Edges.CurrentDeployment.ResourceDefinition
 		if service.Edges.ServiceConfig.DatabaseConfig != nil {
 			crdToDeploy.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
 		}
