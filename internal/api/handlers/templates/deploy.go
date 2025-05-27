@@ -33,6 +33,7 @@ func (self *HandlerGroup) DeployTemplate(ctx context.Context, input *TemplateDep
 	// Deploy template
 	services, err := self.srv.TemplateService.DeployTemplate(ctx, user.ID, bearerToken, input.Body)
 	if err != nil {
+		log.Errorf("Error deploying template: %v", err)
 		return nil, self.handleErr(err)
 	}
 
