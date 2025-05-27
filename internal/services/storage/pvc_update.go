@@ -155,6 +155,20 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 			if err != nil {
 				log.Errorf("Failed to enqueue full build deployments for service %s: %v", targetService.ID, err)
 			}
+
+			// MySQL doesn't update the underlying PVC
+			if targetService.Database != nil && *targetService.Database == "mysql" {
+				updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
+					team.Namespace,
+					pvc.ID,
+					newCapacity,
+					client,
+				)
+				if err != nil {
+					log.Errorf("Failed to update PVC after database update: %v", err)
+					return nil, err
+				}
+			}
 		}
 	}
 
