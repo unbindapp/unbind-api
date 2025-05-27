@@ -130,5 +130,15 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 		self.deploymentService.AttachInstanceDataToServiceResponse(resp, instanceDataMap)
 	}
 
+	// Get TLS status for hosts
+	if len(resp.Config.Host) > 0 {
+		hosts, err := self.k8s.CheckTLSStatusForHosts(ctx, project.Edges.Team.Namespace, resp.Config.Host, self.k8s.GetInternalClient())
+		if err != nil {
+			log.Error("Error checking TLS status for hosts", "err", err, "hosts", resp.Config.Host)
+			return nil, fmt.Errorf("error checking TLS status for hosts: %w", err)
+		}
+		resp.Config.Host = hosts
+	}
+
 	return resp, nil
 }
