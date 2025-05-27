@@ -10,8 +10,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/models"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -101,6 +101,10 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 			return nil, err
 		}
 		deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
+		// For database, always use latest config
+		if service.Type == schema.ServiceTypeDatabase && service.Edges.ServiceConfig.DatabaseConfig != nil {
+			deployment.ResourceDefinition.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
+		}
 
 		_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
 		if err != nil {
