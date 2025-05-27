@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -72,18 +71,7 @@ func (self *WebhooksService) sendSlackWebhook(level WebhookLevel, event schema.W
 
 	// Check response
 	if resp.StatusCode != http.StatusOK {
-		bodyBytes, readErr := io.ReadAll(resp.Body)
-		if readErr != nil {
-			log.Errorf("Failed to send slack webhook: status=%d, error reading body: %v",
-				resp.StatusCode, readErr)
-			return fmt.Errorf("failed to send slack webhook: %s, couldn't read response", resp.Status)
-		}
-
-		// Log both status code and response body
-		bodyString := string(bodyBytes)
-		log.Errorf("Failed to send slack webhook: status=%d, body=%s",
-			resp.StatusCode, bodyString)
-		return fmt.Errorf("failed to send slack webhook: %s, response: %s", resp.Status, bodyString)
+		return fmt.Errorf("failed to send slack webhook: %s", resp.Status)
 	}
 
 	return nil

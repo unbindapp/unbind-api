@@ -145,8 +145,8 @@ func (self *WebhooksService) TriggerWebhooks(ctx context.Context, level WebhookL
 
 				// Log both status code and response body
 				bodyString := string(bodyBytes)
-				log.Errorf("Failed to send slack webhook: status=%d, body=%s",
-					resp.StatusCode, bodyString)
+				log.Errorf("Failed to send slack webhook: status=%d",
+					resp.StatusCode)
 				return fmt.Errorf("failed to send slack webhook: %s, response: %s", resp.Status, bodyString)
 			}
 		}
