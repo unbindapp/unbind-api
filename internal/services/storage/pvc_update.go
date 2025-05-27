@@ -154,6 +154,18 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 		} else {
 			// Update underlying PVC for some databases
 			if targetService.Database != nil && slices.Contains([]string{"mysql", "redis", "mongodb"}, *targetService.Database) {
+				// For Redis and MongoDB, we need to delete the StatefulSet first
+				if slices.Contains([]string{"redis", "mongodb"}, *targetService.Database) {
+					// Delete StatefulSets with orphan cascade
+					err = self.k8s.DeleteStatefulSetsWithOrphanCascade(ctx, team.Namespace, map[string]string{
+						"unbind-service": targetService.ID.String(),
+					}, self.k8s.GetInternalClient())
+					if err != nil {
+						log.Errorf("Failed to delete StatefulSets for database %s: %v", *targetService.Database, err)
+						return nil, err
+					}
+				}
+
 				updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
 					team.Namespace,
 					pvc.ID,

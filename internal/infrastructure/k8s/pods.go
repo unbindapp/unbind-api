@@ -10,6 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 // GetPodsByLabels returns pods matching the provided labels in a namespace
@@ -159,4 +161,32 @@ func (k *KubeClient) restartDaemonSet(ctx context.Context, namespace, name strin
 // Delete a standalone pod
 func (k *KubeClient) deletePod(ctx context.Context, namespace, name string, client *kubernetes.Clientset) error {
 	return client.CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+// DeleteStatefulSetsWithOrphanCascade deletes StatefulSets matching the label selector with orphan cascade
+func (self *KubeClient) DeleteStatefulSetsWithOrphanCascade(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) error {
+	// Convert the labels map to a selector string
+	var labelSelectors []string
+	for key, value := range labels {
+		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", key, value))
+	}
+	labelSelector := strings.Join(labelSelectors, ",")
+
+	statefulSets, err := client.AppsV1().StatefulSets(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list StatefulSets: %w", err)
+	}
+
+	for _, sts := range statefulSets.Items {
+		err = client.AppsV1().StatefulSets(namespace).Delete(ctx, sts.Name, metav1.DeleteOptions{
+			OrphanDependents: utils.ToPtr(true),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete StatefulSet %s: %w", sts.Name, err)
+		}
+	}
+
+	return nil
 }
