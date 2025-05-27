@@ -546,6 +546,15 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 
 		// If service has dependencies, add to dependent queue
 		var deployment *ent.Deployment
+		var dependentServiceIDs []uuid.UUID
+		for _, dep := range service.DependsOn {
+			if service, ok := dbServiceMap[dep]; ok {
+				dependentServiceIDs = append(dependentServiceIDs, service.ID)
+			} else {
+				log.Warn("dependency service not found in map", "serviceID", dep, "templateServiceID", service.ID)
+			}
+		}
+		deployReq.DependsOnServiceIDs = dependentServiceIDs
 		if len(service.VariableReferences) > 0 {
 			deployment, err = self.deployCtl.EnqueueDependentDeployment(ctx, deployReq)
 		} else {

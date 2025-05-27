@@ -33,13 +33,14 @@ const DEPENDENT_SERVICES_QUEUE_KEY = "unbind:dependent-services:queue"
 // The request to deploy a service, includes environment for builder image
 type DeploymentJobRequest struct {
 	// If job has already been created in pending
-	ExistingJobID *uuid.UUID              `json:"existing_job_id"`
-	ServiceID     uuid.UUID               `json:"service_id"`
-	Source        schema.DeploymentSource `json:"source"`
-	CommitSHA     string                  `json:"commit_sha"`
-	CommitMessage string                  `json:"commit_message"`
-	Environment   map[string]string       `json:"environment"`
-	Committer     *schema.GitCommitter    `json:"committer"`
+	ExistingJobID       *uuid.UUID              `json:"existing_job_id"`
+	ServiceID           uuid.UUID               `json:"service_id"`
+	Source              schema.DeploymentSource `json:"source"`
+	CommitSHA           string                  `json:"commit_sha"`
+	CommitMessage       string                  `json:"commit_message"`
+	Environment         map[string]string       `json:"environment"`
+	Committer           *schema.GitCommitter    `json:"committer"`
+	DependsOnServiceIDs []uuid.UUID             `json:"depends_on_service_ids,omitempty"`
 }
 
 // Handles triggering builds for services
@@ -695,7 +696,7 @@ func (self *DeploymentController) SyncJobStatuses(ctx context.Context) error {
 // processDependentJob processes a job from the dependent services queue
 func (self *DeploymentController) processDependentJob(ctx context.Context, item *queue.QueueItem[DeploymentJobRequest]) error {
 	// Check if dependencies are ready
-	if !self.AreDependenciesReady(ctx, item.Data.ServiceID) {
+	if !self.AreDependenciesReady(ctx, item.Data) {
 		// If dependencies aren't ready, put the job back in the queue
 		return self.dependentQueue.Enqueue(ctx, item.ID, item.Data)
 	}
@@ -706,12 +707,42 @@ func (self *DeploymentController) processDependentJob(ctx context.Context, item 
 }
 
 // AreDependenciesReady checks if all dependencies for a service are ready
-func (self *DeploymentController) AreDependenciesReady(ctx context.Context, serviceID uuid.UUID) bool {
+func (self *DeploymentController) AreDependenciesReady(ctx context.Context, req DeploymentJobRequest) bool {
 	// Try to resolve all references
-	_, err := self.variableService.ResolveAllReferences(ctx, serviceID)
+	_, err := self.variableService.ResolveAllReferences(ctx, req.ServiceID)
 	if err != nil {
 		// If we can't resolve references, dependencies aren't ready
 		return false
+	}
+
+	// Check depends on map
+	if len(req.DependsOnServiceIDs) == 0 {
+		return true
+	}
+
+	// Get namespace
+	namespace, err := self.repo.Service().GetDeploymentNamespace(ctx, req.ServiceID)
+	if err != nil {
+		log.Error("Failed to get deployment namespace - dependency ready check", "err", err, "serviceID", req.ServiceID)
+		return false
+	}
+	for _, depServiceID := range req.DependsOnServiceIDs {
+		status, err := self.k8s.GetSimpleHealthStatus(
+			ctx,
+			namespace,
+			map[string]string{
+				"unbind-service": depServiceID.String(),
+			},
+			self.k8s.GetInternalClient(),
+		)
+		if err != nil {
+			log.Error("Failed to get health status for dependent service", "err", err, "serviceID", depServiceID)
+			return false
+		}
+
+		if status.Health != k8s.InstanceHealthHealthy {
+			return false
+		}
 	}
 
 	// If we can resolve all references, dependencies are ready
