@@ -122,7 +122,7 @@ func (self *ServiceService) GetServiceByID(ctx context.Context, requesterUserID 
 
 	// Attach instance data for this single service
 	if service.Edges.CurrentDeployment != nil {
-		instanceDataMap, err := self.deploymentService.AttachInstanceDataToServicesWithKubernetesEvents(ctx, []*ent.Service{service}, project.Edges.Team.Namespace)
+		instanceDataMap, err := self.deploymentService.AttachInstanceDataToServices(ctx, []*ent.Service{service}, project.Edges.Team.Namespace)
 		if err != nil {
 			log.Error("Error attaching instance data to service", "err", err, "service_id", serviceID)
 			return nil, err
