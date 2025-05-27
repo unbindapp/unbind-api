@@ -740,7 +740,7 @@ func (self *DeploymentController) AreDependenciesReady(ctx context.Context, req 
 			return false
 		}
 
-		if status.Health != k8s.InstanceHealthHealthy {
+		if status.Health != k8s.InstanceHealthActive {
 			return false
 		}
 	}

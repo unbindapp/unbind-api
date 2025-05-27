@@ -120,27 +120,19 @@ func (self *DeploymentService) AttachInstanceDataToServicesWithKubernetesEvents(
 
 // calculateInstanceData processes pod statuses to determine deployment status and events
 func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainerStatus, expectedReplicas int32) *ServiceInstanceData {
-	// Initialize counters
-	pendingCount := 0
-	failedCount := 0
-	runningCount := int32(0)
-	crashingCount := 0
-	unknownCount := 0
 	events := []models.EventRecord{}
 	crashingReasons := []string{}
 	restartCount := int32(0)
 
+	hasCrashing := false
+	hasPending := false
+	readyCount := int32(0)
+
 	// Process each pod status
 	for _, status := range statuses {
-		switch status.Phase {
-		case k8s.PodPending:
-			pendingCount++
-		case k8s.PodFailed:
-			failedCount++
-		case k8s.PodRunning:
-			runningCount++
-		default:
-			unknownCount++
+		// Check if any containers are crashing at pod level
+		if status.HasCrashingInstances {
+			hasCrashing = true
 		}
 
 		// Process container instances
@@ -151,14 +143,14 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 
 			// Handle crashing containers
 			if instance.IsCrashing {
-				crashingCount++
+				hasCrashing = true
 				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
-				switch instance.State {
-				case k8s.ContainerStateRunning:
-					runningCount++
-				case k8s.ContainerStateWaiting:
-					pendingCount++
-				}
+			} else if instance.State == k8s.ContainerStateRunning && instance.Ready {
+				// Container is running and ready
+				readyCount++
+			} else {
+				// Container is waiting, terminated, or running but not ready
+				hasPending = true
 			}
 		}
 
@@ -168,21 +160,22 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 
 			// Handle crashing init containers
 			if instance.IsCrashing {
-				crashingCount++
+				hasCrashing = true
 				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
 			}
 		}
 	}
 
-	// Determine target status based on counts
-	targetStatus := schema.DeploymentStatusPending
-	if failedCount > 0 {
+	// Determine target status using simple 3-status logic:
+	// 1. Crashing takes precedence over everything
+	// 2. Pending if any containers are not ready or we don't have enough instances
+	// 3. Active only if all expected instances are ready
+	var targetStatus schema.DeploymentStatus
+	if hasCrashing {
 		targetStatus = schema.DeploymentStatusCrashing
-	} else if crashingCount > 0 {
-		targetStatus = schema.DeploymentStatusCrashing
-	} else if pendingCount > 0 || unknownCount > 0 {
+	} else if hasPending || readyCount < expectedReplicas {
 		targetStatus = schema.DeploymentStatusPending
-	} else if runningCount >= expectedReplicas {
+	} else {
 		targetStatus = schema.DeploymentStatusActive
 	}
 

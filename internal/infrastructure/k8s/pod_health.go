@@ -454,18 +454,18 @@ func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
 type InstanceHealth string
 
 const (
-	InstanceHealthHealthy   InstanceHealth = "healthy"
-	InstanceHealthDegraded  InstanceHealth = "degraded"
-	InstanceHealthUnhealthy InstanceHealth = "unhealthy"
+	InstanceHealthPending  InstanceHealth = "pending"  // Waiting to be scheduled, or running but not ready yet
+	InstanceHealthCrashing InstanceHealth = "crashing" // Has crashing instances
+	InstanceHealthActive   InstanceHealth = "active"   // All instances running and healthy
 )
 
 func (u InstanceHealth) Schema(r huma.Registry) *huma.Schema {
 	if r.Map()["InstanceHealth"] == nil {
 		schemaRef := r.Schema(reflect.TypeOf(""), true, "InstanceHealth")
 		schemaRef.Title = "InstanceHealth"
-		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthHealthy))
-		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthDegraded))
-		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthUnhealthy))
+		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthPending))
+		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthCrashing))
+		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthActive))
 		r.Map()["InstanceHealth"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/InstanceHealth"}
@@ -550,7 +550,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 
 	if len(podStatuses) == 0 {
 		return &SimpleHealthStatus{
-			Health:            InstanceHealthUnhealthy,
+			Health:            InstanceHealthPending,
 			ExpectedInstances: 0,
 			Instances:         []SimpleInstanceStatus{},
 		}, nil
@@ -561,11 +561,13 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 		return nil, fmt.Errorf("failed to get expected instances: %w", err)
 	}
 
-	health := InstanceHealthHealthy
 	hasCrashing := false
+	hasPending := false
+	readyCount := 0
 	allInstances := make([]SimpleInstanceStatus, 0)
 
 	for _, podStatus := range podStatuses {
+		// Check if any containers are crashing
 		if podStatus.HasCrashingInstances {
 			hasCrashing = true
 		}
@@ -576,13 +578,30 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 				Status:         instance.State,
 				Events:         instance.Events,
 			})
+
+			// Count ready instances and detect pending states
+			if instance.IsCrashing {
+				hasCrashing = true
+			} else if instance.State == ContainerStateRunning && instance.Ready {
+				readyCount++
+			} else {
+				// Container is waiting, terminated, or running but not ready
+				hasPending = true
+			}
 		}
 	}
 
+	// Determine health status based on priority:
+	// 1. Crashing takes precedence over everything
+	// 2. Pending if any containers are not ready or we don't have enough instances
+	// 3. Active only if all expected instances are ready
+	var health InstanceHealth
 	if hasCrashing {
-		health = InstanceHealthUnhealthy
-	} else if len(allInstances) < expectedInstances {
-		health = InstanceHealthDegraded
+		health = InstanceHealthCrashing
+	} else if hasPending || readyCount < expectedInstances {
+		health = InstanceHealthPending
+	} else {
+		health = InstanceHealthActive
 	}
 
 	return &SimpleHealthStatus{
