@@ -8,7 +8,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
 	corev1 "k8s.io/api/core/v1"
@@ -251,10 +253,10 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	// If a database, query the DB config
 	if isDatabase && boundToServiceID != nil {
 		dbSvcConfig, err := self.repo.Service().GetDatabaseConfig(ctx, *boundToServiceID)
-		if err != nil {
+		if err != nil && !ent.IsNotFound(err) {
+			log.Errorf("failed to get database config for service '%s': %v", boundToServiceID.String(), err)
 			return nil, fmt.Errorf("failed to get database config for service '%s': %w", boundToServiceID.String(), err)
-		}
-		if dbSvcConfig != nil && dbSvcConfig.StorageSize != "" {
+		} else if dbSvcConfig != nil && dbSvcConfig.StorageSize != "" {
 			// Parse storage size
 			sizeGB := utils.EnsureSuffix(dbSvcConfig.StorageSize, "Gi")
 			qty, err := resource.ParseQuantity(sizeGB)
@@ -438,10 +440,10 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		// If a databsae, query the DB config
 		if isDatabase && boundToServiceID != nil {
 			dbSvcConfig, err := self.repo.Service().GetDatabaseConfig(ctx, *boundToServiceID)
-			if err != nil {
+			if err != nil && !ent.IsNotFound(err) {
+				log.Errorf("failed to get database config for service '%s': %v", boundToServiceID.String(), err)
 				return nil, fmt.Errorf("failed to get database config for service '%s': %w", boundToServiceID.String(), err)
-			}
-			if dbSvcConfig != nil && dbSvcConfig.StorageSize != "" {
+			} else if dbSvcConfig != nil && dbSvcConfig.StorageSize != "" {
 				// Parse storage size
 				sizeGB := utils.EnsureSuffix(dbSvcConfig.StorageSize, "Gi")
 				qty, err := resource.ParseQuantity(sizeGB)
