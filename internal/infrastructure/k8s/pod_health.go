@@ -296,7 +296,6 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 				Reason:    "Created",
 			})
 		}
-
 	case container.State.Waiting != nil:
 		status.State = ContainerStateWaiting
 		status.StateReason = container.State.Waiting.Reason
@@ -338,7 +337,7 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 
 		status.Events = append(status.Events, terminatedEvent)
 
-		if container.State.Terminated.ExitCode != 0 {
+		if container.State.Terminated.ExitCode != 0 && !strings.EqualFold(container.State.Terminated.Reason, "Completed") {
 			status.IsCrashing = true
 			status.CrashLoopReason = fmt.Sprintf("Terminated with exit code: %d, reason: %s",
 				container.State.Terminated.ExitCode, container.State.Terminated.Reason)
@@ -368,17 +367,6 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 		}
 
 		status.Events = append(status.Events, lastTermEvent)
-
-		if container.RestartCount > 3 && term.ExitCode != 0 {
-			recentThreshold := time.Now().Add(-10 * time.Minute)
-			if term.FinishedAt.Time.After(recentThreshold) {
-				status.IsCrashing = true
-				if status.CrashLoopReason == "" {
-					status.CrashLoopReason = fmt.Sprintf("Frequent restarts (%d) with recent termination at %s (exit code: %d)",
-						container.RestartCount, term.FinishedAt.Format(time.RFC3339), term.ExitCode)
-				}
-			}
-		}
 	}
 
 	return status
