@@ -240,6 +240,21 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 					}
 				}
 			}
+		} else {
+			// Get services using this PVC from DB
+			services, err := self.repo.Service().GetServicesUsingPVC(ctx, pvcName)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get services using PVC '%s': %w", pvcName, err)
+			}
+			if len(services) > 0 {
+				isBound = true
+				boundToServiceID = &services[0].ID // Use the first service found
+
+				// Check if the service is a database
+				if services[0].Type == schema.ServiceTypeDatabase {
+					isDatabase = true
+				}
+			}
 		}
 	}
 
@@ -435,8 +450,47 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 			}
 		}
 
+		// Fall back to checking PVC labels
+		if !isBound {
+			serviceIDStr := pvcLabels[serviceLabel]
+			if serviceIDStr != "" {
+				serviceID, err := uuid.Parse(serviceIDStr)
+				if err != nil {
+					log.Errorf("invalid service ID in PVC label '%s': %v", pvc.Name, err)
+				} else {
+					// Fetch from database
+					service, err := self.repo.Service().GetByID(ctx, serviceID)
+					if err != nil && !ent.IsNotFound(err) {
+						log.Errorf("failed to get service '%s': %v", serviceIDStr, err)
+					} else if service != nil {
+						boundToServiceID = &service.ID
+						isBound = true
+
+						// See if the service is a database
+						if service.Type == schema.ServiceTypeDatabase {
+							isDatabase = true
+						}
+					}
+				}
+			} else {
+				// Get services using this PVC from DB
+				services, err := self.repo.Service().GetServicesUsingPVC(ctx, pvc.Name)
+				if err != nil {
+					log.Errorf("failed to get services using PVC '%s': %v", pvc.Name, err)
+				} else if len(services) > 0 {
+					isBound = true
+					boundToServiceID = &services[0].ID // Use the first service found
+
+					// Check if the service is a database
+					if services[0].Type == schema.ServiceTypeDatabase {
+						isDatabase = true
+					}
+				}
+			}
+		}
+
+		// Skip if bound but no valid service ID found
 		if isBound && boundToServiceID == nil {
-			// If the PVC is bound but no service ID is found, skip this PVC
 			continue
 		}
 

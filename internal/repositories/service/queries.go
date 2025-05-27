@@ -387,6 +387,21 @@ func (self *ServiceRepository) IsVolumeInUse(ctx context.Context, volumeName str
 	return len(services) > 0, nil
 }
 
+// Get services using a PVC
+func (self *ServiceRepository) GetServicesUsingPVC(ctx context.Context, pvcID string) ([]*ent.Service, error) {
+	return self.base.DB.Service.Query().
+		Where(
+			func(s *sql.Selector) {
+				s.Where(sqljson.ValueEQ(
+					s.C(serviceconfig.FieldVolumes),
+					pvcID,
+					sqljson.Path("id"),
+				))
+			},
+		).
+		All(ctx)
+}
+
 // Get PVC mount paths by IDs
 func (self *ServiceRepository) GetPVCMountPaths(ctx context.Context, pvcs []*models.PVCInfo) (map[string]string, error) {
 	mountPaths := make(map[string]string)

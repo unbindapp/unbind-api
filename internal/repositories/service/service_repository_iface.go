@@ -41,6 +41,8 @@ type ServiceRepositoryInterface interface {
 	NeedsDeployment(ctx context.Context, service *ent.Service) (NeedsDeploymentResponse, error)
 	// See if volume is in use
 	IsVolumeInUse(ctx context.Context, volumeName string) (bool, error)
+	// Get services using a PVC
+	GetServicesUsingPVC(ctx context.Context, pvcID string) ([]*ent.Service, error)
 	// Get PVC mount paths by IDs
 	GetPVCMountPaths(ctx context.Context, pvcs []*models.PVCInfo) (map[string]string, error)
 	// Get database config for a service
