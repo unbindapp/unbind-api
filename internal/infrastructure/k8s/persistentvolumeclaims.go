@@ -541,6 +541,11 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 			}
 		}
 
+		// Assume PVC not created yet
+		if bytesValueCapacity == 0 {
+			isPendingResize = false
+		}
+
 		result = append(result, &models.PVCInfo{
 			ID:                 pvc.Name,
 			Type:               pvcType,
