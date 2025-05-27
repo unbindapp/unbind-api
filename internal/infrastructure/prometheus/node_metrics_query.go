@@ -17,42 +17,51 @@ func (self *PrometheusClient) GetNodeMetrics(
 	step time.Duration,
 	filter *NodeMetricsFilter,
 ) (map[string]*NodeMetrics, error) {
+	// Align start and end times to step boundaries for consistent sampling
+	alignedStart := alignTimeToStep(start, step)
+	alignedEnd := alignTimeToStep(end, step)
+
 	r := v1.Range{
-		Start: start,
-		End:   end,
+		Start: alignedStart,
+		End:   alignedEnd,
 		Step:  step,
 	}
 
 	// Build the label selector for node metrics
 	nodeSelector := buildNodeLabelSelector(filter)
 
-	// Queries for node-level metrics
+	// Use fixed time windows that don't depend on step size
+	cpuWindow := "5m"
+	networkWindow := calculateNetworkWindow(step)
+	diskWindow := calculateNetworkWindow(step) // Use same logic for disk I/O
+
+	// Queries for node-level metrics with fixed time windows
 	cpuQuery := fmt.Sprintf(`sum by (nodename) (
-  rate(node_cpu_seconds_total{mode!="idle"}[%ds])%s * on(instance) group_left(nodename) node_uname_info
-)`, int(step.Seconds()), nodeSelector)
+		rate(node_cpu_seconds_total{mode!="idle"}[%s])%s * on(instance) group_left(nodename) node_uname_info
+	)`, cpuWindow, nodeSelector)
 
 	ramQuery := fmt.Sprintf(`sum by (nodename) (
-  (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)%s * on(instance) group_left(nodename) node_uname_info
-)`, nodeSelector)
+		(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)%s * on(instance) group_left(nodename) node_uname_info
+	)`, nodeSelector)
 
 	networkQuery := fmt.Sprintf(`sum by (nodename) (
-  (rate(node_network_receive_bytes_total[%ds]) + 
-   rate(node_network_transmit_bytes_total[%ds])%s) * on(instance) group_left(nodename) node_uname_info
-)`, int(step.Seconds()), int(step.Seconds()), nodeSelector)
+		(rate(node_network_receive_bytes_total[%s]) + 
+		 rate(node_network_transmit_bytes_total[%s])%s) * on(instance) group_left(nodename) node_uname_info
+	)`, networkWindow, networkWindow, nodeSelector)
 
 	diskQuery := fmt.Sprintf(`sum by (nodename) (
-  (rate(node_disk_read_bytes_total[%ds]) + 
-   rate(node_disk_written_bytes_total[%ds])%s) * on(instance) group_left(nodename) node_uname_info
-)`, int(step.Seconds()), int(step.Seconds()), nodeSelector)
+		(rate(node_disk_read_bytes_total[%s]) + 
+		 rate(node_disk_written_bytes_total[%s])%s) * on(instance) group_left(nodename) node_uname_info
+	)`, diskWindow, diskWindow, nodeSelector)
 
 	fsQuery := fmt.Sprintf(`sum by (nodename) (
-  (node_filesystem_size_bytes%s - node_filesystem_free_bytes%s) * on(instance) group_left(nodename) node_uname_info
-)`, nodeSelector, nodeSelector)
+		(node_filesystem_size_bytes%s - node_filesystem_free_bytes%s) * on(instance) group_left(nodename) node_uname_info
+	)`, nodeSelector, nodeSelector)
 
 	// Load average
 	loadQuery := fmt.Sprintf(`sum by (nodename) (
-  node_load1%s * on(instance) group_left(nodename) node_uname_info
-)`, nodeSelector)
+		node_load1%s * on(instance) group_left(nodename) node_uname_info
+	)`, nodeSelector)
 
 	// Execute queries
 	cpuResult, _, err := self.api.QueryRange(ctx, cpuQuery, r)
@@ -72,7 +81,7 @@ func (self *PrometheusClient) GetNodeMetrics(
 
 	diskResult, _, err := self.api.QueryRange(ctx, diskQuery, r)
 	if err != nil {
-		return nil, fmt.Errorf("error querying node disk I/O metrics: %w", err)
+		return nil, fmt.Errorf("error querying node disk metrics: %w", err)
 	}
 
 	fsResult, _, err := self.api.QueryRange(ctx, fsQuery, r)

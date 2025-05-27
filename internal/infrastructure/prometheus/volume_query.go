@@ -189,10 +189,14 @@ func (self *PrometheusClient) GetVolumeStatsWithHistory(
 		return nil, fmt.Errorf("failed to get PVC stats: %w", err)
 	}
 
+	// Align start and end times to step boundaries for consistent sampling
+	alignedStart := alignTimeToStep(start, step)
+	alignedEnd := alignTimeToStep(end, step)
+
 	// Get historical data using a query similar to diskQuery but for specific PVC
 	r := v1.Range{
-		Start: start,
-		End:   end,
+		Start: alignedStart,
+		End:   alignedEnd,
 		Step:  step,
 	}
 

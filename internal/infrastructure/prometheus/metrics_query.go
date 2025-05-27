@@ -25,21 +25,29 @@ func (self *PrometheusClient) GetResourceMetrics(
 	step time.Duration,
 	filter *MetricsFilter,
 ) (map[string]*ResourceMetrics, error) {
+	// Align start and end times to step boundaries for consistent sampling
+	alignedStart := alignTimeToStep(start, step)
+	alignedEnd := alignTimeToStep(end, step)
+
 	r := v1.Range{
-		Start: start,
-		End:   end,
+		Start: alignedStart,
+		End:   alignedEnd,
 		Step:  step,
 	}
 
 	// Build the label selector for kube_pod_labels
 	kubeLabelsSelector := buildLabelSelector(filter)
 
-	// Queries with label filtering
+	cpuWindow := "5m"
+	// For network calculations, use a window that's at least 2x the step size but minimum 1m
+	networkWindow := calculateNetworkWindow(step)
+
+	// Queries with label filtering and fixed time windows
 	cpuQuery := fmt.Sprintf(`sum by (%s) (
-			rate(container_cpu_usage_seconds_total{container!="POD", container!=""}[%ds])
-			* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
-			kube_pod_labels%s
-	)`, sumBy.Label(), int(step.Seconds()), kubeLabelsSelector)
+		rate(container_cpu_usage_seconds_total{container!="POD", container!=""}[%s])
+		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
+		kube_pod_labels%s
+	)`, sumBy.Label(), cpuWindow, kubeLabelsSelector)
 
 	ramQuery := fmt.Sprintf(`sum by (%s) (
 		container_memory_working_set_bytes{container!="POD", container!=""}
@@ -48,11 +56,11 @@ func (self *PrometheusClient) GetResourceMetrics(
 	)`, sumBy.Label(), kubeLabelsSelector)
 
 	networkQuery := fmt.Sprintf(`sum by (%s) (
-		(increase(container_network_receive_bytes_total{pod!=""}[%ds]) +
-		increase(container_network_transmit_bytes_total{pod!=""}[%ds]))
+		(rate(container_network_receive_bytes_total{pod!=""}[%s]) +
+		rate(container_network_transmit_bytes_total{pod!=""}[%s]))
 		* on(namespace, pod) group_left(label_unbind_team,label_unbind_project,label_unbind_environment,label_unbind_service)
 		kube_pod_labels%s
-	)`, sumBy.Label(), int(step.Seconds()), int(step.Seconds()), kubeLabelsSelector)
+	)`, sumBy.Label(), networkWindow, networkWindow, kubeLabelsSelector)
 
 	diskQuery := fmt.Sprintf(`sum by (%s) (
 		(
@@ -105,6 +113,42 @@ func (self *PrometheusClient) GetResourceMetrics(
 	})
 
 	return metricsResult, nil
+}
+
+// alignTimeToStep aligns a timestamp to step boundaries
+// This ensures consistent sampling points regardless of when the query is made
+func alignTimeToStep(t time.Time, step time.Duration) time.Time {
+	// Convert to Unix timestamp in nanoseconds
+	nanos := t.UnixNano()
+	stepNanos := step.Nanoseconds()
+
+	// Round down to the nearest step boundary
+	alignedNanos := (nanos / stepNanos) * stepNanos
+
+	return time.Unix(0, alignedNanos)
+}
+
+// calculateNetworkWindow determines the appropriate time window for network rate calculations
+func calculateNetworkWindow(step time.Duration) string {
+	// Use a window that's at least 2x the step size but minimum 1 minute
+	minWindow := 1 * time.Minute
+	calculatedWindow := step * 2
+
+	if calculatedWindow < minWindow {
+		calculatedWindow = minWindow
+	}
+
+	// Convert to Prometheus duration format
+	if calculatedWindow >= time.Hour {
+		hours := int(calculatedWindow.Hours())
+		return fmt.Sprintf("%dh", hours)
+	} else if calculatedWindow >= time.Minute {
+		minutes := int(calculatedWindow.Minutes())
+		return fmt.Sprintf("%dm", minutes)
+	} else {
+		seconds := int(calculatedWindow.Seconds())
+		return fmt.Sprintf("%ds", seconds)
+	}
 }
 
 func extractGroupedMetrics(
