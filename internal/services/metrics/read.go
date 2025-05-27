@@ -67,6 +67,9 @@ func (self *MetricsService) GetMetrics(ctx context.Context, requesterUserID uuid
 	// Calculate step size
 	duration := end.Sub(start)
 	step := chooseStep(duration, 30, []time.Duration{
+		10 * time.Second,
+		15 * time.Second,
+		30 * time.Second,
 		1 * time.Minute,
 		5 * time.Minute,
 		15 * time.Minute,
