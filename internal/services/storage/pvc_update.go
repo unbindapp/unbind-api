@@ -3,6 +3,7 @@ package storage_service
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -151,13 +152,8 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 		if err != nil {
 			log.Errorf("Failed to re-fetch service after database update: %v", err)
 		} else {
-			_, err = self.svcService.DeployAdhocServices(ctx, []*ent.Service{targetService})
-			if err != nil {
-				log.Errorf("Failed to enqueue full build deployments for service %s: %v", targetService.ID, err)
-			}
-
-			// MySQL doesn't update the underlying PVC
-			if targetService.Database != nil && *targetService.Database == "mysql" {
+			// Update underlying PVC for some databases
+			if targetService.Database != nil && slices.Contains([]string{"mysql", "redis", "mongodb"}, *targetService.Database) {
 				updatedPvc, err = self.k8s.UpdatePersistentVolumeClaim(ctx,
 					team.Namespace,
 					pvc.ID,
@@ -169,6 +165,12 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 					return nil, err
 				}
 			}
+
+			_, err = self.svcService.DeployAdhocServices(ctx, []*ent.Service{targetService})
+			if err != nil {
+				log.Errorf("Failed to enqueue full build deployments for service %s: %v", targetService.ID, err)
+			}
+
 		}
 	}
 
