@@ -72,6 +72,9 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 			deployment.ResourceDefinition.Spec.EnvVars = envVars
 			// Set volume data to current
 			deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
+			if service.Type == schema.ServiceTypeDatabase && service.Edges.ServiceConfig.DatabaseConfig != nil {
+				deployment.ResourceDefinition.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
+			}
 			// We can just, re-deploy the existing CRD spec
 			// Deploy to kubernetes
 			_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
