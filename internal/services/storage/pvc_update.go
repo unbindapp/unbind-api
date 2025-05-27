@@ -151,7 +151,7 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 		if err != nil {
 			log.Errorf("Failed to re-fetch service after database update: %v", err)
 		} else {
-			err = self.svcService.EnqueueFullBuildDeployments(ctx, []*ent.Service{targetService})
+			_, err = self.svcService.DeployAdhocServices(ctx, []*ent.Service{targetService})
 			if err != nil {
 				log.Errorf("Failed to enqueue full build deployments for service %s: %v", targetService.ID, err)
 			}

@@ -37,5 +37,5 @@ type ExtendedHostSpec struct {
 	v1.HostSpec
 	DnsConfigured bool `json:"dns_configured"`
 	Cloudflare    bool `json:"cloudflare"`
-	Issued        bool `json:"issued"`
+	TlsIssued     bool `json:"tls_issued"`
 }

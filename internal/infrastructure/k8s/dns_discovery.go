@@ -107,9 +107,9 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 								Path: "/",
 								Port: utils.ToPtr(port.NodePort),
 							},
-							Issued:        false,
 							DnsConfigured: true,
 							Cloudflare:    false,
+							TlsIssued:     false,
 						})
 					}
 				}
@@ -129,9 +129,9 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 										Path: "/",
 										Port: utils.ToPtr(port.NodePort),
 									},
-									Issued:        false,
 									DnsConfigured: true,
 									Cloudflare:    false,
+									TlsIssued:     false,
 								})
 							}
 						}
@@ -272,9 +272,9 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 						Path: path,
 						Port: utils.ToPtr[int32](443),
 					},
-					Issued:        issued,
 					DnsConfigured: dnsConfigured,
 					Cloudflare:    cloudflare,
+					TlsIssued:     issued,
 				})
 			}
 		}
@@ -438,4 +438,46 @@ func (self *KubeClient) DeleteOldVerificationIngresses(
 	}
 
 	return nil
+}
+
+// CheckTLSStatusForHosts checks the TLS certificate status for a slice of HostSpec
+// and returns ExtendedHostSpec with TlsIssued field populated
+func (self *KubeClient) CheckTLSStatusForHosts(ctx context.Context, namespace string, hosts []v1.HostSpec, client *kubernetes.Clientset) ([]v1.HostSpec, error) {
+	var result []v1.HostSpec
+
+	for _, host := range hosts {
+		// Look for ingresses that might have TLS configuration for this host
+		ingresses, err := client.NetworkingV1().Ingresses(namespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list ingresses in namespace %s: %w", namespace, err)
+		}
+
+		// Check each ingress for TLS configuration matching this host
+		for _, ing := range ingresses.Items {
+			for _, tls := range ing.Spec.TLS {
+				for _, tlsHost := range tls.Hosts {
+					if tlsHost == host.Host {
+						// Check if the TLS secret exists and is properly issued
+						if tls.SecretName != "" {
+							secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
+							if err == nil {
+								host.TlsIssued = isCertificateIssued(secret)
+							}
+						}
+						break
+					}
+				}
+				if host.TlsIssued {
+					break
+				}
+			}
+			if host.TlsIssued {
+				break
+			}
+		}
+
+		result = append(result, host)
+	}
+
+	return result, nil
 }
