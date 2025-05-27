@@ -64,7 +64,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				RunCommand: utils.ToPtr("sh -c \"/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run\""),
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
-				Image:      utils.ToPtr("ghcr.io/plausible/community-edition:v3.0.1"),
+				Image:      utils.ToPtr("ghcr.io/plausible/community-edition:v3"),
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,

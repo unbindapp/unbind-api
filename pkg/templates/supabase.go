@@ -1338,7 +1338,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Studio",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/studio:2025.04.21-sha-173cc56"),
+				Image:     utils.ToPtr("supabase/studio:2025.05.19-sha-3487831"),
 				DependsOn: []string{"service_postgresql", "service_kong"},
 				Ports: []schema.PortSpec{
 					{
@@ -1523,7 +1523,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Storage",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/storage-api:v1.22.7"),
+				Image:     utils.ToPtr("supabase/storage-api:v1.22.17"),
 				DependsOn: []string{"service_postgresql", "service_minio"},
 				Ports: []schema.PortSpec{
 					{
@@ -1638,7 +1638,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "PostgREST",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("postgrest/postgrest:v12.2.11"),
+				Image:     utils.ToPtr("postgrest/postgrest:v12.2.12"),
 				DependsOn: []string{"service_postgresql"},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -1684,7 +1684,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Auth",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/gotrue:v2.171.0"),
+				Image:     utils.ToPtr("supabase/gotrue:v2.172.1"),
 				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{
@@ -1751,7 +1751,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Postgres Meta",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/postgres-meta:v0.88.9"),
+				Image:     utils.ToPtr("supabase/postgres-meta:v0.89.0"),
 				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{

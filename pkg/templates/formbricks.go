@@ -58,7 +58,7 @@ func formbricksTemplate() *schema.TemplateDefinition {
 				InputIDs:  []string{"input_domain", "input_storage_size"},
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("ghcr.io/formbricks/formbricks:v3.11.0"),
+				Image:     utils.ToPtr("ghcr.io/formbricks/formbricks:v3.13.0"),
 				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{
