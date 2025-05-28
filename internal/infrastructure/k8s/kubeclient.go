@@ -3,12 +3,13 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	certmanagerclientset "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
 	"github.com/unbindapp/unbind-api/config"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	yamlv3 "gopkg.in/yaml.v3"
@@ -23,12 +24,13 @@ import (
 )
 
 type KubeClient struct {
-	config     config.ConfigInterface
-	client     *dynamic.DynamicClient
-	clientset  *kubernetes.Clientset
-	dnsChecker *utils.DNSChecker
-	httpClient *http.Client
-	repo       repositories.RepositoriesInterface
+	config            config.ConfigInterface
+	client            *dynamic.DynamicClient
+	clientset         *kubernetes.Clientset
+	certmanagerclient *certmanagerclientset.Clientset
+	dnsChecker        *utils.DNSChecker
+	httpClient        *http.Client
+	repo              repositories.RepositoriesInterface
 }
 
 func NewKubeClient(cfg config.ConfigInterface, repo repositories.RepositoriesInterface) *KubeClient {
@@ -59,11 +61,17 @@ func NewKubeClient(cfg config.ConfigInterface, repo repositories.RepositoriesInt
 		log.Fatalf("Error creating clientset: %v", err)
 	}
 
+	certManagerClientSet, err := certmanagerclientset.NewForConfig(kubeConfig)
+	if err != nil {
+		log.Errorf("Error creating cert-manager clientset: %v", err)
+	}
+
 	return &KubeClient{
-		config:     cfg,
-		client:     dynamicClient,
-		clientset:  clientSet,
-		dnsChecker: utils.NewDNSChecker(),
+		config:            cfg,
+		client:            dynamicClient,
+		clientset:         clientSet,
+		certmanagerclient: certManagerClientSet,
+		dnsChecker:        utils.NewDNSChecker(),
 		httpClient: &http.Client{
 			Timeout: 1 * time.Second,
 		},

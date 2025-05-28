@@ -3,11 +3,14 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
 	corev1 "k8s.io/api/core/v1"
@@ -143,6 +146,13 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 		return nil, fmt.Errorf("failed to list ingresses with labels %s: %w", labelSelector, err)
 	}
 
+	// Temp store for ingresses that need CR check
+	type attemptingIngressDetails struct {
+		Host       string
+		SecretName string
+	}
+	var ingressesToCheck []attemptingIngressDetails
+
 	// Process ingresses (external endpoints)
 	for _, ing := range ingresses.Items {
 		teamID, _ := uuid.Parse(ing.Labels["unbind-team"])
@@ -180,7 +190,6 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 					tlsStatus = models.TlsStatusIssued
 				}
 
-				// Create a flattened endpoint with just the host
 				endpoint := models.IngressEndpoint{
 					KubernetesName: ing.Name,
 					IsIngress:      true,
@@ -193,9 +202,60 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 					EnvironmentID:  environmentID,
 					ServiceID:      serviceID,
 				}
-
 				discovery.External = append(discovery.External, endpoint)
+
+				// For attempting ones dig into cert-manager to get the status
+				if tlsStatus == models.TlsStatusAttempting && tls.SecretName != "" {
+					ingressesToCheck = append(ingressesToCheck, attemptingIngressDetails{
+						Host:       host,
+						SecretName: tls.SecretName,
+					})
+				}
 			}
+		}
+	}
+
+	// If there are any ingresses in "Attempting" state, fetch their CertificateRequest conditions
+	if len(ingressesToCheck) > 0 && self.certmanagerclient != nil {
+		// List all CertificateRequests
+		allCrList, err := self.certmanagerclient.CertmanagerV1().CertificateRequests(namespace).List(ctx, metav1.ListOptions{})
+		if err == nil {
+			for _, ingress := range ingressesToCheck {
+				var relevantCrs []certmanagerv1.CertificateRequest
+				for _, cr := range allCrList.Items {
+					if ann, ok := cr.Annotations["cert-manager.io/certificate-name"]; ok && ann == ingress.SecretName {
+						relevantCrs = append(relevantCrs, cr)
+					}
+				}
+
+				if len(relevantCrs) > 0 {
+					// Sort CRs by CreationTimestamp in descending order (newest first)
+					sort.Slice(relevantCrs, func(i, j int) bool {
+						return relevantCrs[j].CreationTimestamp.Before(&relevantCrs[i].CreationTimestamp)
+					})
+
+					cr := relevantCrs[0] // Take the newest CR
+
+					var messages []models.TlsDetails
+					for _, cond := range cr.Status.Conditions {
+						messages = append(messages, models.TlsDetails{
+							Condition: models.CertManagerConditionType(cond.Type),
+							Reason:    cond.Reason,
+							Message:   cond.Message,
+						})
+					}
+					if len(messages) > 0 {
+						// Attach to the ingress
+						for i := range discovery.External {
+							if discovery.External[i].Host == ingress.Host && discovery.External[i].TlsStatus == models.TlsStatusAttempting {
+								discovery.External[i].TlsIssuerMessages = messages
+							}
+						}
+					}
+				}
+			}
+		} else {
+			log.Warn("Failed to list CertificateRequests", "error", err)
 		}
 	}
 

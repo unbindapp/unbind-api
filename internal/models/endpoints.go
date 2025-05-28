@@ -26,16 +26,17 @@ type ServiceEndpoint struct {
 
 // IngressEndpoint represents external DNS information for a Kubernetes ingress
 type IngressEndpoint struct {
-	KubernetesName string    `json:"kubernetes_name"`
-	IsIngress      bool      `json:"is_ingress"`
-	Host           string    `json:"host"`
-	Path           string    `json:"path"`
-	Port           *int32    `json:"port"`
-	TlsStatus      TlsStatus `json:"tls_status"`
-	TeamID         uuid.UUID `json:"team_id"`
-	ProjectID      uuid.UUID `json:"project_id"`
-	EnvironmentID  uuid.UUID `json:"environment_id"`
-	ServiceID      uuid.UUID `json:"service_id"`
+	KubernetesName    string       `json:"kubernetes_name"`
+	IsIngress         bool         `json:"is_ingress"`
+	Host              string       `json:"host"`
+	Path              string       `json:"path"`
+	Port              *int32       `json:"port"`
+	TlsStatus         TlsStatus    `json:"tls_status"`
+	TlsIssuerMessages []TlsDetails `json:"tls_issuer_messages,omitempty"`
+	TeamID            uuid.UUID    `json:"team_id"`
+	ProjectID         uuid.UUID    `json:"project_id"`
+	EnvironmentID     uuid.UUID    `json:"environment_id"`
+	ServiceID         uuid.UUID    `json:"service_id"`
 }
 
 type TlsStatus string
@@ -64,4 +65,39 @@ func (u TlsStatus) Schema(r huma.Registry) *huma.Schema {
 		r.Map()["TlsStatus"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/TlsStatus"}
+}
+
+// TLS Details
+type TlsDetails struct {
+	Condition CertManagerConditionType `json:"condition"`
+	Reason    string                   `json:"reason"`
+	Message   string                   `json:"message"`
+}
+
+type CertManagerConditionType string
+
+const (
+	CertificateRequestConditionReady          CertManagerConditionType = "Ready"
+	CertificateRequestConditionInvalidRequest CertManagerConditionType = "InvalidRequest"
+	CertificateRequestConditionApproved       CertManagerConditionType = "Approved"
+	CertificateRequestConditionDenied         CertManagerConditionType = "Denied"
+)
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u CertManagerConditionType) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["CertManagerConditionType"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "CertManagerConditionType")
+		schemaRef.Title = "CertManagerConditionType"
+		schemaRef.Enum = append(schemaRef.Enum,
+			[]any{
+				string(CertificateRequestConditionReady),
+				string(CertificateRequestConditionInvalidRequest),
+				string(CertificateRequestConditionApproved),
+				string(CertificateRequestConditionDenied),
+			}...,
+		)
+		r.Map()["CertManagerConditionType"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/CertManagerConditionType"}
 }
