@@ -144,7 +144,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	templater := templates.NewTemplater(self.cfg)
-	generatedTemplate, err := templater.ResolveTemplate(&template.Definition, validatedInputs, kubeNameMap, project.Edges.Team.Namespace)
+	generatedTemplate, err := templater.ResolveTemplate(&template.Definition, validatedInputs, kubeNameMap, project.Edges.Team.Namespace, self.k8s.GetInternalClient())
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}

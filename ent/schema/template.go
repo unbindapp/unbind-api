@@ -140,6 +140,7 @@ const (
 	GeneratorTypePasswordBcrypt GeneratorType = "bcrypt"
 	GeneratorTypeInput          GeneratorType = "input"
 	GeneratorTypeJWT            GeneratorType = "jwt"
+	GeneratorTypeNodeIP         GeneratorType = "node_ip"
 	GeneratorTypeStringReplace  GeneratorType = "string_replace"
 )
 
@@ -156,6 +157,7 @@ func (u GeneratorType) Schema(r huma.Registry) *huma.Schema {
 				string(GeneratorTypePasswordBcrypt),
 				string(GeneratorTypeInput),
 				string(GeneratorTypeJWT),
+				string(GeneratorTypeNodeIP),
 				string(GeneratorTypeStringReplace),
 			}...)
 		r.Map()["GeneratorType"] = schemaRef

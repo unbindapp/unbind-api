@@ -1,19 +1,30 @@
 package templates
 
 import (
+	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
-func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inputs map[string]string, kubeNameMap map[string]string, namespace string) (*schema.TemplateDefinition, error) {
+func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inputs map[string]string, kubeNameMap map[string]string, namespace string, kubeClient *kubernetes.Clientset) (*schema.TemplateDefinition, error) {
 	resolved, err := self.resolveGeneratedVariables(template, inputs)
 	if err != nil {
 		return nil, err
+	}
+
+	// Resolve NodeIP variables
+	resolved, err = self.resolvNodeIPs(resolved, kubeClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve NodeIP variables: %w", err)
 	}
 
 	// Resolve volumes
@@ -33,6 +44,8 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 	if err != nil {
 		return nil, err
 	}
+
+	// Resolve input node IPs
 
 	// Build string replace map
 	stringReplaceMap := make(map[string]string)
@@ -81,6 +94,66 @@ func (self *Templater) ResolveTemplate(template *schema.TemplateDefinition, inpu
 	}
 
 	return resolved, nil
+}
+
+// resolvNodeIPs resolves NodeIP generated variables inputs and attaches them to the relevant services
+func (self *Templater) resolvNodeIPs(template *schema.TemplateDefinition, client *kubernetes.Clientset) (*schema.TemplateDefinition, error) {
+	// See if any services has a node IP generator
+	hasNodeIP := false
+	for _, service := range template.Services {
+		for _, variable := range service.Variables {
+			if variable.Generator != nil && variable.Generator.Type == schema.GeneratorTypeNodeIP {
+				hasNodeIP = true
+				break
+			}
+		}
+		if hasNodeIP {
+			break
+		}
+	}
+
+	if !hasNodeIP {
+		return template, nil
+	}
+
+	nodes, err := client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list nodes: %w", err)
+	}
+
+	// Sort nodes by created_at desc
+	sort.Slice(nodes.Items, func(i, j int) bool {
+		return nodes.Items[i].CreationTimestamp.After(nodes.Items[j].CreationTimestamp.Time)
+	})
+
+	var nodeIP string
+	for _, node := range nodes.Items {
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == corev1.NodeExternalIP {
+				nodeIP = addr.Address
+				break
+			}
+		}
+		if nodeIP != "" {
+			break
+		}
+	}
+
+	// Set values for all NodeIP variables
+	for i := range template.Services {
+		svc := &template.Services[i] // Get a pointer to modify directly
+		for j := range svc.Variables {
+			variable := &svc.Variables[j]
+			if variable.Generator != nil && variable.Generator.Type == schema.GeneratorTypeNodeIP {
+				if nodeIP == "" {
+					return template, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("no external IP found for NodeIP generator in service %s", svc.ID))
+				}
+				variable.Value = nodeIP
+			}
+		}
+	}
+
+	return template, nil
 }
 
 // resolveDatabaseSizes resolves DatabaseSize inputs and attaches them to the relevant services

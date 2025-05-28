@@ -61,44 +61,35 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				},
 				Variables: []schema.TemplateVariable{
 					{
-						Name: "WG_HOST",
+						Name:  "HOST",
+						Value: "0.0.0.0",
+					},
+					{
+						Name:  "PORT",
+						Value: "51821",
+					},
+					{
+						Name: "INIT_HOST",
 						Generator: &schema.ValueGenerator{
-							Type:    schema.GeneratorTypeInput,
-							InputID: "input_domain",
+							Type: schema.GeneratorTypeNodeIP,
 						},
 					},
 					{
-						Name: "WG_PORT",
+						Name: "INIT_PORT",
 						Generator: &schema.ValueGenerator{
 							Type:    schema.GeneratorTypeInput,
 							InputID: "input_nodeport",
 						},
 					},
 					{
-						Name: "PASSWORD_HASH",
+						Name:  "INIT_USERNAME",
+						Value: "admin",
+					},
+					{
+						Name: "INIT_PASSWORD",
 						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypePasswordBcrypt,
+							Type: schema.GeneratorTypePassword,
 						},
-					},
-					{
-						Name:  "LANG",
-						Value: "en",
-					},
-					{
-						Name:  "WG_DEFAULT_DNS",
-						Value: "1.1.1.1",
-					},
-					{
-						Name:  "WG_MTU",
-						Value: "1420",
-					},
-					{
-						Name:  "UI_TRAFFIC_STATS",
-						Value: "true",
-					},
-					{
-						Name:  "UI_CHART_TYPE",
-						Value: "1",
 					},
 				},
 				SecurityContext: &schema.SecurityContext{
