@@ -81,6 +81,7 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 				Host:           host.Host,
 				Path:           "/",
 				Port:           host.Port,
+				DNSStatus:      models.DNSStatusUnknown,
 				TlsStatus:      models.TlsStatusPending,
 				TeamID:         project.Edges.Team.ID,
 				ProjectID:      project.ID,
