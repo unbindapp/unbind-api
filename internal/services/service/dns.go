@@ -75,15 +75,16 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 	for _, host := range service.Edges.ServiceConfig.Hosts {
 		if _, exists := endpointMap[host.Host]; !exists {
 			newHost := models.IngressEndpoint{
-				IsIngress:     true,
-				Host:          host.Host,
-				Path:          "/",
-				Port:          host.Port,
-				TlsStatus:     models.TlsStatusPending,
-				TeamID:        project.Edges.Team.ID,
-				ProjectID:     project.ID,
-				EnvironmentID: env.ID,
-				ServiceID:     serviceID,
+				KubernetesName: service.KubernetesName,
+				IsIngress:      true,
+				Host:           host.Host,
+				Path:           "/",
+				Port:           host.Port,
+				TlsStatus:      models.TlsStatusPending,
+				TeamID:         project.Edges.Team.ID,
+				ProjectID:      project.ID,
+				EnvironmentID:  env.ID,
+				ServiceID:      serviceID,
 			}
 
 			if host.Path != "" {
