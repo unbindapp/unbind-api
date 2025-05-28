@@ -11,10 +11,9 @@ import (
 
 // * Custom kubernetes-like types
 type HostSpec struct {
-	Host      string `json:"host"`
-	Path      string `json:"path"`
-	Port      *int32 `json:"port,omitempty" required:"false"`
-	TlsIssued bool   `json:"tls_issued"`
+	Host string `json:"host"`
+	Path string `json:"path"`
+	Port *int32 `json:"port,omitempty" required:"false"`
 }
 
 func AsV1HostSpecs(hosts []HostSpec) []v1.HostSpec {

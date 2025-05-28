@@ -10,8 +10,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/models"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 )
@@ -114,7 +114,7 @@ func (self *VariablesService) resolveSourceValue(ctx context.Context, client *ku
 		endpoints, err := self.k8s.DiscoverEndpointsByLabels(ctx, namespace,
 			map[string]string{
 				source.SourceType.KubernetesLabel(): source.SourceID.String(),
-			}, true, client)
+			}, client)
 		if err != nil {
 			return "", err
 		}
@@ -132,10 +132,8 @@ func (self *VariablesService) resolveSourceValue(ctx context.Context, client *ku
 		} else {
 			// External endpoint
 			for _, endpoint := range endpoints.External {
-				for _, host := range endpoint.Hosts {
-					if host.Host == source.Key {
-						return fmt.Sprintf("https://%s", host.Host), nil
-					}
+				if endpoint.Host == source.Key {
+					return fmt.Sprintf("https://%s", endpoint.Host), nil
 				}
 			}
 		}

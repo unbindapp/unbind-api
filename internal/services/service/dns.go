@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/models"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 // Get a service by ID
@@ -55,12 +55,44 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 		map[string]string{
 			"unbind-service": serviceID.String(),
 		},
-		false,
 		client,
 	)
 
 	if err != nil {
 		return nil, err
+	}
+
+	// Build a map of discovered hosts
+	endpointMap := make(map[string]struct{})
+	for _, host := range endpoints.External {
+		if !host.IsIngress {
+			continue
+		}
+		endpointMap[host.Host] = struct{}{}
+	}
+
+	// Append hosts missing from discovery
+	for _, host := range service.Edges.ServiceConfig.Hosts {
+		if _, exists := endpointMap[host.Host]; !exists {
+			newHost := models.IngressEndpoint{
+				IsIngress:     true,
+				Host:          host.Host,
+				Path:          "/",
+				Port:          host.Port,
+				TlsStatus:     models.TlsStatusPending,
+				TeamID:        project.Edges.Team.ID,
+				ProjectID:     project.ID,
+				EnvironmentID: env.ID,
+				ServiceID:     serviceID,
+			}
+
+			if host.Path != "" {
+				newHost.Path = host.Path
+			}
+
+			endpoints.External = append(endpoints.External, newHost)
+		}
+
 	}
 
 	return endpoints, nil

@@ -3,16 +3,13 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
-	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +18,7 @@ import (
 
 // DiscoverEndpointsByLabels returns both internal (services) and external (ingresses) endpoints
 // matching the provided labels in a namespace
-func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, ignoreDNSChecks bool, client *kubernetes.Clientset) (*models.EndpointDiscovery, error) {
+func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*models.EndpointDiscovery, error) {
 	// Convert the labels map to a selector string
 	var labelSelectors []string
 	for key, value := range labels {
@@ -72,15 +69,6 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 			discovery.Internal = append(discovery.Internal, endpoint)
 		} else if svc.Spec.Type == corev1.ServiceTypeNodePort || svc.Spec.Type == corev1.ServiceTypeLoadBalancer {
 			// Process NodePort and LoadBalancer services as external
-			endpoint := models.IngressEndpoint{
-				KubernetesName: svc.Name,
-				Hosts:          []models.ExtendedHostSpec{},
-				TeamID:         teamID,
-				ProjectID:      projectID,
-				EnvironmentID:  environmentID,
-				ServiceID:      serviceID,
-			}
-
 			// Get the node IPs, use internal client for this
 			nodes, err := self.GetInternalClient().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 			if err != nil {
@@ -101,16 +89,19 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 			for _, port := range svc.Spec.Ports {
 				if port.NodePort > 0 {
 					for _, nodeIP := range nodeIPs {
-						endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
-							HostSpec: v1.HostSpec{
-								Host: nodeIP,
-								Path: "/",
-								Port: utils.ToPtr(port.NodePort),
-							},
-							DnsConfigured: true,
-							Cloudflare:    false,
-							TlsIssued:     false,
-						})
+						endpoint := models.IngressEndpoint{
+							KubernetesName: svc.Name,
+							IsIngress:      false,
+							Host:           nodeIP,
+							Path:           "/",
+							Port:           utils.ToPtr(port.NodePort),
+							TlsStatus:      models.TlsStatusNotAvailable,
+							TeamID:         teamID,
+							ProjectID:      projectID,
+							EnvironmentID:  environmentID,
+							ServiceID:      serviceID,
+						}
+						discovery.External = append(discovery.External, endpoint)
 					}
 				}
 			}
@@ -123,24 +114,23 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 							// Also add the external IP with the NodePort if it exists
 							if port.NodePort > 0 {
 								host := fmt.Sprintf("%s:%d", ingress.IP, port.NodePort)
-								endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
-									HostSpec: v1.HostSpec{
-										Host: host,
-										Path: "/",
-										Port: utils.ToPtr(port.NodePort),
-									},
-									DnsConfigured: true,
-									Cloudflare:    false,
-									TlsIssued:     false,
-								})
+								endpoint := models.IngressEndpoint{
+									KubernetesName: svc.Name,
+									IsIngress:      false,
+									Host:           host,
+									Path:           "/",
+									Port:           utils.ToPtr(port.NodePort),
+									TlsStatus:      models.TlsStatusNotAvailable,
+									TeamID:         teamID,
+									ProjectID:      projectID,
+									EnvironmentID:  environmentID,
+									ServiceID:      serviceID,
+								}
+								discovery.External = append(discovery.External, endpoint)
 							}
 						}
 					}
 				}
-			}
-
-			if len(endpoint.Hosts) > 0 {
-				discovery.External = append(discovery.External, endpoint)
 			}
 		}
 	}
@@ -159,16 +149,6 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 		projectID, _ := uuid.Parse(ing.Labels["unbind-project"])
 		environmentID, _ := uuid.Parse(ing.Labels["unbind-environment"])
 		serviceID, _ := uuid.Parse(ing.Labels["unbind-service"])
-
-		endpoint := models.IngressEndpoint{
-			KubernetesName: ing.Name,
-			IsIngress:      true,
-			Hosts:          []models.ExtendedHostSpec{},
-			TeamID:         teamID,
-			ProjectID:      projectID,
-			EnvironmentID:  environmentID,
-			ServiceID:      serviceID,
-		}
 
 		// Make a map of paths to iterate TLS
 		pathMap := make(map[string]string)
@@ -190,96 +170,28 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 
 				// Check if the secret is issued
 				issued := false
-				dnsConfigured := false
-				cloudflare := false
-
-				if !ignoreDNSChecks {
-					if tls.SecretName != "" {
-						secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
-						issued = err == nil && isCertificateIssued(secret)
-					}
-
-					ips, err := self.GetIngressNginxIP(ctx)
-					if err != nil {
-						return nil, fmt.Errorf("failed to get ingress nginx IP: %w", err)
-					}
-					// Check ipv4 first
-					dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv4)
-					if !dnsConfigured {
-						// Check ipv6
-						dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv6)
-					}
-					if !dnsConfigured {
-						// Check cloudflare
-						cloudflare, _ = self.dnsChecker.IsUsingCloudflareProxy(host)
-
-						if cloudflare {
-							// Spin up an ingress to verify
-							testIngress, path, err := self.CreateVerificationIngress(ctx, host, self.GetInternalClient())
-							if err != nil {
-								log.Warnf("Error creating ingress test for domain %s: %v", host, err)
-							} else {
-								defer func() {
-									err := self.DeleteVerificationIngress(ctx, testIngress.Name, self.GetInternalClient())
-									if err != nil {
-										log.Warnf("Error deleting ingress test for domain %s: %v", host, err)
-									}
-								}()
-
-								url := fmt.Sprintf("https://%s/.unbind-challenge/%s", host, path)
-
-								// Create a new request with context
-								req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-								if err != nil {
-									log.Warnf("Error creating HTTP request for domain %s: %v", host, err)
-								} else {
-									// Retry delaying 200ms between tries
-									maxRetries := 20
-									for attempt := 0; attempt < maxRetries; attempt++ {
-										if attempt > 0 {
-											time.Sleep(200 * time.Millisecond)
-										}
-
-										// Execute the request
-										resp, err := self.httpClient.Do(req)
-										if err != nil {
-											log.Warnf("Attempt %d: Error executing HTTP request for domain %s: %v", attempt+1, host, err)
-											continue // Try again after sleep
-										}
-
-										func() {
-											defer resp.Body.Close()
-											// Check for the special header
-											if resp.Header.Get("X-DNS-Check") == "resolved" {
-												dnsConfigured = true
-												return // Exit the closure
-											}
-										}()
-
-										if dnsConfigured {
-											break
-										}
-									}
-								}
-							}
-						}
-					}
+				tlsStatus := models.TlsStatusAttempting
+				if issued {
+					tlsStatus = models.TlsStatusIssued
 				}
 
-				endpoint.Hosts = append(endpoint.Hosts, models.ExtendedHostSpec{
-					HostSpec: v1.HostSpec{
-						Host: host,
-						Path: path,
-						Port: utils.ToPtr[int32](443),
-					},
-					DnsConfigured: dnsConfigured,
-					Cloudflare:    cloudflare,
-					TlsIssued:     issued,
-				})
+				// Create a flattened endpoint with just the host
+				endpoint := models.IngressEndpoint{
+					KubernetesName: ing.Name,
+					IsIngress:      true,
+					Host:           host,
+					Path:           path,
+					Port:           utils.ToPtr[int32](443),
+					TlsStatus:      tlsStatus,
+					TeamID:         teamID,
+					ProjectID:      projectID,
+					EnvironmentID:  environmentID,
+					ServiceID:      serviceID,
+				}
+
+				discovery.External = append(discovery.External, endpoint)
 			}
 		}
-
-		discovery.External = append(discovery.External, endpoint)
 	}
 
 	return discovery, nil
@@ -438,46 +350,4 @@ func (self *KubeClient) DeleteOldVerificationIngresses(
 	}
 
 	return nil
-}
-
-// CheckTLSStatusForHosts checks the TLS certificate status for a slice of HostSpec
-// and returns ExtendedHostSpec with TlsIssued field populated
-func (self *KubeClient) CheckTLSStatusForHosts(ctx context.Context, namespace string, hosts []schema.HostSpec, client *kubernetes.Clientset) ([]schema.HostSpec, error) {
-	var result []schema.HostSpec
-
-	for _, host := range hosts {
-		// Look for ingresses that might have TLS configuration for this host
-		ingresses, err := client.NetworkingV1().Ingresses(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to list ingresses in namespace %s: %w", namespace, err)
-		}
-
-		// Check each ingress for TLS configuration matching this host
-		for _, ing := range ingresses.Items {
-			for _, tls := range ing.Spec.TLS {
-				for _, tlsHost := range tls.Hosts {
-					if tlsHost == host.Host {
-						// Check if the TLS secret exists and is properly issued
-						if tls.SecretName != "" {
-							secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
-							if err == nil {
-								host.TlsIssued = isCertificateIssued(secret)
-							}
-						}
-						break
-					}
-				}
-				if host.TlsIssued {
-					break
-				}
-			}
-			if host.TlsIssued {
-				break
-			}
-		}
-
-		result = append(result, host)
-	}
-
-	return result, nil
 }

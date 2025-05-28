@@ -12,8 +12,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema" // For service predicates
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/models"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, teamID, projectID, environmentID, serviceID uuid.UUID) ([]models.AvailableVariableReference, error) {
@@ -129,7 +129,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 			mu.Unlock()
 			return
 		}
-		eps, epErr := self.k8s.DiscoverEndpointsByLabels(ctx, team.Namespace, map[string]string{"unbind-environment": currentEnvironment.ID.String()}, true, client)
+		eps, epErr := self.k8s.DiscoverEndpointsByLabels(ctx, team.Namespace, map[string]string{"unbind-environment": currentEnvironment.ID.String()}, client)
 		mu.Lock()
 		if epErr != nil {
 			log.Errorf("Failed to discover endpoints: %v", epErr)

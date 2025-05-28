@@ -105,11 +105,7 @@ func TransformAvailableVariableResponse(secretData []SecretData, endpoints *Endp
 			SourceKubernetesName: kubernetesNameMap[endpoint.ServiceID],
 			SourceType:           schema.VariableReferenceSourceTypeService, // Always service
 			SourceID:             endpoint.ServiceID,
-		}
-
-		resp[i].Keys = make([]string, len(endpoint.Hosts))
-		for j, host := range endpoint.Hosts {
-			resp[i].Keys[j] = host.Host
+			Keys:                 []string{endpoint.Host},
 		}
 		i++
 	}
