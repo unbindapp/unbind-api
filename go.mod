@@ -2,7 +2,7 @@ module github.com/unbindapp/unbind-api
 
 go 1.24.0
 
-toolchain go1.24.1
+toolchain go1.24.3
 
 require (
 	entgo.io/ent v0.14.4
