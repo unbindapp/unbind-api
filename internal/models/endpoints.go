@@ -31,6 +31,8 @@ type IngressEndpoint struct {
 	Host              string       `json:"host"`
 	Path              string       `json:"path"`
 	Port              *int32       `json:"port"`
+	DNSStatus         DNSStatus    `json:"dns_status"`
+	IsCloudflare      bool         `json:"is_cloudflare"`
 	TlsStatus         TlsStatus    `json:"tls_status"`
 	TlsIssuerMessages []TlsDetails `json:"tls_issuer_messages,omitempty"`
 	TeamID            uuid.UUID    `json:"team_id"`
@@ -39,6 +41,34 @@ type IngressEndpoint struct {
 	ServiceID         uuid.UUID    `json:"service_id"`
 }
 
+// DNSStatus
+type DNSStatus string
+
+const (
+	DNSStatusUnknown    DNSStatus = "unknown"
+	DNSStatusResolved   DNSStatus = "resolved"
+	DNSStatusUnresolved DNSStatus = "unresolved"
+)
+
+// Register enum in OpenAPI specification
+// https://github.com/danielgtaylor/huma/issues/621
+func (u DNSStatus) Schema(r huma.Registry) *huma.Schema {
+	if r.Map()["DNSStatus"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "DNSStatus")
+		schemaRef.Title = "DNSStatus"
+		schemaRef.Enum = append(schemaRef.Enum,
+			[]any{
+				string(DNSStatusUnknown),
+				string(DNSStatusResolved),
+				string(DNSStatusUnresolved),
+			}...,
+		)
+		r.Map()["DNSStatus"] = schemaRef
+	}
+	return &huma.Schema{Ref: "#/components/schemas/DNSStatus"}
+}
+
+// TlsStatus
 type TlsStatus string
 
 const (

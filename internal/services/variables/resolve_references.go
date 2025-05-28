@@ -114,7 +114,7 @@ func (self *VariablesService) resolveSourceValue(ctx context.Context, client *ku
 		endpoints, err := self.k8s.DiscoverEndpointsByLabels(ctx, namespace,
 			map[string]string{
 				source.SourceType.KubernetesLabel(): source.SourceID.String(),
-			}, client)
+			}, false, client)
 		if err != nil {
 			return "", err
 		}

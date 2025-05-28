@@ -129,7 +129,7 @@ func (self *VariablesService) GetAvailableVariableReferences(ctx context.Context
 			mu.Unlock()
 			return
 		}
-		eps, epErr := self.k8s.DiscoverEndpointsByLabels(ctx, team.Namespace, map[string]string{"unbind-environment": currentEnvironment.ID.String()}, client)
+		eps, epErr := self.k8s.DiscoverEndpointsByLabels(ctx, team.Namespace, map[string]string{"unbind-environment": currentEnvironment.ID.String()}, false, client)
 		mu.Lock()
 		if epErr != nil {
 			log.Errorf("Failed to discover endpoints: %v", epErr)
