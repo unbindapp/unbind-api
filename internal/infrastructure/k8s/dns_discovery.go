@@ -183,17 +183,18 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 				issued := false
 				tlsStatus := models.TlsStatusAttempting
 
+				dnsStatus := models.DNSStatusUnknown
 				if tls.SecretName != "" {
 					secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
 					issued = err == nil && isCertificateIssued(secret)
 				}
 				if issued {
+					dnsStatus = models.DNSStatusResolved
 					tlsStatus = models.TlsStatusIssued
 				}
 
-				dnsStatus := models.DNSStatusUnknown
 				isCloudflare := false
-				if checkDNS {
+				if checkDNS && dnsStatus == models.DNSStatusUnknown {
 					ips, err := self.GetIngressNginxIP(ctx)
 					if err != nil {
 						return nil, fmt.Errorf("failed to get ingress nginx IP: %w", err)
@@ -209,59 +210,34 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 						isCloudflare, _ = self.dnsChecker.IsUsingCloudflareProxy(host)
 
 						if isCloudflare {
-							// Spin up an ingress to verify
-							testIngress, path, err := self.CreateVerificationIngress(ctx, host, self.GetInternalClient())
+							url := fmt.Sprintf("https://%s", host)
+
+							// Create a new request with context
+							req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 							if err != nil {
-								log.Warnf("Error creating ingress test for domain %s: %v", host, err)
+								log.Warnf("Error creating HTTP request for domain %s: %v", host, err)
 							} else {
-								defer func() {
-									err := self.DeleteVerificationIngress(ctx, testIngress.Name, self.GetInternalClient())
-									if err != nil {
-										log.Warnf("Error deleting ingress test for domain %s: %v", host, err)
-									}
-								}()
-
-								url := fmt.Sprintf("https://%s/.unbind-challenge/%s", host, path)
-
-								// Create a new request with context
-								req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+								// Execute the request once to check DNS resolution
+								resp, err := self.httpClient.Do(req)
 								if err != nil {
-									log.Warnf("Error creating HTTP request for domain %s: %v", host, err)
+									log.Warnf("Error executing HTTP request for domain %s: %v", host, err)
+									// If request fails, DNS is not resolved
+									dnsConfigured = false
 								} else {
-									// Retry delaying 200ms between tries
-									maxRetries := 20
-									for attempt := 0; attempt < maxRetries; attempt++ {
-										if attempt > 0 {
-											time.Sleep(200 * time.Millisecond)
-										}
-
-										// Execute the request
-										resp, err := self.httpClient.Do(req)
-										if err != nil {
-											log.Warnf("Attempt %d: Error executing HTTP request for domain %s: %v", attempt+1, host, err)
-											continue // Try again after sleep
-										}
-
-										func() {
-											defer resp.Body.Close()
-											// Check for the special header
-											if resp.Header.Get("X-DNS-Check") == "resolved" {
-												dnsConfigured = true
-												return // Exit the closure
-											}
-										}()
-
-										if dnsConfigured {
-											break
-										}
-									}
+									func() {
+										defer resp.Body.Close()
+										dnsConfigured = true
+									}()
 								}
 							}
 						}
 					}
+					dnsStatus = models.DNSStatusUnresolved
 					if dnsConfigured {
 						dnsStatus = models.DNSStatusResolved
 					}
+				} else if checkDNS {
+					isCloudflare, _ = self.dnsChecker.IsUsingCloudflareProxy(host)
 				}
 
 				endpoint := models.IngressEndpoint{
