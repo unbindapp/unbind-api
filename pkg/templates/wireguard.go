@@ -76,6 +76,10 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 						Value: "51821",
 					},
 					{
+						Name:  "INIT_ENABLED",
+						Value: "true",
+					},
+					{
 						Name: "INIT_HOST",
 						Generator: &schema.ValueGenerator{
 							Type:    schema.GeneratorTypeInput,

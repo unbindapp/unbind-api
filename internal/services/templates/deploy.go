@@ -128,6 +128,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			validatedInputs[defInput.ID] = strconv.Itoa(int(portMap[defInput.ID]))
 		}
 
+		// Resolve Node IP inputs
 		if defInput.Type == schema.InputTypeGeneratedNodeIP {
 			nodes, err := self.k8s.GetInternalClient().CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 			if err != nil {
