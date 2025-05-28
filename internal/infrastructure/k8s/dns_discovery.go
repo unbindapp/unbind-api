@@ -171,6 +171,11 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 				// Check if the secret is issued
 				issued := false
 				tlsStatus := models.TlsStatusAttempting
+
+				if tls.SecretName != "" {
+					secret, err := client.CoreV1().Secrets(namespace).Get(ctx, tls.SecretName, metav1.GetOptions{})
+					issued = err == nil && isCertificateIssued(secret)
+				}
 				if issued {
 					tlsStatus = models.TlsStatusIssued
 				}
