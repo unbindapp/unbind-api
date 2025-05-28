@@ -75,7 +75,7 @@ func TestResolveTemplate(t *testing.T) {
 	}
 	namespace := "test-namespace"
 
-	resolved, err := templater.ResolveTemplate(template, inputs, kubeNameMap, namespace, nil)
+	resolved, err := templater.ResolveTemplate(template, inputs, kubeNameMap, namespace)
 	require.NoError(t, err)
 	require.NotNil(t, resolved)
 

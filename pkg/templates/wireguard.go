@@ -43,6 +43,13 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				Required:    true,
 				Default:     utils.ToPtr("1"),
 			},
+			{
+				ID:          "input_node_ip",
+				Name:        "Node IP",
+				Type:        schema.InputTypeGeneratedNodeIP,
+				Description: "IP address to connect to WireGuard, used to boostrap wg-easy UI",
+				Hidden:      true,
+			},
 		},
 		Services: []schema.TemplateService{
 			// WireGuard Service
@@ -71,7 +78,8 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 					{
 						Name: "INIT_HOST",
 						Generator: &schema.ValueGenerator{
-							Type: schema.GeneratorTypeNodeIP,
+							Type:    schema.GeneratorTypeInput,
+							InputID: "input_node_ip",
 						},
 					},
 					{

@@ -140,7 +140,6 @@ const (
 	GeneratorTypePasswordBcrypt GeneratorType = "bcrypt"
 	GeneratorTypeInput          GeneratorType = "input"
 	GeneratorTypeJWT            GeneratorType = "jwt"
-	GeneratorTypeNodeIP         GeneratorType = "node_ip"
 	GeneratorTypeStringReplace  GeneratorType = "string_replace"
 )
 
@@ -157,7 +156,6 @@ func (u GeneratorType) Schema(r huma.Registry) *huma.Schema {
 				string(GeneratorTypePasswordBcrypt),
 				string(GeneratorTypeInput),
 				string(GeneratorTypeJWT),
-				string(GeneratorTypeNodeIP),
 				string(GeneratorTypeStringReplace),
 			}...)
 		r.Map()["GeneratorType"] = schemaRef
@@ -333,6 +331,7 @@ const (
 	InputTypeDatabaseSize      TemplateInputType = "database-size"
 	InputTypeGeneratedNodePort TemplateInputType = "generated-node-port"
 	InputTypeGeneratedPassword TemplateInputType = "generated-password"
+	InputTypeGeneratedNodeIP   TemplateInputType = "generated-node-ip" // For node IPs, e.g. for wg-easy
 )
 
 // Register the enum in OpenAPI specification

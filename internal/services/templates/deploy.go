@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/unbindapp/unbind-api/pkg/databases"
 	"github.com/unbindapp/unbind-api/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.TemplateDeployInput) ([]*models.ServiceResponse, error) {
@@ -125,6 +127,33 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			portMap[defInput.ID] = nodePort
 			validatedInputs[defInput.ID] = strconv.Itoa(int(portMap[defInput.ID]))
 		}
+
+		if defInput.Type == schema.InputTypeGeneratedNodeIP {
+			nodes, err := self.k8s.GetInternalClient().CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("failed to list nodes: %w", err)
+			}
+
+			// Sort nodes by created_at desc
+			sort.Slice(nodes.Items, func(i, j int) bool {
+				return nodes.Items[i].CreationTimestamp.After(nodes.Items[j].CreationTimestamp.Time)
+			})
+
+			var nodeIP string
+			for _, node := range nodes.Items {
+				for _, addr := range node.Status.Addresses {
+					if addr.Type == corev1.NodeExternalIP {
+						nodeIP = addr.Address
+						break
+					}
+				}
+				if nodeIP != "" {
+					break
+				}
+			}
+
+			validatedInputs[defInput.ID] = nodeIP
+		}
 	}
 
 	if len(portMap) != portInputCount {
@@ -144,7 +173,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	templater := templates.NewTemplater(self.cfg)
-	generatedTemplate, err := templater.ResolveTemplate(&template.Definition, validatedInputs, kubeNameMap, project.Edges.Team.Namespace, self.k8s.GetInternalClient())
+	generatedTemplate, err := templater.ResolveTemplate(&template.Definition, validatedInputs, kubeNameMap, project.Edges.Team.Namespace)
 	if err != nil {
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, err.Error())
 	}
