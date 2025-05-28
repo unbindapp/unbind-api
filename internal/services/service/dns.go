@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
@@ -80,13 +81,16 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 				IsIngress:      true,
 				Host:           host.Host,
 				Path:           "/",
-				Port:           host.Port,
-				DNSStatus:      models.DNSStatusUnknown,
-				TlsStatus:      models.TlsStatusPending,
-				TeamID:         project.Edges.Team.ID,
-				ProjectID:      project.ID,
-				EnvironmentID:  env.ID,
-				ServiceID:      serviceID,
+				Port: schema.PortSpec{
+					Port:     443,
+					Protocol: utils.ToPtr(schema.ProtocolTCP),
+				},
+				DNSStatus:     models.DNSStatusUnknown,
+				TlsStatus:     models.TlsStatusPending,
+				TeamID:        project.Edges.Team.ID,
+				ProjectID:     project.ID,
+				EnvironmentID: env.ID,
+				ServiceID:     serviceID,
 			}
 
 			if host.Path != "" {

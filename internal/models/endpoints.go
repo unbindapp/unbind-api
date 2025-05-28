@@ -26,19 +26,19 @@ type ServiceEndpoint struct {
 
 // IngressEndpoint represents external DNS information for a Kubernetes ingress
 type IngressEndpoint struct {
-	KubernetesName    string       `json:"kubernetes_name"`
-	IsIngress         bool         `json:"is_ingress"`
-	Host              string       `json:"host"`
-	Path              string       `json:"path"`
-	Port              *int32       `json:"port"`
-	DNSStatus         DNSStatus    `json:"dns_status"`
-	IsCloudflare      bool         `json:"is_cloudflare"`
-	TlsStatus         TlsStatus    `json:"tls_status"`
-	TlsIssuerMessages []TlsDetails `json:"tls_issuer_messages,omitempty"`
-	TeamID            uuid.UUID    `json:"team_id"`
-	ProjectID         uuid.UUID    `json:"project_id"`
-	EnvironmentID     uuid.UUID    `json:"environment_id"`
-	ServiceID         uuid.UUID    `json:"service_id"`
+	KubernetesName    string          `json:"kubernetes_name"`
+	IsIngress         bool            `json:"is_ingress"`
+	Host              string          `json:"host"`
+	Path              string          `json:"path"`
+	Port              schema.PortSpec `json:"port"`
+	DNSStatus         DNSStatus       `json:"dns_status"`
+	IsCloudflare      bool            `json:"is_cloudflare"`
+	TlsStatus         TlsStatus       `json:"tls_status"`
+	TlsIssuerMessages []TlsDetails    `json:"tls_issuer_messages,omitempty"`
+	TeamID            uuid.UUID       `json:"team_id"`
+	ProjectID         uuid.UUID       `json:"project_id"`
+	EnvironmentID     uuid.UUID       `json:"environment_id"`
+	ServiceID         uuid.UUID       `json:"service_id"`
 }
 
 // DNSStatus

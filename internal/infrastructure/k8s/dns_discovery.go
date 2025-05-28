@@ -99,12 +99,17 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 							Host:           nodeIP,
 							Path:           "/",
 							DNSStatus:      models.DNSStatusUnknown,
-							Port:           utils.ToPtr(port.NodePort),
-							TlsStatus:      models.TlsStatusNotAvailable,
-							TeamID:         teamID,
-							ProjectID:      projectID,
-							EnvironmentID:  environmentID,
-							ServiceID:      serviceID,
+							Port: schema.PortSpec{
+								IsNodePort: true,
+								Port:       port.NodePort,
+								NodePort:   utils.ToPtr(port.NodePort),
+								Protocol:   utils.ToPtr(schema.Protocol(port.Protocol)),
+							},
+							TlsStatus:     models.TlsStatusNotAvailable,
+							TeamID:        teamID,
+							ProjectID:     projectID,
+							EnvironmentID: environmentID,
+							ServiceID:     serviceID,
 						}
 						discovery.External = append(discovery.External, endpoint)
 					}
@@ -124,13 +129,18 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 									IsIngress:      false,
 									Host:           host,
 									Path:           "/",
-									Port:           utils.ToPtr(port.NodePort),
-									DNSStatus:      models.DNSStatusUnknown,
-									TlsStatus:      models.TlsStatusNotAvailable,
-									TeamID:         teamID,
-									ProjectID:      projectID,
-									EnvironmentID:  environmentID,
-									ServiceID:      serviceID,
+									Port: schema.PortSpec{
+										IsNodePort: true,
+										Port:       port.NodePort,
+										NodePort:   utils.ToPtr(port.NodePort),
+										Protocol:   utils.ToPtr(schema.Protocol(port.Protocol)),
+									},
+									DNSStatus:     models.DNSStatusUnknown,
+									TlsStatus:     models.TlsStatusNotAvailable,
+									TeamID:        teamID,
+									ProjectID:     projectID,
+									EnvironmentID: environmentID,
+									ServiceID:     serviceID,
 								}
 								discovery.External = append(discovery.External, endpoint)
 							}
@@ -247,14 +257,17 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 					IsIngress:      true,
 					Host:           host,
 					Path:           path,
-					Port:           utils.ToPtr[int32](443),
-					DNSStatus:      dnsStatus,
-					IsCloudflare:   isCloudflare,
-					TlsStatus:      tlsStatus,
-					TeamID:         teamID,
-					ProjectID:      projectID,
-					EnvironmentID:  environmentID,
-					ServiceID:      serviceID,
+					Port: schema.PortSpec{
+						Port:     443,
+						Protocol: utils.ToPtr(schema.ProtocolTCP),
+					},
+					DNSStatus:     dnsStatus,
+					IsCloudflare:  isCloudflare,
+					TlsStatus:     tlsStatus,
+					TeamID:        teamID,
+					ProjectID:     projectID,
+					EnvironmentID: environmentID,
+					ServiceID:     serviceID,
 				}
 				discovery.External = append(discovery.External, endpoint)
 
