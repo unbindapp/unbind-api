@@ -9,6 +9,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 type DnsCheckInput struct {
@@ -17,8 +18,8 @@ type DnsCheckInput struct {
 }
 
 type DnsCheck struct {
-	Cloudflare    bool `json:"cloudflare"`
-	DnsConfigured bool `json:"dns_configured"`
+	IsCloudflare bool             `json:"is_cloudflare"`
+	DnsStatus    models.DNSStatus `json:"dns_status"`
 }
 
 type DnsCheckResponse struct {
@@ -36,13 +37,17 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 	}
 
 	// Check DNS
-	dnsCheck := &DnsCheck{}
+	dnsCheck := &DnsCheck{
+		DnsStatus: models.DNSStatusUnresolved,
+	}
 	resolved, err := self.srv.DNSChecker.IsPointingToIP(input.Domain, ips.IPv4)
 	if err != nil {
 		log.Error("Error checking DNS", "err", err)
 		return nil, huma.Error500InternalServerError("Error checking DNS")
 	}
-	dnsCheck.DnsConfigured = resolved
+	if resolved {
+		dnsCheck.DnsStatus = models.DNSStatusResolved
+	}
 
 	if !resolved {
 		resolved, err = self.srv.DNSChecker.IsPointingToIP(input.Domain, ips.IPv6)
@@ -50,7 +55,9 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 			log.Error("Error checking DNS", "err", err)
 			return nil, huma.Error500InternalServerError("Error checking DNS")
 		}
-		dnsCheck.DnsConfigured = resolved
+		if resolved {
+			dnsCheck.DnsStatus = models.DNSStatusResolved
+		}
 	}
 
 	// Check Cloudflare
@@ -59,10 +66,10 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 		if err != nil {
 			log.Error("Error checking Cloudflare", "err", err)
 		}
-		dnsCheck.Cloudflare = resolved
+		dnsCheck.IsCloudflare = resolved
 	}
 
-	if dnsCheck.Cloudflare {
+	if dnsCheck.IsCloudflare {
 		// Spin up an ingress to verify
 		testIngress, testPath, err := self.srv.KubeClient.CreateVerificationIngress(ctx, input.Domain, self.srv.KubeClient.GetInternalClient())
 		if err != nil {
@@ -100,12 +107,12 @@ func (self *HandlerGroup) CheckDNSResolution(ctx context.Context, input *DnsChec
 						defer resp.Body.Close()
 						// Check for the special header
 						if resp.Header.Get("X-DNS-Check") == "resolved" {
-							dnsCheck.DnsConfigured = true
+							dnsCheck.DnsStatus = models.DNSStatusResolved
 							return // Exit the closure
 						}
 					}()
 
-					if dnsCheck.DnsConfigured {
+					if dnsCheck.DnsStatus == models.DNSStatusResolved {
 						break
 					}
 				}
