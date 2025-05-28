@@ -204,9 +204,6 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 						// Check ipv6
 						dnsConfigured, _ = self.dnsChecker.IsPointingToIP(host, ips.IPv6)
 					}
-					if dnsConfigured {
-						dnsStatus = models.DNSStatusResolved
-					}
 					if !dnsConfigured {
 						// Check cloudflare
 						isCloudflare, _ = self.dnsChecker.IsUsingCloudflareProxy(host)
@@ -255,13 +252,15 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 										}()
 
 										if dnsConfigured {
-											dnsStatus = models.DNSStatusResolved
 											break
 										}
 									}
 								}
 							}
 						}
+					}
+					if dnsConfigured {
+						dnsStatus = models.DNSStatusResolved
 					}
 				}
 
