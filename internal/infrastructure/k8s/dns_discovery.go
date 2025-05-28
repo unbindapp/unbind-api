@@ -79,13 +79,24 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 				return nil, fmt.Errorf("failed to list nodes: %w", err)
 			}
 
+			// Sort nodes by created_at desc
+			sort.Slice(nodes.Items, func(i, j int) bool {
+				return nodes.Items[i].CreationTimestamp.After(nodes.Items[j].CreationTimestamp.Time)
+			})
+
 			var nodeIPs []string
+			ipCount := 0
+			maxNodes := 5 // Limit to 5 node IPs to return
 			for _, node := range nodes.Items {
 				for _, addr := range node.Status.Addresses {
 					if addr.Type == corev1.NodeExternalIP {
 						nodeIPs = append(nodeIPs, addr.Address)
+						ipCount++
 						break
 					}
+				}
+				if ipCount >= maxNodes {
+					break
 				}
 			}
 
