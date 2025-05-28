@@ -8,12 +8,11 @@ import (
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
-	service_service "github.com/unbindapp/unbind-api/internal/services/service"
 )
 
 type CreateServiceInput struct {
 	server.BaseAuthInput
-	Body *service_service.CreateServiceInput
+	Body *models.CreateServiceInput
 }
 
 type CreateServiceResponse struct {

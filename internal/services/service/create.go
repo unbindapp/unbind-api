@@ -25,57 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-// CreateServiceInput defines the input for creating a new service
-type CreateServiceInput struct {
-	TeamID        uuid.UUID `format:"uuid" required:"true" json:"team_id"`
-	ProjectID     uuid.UUID `format:"uuid" required:"true" json:"project_id"`
-	EnvironmentID uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
-	Name          string    `required:"true" json:"name"`
-	Description   string    `json:"description,omitempty"`
-
-	// GitHub integration
-	GitHubInstallationID *int64  `json:"github_installation_id,omitempty"`
-	RepositoryOwner      *string `json:"repository_owner,omitempty"`
-	RepositoryName       *string `json:"repository_name,omitempty"`
-
-	// Configuration
-	Type              schema.ServiceType    `required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
-	Builder           schema.ServiceBuilder `required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
-	Hosts             []schema.HostSpec     `json:"hosts,omitempty"`
-	Ports             []schema.PortSpec     `json:"ports,omitempty"`
-	Replicas          *int32                `minimum:"0" maximum:"10" json:"replicas,omitempty"`
-	AutoDeploy        *bool                 `json:"auto_deploy,omitempty"`
-	InstallCommand    *string               `json:"install_command,omitempty"`
-	BuildCommand      *string               `json:"build_command,omitempty"`
-	RunCommand        *string               `json:"run_command,omitempty"`
-	IsPublic          *bool                 `json:"is_public,omitempty"`
-	Image             *string               `json:"image,omitempty"`
-	DockerfilePath    *string               `json:"dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder"`
-	DockerfileContext *string               `json:"dockerfile_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
-
-	// Databases (special case)
-	DatabaseType         *string                `json:"database_type,omitempty"`
-	DatabaseConfig       *schema.DatabaseConfig `json:"database_config,omitempty"`
-	S3BackupSourceID     *uuid.UUID             `json:"s3_backup_source_id,omitempty" format:"uuid"`
-	S3BackupBucket       *string                `json:"s3_backup_bucket,omitempty"`
-	BackupSchedule       *string                `json:"backup_schedule,omitempty" required:"false" doc:"Cron expression for the backup schedule, e.g. '0 0 * * *'"`
-	BackupRetentionCount *int                   `json:"backup_retention,omitempty" required:"false" doc:"Number of base backups to retain, e.g. 3"`
-
-	// PVC
-	Volumes *[]schema.ServiceVolume `json:"volumes,omitempty" required:"false" doc:"Volumes to mount in the service"`
-
-	// Health check
-	HealthCheck *schema.HealthCheck `json:"health_check,omitempty" doc:"Health check configuration for the service"`
-
-	// Variable mounts
-	VariableMounts []*schema.VariableMount `json:"variable_mounts,omitempty" doc:"Mount variables as volumes"`
-
-	// Init containers
-	InitContainers []*schema.InitContainer `json:"init_containers,omitempty" doc:"Init containers to run before the main container"`
-}
-
 // CreateService creates a new service and its configuration
-func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *CreateServiceInput, bearerToken string) (*models.ServiceResponse, error) {
+func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *models.CreateServiceInput, bearerToken string) (*models.ServiceResponse, error) {
 	var err error
 	var dbDefinition *databases.Definition
 	var dbVersion *string
