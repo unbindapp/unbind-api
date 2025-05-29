@@ -189,27 +189,15 @@ func (self *VariablesService) UpdateVariables(
 	}
 
 	// Perform a restart of pods...
-	// Get label target
-	var labelValue string
-	switch input.Type {
-	// ! TODO handle references
-	// case schema.VariableReferenceSourceTypeTeam:
-	// 	labelValue = team.ID.String()
-	// case schema.VariableReferenceSourceTypeProject:
-	// 	labelValue = project.ID.String()
-	// case schema.VariableReferenceSourceTypeEnvironment:
-	// 	labelValue = environment.ID.String()
-	case schema.VariableReferenceSourceTypeService:
-		labelValue = service.ID.String()
-	default:
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid variable type")
+	// ! TODO - handle references
+	if input.Type == schema.VariableReferenceSourceTypeService {
+		err = self.k8s.RollingRestartPodsByLabel(ctx, team.Namespace, input.Type.KubernetesLabel(), service.ID.String(), client)
+		if err != nil {
+			log.Error("Failed to restart pods", "err", err, "label", input.Type.KubernetesLabel(), "value", service.ID.String())
+			return nil, err
+		}
 	}
 
-	err = self.k8s.RollingRestartPodsByLabel(ctx, team.Namespace, input.Type.KubernetesLabel(), labelValue, client)
-	if err != nil {
-		log.Error("Failed to restart pods", "err", err, "label", input.Type.KubernetesLabel(), "value", labelValue)
-		return nil, err
-	}
 	return variableResponse, nil
 }
 
