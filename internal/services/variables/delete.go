@@ -8,9 +8,9 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // Delete a secret by key
@@ -59,7 +59,7 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 	}
 
 	// Verify input
-	team, project, environment, service, secretName, err := self.validateBaseInputs(ctx, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
+	team, _, _, service, secretName, err := self.validateBaseInputs(ctx, input.Type, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -164,12 +164,13 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 	// Perform a restart of pods...
 	var labelValue string
 	switch input.Type {
-	case schema.VariableReferenceSourceTypeTeam:
-		labelValue = team.ID.String()
-	case schema.VariableReferenceSourceTypeProject:
-		labelValue = project.ID.String()
-	case schema.VariableReferenceSourceTypeEnvironment:
-		labelValue = environment.ID.String()
+	// ! TODO handle references
+	// case schema.VariableReferenceSourceTypeTeam:
+	// 	labelValue = team.ID.String()
+	// case schema.VariableReferenceSourceTypeProject:
+	// 	labelValue = project.ID.String()
+	// case schema.VariableReferenceSourceTypeEnvironment:
+	// 	labelValue = environment.ID.String()
 	case schema.VariableReferenceSourceTypeService:
 		labelValue = service.ID.String()
 	default:
