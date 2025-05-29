@@ -15,13 +15,15 @@ import (
 )
 
 // GetPodsByLabels returns pods matching the provided labels in a namespace
-func (k *KubeClient) GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*corev1.PodList, error) {
-	// Convert the labels map to a selector string
-	var labelSelectors []string
-	for key, value := range labels {
-		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", key, value))
+func (k *KubeClient) GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, labelSelector string, client *kubernetes.Clientset) (*corev1.PodList, error) {
+	if len(labels) > 0 {
+		// Convert the labels map to a selector string
+		var labelSelectors []string
+		for key, value := range labels {
+			labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", key, value))
+		}
+		labelSelector = strings.Join(labelSelectors, ",")
 	}
-	labelSelector := strings.Join(labelSelectors, ",")
 
 	return client.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
@@ -30,22 +32,16 @@ func (k *KubeClient) GetPodsByLabels(ctx context.Context, namespace string, labe
 
 // RollingRestartPodsByLabel performs a rolling restart of all pods with a specific label
 // regardless of whether they're part of Deployments, StatefulSets, or standalone pods.
-func (k *KubeClient) RollingRestartPodsByLabel(
+func (k *KubeClient) RollingRestartPodsByLabels(
 	ctx context.Context,
 	namespace string,
-	labelKey string,
-	labelValue string,
+	labelSelector string,
 	client *kubernetes.Clientset,
 ) error {
-	// Create labels map for the selector
-	labels := map[string]string{
-		labelKey: labelValue,
-	}
-
 	// Get all pods matching the label
-	pods, err := k.GetPodsByLabels(ctx, namespace, labels, client)
+	pods, err := k.GetPodsByLabels(ctx, namespace, nil, labelSelector, client)
 	if err != nil {
-		return fmt.Errorf("failed to get pods with label %s=%s: %w", labelKey, labelValue, err)
+		return fmt.Errorf("failed to get pods with labels: %w", err)
 	}
 
 	// Group pods by owner

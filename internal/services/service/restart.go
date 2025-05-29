@@ -2,6 +2,7 @@ package service_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
@@ -50,5 +51,5 @@ func (self *ServiceService) RestartServiceByID(ctx context.Context, requesterUse
 		return err
 	}
 
-	return self.k8s.RollingRestartPodsByLabel(ctx, project.Edges.Team.Namespace, "unbind-service", service.ID.String(), client)
+	return self.k8s.RollingRestartPodsByLabels(ctx, project.Edges.Team.Namespace, fmt.Sprintf("%s=%s", "unbind-service", service.ID.String()), client)
 }

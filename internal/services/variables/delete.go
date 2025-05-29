@@ -2,15 +2,17 @@ package variables_service
 
 import (
 	"context"
+	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // Delete a secret by key
@@ -71,6 +73,7 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 	}
 
 	secrets := make(map[string][]byte)
+	keysToDelete := []string{}
 	if err := self.repo.WithTx(ctx, func(tx repository.TxInterface) error {
 		// Delete reference IDs
 		if input.Type == schema.VariableReferenceSourceTypeService {
@@ -103,6 +106,8 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 					continue
 				}
 			}
+
+			keysToDelete = append(keysToDelete, secretKey.Name)
 
 			// Delete variable mounts if they exist
 			indexToDelete := -1
@@ -161,24 +166,42 @@ func (self *VariablesService) DeleteVariablesByKey(ctx context.Context, userID u
 		variableResponse.VariableReferences = models.TransformVariableReferenceResponseEntities(references)
 	}
 
-	// Perform a restart of pods...
-	var labelValue string
+	var sourceID uuid.UUID
 	switch input.Type {
 	case schema.VariableReferenceSourceTypeTeam:
-		labelValue = team.ID.String()
+		sourceID = team.ID
 	case schema.VariableReferenceSourceTypeProject:
-		labelValue = project.ID.String()
+		sourceID = project.ID
 	case schema.VariableReferenceSourceTypeEnvironment:
-		labelValue = environment.ID.String()
+		sourceID = environment.ID
 	case schema.VariableReferenceSourceTypeService:
-		labelValue = service.ID.String()
-	default:
-		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid variable type")
+		sourceID = service.ID
 	}
 
-	err = self.k8s.RollingRestartPodsByLabel(ctx, team.Namespace, input.Type.KubernetesLabel(), labelValue, client)
+	// Get services referencing deleted variables
+	services, err := self.repo.Variables().GetServicesReferencingID(ctx, sourceID, keysToDelete)
+
+	// Build labels to restart
+	var labelSelectors []string
+	// Convert the labels map to a selector string
+	// var labelSelectors []string
+	// for key, value := range labels {
+	// 	labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", key, value))
+	// }
+	// labelSelector = strings.Join(labelSelectors, ",")
+	if input.Type == schema.VariableReferenceSourceTypeService {
+		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", "unbind-service", service.ID.String()))
+	}
+
+	// Add other services
+	for _, svc := range services {
+		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", "unbind-service", svc.ID.String()))
+	}
+	labelSelector := strings.Join(labelSelectors, ",")
+
+	err = self.k8s.RollingRestartPodsByLabels(ctx, team.Namespace, labelSelector, client)
 	if err != nil {
-		log.Error("Failed to restart pods", "err", err, "label", input.Type.KubernetesLabel(), "value", labelValue)
+		log.Error("Failed to restart pods", "err", err)
 		return nil, err
 	}
 
