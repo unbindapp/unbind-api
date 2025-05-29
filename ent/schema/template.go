@@ -348,6 +348,7 @@ func (u TemplateInputType) Schema(r huma.Registry) *huma.Schema {
 				string(InputTypeDatabaseSize),
 				string(InputTypeGeneratedNodePort),
 				string(InputTypeGeneratedPassword),
+				string(InputTypeGeneratedNodeIP),
 			}...)
 		r.Map()["TemplateInputType"] = schemaRef
 	}
