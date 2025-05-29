@@ -30,7 +30,7 @@ type PodStatusOptions struct {
 // GetPodContainerStatusByLabelsWithOptions efficiently fetches pod status with configurable options
 // Container state events are always inferred (lightweight and reliable)
 func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset, options PodStatusOptions) ([]PodContainerStatus, error) {
-	pods, err := self.GetPodsByLabels(ctx, namespace, labels, "", client)
+	pods, err := self.GetPodsByLabels(ctx, namespace, labels, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods: %w", err)
 	}

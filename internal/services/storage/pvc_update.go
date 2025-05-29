@@ -188,10 +188,11 @@ func (self *StorageService) UpdatePVC(ctx context.Context, requesterUserID uuid.
 
 	// Restart pods if needed
 	if input.CapacityGB != nil && updatedPvc.MountedOnServiceID != nil {
-		err = self.k8s.RollingRestartPodsByLabels(
+		err = self.k8s.RollingRestartPodsByLabel(
 			ctx,
 			team.Namespace,
-			fmt.Sprintf("unbind-service=%s", (*updatedPvc.MountedOnServiceID).String()),
+			"unbind-service",
+			(*updatedPvc.MountedOnServiceID).String(),
 			client,
 		)
 		if err != nil {

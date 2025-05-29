@@ -11,9 +11,9 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // Create secrets in bulk
@@ -140,12 +140,6 @@ func (self *VariablesService) UpdateVariables(
 			if err != nil {
 				return err
 			}
-		} else if behavior == models.VariableUpdateBehaviorOverwrite {
-			// Overwrite secrets
-			_, err = self.k8s.OverwriteSecretValues(ctx, secretName, team.Namespace, newVariables, client)
-			if err != nil {
-				return err
-			}
 		} else {
 			// make secrets
 			_, err = self.k8s.UpsertSecretValues(ctx, secretName, team.Namespace, newVariables, client)
@@ -189,43 +183,27 @@ func (self *VariablesService) UpdateVariables(
 		variableResponse.VariableReferences = models.TransformVariableReferenceResponseEntities(references)
 	}
 
-	var sourceID uuid.UUID
+	// Perform a restart of pods...
+	// Get label target
+	var labelValue string
 	switch input.Type {
 	case schema.VariableReferenceSourceTypeTeam:
-		sourceID = team.ID
+		labelValue = team.ID.String()
 	case schema.VariableReferenceSourceTypeProject:
-		sourceID = project.ID
+		labelValue = project.ID.String()
 	case schema.VariableReferenceSourceTypeEnvironment:
-		sourceID = environment.ID
+		labelValue = environment.ID.String()
 	case schema.VariableReferenceSourceTypeService:
-		sourceID = service.ID
+		labelValue = service.ID.String()
+	default:
+		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid variable type")
 	}
 
-	// Get services referencing deleted variables
-	var keysToCheck []string
-	for k := range newVariables {
-		keysToCheck = append(keysToCheck, k)
-	}
-	services, err := self.repo.Variables().GetServicesReferencingID(ctx, sourceID, keysToCheck)
-
-	// Build labels to restart
-	var labelSelectors []string
-	if input.Type == schema.VariableReferenceSourceTypeService {
-		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", "unbind-service", service.ID.String()))
-	}
-
-	// Add other services
-	for _, svc := range services {
-		labelSelectors = append(labelSelectors, fmt.Sprintf("%s=%s", "unbind-service", svc.ID.String()))
-	}
-	labelSelector := strings.Join(labelSelectors, ",")
-
-	err = self.k8s.RollingRestartPodsByLabels(ctx, team.Namespace, labelSelector, client)
+	err = self.k8s.RollingRestartPodsByLabel(ctx, team.Namespace, input.Type.KubernetesLabel(), labelValue, client)
 	if err != nil {
-		log.Error("Failed to restart pods", "err", err)
+		log.Error("Failed to restart pods", "err", err, "label", input.Type.KubernetesLabel(), "value", labelValue)
 		return nil, err
 	}
-
 	return variableResponse, nil
 }
 

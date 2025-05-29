@@ -25,7 +25,7 @@ func (self *KubeClient) StreamPodLogs(
 	eventChan chan<- loki.LogEvents,
 ) error {
 	// Get pods for labels
-	pods, err := self.GetPodsByLabels(ctx, namespace, map[string]string{"unbind-deployment": opts.LabelValue}, "", client)
+	pods, err := self.GetPodsByLabels(ctx, namespace, map[string]string{"unbind-deployment": opts.LabelValue}, client)
 	if err != nil {
 		return fmt.Errorf("failed to get pods with label %s: %w", opts.LabelValue, err)
 	}
