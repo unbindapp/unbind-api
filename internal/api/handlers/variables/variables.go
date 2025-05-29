@@ -94,6 +94,9 @@ func handleVariablesErr(err error) error {
 	if errors.Is(err, errdefs.ErrNotFound) {
 		return huma.Error404NotFound(err.Error())
 	}
+	if errors.Is(err, errdefs.ErrInvalidInput) {
+		return huma.Error400BadRequest(err.Error())
+	}
 	log.Error("Error getting variables", "err", err)
 	return huma.Error500InternalServerError("Unable to retrieve variables")
 }
