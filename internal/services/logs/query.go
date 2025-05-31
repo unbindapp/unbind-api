@@ -44,7 +44,7 @@ func (self *LogsService) QueryLogs(ctx context.Context, requesterUserID uuid.UUI
 		}
 
 		// Validate that the deployment belongs to the level requested
-		if err := self.validateDeploymentInput(ctx, deployment.ID, service, environment, project, team); err != nil {
+		if err := self.validateDeploymentInput(ctx, deployment, service, environment, project, team); err != nil {
 			return nil, err
 		}
 

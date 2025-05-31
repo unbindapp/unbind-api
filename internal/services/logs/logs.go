@@ -9,9 +9,9 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
+	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // Integrate logs management with internal permissions and kubernetes RBAC
@@ -123,21 +123,21 @@ func (self *LogsService) validatePermissionsAndParseInputs(ctx context.Context, 
 	return team, project, environment, service, nil
 }
 
-func (self *LogsService) validateDeploymentInput(ctx context.Context, deploymentID uuid.UUID, service *ent.Service, environment *ent.Environment, project *ent.Project, team *ent.Team) error {
+func (self *LogsService) validateDeploymentInput(ctx context.Context, deployment *ent.Deployment, service *ent.Service, environment *ent.Environment, project *ent.Project, team *ent.Team) error {
 	// Validation
 	validDeployment := false
 	var err error
 	if service != nil {
-		if deploymentID != service.ID {
+		if deployment.ServiceID != service.ID {
 			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
 		}
 		validDeployment = true
 	} else if environment != nil {
-		validDeployment, err = self.repo.Deployment().ExistsInEnvironment(ctx, deploymentID, environment.ID)
+		validDeployment, err = self.repo.Deployment().ExistsInEnvironment(ctx, deployment.ID, environment.ID)
 	} else if project != nil {
-		validDeployment, err = self.repo.Deployment().ExistsInProject(ctx, deploymentID, project.ID)
+		validDeployment, err = self.repo.Deployment().ExistsInProject(ctx, deployment.ID, project.ID)
 	} else if team != nil {
-		validDeployment, err = self.repo.Deployment().ExistsInTeam(ctx, deploymentID, team.ID)
+		validDeployment, err = self.repo.Deployment().ExistsInTeam(ctx, deployment.ID, team.ID)
 	}
 
 	if err != nil || !validDeployment {
