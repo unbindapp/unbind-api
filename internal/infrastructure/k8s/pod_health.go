@@ -201,6 +201,8 @@ func mapEventType(reason, message string) models.EventType {
 	switch {
 	case strings.Contains(reasonLower, "oom") || strings.Contains(messageLower, "out of memory"):
 		return models.EventTypeOOMKilled
+	case strings.Contains(reasonLower, "imagepullbackoff"):
+		return models.EventTypeImagePullBackOff
 	case strings.Contains(reasonLower, "backoff") || strings.Contains(reasonLower, "crashloop"):
 		return models.EventTypeCrashLoopBackOff
 	case strings.Contains(reasonLower, "created") || reasonLower == "created":

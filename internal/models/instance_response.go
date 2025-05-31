@@ -15,6 +15,7 @@ const (
 	EventTypeContainerCreated EventType = "ContainerCreated"
 	EventTypeContainerStarted EventType = "ContainerStarted"
 	EventTypeContainerStopped EventType = "ContainerStopped"
+	EventTypeImagePullBackOff EventType = "ImagePullBackOff"
 	EventTypeNodeNotReady     EventType = "NodeNotReady"
 	EventTypeSchedulingFailed EventType = "SchedulingFailed"
 	EventTypeUnknown          EventType = "Unknown"

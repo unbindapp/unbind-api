@@ -179,7 +179,8 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 		// Detect launch error
 		for _, event := range events {
 			if event.Type == models.EventTypeNodeNotReady ||
-				event.Type == models.EventTypeSchedulingFailed {
+				event.Type == models.EventTypeSchedulingFailed ||
+				event.Type == models.EventTypeImagePullBackOff {
 				targetStatus = schema.DeploymentStatusLaunchError
 				break
 			}
