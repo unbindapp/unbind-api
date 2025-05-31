@@ -174,7 +174,16 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 	if hasCrashing {
 		targetStatus = schema.DeploymentStatusCrashing
 	} else if hasPending || readyCount < expectedReplicas {
-		targetStatus = schema.DeploymentStatusPending
+		targetStatus = schema.DeploymentStatusLaunching
+
+		// Detect launch error
+		for _, event := range events {
+			if event.Type == models.EventTypeNodeNotReady ||
+				event.Type == models.EventTypeSchedulingFailed {
+				targetStatus = schema.DeploymentStatusLaunchError
+				break
+			}
+		}
 	} else {
 		targetStatus = schema.DeploymentStatusActive
 	}

@@ -25,10 +25,11 @@ const (
 	DeploymentStatusBuildCancelled DeploymentStatus = "build-cancelled"
 	DeploymentStatusBuildFailed    DeploymentStatus = "build-failed"
 	// * POD/Instance related
-	DeploymentStatusActive   DeploymentStatus = "active"   // Running and healthy
-	DeploymentStatusPending  DeploymentStatus = "pending"  // Waiting for resources or other conditions
-	DeploymentStatusCrashing DeploymentStatus = "crashing" // Pod is crashing or failing in a loop
-	DeploymentStatusRemoved  DeploymentStatus = "removed"  // Deployment has been replaced by a newer one
+	DeploymentStatusActive      DeploymentStatus = "active"       // Running and healthy
+	DeploymentStatusLaunching   DeploymentStatus = "launching"    // Waiting for resources or other conditions
+	DeploymentStatusLaunchError DeploymentStatus = "launch-error" // Failed to launch due to an error
+	DeploymentStatusCrashing    DeploymentStatus = "crashing"     // Pod is crashing or failing in a loop
+	DeploymentStatusRemoved     DeploymentStatus = "removed"      // Deployment has been replaced by a newer one
 )
 
 var allDeploymentStatuses = []DeploymentStatus{
@@ -39,7 +40,8 @@ var allDeploymentStatuses = []DeploymentStatus{
 	DeploymentStatusBuildCancelled,
 	DeploymentStatusBuildFailed,
 	DeploymentStatusActive,
-	DeploymentStatusPending,
+	DeploymentStatusLaunching,
+	DeploymentStatusLaunchError,
 	DeploymentStatusCrashing,
 	DeploymentStatusRemoved,
 }
