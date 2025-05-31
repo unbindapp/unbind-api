@@ -79,6 +79,7 @@ type RedeployExistingDeploymentInput struct {
 	ServiceID     uuid.UUID `format:"uuid" required:"true" json:"service_id"`
 	EnvironmentID uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
 	DeploymentID  uuid.UUID `format:"uuid" required:"true" json:"deployment_id"`
+	SmartRedeploy bool      `json:"smart_redeploy" required:"false" doc:"Try to intelligently redeploy without rebuilding if possible"`
 }
 
 func (self *RedeployExistingDeploymentInput) GetTeamID() uuid.UUID {

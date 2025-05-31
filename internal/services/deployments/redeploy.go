@@ -34,6 +34,58 @@ func (self *DeploymentService) resolveReferences(ctx context.Context, service *e
 	return envVars, nil
 }
 
+func (self *DeploymentService) redeployExistingImage(ctx context.Context, service *ent.Service, deployment *ent.Deployment) (*models.DeploymentResponse, error) {
+	// Update env
+	envVars, err := self.resolveReferences(ctx, service)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy deployment
+	newDeployment, err := self.repo.Deployment().CreateCopy(ctx, nil, deployment)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update deployment resource definition
+	deployment.ResourceDefinition.Spec.EnvVars = envVars
+	deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
+
+	// For docker image services, update the image reference
+	if service.Type == schema.ServiceTypeDockerimage {
+		deployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
+		deployment.Image = utils.ToPtr(service.Edges.ServiceConfig.Image)
+	}
+
+	// For database services, always use latest config
+	if service.Type == schema.ServiceTypeDatabase && service.Edges.ServiceConfig.DatabaseConfig != nil {
+		deployment.ResourceDefinition.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
+	}
+
+	// Deploy to kubernetes
+	_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
+	if err != nil {
+		// Mark failed
+		if _, err := self.repo.Deployment().MarkFailed(ctx, nil, newDeployment.ID, err.Error(), time.Now()); err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	// Mark as succeeded
+	newDeployment, err = self.repo.Deployment().MarkSucceeded(ctx, nil, newDeployment.ID, time.Now())
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the service with the new deployment
+	if err := self.repo.Service().SetCurrentDeployment(ctx, nil, service.ID, newDeployment.ID); err != nil {
+		return nil, err
+	}
+
+	return models.TransformDeploymentEntity(newDeployment), nil
+}
+
 func (self *DeploymentService) CreateRedeployment(ctx context.Context, requesterUserId uuid.UUID, input *models.RedeployExistingDeploymentInput) (*models.DeploymentResponse, error) {
 	// Editor can create deployments
 	if err := self.repo.Permissions().Check(ctx, requesterUserId, []permissions_repo.PermissionCheck{
@@ -60,72 +112,24 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 		return nil, err
 	}
 
-	if deployment.Image != nil && deployment.ResourceDefinition != nil {
-		canPullImage, _ := self.registryTester.CanPullImage(ctx, *deployment.Image)
+	// Check if we can redeploy without rebuilding
+	if input.SmartRedeploy && deployment.ResourceDefinition != nil {
+		canRedeploy := false
 
-		if canPullImage {
-			// Update env
-			envVars, err := self.resolveReferences(ctx, service)
-			if err != nil {
-				return nil, err
-			}
-			deployment.ResourceDefinition.Spec.EnvVars = envVars
-			// Set volume data to current
-			deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
-			if service.Type == schema.ServiceTypeDatabase && service.Edges.ServiceConfig.DatabaseConfig != nil {
-				deployment.ResourceDefinition.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
-			}
-			// We can just, re-deploy the existing CRD spec
-			// Deploy to kubernetes
-			_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
-			if err != nil {
-				return nil, err
-			}
-			// Update current deployment on DB
-			if err := self.repo.Service().SetCurrentDeployment(ctx, nil, deployment.ServiceID, deployment.ID); err != nil {
-				return nil, err
-			}
-			return models.TransformDeploymentEntity(deployment), nil
-		}
-	}
-
-	// For docker-image builds, if we don't have a deployment image we can get it from the config
-	if (service.Type == schema.ServiceTypeDockerimage || service.Type == schema.ServiceTypeDatabase) && deployment.ResourceDefinition != nil {
-		deployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
-		envVars, err := self.resolveReferences(ctx, service)
-		if err != nil {
-			return nil, err
-		}
-		deployment.ResourceDefinition.Spec.EnvVars = envVars
-		// Copy deployment
-		deployment.Image = utils.ToPtr(service.Edges.ServiceConfig.Image)
-		newDeployment, err := self.repo.Deployment().CreateCopy(ctx, nil, deployment)
-		if err != nil {
-			return nil, err
-		}
-		deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
-		// For database, always use latest config
-		if service.Type == schema.ServiceTypeDatabase && service.Edges.ServiceConfig.DatabaseConfig != nil {
-			deployment.ResourceDefinition.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
+		// For non-database services, check if we can pull the existing image
+		if service.Type != schema.ServiceTypeDatabase && deployment.Image != nil {
+			canPullImage, _ := self.registryTester.CanPullImage(ctx, *deployment.Image)
+			canRedeploy = canPullImage
 		}
 
-		_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
-		if err != nil {
-			// Mark failed
-			if _, err := self.repo.Deployment().MarkFailed(ctx, nil, newDeployment.ID, err.Error(), time.Now()); err != nil {
-				return nil, err
-			}
+		// For database and docker image services, we can always redeploy
+		if service.Type == schema.ServiceTypeDatabase || service.Type == schema.ServiceTypeDockerimage {
+			canRedeploy = true
 		}
-		// Mark as succeeded
-		newDeployment, err = self.repo.Deployment().MarkSucceeded(ctx, nil, newDeployment.ID, time.Now())
-		if err != nil {
-			return nil, err
+
+		if canRedeploy {
+			return self.redeployExistingImage(ctx, service, deployment)
 		}
-		// Update the service with the new deployment
-		if err := self.repo.Service().SetCurrentDeployment(ctx, nil, service.ID, newDeployment.ID); err != nil {
-			return nil, err
-		}
-		return models.TransformDeploymentEntity(newDeployment), nil
 	}
 
 	// Build a full deployment
