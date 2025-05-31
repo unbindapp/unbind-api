@@ -74,12 +74,13 @@ func (self *CreateDeploymentInput) GetEnvironmentID() uuid.UUID {
 
 // Re-deploying specific deployment ID
 type RedeployExistingDeploymentInput struct {
-	TeamID        uuid.UUID `format:"uuid" required:"true" json:"team_id"`
-	ProjectID     uuid.UUID `format:"uuid" required:"true" json:"project_id"`
-	ServiceID     uuid.UUID `format:"uuid" required:"true" json:"service_id"`
-	EnvironmentID uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
-	DeploymentID  uuid.UUID `format:"uuid" required:"true" json:"deployment_id"`
-	SmartRedeploy bool      `json:"smart_redeploy" required:"false" doc:"Try to intelligently redeploy without rebuilding if possible"`
+	TeamID            uuid.UUID `format:"uuid" required:"true" json:"team_id"`
+	ProjectID         uuid.UUID `format:"uuid" required:"true" json:"project_id"`
+	ServiceID         uuid.UUID `format:"uuid" required:"true" json:"service_id"`
+	EnvironmentID     uuid.UUID `format:"uuid" required:"true" json:"environment_id"`
+	DeploymentID      uuid.UUID `format:"uuid" required:"true" json:"deployment_id"`
+	DisableBuildCache bool      `json:"disable_build_cache" required:"false" doc:"Disable build cache for this redeployment"`
+	SmartRedeploy     bool      `json:"smart_redeploy" required:"false" doc:"Try to intelligently redeploy without rebuilding if possible"`
 }
 
 func (self *RedeployExistingDeploymentInput) GetTeamID() uuid.UUID {

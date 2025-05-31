@@ -246,7 +246,7 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		},
 	}
 
-	if opts.CacheKey != "" {
+	if opts.CacheKey != "" && !cfg.DisableBuildCache {
 		solveOpts.CacheImports = []client.CacheOptionsEntry{
 			{
 				Type: "registry",

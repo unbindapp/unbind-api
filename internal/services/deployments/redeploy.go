@@ -153,12 +153,13 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	}
 
 	job, err := self.deploymentController.EnqueueDeploymentJob(ctx, deployctl.DeploymentJobRequest{
-		ServiceID:     input.ServiceID,
-		Environment:   env,
-		Source:        schema.DeploymentSourceManual,
-		CommitSHA:     commitSha,
-		CommitMessage: commitMessage,
-		Committer:     deployment.CommitAuthor,
+		ServiceID:         input.ServiceID,
+		Environment:       env,
+		Source:            schema.DeploymentSourceManual,
+		CommitSHA:         commitSha,
+		CommitMessage:     commitMessage,
+		Committer:         deployment.CommitAuthor,
+		DisableBuildCache: input.DisableBuildCache,
 	})
 	if err != nil {
 		return nil, err

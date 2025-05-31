@@ -95,6 +95,8 @@ type Config struct {
 	CheckoutCommitSHA string `env:"CHECKOUT_COMMIT_SHA"`
 	// Security context
 	SecurityContext string `env:"SECURITY_CONTEXT"`
+	// Disable buildkit cache
+	DisableBuildCache bool `env:"DISABLE_BUILD_CACHE" envDefault:"false"`
 }
 
 func (self *Config) GetPostgresHost() string {

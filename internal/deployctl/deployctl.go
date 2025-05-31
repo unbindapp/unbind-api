@@ -41,6 +41,7 @@ type DeploymentJobRequest struct {
 	Environment         map[string]string       `json:"environment"`
 	Committer           *schema.GitCommitter    `json:"committer"`
 	DependsOnServiceIDs []uuid.UUID             `json:"depends_on_service_ids,omitempty"`
+	DisableBuildCache   bool                    `json:"disable_build_cache,omitempty"`
 }
 
 // Handles triggering builds for services
@@ -411,6 +412,10 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create deployment record: %w", err)
 		}
+	}
+
+	if req.DisableBuildCache {
+		req.Environment["DISABLE_BUILD_CACHE"] = "true"
 	}
 
 	req.Environment["SERVICE_DEPLOYMENT_ID"] = job.ID.String()
