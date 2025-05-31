@@ -128,10 +128,9 @@ func (self *LogsService) validateDeploymentInput(ctx context.Context, deployment
 	validDeployment := false
 	var err error
 	if service != nil {
-		if deployment.ServiceID != service.ID {
-			return errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
+		if deployment.ServiceID == service.ID {
+			validDeployment = true
 		}
-		validDeployment = true
 	} else if environment != nil {
 		validDeployment, err = self.repo.Deployment().ExistsInEnvironment(ctx, deployment.ID, environment.ID)
 	} else if project != nil {
