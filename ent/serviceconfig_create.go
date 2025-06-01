@@ -380,6 +380,12 @@ func (scc *ServiceConfigCreate) SetInitContainers(sc []*schema.InitContainer) *S
 	return scc
 }
 
+// SetResources sets the "resources" field.
+func (scc *ServiceConfigCreate) SetResources(s *schema.Resources) *ServiceConfigCreate {
+	scc.mutation.SetResources(s)
+	return scc
+}
+
 // SetID sets the "id" field.
 func (scc *ServiceConfigCreate) SetID(u uuid.UUID) *ServiceConfigCreate {
 	scc.mutation.SetID(u)
@@ -692,6 +698,10 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 	if value, ok := scc.mutation.InitContainers(); ok {
 		_spec.SetField(serviceconfig.FieldInitContainers, field.TypeJSON, value)
 		_node.InitContainers = value
+	}
+	if value, ok := scc.mutation.Resources(); ok {
+		_spec.SetField(serviceconfig.FieldResources, field.TypeJSON, value)
+		_node.Resources = value
 	}
 	if nodes := scc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1292,6 +1302,24 @@ func (u *ServiceConfigUpsert) UpdateInitContainers() *ServiceConfigUpsert {
 // ClearInitContainers clears the value of the "init_containers" field.
 func (u *ServiceConfigUpsert) ClearInitContainers() *ServiceConfigUpsert {
 	u.SetNull(serviceconfig.FieldInitContainers)
+	return u
+}
+
+// SetResources sets the "resources" field.
+func (u *ServiceConfigUpsert) SetResources(v *schema.Resources) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldResources, v)
+	return u
+}
+
+// UpdateResources sets the "resources" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateResources() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldResources)
+	return u
+}
+
+// ClearResources clears the value of the "resources" field.
+func (u *ServiceConfigUpsert) ClearResources() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldResources)
 	return u
 }
 
@@ -1945,6 +1973,27 @@ func (u *ServiceConfigUpsertOne) UpdateInitContainers() *ServiceConfigUpsertOne 
 func (u *ServiceConfigUpsertOne) ClearInitContainers() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearInitContainers()
+	})
+}
+
+// SetResources sets the "resources" field.
+func (u *ServiceConfigUpsertOne) SetResources(v *schema.Resources) *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetResources(v)
+	})
+}
+
+// UpdateResources sets the "resources" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateResources() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateResources()
+	})
+}
+
+// ClearResources clears the value of the "resources" field.
+func (u *ServiceConfigUpsertOne) ClearResources() *ServiceConfigUpsertOne {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearResources()
 	})
 }
 
@@ -2765,6 +2814,27 @@ func (u *ServiceConfigUpsertBulk) UpdateInitContainers() *ServiceConfigUpsertBul
 func (u *ServiceConfigUpsertBulk) ClearInitContainers() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
 		s.ClearInitContainers()
+	})
+}
+
+// SetResources sets the "resources" field.
+func (u *ServiceConfigUpsertBulk) SetResources(v *schema.Resources) *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.SetResources(v)
+	})
+}
+
+// UpdateResources sets the "resources" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateResources() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.UpdateResources()
+	})
+}
+
+// ClearResources clears the value of the "resources" field.
+func (u *ServiceConfigUpsertBulk) ClearResources() *ServiceConfigUpsertBulk {
+	return u.Update(func(s *ServiceConfigUpsert) {
+		s.ClearResources()
 	})
 }
 

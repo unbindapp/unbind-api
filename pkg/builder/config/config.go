@@ -75,6 +75,8 @@ type Config struct {
 	ServiceVariableMounts string `env:"SERVICE_VARIABLE_MOUNTS"` // Json serialized map[string]string
 	// Init containers
 	ServiceInitContainers string `env:"SERVICE_INIT_CONTAINERS"`
+	// B64 encoded resources
+	ServiceResources string `env:"SERVICE_RESOURCES"`
 	// Json serialized []HostSpec
 	ServiceHosts string `env:"SERVICE_HOSTS"`
 	// JsonSerialized []PortSpec

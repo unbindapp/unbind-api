@@ -48,22 +48,22 @@ func (self *DeploymentService) redeployExistingImage(ctx context.Context, servic
 	}
 
 	// Update deployment resource definition
-	deployment.ResourceDefinition.Spec.EnvVars = envVars
-	deployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
+	newDeployment.ResourceDefinition.Spec.EnvVars = envVars
+	newDeployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
 
 	// For docker image services, update the image reference
 	if service.Type == schema.ServiceTypeDockerimage {
-		deployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
-		deployment.Image = utils.ToPtr(service.Edges.ServiceConfig.Image)
+		newDeployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
+		newDeployment.Image = utils.ToPtr(service.Edges.ServiceConfig.Image)
 	}
 
 	// For database services, always use latest config
 	if service.Type == schema.ServiceTypeDatabase && service.Edges.ServiceConfig.DatabaseConfig != nil {
-		deployment.ResourceDefinition.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
+		newDeployment.ResourceDefinition.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
 	}
 
 	// Deploy to kubernetes
-	_, _, err = self.k8s.DeployUnbindService(ctx, deployment.ResourceDefinition)
+	_, _, err = self.k8s.DeployUnbindService(ctx, newDeployment.ResourceDefinition)
 	if err != nil {
 		// Mark failed
 		if _, err := self.repo.Deployment().MarkFailed(ctx, nil, newDeployment.ID, err.Error(), time.Now()); err != nil {

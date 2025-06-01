@@ -13333,6 +13333,7 @@ type ServiceConfigMutation struct {
 	appendprotected_variables []string
 	init_containers           *[]*schema.InitContainer
 	appendinit_containers     []*schema.InitContainer
+	resources                 **schema.Resources
 	clearedFields             map[string]struct{}
 	service                   *uuid.UUID
 	clearedservice            bool
@@ -15021,6 +15022,55 @@ func (m *ServiceConfigMutation) ResetInitContainers() {
 	delete(m.clearedFields, serviceconfig.FieldInitContainers)
 }
 
+// SetResources sets the "resources" field.
+func (m *ServiceConfigMutation) SetResources(s *schema.Resources) {
+	m.resources = &s
+}
+
+// Resources returns the value of the "resources" field in the mutation.
+func (m *ServiceConfigMutation) Resources() (r *schema.Resources, exists bool) {
+	v := m.resources
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResources returns the old "resources" field's value of the ServiceConfig entity.
+// If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceConfigMutation) OldResources(ctx context.Context) (v *schema.Resources, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResources is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResources requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResources: %w", err)
+	}
+	return oldValue.Resources, nil
+}
+
+// ClearResources clears the value of the "resources" field.
+func (m *ServiceConfigMutation) ClearResources() {
+	m.resources = nil
+	m.clearedFields[serviceconfig.FieldResources] = struct{}{}
+}
+
+// ResourcesCleared returns if the "resources" field was cleared in this mutation.
+func (m *ServiceConfigMutation) ResourcesCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldResources]
+	return ok
+}
+
+// ResetResources resets all changes to the "resources" field.
+func (m *ServiceConfigMutation) ResetResources() {
+	m.resources = nil
+	delete(m.clearedFields, serviceconfig.FieldResources)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *ServiceConfigMutation) ClearService() {
 	m.clearedservice = true
@@ -15122,7 +15172,7 @@ func (m *ServiceConfigMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceConfigMutation) Fields() []string {
-	fields := make([]string, 0, 32)
+	fields := make([]string, 0, 33)
 	if m.created_at != nil {
 		fields = append(fields, serviceconfig.FieldCreatedAt)
 	}
@@ -15219,6 +15269,9 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.init_containers != nil {
 		fields = append(fields, serviceconfig.FieldInitContainers)
 	}
+	if m.resources != nil {
+		fields = append(fields, serviceconfig.FieldResources)
+	}
 	return fields
 }
 
@@ -15291,6 +15344,8 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.ProtectedVariables()
 	case serviceconfig.FieldInitContainers:
 		return m.InitContainers()
+	case serviceconfig.FieldResources:
+		return m.Resources()
 	}
 	return nil, false
 }
@@ -15364,6 +15419,8 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldProtectedVariables(ctx)
 	case serviceconfig.FieldInitContainers:
 		return m.OldInitContainers(ctx)
+	case serviceconfig.FieldResources:
+		return m.OldResources(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -15597,6 +15654,13 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetInitContainers(v)
 		return nil
+	case serviceconfig.FieldResources:
+		v, ok := value.(*schema.Resources)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResources(v)
+		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)
 }
@@ -15720,6 +15784,9 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldInitContainers) {
 		fields = append(fields, serviceconfig.FieldInitContainers)
 	}
+	if m.FieldCleared(serviceconfig.FieldResources) {
+		fields = append(fields, serviceconfig.FieldResources)
+	}
 	return fields
 }
 
@@ -15799,6 +15866,9 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 		return nil
 	case serviceconfig.FieldInitContainers:
 		m.ClearInitContainers()
+		return nil
+	case serviceconfig.FieldResources:
+		m.ClearResources()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig nullable field %s", name)
@@ -15903,6 +15973,9 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 		return nil
 	case serviceconfig.FieldInitContainers:
 		m.ResetInitContainers()
+		return nil
+	case serviceconfig.FieldResources:
+		m.ResetResources()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceConfig field %s", name)

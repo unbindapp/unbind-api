@@ -397,6 +397,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			VariableMounts:          input.VariableMounts,
 			ProtectedVariables:      protectedVariables,
 			InitContainers:          input.InitContainers,
+			Resources:               input.Resources,
 		}
 
 		serviceConfig, err = self.repo.Service().CreateConfig(ctx, tx, createInput)

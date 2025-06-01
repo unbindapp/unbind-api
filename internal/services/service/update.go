@@ -248,6 +248,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			VariableMounts:       input.VariableMounts,
 			ProtectedVariables:   input.ProtectedVariables,
 			InitContainers:       input.InitContainers,
+			Resources:            input.Resources,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)

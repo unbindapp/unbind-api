@@ -127,6 +127,37 @@ func AsV1Volumes(volumes []ServiceVolume) []v1.VolumeSpec {
 	return v1Volumes
 }
 
+// * Resources
+// Resources defines the resource requirements/limits for a container
+type Resources struct {
+	// CPU requests and limits
+	CPURequestsMillicores *int64 `json:"cpuRequestsMillicores,omitempty" min:"1"`
+	CPULimitsMillicores   *int64 `json:"cpuLimitsMillicores,omitempty" min:"1"`
+	// Memory requests and limits
+	MemoryRequestsMebibytes *int64 `json:"memoryRequestsMebibytes,omitempty" min:"1"`
+	MemoryLimitsMebibytes   *int64 `json:"memoryLimitsMebibytes,omitempty" min:"1"`
+}
+
+func (self *Resources) AsV1ResourceSpec() *v1.ResourceSpec {
+	if self == nil {
+		return nil
+	}
+	resourceSpec := &v1.ResourceSpec{}
+	if self.CPURequestsMillicores != nil {
+		resourceSpec.CPURequestsMillicores = utils.ToPtr(*self.CPURequestsMillicores)
+	}
+	if self.CPULimitsMillicores != nil {
+		resourceSpec.CPULimitsMillicores = utils.ToPtr(*self.CPULimitsMillicores)
+	}
+	if self.MemoryRequestsMebibytes != nil {
+		resourceSpec.MemoryRequestsMebibytes = utils.ToPtr(*self.MemoryRequestsMebibytes)
+	}
+	if self.MemoryLimitsMebibytes != nil {
+		resourceSpec.MemoryLimitsMebibytes = utils.ToPtr(*self.MemoryLimitsMebibytes)
+	}
+	return resourceSpec
+}
+
 // * Health check compatible with unbind-operator
 type HealthCheckType string
 

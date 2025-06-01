@@ -1,5 +1,6 @@
-h1:d47hZQbkYFl3Ys3VVcxLDQSPWlBdm3za33ZWLF9C6yY=
+h1:HBer39oP9VS4HJsAEWCy/xMq7uOfVX3QnykVppulgG0=
 20250519010757_initial_migration.sql h1:94lMwKemoNX/ichD+2Vzb7GmOHXVj4qVTfeBInQAe0g=
 20250519163449_add_init_containers.sql h1:7bt+zCbtmlYr1QDztgka0R5wUxdjD7XYUkrhL9GYYIQ=
 20250521202532_non_nillable_kubernetes_secret.sql h1:eDpMWyeBXh5cG4poavaUMeYs5QXddFBBIyYlxc+nq64=
 20250525222843_add_pvc_metadata.sql h1:tarpjNJclKSl4XTujIJZJei5NR5SIEYU/NhT7B4fq1M=
+20250601191718_add_resources.sql h1:pyO1IT/lIpsRqQn8fGxJHHH2Oz2rnXuD7d+CSDEiP4s=

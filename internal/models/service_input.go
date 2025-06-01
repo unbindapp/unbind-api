@@ -52,6 +52,9 @@ type CreateServiceInput struct {
 
 	// Init containers
 	InitContainers []*schema.InitContainer `json:"init_containers,omitempty" doc:"Init containers to run before the main container"`
+
+	// Resources
+	Resources *schema.Resources `json:"resources,omitempty" doc:"Resource limits and requests for the service containers"`
 }
 
 // UpdateServiceConfigInput defines the input for updating a service configuration
@@ -100,4 +103,7 @@ type UpdateServiceInput struct {
 
 	// Init containers
 	InitContainers []*schema.InitContainer `json:"init_containers,omitempty" doc:"List of init containers"`
+
+	// Resources
+	Resources *schema.Resources `json:"resources,omitempty" doc:"Resource limits and requests for the service containers"`
 }

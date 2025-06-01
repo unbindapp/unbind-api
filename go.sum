@@ -596,6 +596,8 @@ github.com/tonistiigi/vt100 v0.0.0-20240514184818-90bafcd6abab h1:H6aJ0yKQ0gF49Q
 github.com/tonistiigi/vt100 v0.0.0-20240514184818-90bafcd6abab/go.mod h1:ulncasL3N9uLrVann0m+CDlJKWsIAP34MPcOJF6VRvc=
 github.com/unbindapp/unbind-operator v0.0.0-20250527171845-b9b0fed67eb9 h1:HVOU0NBgrEoTCdJrjAcUvk+v/IitdVB/k/q0cQE1Xqk=
 github.com/unbindapp/unbind-operator v0.0.0-20250527171845-b9b0fed67eb9/go.mod h1:KPSMI0U8da/8XDzhm5G2HwtHYFfF8r39HGVA+iTk6vM=
+github.com/unbindapp/unbind-operator v0.0.0-20250601191126-d5784efed391 h1:INahSKfMAZXjqjMLqnVJt/7wEYBq5KTk4YHRm9CgOVQ=
+github.com/unbindapp/unbind-operator v0.0.0-20250601191126-d5784efed391/go.mod h1:KPSMI0U8da/8XDzhm5G2HwtHYFfF8r39HGVA+iTk6vM=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
 github.com/valyala/fasthttp v1.34.0/go.mod h1:epZA5N+7pY6ZaEKRmstzOuYJx9HI8DI1oaCGZpdH4h0=

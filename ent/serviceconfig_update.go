@@ -571,6 +571,18 @@ func (scu *ServiceConfigUpdate) ClearInitContainers() *ServiceConfigUpdate {
 	return scu
 }
 
+// SetResources sets the "resources" field.
+func (scu *ServiceConfigUpdate) SetResources(s *schema.Resources) *ServiceConfigUpdate {
+	scu.mutation.SetResources(s)
+	return scu
+}
+
+// ClearResources clears the value of the "resources" field.
+func (scu *ServiceConfigUpdate) ClearResources() *ServiceConfigUpdate {
+	scu.mutation.ClearResources()
+	return scu
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scu *ServiceConfigUpdate) SetService(s *Service) *ServiceConfigUpdate {
 	return scu.SetServiceID(s.ID)
@@ -874,6 +886,12 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if scu.mutation.InitContainersCleared() {
 		_spec.ClearField(serviceconfig.FieldInitContainers, field.TypeJSON)
+	}
+	if value, ok := scu.mutation.Resources(); ok {
+		_spec.SetField(serviceconfig.FieldResources, field.TypeJSON, value)
+	}
+	if scu.mutation.ResourcesCleared() {
+		_spec.ClearField(serviceconfig.FieldResources, field.TypeJSON)
 	}
 	if scu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1491,6 +1509,18 @@ func (scuo *ServiceConfigUpdateOne) ClearInitContainers() *ServiceConfigUpdateOn
 	return scuo
 }
 
+// SetResources sets the "resources" field.
+func (scuo *ServiceConfigUpdateOne) SetResources(s *schema.Resources) *ServiceConfigUpdateOne {
+	scuo.mutation.SetResources(s)
+	return scuo
+}
+
+// ClearResources clears the value of the "resources" field.
+func (scuo *ServiceConfigUpdateOne) ClearResources() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearResources()
+	return scuo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (scuo *ServiceConfigUpdateOne) SetService(s *Service) *ServiceConfigUpdateOne {
 	return scuo.SetServiceID(s.ID)
@@ -1824,6 +1854,12 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	}
 	if scuo.mutation.InitContainersCleared() {
 		_spec.ClearField(serviceconfig.FieldInitContainers, field.TypeJSON)
+	}
+	if value, ok := scuo.mutation.Resources(); ok {
+		_spec.SetField(serviceconfig.FieldResources, field.TypeJSON, value)
+	}
+	if scuo.mutation.ResourcesCleared() {
+		_spec.ClearField(serviceconfig.FieldResources, field.TypeJSON)
 	}
 	if scuo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -67,6 +67,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.Strings("protected_variables").Optional().Comment("List of protected variables (can be edited, not deleted)"),
 		// Init containers
 		field.JSON("init_containers", []*InitContainer{}).Optional().Comment("Init containers to run before the main container"),
+		// Resource limits/requests
+		field.JSON("resources", &Resources{}).Optional().Comment("Resource limits for the service containers"),
 	}
 }
 

@@ -1468,6 +1468,16 @@ func InitContainersNotNil() predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNotNull(FieldInitContainers))
 }
 
+// ResourcesIsNil applies the IsNil predicate on the "resources" field.
+func ResourcesIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldResources))
+}
+
+// ResourcesNotNil applies the NotNil predicate on the "resources" field.
+func ResourcesNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldResources))
+}
+
 // HasService applies the HasEdge predicate on the "service" edge.
 func HasService() predicate.ServiceConfig {
 	return predicate.ServiceConfig(func(s *sql.Selector) {

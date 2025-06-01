@@ -82,6 +82,8 @@ const (
 	FieldProtectedVariables = "protected_variables"
 	// FieldInitContainers holds the string denoting the init_containers field in the database.
 	FieldInitContainers = "init_containers"
+	// FieldResources holds the string denoting the resources field in the database.
+	FieldResources = "resources"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// EdgeS3BackupSources holds the string denoting the s3_backup_sources edge name in mutations.
@@ -139,6 +141,7 @@ var Columns = []string{
 	FieldVariableMounts,
 	FieldProtectedVariables,
 	FieldInitContainers,
+	FieldResources,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
