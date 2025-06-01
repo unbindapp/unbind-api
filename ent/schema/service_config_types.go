@@ -131,11 +131,11 @@ func AsV1Volumes(volumes []ServiceVolume) []v1.VolumeSpec {
 // Resources defines the resource requirements/limits for a container
 type Resources struct {
 	// CPU requests and limits
-	CPURequestsMillicores *int64 `json:"cpuRequestsMillicores,omitempty" min:"1"`
-	CPULimitsMillicores   *int64 `json:"cpuLimitsMillicores,omitempty" min:"1"`
+	CPURequestsMillicores *int64 `json:"cpu_requests_millicores,omitempty" min:"1"`
+	CPULimitsMillicores   *int64 `json:"cpu_limits_millicores,omitempty" min:"1"`
 	// Memory requests and limits
-	MemoryRequestsMebibytes *int64 `json:"memoryRequestsMebibytes,omitempty" min:"1"`
-	MemoryLimitsMebibytes   *int64 `json:"memoryLimitsMebibytes,omitempty" min:"1"`
+	MemoryRequestsMebibytes *int64 `json:"memory_requests_mebibytes,omitempty" min:"1"`
+	MemoryLimitsMebibytes   *int64 `json:"memory_limits_mebibytes,omitempty" min:"1"`
 }
 
 func (self *Resources) AsV1ResourceSpec() *v1.ResourceSpec {
