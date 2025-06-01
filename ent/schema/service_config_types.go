@@ -139,18 +139,21 @@ type Resources struct {
 }
 
 func (self *Resources) AsV1ResourceSpec() *v1.ResourceSpec {
-	if self == nil {
-		return nil
-	}
 	resourceSpec := &v1.ResourceSpec{}
 	if self.CPURequestsMillicores != nil {
 		resourceSpec.CPURequestsMillicores = utils.ToPtr(*self.CPURequestsMillicores)
+	} else {
+		// Default to 50m if not set
+		resourceSpec.CPURequestsMillicores = utils.ToPtr(int64(50))
 	}
 	if self.CPULimitsMillicores != nil {
 		resourceSpec.CPULimitsMillicores = utils.ToPtr(*self.CPULimitsMillicores)
 	}
 	if self.MemoryRequestsMebibytes != nil {
 		resourceSpec.MemoryRequestsMebibytes = utils.ToPtr(*self.MemoryRequestsMebibytes)
+	} else {
+		// Default to 64Mi if not set
+		resourceSpec.MemoryRequestsMebibytes = utils.ToPtr(int64(64))
 	}
 	if self.MemoryLimitsMebibytes != nil {
 		resourceSpec.MemoryLimitsMebibytes = utils.ToPtr(*self.MemoryLimitsMebibytes)
