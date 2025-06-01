@@ -25,6 +25,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+// Also set default resources for database services
+var defaultDatabaseResources = &schema.Resources{
+	CPURequestsMillicores:   utils.ToPtr[int64](100),
+	CPULimitsMillicores:     utils.ToPtr[int64](500),
+	MemoryRequestsMegabytes: utils.ToPtr[int64](128),
+	MemoryLimitsMegabytes:   utils.ToPtr[int64](1548),
+}
+
 // CreateService creates a new service and its configuration
 func (self *ServiceService) CreateService(ctx context.Context, requesterUserID uuid.UUID, input *models.CreateServiceInput, bearerToken string) (*models.ServiceResponse, error) {
 	var err error
@@ -88,6 +96,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				Port:     int32(dbDefinition.Port),
 				Protocol: utils.ToPtr(schema.ProtocolTCP),
 			},
+		}
+
+		if input.Resources == nil {
+			// Set to our default
+			input.Resources = defaultDatabaseResources
 		}
 
 		if input.DatabaseConfig != nil {
