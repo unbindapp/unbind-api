@@ -134,8 +134,8 @@ type Resources struct {
 	CPURequestsMillicores *int64 `json:"cpu_requests_millicores,omitempty" min:"1"`
 	CPULimitsMillicores   *int64 `json:"cpu_limits_millicores,omitempty" min:"1"`
 	// Memory requests and limits
-	MemoryRequestsMebibytes *int64 `json:"memory_requests_mebibytes,omitempty" min:"1"`
-	MemoryLimitsMebibytes   *int64 `json:"memory_limits_mebibytes,omitempty" min:"1"`
+	MemoryRequestsMegabytes *int64 `json:"memory_requests_megabytes,omitempty" min:"1"`
+	MemoryLimitsMegabytes   *int64 `json:"memory_limits_megabytes,omitempty" min:"1"`
 }
 
 func (self *Resources) AsV1ResourceSpec() *v1.ResourceSpec {
@@ -149,14 +149,14 @@ func (self *Resources) AsV1ResourceSpec() *v1.ResourceSpec {
 	if self.CPULimitsMillicores != nil {
 		resourceSpec.CPULimitsMillicores = utils.ToPtr(*self.CPULimitsMillicores)
 	}
-	if self.MemoryRequestsMebibytes != nil {
-		resourceSpec.MemoryRequestsMebibytes = utils.ToPtr(*self.MemoryRequestsMebibytes)
+	if self.MemoryRequestsMegabytes != nil {
+		resourceSpec.MemoryRequestsMegabytes = utils.ToPtr(*self.MemoryRequestsMegabytes)
 	} else {
 		// Default to 64Mi if not set
-		resourceSpec.MemoryRequestsMebibytes = utils.ToPtr(int64(64))
+		resourceSpec.MemoryRequestsMegabytes = utils.ToPtr(int64(64))
 	}
-	if self.MemoryLimitsMebibytes != nil {
-		resourceSpec.MemoryLimitsMebibytes = utils.ToPtr(*self.MemoryLimitsMebibytes)
+	if self.MemoryLimitsMegabytes != nil {
+		resourceSpec.MemoryLimitsMegabytes = utils.ToPtr(*self.MemoryLimitsMegabytes)
 	}
 	return resourceSpec
 }

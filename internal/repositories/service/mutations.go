@@ -239,8 +239,8 @@ func (self *ServiceRepository) UpdateConfig(
 		// If all values are nil, we clear the resources
 		if input.Resources.CPULimitsMillicores == nil &&
 			input.Resources.CPURequestsMillicores == nil &&
-			input.Resources.MemoryRequestsMebibytes == nil &&
-			input.Resources.MemoryLimitsMebibytes == nil {
+			input.Resources.MemoryRequestsMegabytes == nil &&
+			input.Resources.MemoryLimitsMegabytes == nil {
 			upd.ClearResources()
 		} else {
 			upd.SetResources(input.Resources)
