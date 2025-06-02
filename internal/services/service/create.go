@@ -389,7 +389,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Framework:               framework,
 			GitBranch:               gitBranch,
 			Ports:                   ports,
-			Hosts:                   hosts,
+			OverwriteHosts:          hosts,
 			Replicas:                input.Replicas,
 			AutoDeploy:              input.AutoDeploy,
 			InstallCommand:          input.InstallCommand,
