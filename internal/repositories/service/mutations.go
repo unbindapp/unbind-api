@@ -69,7 +69,7 @@ type MutateConfigInput struct {
 	GitTag                  *string
 	Icon                    *string
 	Ports                   []schema.PortSpec
-	Hosts                   []schema.HostSpec
+	OverwriteHosts          []schema.HostSpec
 	AddHosts                []schema.HostSpec
 	RemoveHosts             []schema.HostSpec
 	Replicas                *int32
@@ -188,8 +188,8 @@ func (self *ServiceRepository) CreateConfig(
 		c.SetPorts(input.Ports)
 	}
 
-	if len(input.Hosts) > 0 {
-		c.SetHosts(input.Hosts)
+	if len(input.OverwriteHosts) > 0 {
+		c.SetHosts(input.OverwriteHosts)
 	}
 
 	return c.Save(ctx)
@@ -381,8 +381,8 @@ func (self *ServiceRepository) UpdateConfig(
 		upd.SetPorts(input.Ports)
 	}
 
-	if len(input.Hosts) > 0 {
-		upd.SetHosts(input.Hosts)
+	if len(input.OverwriteHosts) > 0 {
+		upd.SetHosts(input.OverwriteHosts)
 	} else if len(input.AddHosts) > 0 || len(input.RemoveHosts) > 0 {
 		hosts := existingConfig.Hosts
 

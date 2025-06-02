@@ -411,7 +411,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				ServiceID:               createService.ID,
 				Builder:                 utils.ToPtr(templateService.Builder),
 				Ports:                   templateService.Ports,
-				Hosts:                   hosts,
+				OverwriteHosts:          hosts,
 				Replicas:                utils.ToPtr[int32](1),
 				Public:                  isPublic,
 				DatabaseConfig:          templateService.DatabaseConfig,

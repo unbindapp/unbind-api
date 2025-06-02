@@ -457,8 +457,6 @@ github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJm
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
-github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
-github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.12.1/go.mod h1:zj2OWP4+oCPe1qIXoGWkgMRwljMUYCdkwsT2108oapk=
 github.com/onsi/ginkgo v1.13.0/go.mod h1:+REjRxOmWfHCjfv9TTWB1jD1Frx4XydAD3zm1lskyM0=
@@ -543,8 +541,6 @@ github.com/spdx/tools-golang v0.5.3 h1:ialnHeEYUC4+hkm5vJm4qz2x+oEJbS0mAMFrNXdQr
 github.com/spdx/tools-golang v0.5.3/go.mod h1:/ETOahiAo96Ob0/RAIBmFZw6XN0yTnyr/uFZm2NTMhI=
 github.com/spf13/cast v1.8.0 h1:gEN9K4b8Xws4EX0+a0reLmhq8moKn7ntRlQYgjPeCDk=
 github.com/spf13/cast v1.8.0/go.mod h1:ancEpBxwJDODSW/UG4rDrAqiKolqNNh2DX3mk86cAdo=
-github.com/spf13/cobra v1.9.1 h1:CXSaggrXdbHK9CF+8ywj8Amf7PBRmPCOJugH954Nnlo=
-github.com/spf13/cobra v1.9.1/go.mod h1:nDyEzZ8ogv936Cinf6g1RU9MRY64Ir93oCnqb9wxYW0=
 github.com/spf13/pflag v1.0.6 h1:jFzHGLGAlb3ruxLB8MhbI6A8+AQX/2eW4qeyNZXNp2o=
 github.com/spf13/pflag v1.0.6/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
@@ -594,12 +590,6 @@ github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea h1:SXhTLE6pb6eld/
 github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea/go.mod h1:WPnis/6cRcDZSUvVmezrxJPkiO87ThFYsoUiMwWNDJk=
 github.com/tonistiigi/vt100 v0.0.0-20240514184818-90bafcd6abab h1:H6aJ0yKQ0gF49Qb2z5hI1UHxSQt4JMyxebFR15KnApw=
 github.com/tonistiigi/vt100 v0.0.0-20240514184818-90bafcd6abab/go.mod h1:ulncasL3N9uLrVann0m+CDlJKWsIAP34MPcOJF6VRvc=
-github.com/unbindapp/unbind-operator v0.0.0-20250527171845-b9b0fed67eb9 h1:HVOU0NBgrEoTCdJrjAcUvk+v/IitdVB/k/q0cQE1Xqk=
-github.com/unbindapp/unbind-operator v0.0.0-20250527171845-b9b0fed67eb9/go.mod h1:KPSMI0U8da/8XDzhm5G2HwtHYFfF8r39HGVA+iTk6vM=
-github.com/unbindapp/unbind-operator v0.0.0-20250601191126-d5784efed391 h1:INahSKfMAZXjqjMLqnVJt/7wEYBq5KTk4YHRm9CgOVQ=
-github.com/unbindapp/unbind-operator v0.0.0-20250601191126-d5784efed391/go.mod h1:KPSMI0U8da/8XDzhm5G2HwtHYFfF8r39HGVA+iTk6vM=
-github.com/unbindapp/unbind-operator v0.0.0-20250601210029-adda1db741a1 h1:P7kUi7k6Ed4SEqvapcHHnfTW8GIAxLsod+AkfTjh0NE=
-github.com/unbindapp/unbind-operator v0.0.0-20250601210029-adda1db741a1/go.mod h1:KPSMI0U8da/8XDzhm5G2HwtHYFfF8r39HGVA+iTk6vM=
 github.com/unbindapp/unbind-operator v0.0.0-20250602131753-c98bfd5fb4f4 h1:FMWLrCNXwSTbqBMJRjRPolphYcAtybob5D323YlrJ3E=
 github.com/unbindapp/unbind-operator v0.0.0-20250602131753-c98bfd5fb4f4/go.mod h1:KPSMI0U8da/8XDzhm5G2HwtHYFfF8r39HGVA+iTk6vM=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=

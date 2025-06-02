@@ -186,7 +186,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
-			input.IsPublic != nil && *input.IsPublic && len(input.Hosts) < 1 && len(input.AddHosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
+			input.IsPublic != nil && *input.IsPublic && len(input.OverwriteHosts) < 1 && len(input.AddHosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
 			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
 
 			// Figure out ports
@@ -206,12 +206,12 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			if generatedHost == nil {
 				input.IsPublic = utils.ToPtr(false)
 			} else {
-				input.Hosts = append(input.Hosts, *generatedHost)
+				input.OverwriteHosts = append(input.OverwriteHosts, *generatedHost)
 			}
 		}
 		// Validate hosts
 		var hostCollisionsToCheck []schema.HostSpec
-		hostCollisionsToCheck = append(hostCollisionsToCheck, input.Hosts...)
+		hostCollisionsToCheck = append(hostCollisionsToCheck, input.OverwriteHosts...)
 		hostCollisionsToCheck = append(hostCollisionsToCheck, input.AddHosts...)
 		for _, host := range hostCollisionsToCheck {
 			// Count domain collisions
@@ -231,7 +231,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			GitBranch:            input.GitBranch,
 			GitTag:               input.GitTag,
 			Ports:                input.Ports,
-			Hosts:                input.Hosts,
+			OverwriteHosts:       input.OverwriteHosts,
 			AddHosts:             input.AddHosts,
 			RemoveHosts:          input.RemoveHosts,
 			Replicas:             input.Replicas,
