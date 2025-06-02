@@ -408,7 +408,11 @@ func (self *ServiceRepository) UpdateConfig(
 		// Append all AddHosts to the filtered list
 		filteredHosts = append(filteredHosts, input.AddHosts...)
 
-		upd.SetHosts(filteredHosts)
+		if len(filteredHosts) == 0 {
+			upd.ClearHosts()
+		} else {
+			upd.SetHosts(filteredHosts)
+		}
 	}
 	return upd.Exec(ctx)
 }

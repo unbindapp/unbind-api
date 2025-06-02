@@ -395,14 +395,14 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 type InstanceStatus struct {
 	KubernetesName  string               `json:"kubernetes_name"`
 	Ready           bool                 `json:"ready"`
-	RestartCount    int32                `json:"restartCount"`
+	RestartCount    int32                `json:"restart_count"`
 	State           ContainerState       `json:"state"`
-	StateReason     string               `json:"stateReason,omitempty"`
-	StateMessage    string               `json:"stateMessage,omitempty"`
-	LastExitCode    int32                `json:"lastExitCode,omitempty"`
-	LastTermination string               `json:"lastTermination,omitempty"`
-	IsCrashing      bool                 `json:"isCrashing"`
-	CrashLoopReason string               `json:"crashLoopReason,omitempty"`
+	StateReason     string               `json:"state_reason,omitempty"`
+	StateMessage    string               `json:"state_message,omitempty"`
+	LastExitCode    int32                `json:"last_exit_code,omitempty"`
+	LastTermination string               `json:"last_termination,omitempty"`
+	IsCrashing      bool                 `json:"is_crashing"`
+	CrashLoopReason string               `json:"crash_loop_reason,omitempty"`
 	Events          []models.EventRecord `json:"events,omitempty" nullable:"false"`
 }
 
@@ -411,10 +411,10 @@ type PodContainerStatus struct {
 	Namespace            string           `json:"namespace"`
 	Phase                PodPhase         `json:"phase"`
 	PodIP                string           `json:"podIP,omitempty"`
-	StartTime            string           `json:"startTime,omitempty"`
-	HasCrashingInstances bool             `json:"hasCrashingInstances"`
+	StartTime            string           `json:"start_time,omitempty"`
+	HasCrashingInstances bool             `json:"has_crashing_instances"`
 	Instances            []InstanceStatus `json:"instances" nullable:"false"`
-	InstanceDependencies []InstanceStatus `json:"instanceDependencies" nullable:"false"`
+	InstanceDependencies []InstanceStatus `json:"instance_dependencies" nullable:"false"`
 	TeamID               uuid.UUID        `json:"team_id"`
 	ProjectID            uuid.UUID        `json:"project_id"`
 	EnvironmentID        uuid.UUID        `json:"environment_id"`
@@ -423,7 +423,7 @@ type PodContainerStatus struct {
 
 type SimpleHealthStatus struct {
 	Health            InstanceHealth         `json:"health"`
-	ExpectedInstances int                    `json:"expectedInstances"`
+	ExpectedInstances int                    `json:"expected_instances"`
 	Instances         []SimpleInstanceStatus `json:"instances"`
 }
 
