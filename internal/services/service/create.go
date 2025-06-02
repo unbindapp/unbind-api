@@ -27,10 +27,10 @@ import (
 
 // Also set default resources for database services
 var defaultDatabaseResources = &schema.Resources{
-	CPURequestsMillicores:   utils.ToPtr[int64](100),
-	CPULimitsMillicores:     utils.ToPtr[int64](500),
-	MemoryRequestsMegabytes: utils.ToPtr[int64](128),
-	MemoryLimitsMegabytes:   utils.ToPtr[int64](1548),
+	CPURequestsMillicores:   100,
+	CPULimitsMillicores:     500,
+	MemoryRequestsMegabytes: 128,
+	MemoryLimitsMegabytes:   1548,
 }
 
 // CreateService creates a new service and its configuration

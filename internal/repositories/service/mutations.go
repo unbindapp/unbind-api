@@ -70,6 +70,8 @@ type MutateConfigInput struct {
 	Icon                    *string
 	Ports                   []schema.PortSpec
 	Hosts                   []schema.HostSpec
+	AddHosts                []schema.HostSpec
+	RemoveHosts             []schema.HostSpec
 	Replicas                *int32
 	AutoDeploy              *bool
 	InstallCommand          *string
@@ -216,6 +218,7 @@ func (self *ServiceRepository) Update(
 func (self *ServiceRepository) UpdateConfig(
 	ctx context.Context,
 	tx repository.TxInterface,
+	existingConfig *ent.ServiceConfig,
 	input *MutateConfigInput,
 ) error {
 	db := self.base.DB
@@ -236,13 +239,29 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
 
 	if input.Resources != nil {
-		// If all values are nil, we clear the resources
-		if input.Resources.CPULimitsMillicores == nil &&
-			input.Resources.CPURequestsMillicores == nil &&
-			input.Resources.MemoryRequestsMegabytes == nil &&
-			input.Resources.MemoryLimitsMegabytes == nil {
+		// If all values are < 1, we clear the resources
+		if input.Resources.CPULimitsMillicores < 1 &&
+			input.Resources.CPURequestsMillicores < 1 &&
+			input.Resources.MemoryRequestsMegabytes < 1 &&
+			input.Resources.MemoryLimitsMegabytes < 1 {
 			upd.ClearResources()
 		} else {
+			// Merge with existing resources
+			if existingConfig != nil && existingConfig.Resources != nil {
+				if input.Resources.CPULimitsMillicores < 1 {
+					input.Resources.CPULimitsMillicores = existingConfig.Resources.CPULimitsMillicores
+				}
+				if input.Resources.CPURequestsMillicores < 1 {
+					input.Resources.CPURequestsMillicores = existingConfig.Resources.CPURequestsMillicores
+				}
+				if input.Resources.MemoryRequestsMegabytes < 1 {
+					input.Resources.MemoryRequestsMegabytes = existingConfig.Resources.MemoryRequestsMegabytes
+				}
+				if input.Resources.MemoryLimitsMegabytes < 1 {
+					input.Resources.MemoryLimitsMegabytes = existingConfig.Resources.MemoryLimitsMegabytes
+				}
+			}
+
 			upd.SetResources(input.Resources)
 		}
 	}
@@ -361,10 +380,36 @@ func (self *ServiceRepository) UpdateConfig(
 	if len(input.Ports) > 0 {
 		upd.SetPorts(input.Ports)
 	}
+
 	if len(input.Hosts) > 0 {
 		upd.SetHosts(input.Hosts)
-	}
+	} else if len(input.AddHosts) > 0 || len(input.RemoveHosts) > 0 {
+		hosts := existingConfig.Hosts
 
+		// Create a map of hosts to remove for efficient lookup
+		toRemove := make(map[string]bool)
+
+		// Add all AddHosts and RemoveHosts to the removal map to prevent duplicates
+		for _, addHost := range input.AddHosts {
+			toRemove[addHost.Host] = true
+		}
+		for _, removeHost := range input.RemoveHosts {
+			toRemove[removeHost.Host] = true
+		}
+
+		// Filter existing hosts, removing any that match AddHosts or RemoveHosts
+		var filteredHosts []schema.HostSpec // Replace HostStruct with your actual struct type
+		for _, host := range hosts {
+			if !toRemove[host.Host] {
+				filteredHosts = append(filteredHosts, host)
+			}
+		}
+
+		// Append all AddHosts to the filtered list
+		filteredHosts = append(filteredHosts, input.AddHosts...)
+
+		upd.SetHosts(filteredHosts)
+	}
 	return upd.Exec(ctx)
 }
 

@@ -131,32 +131,32 @@ func AsV1Volumes(volumes []ServiceVolume) []v1.VolumeSpec {
 // Resources defines the resource requirements/limits for a container
 type Resources struct {
 	// CPU requests and limits
-	CPURequestsMillicores *int64 `json:"cpu_requests_millicores,omitempty" min:"1"`
-	CPULimitsMillicores   *int64 `json:"cpu_limits_millicores,omitempty" min:"1"`
+	CPURequestsMillicores int64 `json:"cpu_requests_millicores,omitempty"`
+	CPULimitsMillicores   int64 `json:"cpu_limits_millicores,omitempty"`
 	// Memory requests and limits
-	MemoryRequestsMegabytes *int64 `json:"memory_requests_megabytes,omitempty" min:"1"`
-	MemoryLimitsMegabytes   *int64 `json:"memory_limits_megabytes,omitempty" min:"1"`
+	MemoryRequestsMegabytes int64 `json:"memory_requests_megabytes,omitempty"`
+	MemoryLimitsMegabytes   int64 `json:"memory_limits_megabytes,omitempty"`
 }
 
 func (self *Resources) AsV1ResourceSpec() *v1.ResourceSpec {
 	resourceSpec := &v1.ResourceSpec{}
-	if self.CPURequestsMillicores != nil {
-		resourceSpec.CPURequestsMillicores = utils.ToPtr(*self.CPURequestsMillicores)
+	if self.CPURequestsMillicores > 0 {
+		resourceSpec.CPURequestsMillicores = self.CPURequestsMillicores
 	} else {
 		// Default to 50m if not set
-		resourceSpec.CPURequestsMillicores = utils.ToPtr(int64(50))
+		resourceSpec.CPURequestsMillicores = 50
 	}
-	if self.CPULimitsMillicores != nil {
-		resourceSpec.CPULimitsMillicores = utils.ToPtr(*self.CPULimitsMillicores)
+	if self.CPULimitsMillicores > 0 {
+		resourceSpec.CPULimitsMillicores = self.CPULimitsMillicores
 	}
-	if self.MemoryRequestsMegabytes != nil {
-		resourceSpec.MemoryRequestsMegabytes = utils.ToPtr(*self.MemoryRequestsMegabytes)
+	if self.MemoryRequestsMegabytes > 0 {
+		resourceSpec.MemoryRequestsMegabytes = self.MemoryRequestsMegabytes
 	} else {
 		// Default to 64Mi if not set
-		resourceSpec.MemoryRequestsMegabytes = utils.ToPtr(int64(64))
+		resourceSpec.MemoryRequestsMegabytes = 64
 	}
-	if self.MemoryLimitsMegabytes != nil {
-		resourceSpec.MemoryLimitsMegabytes = utils.ToPtr(*self.MemoryLimitsMegabytes)
+	if self.MemoryLimitsMegabytes > 0 {
+		resourceSpec.MemoryLimitsMegabytes = self.MemoryLimitsMegabytes
 	}
 	return resourceSpec
 }

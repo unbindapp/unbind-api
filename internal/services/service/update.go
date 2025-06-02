@@ -186,7 +186,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
-			input.IsPublic != nil && *input.IsPublic && len(input.Hosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
+			input.IsPublic != nil && *input.IsPublic && len(input.Hosts) < 1 && len(input.AddHosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
 			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
 
 			// Figure out ports
@@ -210,7 +210,10 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			}
 		}
 		// Validate hosts
-		for _, host := range input.Hosts {
+		var hostCollisionsToCheck []schema.HostSpec
+		hostCollisionsToCheck = append(hostCollisionsToCheck, input.Hosts...)
+		hostCollisionsToCheck = append(hostCollisionsToCheck, input.AddHosts...)
+		for _, host := range hostCollisionsToCheck {
 			// Count domain collisions
 			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host)
 			if err != nil {
@@ -229,6 +232,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			GitTag:               input.GitTag,
 			Ports:                input.Ports,
 			Hosts:                input.Hosts,
+			AddHosts:             input.AddHosts,
+			RemoveHosts:          input.RemoveHosts,
 			Replicas:             input.Replicas,
 			AutoDeploy:           input.AutoDeploy,
 			InstallCommand:       input.InstallCommand,
@@ -250,7 +255,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			InitContainers:       input.InitContainers,
 			Resources:            input.Resources,
 		}
-		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
+		if err := self.repo.Service().UpdateConfig(ctx, tx, service.Edges.ServiceConfig, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)
 		}
 
