@@ -38,6 +38,8 @@ type ServiceConfigResponse struct {
 	ProtectedVariables []string `json:"protected_variables" nullable:"false"`
 	// Init containers
 	InitContainers []*schema.InitContainer `json:"init_containers" nullable:"false"`
+	// Resources
+	Resources *schema.Resources `json:"resources,omitempty"`
 }
 
 // TransformServiceConfigEntity transforms an ent.ServiceConfig entity into a ServiceConfigResponse
@@ -68,6 +70,7 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			ProtectedVariables:   entity.ProtectedVariables,
 			InitContainers:       entity.InitContainers,
 			Volumes:              []*PVCInfo{},
+			Resources:            entity.Resources,
 		}
 		if response.ProtectedVariables == nil {
 			response.ProtectedVariables = []string{}
