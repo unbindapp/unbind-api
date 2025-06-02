@@ -45,7 +45,7 @@ type EventRecord struct {
 	Timestamp string    `json:"timestamp"`
 	Message   string    `json:"message,omitempty"`
 	Count     int32     `json:"count,omitempty"`
-	FirstSeen string    `json:"firstSeen,omitempty"`
-	LastSeen  string    `json:"lastSeen,omitempty"`
+	FirstSeen string    `json:"first_seen,omitempty"`
+	LastSeen  string    `json:"last_seen,omitempty"`
 	Reason    string    `json:"reason,omitempty"`
 }

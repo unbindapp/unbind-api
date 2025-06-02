@@ -410,7 +410,7 @@ type PodContainerStatus struct {
 	KubernetesName       string           `json:"kubernetes_name"`
 	Namespace            string           `json:"namespace"`
 	Phase                PodPhase         `json:"phase"`
-	PodIP                string           `json:"podIP,omitempty"`
+	PodIP                string           `json:"pod_ip,omitempty"`
 	StartTime            string           `json:"start_time,omitempty"`
 	HasCrashingInstances bool             `json:"has_crashing_instances"`
 	Instances            []InstanceStatus `json:"instances" nullable:"false"`
