@@ -48,6 +48,7 @@ func (self *DeploymentService) redeployExistingImage(ctx context.Context, servic
 	}
 
 	// Update deployment resource definition
+	newDeployment.ResourceDefinition.Spec.DeploymentRef = newDeployment.ID.String()
 	newDeployment.ResourceDefinition.Spec.EnvVars = envVars
 	newDeployment.ResourceDefinition.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
 

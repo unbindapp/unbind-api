@@ -127,6 +127,7 @@ func (self *ServiceService) deployAdhocService(ctx context.Context, service *ent
 		if err != nil {
 			return err
 		}
+		crdToDeploy.Spec.DeploymentRef = newDeployment.ID.String()
 
 		// Mark the deployment as started
 		if _, err := self.repo.Deployment().MarkStarted(ctx, tx, newDeployment.ID, time.Now()); err != nil {
