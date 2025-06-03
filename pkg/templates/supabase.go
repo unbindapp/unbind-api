@@ -1613,11 +1613,11 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				},
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeExec,
-					Command:                   "sleep 5 && exit 0",
-					PeriodSeconds:             2,
-					TimeoutSeconds:            10,
-					StartupFailureThreshold:   5,
-					LivenessFailureThreshold:  3,
+					Command:                   "mc ready local",
+					PeriodSeconds:             5,
+					TimeoutSeconds:            20,
+					StartupFailureThreshold:   10,
+					LivenessFailureThreshold:  10,
 					ReadinessFailureThreshold: 3,
 				},
 				Variables: []schema.TemplateVariable{
@@ -1803,15 +1803,6 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 						Port:     9000,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
-				},
-				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeExec,
-					Command:                   "echo 'Edge Functions is healthy'",
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   3,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
 				},
 				RunCommand: utils.ToPtr("edge-runtime start --main-service /home/deno/functions/main"),
 				VariablesMounts: []*schema.VariableMount{
