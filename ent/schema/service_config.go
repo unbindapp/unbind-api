@@ -31,8 +31,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.Enum("builder").GoType(ServiceBuilder("")),
 		field.String("icon").Comment("Icon metadata, unique of framework, provider, database"),
 		// For builds from git using Dockerfile
-		field.String("dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
-		field.String("dockerfile_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
+		field.String("docker_builder_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
+		field.String("docker_builder_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
 		// Provider and framework directly from railpack
 		field.Enum("railpack_provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
 		field.Enum("railpack_framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),

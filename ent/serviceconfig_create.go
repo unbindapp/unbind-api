@@ -74,30 +74,30 @@ func (scc *ServiceConfigCreate) SetIcon(s string) *ServiceConfigCreate {
 	return scc
 }
 
-// SetDockerfilePath sets the "dockerfile_path" field.
-func (scc *ServiceConfigCreate) SetDockerfilePath(s string) *ServiceConfigCreate {
-	scc.mutation.SetDockerfilePath(s)
+// SetDockerBuilderPath sets the "docker_builder_path" field.
+func (scc *ServiceConfigCreate) SetDockerBuilderPath(s string) *ServiceConfigCreate {
+	scc.mutation.SetDockerBuilderPath(s)
 	return scc
 }
 
-// SetNillableDockerfilePath sets the "dockerfile_path" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableDockerfilePath(s *string) *ServiceConfigCreate {
+// SetNillableDockerBuilderPath sets the "docker_builder_path" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDockerBuilderPath(s *string) *ServiceConfigCreate {
 	if s != nil {
-		scc.SetDockerfilePath(*s)
+		scc.SetDockerBuilderPath(*s)
 	}
 	return scc
 }
 
-// SetDockerfileContext sets the "dockerfile_context" field.
-func (scc *ServiceConfigCreate) SetDockerfileContext(s string) *ServiceConfigCreate {
-	scc.mutation.SetDockerfileContext(s)
+// SetDockerBuilderContext sets the "docker_builder_context" field.
+func (scc *ServiceConfigCreate) SetDockerBuilderContext(s string) *ServiceConfigCreate {
+	scc.mutation.SetDockerBuilderContext(s)
 	return scc
 }
 
-// SetNillableDockerfileContext sets the "dockerfile_context" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableDockerfileContext(s *string) *ServiceConfigCreate {
+// SetNillableDockerBuilderContext sets the "docker_builder_context" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDockerBuilderContext(s *string) *ServiceConfigCreate {
 	if s != nil {
-		scc.SetDockerfileContext(*s)
+		scc.SetDockerBuilderContext(*s)
 	}
 	return scc
 }
@@ -595,13 +595,13 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
 		_node.Icon = value
 	}
-	if value, ok := scc.mutation.DockerfilePath(); ok {
-		_spec.SetField(serviceconfig.FieldDockerfilePath, field.TypeString, value)
-		_node.DockerfilePath = &value
+	if value, ok := scc.mutation.DockerBuilderPath(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderPath, field.TypeString, value)
+		_node.DockerBuilderPath = &value
 	}
-	if value, ok := scc.mutation.DockerfileContext(); ok {
-		_spec.SetField(serviceconfig.FieldDockerfileContext, field.TypeString, value)
-		_node.DockerfileContext = &value
+	if value, ok := scc.mutation.DockerBuilderContext(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderContext, field.TypeString, value)
+		_node.DockerBuilderContext = &value
 	}
 	if value, ok := scc.mutation.RailpackProvider(); ok {
 		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
@@ -837,39 +837,39 @@ func (u *ServiceConfigUpsert) UpdateIcon() *ServiceConfigUpsert {
 	return u
 }
 
-// SetDockerfilePath sets the "dockerfile_path" field.
-func (u *ServiceConfigUpsert) SetDockerfilePath(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDockerfilePath, v)
+// SetDockerBuilderPath sets the "docker_builder_path" field.
+func (u *ServiceConfigUpsert) SetDockerBuilderPath(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDockerBuilderPath, v)
 	return u
 }
 
-// UpdateDockerfilePath sets the "dockerfile_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDockerfilePath() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDockerfilePath)
+// UpdateDockerBuilderPath sets the "docker_builder_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDockerBuilderPath() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDockerBuilderPath)
 	return u
 }
 
-// ClearDockerfilePath clears the value of the "dockerfile_path" field.
-func (u *ServiceConfigUpsert) ClearDockerfilePath() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDockerfilePath)
+// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
+func (u *ServiceConfigUpsert) ClearDockerBuilderPath() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDockerBuilderPath)
 	return u
 }
 
-// SetDockerfileContext sets the "dockerfile_context" field.
-func (u *ServiceConfigUpsert) SetDockerfileContext(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDockerfileContext, v)
+// SetDockerBuilderContext sets the "docker_builder_context" field.
+func (u *ServiceConfigUpsert) SetDockerBuilderContext(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDockerBuilderContext, v)
 	return u
 }
 
-// UpdateDockerfileContext sets the "dockerfile_context" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDockerfileContext() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDockerfileContext)
+// UpdateDockerBuilderContext sets the "docker_builder_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDockerBuilderContext() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDockerBuilderContext)
 	return u
 }
 
-// ClearDockerfileContext clears the value of the "dockerfile_context" field.
-func (u *ServiceConfigUpsert) ClearDockerfileContext() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDockerfileContext)
+// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
+func (u *ServiceConfigUpsert) ClearDockerBuilderContext() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDockerBuilderContext)
 	return u
 }
 
@@ -1430,45 +1430,45 @@ func (u *ServiceConfigUpsertOne) UpdateIcon() *ServiceConfigUpsertOne {
 	})
 }
 
-// SetDockerfilePath sets the "dockerfile_path" field.
-func (u *ServiceConfigUpsertOne) SetDockerfilePath(v string) *ServiceConfigUpsertOne {
+// SetDockerBuilderPath sets the "docker_builder_path" field.
+func (u *ServiceConfigUpsertOne) SetDockerBuilderPath(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerfilePath(v)
+		s.SetDockerBuilderPath(v)
 	})
 }
 
-// UpdateDockerfilePath sets the "dockerfile_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDockerfilePath() *ServiceConfigUpsertOne {
+// UpdateDockerBuilderPath sets the "docker_builder_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDockerBuilderPath() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerfilePath()
+		s.UpdateDockerBuilderPath()
 	})
 }
 
-// ClearDockerfilePath clears the value of the "dockerfile_path" field.
-func (u *ServiceConfigUpsertOne) ClearDockerfilePath() *ServiceConfigUpsertOne {
+// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
+func (u *ServiceConfigUpsertOne) ClearDockerBuilderPath() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerfilePath()
+		s.ClearDockerBuilderPath()
 	})
 }
 
-// SetDockerfileContext sets the "dockerfile_context" field.
-func (u *ServiceConfigUpsertOne) SetDockerfileContext(v string) *ServiceConfigUpsertOne {
+// SetDockerBuilderContext sets the "docker_builder_context" field.
+func (u *ServiceConfigUpsertOne) SetDockerBuilderContext(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerfileContext(v)
+		s.SetDockerBuilderContext(v)
 	})
 }
 
-// UpdateDockerfileContext sets the "dockerfile_context" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDockerfileContext() *ServiceConfigUpsertOne {
+// UpdateDockerBuilderContext sets the "docker_builder_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDockerBuilderContext() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerfileContext()
+		s.UpdateDockerBuilderContext()
 	})
 }
 
-// ClearDockerfileContext clears the value of the "dockerfile_context" field.
-func (u *ServiceConfigUpsertOne) ClearDockerfileContext() *ServiceConfigUpsertOne {
+// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
+func (u *ServiceConfigUpsertOne) ClearDockerBuilderContext() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerfileContext()
+		s.ClearDockerBuilderContext()
 	})
 }
 
@@ -2271,45 +2271,45 @@ func (u *ServiceConfigUpsertBulk) UpdateIcon() *ServiceConfigUpsertBulk {
 	})
 }
 
-// SetDockerfilePath sets the "dockerfile_path" field.
-func (u *ServiceConfigUpsertBulk) SetDockerfilePath(v string) *ServiceConfigUpsertBulk {
+// SetDockerBuilderPath sets the "docker_builder_path" field.
+func (u *ServiceConfigUpsertBulk) SetDockerBuilderPath(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerfilePath(v)
+		s.SetDockerBuilderPath(v)
 	})
 }
 
-// UpdateDockerfilePath sets the "dockerfile_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDockerfilePath() *ServiceConfigUpsertBulk {
+// UpdateDockerBuilderPath sets the "docker_builder_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDockerBuilderPath() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerfilePath()
+		s.UpdateDockerBuilderPath()
 	})
 }
 
-// ClearDockerfilePath clears the value of the "dockerfile_path" field.
-func (u *ServiceConfigUpsertBulk) ClearDockerfilePath() *ServiceConfigUpsertBulk {
+// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
+func (u *ServiceConfigUpsertBulk) ClearDockerBuilderPath() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerfilePath()
+		s.ClearDockerBuilderPath()
 	})
 }
 
-// SetDockerfileContext sets the "dockerfile_context" field.
-func (u *ServiceConfigUpsertBulk) SetDockerfileContext(v string) *ServiceConfigUpsertBulk {
+// SetDockerBuilderContext sets the "docker_builder_context" field.
+func (u *ServiceConfigUpsertBulk) SetDockerBuilderContext(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerfileContext(v)
+		s.SetDockerBuilderContext(v)
 	})
 }
 
-// UpdateDockerfileContext sets the "dockerfile_context" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDockerfileContext() *ServiceConfigUpsertBulk {
+// UpdateDockerBuilderContext sets the "docker_builder_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDockerBuilderContext() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerfileContext()
+		s.UpdateDockerBuilderContext()
 	})
 }
 
-// ClearDockerfileContext clears the value of the "dockerfile_context" field.
-func (u *ServiceConfigUpsertBulk) ClearDockerfileContext() *ServiceConfigUpsertBulk {
+// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
+func (u *ServiceConfigUpsertBulk) ClearDockerBuilderContext() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerfileContext()
+		s.ClearDockerBuilderContext()
 	})
 }
 

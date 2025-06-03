@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 
 	a "github.com/railwayapp/railpack/core/app"
 	"github.com/unbindapp/unbind-api/internal/common/log"
@@ -37,14 +38,14 @@ func (self *Builder) BuildDockerfile(ctx context.Context, buildSecrets map[strin
 	defer os.RemoveAll(tmpDir)
 
 	// Use default Dockerfile if not specified
-	if self.config.ServiceDockerfilePath == "" {
-		self.config.ServiceDockerfilePath = "Dockerfile"
+	if self.config.ServiceDockerBuilderPath == "" {
+		self.config.ServiceDockerBuilderPath = "Dockerfile"
 	}
 
 	// Check if Dockerfile exists
-	fullDockerfilePath := fmt.Sprintf("%s/%s", tmpDir, self.config.ServiceDockerfilePath)
+	fullDockerfilePath := path.Join(tmpDir, self.config.ServiceDockerBuilderPath)
 	if _, err := os.Stat(fullDockerfilePath); os.IsNotExist(err) {
-		return "", repoName, fmt.Errorf("dockerfile not found at path: %s", self.config.ServiceDockerfilePath)
+		return "", repoName, fmt.Errorf("dockerfile not found at path: %s", self.config.ServiceDockerBuilderPath)
 	}
 
 	// Make app from source
@@ -61,14 +62,14 @@ func (self *Builder) BuildDockerfile(ctx context.Context, buildSecrets map[strin
 			ImageName:      outputImage,
 			CacheKey:       cacheKey,
 			Secrets:        buildSecrets,
-			DockerfilePath: self.config.ServiceDockerfilePath,
-			ContextPath:    self.config.ServiceDockerfileContext,
+			DockerfilePath: self.config.ServiceDockerBuilderPath,
+			ContextPath:    self.config.ServiceDockerBuilderContext,
 		},
 	)
 	if err != nil {
 		return "", repoName, fmt.Errorf("build failed: %v", err)
 	}
 
-	log.Infof("Built image %s from Dockerfile: %s", outputImage, self.config.ServiceDockerfilePath)
+	log.Infof("Built image %s from Dockerfile: %s", outputImage, self.config.ServiceDockerBuilderPath)
 	return outputImage, repoName, nil
 }

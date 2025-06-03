@@ -79,8 +79,8 @@ type MutateConfigInput struct {
 	RunCommand              *string
 	Public                  *bool
 	Image                   *string
-	DockerfilePath          *string
-	DockerfileContext       *string
+	DockerBuilderPath       *string
+	DockerBuilderContext    *string
 	CustomDefinitionVersion *string
 	DatabaseConfig          *schema.DatabaseConfig
 	S3BackupSourceID        *uuid.UUID
@@ -144,8 +144,8 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableRunCommand(input.RunCommand).
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
-		SetNillableDockerfilePath(input.DockerfilePath).
-		SetNillableDockerfileContext(input.DockerfileContext).
+		SetNillableDockerBuilderPath(input.DockerBuilderPath).
+		SetNillableDockerBuilderContext(input.DockerBuilderContext).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
 		SetNillableS3BackupSourceID(input.S3BackupSourceID).
 		SetNillableS3BackupBucket(input.S3BackupBucket).
@@ -361,19 +361,19 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 	}
 
-	if input.DockerfilePath != nil {
-		if *input.DockerfilePath == "" {
-			upd.ClearDockerfilePath()
+	if input.DockerBuilderPath != nil {
+		if *input.DockerBuilderPath == "" {
+			upd.ClearDockerBuilderPath()
 		} else {
-			upd.SetDockerfilePath(*input.DockerfilePath)
+			upd.SetDockerBuilderPath(*input.DockerBuilderPath)
 		}
 	}
 
-	if input.DockerfileContext != nil {
-		if *input.DockerfileContext == "" {
-			upd.ClearDockerfileContext()
+	if input.DockerBuilderContext != nil {
+		if *input.DockerBuilderContext == "" {
+			upd.ClearDockerBuilderContext()
 		} else {
-			upd.SetDockerfileContext(*input.DockerfileContext)
+			upd.SetDockerBuilderContext(*input.DockerBuilderContext)
 		}
 	}
 

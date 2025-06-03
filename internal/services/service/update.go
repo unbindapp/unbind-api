@@ -249,8 +249,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			RunCommand:           input.RunCommand,
 			Public:               input.IsPublic,
 			Image:                input.Image,
-			DockerfilePath:       input.DockerfilePath,
-			DockerfileContext:    input.DockerfileContext,
+			DockerBuilderPath:    input.DockerBuilderPath,
+			DockerBuilderContext: input.DockerBuilderContext,
 			DatabaseConfig:       input.DatabaseConfig,
 			S3BackupSourceID:     input.S3BackupSourceID,
 			S3BackupBucket:       input.S3BackupBucket,
@@ -390,17 +390,17 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			})
 		}
 
-		if input.DockerfilePath != nil {
+		if input.DockerBuilderPath != nil {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 				Name:  "Dockerfile Path",
-				Value: *input.DockerfilePath,
+				Value: *input.DockerBuilderPath,
 			})
 		}
 
-		if input.DockerfileContext != nil {
+		if input.DockerBuilderContext != nil {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 				Name:  "Dockerfile Context",
-				Value: *input.DockerfileContext,
+				Value: *input.DockerBuilderContext,
 			})
 		}
 

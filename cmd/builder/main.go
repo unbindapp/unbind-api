@@ -154,13 +154,13 @@ func main() {
 		log.Infof(" - Builder Type: %s", cfg.ServiceBuilder)
 		if cfg.ServiceBuilder == schema.ServiceBuilderDocker {
 			dockerfileDisplay := "Dockerfile"
-			if cfg.ServiceDockerfilePath != "" {
-				dockerfileDisplay = cfg.ServiceDockerfilePath
+			if cfg.ServiceDockerBuilderPath != "" {
+				dockerfileDisplay = cfg.ServiceDockerBuilderPath
 			}
 			log.Infof(" - Dockerfile Path: %s", dockerfileDisplay)
 			ctxDisplay := "."
-			if cfg.ServiceDockerfileContext != "" {
-				ctxDisplay = cfg.ServiceDockerfileContext
+			if cfg.ServiceDockerBuilderContext != "" {
+				ctxDisplay = cfg.ServiceDockerBuilderContext
 			}
 			log.Infof(" - Dockerfile Context: %s", ctxDisplay)
 		}
