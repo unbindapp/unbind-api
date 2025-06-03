@@ -1986,7 +1986,7 @@ serve(async () => {
 				Name:     "Kong",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
-				Image:    utils.ToPtr("kong:2.8.1"),
+				Image:    utils.ToPtr("kong:3.9.0"),
 				InputIDs: []string{"input_domain"},
 				Ports: []schema.PortSpec{
 					{
@@ -2052,7 +2052,7 @@ serve(async () => {
 						Generator: &schema.ValueGenerator{
 							Type: schema.GeneratorTypeStringReplace,
 						},
-						Value: `_format_version: '2.1'
+						Value: `_format_version: '3.0'
 _transform: true
 
 consumers:

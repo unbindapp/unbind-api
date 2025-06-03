@@ -59,7 +59,7 @@ func flowiseTemplate() *schema.TemplateDefinition {
 				Name:       "Flowise",
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
-				Image:      utils.ToPtr("flowiseai/flowise:3.0.0"),
+				Image:      utils.ToPtr("flowiseai/flowise:3.0.1"),
 				RunCommand: utils.ToPtr("flowise start"),
 				Ports: []schema.PortSpec{
 					{
