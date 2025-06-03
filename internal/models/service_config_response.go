@@ -21,6 +21,9 @@ type ServiceConfigResponse struct {
 	RunCommand     *string               `json:"run_command,omitempty"`
 	IsPublic       bool                  `json:"is_public"`
 	Image          string                `json:"image,omitempty"`
+	// Dockerfile build overrides
+	DockerfilePath    *string `json:"dockerfile_path,omitempty"`
+	DockerfileContext *string `json:"dockerfile_context,omitempty"`
 	// For backups
 	S3BackupSourceID     *uuid.UUID `json:"s3_backup_source_id,omitempty"`
 	S3BackupBucket       *string    `json:"s3_backup_bucket,omitempty"`
@@ -71,6 +74,8 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			InitContainers:       entity.InitContainers,
 			Volumes:              []*PVCInfo{},
 			Resources:            entity.Resources,
+			DockerfilePath:       entity.DockerfilePath,
+			DockerfileContext:    entity.DockerfileContext,
 		}
 		if response.ProtectedVariables == nil {
 			response.ProtectedVariables = []string{}

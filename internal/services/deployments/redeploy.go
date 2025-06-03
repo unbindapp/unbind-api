@@ -2,6 +2,8 @@ package deployments_service
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +14,7 @@ import (
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
+	ubv1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -47,6 +50,9 @@ func (self *DeploymentService) redeployExistingImage(ctx context.Context, servic
 		return nil, err
 	}
 
+	// Create a CRD from the service configuration
+	newDeployment.ResourceDefinition = self.CreateCRDFromService(service)
+
 	// Update deployment resource definition
 	newDeployment.ResourceDefinition.Spec.DeploymentRef = newDeployment.ID.String()
 	newDeployment.ResourceDefinition.Spec.EnvVars = envVars
@@ -54,8 +60,13 @@ func (self *DeploymentService) redeployExistingImage(ctx context.Context, servic
 
 	// For docker image services, update the image reference
 	if service.Type == schema.ServiceTypeDockerimage {
-		newDeployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
-		newDeployment.Image = utils.ToPtr(service.Edges.ServiceConfig.Image)
+		if deployment.Image == nil {
+			newDeployment.ResourceDefinition.Spec.Config.Image = service.Edges.ServiceConfig.Image
+			newDeployment.Image = utils.ToPtr(service.Edges.ServiceConfig.Image)
+		} else {
+			newDeployment.ResourceDefinition.Spec.Config.Image = *deployment.Image
+			newDeployment.Image = utils.ToPtr(*deployment.Image)
+		}
 	}
 
 	// For database services, always use latest config
@@ -70,6 +81,22 @@ func (self *DeploymentService) redeployExistingImage(ctx context.Context, servic
 		if _, err := self.repo.Deployment().MarkFailed(ctx, nil, newDeployment.ID, err.Error(), time.Now()); err != nil {
 			return nil, err
 		}
+		return nil, err
+	}
+
+	// Attach metadata
+	if _, err := self.repo.Deployment().AttachDeploymentMetadata(
+		ctx,
+		nil,
+		newDeployment.ID,
+		newDeployment.ResourceDefinition.Spec.Config.Image,
+		newDeployment.ResourceDefinition,
+	); err != nil {
+		// Mark failed
+		if _, err := self.repo.Deployment().MarkFailed(ctx, nil, newDeployment.ID, err.Error(), time.Now()); err != nil {
+			return nil, err
+		}
+		// Pass through since we already marked the deployment as failed
 		return nil, err
 	}
 
@@ -167,4 +194,43 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	}
 
 	return models.TransformDeploymentEntity(job), nil
+}
+
+// CreateCRDFromService creates a CRD from the service configuration
+func (self *DeploymentService) CreateCRDFromService(service *ent.Service) *ubv1.Service {
+	crdToDeploy := &ubv1.Service{}
+
+	// For databsae fetch the crd from the current deployment
+	if service.Type == schema.ServiceTypeDatabase && service.Edges.CurrentDeployment != nil && service.Edges.CurrentDeployment.ResourceDefinition != nil {
+		crdToDeploy = service.Edges.CurrentDeployment.ResourceDefinition
+		if service.Edges.ServiceConfig.DatabaseConfig != nil {
+			crdToDeploy.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
+		}
+	}
+
+	// Metadata
+	crdToDeploy.Name = service.Edges.CurrentDeployment.ResourceDefinition.Name
+	crdToDeploy.Namespace = service.Edges.CurrentDeployment.ResourceDefinition.Namespace
+	crdToDeploy.Kind = service.Edges.CurrentDeployment.ResourceDefinition.Kind
+	crdToDeploy.APIVersion = service.Edges.CurrentDeployment.ResourceDefinition.APIVersion
+	crdToDeploy.Labels = service.Edges.CurrentDeployment.ResourceDefinition.Labels
+	crdToDeploy.Spec = service.Edges.CurrentDeployment.ResourceDefinition.Spec
+
+	// Update the Spec
+	var gitBranch string
+	if service.Edges.ServiceConfig.GitBranch != nil {
+		gitBranch = *service.Edges.ServiceConfig.GitBranch
+		if !strings.HasPrefix(gitBranch, "refs/heads/") {
+			gitBranch = fmt.Sprintf("refs/heads/%s", gitBranch)
+		}
+	}
+	crdToDeploy.Spec.Config.GitBranch = gitBranch
+	crdToDeploy.Spec.Config.Hosts = schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts)
+	crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
+	crdToDeploy.Spec.Config.Ports = schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports)
+	crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
+	crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.IsPublic
+	crdToDeploy.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
+
+	return crdToDeploy
 }

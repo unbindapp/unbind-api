@@ -3,18 +3,15 @@ package service_service
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	service_repo "github.com/unbindapp/unbind-api/internal/repositories/service"
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -97,7 +94,7 @@ func (self *ServiceService) deployAdhocService(ctx context.Context, service *ent
 	}
 
 	// Create CRD to deploy
-	crdToDeploy := self.createCRDFromService(service)
+	crdToDeploy := self.deploymentService.CreateCRDFromService(service)
 
 	var newDeployment *ent.Deployment
 
@@ -199,45 +196,6 @@ func (self *ServiceService) deployAdhocService(ctx context.Context, service *ent
 	}
 
 	return newDeployment, nil
-}
-
-// createCRDFromService creates a CRD from the service configuration
-func (self *ServiceService) createCRDFromService(service *ent.Service) *v1.Service {
-	crdToDeploy := &v1.Service{}
-
-	// For databsae fetch the crd from the current deployment
-	if service.Type == schema.ServiceTypeDatabase && service.Edges.CurrentDeployment != nil && service.Edges.CurrentDeployment.ResourceDefinition != nil {
-		crdToDeploy = service.Edges.CurrentDeployment.ResourceDefinition
-		if service.Edges.ServiceConfig.DatabaseConfig != nil {
-			crdToDeploy.Spec.Config.Database.Config = service.Edges.ServiceConfig.DatabaseConfig.AsV1DatabaseConfig()
-		}
-	}
-
-	// Metadata
-	crdToDeploy.Name = service.Edges.CurrentDeployment.ResourceDefinition.Name
-	crdToDeploy.Namespace = service.Edges.CurrentDeployment.ResourceDefinition.Namespace
-	crdToDeploy.Kind = service.Edges.CurrentDeployment.ResourceDefinition.Kind
-	crdToDeploy.APIVersion = service.Edges.CurrentDeployment.ResourceDefinition.APIVersion
-	crdToDeploy.Labels = service.Edges.CurrentDeployment.ResourceDefinition.Labels
-	crdToDeploy.Spec = service.Edges.CurrentDeployment.ResourceDefinition.Spec
-
-	// Update the Spec
-	var gitBranch string
-	if service.Edges.ServiceConfig.GitBranch != nil {
-		gitBranch = *service.Edges.ServiceConfig.GitBranch
-		if !strings.HasPrefix(gitBranch, "refs/heads/") {
-			gitBranch = fmt.Sprintf("refs/heads/%s", gitBranch)
-		}
-	}
-	crdToDeploy.Spec.Config.GitBranch = gitBranch
-	crdToDeploy.Spec.Config.Hosts = schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts)
-	crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
-	crdToDeploy.Spec.Config.Ports = schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports)
-	crdToDeploy.Spec.Config.RunCommand = service.Edges.ServiceConfig.RunCommand
-	crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.IsPublic
-	crdToDeploy.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
-
-	return crdToDeploy
 }
 
 // RedeployServices determines which services need rebuilding vs redeploying and performs the appropriate action
