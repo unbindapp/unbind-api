@@ -1986,7 +1986,7 @@ serve(async () => {
 				Name:     "Kong",
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
-				Image:    utils.ToPtr("kong:3.9.0"),
+				Image:    utils.ToPtr("kong:3.4.2"),
 				InputIDs: []string{"input_domain"},
 				Ports: []schema.PortSpec{
 					{
