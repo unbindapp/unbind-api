@@ -224,6 +224,14 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			}
 		}
 
+		// Determine is public
+		if len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0 {
+			// Has ports, do we have hosts
+			if len(input.OverwriteHosts) > 0 || len(input.AddHosts) > 0 || len(service.Edges.ServiceConfig.Hosts) > 0 {
+				input.IsPublic = utils.ToPtr(true)
+			}
+		}
+
 		// Update the service config
 		updateInput := &service_repo.MutateConfigInput{
 			ServiceID:            input.ServiceID,

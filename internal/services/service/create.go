@@ -381,6 +381,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 		service = createService
 
+		// Override public if hosts and ports exist
+		if len(hosts) > 0 && len(ports) > 0 {
+			isPublic = utils.ToPtr(true)
+		}
+
 		// Create the service config
 		createInput := &service_repo.MutateConfigInput{
 			ServiceID:               service.ID,
