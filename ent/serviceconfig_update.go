@@ -83,43 +83,43 @@ func (scu *ServiceConfigUpdate) SetNillableIcon(s *string) *ServiceConfigUpdate 
 	return scu
 }
 
-// SetDockerBuilderPath sets the "docker_builder_path" field.
-func (scu *ServiceConfigUpdate) SetDockerBuilderPath(s string) *ServiceConfigUpdate {
-	scu.mutation.SetDockerBuilderPath(s)
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (scu *ServiceConfigUpdate) SetDockerBuilderDockerfilePath(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDockerBuilderDockerfilePath(s)
 	return scu
 }
 
-// SetNillableDockerBuilderPath sets the "docker_builder_path" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableDockerBuilderPath(s *string) *ServiceConfigUpdate {
+// SetNillableDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDockerBuilderDockerfilePath(s *string) *ServiceConfigUpdate {
 	if s != nil {
-		scu.SetDockerBuilderPath(*s)
+		scu.SetDockerBuilderDockerfilePath(*s)
 	}
 	return scu
 }
 
-// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
-func (scu *ServiceConfigUpdate) ClearDockerBuilderPath() *ServiceConfigUpdate {
-	scu.mutation.ClearDockerBuilderPath()
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (scu *ServiceConfigUpdate) ClearDockerBuilderDockerfilePath() *ServiceConfigUpdate {
+	scu.mutation.ClearDockerBuilderDockerfilePath()
 	return scu
 }
 
-// SetDockerBuilderContext sets the "docker_builder_context" field.
-func (scu *ServiceConfigUpdate) SetDockerBuilderContext(s string) *ServiceConfigUpdate {
-	scu.mutation.SetDockerBuilderContext(s)
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (scu *ServiceConfigUpdate) SetDockerBuilderBuildContext(s string) *ServiceConfigUpdate {
+	scu.mutation.SetDockerBuilderBuildContext(s)
 	return scu
 }
 
-// SetNillableDockerBuilderContext sets the "docker_builder_context" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableDockerBuilderContext(s *string) *ServiceConfigUpdate {
+// SetNillableDockerBuilderBuildContext sets the "docker_builder_build_context" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableDockerBuilderBuildContext(s *string) *ServiceConfigUpdate {
 	if s != nil {
-		scu.SetDockerBuilderContext(*s)
+		scu.SetDockerBuilderBuildContext(*s)
 	}
 	return scu
 }
 
-// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
-func (scu *ServiceConfigUpdate) ClearDockerBuilderContext() *ServiceConfigUpdate {
-	scu.mutation.ClearDockerBuilderContext()
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (scu *ServiceConfigUpdate) ClearDockerBuilderBuildContext() *ServiceConfigUpdate {
+	scu.mutation.ClearDockerBuilderBuildContext()
 	return scu
 }
 
@@ -274,43 +274,43 @@ func (scu *ServiceConfigUpdate) SetNillableAutoDeploy(b *bool) *ServiceConfigUpd
 	return scu
 }
 
-// SetInstallCommand sets the "install_command" field.
-func (scu *ServiceConfigUpdate) SetInstallCommand(s string) *ServiceConfigUpdate {
-	scu.mutation.SetInstallCommand(s)
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (scu *ServiceConfigUpdate) SetRailpackBuilderInstallCommand(s string) *ServiceConfigUpdate {
+	scu.mutation.SetRailpackBuilderInstallCommand(s)
 	return scu
 }
 
-// SetNillableInstallCommand sets the "install_command" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableInstallCommand(s *string) *ServiceConfigUpdate {
+// SetNillableRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableRailpackBuilderInstallCommand(s *string) *ServiceConfigUpdate {
 	if s != nil {
-		scu.SetInstallCommand(*s)
+		scu.SetRailpackBuilderInstallCommand(*s)
 	}
 	return scu
 }
 
-// ClearInstallCommand clears the value of the "install_command" field.
-func (scu *ServiceConfigUpdate) ClearInstallCommand() *ServiceConfigUpdate {
-	scu.mutation.ClearInstallCommand()
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (scu *ServiceConfigUpdate) ClearRailpackBuilderInstallCommand() *ServiceConfigUpdate {
+	scu.mutation.ClearRailpackBuilderInstallCommand()
 	return scu
 }
 
-// SetBuildCommand sets the "build_command" field.
-func (scu *ServiceConfigUpdate) SetBuildCommand(s string) *ServiceConfigUpdate {
-	scu.mutation.SetBuildCommand(s)
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (scu *ServiceConfigUpdate) SetRailpackBuilderBuildCommand(s string) *ServiceConfigUpdate {
+	scu.mutation.SetRailpackBuilderBuildCommand(s)
 	return scu
 }
 
-// SetNillableBuildCommand sets the "build_command" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableBuildCommand(s *string) *ServiceConfigUpdate {
+// SetNillableRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field if the given value is not nil.
+func (scu *ServiceConfigUpdate) SetNillableRailpackBuilderBuildCommand(s *string) *ServiceConfigUpdate {
 	if s != nil {
-		scu.SetBuildCommand(*s)
+		scu.SetRailpackBuilderBuildCommand(*s)
 	}
 	return scu
 }
 
-// ClearBuildCommand clears the value of the "build_command" field.
-func (scu *ServiceConfigUpdate) ClearBuildCommand() *ServiceConfigUpdate {
-	scu.mutation.ClearBuildCommand()
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (scu *ServiceConfigUpdate) ClearRailpackBuilderBuildCommand() *ServiceConfigUpdate {
+	scu.mutation.ClearRailpackBuilderBuildCommand()
 	return scu
 }
 
@@ -710,17 +710,17 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.Icon(); ok {
 		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
 	}
-	if value, ok := scu.mutation.DockerBuilderPath(); ok {
-		_spec.SetField(serviceconfig.FieldDockerBuilderPath, field.TypeString, value)
+	if value, ok := scu.mutation.DockerBuilderDockerfilePath(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderDockerfilePath, field.TypeString, value)
 	}
-	if scu.mutation.DockerBuilderPathCleared() {
-		_spec.ClearField(serviceconfig.FieldDockerBuilderPath, field.TypeString)
+	if scu.mutation.DockerBuilderDockerfilePathCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerBuilderDockerfilePath, field.TypeString)
 	}
-	if value, ok := scu.mutation.DockerBuilderContext(); ok {
-		_spec.SetField(serviceconfig.FieldDockerBuilderContext, field.TypeString, value)
+	if value, ok := scu.mutation.DockerBuilderBuildContext(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderBuildContext, field.TypeString, value)
 	}
-	if scu.mutation.DockerBuilderContextCleared() {
-		_spec.ClearField(serviceconfig.FieldDockerBuilderContext, field.TypeString)
+	if scu.mutation.DockerBuilderBuildContextCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerBuilderBuildContext, field.TypeString)
 	}
 	if value, ok := scu.mutation.RailpackProvider(); ok {
 		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
@@ -777,17 +777,17 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	if value, ok := scu.mutation.AutoDeploy(); ok {
 		_spec.SetField(serviceconfig.FieldAutoDeploy, field.TypeBool, value)
 	}
-	if value, ok := scu.mutation.InstallCommand(); ok {
-		_spec.SetField(serviceconfig.FieldInstallCommand, field.TypeString, value)
+	if value, ok := scu.mutation.RailpackBuilderInstallCommand(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackBuilderInstallCommand, field.TypeString, value)
 	}
-	if scu.mutation.InstallCommandCleared() {
-		_spec.ClearField(serviceconfig.FieldInstallCommand, field.TypeString)
+	if scu.mutation.RailpackBuilderInstallCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackBuilderInstallCommand, field.TypeString)
 	}
-	if value, ok := scu.mutation.BuildCommand(); ok {
-		_spec.SetField(serviceconfig.FieldBuildCommand, field.TypeString, value)
+	if value, ok := scu.mutation.RailpackBuilderBuildCommand(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackBuilderBuildCommand, field.TypeString, value)
 	}
-	if scu.mutation.BuildCommandCleared() {
-		_spec.ClearField(serviceconfig.FieldBuildCommand, field.TypeString)
+	if scu.mutation.RailpackBuilderBuildCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackBuilderBuildCommand, field.TypeString)
 	}
 	if value, ok := scu.mutation.RunCommand(); ok {
 		_spec.SetField(serviceconfig.FieldRunCommand, field.TypeString, value)
@@ -1021,43 +1021,43 @@ func (scuo *ServiceConfigUpdateOne) SetNillableIcon(s *string) *ServiceConfigUpd
 	return scuo
 }
 
-// SetDockerBuilderPath sets the "docker_builder_path" field.
-func (scuo *ServiceConfigUpdateOne) SetDockerBuilderPath(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetDockerBuilderPath(s)
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (scuo *ServiceConfigUpdateOne) SetDockerBuilderDockerfilePath(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDockerBuilderDockerfilePath(s)
 	return scuo
 }
 
-// SetNillableDockerBuilderPath sets the "docker_builder_path" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableDockerBuilderPath(s *string) *ServiceConfigUpdateOne {
+// SetNillableDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDockerBuilderDockerfilePath(s *string) *ServiceConfigUpdateOne {
 	if s != nil {
-		scuo.SetDockerBuilderPath(*s)
+		scuo.SetDockerBuilderDockerfilePath(*s)
 	}
 	return scuo
 }
 
-// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
-func (scuo *ServiceConfigUpdateOne) ClearDockerBuilderPath() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearDockerBuilderPath()
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (scuo *ServiceConfigUpdateOne) ClearDockerBuilderDockerfilePath() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDockerBuilderDockerfilePath()
 	return scuo
 }
 
-// SetDockerBuilderContext sets the "docker_builder_context" field.
-func (scuo *ServiceConfigUpdateOne) SetDockerBuilderContext(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetDockerBuilderContext(s)
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (scuo *ServiceConfigUpdateOne) SetDockerBuilderBuildContext(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetDockerBuilderBuildContext(s)
 	return scuo
 }
 
-// SetNillableDockerBuilderContext sets the "docker_builder_context" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableDockerBuilderContext(s *string) *ServiceConfigUpdateOne {
+// SetNillableDockerBuilderBuildContext sets the "docker_builder_build_context" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableDockerBuilderBuildContext(s *string) *ServiceConfigUpdateOne {
 	if s != nil {
-		scuo.SetDockerBuilderContext(*s)
+		scuo.SetDockerBuilderBuildContext(*s)
 	}
 	return scuo
 }
 
-// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
-func (scuo *ServiceConfigUpdateOne) ClearDockerBuilderContext() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearDockerBuilderContext()
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (scuo *ServiceConfigUpdateOne) ClearDockerBuilderBuildContext() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearDockerBuilderBuildContext()
 	return scuo
 }
 
@@ -1212,43 +1212,43 @@ func (scuo *ServiceConfigUpdateOne) SetNillableAutoDeploy(b *bool) *ServiceConfi
 	return scuo
 }
 
-// SetInstallCommand sets the "install_command" field.
-func (scuo *ServiceConfigUpdateOne) SetInstallCommand(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetInstallCommand(s)
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (scuo *ServiceConfigUpdateOne) SetRailpackBuilderInstallCommand(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetRailpackBuilderInstallCommand(s)
 	return scuo
 }
 
-// SetNillableInstallCommand sets the "install_command" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableInstallCommand(s *string) *ServiceConfigUpdateOne {
+// SetNillableRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableRailpackBuilderInstallCommand(s *string) *ServiceConfigUpdateOne {
 	if s != nil {
-		scuo.SetInstallCommand(*s)
+		scuo.SetRailpackBuilderInstallCommand(*s)
 	}
 	return scuo
 }
 
-// ClearInstallCommand clears the value of the "install_command" field.
-func (scuo *ServiceConfigUpdateOne) ClearInstallCommand() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearInstallCommand()
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (scuo *ServiceConfigUpdateOne) ClearRailpackBuilderInstallCommand() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearRailpackBuilderInstallCommand()
 	return scuo
 }
 
-// SetBuildCommand sets the "build_command" field.
-func (scuo *ServiceConfigUpdateOne) SetBuildCommand(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetBuildCommand(s)
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (scuo *ServiceConfigUpdateOne) SetRailpackBuilderBuildCommand(s string) *ServiceConfigUpdateOne {
+	scuo.mutation.SetRailpackBuilderBuildCommand(s)
 	return scuo
 }
 
-// SetNillableBuildCommand sets the "build_command" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableBuildCommand(s *string) *ServiceConfigUpdateOne {
+// SetNillableRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field if the given value is not nil.
+func (scuo *ServiceConfigUpdateOne) SetNillableRailpackBuilderBuildCommand(s *string) *ServiceConfigUpdateOne {
 	if s != nil {
-		scuo.SetBuildCommand(*s)
+		scuo.SetRailpackBuilderBuildCommand(*s)
 	}
 	return scuo
 }
 
-// ClearBuildCommand clears the value of the "build_command" field.
-func (scuo *ServiceConfigUpdateOne) ClearBuildCommand() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearBuildCommand()
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (scuo *ServiceConfigUpdateOne) ClearRailpackBuilderBuildCommand() *ServiceConfigUpdateOne {
+	scuo.mutation.ClearRailpackBuilderBuildCommand()
 	return scuo
 }
 
@@ -1678,17 +1678,17 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	if value, ok := scuo.mutation.Icon(); ok {
 		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
 	}
-	if value, ok := scuo.mutation.DockerBuilderPath(); ok {
-		_spec.SetField(serviceconfig.FieldDockerBuilderPath, field.TypeString, value)
+	if value, ok := scuo.mutation.DockerBuilderDockerfilePath(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderDockerfilePath, field.TypeString, value)
 	}
-	if scuo.mutation.DockerBuilderPathCleared() {
-		_spec.ClearField(serviceconfig.FieldDockerBuilderPath, field.TypeString)
+	if scuo.mutation.DockerBuilderDockerfilePathCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerBuilderDockerfilePath, field.TypeString)
 	}
-	if value, ok := scuo.mutation.DockerBuilderContext(); ok {
-		_spec.SetField(serviceconfig.FieldDockerBuilderContext, field.TypeString, value)
+	if value, ok := scuo.mutation.DockerBuilderBuildContext(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderBuildContext, field.TypeString, value)
 	}
-	if scuo.mutation.DockerBuilderContextCleared() {
-		_spec.ClearField(serviceconfig.FieldDockerBuilderContext, field.TypeString)
+	if scuo.mutation.DockerBuilderBuildContextCleared() {
+		_spec.ClearField(serviceconfig.FieldDockerBuilderBuildContext, field.TypeString)
 	}
 	if value, ok := scuo.mutation.RailpackProvider(); ok {
 		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
@@ -1745,17 +1745,17 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 	if value, ok := scuo.mutation.AutoDeploy(); ok {
 		_spec.SetField(serviceconfig.FieldAutoDeploy, field.TypeBool, value)
 	}
-	if value, ok := scuo.mutation.InstallCommand(); ok {
-		_spec.SetField(serviceconfig.FieldInstallCommand, field.TypeString, value)
+	if value, ok := scuo.mutation.RailpackBuilderInstallCommand(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackBuilderInstallCommand, field.TypeString, value)
 	}
-	if scuo.mutation.InstallCommandCleared() {
-		_spec.ClearField(serviceconfig.FieldInstallCommand, field.TypeString)
+	if scuo.mutation.RailpackBuilderInstallCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackBuilderInstallCommand, field.TypeString)
 	}
-	if value, ok := scuo.mutation.BuildCommand(); ok {
-		_spec.SetField(serviceconfig.FieldBuildCommand, field.TypeString, value)
+	if value, ok := scuo.mutation.RailpackBuilderBuildCommand(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackBuilderBuildCommand, field.TypeString, value)
 	}
-	if scuo.mutation.BuildCommandCleared() {
-		_spec.ClearField(serviceconfig.FieldBuildCommand, field.TypeString)
+	if scuo.mutation.RailpackBuilderBuildCommandCleared() {
+		_spec.ClearField(serviceconfig.FieldRailpackBuilderBuildCommand, field.TypeString)
 	}
 	if value, ok := scuo.mutation.RunCommand(); ok {
 		_spec.SetField(serviceconfig.FieldRunCommand, field.TypeString, value)

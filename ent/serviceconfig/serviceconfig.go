@@ -28,10 +28,10 @@ const (
 	FieldBuilder = "builder"
 	// FieldIcon holds the string denoting the icon field in the database.
 	FieldIcon = "icon"
-	// FieldDockerBuilderPath holds the string denoting the docker_builder_path field in the database.
-	FieldDockerBuilderPath = "docker_builder_path"
-	// FieldDockerBuilderContext holds the string denoting the docker_builder_context field in the database.
-	FieldDockerBuilderContext = "docker_builder_context"
+	// FieldDockerBuilderDockerfilePath holds the string denoting the docker_builder_dockerfile_path field in the database.
+	FieldDockerBuilderDockerfilePath = "docker_builder_dockerfile_path"
+	// FieldDockerBuilderBuildContext holds the string denoting the docker_builder_build_context field in the database.
+	FieldDockerBuilderBuildContext = "docker_builder_build_context"
 	// FieldRailpackProvider holds the string denoting the railpack_provider field in the database.
 	FieldRailpackProvider = "railpack_provider"
 	// FieldRailpackFramework holds the string denoting the railpack_framework field in the database.
@@ -48,10 +48,10 @@ const (
 	FieldReplicas = "replicas"
 	// FieldAutoDeploy holds the string denoting the auto_deploy field in the database.
 	FieldAutoDeploy = "auto_deploy"
-	// FieldInstallCommand holds the string denoting the install_command field in the database.
-	FieldInstallCommand = "install_command"
-	// FieldBuildCommand holds the string denoting the build_command field in the database.
-	FieldBuildCommand = "build_command"
+	// FieldRailpackBuilderInstallCommand holds the string denoting the railpack_builder_install_command field in the database.
+	FieldRailpackBuilderInstallCommand = "railpack_builder_install_command"
+	// FieldRailpackBuilderBuildCommand holds the string denoting the railpack_builder_build_command field in the database.
+	FieldRailpackBuilderBuildCommand = "railpack_builder_build_command"
 	// FieldRunCommand holds the string denoting the run_command field in the database.
 	FieldRunCommand = "run_command"
 	// FieldIsPublic holds the string denoting the is_public field in the database.
@@ -114,8 +114,8 @@ var Columns = []string{
 	FieldServiceID,
 	FieldBuilder,
 	FieldIcon,
-	FieldDockerBuilderPath,
-	FieldDockerBuilderContext,
+	FieldDockerBuilderDockerfilePath,
+	FieldDockerBuilderBuildContext,
 	FieldRailpackProvider,
 	FieldRailpackFramework,
 	FieldGitBranch,
@@ -124,8 +124,8 @@ var Columns = []string{
 	FieldPorts,
 	FieldReplicas,
 	FieldAutoDeploy,
-	FieldInstallCommand,
-	FieldBuildCommand,
+	FieldRailpackBuilderInstallCommand,
+	FieldRailpackBuilderBuildCommand,
 	FieldRunCommand,
 	FieldIsPublic,
 	FieldImage,
@@ -238,14 +238,14 @@ func ByIcon(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIcon, opts...).ToFunc()
 }
 
-// ByDockerBuilderPath orders the results by the docker_builder_path field.
-func ByDockerBuilderPath(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDockerBuilderPath, opts...).ToFunc()
+// ByDockerBuilderDockerfilePath orders the results by the docker_builder_dockerfile_path field.
+func ByDockerBuilderDockerfilePath(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDockerBuilderDockerfilePath, opts...).ToFunc()
 }
 
-// ByDockerBuilderContext orders the results by the docker_builder_context field.
-func ByDockerBuilderContext(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDockerBuilderContext, opts...).ToFunc()
+// ByDockerBuilderBuildContext orders the results by the docker_builder_build_context field.
+func ByDockerBuilderBuildContext(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDockerBuilderBuildContext, opts...).ToFunc()
 }
 
 // ByRailpackProvider orders the results by the railpack_provider field.
@@ -278,14 +278,14 @@ func ByAutoDeploy(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAutoDeploy, opts...).ToFunc()
 }
 
-// ByInstallCommand orders the results by the install_command field.
-func ByInstallCommand(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldInstallCommand, opts...).ToFunc()
+// ByRailpackBuilderInstallCommand orders the results by the railpack_builder_install_command field.
+func ByRailpackBuilderInstallCommand(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRailpackBuilderInstallCommand, opts...).ToFunc()
 }
 
-// ByBuildCommand orders the results by the build_command field.
-func ByBuildCommand(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBuildCommand, opts...).ToFunc()
+// ByRailpackBuilderBuildCommand orders the results by the railpack_builder_build_command field.
+func ByRailpackBuilderBuildCommand(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRailpackBuilderBuildCommand, opts...).ToFunc()
 }
 
 // ByRunCommand orders the results by the run_command field.

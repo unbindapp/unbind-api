@@ -13292,56 +13292,56 @@ func (m *ServiceMutation) ResetEdge(name string) error {
 // ServiceConfigMutation represents an operation that mutates the ServiceConfig nodes in the graph.
 type ServiceConfigMutation struct {
 	config
-	op                        Op
-	typ                       string
-	id                        *uuid.UUID
-	created_at                *time.Time
-	updated_at                *time.Time
-	builder                   *schema.ServiceBuilder
-	icon                      *string
-	docker_builder_path       *string
-	docker_builder_context    *string
-	railpack_provider         *enum.Provider
-	railpack_framework        *enum.Framework
-	git_branch                *string
-	git_tag                   *string
-	hosts                     *[]schema.HostSpec
-	appendhosts               []schema.HostSpec
-	ports                     *[]schema.PortSpec
-	appendports               []schema.PortSpec
-	replicas                  *int32
-	addreplicas               *int32
-	auto_deploy               *bool
-	install_command           *string
-	build_command             *string
-	run_command               *string
-	is_public                 *bool
-	image                     *string
-	definition_version        *string
-	database_config           **schema.DatabaseConfig
-	s3_backup_bucket          *string
-	backup_schedule           *string
-	backup_retention_count    *int
-	addbackup_retention_count *int
-	volumes                   *[]schema.ServiceVolume
-	appendvolumes             []schema.ServiceVolume
-	security_context          **schema.SecurityContext
-	health_check              **schema.HealthCheck
-	variable_mounts           *[]*schema.VariableMount
-	appendvariable_mounts     []*schema.VariableMount
-	protected_variables       *[]string
-	appendprotected_variables []string
-	init_containers           *[]*schema.InitContainer
-	appendinit_containers     []*schema.InitContainer
-	resources                 **schema.Resources
-	clearedFields             map[string]struct{}
-	service                   *uuid.UUID
-	clearedservice            bool
-	s3_backup_sources         *uuid.UUID
-	cleareds3_backup_sources  bool
-	done                      bool
-	oldValue                  func(context.Context) (*ServiceConfig, error)
-	predicates                []predicate.ServiceConfig
+	op                               Op
+	typ                              string
+	id                               *uuid.UUID
+	created_at                       *time.Time
+	updated_at                       *time.Time
+	builder                          *schema.ServiceBuilder
+	icon                             *string
+	docker_builder_dockerfile_path   *string
+	docker_builder_build_context     *string
+	railpack_provider                *enum.Provider
+	railpack_framework               *enum.Framework
+	git_branch                       *string
+	git_tag                          *string
+	hosts                            *[]schema.HostSpec
+	appendhosts                      []schema.HostSpec
+	ports                            *[]schema.PortSpec
+	appendports                      []schema.PortSpec
+	replicas                         *int32
+	addreplicas                      *int32
+	auto_deploy                      *bool
+	railpack_builder_install_command *string
+	railpack_builder_build_command   *string
+	run_command                      *string
+	is_public                        *bool
+	image                            *string
+	definition_version               *string
+	database_config                  **schema.DatabaseConfig
+	s3_backup_bucket                 *string
+	backup_schedule                  *string
+	backup_retention_count           *int
+	addbackup_retention_count        *int
+	volumes                          *[]schema.ServiceVolume
+	appendvolumes                    []schema.ServiceVolume
+	security_context                 **schema.SecurityContext
+	health_check                     **schema.HealthCheck
+	variable_mounts                  *[]*schema.VariableMount
+	appendvariable_mounts            []*schema.VariableMount
+	protected_variables              *[]string
+	appendprotected_variables        []string
+	init_containers                  *[]*schema.InitContainer
+	appendinit_containers            []*schema.InitContainer
+	resources                        **schema.Resources
+	clearedFields                    map[string]struct{}
+	service                          *uuid.UUID
+	clearedservice                   bool
+	s3_backup_sources                *uuid.UUID
+	cleareds3_backup_sources         bool
+	done                             bool
+	oldValue                         func(context.Context) (*ServiceConfig, error)
+	predicates                       []predicate.ServiceConfig
 }
 
 var _ ent.Mutation = (*ServiceConfigMutation)(nil)
@@ -13628,102 +13628,102 @@ func (m *ServiceConfigMutation) ResetIcon() {
 	m.icon = nil
 }
 
-// SetDockerBuilderPath sets the "docker_builder_path" field.
-func (m *ServiceConfigMutation) SetDockerBuilderPath(s string) {
-	m.docker_builder_path = &s
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (m *ServiceConfigMutation) SetDockerBuilderDockerfilePath(s string) {
+	m.docker_builder_dockerfile_path = &s
 }
 
-// DockerBuilderPath returns the value of the "docker_builder_path" field in the mutation.
-func (m *ServiceConfigMutation) DockerBuilderPath() (r string, exists bool) {
-	v := m.docker_builder_path
+// DockerBuilderDockerfilePath returns the value of the "docker_builder_dockerfile_path" field in the mutation.
+func (m *ServiceConfigMutation) DockerBuilderDockerfilePath() (r string, exists bool) {
+	v := m.docker_builder_dockerfile_path
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldDockerBuilderPath returns the old "docker_builder_path" field's value of the ServiceConfig entity.
+// OldDockerBuilderDockerfilePath returns the old "docker_builder_dockerfile_path" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldDockerBuilderPath(ctx context.Context) (v *string, err error) {
+func (m *ServiceConfigMutation) OldDockerBuilderDockerfilePath(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDockerBuilderPath is only allowed on UpdateOne operations")
+		return v, errors.New("OldDockerBuilderDockerfilePath is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDockerBuilderPath requires an ID field in the mutation")
+		return v, errors.New("OldDockerBuilderDockerfilePath requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDockerBuilderPath: %w", err)
+		return v, fmt.Errorf("querying old value for OldDockerBuilderDockerfilePath: %w", err)
 	}
-	return oldValue.DockerBuilderPath, nil
+	return oldValue.DockerBuilderDockerfilePath, nil
 }
 
-// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
-func (m *ServiceConfigMutation) ClearDockerBuilderPath() {
-	m.docker_builder_path = nil
-	m.clearedFields[serviceconfig.FieldDockerBuilderPath] = struct{}{}
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (m *ServiceConfigMutation) ClearDockerBuilderDockerfilePath() {
+	m.docker_builder_dockerfile_path = nil
+	m.clearedFields[serviceconfig.FieldDockerBuilderDockerfilePath] = struct{}{}
 }
 
-// DockerBuilderPathCleared returns if the "docker_builder_path" field was cleared in this mutation.
-func (m *ServiceConfigMutation) DockerBuilderPathCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldDockerBuilderPath]
+// DockerBuilderDockerfilePathCleared returns if the "docker_builder_dockerfile_path" field was cleared in this mutation.
+func (m *ServiceConfigMutation) DockerBuilderDockerfilePathCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldDockerBuilderDockerfilePath]
 	return ok
 }
 
-// ResetDockerBuilderPath resets all changes to the "docker_builder_path" field.
-func (m *ServiceConfigMutation) ResetDockerBuilderPath() {
-	m.docker_builder_path = nil
-	delete(m.clearedFields, serviceconfig.FieldDockerBuilderPath)
+// ResetDockerBuilderDockerfilePath resets all changes to the "docker_builder_dockerfile_path" field.
+func (m *ServiceConfigMutation) ResetDockerBuilderDockerfilePath() {
+	m.docker_builder_dockerfile_path = nil
+	delete(m.clearedFields, serviceconfig.FieldDockerBuilderDockerfilePath)
 }
 
-// SetDockerBuilderContext sets the "docker_builder_context" field.
-func (m *ServiceConfigMutation) SetDockerBuilderContext(s string) {
-	m.docker_builder_context = &s
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (m *ServiceConfigMutation) SetDockerBuilderBuildContext(s string) {
+	m.docker_builder_build_context = &s
 }
 
-// DockerBuilderContext returns the value of the "docker_builder_context" field in the mutation.
-func (m *ServiceConfigMutation) DockerBuilderContext() (r string, exists bool) {
-	v := m.docker_builder_context
+// DockerBuilderBuildContext returns the value of the "docker_builder_build_context" field in the mutation.
+func (m *ServiceConfigMutation) DockerBuilderBuildContext() (r string, exists bool) {
+	v := m.docker_builder_build_context
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldDockerBuilderContext returns the old "docker_builder_context" field's value of the ServiceConfig entity.
+// OldDockerBuilderBuildContext returns the old "docker_builder_build_context" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldDockerBuilderContext(ctx context.Context) (v *string, err error) {
+func (m *ServiceConfigMutation) OldDockerBuilderBuildContext(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDockerBuilderContext is only allowed on UpdateOne operations")
+		return v, errors.New("OldDockerBuilderBuildContext is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDockerBuilderContext requires an ID field in the mutation")
+		return v, errors.New("OldDockerBuilderBuildContext requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDockerBuilderContext: %w", err)
+		return v, fmt.Errorf("querying old value for OldDockerBuilderBuildContext: %w", err)
 	}
-	return oldValue.DockerBuilderContext, nil
+	return oldValue.DockerBuilderBuildContext, nil
 }
 
-// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
-func (m *ServiceConfigMutation) ClearDockerBuilderContext() {
-	m.docker_builder_context = nil
-	m.clearedFields[serviceconfig.FieldDockerBuilderContext] = struct{}{}
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (m *ServiceConfigMutation) ClearDockerBuilderBuildContext() {
+	m.docker_builder_build_context = nil
+	m.clearedFields[serviceconfig.FieldDockerBuilderBuildContext] = struct{}{}
 }
 
-// DockerBuilderContextCleared returns if the "docker_builder_context" field was cleared in this mutation.
-func (m *ServiceConfigMutation) DockerBuilderContextCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldDockerBuilderContext]
+// DockerBuilderBuildContextCleared returns if the "docker_builder_build_context" field was cleared in this mutation.
+func (m *ServiceConfigMutation) DockerBuilderBuildContextCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldDockerBuilderBuildContext]
 	return ok
 }
 
-// ResetDockerBuilderContext resets all changes to the "docker_builder_context" field.
-func (m *ServiceConfigMutation) ResetDockerBuilderContext() {
-	m.docker_builder_context = nil
-	delete(m.clearedFields, serviceconfig.FieldDockerBuilderContext)
+// ResetDockerBuilderBuildContext resets all changes to the "docker_builder_build_context" field.
+func (m *ServiceConfigMutation) ResetDockerBuilderBuildContext() {
+	m.docker_builder_build_context = nil
+	delete(m.clearedFields, serviceconfig.FieldDockerBuilderBuildContext)
 }
 
 // SetRailpackProvider sets the "railpack_provider" field.
@@ -14144,102 +14144,102 @@ func (m *ServiceConfigMutation) ResetAutoDeploy() {
 	m.auto_deploy = nil
 }
 
-// SetInstallCommand sets the "install_command" field.
-func (m *ServiceConfigMutation) SetInstallCommand(s string) {
-	m.install_command = &s
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (m *ServiceConfigMutation) SetRailpackBuilderInstallCommand(s string) {
+	m.railpack_builder_install_command = &s
 }
 
-// InstallCommand returns the value of the "install_command" field in the mutation.
-func (m *ServiceConfigMutation) InstallCommand() (r string, exists bool) {
-	v := m.install_command
+// RailpackBuilderInstallCommand returns the value of the "railpack_builder_install_command" field in the mutation.
+func (m *ServiceConfigMutation) RailpackBuilderInstallCommand() (r string, exists bool) {
+	v := m.railpack_builder_install_command
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldInstallCommand returns the old "install_command" field's value of the ServiceConfig entity.
+// OldRailpackBuilderInstallCommand returns the old "railpack_builder_install_command" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldInstallCommand(ctx context.Context) (v *string, err error) {
+func (m *ServiceConfigMutation) OldRailpackBuilderInstallCommand(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldInstallCommand is only allowed on UpdateOne operations")
+		return v, errors.New("OldRailpackBuilderInstallCommand is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldInstallCommand requires an ID field in the mutation")
+		return v, errors.New("OldRailpackBuilderInstallCommand requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldInstallCommand: %w", err)
+		return v, fmt.Errorf("querying old value for OldRailpackBuilderInstallCommand: %w", err)
 	}
-	return oldValue.InstallCommand, nil
+	return oldValue.RailpackBuilderInstallCommand, nil
 }
 
-// ClearInstallCommand clears the value of the "install_command" field.
-func (m *ServiceConfigMutation) ClearInstallCommand() {
-	m.install_command = nil
-	m.clearedFields[serviceconfig.FieldInstallCommand] = struct{}{}
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (m *ServiceConfigMutation) ClearRailpackBuilderInstallCommand() {
+	m.railpack_builder_install_command = nil
+	m.clearedFields[serviceconfig.FieldRailpackBuilderInstallCommand] = struct{}{}
 }
 
-// InstallCommandCleared returns if the "install_command" field was cleared in this mutation.
-func (m *ServiceConfigMutation) InstallCommandCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldInstallCommand]
+// RailpackBuilderInstallCommandCleared returns if the "railpack_builder_install_command" field was cleared in this mutation.
+func (m *ServiceConfigMutation) RailpackBuilderInstallCommandCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldRailpackBuilderInstallCommand]
 	return ok
 }
 
-// ResetInstallCommand resets all changes to the "install_command" field.
-func (m *ServiceConfigMutation) ResetInstallCommand() {
-	m.install_command = nil
-	delete(m.clearedFields, serviceconfig.FieldInstallCommand)
+// ResetRailpackBuilderInstallCommand resets all changes to the "railpack_builder_install_command" field.
+func (m *ServiceConfigMutation) ResetRailpackBuilderInstallCommand() {
+	m.railpack_builder_install_command = nil
+	delete(m.clearedFields, serviceconfig.FieldRailpackBuilderInstallCommand)
 }
 
-// SetBuildCommand sets the "build_command" field.
-func (m *ServiceConfigMutation) SetBuildCommand(s string) {
-	m.build_command = &s
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (m *ServiceConfigMutation) SetRailpackBuilderBuildCommand(s string) {
+	m.railpack_builder_build_command = &s
 }
 
-// BuildCommand returns the value of the "build_command" field in the mutation.
-func (m *ServiceConfigMutation) BuildCommand() (r string, exists bool) {
-	v := m.build_command
+// RailpackBuilderBuildCommand returns the value of the "railpack_builder_build_command" field in the mutation.
+func (m *ServiceConfigMutation) RailpackBuilderBuildCommand() (r string, exists bool) {
+	v := m.railpack_builder_build_command
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldBuildCommand returns the old "build_command" field's value of the ServiceConfig entity.
+// OldRailpackBuilderBuildCommand returns the old "railpack_builder_build_command" field's value of the ServiceConfig entity.
 // If the ServiceConfig object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceConfigMutation) OldBuildCommand(ctx context.Context) (v *string, err error) {
+func (m *ServiceConfigMutation) OldRailpackBuilderBuildCommand(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldBuildCommand is only allowed on UpdateOne operations")
+		return v, errors.New("OldRailpackBuilderBuildCommand is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldBuildCommand requires an ID field in the mutation")
+		return v, errors.New("OldRailpackBuilderBuildCommand requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldBuildCommand: %w", err)
+		return v, fmt.Errorf("querying old value for OldRailpackBuilderBuildCommand: %w", err)
 	}
-	return oldValue.BuildCommand, nil
+	return oldValue.RailpackBuilderBuildCommand, nil
 }
 
-// ClearBuildCommand clears the value of the "build_command" field.
-func (m *ServiceConfigMutation) ClearBuildCommand() {
-	m.build_command = nil
-	m.clearedFields[serviceconfig.FieldBuildCommand] = struct{}{}
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (m *ServiceConfigMutation) ClearRailpackBuilderBuildCommand() {
+	m.railpack_builder_build_command = nil
+	m.clearedFields[serviceconfig.FieldRailpackBuilderBuildCommand] = struct{}{}
 }
 
-// BuildCommandCleared returns if the "build_command" field was cleared in this mutation.
-func (m *ServiceConfigMutation) BuildCommandCleared() bool {
-	_, ok := m.clearedFields[serviceconfig.FieldBuildCommand]
+// RailpackBuilderBuildCommandCleared returns if the "railpack_builder_build_command" field was cleared in this mutation.
+func (m *ServiceConfigMutation) RailpackBuilderBuildCommandCleared() bool {
+	_, ok := m.clearedFields[serviceconfig.FieldRailpackBuilderBuildCommand]
 	return ok
 }
 
-// ResetBuildCommand resets all changes to the "build_command" field.
-func (m *ServiceConfigMutation) ResetBuildCommand() {
-	m.build_command = nil
-	delete(m.clearedFields, serviceconfig.FieldBuildCommand)
+// ResetRailpackBuilderBuildCommand resets all changes to the "railpack_builder_build_command" field.
+func (m *ServiceConfigMutation) ResetRailpackBuilderBuildCommand() {
+	m.railpack_builder_build_command = nil
+	delete(m.clearedFields, serviceconfig.FieldRailpackBuilderBuildCommand)
 }
 
 // SetRunCommand sets the "run_command" field.
@@ -15188,11 +15188,11 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.icon != nil {
 		fields = append(fields, serviceconfig.FieldIcon)
 	}
-	if m.docker_builder_path != nil {
-		fields = append(fields, serviceconfig.FieldDockerBuilderPath)
+	if m.docker_builder_dockerfile_path != nil {
+		fields = append(fields, serviceconfig.FieldDockerBuilderDockerfilePath)
 	}
-	if m.docker_builder_context != nil {
-		fields = append(fields, serviceconfig.FieldDockerBuilderContext)
+	if m.docker_builder_build_context != nil {
+		fields = append(fields, serviceconfig.FieldDockerBuilderBuildContext)
 	}
 	if m.railpack_provider != nil {
 		fields = append(fields, serviceconfig.FieldRailpackProvider)
@@ -15218,11 +15218,11 @@ func (m *ServiceConfigMutation) Fields() []string {
 	if m.auto_deploy != nil {
 		fields = append(fields, serviceconfig.FieldAutoDeploy)
 	}
-	if m.install_command != nil {
-		fields = append(fields, serviceconfig.FieldInstallCommand)
+	if m.railpack_builder_install_command != nil {
+		fields = append(fields, serviceconfig.FieldRailpackBuilderInstallCommand)
 	}
-	if m.build_command != nil {
-		fields = append(fields, serviceconfig.FieldBuildCommand)
+	if m.railpack_builder_build_command != nil {
+		fields = append(fields, serviceconfig.FieldRailpackBuilderBuildCommand)
 	}
 	if m.run_command != nil {
 		fields = append(fields, serviceconfig.FieldRunCommand)
@@ -15290,10 +15290,10 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.Builder()
 	case serviceconfig.FieldIcon:
 		return m.Icon()
-	case serviceconfig.FieldDockerBuilderPath:
-		return m.DockerBuilderPath()
-	case serviceconfig.FieldDockerBuilderContext:
-		return m.DockerBuilderContext()
+	case serviceconfig.FieldDockerBuilderDockerfilePath:
+		return m.DockerBuilderDockerfilePath()
+	case serviceconfig.FieldDockerBuilderBuildContext:
+		return m.DockerBuilderBuildContext()
 	case serviceconfig.FieldRailpackProvider:
 		return m.RailpackProvider()
 	case serviceconfig.FieldRailpackFramework:
@@ -15310,10 +15310,10 @@ func (m *ServiceConfigMutation) Field(name string) (ent.Value, bool) {
 		return m.Replicas()
 	case serviceconfig.FieldAutoDeploy:
 		return m.AutoDeploy()
-	case serviceconfig.FieldInstallCommand:
-		return m.InstallCommand()
-	case serviceconfig.FieldBuildCommand:
-		return m.BuildCommand()
+	case serviceconfig.FieldRailpackBuilderInstallCommand:
+		return m.RailpackBuilderInstallCommand()
+	case serviceconfig.FieldRailpackBuilderBuildCommand:
+		return m.RailpackBuilderBuildCommand()
 	case serviceconfig.FieldRunCommand:
 		return m.RunCommand()
 	case serviceconfig.FieldIsPublic:
@@ -15365,10 +15365,10 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldBuilder(ctx)
 	case serviceconfig.FieldIcon:
 		return m.OldIcon(ctx)
-	case serviceconfig.FieldDockerBuilderPath:
-		return m.OldDockerBuilderPath(ctx)
-	case serviceconfig.FieldDockerBuilderContext:
-		return m.OldDockerBuilderContext(ctx)
+	case serviceconfig.FieldDockerBuilderDockerfilePath:
+		return m.OldDockerBuilderDockerfilePath(ctx)
+	case serviceconfig.FieldDockerBuilderBuildContext:
+		return m.OldDockerBuilderBuildContext(ctx)
 	case serviceconfig.FieldRailpackProvider:
 		return m.OldRailpackProvider(ctx)
 	case serviceconfig.FieldRailpackFramework:
@@ -15385,10 +15385,10 @@ func (m *ServiceConfigMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldReplicas(ctx)
 	case serviceconfig.FieldAutoDeploy:
 		return m.OldAutoDeploy(ctx)
-	case serviceconfig.FieldInstallCommand:
-		return m.OldInstallCommand(ctx)
-	case serviceconfig.FieldBuildCommand:
-		return m.OldBuildCommand(ctx)
+	case serviceconfig.FieldRailpackBuilderInstallCommand:
+		return m.OldRailpackBuilderInstallCommand(ctx)
+	case serviceconfig.FieldRailpackBuilderBuildCommand:
+		return m.OldRailpackBuilderBuildCommand(ctx)
 	case serviceconfig.FieldRunCommand:
 		return m.OldRunCommand(ctx)
 	case serviceconfig.FieldIsPublic:
@@ -15465,19 +15465,19 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetIcon(v)
 		return nil
-	case serviceconfig.FieldDockerBuilderPath:
+	case serviceconfig.FieldDockerBuilderDockerfilePath:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetDockerBuilderPath(v)
+		m.SetDockerBuilderDockerfilePath(v)
 		return nil
-	case serviceconfig.FieldDockerBuilderContext:
+	case serviceconfig.FieldDockerBuilderBuildContext:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetDockerBuilderContext(v)
+		m.SetDockerBuilderBuildContext(v)
 		return nil
 	case serviceconfig.FieldRailpackProvider:
 		v, ok := value.(enum.Provider)
@@ -15535,19 +15535,19 @@ func (m *ServiceConfigMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetAutoDeploy(v)
 		return nil
-	case serviceconfig.FieldInstallCommand:
+	case serviceconfig.FieldRailpackBuilderInstallCommand:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetInstallCommand(v)
+		m.SetRailpackBuilderInstallCommand(v)
 		return nil
-	case serviceconfig.FieldBuildCommand:
+	case serviceconfig.FieldRailpackBuilderBuildCommand:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetBuildCommand(v)
+		m.SetRailpackBuilderBuildCommand(v)
 		return nil
 	case serviceconfig.FieldRunCommand:
 		v, ok := value.(string)
@@ -15718,11 +15718,11 @@ func (m *ServiceConfigMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *ServiceConfigMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(serviceconfig.FieldDockerBuilderPath) {
-		fields = append(fields, serviceconfig.FieldDockerBuilderPath)
+	if m.FieldCleared(serviceconfig.FieldDockerBuilderDockerfilePath) {
+		fields = append(fields, serviceconfig.FieldDockerBuilderDockerfilePath)
 	}
-	if m.FieldCleared(serviceconfig.FieldDockerBuilderContext) {
-		fields = append(fields, serviceconfig.FieldDockerBuilderContext)
+	if m.FieldCleared(serviceconfig.FieldDockerBuilderBuildContext) {
+		fields = append(fields, serviceconfig.FieldDockerBuilderBuildContext)
 	}
 	if m.FieldCleared(serviceconfig.FieldRailpackProvider) {
 		fields = append(fields, serviceconfig.FieldRailpackProvider)
@@ -15742,11 +15742,11 @@ func (m *ServiceConfigMutation) ClearedFields() []string {
 	if m.FieldCleared(serviceconfig.FieldPorts) {
 		fields = append(fields, serviceconfig.FieldPorts)
 	}
-	if m.FieldCleared(serviceconfig.FieldInstallCommand) {
-		fields = append(fields, serviceconfig.FieldInstallCommand)
+	if m.FieldCleared(serviceconfig.FieldRailpackBuilderInstallCommand) {
+		fields = append(fields, serviceconfig.FieldRailpackBuilderInstallCommand)
 	}
-	if m.FieldCleared(serviceconfig.FieldBuildCommand) {
-		fields = append(fields, serviceconfig.FieldBuildCommand)
+	if m.FieldCleared(serviceconfig.FieldRailpackBuilderBuildCommand) {
+		fields = append(fields, serviceconfig.FieldRailpackBuilderBuildCommand)
 	}
 	if m.FieldCleared(serviceconfig.FieldRunCommand) {
 		fields = append(fields, serviceconfig.FieldRunCommand)
@@ -15801,11 +15801,11 @@ func (m *ServiceConfigMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *ServiceConfigMutation) ClearField(name string) error {
 	switch name {
-	case serviceconfig.FieldDockerBuilderPath:
-		m.ClearDockerBuilderPath()
+	case serviceconfig.FieldDockerBuilderDockerfilePath:
+		m.ClearDockerBuilderDockerfilePath()
 		return nil
-	case serviceconfig.FieldDockerBuilderContext:
-		m.ClearDockerBuilderContext()
+	case serviceconfig.FieldDockerBuilderBuildContext:
+		m.ClearDockerBuilderBuildContext()
 		return nil
 	case serviceconfig.FieldRailpackProvider:
 		m.ClearRailpackProvider()
@@ -15825,11 +15825,11 @@ func (m *ServiceConfigMutation) ClearField(name string) error {
 	case serviceconfig.FieldPorts:
 		m.ClearPorts()
 		return nil
-	case serviceconfig.FieldInstallCommand:
-		m.ClearInstallCommand()
+	case serviceconfig.FieldRailpackBuilderInstallCommand:
+		m.ClearRailpackBuilderInstallCommand()
 		return nil
-	case serviceconfig.FieldBuildCommand:
-		m.ClearBuildCommand()
+	case serviceconfig.FieldRailpackBuilderBuildCommand:
+		m.ClearRailpackBuilderBuildCommand()
 		return nil
 	case serviceconfig.FieldRunCommand:
 		m.ClearRunCommand()
@@ -15893,11 +15893,11 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 	case serviceconfig.FieldIcon:
 		m.ResetIcon()
 		return nil
-	case serviceconfig.FieldDockerBuilderPath:
-		m.ResetDockerBuilderPath()
+	case serviceconfig.FieldDockerBuilderDockerfilePath:
+		m.ResetDockerBuilderDockerfilePath()
 		return nil
-	case serviceconfig.FieldDockerBuilderContext:
-		m.ResetDockerBuilderContext()
+	case serviceconfig.FieldDockerBuilderBuildContext:
+		m.ResetDockerBuilderBuildContext()
 		return nil
 	case serviceconfig.FieldRailpackProvider:
 		m.ResetRailpackProvider()
@@ -15923,11 +15923,11 @@ func (m *ServiceConfigMutation) ResetField(name string) error {
 	case serviceconfig.FieldAutoDeploy:
 		m.ResetAutoDeploy()
 		return nil
-	case serviceconfig.FieldInstallCommand:
-		m.ResetInstallCommand()
+	case serviceconfig.FieldRailpackBuilderInstallCommand:
+		m.ResetRailpackBuilderInstallCommand()
 		return nil
-	case serviceconfig.FieldBuildCommand:
-		m.ResetBuildCommand()
+	case serviceconfig.FieldRailpackBuilderBuildCommand:
+		m.ResetRailpackBuilderBuildCommand()
 		return nil
 	case serviceconfig.FieldRunCommand:
 		m.ResetRunCommand()

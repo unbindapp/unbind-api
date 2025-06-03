@@ -74,30 +74,30 @@ func (scc *ServiceConfigCreate) SetIcon(s string) *ServiceConfigCreate {
 	return scc
 }
 
-// SetDockerBuilderPath sets the "docker_builder_path" field.
-func (scc *ServiceConfigCreate) SetDockerBuilderPath(s string) *ServiceConfigCreate {
-	scc.mutation.SetDockerBuilderPath(s)
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (scc *ServiceConfigCreate) SetDockerBuilderDockerfilePath(s string) *ServiceConfigCreate {
+	scc.mutation.SetDockerBuilderDockerfilePath(s)
 	return scc
 }
 
-// SetNillableDockerBuilderPath sets the "docker_builder_path" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableDockerBuilderPath(s *string) *ServiceConfigCreate {
+// SetNillableDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDockerBuilderDockerfilePath(s *string) *ServiceConfigCreate {
 	if s != nil {
-		scc.SetDockerBuilderPath(*s)
+		scc.SetDockerBuilderDockerfilePath(*s)
 	}
 	return scc
 }
 
-// SetDockerBuilderContext sets the "docker_builder_context" field.
-func (scc *ServiceConfigCreate) SetDockerBuilderContext(s string) *ServiceConfigCreate {
-	scc.mutation.SetDockerBuilderContext(s)
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (scc *ServiceConfigCreate) SetDockerBuilderBuildContext(s string) *ServiceConfigCreate {
+	scc.mutation.SetDockerBuilderBuildContext(s)
 	return scc
 }
 
-// SetNillableDockerBuilderContext sets the "docker_builder_context" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableDockerBuilderContext(s *string) *ServiceConfigCreate {
+// SetNillableDockerBuilderBuildContext sets the "docker_builder_build_context" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableDockerBuilderBuildContext(s *string) *ServiceConfigCreate {
 	if s != nil {
-		scc.SetDockerBuilderContext(*s)
+		scc.SetDockerBuilderBuildContext(*s)
 	}
 	return scc
 }
@@ -198,30 +198,30 @@ func (scc *ServiceConfigCreate) SetNillableAutoDeploy(b *bool) *ServiceConfigCre
 	return scc
 }
 
-// SetInstallCommand sets the "install_command" field.
-func (scc *ServiceConfigCreate) SetInstallCommand(s string) *ServiceConfigCreate {
-	scc.mutation.SetInstallCommand(s)
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (scc *ServiceConfigCreate) SetRailpackBuilderInstallCommand(s string) *ServiceConfigCreate {
+	scc.mutation.SetRailpackBuilderInstallCommand(s)
 	return scc
 }
 
-// SetNillableInstallCommand sets the "install_command" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableInstallCommand(s *string) *ServiceConfigCreate {
+// SetNillableRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableRailpackBuilderInstallCommand(s *string) *ServiceConfigCreate {
 	if s != nil {
-		scc.SetInstallCommand(*s)
+		scc.SetRailpackBuilderInstallCommand(*s)
 	}
 	return scc
 }
 
-// SetBuildCommand sets the "build_command" field.
-func (scc *ServiceConfigCreate) SetBuildCommand(s string) *ServiceConfigCreate {
-	scc.mutation.SetBuildCommand(s)
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (scc *ServiceConfigCreate) SetRailpackBuilderBuildCommand(s string) *ServiceConfigCreate {
+	scc.mutation.SetRailpackBuilderBuildCommand(s)
 	return scc
 }
 
-// SetNillableBuildCommand sets the "build_command" field if the given value is not nil.
-func (scc *ServiceConfigCreate) SetNillableBuildCommand(s *string) *ServiceConfigCreate {
+// SetNillableRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field if the given value is not nil.
+func (scc *ServiceConfigCreate) SetNillableRailpackBuilderBuildCommand(s *string) *ServiceConfigCreate {
 	if s != nil {
-		scc.SetBuildCommand(*s)
+		scc.SetRailpackBuilderBuildCommand(*s)
 	}
 	return scc
 }
@@ -595,13 +595,13 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldIcon, field.TypeString, value)
 		_node.Icon = value
 	}
-	if value, ok := scc.mutation.DockerBuilderPath(); ok {
-		_spec.SetField(serviceconfig.FieldDockerBuilderPath, field.TypeString, value)
-		_node.DockerBuilderPath = &value
+	if value, ok := scc.mutation.DockerBuilderDockerfilePath(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderDockerfilePath, field.TypeString, value)
+		_node.DockerBuilderDockerfilePath = &value
 	}
-	if value, ok := scc.mutation.DockerBuilderContext(); ok {
-		_spec.SetField(serviceconfig.FieldDockerBuilderContext, field.TypeString, value)
-		_node.DockerBuilderContext = &value
+	if value, ok := scc.mutation.DockerBuilderBuildContext(); ok {
+		_spec.SetField(serviceconfig.FieldDockerBuilderBuildContext, field.TypeString, value)
+		_node.DockerBuilderBuildContext = &value
 	}
 	if value, ok := scc.mutation.RailpackProvider(); ok {
 		_spec.SetField(serviceconfig.FieldRailpackProvider, field.TypeEnum, value)
@@ -635,13 +635,13 @@ func (scc *ServiceConfigCreate) createSpec() (*ServiceConfig, *sqlgraph.CreateSp
 		_spec.SetField(serviceconfig.FieldAutoDeploy, field.TypeBool, value)
 		_node.AutoDeploy = value
 	}
-	if value, ok := scc.mutation.InstallCommand(); ok {
-		_spec.SetField(serviceconfig.FieldInstallCommand, field.TypeString, value)
-		_node.InstallCommand = &value
+	if value, ok := scc.mutation.RailpackBuilderInstallCommand(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackBuilderInstallCommand, field.TypeString, value)
+		_node.RailpackBuilderInstallCommand = &value
 	}
-	if value, ok := scc.mutation.BuildCommand(); ok {
-		_spec.SetField(serviceconfig.FieldBuildCommand, field.TypeString, value)
-		_node.BuildCommand = &value
+	if value, ok := scc.mutation.RailpackBuilderBuildCommand(); ok {
+		_spec.SetField(serviceconfig.FieldRailpackBuilderBuildCommand, field.TypeString, value)
+		_node.RailpackBuilderBuildCommand = &value
 	}
 	if value, ok := scc.mutation.RunCommand(); ok {
 		_spec.SetField(serviceconfig.FieldRunCommand, field.TypeString, value)
@@ -837,39 +837,39 @@ func (u *ServiceConfigUpsert) UpdateIcon() *ServiceConfigUpsert {
 	return u
 }
 
-// SetDockerBuilderPath sets the "docker_builder_path" field.
-func (u *ServiceConfigUpsert) SetDockerBuilderPath(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDockerBuilderPath, v)
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (u *ServiceConfigUpsert) SetDockerBuilderDockerfilePath(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDockerBuilderDockerfilePath, v)
 	return u
 }
 
-// UpdateDockerBuilderPath sets the "docker_builder_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDockerBuilderPath() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDockerBuilderPath)
+// UpdateDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDockerBuilderDockerfilePath() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDockerBuilderDockerfilePath)
 	return u
 }
 
-// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
-func (u *ServiceConfigUpsert) ClearDockerBuilderPath() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDockerBuilderPath)
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (u *ServiceConfigUpsert) ClearDockerBuilderDockerfilePath() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDockerBuilderDockerfilePath)
 	return u
 }
 
-// SetDockerBuilderContext sets the "docker_builder_context" field.
-func (u *ServiceConfigUpsert) SetDockerBuilderContext(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldDockerBuilderContext, v)
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (u *ServiceConfigUpsert) SetDockerBuilderBuildContext(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldDockerBuilderBuildContext, v)
 	return u
 }
 
-// UpdateDockerBuilderContext sets the "docker_builder_context" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateDockerBuilderContext() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldDockerBuilderContext)
+// UpdateDockerBuilderBuildContext sets the "docker_builder_build_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateDockerBuilderBuildContext() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldDockerBuilderBuildContext)
 	return u
 }
 
-// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
-func (u *ServiceConfigUpsert) ClearDockerBuilderContext() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldDockerBuilderContext)
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (u *ServiceConfigUpsert) ClearDockerBuilderBuildContext() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldDockerBuilderBuildContext)
 	return u
 }
 
@@ -1011,39 +1011,39 @@ func (u *ServiceConfigUpsert) UpdateAutoDeploy() *ServiceConfigUpsert {
 	return u
 }
 
-// SetInstallCommand sets the "install_command" field.
-func (u *ServiceConfigUpsert) SetInstallCommand(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldInstallCommand, v)
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (u *ServiceConfigUpsert) SetRailpackBuilderInstallCommand(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldRailpackBuilderInstallCommand, v)
 	return u
 }
 
-// UpdateInstallCommand sets the "install_command" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateInstallCommand() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldInstallCommand)
+// UpdateRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateRailpackBuilderInstallCommand() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldRailpackBuilderInstallCommand)
 	return u
 }
 
-// ClearInstallCommand clears the value of the "install_command" field.
-func (u *ServiceConfigUpsert) ClearInstallCommand() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldInstallCommand)
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (u *ServiceConfigUpsert) ClearRailpackBuilderInstallCommand() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldRailpackBuilderInstallCommand)
 	return u
 }
 
-// SetBuildCommand sets the "build_command" field.
-func (u *ServiceConfigUpsert) SetBuildCommand(v string) *ServiceConfigUpsert {
-	u.Set(serviceconfig.FieldBuildCommand, v)
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (u *ServiceConfigUpsert) SetRailpackBuilderBuildCommand(v string) *ServiceConfigUpsert {
+	u.Set(serviceconfig.FieldRailpackBuilderBuildCommand, v)
 	return u
 }
 
-// UpdateBuildCommand sets the "build_command" field to the value that was provided on create.
-func (u *ServiceConfigUpsert) UpdateBuildCommand() *ServiceConfigUpsert {
-	u.SetExcluded(serviceconfig.FieldBuildCommand)
+// UpdateRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsert) UpdateRailpackBuilderBuildCommand() *ServiceConfigUpsert {
+	u.SetExcluded(serviceconfig.FieldRailpackBuilderBuildCommand)
 	return u
 }
 
-// ClearBuildCommand clears the value of the "build_command" field.
-func (u *ServiceConfigUpsert) ClearBuildCommand() *ServiceConfigUpsert {
-	u.SetNull(serviceconfig.FieldBuildCommand)
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (u *ServiceConfigUpsert) ClearRailpackBuilderBuildCommand() *ServiceConfigUpsert {
+	u.SetNull(serviceconfig.FieldRailpackBuilderBuildCommand)
 	return u
 }
 
@@ -1430,45 +1430,45 @@ func (u *ServiceConfigUpsertOne) UpdateIcon() *ServiceConfigUpsertOne {
 	})
 }
 
-// SetDockerBuilderPath sets the "docker_builder_path" field.
-func (u *ServiceConfigUpsertOne) SetDockerBuilderPath(v string) *ServiceConfigUpsertOne {
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (u *ServiceConfigUpsertOne) SetDockerBuilderDockerfilePath(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerBuilderPath(v)
+		s.SetDockerBuilderDockerfilePath(v)
 	})
 }
 
-// UpdateDockerBuilderPath sets the "docker_builder_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDockerBuilderPath() *ServiceConfigUpsertOne {
+// UpdateDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDockerBuilderDockerfilePath() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerBuilderPath()
+		s.UpdateDockerBuilderDockerfilePath()
 	})
 }
 
-// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
-func (u *ServiceConfigUpsertOne) ClearDockerBuilderPath() *ServiceConfigUpsertOne {
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (u *ServiceConfigUpsertOne) ClearDockerBuilderDockerfilePath() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerBuilderPath()
+		s.ClearDockerBuilderDockerfilePath()
 	})
 }
 
-// SetDockerBuilderContext sets the "docker_builder_context" field.
-func (u *ServiceConfigUpsertOne) SetDockerBuilderContext(v string) *ServiceConfigUpsertOne {
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (u *ServiceConfigUpsertOne) SetDockerBuilderBuildContext(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerBuilderContext(v)
+		s.SetDockerBuilderBuildContext(v)
 	})
 }
 
-// UpdateDockerBuilderContext sets the "docker_builder_context" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateDockerBuilderContext() *ServiceConfigUpsertOne {
+// UpdateDockerBuilderBuildContext sets the "docker_builder_build_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateDockerBuilderBuildContext() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerBuilderContext()
+		s.UpdateDockerBuilderBuildContext()
 	})
 }
 
-// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
-func (u *ServiceConfigUpsertOne) ClearDockerBuilderContext() *ServiceConfigUpsertOne {
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (u *ServiceConfigUpsertOne) ClearDockerBuilderBuildContext() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerBuilderContext()
+		s.ClearDockerBuilderBuildContext()
 	})
 }
 
@@ -1633,45 +1633,45 @@ func (u *ServiceConfigUpsertOne) UpdateAutoDeploy() *ServiceConfigUpsertOne {
 	})
 }
 
-// SetInstallCommand sets the "install_command" field.
-func (u *ServiceConfigUpsertOne) SetInstallCommand(v string) *ServiceConfigUpsertOne {
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (u *ServiceConfigUpsertOne) SetRailpackBuilderInstallCommand(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetInstallCommand(v)
+		s.SetRailpackBuilderInstallCommand(v)
 	})
 }
 
-// UpdateInstallCommand sets the "install_command" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateInstallCommand() *ServiceConfigUpsertOne {
+// UpdateRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateRailpackBuilderInstallCommand() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateInstallCommand()
+		s.UpdateRailpackBuilderInstallCommand()
 	})
 }
 
-// ClearInstallCommand clears the value of the "install_command" field.
-func (u *ServiceConfigUpsertOne) ClearInstallCommand() *ServiceConfigUpsertOne {
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (u *ServiceConfigUpsertOne) ClearRailpackBuilderInstallCommand() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearInstallCommand()
+		s.ClearRailpackBuilderInstallCommand()
 	})
 }
 
-// SetBuildCommand sets the "build_command" field.
-func (u *ServiceConfigUpsertOne) SetBuildCommand(v string) *ServiceConfigUpsertOne {
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (u *ServiceConfigUpsertOne) SetRailpackBuilderBuildCommand(v string) *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetBuildCommand(v)
+		s.SetRailpackBuilderBuildCommand(v)
 	})
 }
 
-// UpdateBuildCommand sets the "build_command" field to the value that was provided on create.
-func (u *ServiceConfigUpsertOne) UpdateBuildCommand() *ServiceConfigUpsertOne {
+// UpdateRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertOne) UpdateRailpackBuilderBuildCommand() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateBuildCommand()
+		s.UpdateRailpackBuilderBuildCommand()
 	})
 }
 
-// ClearBuildCommand clears the value of the "build_command" field.
-func (u *ServiceConfigUpsertOne) ClearBuildCommand() *ServiceConfigUpsertOne {
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (u *ServiceConfigUpsertOne) ClearRailpackBuilderBuildCommand() *ServiceConfigUpsertOne {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearBuildCommand()
+		s.ClearRailpackBuilderBuildCommand()
 	})
 }
 
@@ -2271,45 +2271,45 @@ func (u *ServiceConfigUpsertBulk) UpdateIcon() *ServiceConfigUpsertBulk {
 	})
 }
 
-// SetDockerBuilderPath sets the "docker_builder_path" field.
-func (u *ServiceConfigUpsertBulk) SetDockerBuilderPath(v string) *ServiceConfigUpsertBulk {
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (u *ServiceConfigUpsertBulk) SetDockerBuilderDockerfilePath(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerBuilderPath(v)
+		s.SetDockerBuilderDockerfilePath(v)
 	})
 }
 
-// UpdateDockerBuilderPath sets the "docker_builder_path" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDockerBuilderPath() *ServiceConfigUpsertBulk {
+// UpdateDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDockerBuilderDockerfilePath() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerBuilderPath()
+		s.UpdateDockerBuilderDockerfilePath()
 	})
 }
 
-// ClearDockerBuilderPath clears the value of the "docker_builder_path" field.
-func (u *ServiceConfigUpsertBulk) ClearDockerBuilderPath() *ServiceConfigUpsertBulk {
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (u *ServiceConfigUpsertBulk) ClearDockerBuilderDockerfilePath() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerBuilderPath()
+		s.ClearDockerBuilderDockerfilePath()
 	})
 }
 
-// SetDockerBuilderContext sets the "docker_builder_context" field.
-func (u *ServiceConfigUpsertBulk) SetDockerBuilderContext(v string) *ServiceConfigUpsertBulk {
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (u *ServiceConfigUpsertBulk) SetDockerBuilderBuildContext(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetDockerBuilderContext(v)
+		s.SetDockerBuilderBuildContext(v)
 	})
 }
 
-// UpdateDockerBuilderContext sets the "docker_builder_context" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateDockerBuilderContext() *ServiceConfigUpsertBulk {
+// UpdateDockerBuilderBuildContext sets the "docker_builder_build_context" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateDockerBuilderBuildContext() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateDockerBuilderContext()
+		s.UpdateDockerBuilderBuildContext()
 	})
 }
 
-// ClearDockerBuilderContext clears the value of the "docker_builder_context" field.
-func (u *ServiceConfigUpsertBulk) ClearDockerBuilderContext() *ServiceConfigUpsertBulk {
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (u *ServiceConfigUpsertBulk) ClearDockerBuilderBuildContext() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearDockerBuilderContext()
+		s.ClearDockerBuilderBuildContext()
 	})
 }
 
@@ -2474,45 +2474,45 @@ func (u *ServiceConfigUpsertBulk) UpdateAutoDeploy() *ServiceConfigUpsertBulk {
 	})
 }
 
-// SetInstallCommand sets the "install_command" field.
-func (u *ServiceConfigUpsertBulk) SetInstallCommand(v string) *ServiceConfigUpsertBulk {
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (u *ServiceConfigUpsertBulk) SetRailpackBuilderInstallCommand(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetInstallCommand(v)
+		s.SetRailpackBuilderInstallCommand(v)
 	})
 }
 
-// UpdateInstallCommand sets the "install_command" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateInstallCommand() *ServiceConfigUpsertBulk {
+// UpdateRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateRailpackBuilderInstallCommand() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateInstallCommand()
+		s.UpdateRailpackBuilderInstallCommand()
 	})
 }
 
-// ClearInstallCommand clears the value of the "install_command" field.
-func (u *ServiceConfigUpsertBulk) ClearInstallCommand() *ServiceConfigUpsertBulk {
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (u *ServiceConfigUpsertBulk) ClearRailpackBuilderInstallCommand() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearInstallCommand()
+		s.ClearRailpackBuilderInstallCommand()
 	})
 }
 
-// SetBuildCommand sets the "build_command" field.
-func (u *ServiceConfigUpsertBulk) SetBuildCommand(v string) *ServiceConfigUpsertBulk {
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (u *ServiceConfigUpsertBulk) SetRailpackBuilderBuildCommand(v string) *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.SetBuildCommand(v)
+		s.SetRailpackBuilderBuildCommand(v)
 	})
 }
 
-// UpdateBuildCommand sets the "build_command" field to the value that was provided on create.
-func (u *ServiceConfigUpsertBulk) UpdateBuildCommand() *ServiceConfigUpsertBulk {
+// UpdateRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field to the value that was provided on create.
+func (u *ServiceConfigUpsertBulk) UpdateRailpackBuilderBuildCommand() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.UpdateBuildCommand()
+		s.UpdateRailpackBuilderBuildCommand()
 	})
 }
 
-// ClearBuildCommand clears the value of the "build_command" field.
-func (u *ServiceConfigUpsertBulk) ClearBuildCommand() *ServiceConfigUpsertBulk {
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (u *ServiceConfigUpsertBulk) ClearRailpackBuilderBuildCommand() *ServiceConfigUpsertBulk {
 	return u.Update(func(s *ServiceConfigUpsert) {
-		s.ClearBuildCommand()
+		s.ClearRailpackBuilderBuildCommand()
 	})
 }
 

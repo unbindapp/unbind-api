@@ -35,9 +35,9 @@ type ServiceConfig struct {
 	// Icon metadata, unique of framework, provider, database
 	Icon string `json:"icon,omitempty"`
 	// Path to Dockerfile if using docker builder
-	DockerBuilderPath *string `json:"docker_builder_path,omitempty"`
+	DockerBuilderDockerfilePath *string `json:"docker_builder_dockerfile_path,omitempty"`
 	// Path to Dockerfile context if using docker builder
-	DockerBuilderContext *string `json:"docker_builder_context,omitempty"`
+	DockerBuilderBuildContext *string `json:"docker_builder_build_context,omitempty"`
 	// Provider (e.g. Go, Python, Node, Deno)
 	RailpackProvider *enum.Provider `json:"railpack_provider,omitempty"`
 	// Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin
@@ -55,9 +55,9 @@ type ServiceConfig struct {
 	// Whether to automatically deploy on git push
 	AutoDeploy bool `json:"auto_deploy,omitempty"`
 	// Custom install command (railpack only)
-	InstallCommand *string `json:"install_command,omitempty"`
+	RailpackBuilderInstallCommand *string `json:"railpack_builder_install_command,omitempty"`
 	// Custom build command (railpack only)
-	BuildCommand *string `json:"build_command,omitempty"`
+	RailpackBuilderBuildCommand *string `json:"railpack_builder_build_command,omitempty"`
 	// Custom run command
 	RunCommand *string `json:"run_command,omitempty"`
 	// Whether the service is publicly accessible, creates an ingress resource
@@ -142,7 +142,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case serviceconfig.FieldReplicas, serviceconfig.FieldBackupRetentionCount:
 			values[i] = new(sql.NullInt64)
-		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerBuilderPath, serviceconfig.FieldDockerBuilderContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldInstallCommand, serviceconfig.FieldBuildCommand, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket, serviceconfig.FieldBackupSchedule:
+		case serviceconfig.FieldBuilder, serviceconfig.FieldIcon, serviceconfig.FieldDockerBuilderDockerfilePath, serviceconfig.FieldDockerBuilderBuildContext, serviceconfig.FieldRailpackProvider, serviceconfig.FieldRailpackFramework, serviceconfig.FieldGitBranch, serviceconfig.FieldGitTag, serviceconfig.FieldRailpackBuilderInstallCommand, serviceconfig.FieldRailpackBuilderBuildCommand, serviceconfig.FieldRunCommand, serviceconfig.FieldImage, serviceconfig.FieldDefinitionVersion, serviceconfig.FieldS3BackupBucket, serviceconfig.FieldBackupSchedule:
 			values[i] = new(sql.NullString)
 		case serviceconfig.FieldCreatedAt, serviceconfig.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -199,19 +199,19 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.Icon = value.String
 			}
-		case serviceconfig.FieldDockerBuilderPath:
+		case serviceconfig.FieldDockerBuilderDockerfilePath:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field docker_builder_path", values[i])
+				return fmt.Errorf("unexpected type %T for field docker_builder_dockerfile_path", values[i])
 			} else if value.Valid {
-				sc.DockerBuilderPath = new(string)
-				*sc.DockerBuilderPath = value.String
+				sc.DockerBuilderDockerfilePath = new(string)
+				*sc.DockerBuilderDockerfilePath = value.String
 			}
-		case serviceconfig.FieldDockerBuilderContext:
+		case serviceconfig.FieldDockerBuilderBuildContext:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field docker_builder_context", values[i])
+				return fmt.Errorf("unexpected type %T for field docker_builder_build_context", values[i])
 			} else if value.Valid {
-				sc.DockerBuilderContext = new(string)
-				*sc.DockerBuilderContext = value.String
+				sc.DockerBuilderBuildContext = new(string)
+				*sc.DockerBuilderBuildContext = value.String
 			}
 		case serviceconfig.FieldRailpackProvider:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -269,19 +269,19 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				sc.AutoDeploy = value.Bool
 			}
-		case serviceconfig.FieldInstallCommand:
+		case serviceconfig.FieldRailpackBuilderInstallCommand:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field install_command", values[i])
+				return fmt.Errorf("unexpected type %T for field railpack_builder_install_command", values[i])
 			} else if value.Valid {
-				sc.InstallCommand = new(string)
-				*sc.InstallCommand = value.String
+				sc.RailpackBuilderInstallCommand = new(string)
+				*sc.RailpackBuilderInstallCommand = value.String
 			}
-		case serviceconfig.FieldBuildCommand:
+		case serviceconfig.FieldRailpackBuilderBuildCommand:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field build_command", values[i])
+				return fmt.Errorf("unexpected type %T for field railpack_builder_build_command", values[i])
 			} else if value.Valid {
-				sc.BuildCommand = new(string)
-				*sc.BuildCommand = value.String
+				sc.RailpackBuilderBuildCommand = new(string)
+				*sc.RailpackBuilderBuildCommand = value.String
 			}
 		case serviceconfig.FieldRunCommand:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -460,13 +460,13 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString("icon=")
 	builder.WriteString(sc.Icon)
 	builder.WriteString(", ")
-	if v := sc.DockerBuilderPath; v != nil {
-		builder.WriteString("docker_builder_path=")
+	if v := sc.DockerBuilderDockerfilePath; v != nil {
+		builder.WriteString("docker_builder_dockerfile_path=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := sc.DockerBuilderContext; v != nil {
-		builder.WriteString("docker_builder_context=")
+	if v := sc.DockerBuilderBuildContext; v != nil {
+		builder.WriteString("docker_builder_build_context=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
@@ -502,13 +502,13 @@ func (sc *ServiceConfig) String() string {
 	builder.WriteString("auto_deploy=")
 	builder.WriteString(fmt.Sprintf("%v", sc.AutoDeploy))
 	builder.WriteString(", ")
-	if v := sc.InstallCommand; v != nil {
-		builder.WriteString("install_command=")
+	if v := sc.RailpackBuilderInstallCommand; v != nil {
+		builder.WriteString("railpack_builder_install_command=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := sc.BuildCommand; v != nil {
-		builder.WriteString("build_command=")
+	if v := sc.RailpackBuilderBuildCommand; v != nil {
+		builder.WriteString("railpack_builder_build_command=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

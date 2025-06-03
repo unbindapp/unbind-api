@@ -247,13 +247,13 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	}
 
 	// Add dockerfile override
-	if service.Edges.ServiceConfig.DockerBuilderPath != nil {
-		env["SERVICE_DOCKER_BUILDER_PATH"] = *service.Edges.ServiceConfig.DockerBuilderPath
+	if service.Edges.ServiceConfig.DockerBuilderDockerfilePath != nil {
+		env["SERVICE_DOCKER_BUILDER_DOCKERFILE_PATH"] = *service.Edges.ServiceConfig.DockerBuilderDockerfilePath
 	}
 
 	// Also don't set context if it's the default
-	if service.Edges.ServiceConfig.DockerBuilderContext != nil && *service.Edges.ServiceConfig.DockerBuilderContext != "." {
-		env["SERVICE_DOCKER_BUILDER_CONTEXT"] = *service.Edges.ServiceConfig.DockerBuilderContext
+	if service.Edges.ServiceConfig.DockerBuilderBuildContext != nil && *service.Edges.ServiceConfig.DockerBuilderBuildContext != "." {
+		env["SERVICE_DOCKER_BUILDER_BUILD_CONTEXT"] = *service.Edges.ServiceConfig.DockerBuilderBuildContext
 	}
 
 	// Add Github fields
@@ -342,12 +342,12 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_HOSTS"] = string(marshalled)
 	}
 
-	if service.Edges.ServiceConfig.InstallCommand != nil {
-		env["RAILPACK_INSTALL_CMD"] = *service.Edges.ServiceConfig.InstallCommand
+	if service.Edges.ServiceConfig.RailpackBuilderInstallCommand != nil {
+		env["RAILPACK_INSTALL_CMD"] = *service.Edges.ServiceConfig.RailpackBuilderInstallCommand
 	}
 
-	if service.Edges.ServiceConfig.BuildCommand != nil {
-		env["RAILPACK_BUILD_CMD"] = *service.Edges.ServiceConfig.BuildCommand
+	if service.Edges.ServiceConfig.RailpackBuilderBuildCommand != nil {
+		env["RAILPACK_BUILD_CMD"] = *service.Edges.ServiceConfig.RailpackBuilderBuildCommand
 	}
 
 	if service.Edges.ServiceConfig.RunCommand != nil {

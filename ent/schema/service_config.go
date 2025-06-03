@@ -31,8 +31,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.Enum("builder").GoType(ServiceBuilder("")),
 		field.String("icon").Comment("Icon metadata, unique of framework, provider, database"),
 		// For builds from git using Dockerfile
-		field.String("docker_builder_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
-		field.String("docker_builder_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
+		field.String("docker_builder_dockerfile_path").Optional().Nillable().Comment("Path to Dockerfile if using docker builder"),
+		field.String("docker_builder_build_context").Optional().Nillable().Comment("Path to Dockerfile context if using docker builder"),
 		// Provider and framework directly from railpack
 		field.Enum("railpack_provider").GoType(enum.Provider("")).Optional().Nillable().Comment("Provider (e.g. Go, Python, Node, Deno)"),
 		field.Enum("railpack_framework").GoType(enum.Framework("")).Optional().Nillable().Comment("Framework of service - corresponds mostly to railpack results - e.g. Django, Next, Express, Gin"),
@@ -44,8 +44,8 @@ func (ServiceConfig) Fields() []ent.Field {
 		field.JSON("ports", []PortSpec{}).Optional().Comment("Container ports to expose"),
 		field.Int32("replicas").Default(1).Comment("Number of replicas for the service"),
 		field.Bool("auto_deploy").Default(false).Comment("Whether to automatically deploy on git push"),
-		field.String("install_command").Optional().Nillable().Comment("Custom install command (railpack only)"),
-		field.String("build_command").Optional().Nillable().Comment("Custom build command (railpack only)"),
+		field.String("railpack_builder_install_command").Optional().Nillable().Comment("Custom install command (railpack only)"),
+		field.String("railpack_builder_build_command").Optional().Nillable().Comment("Custom build command (railpack only)"),
 		field.String("run_command").Optional().Nillable().Comment("Custom run command"),
 		field.Bool("is_public").Default(false).Comment("Whether the service is publicly accessible, creates an ingress resource"),
 		field.String("image").Optional().Comment("Custom Docker image if not building from git"), // Only applies to type=docker-image

@@ -19,19 +19,19 @@ type CreateServiceInput struct {
 	RepositoryName       *string `json:"repository_name,omitempty"`
 
 	// Configuration
-	Type                 schema.ServiceType    `required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
-	Builder              schema.ServiceBuilder `required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
-	Hosts                []schema.HostSpec     `json:"hosts,omitempty"`
-	Ports                []schema.PortSpec     `json:"ports,omitempty"`
-	Replicas             *int32                `minimum:"0" maximum:"10" json:"replicas,omitempty"`
-	AutoDeploy           *bool                 `json:"auto_deploy,omitempty"`
-	InstallCommand       *string               `json:"install_command,omitempty"`
-	BuildCommand         *string               `json:"build_command,omitempty"`
-	RunCommand           *string               `json:"run_command,omitempty"`
-	IsPublic             *bool                 `json:"is_public,omitempty"`
-	Image                *string               `json:"image,omitempty"`
-	DockerBuilderPath    *string               `json:"docker_builder_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder"`
-	DockerBuilderContext *string               `json:"docker_builder_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
+	Type                          schema.ServiceType    `required:"true" doc:"Type of service, e.g. 'github', 'docker-image'" json:"type"`
+	Builder                       schema.ServiceBuilder `required:"true" doc:"Builder of the service - docker, nixpacks, railpack" json:"builder"`
+	Hosts                         []schema.HostSpec     `json:"hosts,omitempty"`
+	Ports                         []schema.PortSpec     `json:"ports,omitempty"`
+	Replicas                      *int32                `minimum:"0" maximum:"10" json:"replicas,omitempty"`
+	AutoDeploy                    *bool                 `json:"auto_deploy,omitempty"`
+	RailpackBuilderInstallCommand *string               `json:"railpack_builder_install_command,omitempty"`
+	RailpackBuilderBuildCommand   *string               `json:"railpack_builder_build_command,omitempty"`
+	RunCommand                    *string               `json:"run_command,omitempty"`
+	IsPublic                      *bool                 `json:"is_public,omitempty"`
+	Image                         *string               `json:"image,omitempty"`
+	DockerBuilderDockerfilePath   *string               `json:"docker_builder_dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder"`
+	DockerBuilderBuildContext     *string               `json:"docker_builder_build_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder"`
 
 	// Databases (special case)
 	DatabaseType         *string                `json:"database_type,omitempty"`
@@ -67,22 +67,22 @@ type UpdateServiceInput struct {
 	Description   *string   `required:"false" json:"description"`
 
 	// Configuration
-	GitBranch            *string                `json:"git_branch,omitempty" required:"false"`
-	GitTag               *string                `json:"git_tag,omitempty" required:"false" doc:"Tag to build from, supports glob patterns"`
-	Builder              *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
-	OverwriteHosts       []schema.HostSpec      `json:"overwrite_hosts,omitempty" required:"false"`
-	AddHosts             []schema.HostSpec      `json:"add_hosts,omitempty" required:"false" doc:"Additional hosts to add, will not remove existing hosts"`
-	RemoveHosts          []schema.HostSpec      `json:"remove_hosts,omitempty" required:"false" doc:"Hosts to remove"`
-	Ports                []schema.PortSpec      `json:"ports,omitempty" required:"false"`
-	Replicas             *int32                 `json:"replicas,omitempty" required:"false"`
-	AutoDeploy           *bool                  `json:"auto_deploy,omitempty" required:"false"`
-	InstallCommand       *string                `json:"install_command,omitempty"`
-	BuildCommand         *string                `json:"build_command,omitempty"`
-	RunCommand           *string                `json:"run_command,omitempty" required:"false"`
-	IsPublic             *bool                  `json:"is_public,omitempty" required:"false"`
-	Image                *string                `json:"image,omitempty" required:"false"`
-	DockerBuilderPath    *string                `json:"docker_builder_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder - set empty string to reset to default"`
-	DockerBuilderContext *string                `json:"docker_builder_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder - set empty string to reset to default"`
+	GitBranch                     *string                `json:"git_branch,omitempty" required:"false"`
+	GitTag                        *string                `json:"git_tag,omitempty" required:"false" doc:"Tag to build from, supports glob patterns"`
+	Builder                       *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
+	OverwriteHosts                []schema.HostSpec      `json:"overwrite_hosts,omitempty" required:"false"`
+	AddHosts                      []schema.HostSpec      `json:"add_hosts,omitempty" required:"false" doc:"Additional hosts to add, will not remove existing hosts"`
+	RemoveHosts                   []schema.HostSpec      `json:"remove_hosts,omitempty" required:"false" doc:"Hosts to remove"`
+	Ports                         []schema.PortSpec      `json:"ports,omitempty" required:"false"`
+	Replicas                      *int32                 `json:"replicas,omitempty" required:"false"`
+	AutoDeploy                    *bool                  `json:"auto_deploy,omitempty" required:"false"`
+	RailpackBuilderInstallCommand *string                `json:"railpack_builder_install_command,omitempty"`
+	RailpackBuilderBuildCommand   *string                `json:"railpack_builder_build_command,omitempty"`
+	RunCommand                    *string                `json:"run_command,omitempty" required:"false"`
+	IsPublic                      *bool                  `json:"is_public,omitempty" required:"false"`
+	Image                         *string                `json:"image,omitempty" required:"false"`
+	DockerBuilderDockerfilePath   *string                `json:"docker_builder_dockerfile_path,omitempty" required:"false" doc:"Optional path to Dockerfile, if using docker builder - set empty string to reset to default"`
+	DockerBuilderBuildContext     *string                `json:"docker_builder_build_context,omitempty" required:"false" doc:"Optional path to Dockerfile context, if using docker builder - set empty string to reset to default"`
 
 	// Databases
 	DatabaseConfig       *schema.DatabaseConfig `json:"database_config,omitempty"`

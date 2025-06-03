@@ -61,39 +61,39 @@ func (self *ServiceRepository) Create(
 
 // Create the service config
 type MutateConfigInput struct {
-	ServiceID               uuid.UUID
-	Builder                 *schema.ServiceBuilder
-	Provider                *enum.Provider
-	Framework               *enum.Framework
-	GitBranch               *string
-	GitTag                  *string
-	Icon                    *string
-	Ports                   []schema.PortSpec
-	OverwriteHosts          []schema.HostSpec
-	AddHosts                []schema.HostSpec
-	RemoveHosts             []schema.HostSpec
-	Replicas                *int32
-	AutoDeploy              *bool
-	InstallCommand          *string
-	BuildCommand            *string
-	RunCommand              *string
-	Public                  *bool
-	Image                   *string
-	DockerBuilderPath       *string
-	DockerBuilderContext    *string
-	CustomDefinitionVersion *string
-	DatabaseConfig          *schema.DatabaseConfig
-	S3BackupSourceID        *uuid.UUID
-	S3BackupBucket          *string
-	BackupSchedule          *string
-	BackupRetentionCount    *int
-	SecurityContext         *schema.SecurityContext
-	HealthCheck             *schema.HealthCheck
-	VariableMounts          []*schema.VariableMount
-	ProtectedVariables      *[]string
-	Volumes                 *[]schema.ServiceVolume
-	InitContainers          []*schema.InitContainer
-	Resources               *schema.Resources
+	ServiceID                     uuid.UUID
+	Builder                       *schema.ServiceBuilder
+	Provider                      *enum.Provider
+	Framework                     *enum.Framework
+	GitBranch                     *string
+	GitTag                        *string
+	Icon                          *string
+	Ports                         []schema.PortSpec
+	OverwriteHosts                []schema.HostSpec
+	AddHosts                      []schema.HostSpec
+	RemoveHosts                   []schema.HostSpec
+	Replicas                      *int32
+	AutoDeploy                    *bool
+	RailpackBuilderInstallCommand *string
+	RailpackBuilderBuildCommand   *string
+	RunCommand                    *string
+	Public                        *bool
+	Image                         *string
+	DockerBuilderDockerfilePath   *string
+	DockerBuilderBuildContext     *string
+	CustomDefinitionVersion       *string
+	DatabaseConfig                *schema.DatabaseConfig
+	S3BackupSourceID              *uuid.UUID
+	S3BackupBucket                *string
+	BackupSchedule                *string
+	BackupRetentionCount          *int
+	SecurityContext               *schema.SecurityContext
+	HealthCheck                   *schema.HealthCheck
+	VariableMounts                []*schema.VariableMount
+	ProtectedVariables            *[]string
+	Volumes                       *[]schema.ServiceVolume
+	InitContainers                []*schema.InitContainer
+	Resources                     *schema.Resources
 }
 
 func (self *ServiceRepository) CreateConfig(
@@ -139,13 +139,13 @@ func (self *ServiceRepository) CreateConfig(
 		SetNillableGitBranch(input.GitBranch).
 		SetNillableReplicas(input.Replicas).
 		SetNillableAutoDeploy(input.AutoDeploy).
-		SetNillableInstallCommand(input.InstallCommand).
-		SetNillableBuildCommand(input.BuildCommand).
+		SetNillableRailpackBuilderInstallCommand(input.RailpackBuilderInstallCommand).
+		SetNillableRailpackBuilderBuildCommand(input.RailpackBuilderBuildCommand).
 		SetNillableRunCommand(input.RunCommand).
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
-		SetNillableDockerBuilderPath(input.DockerBuilderPath).
-		SetNillableDockerBuilderContext(input.DockerBuilderContext).
+		SetNillableDockerBuilderDockerfilePath(input.DockerBuilderDockerfilePath).
+		SetNillableDockerBuilderBuildContext(input.DockerBuilderBuildContext).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
 		SetNillableS3BackupSourceID(input.S3BackupSourceID).
 		SetNillableS3BackupBucket(input.S3BackupBucket).
@@ -296,19 +296,19 @@ func (self *ServiceRepository) UpdateConfig(
 		upd.SetSecurityContext(input.SecurityContext)
 	}
 
-	if input.InstallCommand != nil {
-		if *input.InstallCommand == "" {
-			upd.ClearInstallCommand()
+	if input.RailpackBuilderInstallCommand != nil {
+		if *input.RailpackBuilderInstallCommand == "" {
+			upd.ClearRailpackBuilderInstallCommand()
 		} else {
-			upd.SetInstallCommand(*input.InstallCommand)
+			upd.SetRailpackBuilderInstallCommand(*input.RailpackBuilderInstallCommand)
 		}
 	}
 
-	if input.BuildCommand != nil {
-		if *input.BuildCommand == "" {
-			upd.ClearBuildCommand()
+	if input.RailpackBuilderBuildCommand != nil {
+		if *input.RailpackBuilderBuildCommand == "" {
+			upd.ClearRailpackBuilderBuildCommand()
 		} else {
-			upd.SetBuildCommand(*input.BuildCommand)
+			upd.SetRailpackBuilderBuildCommand(*input.RailpackBuilderBuildCommand)
 		}
 	}
 
@@ -361,19 +361,19 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 	}
 
-	if input.DockerBuilderPath != nil {
-		if *input.DockerBuilderPath == "" {
-			upd.ClearDockerBuilderPath()
+	if input.DockerBuilderDockerfilePath != nil {
+		if *input.DockerBuilderDockerfilePath == "" {
+			upd.ClearDockerBuilderDockerfilePath()
 		} else {
-			upd.SetDockerBuilderPath(*input.DockerBuilderPath)
+			upd.SetDockerBuilderDockerfilePath(*input.DockerBuilderDockerfilePath)
 		}
 	}
 
-	if input.DockerBuilderContext != nil {
-		if *input.DockerBuilderContext == "" {
-			upd.ClearDockerBuilderContext()
+	if input.DockerBuilderBuildContext != nil {
+		if *input.DockerBuilderBuildContext == "" {
+			upd.ClearDockerBuilderBuildContext()
 		} else {
-			upd.SetDockerBuilderContext(*input.DockerBuilderContext)
+			upd.SetDockerBuilderBuildContext(*input.DockerBuilderBuildContext)
 		}
 	}
 

@@ -78,14 +78,14 @@ func Icon(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldIcon, v))
 }
 
-// DockerBuilderPath applies equality check predicate on the "docker_builder_path" field. It's identical to DockerBuilderPathEQ.
-func DockerBuilderPath(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePath applies equality check predicate on the "docker_builder_dockerfile_path" field. It's identical to DockerBuilderDockerfilePathEQ.
+func DockerBuilderDockerfilePath(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderContext applies equality check predicate on the "docker_builder_context" field. It's identical to DockerBuilderContextEQ.
-func DockerBuilderContext(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContext applies equality check predicate on the "docker_builder_build_context" field. It's identical to DockerBuilderBuildContextEQ.
+func DockerBuilderBuildContext(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderBuildContext, v))
 }
 
 // GitBranch applies equality check predicate on the "git_branch" field. It's identical to GitBranchEQ.
@@ -108,14 +108,14 @@ func AutoDeploy(v bool) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldEQ(FieldAutoDeploy, v))
 }
 
-// InstallCommand applies equality check predicate on the "install_command" field. It's identical to InstallCommandEQ.
-func InstallCommand(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldInstallCommand, v))
+// RailpackBuilderInstallCommand applies equality check predicate on the "railpack_builder_install_command" field. It's identical to RailpackBuilderInstallCommandEQ.
+func RailpackBuilderInstallCommand(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldRailpackBuilderInstallCommand, v))
 }
 
-// BuildCommand applies equality check predicate on the "build_command" field. It's identical to BuildCommandEQ.
-func BuildCommand(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldBuildCommand, v))
+// RailpackBuilderBuildCommand applies equality check predicate on the "railpack_builder_build_command" field. It's identical to RailpackBuilderBuildCommandEQ.
+func RailpackBuilderBuildCommand(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldRailpackBuilderBuildCommand, v))
 }
 
 // RunCommand applies equality check predicate on the "run_command" field. It's identical to RunCommandEQ.
@@ -353,154 +353,154 @@ func IconContainsFold(v string) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldContainsFold(FieldIcon, v))
 }
 
-// DockerBuilderPathEQ applies the EQ predicate on the "docker_builder_path" field.
-func DockerBuilderPathEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathEQ applies the EQ predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathNEQ applies the NEQ predicate on the "docker_builder_path" field.
-func DockerBuilderPathNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathNEQ applies the NEQ predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathIn applies the In predicate on the "docker_builder_path" field.
-func DockerBuilderPathIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldDockerBuilderPath, vs...))
+// DockerBuilderDockerfilePathIn applies the In predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldDockerBuilderDockerfilePath, vs...))
 }
 
-// DockerBuilderPathNotIn applies the NotIn predicate on the "docker_builder_path" field.
-func DockerBuilderPathNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldDockerBuilderPath, vs...))
+// DockerBuilderDockerfilePathNotIn applies the NotIn predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldDockerBuilderDockerfilePath, vs...))
 }
 
-// DockerBuilderPathGT applies the GT predicate on the "docker_builder_path" field.
-func DockerBuilderPathGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathGT applies the GT predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathGTE applies the GTE predicate on the "docker_builder_path" field.
-func DockerBuilderPathGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathGTE applies the GTE predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathLT applies the LT predicate on the "docker_builder_path" field.
-func DockerBuilderPathLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathLT applies the LT predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathLTE applies the LTE predicate on the "docker_builder_path" field.
-func DockerBuilderPathLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathLTE applies the LTE predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathContains applies the Contains predicate on the "docker_builder_path" field.
-func DockerBuilderPathContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathContains applies the Contains predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathHasPrefix applies the HasPrefix predicate on the "docker_builder_path" field.
-func DockerBuilderPathHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathHasPrefix applies the HasPrefix predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathHasSuffix applies the HasSuffix predicate on the "docker_builder_path" field.
-func DockerBuilderPathHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathHasSuffix applies the HasSuffix predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathIsNil applies the IsNil predicate on the "docker_builder_path" field.
-func DockerBuilderPathIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldDockerBuilderPath))
+// DockerBuilderDockerfilePathIsNil applies the IsNil predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldDockerBuilderDockerfilePath))
 }
 
-// DockerBuilderPathNotNil applies the NotNil predicate on the "docker_builder_path" field.
-func DockerBuilderPathNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldDockerBuilderPath))
+// DockerBuilderDockerfilePathNotNil applies the NotNil predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldDockerBuilderDockerfilePath))
 }
 
-// DockerBuilderPathEqualFold applies the EqualFold predicate on the "docker_builder_path" field.
-func DockerBuilderPathEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathEqualFold applies the EqualFold predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderPathContainsFold applies the ContainsFold predicate on the "docker_builder_path" field.
-func DockerBuilderPathContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldDockerBuilderPath, v))
+// DockerBuilderDockerfilePathContainsFold applies the ContainsFold predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldDockerBuilderDockerfilePath, v))
 }
 
-// DockerBuilderContextEQ applies the EQ predicate on the "docker_builder_context" field.
-func DockerBuilderContextEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextEQ applies the EQ predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextNEQ applies the NEQ predicate on the "docker_builder_context" field.
-func DockerBuilderContextNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextNEQ applies the NEQ predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextIn applies the In predicate on the "docker_builder_context" field.
-func DockerBuilderContextIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldDockerBuilderContext, vs...))
+// DockerBuilderBuildContextIn applies the In predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldDockerBuilderBuildContext, vs...))
 }
 
-// DockerBuilderContextNotIn applies the NotIn predicate on the "docker_builder_context" field.
-func DockerBuilderContextNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldDockerBuilderContext, vs...))
+// DockerBuilderBuildContextNotIn applies the NotIn predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldDockerBuilderBuildContext, vs...))
 }
 
-// DockerBuilderContextGT applies the GT predicate on the "docker_builder_context" field.
-func DockerBuilderContextGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextGT applies the GT predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextGTE applies the GTE predicate on the "docker_builder_context" field.
-func DockerBuilderContextGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextGTE applies the GTE predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextLT applies the LT predicate on the "docker_builder_context" field.
-func DockerBuilderContextLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextLT applies the LT predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextLTE applies the LTE predicate on the "docker_builder_context" field.
-func DockerBuilderContextLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextLTE applies the LTE predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextContains applies the Contains predicate on the "docker_builder_context" field.
-func DockerBuilderContextContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextContains applies the Contains predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextHasPrefix applies the HasPrefix predicate on the "docker_builder_context" field.
-func DockerBuilderContextHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextHasPrefix applies the HasPrefix predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextHasSuffix applies the HasSuffix predicate on the "docker_builder_context" field.
-func DockerBuilderContextHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextHasSuffix applies the HasSuffix predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextIsNil applies the IsNil predicate on the "docker_builder_context" field.
-func DockerBuilderContextIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldDockerBuilderContext))
+// DockerBuilderBuildContextIsNil applies the IsNil predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldDockerBuilderBuildContext))
 }
 
-// DockerBuilderContextNotNil applies the NotNil predicate on the "docker_builder_context" field.
-func DockerBuilderContextNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldDockerBuilderContext))
+// DockerBuilderBuildContextNotNil applies the NotNil predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldDockerBuilderBuildContext))
 }
 
-// DockerBuilderContextEqualFold applies the EqualFold predicate on the "docker_builder_context" field.
-func DockerBuilderContextEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextEqualFold applies the EqualFold predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldDockerBuilderBuildContext, v))
 }
 
-// DockerBuilderContextContainsFold applies the ContainsFold predicate on the "docker_builder_context" field.
-func DockerBuilderContextContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldDockerBuilderContext, v))
+// DockerBuilderBuildContextContainsFold applies the ContainsFold predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldDockerBuilderBuildContext, v))
 }
 
 // RailpackProviderEQ applies the EQ predicate on the "railpack_provider" field.
@@ -803,154 +803,154 @@ func AutoDeployNEQ(v bool) predicate.ServiceConfig {
 	return predicate.ServiceConfig(sql.FieldNEQ(FieldAutoDeploy, v))
 }
 
-// InstallCommandEQ applies the EQ predicate on the "install_command" field.
-func InstallCommandEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandEQ applies the EQ predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandNEQ applies the NEQ predicate on the "install_command" field.
-func InstallCommandNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandNEQ applies the NEQ predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandIn applies the In predicate on the "install_command" field.
-func InstallCommandIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldInstallCommand, vs...))
+// RailpackBuilderInstallCommandIn applies the In predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldRailpackBuilderInstallCommand, vs...))
 }
 
-// InstallCommandNotIn applies the NotIn predicate on the "install_command" field.
-func InstallCommandNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldInstallCommand, vs...))
+// RailpackBuilderInstallCommandNotIn applies the NotIn predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldRailpackBuilderInstallCommand, vs...))
 }
 
-// InstallCommandGT applies the GT predicate on the "install_command" field.
-func InstallCommandGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandGT applies the GT predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandGTE applies the GTE predicate on the "install_command" field.
-func InstallCommandGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandGTE applies the GTE predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandLT applies the LT predicate on the "install_command" field.
-func InstallCommandLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandLT applies the LT predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandLTE applies the LTE predicate on the "install_command" field.
-func InstallCommandLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandLTE applies the LTE predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandContains applies the Contains predicate on the "install_command" field.
-func InstallCommandContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandContains applies the Contains predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandHasPrefix applies the HasPrefix predicate on the "install_command" field.
-func InstallCommandHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandHasPrefix applies the HasPrefix predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandHasSuffix applies the HasSuffix predicate on the "install_command" field.
-func InstallCommandHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandHasSuffix applies the HasSuffix predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandIsNil applies the IsNil predicate on the "install_command" field.
-func InstallCommandIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldInstallCommand))
+// RailpackBuilderInstallCommandIsNil applies the IsNil predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldRailpackBuilderInstallCommand))
 }
 
-// InstallCommandNotNil applies the NotNil predicate on the "install_command" field.
-func InstallCommandNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldInstallCommand))
+// RailpackBuilderInstallCommandNotNil applies the NotNil predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldRailpackBuilderInstallCommand))
 }
 
-// InstallCommandEqualFold applies the EqualFold predicate on the "install_command" field.
-func InstallCommandEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandEqualFold applies the EqualFold predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldRailpackBuilderInstallCommand, v))
 }
 
-// InstallCommandContainsFold applies the ContainsFold predicate on the "install_command" field.
-func InstallCommandContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldInstallCommand, v))
+// RailpackBuilderInstallCommandContainsFold applies the ContainsFold predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldRailpackBuilderInstallCommand, v))
 }
 
-// BuildCommandEQ applies the EQ predicate on the "build_command" field.
-func BuildCommandEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEQ(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandEQ applies the EQ predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEQ(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandNEQ applies the NEQ predicate on the "build_command" field.
-func BuildCommandNEQ(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNEQ(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandNEQ applies the NEQ predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandNEQ(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNEQ(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandIn applies the In predicate on the "build_command" field.
-func BuildCommandIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIn(FieldBuildCommand, vs...))
+// RailpackBuilderBuildCommandIn applies the In predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIn(FieldRailpackBuilderBuildCommand, vs...))
 }
 
-// BuildCommandNotIn applies the NotIn predicate on the "build_command" field.
-func BuildCommandNotIn(vs ...string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotIn(FieldBuildCommand, vs...))
+// RailpackBuilderBuildCommandNotIn applies the NotIn predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandNotIn(vs ...string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotIn(FieldRailpackBuilderBuildCommand, vs...))
 }
 
-// BuildCommandGT applies the GT predicate on the "build_command" field.
-func BuildCommandGT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGT(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandGT applies the GT predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandGT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGT(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandGTE applies the GTE predicate on the "build_command" field.
-func BuildCommandGTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldGTE(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandGTE applies the GTE predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandGTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldGTE(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandLT applies the LT predicate on the "build_command" field.
-func BuildCommandLT(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLT(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandLT applies the LT predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandLT(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLT(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandLTE applies the LTE predicate on the "build_command" field.
-func BuildCommandLTE(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldLTE(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandLTE applies the LTE predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandLTE(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldLTE(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandContains applies the Contains predicate on the "build_command" field.
-func BuildCommandContains(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContains(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandContains applies the Contains predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandContains(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContains(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandHasPrefix applies the HasPrefix predicate on the "build_command" field.
-func BuildCommandHasPrefix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandHasPrefix applies the HasPrefix predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandHasPrefix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasPrefix(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandHasSuffix applies the HasSuffix predicate on the "build_command" field.
-func BuildCommandHasSuffix(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandHasSuffix applies the HasSuffix predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandHasSuffix(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldHasSuffix(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandIsNil applies the IsNil predicate on the "build_command" field.
-func BuildCommandIsNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldIsNull(FieldBuildCommand))
+// RailpackBuilderBuildCommandIsNil applies the IsNil predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandIsNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldIsNull(FieldRailpackBuilderBuildCommand))
 }
 
-// BuildCommandNotNil applies the NotNil predicate on the "build_command" field.
-func BuildCommandNotNil() predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldNotNull(FieldBuildCommand))
+// RailpackBuilderBuildCommandNotNil applies the NotNil predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandNotNil() predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldNotNull(FieldRailpackBuilderBuildCommand))
 }
 
-// BuildCommandEqualFold applies the EqualFold predicate on the "build_command" field.
-func BuildCommandEqualFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldEqualFold(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandEqualFold applies the EqualFold predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandEqualFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldEqualFold(FieldRailpackBuilderBuildCommand, v))
 }
 
-// BuildCommandContainsFold applies the ContainsFold predicate on the "build_command" field.
-func BuildCommandContainsFold(v string) predicate.ServiceConfig {
-	return predicate.ServiceConfig(sql.FieldContainsFold(FieldBuildCommand, v))
+// RailpackBuilderBuildCommandContainsFold applies the ContainsFold predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandContainsFold(v string) predicate.ServiceConfig {
+	return predicate.ServiceConfig(sql.FieldContainsFold(FieldRailpackBuilderBuildCommand, v))
 }
 
 // RunCommandEQ applies the EQ predicate on the "run_command" field.

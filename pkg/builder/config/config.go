@@ -41,24 +41,24 @@ type Config struct {
 	// Deployment namespace (kubernetes)
 	DeploymentNamespace string `env:"DEPLOYMENT_NAMESPACE,required"`
 	// Service specific
-	ServiceDeploymentID         uuid.UUID             `env:"SERVICE_DEPLOYMENT_ID"`
-	ServiceName                 string                `env:"SERVICE_NAME"`
-	ServiceProvider             string                `env:"SERVICE_PROVIDER"`
-	ServiceFramework            string                `env:"SERVICE_FRAMEWORK"`
-	ServicePublic               *bool                 `env:"SERVICE_PUBLIC"`
-	ServiceReplicas             *int32                `env:"SERVICE_REPLICAS"`
-	ServiceSecretName           string                `env:"SERVICE_SECRET_NAME,required"`
-	ServiceBuildSecrets         string                `env:"SERVICE_BUILD_SECRETS"`
-	ServiceType                 schema.ServiceType    `env:"SERVICE_TYPE"`
-	ServiceBuilder              schema.ServiceBuilder `env:"SERVICE_BUILDER"`
-	ServiceTeamRef              string                `env:"SERVICE_TEAM_REF"`
-	ServiceProjectRef           string                `env:"SERVICE_PROJECT_REF"`
-	ServiceEnvironmentRef       string                `env:"SERVICE_ENVIRONMENT_REF"`
-	ServiceRef                  string                `env:"SERVICE_REF"`
-	ServiceDockerBuilderPath    string                `env:"SERVICE_DOCKER_BUILDER_PATH"`    // Path to Dockerfile in the repo (optional)
-	ServiceDockerBuilderContext string                `env:"SERVICE_DOCKER_BUILDER_CONTEXT"` // Path to Dockerfile context in the repo (optional)
-	ServiceImage                string                `env:"SERVICE_IMAGE"`                  // Custom image if not building from git
-	ServiceRunCommand           string                `env:"SERVICE_RUN_COMMAND"`            // Command to run the service
+	ServiceDeploymentID                uuid.UUID             `env:"SERVICE_DEPLOYMENT_ID"`
+	ServiceName                        string                `env:"SERVICE_NAME"`
+	ServiceProvider                    string                `env:"SERVICE_PROVIDER"`
+	ServiceFramework                   string                `env:"SERVICE_FRAMEWORK"`
+	ServicePublic                      *bool                 `env:"SERVICE_PUBLIC"`
+	ServiceReplicas                    *int32                `env:"SERVICE_REPLICAS"`
+	ServiceSecretName                  string                `env:"SERVICE_SECRET_NAME,required"`
+	ServiceBuildSecrets                string                `env:"SERVICE_BUILD_SECRETS"`
+	ServiceType                        schema.ServiceType    `env:"SERVICE_TYPE"`
+	ServiceBuilder                     schema.ServiceBuilder `env:"SERVICE_BUILDER"`
+	ServiceTeamRef                     string                `env:"SERVICE_TEAM_REF"`
+	ServiceProjectRef                  string                `env:"SERVICE_PROJECT_REF"`
+	ServiceEnvironmentRef              string                `env:"SERVICE_ENVIRONMENT_REF"`
+	ServiceRef                         string                `env:"SERVICE_REF"`
+	ServiceDockerBuilderDockerfilePath string                `env:"SERVICE_DOCKER_BUILDER_DOCKERFILE_PATH"` // Path to Dockerfile in the repo (optional)
+	ServiceDockerBuilderBuildContext   string                `env:"SERVICE_DOCKER_BUILDER_BUILD_CONTEXT"`   // Path to Dockerfile context in the repo (optional)
+	ServiceImage                       string                `env:"SERVICE_IMAGE"`                          // Custom image if not building from git
+	ServiceRunCommand                  string                `env:"SERVICE_RUN_COMMAND"`                    // Command to run the service
 	// Database data
 	ServiceDatabaseType              string `env:"SERVICE_DATABASE_TYPE"`
 	ServiceDatabaseDefinitionVersion string `env:"SERVICE_DATABASE_USD_VERSION"`

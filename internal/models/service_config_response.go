@@ -8,22 +8,22 @@ import (
 
 // ServiceConfigResponse defines the configuration response for a service
 type ServiceConfigResponse struct {
-	GitBranch      *string               `json:"git_branch,omitempty"`
-	GitTag         *string               `json:"git_tag,omitempty"`
-	Builder        schema.ServiceBuilder `json:"builder"`
-	Icon           string                `json:"icon"`
-	Host           []schema.HostSpec     `json:"hosts,omitempty" nullable:"false"`
-	Port           []schema.PortSpec     `json:"ports,omitempty" nullable:"false"`
-	Replicas       int32                 `json:"replicas"`
-	AutoDeploy     bool                  `json:"auto_deploy"`
-	InstallCommand *string               `json:"install_command,omitempty"`
-	BuildCommand   *string               `json:"build_command,omitempty"`
-	RunCommand     *string               `json:"run_command,omitempty"`
-	IsPublic       bool                  `json:"is_public"`
-	Image          string                `json:"image,omitempty"`
+	GitBranch                     *string               `json:"git_branch,omitempty"`
+	GitTag                        *string               `json:"git_tag,omitempty"`
+	Builder                       schema.ServiceBuilder `json:"builder"`
+	Icon                          string                `json:"icon"`
+	Host                          []schema.HostSpec     `json:"hosts,omitempty" nullable:"false"`
+	Port                          []schema.PortSpec     `json:"ports,omitempty" nullable:"false"`
+	Replicas                      int32                 `json:"replicas"`
+	AutoDeploy                    bool                  `json:"auto_deploy"`
+	RailpackBuilderInstallCommand *string               `json:"railpack_builder_install_command,omitempty"`
+	RailpackBuilderBuildCommand   *string               `json:"railpack_builder_build_command,omitempty"`
+	RunCommand                    *string               `json:"run_command,omitempty"`
+	IsPublic                      bool                  `json:"is_public"`
+	Image                         string                `json:"image,omitempty"`
 	// Dockerfile build overrides
-	DockerBuilderPath    *string `json:"docker_builder_path,omitempty"`
-	DockerBuilderContext *string `json:"docker_builder_context,omitempty"`
+	DockerBuilderDockerfilePath *string `json:"docker_builder_dockerfile_path,omitempty"`
+	DockerBuilderBuildContext   *string `json:"docker_builder_build_context,omitempty"`
 	// For backups
 	S3BackupSourceID     *uuid.UUID `json:"s3_backup_source_id,omitempty"`
 	S3BackupBucket       *string    `json:"s3_backup_bucket,omitempty"`
@@ -50,32 +50,32 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 	response := &ServiceConfigResponse{}
 	if entity != nil {
 		response = &ServiceConfigResponse{
-			GitBranch:            entity.GitBranch,
-			GitTag:               entity.GitTag,
-			Builder:              entity.Builder,
-			Icon:                 entity.Icon,
-			Host:                 entity.Hosts,
-			Port:                 entity.Ports,
-			Replicas:             entity.Replicas,
-			AutoDeploy:           entity.AutoDeploy,
-			InstallCommand:       entity.InstallCommand,
-			BuildCommand:         entity.BuildCommand,
-			RunCommand:           entity.RunCommand,
-			IsPublic:             entity.IsPublic,
-			Image:                entity.Image,
-			S3BackupSourceID:     entity.S3BackupSourceID,
-			S3BackupBucket:       entity.S3BackupBucket,
-			BackupSchedule:       entity.BackupSchedule,
-			BackupRetentionCount: entity.BackupRetentionCount,
-			SecurityContext:      entity.SecurityContext,
-			HealthCheck:          entity.HealthCheck,
-			VariableMounts:       entity.VariableMounts,
-			ProtectedVariables:   entity.ProtectedVariables,
-			InitContainers:       entity.InitContainers,
-			Volumes:              []*PVCInfo{},
-			Resources:            entity.Resources,
-			DockerBuilderPath:    entity.DockerBuilderPath,
-			DockerBuilderContext: entity.DockerBuilderContext,
+			GitBranch:                     entity.GitBranch,
+			GitTag:                        entity.GitTag,
+			Builder:                       entity.Builder,
+			Icon:                          entity.Icon,
+			Host:                          entity.Hosts,
+			Port:                          entity.Ports,
+			Replicas:                      entity.Replicas,
+			AutoDeploy:                    entity.AutoDeploy,
+			RailpackBuilderInstallCommand: entity.RailpackBuilderInstallCommand,
+			RailpackBuilderBuildCommand:   entity.RailpackBuilderBuildCommand,
+			RunCommand:                    entity.RunCommand,
+			IsPublic:                      entity.IsPublic,
+			Image:                         entity.Image,
+			S3BackupSourceID:              entity.S3BackupSourceID,
+			S3BackupBucket:                entity.S3BackupBucket,
+			BackupSchedule:                entity.BackupSchedule,
+			BackupRetentionCount:          entity.BackupRetentionCount,
+			SecurityContext:               entity.SecurityContext,
+			HealthCheck:                   entity.HealthCheck,
+			VariableMounts:                entity.VariableMounts,
+			ProtectedVariables:            entity.ProtectedVariables,
+			InitContainers:                entity.InitContainers,
+			Volumes:                       []*PVCInfo{},
+			Resources:                     entity.Resources,
+			DockerBuilderDockerfilePath:   entity.DockerBuilderDockerfilePath,
+			DockerBuilderBuildContext:     entity.DockerBuilderBuildContext,
 		}
 		if response.ProtectedVariables == nil {
 			response.ProtectedVariables = []string{}

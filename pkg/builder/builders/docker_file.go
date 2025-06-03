@@ -38,14 +38,14 @@ func (self *Builder) BuildDockerfile(ctx context.Context, buildSecrets map[strin
 	defer os.RemoveAll(tmpDir)
 
 	// Use default Dockerfile if not specified
-	if self.config.ServiceDockerBuilderPath == "" {
-		self.config.ServiceDockerBuilderPath = "Dockerfile"
+	if self.config.ServiceDockerBuilderDockerfilePath == "" {
+		self.config.ServiceDockerBuilderDockerfilePath = "Dockerfile"
 	}
 
 	// Check if Dockerfile exists
-	fullDockerfilePath := path.Join(tmpDir, self.config.ServiceDockerBuilderPath)
+	fullDockerfilePath := path.Join(tmpDir, self.config.ServiceDockerBuilderDockerfilePath)
 	if _, err := os.Stat(fullDockerfilePath); os.IsNotExist(err) {
-		return "", repoName, fmt.Errorf("dockerfile not found at path: %s", self.config.ServiceDockerBuilderPath)
+		return "", repoName, fmt.Errorf("dockerfile not found at path: %s", self.config.ServiceDockerBuilderDockerfilePath)
 	}
 
 	// Make app from source
@@ -62,14 +62,14 @@ func (self *Builder) BuildDockerfile(ctx context.Context, buildSecrets map[strin
 			ImageName:      outputImage,
 			CacheKey:       cacheKey,
 			Secrets:        buildSecrets,
-			DockerfilePath: self.config.ServiceDockerBuilderPath,
-			ContextPath:    self.config.ServiceDockerBuilderContext,
+			DockerfilePath: self.config.ServiceDockerBuilderDockerfilePath,
+			ContextPath:    self.config.ServiceDockerBuilderBuildContext,
 		},
 	)
 	if err != nil {
 		return "", repoName, fmt.Errorf("build failed: %v", err)
 	}
 
-	log.Infof("Built image %s from Dockerfile: %s", outputImage, self.config.ServiceDockerBuilderPath)
+	log.Infof("Built image %s from Dockerfile: %s", outputImage, self.config.ServiceDockerBuilderDockerfilePath)
 	return outputImage, repoName, nil
 }

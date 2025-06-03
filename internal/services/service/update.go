@@ -168,13 +168,13 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 	// Force build if certain things change
 	forceBuild := false
-	if input.InstallCommand != nil {
-		if service.Edges.ServiceConfig.InstallCommand == nil || (*input.InstallCommand != *service.Edges.ServiceConfig.InstallCommand) {
+	if input.RailpackBuilderInstallCommand != nil {
+		if service.Edges.ServiceConfig.RailpackBuilderInstallCommand == nil || (*input.RailpackBuilderInstallCommand != *service.Edges.ServiceConfig.RailpackBuilderInstallCommand) {
 			forceBuild = true
 		}
 	}
-	if input.BuildCommand != nil {
-		if service.Edges.ServiceConfig.BuildCommand == nil || (*input.BuildCommand != *service.Edges.ServiceConfig.BuildCommand) {
+	if input.RailpackBuilderBuildCommand != nil {
+		if service.Edges.ServiceConfig.RailpackBuilderBuildCommand == nil || (*input.RailpackBuilderBuildCommand != *service.Edges.ServiceConfig.RailpackBuilderBuildCommand) {
 			forceBuild = true
 		}
 	}
@@ -234,34 +234,34 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 		// Update the service config
 		updateInput := &service_repo.MutateConfigInput{
-			ServiceID:            input.ServiceID,
-			Builder:              input.Builder,
-			GitBranch:            input.GitBranch,
-			GitTag:               input.GitTag,
-			Ports:                input.Ports,
-			OverwriteHosts:       input.OverwriteHosts,
-			AddHosts:             input.AddHosts,
-			RemoveHosts:          input.RemoveHosts,
-			Replicas:             input.Replicas,
-			AutoDeploy:           input.AutoDeploy,
-			InstallCommand:       input.InstallCommand,
-			BuildCommand:         input.BuildCommand,
-			RunCommand:           input.RunCommand,
-			Public:               input.IsPublic,
-			Image:                input.Image,
-			DockerBuilderPath:    input.DockerBuilderPath,
-			DockerBuilderContext: input.DockerBuilderContext,
-			DatabaseConfig:       input.DatabaseConfig,
-			S3BackupSourceID:     input.S3BackupSourceID,
-			S3BackupBucket:       input.S3BackupBucket,
-			BackupSchedule:       input.BackupSchedule,
-			BackupRetentionCount: input.BackupRetentionCount,
-			Volumes:              input.Volumes,
-			HealthCheck:          input.HealthCheck,
-			VariableMounts:       input.VariableMounts,
-			ProtectedVariables:   input.ProtectedVariables,
-			InitContainers:       input.InitContainers,
-			Resources:            input.Resources,
+			ServiceID:                     input.ServiceID,
+			Builder:                       input.Builder,
+			GitBranch:                     input.GitBranch,
+			GitTag:                        input.GitTag,
+			Ports:                         input.Ports,
+			OverwriteHosts:                input.OverwriteHosts,
+			AddHosts:                      input.AddHosts,
+			RemoveHosts:                   input.RemoveHosts,
+			Replicas:                      input.Replicas,
+			AutoDeploy:                    input.AutoDeploy,
+			RailpackBuilderInstallCommand: input.RailpackBuilderInstallCommand,
+			RailpackBuilderBuildCommand:   input.RailpackBuilderBuildCommand,
+			RunCommand:                    input.RunCommand,
+			Public:                        input.IsPublic,
+			Image:                         input.Image,
+			DockerBuilderDockerfilePath:   input.DockerBuilderDockerfilePath,
+			DockerBuilderBuildContext:     input.DockerBuilderBuildContext,
+			DatabaseConfig:                input.DatabaseConfig,
+			S3BackupSourceID:              input.S3BackupSourceID,
+			S3BackupBucket:                input.S3BackupBucket,
+			BackupSchedule:                input.BackupSchedule,
+			BackupRetentionCount:          input.BackupRetentionCount,
+			Volumes:                       input.Volumes,
+			HealthCheck:                   input.HealthCheck,
+			VariableMounts:                input.VariableMounts,
+			ProtectedVariables:            input.ProtectedVariables,
+			InitContainers:                input.InitContainers,
+			Resources:                     input.Resources,
 		}
 		if err := self.repo.Service().UpdateConfig(ctx, tx, service.Edges.ServiceConfig, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)
@@ -390,17 +390,17 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			})
 		}
 
-		if input.DockerBuilderPath != nil {
+		if input.DockerBuilderDockerfilePath != nil {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 				Name:  "Dockerfile Path",
-				Value: *input.DockerBuilderPath,
+				Value: *input.DockerBuilderDockerfilePath,
 			})
 		}
 
-		if input.DockerBuilderContext != nil {
+		if input.DockerBuilderBuildContext != nil {
 			data.Fields = append(data.Fields, webhooks_service.WebhookDataField{
 				Name:  "Dockerfile Context",
-				Value: *input.DockerBuilderContext,
+				Value: *input.DockerBuilderBuildContext,
 			})
 		}
 
