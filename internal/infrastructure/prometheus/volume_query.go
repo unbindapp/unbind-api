@@ -79,9 +79,11 @@ func (self *PrometheusClient) getPrometheusUsageStats(ctx context.Context, pvcNa
 	query := fmt.Sprintf(`
 (
   label_replace(
-    max by (persistentvolumeclaim) (
-      kubelet_volume_stats_used_bytes{persistentvolumeclaim=~"%s", job="kubelet"} / 1024 / 1024 / 1024
-    ),
+    last_over_time(
+      kubelet_volume_stats_used_bytes{
+        persistentvolumeclaim=~"%s", job="kubelet"
+      }[10m]
+    ) / 1024 / 1024 / 1024,
     "kind", "used", "persistentvolumeclaim", ".*"
   )
 )
