@@ -13,82 +13,86 @@
 
 _Effortlessly deploy, scale, and manage applications on Kubernetes_
 
-[🚀 **Quick Start**](#-quick-start) • [📖 **Documentation**](#-api-documentation) • [🏗️ **Architecture**](#-architecture) • [🤝 **Contributing**](#-contributing)
+[**Quick Start**](#quick-start) • [**Documentation**](#api-documentation) • [**Architecture**](#architecture) • [**Contributing**](#contributing)
 
 </div>
 
 ---
 
-## 🌟 **What is Unbind?**
+## **What is Unbind?**
 
 Unbind is a **Platform as a Service (PaaS)** for managing all kinds of applications, it provides:
 
-- 🎯 **Zero-configuration deployments** from Git repositories and Docker images
-- ⚡ **Intelligent build system** powered by [BuildKit](https://github.com/moby/buildkit) and [Railpack](https://github.com/railwayapp/railpack)
-- 🔒 **Security** integrating OAuth2/OIDC with native [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- 📊 **Metrics** with [Prometheus kube stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
-- 📖 **Templates** an extensible template system that supports zero-configuration deployments of many popular open-source products (plausible, supabase, wordpress, minio, and more.)
-- 💾 **Production-grade Databases with Backups** with support for many popular databases through [operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) and helm charts - with backups to any S3-compatible storage.
+- **Zero-configuration deployments** from Git repositories and Docker images
+- **Intelligent build system** powered by [BuildKit](https://github.com/moby/buildkit) and [Railpack](https://github.com/railwayapp/railpack)
+- **Security** integrating OAuth2/OIDC with native [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- **Metrics** with [Prometheus kube stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
+- **Templates** an extensible template system that supports zero-configuration deployments of many popular open-source products (plausible, supabase, wordpress, minio, and more.)
+- **Production-grade Databases with Backups** with support for many popular databases through [operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) and helm charts - with backups to any S3-compatible storage.
 
 ---
 
-## 🏗️ **Architecture**
+## **Architecture**
 
 ```mermaid
 graph TB
-    subgraph "🌐 Frontend & API"
-        UI[🌐 Unbind UI]
-        API[🚀 Unbind API]
-        Auth[🔐 OAuth2 Server]
-        UI --> API
-        API --> Auth
+    subgraph "User Interface"
+        UI[Unbind UI<br/>NextJS]
     end
 
-    subgraph "💾 Data Layer"
-        DB[(🗄️ PostgreSQL)]
-        Cache[(📦 Redis)]
+    subgraph "Authentication Layer"
+        Dex[Dex OIDC Provider]
+        OIDC[Unbind OIDC Server]
+        Dex -.-> OIDC
     end
 
-    subgraph "🏗️ Build Pipeline"
-        Job[📦 Build Job]
-        Builder[🏗️ Unbind Builder]
-        BuildKit[⚡ BuildKit]
-        Registry[📦 Container Registry]
-        Git[🐙 Git Integration]
-
-        Job --> Builder
-        Builder --> BuildKit
-        Builder --> Registry
-        Builder --> Git
+    subgraph "API Layer"
+        API[Unbind API<br/>Go + Huma]
     end
 
-    subgraph "☸️ Infrastructure"
-        K8s[☸️ Kubernetes]
-        Operator[🔧 Unbind Operator]
-        Operator --> K8s
+    subgraph "Data Storage"
+        DB[(PostgreSQL<br/>All Unbind Data)]
+        Redis[(Redis<br/>Cache & Build Queue)]
     end
 
-    subgraph "📊 Monitoring and Logs"
-        Prometheus[📊 Prometheus]
-        Alloy[📡 Alloy]
-        Loki[📋 Loki]
-
-        Alloy --> Loki
+    subgraph "Build System"
+        BuildJob[Kubernetes Job<br/>unbind-builder]
+        BuildKit[BuildKit<br/>Build + Push]
+        Registry[Container Registry]
+        BuildJob --> BuildKit
+        BuildKit --> Registry
     end
 
-    %% Main connections
+    subgraph "Kubernetes Infrastructure"
+        K8s[Kubernetes API]
+        Operator[Unbind Operator<br/>Watches CRDs]
+        CRD[Custom Resource<br/>Instances]
+        NativeRes[Native K8s Resources<br/>StatefulSets, Services, etc.]
+
+        Operator -->|"Reconciles"| CRD
+        Operator -->|"Creates/Updates"| NativeRes
+    end
+
+    %% Authentication Flow
+    UI -->|"Auth Request"| Dex
+    UI -->|"API Calls with Token"| API
+    API -->|"Token Verification"| Dex
+
+    %% Data Flow
     API --> DB
-    API --> Cache
-    API --> Job
-    API --> K8s
-    Builder --> K8s
-    K8s --> Prometheus
-    K8s --> Alloy
-    API --> Prometheus
-    API --> Loki
+    API --> Redis
+
+    %% Build Flow
+    API -->|"Trigger Build"| BuildJob
+    API -->|"Queue Management"| Redis
+    BuildJob -->|"Deploy CRD Instance"| CRD
+    BuildKit -->|"Push Image"| Registry
+
+    %% Platform Operations
+    API -->|"Direct K8s Operations"| K8s
 ```
 
-### 🧩 **Core Components**
+### **Core Components**
 
 | Component           | Purpose                         | Technology          |
 | ------------------- | ------------------------------- | ------------------- |
@@ -98,16 +102,16 @@ graph TB
 
 ---
 
-## 🚀 **Quick Start**
+## **Quick Start**
 
-### 📋 **Prerequisites**
+### **Prerequisites**
 
-- **Go 1.24+** 🐹
-- **Docker & Docker Compose** 🐳
-- **Kubernetes cluster** (local or cloud) ☸️
-- **Dex IDP binary** in `$PATH` 🔐
+- **Go 1.24+**
+- **Docker & Docker Compose**
+- **Kubernetes cluster** (local or cloud)
+- **Dex IDP binary** in `$PATH`
 
-### ⚡ **Local Development Setup**
+### **Local Development Setup**
 
 ```bash
 # 1) Clone the repository
@@ -128,19 +132,19 @@ cp .env.example .env
 go run cmd/cli migrate
 
 # 6) Start the services
-go run cmd/api          # 🚀 API Server (port 8089)
-go run cmd/oauth2server # 🔐 OAuth2 Server (port 8090)
+go run cmd/api          # API Server (port 8089)
+go run cmd/oauth2server # OAuth2 Server (port 8090)
 ```
 
-### 📖 **API Documentation**
+### **API Documentation**
 
-Visit **`http://localhost:8089/docs`** for interactive API documentation (OpenAPI 3.1) 📚
+Visit **`http://localhost:8089/docs`** for interactive API documentation (OpenAPI 3.1)
 
 ---
 
-## 🔧 **Technology Stack**
+## **Technology Stack**
 
-### 🏗️ **Backend Technologies**
+### **Backend Technologies**
 
 | Technology                                             | Purpose             | Why We Use It                                    |
 | ------------------------------------------------------ | ------------------- | ------------------------------------------------ |
@@ -150,7 +154,7 @@ Visit **`http://localhost:8089/docs`** for interactive API documentation (OpenAP
 | **[BuildKit](https://github.com/moby/buildkit)**       | Container Builder   | Advanced build features and distributed caching  |
 | **[Railpack](https://github.com/railwayapp/railpack)** | Application Builder | Automatically turns code into images             |
 
-### ☸️ **Kubernetes & Cloud**
+### **Kubernetes & Cloud**
 
 - **Cert-Manager** for TLS certificate automation with Let's Encrypt
 - **Ingress NGINX Controller** for reverse proxy and load balancer
@@ -160,9 +164,9 @@ Visit **`http://localhost:8089/docs`** for interactive API documentation (OpenAP
 
 ---
 
-## 🛠️ **Development Workflow**
+## **Development Workflow**
 
-### 🔄 **Code Generation**
+### **Code Generation**
 
 Unbind uses extensive code generation for maintainable, type-safe code:
 
@@ -177,7 +181,7 @@ go generate ./...
 mockery
 ```
 
-### 🗄️ **Database Migrations**
+### **Database Migrations**
 
 Update entities in `./ent/schema`, then create a new versioned migration.
 
@@ -193,7 +197,7 @@ Migrations are applied automatically on API startup.
 
 ---
 
-## 👥 **Bootstrapping Admin User**
+## **Bootstrapping Admin User**
 
 ```bash
 # Create superuser account
@@ -224,21 +228,21 @@ go run cmd/cli sync:group-to-k8s
 
 ---
 
-## 🤝 **Contributing**
+## **Contributing**
 
 We welcome contributions! Here's how to get started:
 
-1. **🍴 Fork** the repository
-2. **🌿 Create** a feature branch: `git checkout -b amazing-feature`
-3. **✨ Make** your changes and add tests
-4. **🧪 Run** tests: `go test ./...`
-5. **📝 Commit** changes: `git commit -m 'Add amazing feature'`
-6. **🚀 Push** to branch: `git push origin amazing-feature`
-7. **🔄 Create** a Pull Request
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b amazing-feature`
+3. **Make** your changes and add tests
+4. **Run** tests: `go test ./...`
+5. **Commit** changes: `git commit -m 'Add amazing feature'`
+6. **Push** to branch: `git push origin amazing-feature`
+7. **Create** a Pull Request
 
 ---
 
-## 📄 **License**
+## **License**
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
