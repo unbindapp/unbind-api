@@ -54,6 +54,28 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "deployment_service_id",
+				Unique:  false,
+				Columns: []*schema.Column{DeploymentsColumns[17]},
+			},
+			{
+				Name:    "deployment_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{DeploymentsColumns[1]},
+			},
+			{
+				Name:    "deployment_service_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{DeploymentsColumns[17], DeploymentsColumns[1]},
+			},
+			{
+				Name:    "deployment_service_id_status_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{DeploymentsColumns[17], DeploymentsColumns[3], DeploymentsColumns[1]},
+			},
+		},
 	}
 	// EnvironmentsColumns holds the columns for the "environments" table.
 	EnvironmentsColumns = []*schema.Column{
@@ -388,6 +410,23 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "service_environment_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ServicesColumns[13], ServicesColumns[1]},
+			},
+			{
+				Name:    "service_service_group_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ServicesColumns[16], ServicesColumns[1]},
+			},
+			{
+				Name:    "service_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ServicesColumns[1]},
+			},
+		},
 	}
 	// ServiceConfigsColumns holds the columns for the "service_configs" table.
 	ServiceConfigsColumns = []*schema.Column{
@@ -571,6 +610,21 @@ var (
 				Name:    "variablereference_target_service_id_target_name",
 				Unique:  true,
 				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[3]},
+			},
+			{
+				Name:    "variablereference_target_service_id",
+				Unique:  false,
+				Columns: []*schema.Column{VariableReferencesColumns[7]},
+			},
+			{
+				Name:    "variablereference_target_service_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{VariableReferencesColumns[7], VariableReferencesColumns[1]},
+			},
+			{
+				Name:    "variablereference_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{VariableReferencesColumns[1]},
 			},
 		},
 	}

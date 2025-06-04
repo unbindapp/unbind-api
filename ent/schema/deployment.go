@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
@@ -171,6 +172,18 @@ func (Deployment) Edges() []ent.Edge {
 	return []ent.Edge{
 		// M2O edge to keep track of the service
 		edge.From("service", Service.Type).Ref("deployments").Field("service_id").Unique().Required(),
+	}
+}
+
+// Indexes of the Deployment.
+func (Deployment) Indexes() []ent.Index {
+	return []ent.Index{
+		// Single field indexes
+		index.Fields("service_id"),
+		index.Fields("created_at"),
+		// Composite indexes
+		index.Fields("service_id", "created_at"),
+		index.Fields("service_id", "status", "created_at"),
 	}
 }
 

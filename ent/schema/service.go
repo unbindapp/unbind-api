@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
@@ -121,6 +122,18 @@ func (Service) Edges() []ent.Edge {
 				OnDelete: entsql.Cascade,
 			},
 		),
+	}
+}
+
+// Indexes of the Service.
+func (Service) Indexes() []ent.Index {
+	return []ent.Index{
+		// Composite indexe
+		index.Fields("environment_id", "created_at"),
+		index.Fields("service_group_id", "created_at"),
+
+		// Index for ordering services by created_at (most common sort)
+		index.Fields("created_at"),
 	}
 }
 

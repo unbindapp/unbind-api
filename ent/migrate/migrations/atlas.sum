@@ -1,4 +1,4 @@
-h1:/wuY1E+gXABDPZ7D468Gbb6YkOQqXfVW4jcQFCr3oIM=
+h1:OiYguajE/yAbrvyzjq2AkO2P6uebPGpK+7wvdIGN9to=
 20250519010757_initial_migration.sql h1:94lMwKemoNX/ichD+2Vzb7GmOHXVj4qVTfeBInQAe0g=
 20250519163449_add_init_containers.sql h1:7bt+zCbtmlYr1QDztgka0R5wUxdjD7XYUkrhL9GYYIQ=
 20250521202532_non_nillable_kubernetes_secret.sql h1:eDpMWyeBXh5cG4poavaUMeYs5QXddFBBIyYlxc+nq64=
@@ -6,3 +6,4 @@ h1:/wuY1E+gXABDPZ7D468Gbb6YkOQqXfVW4jcQFCr3oIM=
 20250601191718_add_resources.sql h1:pyO1IT/lIpsRqQn8fGxJHHH2Oz2rnXuD7d+CSDEiP4s=
 20250603193716_rebuild_docker_params.sql h1:G1KAu08Y11gZhV0YSiafedpwYBVrbUX0+DF+/FztiI8=
 20250603221624_rename_builder_fields.sql h1:1C+hoQI8M3gWWBZYjhPsSJXGHuK2h6Iiv+wSQnrAP/o=
+20250604173032_add_indexes.sql h1:ehOMP5bhyv9eGtWji8HY4hMZPkCh3xfP79kfIepErbI=

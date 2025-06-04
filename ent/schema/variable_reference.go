@@ -65,8 +65,17 @@ func (VariableReference) Edges() []ent.Edge {
 // Indexes of the VariableReference.
 func (VariableReference) Indexes() []ent.Index {
 	return []ent.Index{
-		// Just prevent duplicates
+		// Unique constraint to prevent duplicates
 		index.Fields("target_service_id", "target_name").Unique(),
+
+		// Single field
+		index.Fields("target_service_id"),
+
+		// Composite indexes
+		index.Fields("target_service_id", "created_at"),
+
+		// Index for ordering variable references
+		index.Fields("created_at"),
 	}
 }
 
