@@ -194,7 +194,7 @@ func main() {
 		serviceID, _ := uuid.Parse(cfg.ServiceRef)
 		service, err := repo.Service().GetByID(context.Background(), serviceID)
 		if err != nil {
-			log.Errorf("Failed to get service %s: %v", service.ID.String(), err)
+			log.Errorf("Failed to get service %s: %v", serviceID.String(), err)
 			return
 		}
 
