@@ -26,6 +26,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Also set default resources for database services
+var defaultDatabaseResources = &schema.Resources{
+	CPURequestsMillicores:   50,
+	CPULimitsMillicores:     500,
+	MemoryRequestsMegabytes: 128,
+	MemoryLimitsMegabytes:   1548,
+}
+
 func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.TemplateDeployInput) ([]*models.ServiceResponse, error) {
 	// Check permissions
 	permissionChecks := []permissions_repo.PermissionCheck{
@@ -218,6 +226,10 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			// Fetch DB metadata (if a database)
 			var dbVersion *string
 			if templateService.Type == schema.ServiceTypeDatabase {
+				if templateService.Resources == nil {
+					templateService.Resources = defaultDatabaseResources
+				}
+
 				// Fetch the template
 				dbDefinition, err := self.dbProvider.FetchDatabaseDefinition(ctx, self.cfg.UnbindServiceDefVersion, *templateService.DatabaseType)
 				if err != nil {

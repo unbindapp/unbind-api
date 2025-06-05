@@ -27,7 +27,7 @@ import (
 
 // Also set default resources for database services
 var defaultDatabaseResources = &schema.Resources{
-	CPURequestsMillicores:   100,
+	CPURequestsMillicores:   50,
 	CPULimitsMillicores:     500,
 	MemoryRequestsMegabytes: 128,
 	MemoryLimitsMegabytes:   1548,
