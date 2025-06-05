@@ -52,6 +52,10 @@ func minioTemplate() *schema.TemplateDefinition {
 				Builder:  schema.ServiceBuilderDocker,
 				InputIDs: []string{"input_domain_api", "input_domain_ui", "input_storage_size"},
 				Image:    utils.ToPtr("minio/minio:latest"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 30,
+					CPULimitsMillicores:   200,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,

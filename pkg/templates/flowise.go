@@ -61,6 +61,10 @@ func flowiseTemplate() *schema.TemplateDefinition {
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("flowiseai/flowise:3.0.1"),
 				RunCommand: utils.ToPtr("flowise start"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 40,
+					CPULimitsMillicores:   500,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,

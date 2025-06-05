@@ -61,6 +61,10 @@ func n8nTemplate() *schema.TemplateDefinition {
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("n8nio/n8n:1.97.0"),
 				RunCommand: utils.ToPtr("n8n worker"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 30,
+					CPULimitsMillicores:   300,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,
@@ -168,6 +172,10 @@ func n8nTemplate() *schema.TemplateDefinition {
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("n8nio/n8n:1.97.0"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 40,
+					CPULimitsMillicores:   400,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     5678,

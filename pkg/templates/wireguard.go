@@ -60,6 +60,10 @@ func wireGuardTemplate() *schema.TemplateDefinition {
 				Builder:  schema.ServiceBuilderDocker,
 				InputIDs: []string{"input_domain", "input_nodeport", "input_storage_size"},
 				Image:    utils.ToPtr("ghcr.io/wg-easy/wg-easy:15"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 20,
+					CPULimitsMillicores:   100,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     51821,

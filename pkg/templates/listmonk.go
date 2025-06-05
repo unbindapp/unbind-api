@@ -61,6 +61,10 @@ func listmonkTemplate() *schema.TemplateDefinition {
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("listmonk/listmonk:v5.0.1"),
 				RunCommand: utils.ToPtr("./listmonk --install --idempotent --yes && ./listmonk --upgrade --yes && ./listmonk"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 30,
+					CPULimitsMillicores:   150,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,

@@ -60,6 +60,10 @@ func formbricksTemplate() *schema.TemplateDefinition {
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("ghcr.io/formbricks/formbricks:v3.13.1"),
 				DependsOn: []string{"service_postgresql"},
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 30,
+					CPULimitsMillicores:   200,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,

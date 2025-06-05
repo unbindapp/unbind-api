@@ -61,6 +61,10 @@ func nocodbTemplate() *schema.TemplateDefinition {
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("nocodb/nocodb:latest"),
 				DependsOn: []string{"service_postgresql"},
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 40,
+					CPULimitsMillicores:   300,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     8080,

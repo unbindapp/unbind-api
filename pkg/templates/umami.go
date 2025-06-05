@@ -48,6 +48,10 @@ func umamiTemplate() *schema.TemplateDefinition {
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("ghcr.io/umami-software/umami:postgresql-v2"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 30,
+					CPULimitsMillicores:   150,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,

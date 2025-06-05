@@ -70,6 +70,10 @@ func teableTemplate() *schema.TemplateDefinition {
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("ghcr.io/teableio/teable:latest"),
 				DependsOn: []string{"service_postgres", "service_redis"},
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 40,
+					CPULimitsMillicores:   300,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     3000,

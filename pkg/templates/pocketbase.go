@@ -43,6 +43,10 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 				Builder:  schema.ServiceBuilderDocker,
 				InputIDs: []string{"input_domain", "input_storage_size"},
 				Image:    utils.ToPtr("ghcr.io/unbindapp/pocketbase:v0.28.2"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 20,
+					CPULimitsMillicores:   150,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     8090,

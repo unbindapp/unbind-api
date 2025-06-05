@@ -65,6 +65,10 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
 				Image:      utils.ToPtr("ghcr.io/plausible/community-edition:v3"),
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 30,
+					CPULimitsMillicores:   200,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     8000,
