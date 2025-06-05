@@ -184,23 +184,41 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 		environmentID, _ := uuid.Parse(ing.Labels["unbind-environment"])
 		serviceID, _ := uuid.Parse(ing.Labels["unbind-service"])
 
-		// Make a map of paths to iterate TLS
-		pathMap := make(map[string]string)
+		// Make a map of paths and backend ports to iterate TLS
+		type backendInfo struct {
+			Path string
+			Port int32
+		}
+		backendMap := make(map[string]backendInfo)
 
 		for _, rule := range ing.Spec.Rules {
 			host := rule.Host
 
 			if rule.HTTP != nil {
 				for _, path := range rule.HTTP.Paths {
-					pathMap[host] = path.Path
+					var port int32 = 443 // Default fallback port
+
+					// Extract the actual backend service port
+					if path.Backend.Service != nil {
+						if path.Backend.Service.Port.Number != 0 {
+							port = path.Backend.Service.Port.Number
+						}
+					}
+
+					backendMap[host] = backendInfo{
+						Path: path.Path,
+						Port: port,
+					}
 				}
 			}
 		}
 
-		// Only consider TLS for ingresses, get path from map above
+		// Only consider TLS for ingresses, get path and port from map above
 		for _, tls := range ing.Spec.TLS {
 			for _, host := range tls.Hosts {
-				path := pathMap[host]
+				backend := backendMap[host]
+				path := backend.Path
+				port := backend.Port
 
 				// Check if the secret is issued
 				issued := false
@@ -269,7 +287,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 					Host:           host,
 					Path:           path,
 					Port: schema.PortSpec{
-						Port:     443,
+						Port:     port,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},
 					DNSStatus:     dnsStatus,

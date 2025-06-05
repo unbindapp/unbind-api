@@ -76,13 +76,21 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 	// Append hosts missing from discovery
 	for _, host := range service.Edges.ServiceConfig.Hosts {
 		if _, exists := endpointMap[host.Host]; !exists {
+			path := host.Path
+			if path == "" {
+				path = "/"
+			}
+			var port int32 = 443
+			if host.Port != nil {
+				port = *host.Port
+			}
 			newHost := models.IngressEndpoint{
 				KubernetesName: service.KubernetesName,
 				IsIngress:      true,
 				Host:           host.Host,
-				Path:           "/",
+				Path:           path,
 				Port: schema.PortSpec{
-					Port:     443,
+					Port:     port,
 					Protocol: utils.ToPtr(schema.ProtocolTCP),
 				},
 				DNSStatus:     models.DNSStatusUnknown,
