@@ -1338,7 +1338,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Studio",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/studio:2025.05.19-sha-3487831"),
+				Image:     utils.ToPtr("supabase/studio:2025.06.02-sha-8f2993d"),
 				DependsOn: []string{"service_postgresql", "service_kong"},
 				Ports: []schema.PortSpec{
 					{
@@ -1384,8 +1384,8 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					},
 					{
 						SourceID:   "service_analytics",
-						SourceName: "LOGFLARE_API_KEY",
-						TargetName: "LOGFLARE_API_KEY",
+						SourceName: "LOGFLARE_PRIVATE_ACCESS_TOKEN",
+						TargetName: "LOGFLARE_PRIVATE_ACCESS_TOKEN",
 					},
 					{
 						SourceID:   "service_analytics",
@@ -1430,7 +1430,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Analytics",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/logflare:1.12.0"),
+				Image:     utils.ToPtr("supabase/logflare:1.14.2"),
 				DependsOn: []string{"service_postgresql"},
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeHTTP,
@@ -1486,7 +1486,14 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 						Value: "_analytics",
 					},
 					{
-						Name: "LOGFLARE_API_KEY",
+						Name: "LOGFLARE_PUBLIC_ACCESS_TOKEN",
+						Generator: &schema.ValueGenerator{
+							Type:     schema.GeneratorTypePassword,
+							HashType: utils.ToPtr(schema.ValueHashTypeSHA256),
+						},
+					},
+					{
+						Name: "LOGFLARE_PRIVATE_ACCESS_TOKEN",
 						Generator: &schema.ValueGenerator{
 							Type:     schema.GeneratorTypePassword,
 							HashType: utils.ToPtr(schema.ValueHashTypeSHA256),
@@ -1523,7 +1530,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Storage",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/storage-api:v1.22.17"),
+				Image:     utils.ToPtr("supabase/storage-api:v1.23.0"),
 				DependsOn: []string{"service_postgresql", "service_minio"},
 				Ports: []schema.PortSpec{
 					{
@@ -1684,7 +1691,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Auth",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/gotrue:v2.172.1"),
+				Image:     utils.ToPtr("supabase/gotrue:v2.174.0"),
 				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{
@@ -1751,7 +1758,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Postgres Meta",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/postgres-meta:v0.89.0"),
+				Image:     utils.ToPtr("supabase/postgres-meta:v0.89.3"),
 				DependsOn: []string{"service_postgresql"},
 				Ports: []schema.PortSpec{
 					{
@@ -1856,8 +1863,8 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					},
 					{
 						Name: "main_index_ts",
-						Value: `import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
-import * as jose from 'https://deno.land/x/jose@v4.14.4/index.ts'
+						Value: `import { serve } from 'https://raw.githubusercontent.com/denoland/deno_std/0.131.0/http/server.ts'
+import * as jose from 'https://cdn.skypack.dev/jose@v4.14.4'
 
 console.log('main function started')
 
@@ -1957,7 +1964,7 @@ serve(async (req: Request) => {
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
 
-import { serve } from "https://deno.land/std@0.177.1/http/server.ts"
+import { serve } from 'https://raw.githubusercontent.com/denoland/deno_std/0.131.0/http/server.ts'
 
 serve(async () => {
   return new Response(

@@ -1338,7 +1338,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Studio",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/studio:2025.05.19-sha-3487831"),
+				Image:     utils.ToPtr("supabase/studio:2025.06.02-sha-8f2993d"),
 				DependsOn: []string{"service_postgresql", "service_kong"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 50,
@@ -1424,7 +1424,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Storage",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/storage-api:v1.22.17"),
+				Image:     utils.ToPtr("supabase/storage-api:v1.23.0"),
 				DependsOn: []string{"service_postgresql", "service_minio"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
@@ -1597,7 +1597,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Auth",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/gotrue:v2.172.1"),
+				Image:     utils.ToPtr("supabase/gotrue:v2.174.0"),
 				DependsOn: []string{"service_postgresql"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
@@ -1668,7 +1668,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Postgres Meta",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/postgres-meta:v0.89.0"),
+				Image:     utils.ToPtr("supabase/postgres-meta:v0.89.3"),
 				DependsOn: []string{"service_postgresql"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
@@ -1781,8 +1781,8 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					},
 					{
 						Name: "main_index_ts",
-						Value: `import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
-import * as jose from 'https://deno.land/x/jose@v4.14.4/index.ts'
+						Value: `import { serve } from 'https://raw.githubusercontent.com/denoland/deno_std/0.131.0/http/server.ts'
+import * as jose from 'https://cdn.skypack.dev/jose@v4.14.4'
 
 console.log('main function started')
 
@@ -1882,7 +1882,7 @@ serve(async (req: Request) => {
 // https://deno.land/manual/getting_started/setup_your_environment
 // This enables autocomplete, go to definition, etc.
 
-import { serve } from "https://deno.land/std@0.177.1/http/server.ts"
+import { serve } from 'https://raw.githubusercontent.com/denoland/deno_std/0.131.0/http/server.ts'
 
 serve(async () => {
   return new Response(
