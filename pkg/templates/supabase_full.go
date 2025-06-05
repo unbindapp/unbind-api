@@ -5,8 +5,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
-// supabaseTemplate returns a template definition for Supabase
-func supabaseTemplate() *schema.TemplateDefinition {
+// supabaseFullTemplate returns a template definition for Supabase
+func supabaseFullTemplate() *schema.TemplateDefinition {
 	return &schema.TemplateDefinition{
 		Name:        "Supabase",
 		DisplayRank: uint(50000),
