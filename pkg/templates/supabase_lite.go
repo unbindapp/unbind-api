@@ -1719,6 +1719,10 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Builder:   schema.ServiceBuilderDocker,
 				Image:     utils.ToPtr("supabase/edge-runtime:v1.67.4"),
 				DependsOn: []string{"service_postgresql", "service_kong"},
+				Resources: &schema.Resources{
+					CPURequestsMillicores: 20,
+					CPULimitsMillicores:   250,
+				},
 				Ports: []schema.PortSpec{
 					{
 						Port:     9000,
