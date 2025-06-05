@@ -11444,6 +11444,8 @@ type ServiceMutation struct {
 	kubernetes_name            *string
 	name                       *string
 	description                *string
+	detected_ports             *[]schema.PortSpec
+	appenddetected_ports       []schema.PortSpec
 	database                   *string
 	database_version           *string
 	git_repository_owner       *string
@@ -11841,6 +11843,71 @@ func (m *ServiceMutation) OldEnvironmentID(ctx context.Context) (v uuid.UUID, er
 // ResetEnvironmentID resets all changes to the "environment_id" field.
 func (m *ServiceMutation) ResetEnvironmentID() {
 	m.environment = nil
+}
+
+// SetDetectedPorts sets the "detected_ports" field.
+func (m *ServiceMutation) SetDetectedPorts(ss []schema.PortSpec) {
+	m.detected_ports = &ss
+	m.appenddetected_ports = nil
+}
+
+// DetectedPorts returns the value of the "detected_ports" field in the mutation.
+func (m *ServiceMutation) DetectedPorts() (r []schema.PortSpec, exists bool) {
+	v := m.detected_ports
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDetectedPorts returns the old "detected_ports" field's value of the Service entity.
+// If the Service object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceMutation) OldDetectedPorts(ctx context.Context) (v []schema.PortSpec, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDetectedPorts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDetectedPorts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDetectedPorts: %w", err)
+	}
+	return oldValue.DetectedPorts, nil
+}
+
+// AppendDetectedPorts adds ss to the "detected_ports" field.
+func (m *ServiceMutation) AppendDetectedPorts(ss []schema.PortSpec) {
+	m.appenddetected_ports = append(m.appenddetected_ports, ss...)
+}
+
+// AppendedDetectedPorts returns the list of values that were appended to the "detected_ports" field in this mutation.
+func (m *ServiceMutation) AppendedDetectedPorts() ([]schema.PortSpec, bool) {
+	if len(m.appenddetected_ports) == 0 {
+		return nil, false
+	}
+	return m.appenddetected_ports, true
+}
+
+// ClearDetectedPorts clears the value of the "detected_ports" field.
+func (m *ServiceMutation) ClearDetectedPorts() {
+	m.detected_ports = nil
+	m.appenddetected_ports = nil
+	m.clearedFields[service.FieldDetectedPorts] = struct{}{}
+}
+
+// DetectedPortsCleared returns if the "detected_ports" field was cleared in this mutation.
+func (m *ServiceMutation) DetectedPortsCleared() bool {
+	_, ok := m.clearedFields[service.FieldDetectedPorts]
+	return ok
+}
+
+// ResetDetectedPorts resets all changes to the "detected_ports" field.
+func (m *ServiceMutation) ResetDetectedPorts() {
+	m.detected_ports = nil
+	m.appenddetected_ports = nil
+	delete(m.clearedFields, service.FieldDetectedPorts)
 }
 
 // SetDatabase sets the "database" field.
@@ -12636,7 +12703,7 @@ func (m *ServiceMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ServiceMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 18)
 	if m.created_at != nil {
 		fields = append(fields, service.FieldCreatedAt)
 	}
@@ -12657,6 +12724,9 @@ func (m *ServiceMutation) Fields() []string {
 	}
 	if m.environment != nil {
 		fields = append(fields, service.FieldEnvironmentID)
+	}
+	if m.detected_ports != nil {
+		fields = append(fields, service.FieldDetectedPorts)
 	}
 	if m.database != nil {
 		fields = append(fields, service.FieldDatabase)
@@ -12710,6 +12780,8 @@ func (m *ServiceMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case service.FieldEnvironmentID:
 		return m.EnvironmentID()
+	case service.FieldDetectedPorts:
+		return m.DetectedPorts()
 	case service.FieldDatabase:
 		return m.Database()
 	case service.FieldDatabaseVersion:
@@ -12753,6 +12825,8 @@ func (m *ServiceMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldDescription(ctx)
 	case service.FieldEnvironmentID:
 		return m.OldEnvironmentID(ctx)
+	case service.FieldDetectedPorts:
+		return m.OldDetectedPorts(ctx)
 	case service.FieldDatabase:
 		return m.OldDatabase(ctx)
 	case service.FieldDatabaseVersion:
@@ -12830,6 +12904,13 @@ func (m *ServiceMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEnvironmentID(v)
+		return nil
+	case service.FieldDetectedPorts:
+		v, ok := value.([]schema.PortSpec)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDetectedPorts(v)
 		return nil
 	case service.FieldDatabase:
 		v, ok := value.(string)
@@ -12937,6 +13018,9 @@ func (m *ServiceMutation) ClearedFields() []string {
 	if m.FieldCleared(service.FieldDescription) {
 		fields = append(fields, service.FieldDescription)
 	}
+	if m.FieldCleared(service.FieldDetectedPorts) {
+		fields = append(fields, service.FieldDetectedPorts)
+	}
 	if m.FieldCleared(service.FieldDatabase) {
 		fields = append(fields, service.FieldDatabase)
 	}
@@ -12980,6 +13064,9 @@ func (m *ServiceMutation) ClearField(name string) error {
 	switch name {
 	case service.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case service.FieldDetectedPorts:
+		m.ClearDetectedPorts()
 		return nil
 	case service.FieldDatabase:
 		m.ClearDatabase()
@@ -13036,6 +13123,9 @@ func (m *ServiceMutation) ResetField(name string) error {
 		return nil
 	case service.FieldEnvironmentID:
 		m.ResetEnvironmentID()
+		return nil
+	case service.FieldDetectedPorts:
+		m.ResetDetectedPorts()
 		return nil
 	case service.FieldDatabase:
 		m.ResetDatabase()

@@ -472,6 +472,16 @@ func EnvironmentIDNotIn(vs ...uuid.UUID) predicate.Service {
 	return predicate.Service(sql.FieldNotIn(FieldEnvironmentID, vs...))
 }
 
+// DetectedPortsIsNil applies the IsNil predicate on the "detected_ports" field.
+func DetectedPortsIsNil() predicate.Service {
+	return predicate.Service(sql.FieldIsNull(FieldDetectedPorts))
+}
+
+// DetectedPortsNotNil applies the NotNil predicate on the "detected_ports" field.
+func DetectedPortsNotNil() predicate.Service {
+	return predicate.Service(sql.FieldNotNull(FieldDetectedPorts))
+}
+
 // DatabaseEQ applies the EQ predicate on the "database" field.
 func DatabaseEQ(v string) predicate.Service {
 	return predicate.Service(sql.FieldEQ(FieldDatabase, v))

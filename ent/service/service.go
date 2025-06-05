@@ -31,6 +31,8 @@ const (
 	FieldDescription = "description"
 	// FieldEnvironmentID holds the string denoting the environment_id field in the database.
 	FieldEnvironmentID = "environment_id"
+	// FieldDetectedPorts holds the string denoting the detected_ports field in the database.
+	FieldDetectedPorts = "detected_ports"
 	// FieldDatabase holds the string denoting the database field in the database.
 	FieldDatabase = "database"
 	// FieldDatabaseVersion holds the string denoting the database_version field in the database.
@@ -137,6 +139,7 @@ var Columns = []string{
 	FieldName,
 	FieldDescription,
 	FieldEnvironmentID,
+	FieldDetectedPorts,
 	FieldDatabase,
 	FieldDatabaseVersion,
 	FieldGithubInstallationID,

@@ -1,4 +1,4 @@
-h1:OiYguajE/yAbrvyzjq2AkO2P6uebPGpK+7wvdIGN9to=
+h1:hjCrvL9bRI73wy2VDl7y7q7ynLOANgIYYbt1ZPvg618=
 20250519010757_initial_migration.sql h1:94lMwKemoNX/ichD+2Vzb7GmOHXVj4qVTfeBInQAe0g=
 20250519163449_add_init_containers.sql h1:7bt+zCbtmlYr1QDztgka0R5wUxdjD7XYUkrhL9GYYIQ=
 20250521202532_non_nillable_kubernetes_secret.sql h1:eDpMWyeBXh5cG4poavaUMeYs5QXddFBBIyYlxc+nq64=
@@ -7,3 +7,4 @@ h1:OiYguajE/yAbrvyzjq2AkO2P6uebPGpK+7wvdIGN9to=
 20250603193716_rebuild_docker_params.sql h1:G1KAu08Y11gZhV0YSiafedpwYBVrbUX0+DF+/FztiI8=
 20250603221624_rename_builder_fields.sql h1:1C+hoQI8M3gWWBZYjhPsSJXGHuK2h6Iiv+wSQnrAP/o=
 20250604173032_add_indexes.sql h1:ehOMP5bhyv9eGtWji8HY4hMZPkCh3xfP79kfIepErbI=
+20250605182136_stash_detected_port.sql h1:Q3KbnJojHkNKvP4XSYRJCkvjdG78atW1o179cs9w2MY=

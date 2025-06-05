@@ -361,6 +361,7 @@ var (
 		{Name: "kubernetes_name", Type: field.TypeString, Unique: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "detected_ports", Type: field.TypeJSON, Nullable: true},
 		{Name: "database", Type: field.TypeString, Nullable: true},
 		{Name: "database_version", Type: field.TypeString, Nullable: true},
 		{Name: "git_repository_owner", Type: field.TypeString, Nullable: true},
@@ -381,31 +382,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "services_environments_services",
-				Columns:    []*schema.Column{ServicesColumns[13]},
+				Columns:    []*schema.Column{ServicesColumns[14]},
 				RefColumns: []*schema.Column{EnvironmentsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "services_github_installations_services",
-				Columns:    []*schema.Column{ServicesColumns[14]},
+				Columns:    []*schema.Column{ServicesColumns[15]},
 				RefColumns: []*schema.Column{GithubInstallationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "services_deployments_current_deployment",
-				Columns:    []*schema.Column{ServicesColumns[15]},
+				Columns:    []*schema.Column{ServicesColumns[16]},
 				RefColumns: []*schema.Column{DeploymentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "services_service_groups_services",
-				Columns:    []*schema.Column{ServicesColumns[16]},
+				Columns:    []*schema.Column{ServicesColumns[17]},
 				RefColumns: []*schema.Column{ServiceGroupsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "services_templates_services",
-				Columns:    []*schema.Column{ServicesColumns[17]},
+				Columns:    []*schema.Column{ServicesColumns[18]},
 				RefColumns: []*schema.Column{TemplatesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -414,12 +415,12 @@ var (
 			{
 				Name:    "service_environment_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{ServicesColumns[13], ServicesColumns[1]},
+				Columns: []*schema.Column{ServicesColumns[14], ServicesColumns[1]},
 			},
 			{
 				Name:    "service_service_group_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{ServicesColumns[16], ServicesColumns[1]},
+				Columns: []*schema.Column{ServicesColumns[17], ServicesColumns[1]},
 			},
 			{
 				Name:    "service_created_at",

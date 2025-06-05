@@ -72,6 +72,7 @@ func (Service) Fields() []ent.Field {
 		field.String("name"),
 		field.String("description").Optional(),
 		field.UUID("environment_id", uuid.UUID{}),
+		field.JSON("detected_ports", []PortSpec{}).Optional(),
 		// Database
 		field.String("database").Optional().Nillable().Comment("Database to use for the service"),
 		field.String("database_version").Optional().Nillable().Comment("Version of the database"),

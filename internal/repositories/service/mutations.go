@@ -29,6 +29,7 @@ type CreateServiceInput struct {
 	TemplateID           *uuid.UUID
 	TemplateInstanceID   *uuid.UUID
 	ServiceGroupID       *uuid.UUID
+	DetectedPorts        []schema.PortSpec // This is used to store detected ports, not for creation
 }
 
 // Create the service
@@ -56,6 +57,7 @@ func (self *ServiceRepository) Create(
 		SetNillableTemplateID(input.TemplateID).
 		SetNillableTemplateInstanceID(input.TemplateInstanceID).
 		SetNillableServiceGroupID(input.ServiceGroupID).
+		SetDetectedPorts(input.DetectedPorts).
 		SetNillableDatabaseVersion(input.DatabaseVersion).Save(ctx)
 }
 
@@ -68,7 +70,9 @@ type MutateConfigInput struct {
 	GitBranch                     *string
 	GitTag                        *string
 	Icon                          *string
-	Ports                         []schema.PortSpec
+	OverwritePorts                []schema.PortSpec
+	AddPorts                      []schema.PortSpec
+	RemovePorts                   []schema.PortSpec
 	OverwriteHosts                []schema.HostSpec
 	AddHosts                      []schema.HostSpec
 	RemoveHosts                   []schema.HostSpec
@@ -89,9 +93,13 @@ type MutateConfigInput struct {
 	BackupRetentionCount          *int
 	SecurityContext               *schema.SecurityContext
 	HealthCheck                   *schema.HealthCheck
-	VariableMounts                []*schema.VariableMount
+	OverwriteVariableMounts       []*schema.VariableMount
+	AddVariableMounts             []*schema.VariableMount
+	RemoveVariableMounts          []*schema.VariableMount
 	ProtectedVariables            *[]string
-	Volumes                       *[]schema.ServiceVolume
+	OverwriteVolumes              []schema.ServiceVolume
+	AddVolumes                    []schema.ServiceVolume
+	RemoveVolumes                 []schema.ServiceVolume
 	InitContainers                []*schema.InitContainer
 	Resources                     *schema.Resources
 }
@@ -160,16 +168,16 @@ func (self *ServiceRepository) CreateConfig(
 		c.SetInitContainers(input.InitContainers)
 	}
 
-	if input.Volumes != nil {
-		c.SetVolumes(*input.Volumes)
+	if input.OverwriteVolumes != nil {
+		c.SetVolumes(input.OverwriteVolumes)
 	}
 
 	if input.ProtectedVariables != nil {
 		c.SetProtectedVariables(*input.ProtectedVariables)
 	}
 
-	if len(input.VariableMounts) > 0 {
-		c.SetVariableMounts(input.VariableMounts)
+	if len(input.OverwriteVariableMounts) > 0 {
+		c.SetVariableMounts(input.OverwriteVariableMounts)
 	}
 
 	if input.HealthCheck != nil {
@@ -184,8 +192,8 @@ func (self *ServiceRepository) CreateConfig(
 		c.SetDatabaseConfig(input.DatabaseConfig)
 	}
 
-	if len(input.Ports) > 0 {
-		c.SetPorts(input.Ports)
+	if len(input.OverwritePorts) > 0 {
+		c.SetPorts(input.OverwritePorts)
 	}
 
 	if len(input.OverwriteHosts) > 0 {
@@ -278,12 +286,6 @@ func (self *ServiceRepository) UpdateConfig(
 		upd.SetProtectedVariables(*input.ProtectedVariables)
 	}
 
-	if len(input.VariableMounts) > 0 {
-		upd.SetVariableMounts(input.VariableMounts)
-	} else if input.VariableMounts != nil {
-		upd.ClearVariableMounts()
-	}
-
 	if input.HealthCheck != nil {
 		if input.HealthCheck.Type == schema.HealthCheckTypeNone {
 			upd.ClearHealthCheck()
@@ -318,10 +320,6 @@ func (self *ServiceRepository) UpdateConfig(
 		} else {
 			upd.SetRunCommand(*input.RunCommand)
 		}
-	}
-
-	if input.Volumes != nil {
-		upd.SetVolumes(*input.Volumes)
 	}
 
 	if input.GitBranch != nil {
@@ -377,8 +375,93 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 	}
 
-	if len(input.Ports) > 0 {
-		upd.SetPorts(input.Ports)
+	// * A bunch of jsonb merging logic for volumes, ports, hosts, and variable mounts
+	if len(input.OverwriteVariableMounts) > 0 {
+		upd.SetVariableMounts(input.OverwriteVariableMounts)
+	} else if len(input.AddVariableMounts) > 0 || len(input.RemoveVariableMounts) > 0 {
+		variableMounts := existingConfig.VariableMounts
+		// Create a map of variable mounts to remove for efficient lookup
+		toRemove := make(map[string]bool)
+		// Add all AddVariableMounts and RemoveVariableMounts to the removal map to prevent duplicates
+		for _, addVariableMount := range input.AddVariableMounts {
+			toRemove[addVariableMount.Name] = true
+		}
+		for _, removeVariableMount := range input.RemoveVariableMounts {
+			toRemove[removeVariableMount.Name] = true
+		}
+		// Filter existing variable mounts, removing any that match AddVariableMounts or RemoveVariableMounts
+		var filteredVariableMounts []*schema.VariableMount
+		for _, variableMount := range variableMounts {
+			if !toRemove[variableMount.Name] {
+				filteredVariableMounts = append(filteredVariableMounts, variableMount)
+			}
+		}
+		// Append all AddVariableMounts to the filtered list
+		filteredVariableMounts = append(filteredVariableMounts, input.AddVariableMounts...)
+		if len(filteredVariableMounts) == 0 {
+			upd.ClearVariableMounts()
+		} else {
+			upd.SetVariableMounts(filteredVariableMounts)
+		}
+	}
+	if len(input.OverwriteVolumes) > 0 {
+		upd.SetVolumes(input.OverwriteVolumes)
+	} else if len(input.AddVolumes) > 0 || len(input.RemoveVolumes) > 0 {
+		volumes := existingConfig.Volumes
+
+		// Create a map of volumes to remove for efficient lookup
+		toRemove := make(map[string]bool)
+		// Add all AddVolumes and RemoveVolumes to the removal map to prevent duplicates
+		for _, addVolume := range input.AddVolumes {
+			toRemove[addVolume.ID] = true
+		}
+		for _, removeVolume := range input.RemoveVolumes {
+			toRemove[removeVolume.ID] = true
+		}
+		// Filter existing volumes, removing any that match AddVolumes or RemoveVolumes
+		var filteredVolumes []schema.ServiceVolume
+		for _, volume := range volumes {
+			if !toRemove[volume.ID] {
+				filteredVolumes = append(filteredVolumes, volume)
+			}
+		}
+		// Append all AddVolumes to the filtered list
+		filteredVolumes = append(filteredVolumes, input.AddVolumes...)
+		if len(filteredVolumes) == 0 {
+			upd.ClearVolumes()
+		} else {
+			upd.SetVolumes(filteredVolumes)
+		}
+	}
+
+	if len(input.OverwritePorts) > 0 {
+		upd.SetPorts(input.OverwritePorts)
+	} else if len(input.AddPorts) > 0 || len(input.RemovePorts) > 0 {
+		ports := existingConfig.Ports
+
+		// Create a map of ports to remove for efficient lookup
+		toRemove := make(map[int32]bool)
+		// Add all AddPorts and RemovePorts to the removal map to prevent duplicates
+		for _, addPort := range input.AddPorts {
+			toRemove[addPort.Port] = true
+		}
+		for _, removePort := range input.RemovePorts {
+			toRemove[removePort.Port] = true
+		}
+		// Filter existing ports, removing any that match AddPorts or RemovePorts
+		var filteredPorts []schema.PortSpec
+		for _, port := range ports {
+			if !toRemove[port.Port] {
+				filteredPorts = append(filteredPorts, port)
+			}
+		}
+		// Append all AddPorts to the filtered list
+		filteredPorts = append(filteredPorts, input.AddPorts...)
+		if len(filteredPorts) == 0 {
+			upd.ClearPorts()
+		} else {
+			upd.SetPorts(filteredPorts)
+		}
 	}
 
 	if len(input.OverwriteHosts) > 0 {
@@ -398,7 +481,7 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 
 		// Filter existing hosts, removing any that match AddHosts or RemoveHosts
-		var filteredHosts []schema.HostSpec // Replace HostStruct with your actual struct type
+		var filteredHosts []schema.HostSpec
 		for _, host := range hosts {
 			if !toRemove[host.Host] {
 				filteredHosts = append(filteredHosts, host)
@@ -414,6 +497,7 @@ func (self *ServiceRepository) UpdateConfig(
 			upd.SetHosts(filteredHosts)
 		}
 	}
+
 	return upd.Exec(ctx)
 }
 

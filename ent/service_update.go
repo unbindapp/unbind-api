@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/deployment"
@@ -117,6 +118,24 @@ func (su *ServiceUpdate) SetNillableEnvironmentID(u *uuid.UUID) *ServiceUpdate {
 	if u != nil {
 		su.SetEnvironmentID(*u)
 	}
+	return su
+}
+
+// SetDetectedPorts sets the "detected_ports" field.
+func (su *ServiceUpdate) SetDetectedPorts(ss []schema.PortSpec) *ServiceUpdate {
+	su.mutation.SetDetectedPorts(ss)
+	return su
+}
+
+// AppendDetectedPorts appends ss to the "detected_ports" field.
+func (su *ServiceUpdate) AppendDetectedPorts(ss []schema.PortSpec) *ServiceUpdate {
+	su.mutation.AppendDetectedPorts(ss)
+	return su
+}
+
+// ClearDetectedPorts clears the value of the "detected_ports" field.
+func (su *ServiceUpdate) ClearDetectedPorts() *ServiceUpdate {
+	su.mutation.ClearDetectedPorts()
 	return su
 }
 
@@ -561,6 +580,17 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if su.mutation.DescriptionCleared() {
 		_spec.ClearField(service.FieldDescription, field.TypeString)
 	}
+	if value, ok := su.mutation.DetectedPorts(); ok {
+		_spec.SetField(service.FieldDetectedPorts, field.TypeJSON, value)
+	}
+	if value, ok := su.mutation.AppendedDetectedPorts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, service.FieldDetectedPorts, value)
+		})
+	}
+	if su.mutation.DetectedPortsCleared() {
+		_spec.ClearField(service.FieldDetectedPorts, field.TypeJSON)
+	}
 	if value, ok := su.mutation.Database(); ok {
 		_spec.SetField(service.FieldDatabase, field.TypeString, value)
 	}
@@ -959,6 +989,24 @@ func (suo *ServiceUpdateOne) SetNillableEnvironmentID(u *uuid.UUID) *ServiceUpda
 	if u != nil {
 		suo.SetEnvironmentID(*u)
 	}
+	return suo
+}
+
+// SetDetectedPorts sets the "detected_ports" field.
+func (suo *ServiceUpdateOne) SetDetectedPorts(ss []schema.PortSpec) *ServiceUpdateOne {
+	suo.mutation.SetDetectedPorts(ss)
+	return suo
+}
+
+// AppendDetectedPorts appends ss to the "detected_ports" field.
+func (suo *ServiceUpdateOne) AppendDetectedPorts(ss []schema.PortSpec) *ServiceUpdateOne {
+	suo.mutation.AppendDetectedPorts(ss)
+	return suo
+}
+
+// ClearDetectedPorts clears the value of the "detected_ports" field.
+func (suo *ServiceUpdateOne) ClearDetectedPorts() *ServiceUpdateOne {
+	suo.mutation.ClearDetectedPorts()
 	return suo
 }
 
@@ -1432,6 +1480,17 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err e
 	}
 	if suo.mutation.DescriptionCleared() {
 		_spec.ClearField(service.FieldDescription, field.TypeString)
+	}
+	if value, ok := suo.mutation.DetectedPorts(); ok {
+		_spec.SetField(service.FieldDetectedPorts, field.TypeJSON, value)
+	}
+	if value, ok := suo.mutation.AppendedDetectedPorts(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, service.FieldDetectedPorts, value)
+		})
+	}
+	if suo.mutation.DetectedPortsCleared() {
+		_spec.ClearField(service.FieldDetectedPorts, field.TypeJSON)
 	}
 	if value, ok := suo.mutation.Database(); ok {
 		_spec.SetField(service.FieldDatabase, field.TypeString, value)

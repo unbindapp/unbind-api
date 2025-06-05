@@ -42,7 +42,7 @@ type CreateServiceInput struct {
 	BackupRetentionCount *int                   `json:"backup_retention,omitempty" required:"false" doc:"Number of base backups to retain, e.g. 3"`
 
 	// PVC
-	Volumes *[]schema.ServiceVolume `json:"volumes,omitempty" required:"false" doc:"Volumes to mount in the service"`
+	Volumes []schema.ServiceVolume `json:"volumes,omitempty" required:"false" doc:"Volumes to mount in the service"`
 
 	// Health check
 	HealthCheck *schema.HealthCheck `json:"health_check,omitempty" doc:"Health check configuration for the service"`
@@ -73,7 +73,9 @@ type UpdateServiceInput struct {
 	OverwriteHosts                []schema.HostSpec      `json:"overwrite_hosts,omitempty" required:"false"`
 	AddHosts                      []schema.HostSpec      `json:"add_hosts,omitempty" required:"false" doc:"Additional hosts to add, will not remove existing hosts"`
 	RemoveHosts                   []schema.HostSpec      `json:"remove_hosts,omitempty" required:"false" doc:"Hosts to remove"`
-	Ports                         []schema.PortSpec      `json:"ports,omitempty" required:"false"`
+	AddPorts                      []schema.PortSpec      `json:"add_ports,omitempty" required:"false" doc:"Additional ports to add, will not remove existing ports"`
+	RemovePorts                   []schema.PortSpec      `json:"remove_ports,omitempty" required:"false" doc:"Ports to remove"`
+	OverwritePorts                []schema.PortSpec      `json:"overwrite_ports,omitempty" required:"false"`
 	Replicas                      *int32                 `json:"replicas,omitempty" required:"false"`
 	AutoDeploy                    *bool                  `json:"auto_deploy,omitempty" required:"false"`
 	RailpackBuilderInstallCommand *string                `json:"railpack_builder_install_command,omitempty"`
@@ -92,13 +94,17 @@ type UpdateServiceInput struct {
 	BackupRetentionCount *int                   `json:"backup_retention,omitempty" required:"false" doc:"Number of base backups to retain, e.g. 3"`
 
 	// Volumes
-	Volumes *[]schema.ServiceVolume `json:"volumes,omitempty" required:"false" doc:"Volumes to attach to the service"`
+	OverwriteVolumes []schema.ServiceVolume `json:"overwrite_volumes,omitempty" required:"false" doc:"Volumes to attach to the service"`
+	AddVolumes       []schema.ServiceVolume `json:"add_volumes,omitempty" required:"false" doc:"Additional volumes to add, will not remove existing volumes"`
+	RemoveVolumes    []schema.ServiceVolume `json:"remove_volumes,omitempty" required:"false" doc:"Volumes to remove from the service"`
 
 	// Health check
 	HealthCheck *schema.HealthCheck `json:"health_check,omitempty" required:"false"`
 
 	// Variable mounts
-	VariableMounts []*schema.VariableMount `json:"variable_mounts,omitempty" doc:"Mount variables as volumes"`
+	OverwriteVariableMounts []*schema.VariableMount `json:"overwrite_variable_mounts,omitempty" doc:"Mount variables as volumes"`
+	AddVariableMounts       []*schema.VariableMount `json:"add_variable_mounts,omitempty" doc:"Additional variable mounts to add, will not remove existing mounts"`
+	RemoveVariableMounts    []*schema.VariableMount `json:"remove_variable_mounts,omitempty" doc:"Variable mounts to remove"`
 
 	// Protected variables
 	ProtectedVariables *[]string `json:"protected_variables,omitempty" doc:"List of protected variables"`

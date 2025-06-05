@@ -98,6 +98,12 @@ func (sc *ServiceCreate) SetEnvironmentID(u uuid.UUID) *ServiceCreate {
 	return sc
 }
 
+// SetDetectedPorts sets the "detected_ports" field.
+func (sc *ServiceCreate) SetDetectedPorts(ss []schema.PortSpec) *ServiceCreate {
+	sc.mutation.SetDetectedPorts(ss)
+	return sc
+}
+
 // SetDatabase sets the "database" field.
 func (sc *ServiceCreate) SetDatabase(s string) *ServiceCreate {
 	sc.mutation.SetDatabase(s)
@@ -463,6 +469,10 @@ func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 		_spec.SetField(service.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
+	if value, ok := sc.mutation.DetectedPorts(); ok {
+		_spec.SetField(service.FieldDetectedPorts, field.TypeJSON, value)
+		_node.DetectedPorts = value
+	}
 	if value, ok := sc.mutation.Database(); ok {
 		_spec.SetField(service.FieldDatabase, field.TypeString, value)
 		_node.Database = &value
@@ -747,6 +757,24 @@ func (u *ServiceUpsert) SetEnvironmentID(v uuid.UUID) *ServiceUpsert {
 // UpdateEnvironmentID sets the "environment_id" field to the value that was provided on create.
 func (u *ServiceUpsert) UpdateEnvironmentID() *ServiceUpsert {
 	u.SetExcluded(service.FieldEnvironmentID)
+	return u
+}
+
+// SetDetectedPorts sets the "detected_ports" field.
+func (u *ServiceUpsert) SetDetectedPorts(v []schema.PortSpec) *ServiceUpsert {
+	u.Set(service.FieldDetectedPorts, v)
+	return u
+}
+
+// UpdateDetectedPorts sets the "detected_ports" field to the value that was provided on create.
+func (u *ServiceUpsert) UpdateDetectedPorts() *ServiceUpsert {
+	u.SetExcluded(service.FieldDetectedPorts)
+	return u
+}
+
+// ClearDetectedPorts clears the value of the "detected_ports" field.
+func (u *ServiceUpsert) ClearDetectedPorts() *ServiceUpsert {
+	u.SetNull(service.FieldDetectedPorts)
 	return u
 }
 
@@ -1063,6 +1091,27 @@ func (u *ServiceUpsertOne) SetEnvironmentID(v uuid.UUID) *ServiceUpsertOne {
 func (u *ServiceUpsertOne) UpdateEnvironmentID() *ServiceUpsertOne {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateEnvironmentID()
+	})
+}
+
+// SetDetectedPorts sets the "detected_ports" field.
+func (u *ServiceUpsertOne) SetDetectedPorts(v []schema.PortSpec) *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetDetectedPorts(v)
+	})
+}
+
+// UpdateDetectedPorts sets the "detected_ports" field to the value that was provided on create.
+func (u *ServiceUpsertOne) UpdateDetectedPorts() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateDetectedPorts()
+	})
+}
+
+// ClearDetectedPorts clears the value of the "detected_ports" field.
+func (u *ServiceUpsertOne) ClearDetectedPorts() *ServiceUpsertOne {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearDetectedPorts()
 	})
 }
 
@@ -1575,6 +1624,27 @@ func (u *ServiceUpsertBulk) SetEnvironmentID(v uuid.UUID) *ServiceUpsertBulk {
 func (u *ServiceUpsertBulk) UpdateEnvironmentID() *ServiceUpsertBulk {
 	return u.Update(func(s *ServiceUpsert) {
 		s.UpdateEnvironmentID()
+	})
+}
+
+// SetDetectedPorts sets the "detected_ports" field.
+func (u *ServiceUpsertBulk) SetDetectedPorts(v []schema.PortSpec) *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.SetDetectedPorts(v)
+	})
+}
+
+// UpdateDetectedPorts sets the "detected_ports" field to the value that was provided on create.
+func (u *ServiceUpsertBulk) UpdateDetectedPorts() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.UpdateDetectedPorts()
+	})
+}
+
+// ClearDetectedPorts clears the value of the "detected_ports" field.
+func (u *ServiceUpsertBulk) ClearDetectedPorts() *ServiceUpsertBulk {
+	return u.Update(func(s *ServiceUpsert) {
+		s.ClearDetectedPorts()
 	})
 }
 

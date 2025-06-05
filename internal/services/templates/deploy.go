@@ -318,6 +318,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 					TemplateID:         utils.ToPtr(template.ID),
 					TemplateInstanceID: utils.ToPtr(templateInstanceID),
 					ServiceGroupID:     utils.ToPtr(serviceGroup.ID),
+					DetectedPorts:      templateService.Ports,
 				})
 			if err != nil {
 				return fmt.Errorf("failed to create service: %w", err)
@@ -325,7 +326,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			createService.Edges.ServiceGroup = serviceGroup
 
 			// Create volumes
-			var volumes *[]schema.ServiceVolume
+			var volumes []schema.ServiceVolume
 			for _, volume := range templateService.Volumes {
 				// Build labels to set
 				labels := map[string]string{
@@ -369,10 +370,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 				pvc.Name = volume.Name
 
 				// Append
-				if volumes == nil {
-					volumes = &[]schema.ServiceVolume{}
-				}
-				*volumes = append(*volumes, schema.ServiceVolume{
+				volumes = append(volumes, schema.ServiceVolume{
 					ID:        pvc.ID,
 					MountPath: volume.MountPath,
 				})
@@ -410,18 +408,18 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 			createInput := &service_repo.MutateConfigInput{
 				ServiceID:               createService.ID,
 				Builder:                 utils.ToPtr(templateService.Builder),
-				Ports:                   templateService.Ports,
+				OverwritePorts:          templateService.Ports,
 				OverwriteHosts:          hosts,
 				Replicas:                utils.ToPtr[int32](1),
 				Public:                  isPublic,
 				DatabaseConfig:          templateService.DatabaseConfig,
 				Image:                   templateService.Image,
 				CustomDefinitionVersion: utils.ToPtr(self.cfg.UnbindServiceDefVersion),
-				Volumes:                 volumes,
+				OverwriteVolumes:        volumes,
 				RunCommand:              templateService.RunCommand,
 				SecurityContext:         templateService.SecurityContext,
 				HealthCheck:             templateService.HealthCheck,
-				VariableMounts:          templateService.VariablesMounts,
+				OverwriteVariableMounts: templateService.VariablesMounts,
 				InitContainers:          templateService.InitContainers,
 				Resources:               templateService.Resources,
 			}
@@ -706,7 +704,7 @@ func (self *TemplatesService) resolveHostInputs(
 					}
 				}
 			}
-			hostSpecByID[in.ID] = schema.HostSpec{Host: hostVal, Path: "/", Port: port}
+			hostSpecByID[in.ID] = schema.HostSpec{Host: hostVal, Path: "/", TargetPort: port}
 			valueByID[in.ID] = hostVal
 		}
 	}
@@ -756,8 +754,8 @@ func (self *TemplatesService) generateWildcardHost(ctx context.Context, tx repos
 	}
 
 	return &schema.HostSpec{
-		Host: domain,
-		Path: "/",
-		Port: port,
+		Host:       domain,
+		Path:       "/",
+		TargetPort: port,
 	}, nil
 }

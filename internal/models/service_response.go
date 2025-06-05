@@ -30,11 +30,14 @@ type ServiceResponse struct {
 	Template                 *TemplateShortResponse `json:"template,omitempty"`
 	TemplateInstanceID       *uuid.UUID             `json:"template_instance_id,omitempty"`
 	ServiceGroup             *ServiceGroupResponse  `json:"service_group,omitempty"`
+	DetectedPorts            []schema.PortSpec      `json:"detected_ports" nullable:"false"`
 }
 
 // TransformServiceEntity transforms an ent.Service entity into a ServiceResponse
 func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
-	response := &ServiceResponse{}
+	response := &ServiceResponse{
+		DetectedPorts: []schema.PortSpec{},
+	}
 	if entity != nil {
 		response = &ServiceResponse{
 			ID:                   entity.ID,
@@ -52,6 +55,11 @@ func TransformServiceEntity(entity *ent.Service) *ServiceResponse {
 			DatabaseType:         entity.Database,
 			Config:               TransformServiceConfigEntity(entity.Edges.ServiceConfig),
 			TemplateInstanceID:   entity.TemplateInstanceID,
+			DetectedPorts:        []schema.PortSpec{},
+		}
+
+		if entity.DetectedPorts != nil {
+			response.DetectedPorts = entity.DetectedPorts
 		}
 
 		if entity.Edges.ServiceGroup != nil {

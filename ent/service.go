@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -40,6 +41,8 @@ type Service struct {
 	Description string `json:"description,omitempty"`
 	// EnvironmentID holds the value of the "environment_id" field.
 	EnvironmentID uuid.UUID `json:"environment_id,omitempty"`
+	// DetectedPorts holds the value of the "detected_ports" field.
+	DetectedPorts []schema.PortSpec `json:"detected_ports,omitempty"`
 	// Database to use for the service
 	Database *string `json:"database,omitempty"`
 	// Version of the database
@@ -180,6 +183,8 @@ func (*Service) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case service.FieldCurrentDeploymentID, service.FieldTemplateID, service.FieldTemplateInstanceID, service.FieldServiceGroupID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case service.FieldDetectedPorts:
+			values[i] = new([]byte)
 		case service.FieldGithubInstallationID:
 			values[i] = new(sql.NullInt64)
 		case service.FieldType, service.FieldKubernetesName, service.FieldName, service.FieldDescription, service.FieldDatabase, service.FieldDatabaseVersion, service.FieldGitRepositoryOwner, service.FieldGitRepository, service.FieldKubernetesSecret:
@@ -250,6 +255,14 @@ func (s *Service) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field environment_id", values[i])
 			} else if value != nil {
 				s.EnvironmentID = *value
+			}
+		case service.FieldDetectedPorts:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field detected_ports", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.DetectedPorts); err != nil {
+					return fmt.Errorf("unmarshal field detected_ports: %w", err)
+				}
 			}
 		case service.FieldDatabase:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -416,6 +429,9 @@ func (s *Service) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("environment_id=")
 	builder.WriteString(fmt.Sprintf("%v", s.EnvironmentID))
+	builder.WriteString(", ")
+	builder.WriteString("detected_ports=")
+	builder.WriteString(fmt.Sprintf("%v", s.DetectedPorts))
 	builder.WriteString(", ")
 	if v := s.Database; v != nil {
 		builder.WriteString("database=")

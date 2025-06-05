@@ -64,7 +64,8 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 	// For database we don't want to set ports
 	if service.Type == schema.ServiceTypeDatabase {
-		input.Ports = nil
+		input.OverwritePorts = nil
+		input.AddPorts = nil
 
 		// Check backup schedule
 		if input.BackupSchedule != nil {
@@ -74,17 +75,20 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		// Disallow attaching a PVC to a database service
-		if input.Volumes != nil && len(*input.Volumes) > 0 {
+		if len(input.OverwriteVolumes) > 0 || len(input.AddVolumes) > 0 {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Cannot attach a PVC to a database service")
 		}
 	}
 
 	// PVC validation, requires a path
-	if input.Volumes != nil {
-		for _, volume := range *input.Volumes {
-			if !utils.IsValidUnixPath(volume.MountPath) {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid volume mount path")
-			}
+	for _, volume := range input.OverwriteVolumes {
+		if !utils.IsValidUnixPath(volume.MountPath) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid volume mount path")
+		}
+	}
+	for _, volume := range input.AddVolumes {
+		if !utils.IsValidUnixPath(volume.MountPath) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid volume mount path")
 		}
 	}
 
@@ -140,12 +144,16 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 	}
 
 	// Check if PVC is in use by a service
-	if input.Volumes != nil {
-		for _, volume := range *input.Volumes {
-			err = self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, volume.ID, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, client)
-			if err != nil {
-				return nil, err
-			}
+	for _, volume := range input.OverwriteVolumes {
+		err = self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, volume.ID, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, client)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, volume := range input.AddVolumes {
+		err = self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, volume.ID, service.Edges.Environment.Edges.Project.Edges.Team.Namespace, client)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -187,12 +195,14 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
 			input.IsPublic != nil && *input.IsPublic && len(input.OverwriteHosts) < 1 && len(input.AddHosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
-			(len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
+			(len(input.OverwritePorts) > 0 || len(input.AddPorts) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
 
 			// Figure out ports
 			var ports []schema.PortSpec
-			if len(input.Ports) > 0 {
-				ports = input.Ports
+			if len(input.OverwritePorts) > 0 {
+				ports = input.OverwritePorts
+			} else if len(input.AddPorts) > 0 {
+				ports = input.AddPorts
 			}
 
 			if len(service.Edges.ServiceConfig.Ports) > 0 {
@@ -225,7 +235,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		// Determine is public
-		if len(input.Ports) > 0 || len(service.Edges.ServiceConfig.Ports) > 0 {
+		if len(input.OverwritePorts) > 0 || len(input.AddPorts) > 0 || len(service.Edges.ServiceConfig.Ports) > 0 {
 			// Has ports, do we have hosts
 			if len(input.OverwriteHosts) > 0 || len(input.AddHosts) > 0 || len(service.Edges.ServiceConfig.Hosts) > 0 {
 				input.IsPublic = utils.ToPtr(true)
@@ -238,7 +248,9 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			Builder:                       input.Builder,
 			GitBranch:                     input.GitBranch,
 			GitTag:                        input.GitTag,
-			Ports:                         input.Ports,
+			AddPorts:                      input.AddPorts,
+			RemovePorts:                   input.RemovePorts,
+			OverwritePorts:                input.OverwritePorts,
 			OverwriteHosts:                input.OverwriteHosts,
 			AddHosts:                      input.AddHosts,
 			RemoveHosts:                   input.RemoveHosts,
@@ -256,9 +268,13 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			S3BackupBucket:                input.S3BackupBucket,
 			BackupSchedule:                input.BackupSchedule,
 			BackupRetentionCount:          input.BackupRetentionCount,
-			Volumes:                       input.Volumes,
+			OverwriteVolumes:              input.OverwriteVolumes,
+			AddVolumes:                    input.AddVolumes,
+			RemoveVolumes:                 input.RemoveVolumes,
 			HealthCheck:                   input.HealthCheck,
-			VariableMounts:                input.VariableMounts,
+			OverwriteVariableMounts:       input.OverwriteVariableMounts,
+			AddVariableMounts:             input.AddVariableMounts,
+			RemoveVariableMounts:          input.RemoveVariableMounts,
 			ProtectedVariables:            input.ProtectedVariables,
 			InitContainers:                input.InitContainers,
 			Resources:                     input.Resources,

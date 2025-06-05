@@ -125,9 +125,9 @@ func (self *ServiceService) generateWildcardHost(ctx context.Context, tx reposit
 	}
 
 	return &schema.HostSpec{
-		Host: domain,
-		Path: "/",
-		Port: utils.ToPtr(ports[0].Port),
+		Host:       domain,
+		Path:       "/",
+		TargetPort: utils.ToPtr(ports[0].Port),
 	}, nil
 }
 

@@ -70,7 +70,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		}
 
 		// Disallow pvc for database
-		if input.Volumes != nil && len(*input.Volumes) > 0 {
+		if len(input.Volumes) > 0 {
 			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput,
 				"PVC is not supported for database services")
 		}
@@ -155,11 +155,9 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// PVC validation, requires a path
-	if input.Volumes != nil {
-		for _, volume := range *input.Volumes {
-			if !utils.IsValidUnixPath(volume.MountPath) {
-				return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid PVC mount path")
-			}
+	for _, volume := range input.Volumes {
+		if !utils.IsValidUnixPath(volume.MountPath) {
+			return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "Invalid PVC mount path")
 		}
 	}
 
@@ -189,6 +187,8 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	// If GitHub integration is provided, verify repository access
 	var analysisResult *sourceanalyzer.AnalysisResult
 	var gitBranch *string
+	// Only ad metadata if user is not providing ports
+	addDetectedPorts := len(input.Ports) == 0
 	if input.Type == schema.ServiceTypeGithub {
 		// Get GitHub installation
 		installation, err := self.repo.Github().GetInstallationByID(ctx, *input.GitHubInstallationID)
@@ -260,12 +260,10 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 	}
 
 	// Check if PVC is in use by a service
-	if input.Volumes != nil {
-		for _, volume := range *input.Volumes {
-			err = self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, volume.ID, project.Edges.Team.Namespace, client)
-			if err != nil {
-				return nil, err
-			}
+	for _, volume := range input.Volumes {
+		err = self.validatePVC(ctx, input.TeamID, input.ProjectID, input.EnvironmentID, volume.ID, project.Edges.Team.Namespace, client)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -361,6 +359,12 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			return fmt.Errorf("failed to create secret: %v", err)
 		}
 
+		// Set detected ports
+		var detectedPorts []schema.PortSpec
+		if addDetectedPorts {
+			detectedPorts = ports
+		}
+
 		// Create the service
 		createService, err := self.repo.Service().Create(ctx, tx,
 			&service_repo.CreateServiceInput{
@@ -375,6 +379,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				KubernetesSecret:     secret.Name,
 				Database:             input.DatabaseType,
 				DatabaseVersion:      dbVersion,
+				DetectedPorts:        detectedPorts,
 			})
 		if err != nil {
 			return fmt.Errorf("failed to create service: %w", err)
@@ -393,7 +398,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			Provider:                      provider,
 			Framework:                     framework,
 			GitBranch:                     gitBranch,
-			Ports:                         ports,
+			OverwritePorts:                ports,
 			OverwriteHosts:                hosts,
 			Replicas:                      input.Replicas,
 			AutoDeploy:                    input.AutoDeploy,
@@ -410,9 +415,9 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 			S3BackupBucket:                input.S3BackupBucket,
 			BackupSchedule:                input.BackupSchedule,
 			BackupRetentionCount:          input.BackupRetentionCount,
-			Volumes:                       input.Volumes,
+			OverwriteVolumes:              input.Volumes,
 			HealthCheck:                   input.HealthCheck,
-			VariableMounts:                input.VariableMounts,
+			OverwriteVariableMounts:       input.VariableMounts,
 			ProtectedVariables:            protectedVariables,
 			InitContainers:                input.InitContainers,
 			Resources:                     input.Resources,
