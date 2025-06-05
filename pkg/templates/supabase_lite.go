@@ -1713,6 +1713,187 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				},
 			},
 			{
+				ID:        "service_functions",
+				Name:      "Functions",
+				Type:      schema.ServiceTypeDockerimage,
+				Builder:   schema.ServiceBuilderDocker,
+				Image:     utils.ToPtr("supabase/edge-runtime:v1.67.4"),
+				DependsOn: []string{"service_postgresql", "service_kong"},
+				Ports: []schema.PortSpec{
+					{
+						Port:     9000,
+						Protocol: utils.ToPtr(schema.ProtocolTCP),
+					},
+				},
+				RunCommand: utils.ToPtr("edge-runtime start --main-service /home/deno/functions/main"),
+				VariablesMounts: []*schema.VariableMount{
+					{
+						Name: "main_index_ts",
+						Path: "/home/deno/functions/main/index.ts",
+					},
+					{
+						Name: "hello_index_ts",
+						Path: "/home/deno/functions/hello/index.ts",
+					},
+				},
+				VariableReferences: []schema.TemplateVariableReference{
+					{
+						SourceID:   "service_postgresql",
+						SourceName: "DATABASE_PASSWORD",
+						TargetName: "POSTGRES_PASSWORD",
+					},
+					{
+						SourceID:   "service_kong",
+						SourceName: "JWT_SECRET",
+						TargetName: "JWT_SECRET",
+					},
+					{
+						SourceID:   "service_kong",
+						SourceName: "SUPABASE_ANON_KEY",
+						TargetName: "SUPABASE_ANON_KEY",
+					},
+					{
+						SourceID:   "service_kong",
+						SourceName: "SUPABASE_SERVICE_KEY",
+						TargetName: "SUPABASE_SERVICE_ROLE_KEY",
+					},
+					{
+						SourceID:   "service_kong",
+						TargetName: "SUPABASE_URL",
+						IsHost:     true,
+					},
+					{
+						SourceID:                  "service_postgresql",
+						SourceName:                "DATABASE_PASSWORD",
+						TargetName:                "SUPABASE_DB_URL",
+						AdditionalTemplateSources: []string{"DATABASE_HOST"},
+						TemplateString:            "postgresql://postgres:${DATABASE_PASSWORD}@${DATABASE_HOST}:5432/postgres",
+					},
+				},
+				Variables: []schema.TemplateVariable{
+					{
+						Name:  "VERIFY_JWT",
+						Value: "false",
+					},
+					{
+						Name: "main_index_ts",
+						Value: `import { serve } from 'https://deno.land/std@0.131.0/http/server.ts'
+import * as jose from 'https://deno.land/x/jose@v4.14.4/index.ts'
+
+console.log('main function started')
+
+const JWT_SECRET = Deno.env.get('JWT_SECRET')
+const VERIFY_JWT = Deno.env.get('VERIFY_JWT') === 'true'
+
+function getAuthToken(req: Request) {
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader) {
+    throw new Error('Missing authorization header')
+  }
+  const [bearer, token] = authHeader.split(' ')
+  if (bearer !== 'Bearer') {
+    throw new Error("Auth header is not 'Bearer {token}'")
+  }
+  return token
+}
+
+async function verifyJWT(jwt: string): Promise<boolean> {
+  const encoder = new TextEncoder()
+  const secretKey = encoder.encode(JWT_SECRET)
+  try {
+    await jose.jwtVerify(jwt, secretKey)
+  } catch (err) {
+    console.error(err)
+    return false
+  }
+  return true
+}
+
+serve(async (req: Request) => {
+  if (req.method !== 'OPTIONS' && VERIFY_JWT) {
+    try {
+      const token = getAuthToken(req)
+      const isValidJWT = await verifyJWT(token)
+
+      if (!isValidJWT) {
+        return new Response(JSON.stringify({ msg: 'Invalid JWT' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      }
+    } catch (e) {
+      console.error(e)
+      return new Response(JSON.stringify({ msg: e.toString() }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
+  const url = new URL(req.url)
+  const { pathname } = url
+  const path_parts = pathname.split('/')
+  const service_name = path_parts[1]
+
+  if (!service_name || service_name === '') {
+    const error = { msg: 'missing function name in request' }
+    return new Response(JSON.stringify(error), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const servicePath = "/home/deno/functions/" + service_name
+  console.error("serving the request with " + servicePath)
+
+  const memoryLimitMb = 150
+  const workerTimeoutMs = 1 * 60 * 1000
+  const noModuleCache = false
+  const importMapPath = null
+  const envVarsObj = Deno.env.toObject()
+  const envVars = Object.keys(envVarsObj).map((k) => [k, envVarsObj[k]])
+
+  try {
+    const worker = await EdgeRuntime.userWorkers.create({
+      servicePath,
+      memoryLimitMb,
+      workerTimeoutMs,
+      noModuleCache,
+      importMapPath,
+      envVars,
+    })
+    return await worker.fetch(req)
+  } catch (e) {
+    const error = { msg: e.toString() }
+    return new Response(JSON.stringify(error), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+})`,
+					},
+					{
+						Name: "hello_index_ts",
+						Value: `// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+import { serve } from "https://deno.land/std@0.177.1/http/server.ts"
+
+serve(async () => {
+  return new Response(
+    '"Hello from Edge Functions!"',
+    { headers: { "Content-Type": "application/json" } },
+  )
+})
+
+// To invoke:
+// curl 'http://localhost:<KONG_HTTP_PORT>/functions/v1/hello' \\
+//   --header 'Authorization: Bearer <anon/service_role API key>'`,
+					},
+				},
+			},
+			{
 				ID:       "service_kong",
 				Name:     "Kong",
 				Type:     schema.ServiceTypeDockerimage,
@@ -1863,6 +2044,15 @@ services:
         strip_path: true
         paths:
           - /storage/v1/
+    plugins:
+      - name: cors
+  - name: functions-v1
+    url: http://${SERVICE_FUNCTIONS_KUBE_NAME}.${NAMESPACE}:9000/
+    routes:
+      - name: functions-v1-all
+        strip_path: true
+        paths:
+          - /functions/v1/
     plugins:
       - name: cors
   - name: meta
