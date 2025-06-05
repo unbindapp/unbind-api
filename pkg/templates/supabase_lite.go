@@ -66,7 +66,6 @@ func supabaseTemplate() *schema.TemplateDefinition {
 				DatabaseConfig: &schema.DatabaseConfig{
 					DefaultDatabaseName: "postgres",
 					Version:             "17",
-					WalLevel:            "logical", // Required for analytics
 					InitDB: `-- Combined Supabase migration file with default passwords set to '${REPLACEME}'
 
 -- Set up realtime
