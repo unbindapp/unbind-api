@@ -71,7 +71,7 @@ func plausibleTemplate() *schema.TemplateDefinition {
 				Image:      utils.ToPtr("ghcr.io/plausible/community-edition:v3"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   200,
+					CPULimitsMillicores:   500,
 				},
 				Ports: []schema.PortSpec{
 					{
@@ -84,10 +84,10 @@ func plausibleTemplate() *schema.TemplateDefinition {
 					Path:                      "/api/health",
 					Port:                      utils.ToPtr(int32(8000)),
 					PeriodSeconds:             10,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   5,
+					TimeoutSeconds:            10,
+					StartupFailureThreshold:   10,
 					LivenessFailureThreshold:  5,
-					ReadinessFailureThreshold: 3,
+					ReadinessFailureThreshold: 10,
 				},
 				Variables: []schema.TemplateVariable{
 					{
