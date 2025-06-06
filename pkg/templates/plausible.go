@@ -14,6 +14,10 @@ func plausibleTemplate() *schema.TemplateDefinition {
 		Keywords:    []string{"analytics", "privacy-friendly", "open source", "Google Analytics", "umami"},
 		Description: "Privacy-friendly Google Analytics alternative.",
 		Version:     1,
+		ResourceRecommendations: schema.TemplateResourceRecommendations{
+			MinimumCPUs:  1,
+			MinimumRAMGB: 2,
+		},
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          "input_domain",

@@ -14,6 +14,10 @@ func nocodbTemplate() *schema.TemplateDefinition {
 		Keywords:    []string{"low code", "no code", "no-code", "database", "spreadsheet", "airtable alternative", "api builder", "sql", "postgresql"},
 		Description: "Build databases as spreadsheets.",
 		Version:     1,
+		ResourceRecommendations: schema.TemplateResourceRecommendations{
+			MinimumCPUs:  1,
+			MinimumRAMGB: 1,
+		},
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          "input_domain",

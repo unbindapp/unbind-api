@@ -44,6 +44,7 @@ func (Template) Fields() []ent.Field {
 		field.String("description"),
 		field.String("icon"),
 		field.Strings("keywords").Optional(),
+		field.JSON("resource_recommendations", TemplateResourceRecommendations{}),
 		field.Uint("display_rank").Default(0).Comment("Rank for ordering results, lower ranks higher"),
 		field.Int("version"),
 		field.Bool("immutable").Default(false).Comment("If true, the template cannot be modified or deleted (system bundle)"),
@@ -77,14 +78,21 @@ func (Template) Annotations() []schema.Annotation {
 
 // TemplateDefinition represents a complete template configuration
 type TemplateDefinition struct {
-	Name        string            `json:"name"`
-	DisplayRank uint              `json:"display_rank"`   // Rank for ordering results, lower ranks higher
-	Icon        string            `json:"icon,omitempty"` // Icon name
-	Description string            `json:"description"`
-	Keywords    []string          `json:"keywords,omitempty"`
-	Version     int               `json:"version"`
-	Services    []TemplateService `json:"services" nullable:"false"`
-	Inputs      []TemplateInput   `json:"inputs" nullable:"false"`
+	Name                    string                          `json:"name"`
+	ResourceRecommendations TemplateResourceRecommendations `json:"resource_recommendations,omitempty"` // Resource recommendations for the template
+	DisplayRank             uint                            `json:"display_rank"`                       // Rank for ordering results, lower ranks higher
+	Icon                    string                          `json:"icon,omitempty"`                     // Icon name
+	Description             string                          `json:"description"`
+	Keywords                []string                        `json:"keywords,omitempty"`
+	Version                 int                             `json:"version"`
+	Services                []TemplateService               `json:"services" nullable:"false"`
+	Inputs                  []TemplateInput                 `json:"inputs" nullable:"false"`
+}
+
+// TemplateResourceRecommendations represents resource recommendations for a template
+type TemplateResourceRecommendations struct {
+	MinimumCPUs  float64 `json:"minimum_cpus"`   // Minimum CPUs required
+	MinimumRAMGB float64 `json:"minimum_ram_gb"` // Minimum RAM required in GB
 }
 
 // TemplateService represents a service within a template

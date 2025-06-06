@@ -78,6 +78,12 @@ func (tc *TemplateCreate) SetKeywords(s []string) *TemplateCreate {
 	return tc
 }
 
+// SetResourceRecommendations sets the "resource_recommendations" field.
+func (tc *TemplateCreate) SetResourceRecommendations(srr schema.TemplateResourceRecommendations) *TemplateCreate {
+	tc.mutation.SetResourceRecommendations(srr)
+	return tc
+}
+
 // SetDisplayRank sets the "display_rank" field.
 func (tc *TemplateCreate) SetDisplayRank(u uint) *TemplateCreate {
 	tc.mutation.SetDisplayRank(u)
@@ -221,6 +227,9 @@ func (tc *TemplateCreate) check() error {
 	if _, ok := tc.mutation.Icon(); !ok {
 		return &ValidationError{Name: "icon", err: errors.New(`ent: missing required field "Template.icon"`)}
 	}
+	if _, ok := tc.mutation.ResourceRecommendations(); !ok {
+		return &ValidationError{Name: "resource_recommendations", err: errors.New(`ent: missing required field "Template.resource_recommendations"`)}
+	}
 	if _, ok := tc.mutation.DisplayRank(); !ok {
 		return &ValidationError{Name: "display_rank", err: errors.New(`ent: missing required field "Template.display_rank"`)}
 	}
@@ -292,6 +301,10 @@ func (tc *TemplateCreate) createSpec() (*Template, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Keywords(); ok {
 		_spec.SetField(template.FieldKeywords, field.TypeJSON, value)
 		_node.Keywords = value
+	}
+	if value, ok := tc.mutation.ResourceRecommendations(); ok {
+		_spec.SetField(template.FieldResourceRecommendations, field.TypeJSON, value)
+		_node.ResourceRecommendations = value
 	}
 	if value, ok := tc.mutation.DisplayRank(); ok {
 		_spec.SetField(template.FieldDisplayRank, field.TypeUint, value)
@@ -440,6 +453,18 @@ func (u *TemplateUpsert) UpdateKeywords() *TemplateUpsert {
 // ClearKeywords clears the value of the "keywords" field.
 func (u *TemplateUpsert) ClearKeywords() *TemplateUpsert {
 	u.SetNull(template.FieldKeywords)
+	return u
+}
+
+// SetResourceRecommendations sets the "resource_recommendations" field.
+func (u *TemplateUpsert) SetResourceRecommendations(v schema.TemplateResourceRecommendations) *TemplateUpsert {
+	u.Set(template.FieldResourceRecommendations, v)
+	return u
+}
+
+// UpdateResourceRecommendations sets the "resource_recommendations" field to the value that was provided on create.
+func (u *TemplateUpsert) UpdateResourceRecommendations() *TemplateUpsert {
+	u.SetExcluded(template.FieldResourceRecommendations)
 	return u
 }
 
@@ -628,6 +653,20 @@ func (u *TemplateUpsertOne) UpdateKeywords() *TemplateUpsertOne {
 func (u *TemplateUpsertOne) ClearKeywords() *TemplateUpsertOne {
 	return u.Update(func(s *TemplateUpsert) {
 		s.ClearKeywords()
+	})
+}
+
+// SetResourceRecommendations sets the "resource_recommendations" field.
+func (u *TemplateUpsertOne) SetResourceRecommendations(v schema.TemplateResourceRecommendations) *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetResourceRecommendations(v)
+	})
+}
+
+// UpdateResourceRecommendations sets the "resource_recommendations" field to the value that was provided on create.
+func (u *TemplateUpsertOne) UpdateResourceRecommendations() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateResourceRecommendations()
 	})
 }
 
@@ -993,6 +1032,20 @@ func (u *TemplateUpsertBulk) UpdateKeywords() *TemplateUpsertBulk {
 func (u *TemplateUpsertBulk) ClearKeywords() *TemplateUpsertBulk {
 	return u.Update(func(s *TemplateUpsert) {
 		s.ClearKeywords()
+	})
+}
+
+// SetResourceRecommendations sets the "resource_recommendations" field.
+func (u *TemplateUpsertBulk) SetResourceRecommendations(v schema.TemplateResourceRecommendations) *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetResourceRecommendations(v)
+	})
+}
+
+// UpdateResourceRecommendations sets the "resource_recommendations" field to the value that was provided on create.
+func (u *TemplateUpsertBulk) UpdateResourceRecommendations() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateResourceRecommendations()
 	})
 }
 

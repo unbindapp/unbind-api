@@ -33,6 +33,8 @@ type Template struct {
 	Icon string `json:"icon,omitempty"`
 	// Keywords holds the value of the "keywords" field.
 	Keywords []string `json:"keywords,omitempty"`
+	// ResourceRecommendations holds the value of the "resource_recommendations" field.
+	ResourceRecommendations schema.TemplateResourceRecommendations `json:"resource_recommendations,omitempty"`
 	// Rank for ordering results, lower ranks higher
 	DisplayRank uint `json:"display_rank,omitempty"`
 	// Version holds the value of the "version" field.
@@ -70,7 +72,7 @@ func (*Template) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case template.FieldKeywords, template.FieldDefinition:
+		case template.FieldKeywords, template.FieldResourceRecommendations, template.FieldDefinition:
 			values[i] = new([]byte)
 		case template.FieldImmutable:
 			values[i] = new(sql.NullBool)
@@ -139,6 +141,14 @@ func (t *Template) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &t.Keywords); err != nil {
 					return fmt.Errorf("unmarshal field keywords: %w", err)
+				}
+			}
+		case template.FieldResourceRecommendations:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field resource_recommendations", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &t.ResourceRecommendations); err != nil {
+					return fmt.Errorf("unmarshal field resource_recommendations: %w", err)
 				}
 			}
 		case template.FieldDisplayRank:
@@ -225,6 +235,9 @@ func (t *Template) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("keywords=")
 	builder.WriteString(fmt.Sprintf("%v", t.Keywords))
+	builder.WriteString(", ")
+	builder.WriteString("resource_recommendations=")
+	builder.WriteString(fmt.Sprintf("%v", t.ResourceRecommendations))
 	builder.WriteString(", ")
 	builder.WriteString("display_rank=")
 	builder.WriteString(fmt.Sprintf("%v", t.DisplayRank))

@@ -14,6 +14,10 @@ func listmonkTemplate() *schema.TemplateDefinition {
 		Keywords:    []string{"newsletter", "email", "mailing list", "campaign", "marketing", "smtp"},
 		Description: "Newsletter and mailing list manager.",
 		Version:     1,
+		ResourceRecommendations: schema.TemplateResourceRecommendations{
+			MinimumCPUs:  1,
+			MinimumRAMGB: 0.25,
+		},
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          "input_domain",

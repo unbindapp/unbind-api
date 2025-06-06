@@ -550,6 +550,7 @@ var (
 		{Name: "description", Type: field.TypeString},
 		{Name: "icon", Type: field.TypeString},
 		{Name: "keywords", Type: field.TypeJSON, Nullable: true},
+		{Name: "resource_recommendations", Type: field.TypeJSON},
 		{Name: "display_rank", Type: field.TypeUint, Default: 0},
 		{Name: "version", Type: field.TypeInt},
 		{Name: "immutable", Type: field.TypeBool, Default: false},
@@ -564,7 +565,7 @@ var (
 			{
 				Name:    "template_name_version",
 				Unique:  true,
-				Columns: []*schema.Column{TemplatesColumns[3], TemplatesColumns[8]},
+				Columns: []*schema.Column{TemplatesColumns[3], TemplatesColumns[9]},
 			},
 		},
 	}

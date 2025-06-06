@@ -14,6 +14,10 @@ func n8nTemplate() *schema.TemplateDefinition {
 		Keywords:    []string{"workflow", "automation", "n8n", "queue", "low code", "low-code", "no code", "no-code", "chatbot", "ai", "llm"},
 		Description: "Powerful AI workflow automation tools.",
 		Version:     1,
+		ResourceRecommendations: schema.TemplateResourceRecommendations{
+			MinimumCPUs:  1,
+			MinimumRAMGB: 1,
+		},
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          "input_domain",

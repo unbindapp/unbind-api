@@ -18,6 +18,7 @@ func (self *TemplateRepository) UpsertPredefinedTemplates(ctx context.Context) (
 			SetIcon(template.Icon).
 			SetDescription(template.Description).
 			SetKeywords(template.Keywords).
+			SetResourceRecommendations(template.ResourceRecommendations).
 			SetVersion(template.Version).
 			SetDefinition(*template).
 			SetImmutable(true).

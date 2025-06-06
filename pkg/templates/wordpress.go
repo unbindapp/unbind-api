@@ -14,6 +14,10 @@ func wordPressTemplate() *schema.TemplateDefinition {
 		Keywords:    []string{"bloggin", "cms", "content management system", "WooCommerce", "ecommerce", "website", "publishing platform", "php", "mysql"},
 		Description: "The open source publishing platform & CMS.",
 		Version:     1,
+		ResourceRecommendations: schema.TemplateResourceRecommendations{
+			MinimumCPUs:  1,
+			MinimumRAMGB: 0.5,
+		},
 		Inputs: []schema.TemplateInput{
 			{
 				ID:          "input_domain",

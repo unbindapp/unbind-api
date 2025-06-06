@@ -18503,29 +18503,30 @@ func (m *TeamMutation) ResetEdge(name string) error {
 // TemplateMutation represents an operation that mutates the Template nodes in the graph.
 type TemplateMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	created_at      *time.Time
-	updated_at      *time.Time
-	name            *string
-	description     *string
-	icon            *string
-	keywords        *[]string
-	appendkeywords  []string
-	display_rank    *uint
-	adddisplay_rank *int
-	version         *int
-	addversion      *int
-	immutable       *bool
-	definition      *schema.TemplateDefinition
-	clearedFields   map[string]struct{}
-	services        map[uuid.UUID]struct{}
-	removedservices map[uuid.UUID]struct{}
-	clearedservices bool
-	done            bool
-	oldValue        func(context.Context) (*Template, error)
-	predicates      []predicate.Template
+	op                       Op
+	typ                      string
+	id                       *uuid.UUID
+	created_at               *time.Time
+	updated_at               *time.Time
+	name                     *string
+	description              *string
+	icon                     *string
+	keywords                 *[]string
+	appendkeywords           []string
+	resource_recommendations *schema.TemplateResourceRecommendations
+	display_rank             *uint
+	adddisplay_rank          *int
+	version                  *int
+	addversion               *int
+	immutable                *bool
+	definition               *schema.TemplateDefinition
+	clearedFields            map[string]struct{}
+	services                 map[uuid.UUID]struct{}
+	removedservices          map[uuid.UUID]struct{}
+	clearedservices          bool
+	done                     bool
+	oldValue                 func(context.Context) (*Template, error)
+	predicates               []predicate.Template
 }
 
 var _ ent.Mutation = (*TemplateMutation)(nil)
@@ -18877,6 +18878,42 @@ func (m *TemplateMutation) ResetKeywords() {
 	delete(m.clearedFields, template.FieldKeywords)
 }
 
+// SetResourceRecommendations sets the "resource_recommendations" field.
+func (m *TemplateMutation) SetResourceRecommendations(srr schema.TemplateResourceRecommendations) {
+	m.resource_recommendations = &srr
+}
+
+// ResourceRecommendations returns the value of the "resource_recommendations" field in the mutation.
+func (m *TemplateMutation) ResourceRecommendations() (r schema.TemplateResourceRecommendations, exists bool) {
+	v := m.resource_recommendations
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResourceRecommendations returns the old "resource_recommendations" field's value of the Template entity.
+// If the Template object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TemplateMutation) OldResourceRecommendations(ctx context.Context) (v schema.TemplateResourceRecommendations, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResourceRecommendations is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResourceRecommendations requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResourceRecommendations: %w", err)
+	}
+	return oldValue.ResourceRecommendations, nil
+}
+
+// ResetResourceRecommendations resets all changes to the "resource_recommendations" field.
+func (m *TemplateMutation) ResetResourceRecommendations() {
+	m.resource_recommendations = nil
+}
+
 // SetDisplayRank sets the "display_rank" field.
 func (m *TemplateMutation) SetDisplayRank(u uint) {
 	m.display_rank = &u
@@ -19149,7 +19186,7 @@ func (m *TemplateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TemplateMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 11)
 	if m.created_at != nil {
 		fields = append(fields, template.FieldCreatedAt)
 	}
@@ -19167,6 +19204,9 @@ func (m *TemplateMutation) Fields() []string {
 	}
 	if m.keywords != nil {
 		fields = append(fields, template.FieldKeywords)
+	}
+	if m.resource_recommendations != nil {
+		fields = append(fields, template.FieldResourceRecommendations)
 	}
 	if m.display_rank != nil {
 		fields = append(fields, template.FieldDisplayRank)
@@ -19200,6 +19240,8 @@ func (m *TemplateMutation) Field(name string) (ent.Value, bool) {
 		return m.Icon()
 	case template.FieldKeywords:
 		return m.Keywords()
+	case template.FieldResourceRecommendations:
+		return m.ResourceRecommendations()
 	case template.FieldDisplayRank:
 		return m.DisplayRank()
 	case template.FieldVersion:
@@ -19229,6 +19271,8 @@ func (m *TemplateMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldIcon(ctx)
 	case template.FieldKeywords:
 		return m.OldKeywords(ctx)
+	case template.FieldResourceRecommendations:
+		return m.OldResourceRecommendations(ctx)
 	case template.FieldDisplayRank:
 		return m.OldDisplayRank(ctx)
 	case template.FieldVersion:
@@ -19287,6 +19331,13 @@ func (m *TemplateMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetKeywords(v)
+		return nil
+	case template.FieldResourceRecommendations:
+		v, ok := value.(schema.TemplateResourceRecommendations)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResourceRecommendations(v)
 		return nil
 	case template.FieldDisplayRank:
 		v, ok := value.(uint)
@@ -19418,6 +19469,9 @@ func (m *TemplateMutation) ResetField(name string) error {
 		return nil
 	case template.FieldKeywords:
 		m.ResetKeywords()
+		return nil
+	case template.FieldResourceRecommendations:
+		m.ResetResourceRecommendations()
 		return nil
 	case template.FieldDisplayRank:
 		m.ResetDisplayRank()

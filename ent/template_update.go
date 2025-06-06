@@ -99,6 +99,20 @@ func (tu *TemplateUpdate) ClearKeywords() *TemplateUpdate {
 	return tu
 }
 
+// SetResourceRecommendations sets the "resource_recommendations" field.
+func (tu *TemplateUpdate) SetResourceRecommendations(srr schema.TemplateResourceRecommendations) *TemplateUpdate {
+	tu.mutation.SetResourceRecommendations(srr)
+	return tu
+}
+
+// SetNillableResourceRecommendations sets the "resource_recommendations" field if the given value is not nil.
+func (tu *TemplateUpdate) SetNillableResourceRecommendations(srr *schema.TemplateResourceRecommendations) *TemplateUpdate {
+	if srr != nil {
+		tu.SetResourceRecommendations(*srr)
+	}
+	return tu
+}
+
 // SetDisplayRank sets the "display_rank" field.
 func (tu *TemplateUpdate) SetDisplayRank(u uint) *TemplateUpdate {
 	tu.mutation.ResetDisplayRank()
@@ -284,6 +298,9 @@ func (tu *TemplateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.KeywordsCleared() {
 		_spec.ClearField(template.FieldKeywords, field.TypeJSON)
 	}
+	if value, ok := tu.mutation.ResourceRecommendations(); ok {
+		_spec.SetField(template.FieldResourceRecommendations, field.TypeJSON, value)
+	}
 	if value, ok := tu.mutation.DisplayRank(); ok {
 		_spec.SetField(template.FieldDisplayRank, field.TypeUint, value)
 	}
@@ -432,6 +449,20 @@ func (tuo *TemplateUpdateOne) AppendKeywords(s []string) *TemplateUpdateOne {
 // ClearKeywords clears the value of the "keywords" field.
 func (tuo *TemplateUpdateOne) ClearKeywords() *TemplateUpdateOne {
 	tuo.mutation.ClearKeywords()
+	return tuo
+}
+
+// SetResourceRecommendations sets the "resource_recommendations" field.
+func (tuo *TemplateUpdateOne) SetResourceRecommendations(srr schema.TemplateResourceRecommendations) *TemplateUpdateOne {
+	tuo.mutation.SetResourceRecommendations(srr)
+	return tuo
+}
+
+// SetNillableResourceRecommendations sets the "resource_recommendations" field if the given value is not nil.
+func (tuo *TemplateUpdateOne) SetNillableResourceRecommendations(srr *schema.TemplateResourceRecommendations) *TemplateUpdateOne {
+	if srr != nil {
+		tuo.SetResourceRecommendations(*srr)
+	}
 	return tuo
 }
 
@@ -649,6 +680,9 @@ func (tuo *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err
 	}
 	if tuo.mutation.KeywordsCleared() {
 		_spec.ClearField(template.FieldKeywords, field.TypeJSON)
+	}
+	if value, ok := tuo.mutation.ResourceRecommendations(); ok {
+		_spec.SetField(template.FieldResourceRecommendations, field.TypeJSON, value)
 	}
 	if value, ok := tuo.mutation.DisplayRank(); ok {
 		_spec.SetField(template.FieldDisplayRank, field.TypeUint, value)

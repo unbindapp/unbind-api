@@ -27,6 +27,8 @@ const (
 	FieldIcon = "icon"
 	// FieldKeywords holds the string denoting the keywords field in the database.
 	FieldKeywords = "keywords"
+	// FieldResourceRecommendations holds the string denoting the resource_recommendations field in the database.
+	FieldResourceRecommendations = "resource_recommendations"
 	// FieldDisplayRank holds the string denoting the display_rank field in the database.
 	FieldDisplayRank = "display_rank"
 	// FieldVersion holds the string denoting the version field in the database.
@@ -57,6 +59,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldIcon,
 	FieldKeywords,
+	FieldResourceRecommendations,
 	FieldDisplayRank,
 	FieldVersion,
 	FieldImmutable,
