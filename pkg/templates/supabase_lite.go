@@ -1346,7 +1346,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				DependsOn: []string{"service_postgresql", "service_kong"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 50,
-					CPULimitsMillicores:   250,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{
@@ -1360,9 +1360,9 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					Port:                      utils.ToPtr(int32(3000)),
 					PeriodSeconds:             5,
 					TimeoutSeconds:            5,
-					StartupFailureThreshold:   3,
+					StartupFailureThreshold:   10,
 					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
+					ReadinessFailureThreshold: 5,
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -1432,7 +1432,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				DependsOn: []string{"service_postgresql", "service_minio"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   150,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{
@@ -1446,9 +1446,9 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					Port:                      utils.ToPtr(int32(5000)),
 					PeriodSeconds:             5,
 					TimeoutSeconds:            5,
-					StartupFailureThreshold:   3,
+					StartupFailureThreshold:   10,
 					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
+					ReadinessFailureThreshold: 5,
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -1512,7 +1512,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				RunCommand: utils.ToPtr("bash -c '/usr/bin/mc alias set supabase-minio http://localhost:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} 2>/dev/null || true && /usr/bin/mc mb --ignore-existing supabase-minio/stub 2>/dev/null || true && exec minio server /data --console-address \":9001\"'"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 50,
-					CPULimitsMillicores:   200,
+					CPULimitsMillicores:   300,
 				},
 				Ports: []schema.PortSpec{
 					{
@@ -1531,7 +1531,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					TimeoutSeconds:            20,
 					StartupFailureThreshold:   10,
 					LivenessFailureThreshold:  10,
-					ReadinessFailureThreshold: 3,
+					ReadinessFailureThreshold: 5,
 				},
 				Variables: []schema.TemplateVariable{
 					{
@@ -1555,7 +1555,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				DependsOn: []string{"service_postgresql"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   150,
+					CPULimitsMillicores:   400,
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -1605,7 +1605,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				DependsOn: []string{"service_postgresql"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
-					CPULimitsMillicores:   100,
+					CPULimitsMillicores:   300,
 				},
 				Ports: []schema.PortSpec{
 					{
@@ -1619,9 +1619,9 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					Port:                      utils.ToPtr(int32(9999)),
 					PeriodSeconds:             5,
 					TimeoutSeconds:            5,
-					StartupFailureThreshold:   3,
+					StartupFailureThreshold:   10,
 					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
+					ReadinessFailureThreshold: 5,
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -1676,7 +1676,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				DependsOn: []string{"service_postgresql"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
-					CPULimitsMillicores:   100,
+					CPULimitsMillicores:   300,
 				},
 				Ports: []schema.PortSpec{
 					{
@@ -1725,7 +1725,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				DependsOn: []string{"service_postgresql", "service_kong"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
-					CPULimitsMillicores:   250,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{
@@ -1910,7 +1910,7 @@ serve(async () => {
 				InputIDs: []string{"input_domain"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 50,
-					CPULimitsMillicores:   300,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{
