@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/errors"
 	"github.com/go-oauth2/oauth2/v4/manage"
@@ -231,14 +231,31 @@ func StartOauth2Server(cfg *config.Config) {
 	})
 
 	// Cron job to clean up expired tokens
-	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Hour().Do(func() {
-		err := oauth2Srv.Repository.Oauth().CleanTokenStore(ctx)
-		if err != nil {
-			log.Error("Failed to clean token store", "err", err)
+	scheduler, err := gocron.NewScheduler(gocron.WithLocation(time.UTC))
+	if err != nil {
+		log.Fatal("Failed to create scheduler", "err", err)
+	}
+	_, err = scheduler.NewJob(
+		gocron.DurationJob(1*time.Hour),
+		gocron.NewTask(
+			func(ctx context.Context) {
+				err := oauth2Srv.Repository.Oauth().CleanTokenStore(ctx)
+				if err != nil {
+					log.Error("Failed to clean token store", "err", err)
+				}
+			},
+			ctx,
+		),
+	)
+	// Start the scheduler
+	scheduler.Start()
+	defer func() {
+		if err := scheduler.Shutdown(); err != nil {
+			log.Error("Scheduler shutdown error", "err", err)
+		} else {
+			log.Info("Scheduler gracefully stopped")
 		}
-	})
-	s.StartAsync()
+	}()
 
 	// Start server
 	addr := ":8090"

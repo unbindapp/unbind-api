@@ -21,7 +21,6 @@ require (
 	github.com/danielgtaylor/huma/v2 v2.32.1-0.20250427163545-eb497eebe4e8
 	github.com/docker/cli v28.2.0+incompatible
 	github.com/go-chi/chi/v5 v5.2.1
-	github.com/go-co-op/gocron v1.37.0
 	github.com/go-co-op/gocron/v2 v2.16.2
 	github.com/go-git/go-git/v5 v5.16.0
 	github.com/go-oauth2/oauth2/v4 v4.5.3
@@ -182,7 +181,6 @@ require (
 	go.opentelemetry.io/otel/sdk v1.36.0 // indirect
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.6.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250528174236-200df99c418a // indirect
