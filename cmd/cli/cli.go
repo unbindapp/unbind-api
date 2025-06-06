@@ -553,3 +553,46 @@ func (self *cli) createUser(email, password string) {
 	fmt.Printf("ID: %s\n", u.ID)
 	fmt.Printf("Email: %s\n", u.Email)
 }
+
+// Change password for an existing user
+func (self *cli) changeUserPassword(email, password string) {
+	// Validate inputs
+	if email == "" || password == "" {
+		log.Errorf("Error: email and password are required")
+		return
+	}
+
+	// Check if username already exists
+	u, err := self.repository.User().GetByEmail(context.Background(), email)
+	if err != nil {
+		if !ent.IsNotFound(err) {
+			log.Errorf("Error checking if user exists: %v", err)
+			return
+		}
+		if ent.IsNotFound(err) {
+			log.Errorf("Error: User '%s' not found", email)
+			return
+		}
+	}
+
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Printf("Error hashing password: %v\n", err)
+		return
+	}
+
+	// Create the user
+	_, err = self.repository.Ent().User.UpdateOneID(u.ID).
+		SetPasswordHash(string(hashedPassword)).
+		Save(context.Background())
+
+	if err != nil {
+		fmt.Printf("Error updating user: %v\n", err)
+		return
+	}
+
+	fmt.Println("Password updated successfully:")
+	fmt.Printf("ID: %s\n", u.ID)
+	fmt.Printf("Email: %s\n", u.Email)
+}

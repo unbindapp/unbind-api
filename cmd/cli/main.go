@@ -24,6 +24,7 @@ Commands:
     list                         List all users
     create --email=EMAIL --password=PASSWORD
                                  Create a new user
+		change-password --email=EMAIL --password=PASSWORD
 
   group:
     list                         List all groups
@@ -72,6 +73,7 @@ func main() {
 	// Create FlagSets separately so they can be accessed in the handlers
 	userListFlagSet := flag.NewFlagSet("user:list", flag.ExitOnError)
 	userCreateFlagSet := flag.NewFlagSet("user:create", flag.ExitOnError)
+	userChangePasswordFlagSet := flag.NewFlagSet("user:change-password", flag.ExitOnError)
 	groupListFlagSet := flag.NewFlagSet("group:list", flag.ExitOnError)
 	groupCreateFlagSet := flag.NewFlagSet("group:create", flag.ExitOnError)
 	groupAddUserFlagSet := flag.NewFlagSet("group:add-user", flag.ExitOnError)
@@ -125,6 +127,21 @@ func main() {
 			}
 
 			cli.createUser(*email, *password)
+		},
+	}
+
+	userChangePasswordCmd := &Command{
+		Name:        "user:change-password",
+		Description: "Change password for a user",
+		FlagSet:     userChangePasswordFlagSet,
+		Handler: func() {
+			userChangePasswordFlagSet.Parse(os.Args[2:])
+			if *email == "" || *password == "" {
+				fmt.Println("Error: email and password are required")
+				userChangePasswordFlagSet.Usage()
+				os.Exit(1)
+			}
+			cli.changeUserPassword(*email, *password)
 		},
 	}
 
@@ -248,6 +265,7 @@ func main() {
 	allCommands := []*Command{
 		userListCmd,
 		userCreateCmd,
+		userChangePasswordCmd,
 		groupListCmd,
 		groupCreateCmd,
 		groupAddUserCmd,

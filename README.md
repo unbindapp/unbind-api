@@ -26,7 +26,7 @@ Unbind is a **Platform as a Service (PaaS)** for managing all kinds of applicati
 - **Zero-configuration deployments** from Git repositories and Docker images
 - **Intelligent build system** powered by [BuildKit](https://github.com/moby/buildkit) and [Railpack](https://github.com/railwayapp/railpack)
 - **Security** integrating OAuth2/OIDC with native [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- **Metrics** with [Prometheus kube stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
+- **Metrics** with [Victoria k8s stack](https://docs.victoriametrics.com/helm/victoriametrics-k8s-stack/) or [Prometheus kube stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
 - **Templates** an extensible template system that supports zero-configuration deployments of many popular open-source products (plausible, supabase, wordpress, minio, and more.)
 - **Production-grade Databases with Backups** with support for many popular databases through [operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/) and helm charts - with backups to any S3-compatible storage.
 
