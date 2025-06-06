@@ -54,7 +54,7 @@ func wordPressTemplate() *schema.TemplateDefinition {
 				Image:     utils.ToPtr("wordpress:6.8"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   200,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{

@@ -67,7 +67,7 @@ func listmonkTemplate() *schema.TemplateDefinition {
 				RunCommand: utils.ToPtr("./listmonk --install --idempotent --yes && ./listmonk --upgrade --yes && ./listmonk"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   150,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{

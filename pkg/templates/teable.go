@@ -76,7 +76,7 @@ func teableTemplate() *schema.TemplateDefinition {
 				DependsOn: []string{"service_postgres", "service_redis"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 40,
-					CPULimitsMillicores:   300,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{

@@ -54,7 +54,7 @@ func umamiTemplate() *schema.TemplateDefinition {
 				Image:     utils.ToPtr("ghcr.io/umami-software/umami:postgresql-v2"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   150,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{

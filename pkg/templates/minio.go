@@ -58,7 +58,7 @@ func minioTemplate() *schema.TemplateDefinition {
 				Image:    utils.ToPtr("minio/minio:latest"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   200,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{

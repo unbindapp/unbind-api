@@ -67,7 +67,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 				RunCommand: utils.ToPtr("n8n worker"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
-					CPULimitsMillicores:   300,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{

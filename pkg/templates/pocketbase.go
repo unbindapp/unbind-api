@@ -49,7 +49,7 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 				Image:    utils.ToPtr("ghcr.io/unbindapp/pocketbase:v0.28.2"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
-					CPULimitsMillicores:   150,
+					CPULimitsMillicores:   400,
 				},
 				Ports: []schema.PortSpec{
 					{
