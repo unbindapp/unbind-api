@@ -231,37 +231,7 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 	}
 	if teamCount > 0 {
 		// Bootstrap registry secrets if needed
-		registries, err := self.repos.Ent().Registry.Query().All(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to query registries: %w", err)
-		}
-		teams, err := self.repos.Ent().Team.Query().All(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to query teams: %w", err)
-		}
-		for _, reg := range registries {
-			for _, team := range teams {
-				if reg.KubernetesSecret != "" {
-					// Check existence
-					secretName := reg.KubernetesSecret
-					_, err := self.kubeClient.GetSecret(ctx, secretName, team.Namespace, self.kubeClient.GetInternalClient())
-					if err != nil {
-						if !errors.IsNotFound(err) {
-							return fmt.Errorf("failed to get secret %s in team namespace %s: %w", secretName, team.Namespace, err)
-						}
-					}
-					if errors.IsNotFound(err) {
-						// Copy
-						_, err = self.kubeClient.CopySecret(ctx, secretName, self.cfg.SystemNamespace, team.Namespace, self.kubeClient.GetInternalClient())
-						if err != nil {
-							log.Warnf("Failed to copy registry secret %s to team namespace %s: %v", secretName, team.Namespace, err)
-						}
-					}
-				}
-			}
-		}
-
-		return nil
+		return self.syncRegistrySecretsToTeams(ctx)
 	}
 
 	// Create a team
@@ -347,6 +317,44 @@ func (self *Bootstrapper) bootstrapTeam(ctx context.Context) error {
 	}); err != nil {
 		fmt.Printf("Error creating team: %v\n", err)
 		return err
+	}
+
+	// Sync registry secrets to the newly created team
+	return self.syncRegistrySecretsToTeams(ctx)
+}
+
+// * Registry Team Sync
+func (self *Bootstrapper) syncRegistrySecretsToTeams(ctx context.Context) error {
+	log.Infof("Syncing registry secrets to teams")
+
+	registries, err := self.repos.Ent().Registry.Query().All(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query registries: %w", err)
+	}
+	teams, err := self.repos.Ent().Team.Query().All(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query teams: %w", err)
+	}
+	for _, reg := range registries {
+		for _, team := range teams {
+			if reg.KubernetesSecret != "" {
+				// Check existence
+				secretName := reg.KubernetesSecret
+				_, err := self.kubeClient.GetSecret(ctx, secretName, team.Namespace, self.kubeClient.GetInternalClient())
+				if err != nil {
+					if !errors.IsNotFound(err) {
+						return fmt.Errorf("failed to get secret %s in team namespace %s: %w", secretName, team.Namespace, err)
+					}
+				}
+				if errors.IsNotFound(err) {
+					// Copy
+					_, err = self.kubeClient.CopySecret(ctx, secretName, self.cfg.SystemNamespace, team.Namespace, self.kubeClient.GetInternalClient())
+					if err != nil {
+						log.Warnf("Failed to copy registry secret %s to team namespace %s: %v", secretName, team.Namespace, err)
+					}
+				}
+			}
+		}
 	}
 
 	return nil

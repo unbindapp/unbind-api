@@ -175,7 +175,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 				Name:      "n8n",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("n8nio/n8n:1.97.0"),
+				Image:     utils.ToPtr("n8nio/n8n:1.97.1"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 40,
 					CPULimitsMillicores:   400,
