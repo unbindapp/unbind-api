@@ -63,7 +63,7 @@ func listmonkTemplate() *schema.TemplateDefinition {
 				Name:       "Listmonk",
 				Type:       schema.ServiceTypeDockerimage,
 				Builder:    schema.ServiceBuilderDocker,
-				Image:      utils.ToPtr("listmonk/listmonk:v5.0.1"),
+				Image:      utils.ToPtr("listmonk/listmonk:v5.0.2"),
 				RunCommand: utils.ToPtr("./listmonk --install --idempotent --yes && ./listmonk --upgrade --yes && ./listmonk"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
