@@ -2,6 +2,8 @@ package template_repo
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/hashicorp/go-multierror"
 	entTemplate "github.com/unbindapp/unbind-api/ent/template"
@@ -25,7 +27,8 @@ func (self *TemplateRepository) UpsertPredefinedTemplates(ctx context.Context) (
 			OnConflictColumns(entTemplate.FieldName, entTemplate.FieldVersion).
 			DoNothing().
 			Exec(ctx)
-		if err != nil {
+			// Ignore no rows in result set error
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			result = multierror.Append(result, err)
 		}
 	}

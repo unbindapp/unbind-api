@@ -46,6 +46,7 @@ import (
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/api/server"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
@@ -366,6 +367,9 @@ func startAPI(cfg *config.Config) {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RealIP)
 		r.Use(middleware.Logger)
+
+		// Register huma error function
+		huma.NewError = errdefs.HumaErrorFunc
 
 		config := NewHumaConfig("Unbind API", "1.0.0")
 		config.DocsPath = ""
