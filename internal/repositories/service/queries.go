@@ -319,13 +319,15 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 		Spec: v1.ServiceSpec{
 			Builder: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Builder,
 			Config: v1.ServiceConfigSpec{
-				GitBranch:  service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.GitBranch,
-				Hosts:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Hosts,
-				Replicas:   service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Replicas,
-				Ports:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Ports,
-				RunCommand: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.RunCommand,
-				Public:     service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Public,
-				Volumes:    service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Volumes,
+				GitBranch:      service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.GitBranch,
+				Hosts:          service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Hosts,
+				Replicas:       service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Replicas,
+				Ports:          service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Ports,
+				RunCommand:     service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.RunCommand,
+				Public:         service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Public,
+				Volumes:        service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.Volumes,
+				HealthCheck:    service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.HealthCheck,
+				VariableMounts: service.Edges.CurrentDeployment.ResourceDefinition.Spec.Config.VariableMounts,
 			},
 		},
 	}
@@ -337,17 +339,27 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 			gitBranch = fmt.Sprintf("refs/heads/%s", gitBranch)
 		}
 	}
+	var healthCheck *v1.HealthCheckSpec
+	if service.Edges.ServiceConfig.HealthCheck != nil {
+		healthCheck = service.Edges.ServiceConfig.HealthCheck.AsV1HealthCheck()
+	}
+	var variableMounts []v1.VariableMountSpec
+	if len(service.Edges.ServiceConfig.VariableMounts) > 0 {
+		variableMounts = schema.AsV1VariableMounts(service.Edges.ServiceConfig.VariableMounts)
+	}
 	newCrd := &v1.Service{
 		Spec: v1.ServiceSpec{
 			Builder: string(service.Edges.ServiceConfig.Builder),
 			Config: v1.ServiceConfigSpec{
-				GitBranch:  gitBranch,
-				Hosts:      schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts),
-				Replicas:   utils.ToPtr(service.Edges.ServiceConfig.Replicas),
-				Ports:      schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports),
-				RunCommand: service.Edges.ServiceConfig.RunCommand,
-				Public:     service.Edges.ServiceConfig.IsPublic,
-				Volumes:    schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes),
+				GitBranch:      gitBranch,
+				Hosts:          schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts),
+				Replicas:       utils.ToPtr(service.Edges.ServiceConfig.Replicas),
+				Ports:          schema.AsV1PortSpecs(service.Edges.ServiceConfig.Ports),
+				RunCommand:     service.Edges.ServiceConfig.RunCommand,
+				Public:         service.Edges.ServiceConfig.IsPublic,
+				Volumes:        schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes),
+				HealthCheck:    healthCheck,
+				VariableMounts: variableMounts,
 			},
 		},
 	}
