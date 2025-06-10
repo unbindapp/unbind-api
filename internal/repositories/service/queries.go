@@ -7,8 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"entgo.io/ent/dialect/sql"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/deployment"
@@ -61,7 +59,7 @@ func (self *ServiceRepository) GetByID(ctx context.Context, serviceID uuid.UUID)
 
 func (self *ServiceRepository) GetByIDsAndEnvironment(ctx context.Context, serviceIDs []uuid.UUID, environmentID uuid.UUID) ([]*ent.Service, error) {
 	services, err := self.base.DB.Service.Query().
-		Where(service.IDIn(serviceIDs...), service.ServiceGroupID(environmentID)).
+		Where(service.IDIn(serviceIDs...), service.EnvironmentID(environmentID)).
 		All(ctx)
 
 	if err != nil {
@@ -384,35 +382,53 @@ func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent
 
 // See if volume is in use
 func (self *ServiceRepository) IsVolumeInUse(ctx context.Context, volumeName string) (bool, error) {
+	// ! TODO - figure out how to use sqljson rather than go filtering
 	services, err := self.base.DB.ServiceConfig.Query().
-		Where(func(s *sql.Selector) {
-			s.Where(sqljson.ValueEQ(
-				s.C(serviceconfig.FieldVolumes),
-				volumeName,
-				sqljson.Path("id"),
-			))
-		}).
+		Where(
+			serviceconfig.VolumesNotNil(),
+		).
 		All(ctx)
 	if err != nil {
 		return false, err
 	}
-	return len(services) > 0, nil
+	for _, svc := range services {
+		for _, volume := range svc.Volumes {
+			if volume.ID == volumeName {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 // Get services using a PVC
 func (self *ServiceRepository) GetServicesUsingPVC(ctx context.Context, pvcID string) ([]*ent.Service, error) {
-	return self.base.DB.ServiceConfig.Query().
+	// Use the same approach as IsVolumeInUse since the sqljson approach isn't working correctly
+	serviceConfigs, err := self.base.DB.ServiceConfig.Query().
 		Where(
-			func(s *sql.Selector) {
-				s.Where(sqljson.ValueEQ(
-					s.C(serviceconfig.FieldVolumes),
-					pvcID,
-					sqljson.Path("id"),
-				))
-			},
+			serviceconfig.VolumesNotNil(),
 		).
-		QueryService().
+		WithService().
 		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var services []*ent.Service
+	for _, svcConfig := range serviceConfigs {
+		if len(svcConfig.Volumes) == 0 {
+			continue
+		}
+
+		for _, volume := range svcConfig.Volumes {
+			if volume.ID == pvcID {
+				services = append(services, svcConfig.Edges.Service)
+				break // Found in this service, no need to check other volumes
+			}
+		}
+	}
+
+	return services, nil
 }
 
 // Get PVC mount paths by IDs
@@ -421,21 +437,13 @@ func (self *ServiceRepository) GetPVCMountPaths(ctx context.Context, pvcs []*mod
 
 	// Query all services that use these PVCs
 	pvcIDs := make([]string, len(pvcs))
-	serviceConfigs, err := self.base.DB.Service.Query().
-		QueryServiceConfig().
+	for i, pvc := range pvcs {
+		pvcIDs[i] = pvc.ID
+	}
+	// ! TODO - figure out how to use sqljson rather than go filtering
+	serviceConfigs, err := self.base.DB.ServiceConfig.Query().
 		Where(
-			func(s *sql.Selector) {
-				pvcIDsAny := make([]any, len(pvcs))
-				for i, pvc := range pvcs {
-					pvcIDsAny[i] = pvc.ID
-					pvcIDs[i] = pvc.ID
-				}
-				s.Where(sqljson.ValueIn(
-					s.C(serviceconfig.FieldVolumes),
-					pvcIDsAny,
-					sqljson.Path("id"),
-				))
-			},
+			serviceconfig.VolumesNotNil(),
 		).
 		All(ctx)
 	if err != nil {

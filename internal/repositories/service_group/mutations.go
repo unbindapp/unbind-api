@@ -7,8 +7,8 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/servicegroup"
-	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	"github.com/unbindapp/unbind-api/internal/models"
+	repository "github.com/unbindapp/unbind-api/internal/repositories"
 )
 
 func (self *ServiceGroupRepository) Create(ctx context.Context, tx repository.TxInterface, name string, icon, description *string, environmentID uuid.UUID) (*ent.ServiceGroup, error) {
@@ -49,7 +49,7 @@ func (self *ServiceGroupRepository) Update(ctx context.Context, input *models.Up
 		updateStmt.AddServiceIDs(input.AddServiceIDs...)
 	}
 	if len(input.RemoveServiceIDs) > 0 {
-		updateStmt.RemoveServiceIDs(input.AddServiceIDs...)
+		updateStmt.RemoveServiceIDs(input.RemoveServiceIDs...)
 	}
 	return updateStmt.Save(ctx)
 }

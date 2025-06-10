@@ -15,31 +15,6 @@ func (self *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*ent.Use
 	return self.base.DB.User.Get(ctx, id)
 }
 
-func (self *UserRepository) GetOrCreate(ctx context.Context, email string) (*ent.User, error) {
-	// Try to find existing user
-	user, err := self.base.DB.User.
-		Query().
-		Where(user.EmailEQ(email)).
-		Only(ctx)
-
-	if err != nil {
-		if !ent.IsNotFound(err) {
-			return nil, err
-		}
-		// Create new user if not found
-		user, err = self.base.DB.User.
-			Create().
-			SetEmail(email).
-			Save(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return user, nil
-}
-
 func (self *UserRepository) GetByEmail(ctx context.Context, email string) (*ent.User, error) {
 	return self.base.DB.User.Query().Where(user.EmailEQ(email)).Only(ctx)
 }

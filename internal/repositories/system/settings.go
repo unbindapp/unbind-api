@@ -33,7 +33,7 @@ func (self *SystemRepository) UpdateSystemSettings(ctx context.Context, input *S
 		}
 		if ent.IsNotFound(err) {
 			// Create system settings
-			settings, err = self.base.DB.SystemSetting.Create().Save(ctx)
+			settings, err = tx.Client().SystemSetting.Create().Save(ctx)
 			if err != nil {
 				return err
 			}
@@ -47,7 +47,7 @@ func (self *SystemRepository) UpdateSystemSettings(ctx context.Context, input *S
 				m.ClearWildcardBaseURL()
 			} else {
 				d := strings.TrimPrefix(*input.WildcardDomain, "https://")
-				d = strings.TrimPrefix(*input.WildcardDomain, "http://")
+				d = strings.TrimPrefix(d, "http://")
 				m.SetWildcardBaseURL(d)
 			}
 		}

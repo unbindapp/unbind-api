@@ -261,65 +261,6 @@ func (_c *UserRepositoryMock_GetGroups_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// GetOrCreate provides a mock function with given fields: ctx, email
-func (_m *UserRepositoryMock) GetOrCreate(ctx context.Context, email string) (*ent.User, error) {
-	ret := _m.Called(ctx, email)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetOrCreate")
-	}
-
-	var r0 *ent.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*ent.User, error)); ok {
-		return rf(ctx, email)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *ent.User); ok {
-		r0 = rf(ctx, email)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ent.User)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, email)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UserRepositoryMock_GetOrCreate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOrCreate'
-type UserRepositoryMock_GetOrCreate_Call struct {
-	*mock.Call
-}
-
-// GetOrCreate is a helper method to define mock.On call
-//   - ctx context.Context
-//   - email string
-func (_e *UserRepositoryMock_Expecter) GetOrCreate(ctx interface{}, email interface{}) *UserRepositoryMock_GetOrCreate_Call {
-	return &UserRepositoryMock_GetOrCreate_Call{Call: _e.mock.On("GetOrCreate", ctx, email)}
-}
-
-func (_c *UserRepositoryMock_GetOrCreate_Call) Run(run func(ctx context.Context, email string)) *UserRepositoryMock_GetOrCreate_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *UserRepositoryMock_GetOrCreate_Call) Return(_a0 *ent.User, _a1 error) *UserRepositoryMock_GetOrCreate_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *UserRepositoryMock_GetOrCreate_Call) RunAndReturn(run func(context.Context, string) (*ent.User, error)) *UserRepositoryMock_GetOrCreate_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // NewUserRepositoryMock creates a new instance of UserRepositoryMock. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewUserRepositoryMock(t interface {
