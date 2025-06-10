@@ -79,11 +79,11 @@ func n8nTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/healthz/readiness",
 					Port:                      utils.ToPtr(int32(8000)),
-					PeriodSeconds:             30,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  5,
-					ReadinessFailureThreshold: 3,
+					PeriodSeconds:             utils.ToPtr(int32(30)),
+					TimeoutSeconds:            utils.ToPtr(int32(5)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(5)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(3)),
 				},
 				Variables: []schema.TemplateVariable{
 					// Queue mode for worker
@@ -190,11 +190,11 @@ func n8nTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/healthz",
 					Port:                      utils.ToPtr(int32(5678)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(5)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(3)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(3)),
 				},
 				Variables: []schema.TemplateVariable{
 					// Host related variables

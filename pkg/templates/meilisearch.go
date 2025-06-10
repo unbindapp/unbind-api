@@ -62,11 +62,11 @@ func meiliSearchTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/health",
 					Port:                      utils.ToPtr(int32(7700)),
-					PeriodSeconds:             2,
-					TimeoutSeconds:            10,
-					StartupFailureThreshold:   15,
-					LivenessFailureThreshold:  15,
-					ReadinessFailureThreshold: 3,
+					PeriodSeconds:             utils.ToPtr(int32(2)),
+					TimeoutSeconds:            utils.ToPtr(int32(10)),
+					StartupFailureThreshold:   utils.ToPtr(int32(15)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(15)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(3)),
 				},
 				Variables: []schema.TemplateVariable{
 					{

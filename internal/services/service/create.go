@@ -154,6 +154,13 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("received unsupported service type %s", input.Type))
 	}
 
+	// Validate health check
+	if input.HealthCheck != nil {
+		if err := input.HealthCheck.Validate(); err != nil {
+			return nil, err
+		}
+	}
+
 	// PVC validation, requires a path
 	for _, volume := range input.Volumes {
 		if !utils.IsValidUnixPath(volume.MountPath) {

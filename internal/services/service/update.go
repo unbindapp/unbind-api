@@ -242,6 +242,21 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			}
 		}
 
+		// Validate health check if updating
+		if input.HealthCheck != nil {
+			// Copy data from existing
+			if service.Edges.ServiceConfig.HealthCheck != nil {
+				input.HealthCheck.LivenessFailureThreshold = service.Edges.ServiceConfig.HealthCheck.LivenessFailureThreshold
+				input.HealthCheck.ReadinessFailureThreshold = service.Edges.ServiceConfig.HealthCheck.ReadinessFailureThreshold
+				input.HealthCheck.StartupFailureThreshold = service.Edges.ServiceConfig.HealthCheck.StartupFailureThreshold
+				input.HealthCheck.PeriodSeconds = service.Edges.ServiceConfig.HealthCheck.PeriodSeconds
+				input.HealthCheck.TimeoutSeconds = service.Edges.ServiceConfig.HealthCheck.TimeoutSeconds
+			}
+			if err := input.HealthCheck.Validate(); err != nil {
+				return err
+			}
+		}
+
 		// Update the service config
 		updateInput := &service_repo.MutateConfigInput{
 			ServiceID:                     input.ServiceID,

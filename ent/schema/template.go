@@ -278,7 +278,7 @@ func (self *ValueGenerator) Generate(inputs map[string]string) (*GenerateRespons
 		// Find the input by ID
 		inputValue, ok := inputs[self.InputID]
 		if !ok {
-			return nil, fmt.Errorf("input ID %d not found in inputs map", self.InputID)
+			return nil, fmt.Errorf("input ID %s not found in inputs map", self.InputID)
 		}
 		return &GenerateResponse{
 			GeneratedValue: self.AddPrefix + inputValue,

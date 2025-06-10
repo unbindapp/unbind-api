@@ -46,7 +46,7 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 				Type:     schema.ServiceTypeDockerimage,
 				Builder:  schema.ServiceBuilderDocker,
 				InputIDs: []string{"input_domain", "input_storage_size"},
-				Image:    utils.ToPtr("ghcr.io/unbindapp/pocketbase:v0.28.2"),
+				Image:    utils.ToPtr("ghcr.io/unbindapp/pocketbase:v0.28.3"),
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
 					CPULimitsMillicores:   400,
@@ -61,11 +61,11 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/api/health",
 					Port:                      utils.ToPtr(int32(8090)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   3,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(5)),
+					StartupFailureThreshold:   utils.ToPtr(int32(3)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(3)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(3)),
 				},
 				Variables: []schema.TemplateVariable{
 					{

@@ -99,7 +99,7 @@ func (p *DatabaseProvider) FetchDatabaseDefinition(
 		Chart:       metadata.Chart,
 	}
 
-	if db.Type == "helm" && db.Chart == nil {
+	if db.Type == "helm" && (db.Chart == nil || db.Chart.Name == "" || db.Chart.Version == "" || db.Chart.Repository == "" || db.Chart.RepositoryName == "") {
 		return nil, fmt.Errorf("chart information is required for Helm database type")
 	}
 

@@ -68,12 +68,17 @@ func GetSqlDbConn(cfg config.ConfigInterface, mock bool) (SqlDBConn, error) {
 		os.Exit(1)
 	}
 
+	sslMode := cfg.GetPostgresSSLMode()
+	if sslMode == "" {
+		sslMode = "disable" // Default to disable if not set
+	}
+
 	return &PostgresConn{
 		Host:     postgresHost,
 		Port:     postgresPort,
 		Password: postgresPassword,
 		User:     postgresUser,
 		DBName:   postgresDb,
-		SSLMode:  cfg.GetPostgresSSLMode(),
+		SSLMode:  sslMode,
 	}, nil
 }

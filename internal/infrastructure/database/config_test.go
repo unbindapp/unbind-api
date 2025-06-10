@@ -18,7 +18,7 @@ func TestGetSqlDbConnPostgres(t *testing.T) {
 	}, false)
 	assert.Nil(t, err)
 
-	assert.Equal(t, "postgres://user:password@127.0.0.1:5432/pippin", conn.DSN())
+	assert.Equal(t, "postgres://user:password@127.0.0.1:5432/pippin?sslmode=disable", conn.DSN())
 	assert.Equal(t, dialect.Postgres, conn.Dialect())
 	assert.Equal(t, "pgx", conn.Driver())
 }

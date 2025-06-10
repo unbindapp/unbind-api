@@ -172,13 +172,10 @@ Unbind uses extensive code generation for maintainable, type-safe code:
 
 ```bash
 # Regenerate Ent entities and edges
-go generate ./ent/...
+make ent
 
-# Regenerate service interfaces
-go generate ./...
-
-# Regenerate mocks for testing
-mockery
+# Regenerate service interfaces and mocks
+make interfaces
 ```
 
 ### **Database Migrations**
@@ -190,7 +187,7 @@ Update entities in `./ent/schema`, then create a new versioned migration.
 make migrate NAME=add_awesome_feature
 
 # If editing the migration manually, then re-generate checksum
-make migrate-checksum
+make migrate:checksum
 ```
 
 Migrations are applied automatically on API startup.

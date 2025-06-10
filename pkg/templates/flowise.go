@@ -79,11 +79,11 @@ func flowiseTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/api/v1/ping",
 					Port:                      utils.ToPtr(int32(3000)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   3,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 3,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(5)),
+					StartupFailureThreshold:   utils.ToPtr(int32(3)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(3)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(3)),
 				},
 				Variables: []schema.TemplateVariable{
 					{

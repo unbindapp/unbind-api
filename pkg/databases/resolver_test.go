@@ -1549,28 +1549,28 @@ func TestHelmChartValidation(t *testing.T) {
 		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "incomplete-chart-name")
 		t.Logf("Error: %v", err)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "chart name is required for Helm database type")
+		assert.Contains(t, err.Error(), "chart information is required for Helm database type")
 	})
 
 	t.Run("Incomplete Chart Info - Missing Version", func(t *testing.T) {
 		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "incomplete-chart-version")
 		t.Logf("Error: %v", err)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "chart version is required for Helm database type")
+		assert.Contains(t, err.Error(), "chart information is required for Helm database type")
 	})
 
 	t.Run("Incomplete Chart Info - Missing Repository", func(t *testing.T) {
 		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "incomplete-chart-repo")
 		t.Logf("Error: %v", err)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "chart repository is required for Helm database type")
+		assert.Contains(t, err.Error(), "chart information is required for Helm database type")
 	})
 
 	t.Run("Incomplete Chart Info - Missing RepositoryName", func(t *testing.T) {
 		_, err := provider.FetchDatabaseDefinition(ctx, "v0.1", "incomplete-chart-reponame")
 		t.Logf("Error: %v", err)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "chart repositoryName is required for Helm database type")
+		assert.Contains(t, err.Error(), "chart information is required for Helm database type")
 	})
 }
 

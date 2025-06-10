@@ -83,11 +83,11 @@ func plausibleTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/api/health",
 					Port:                      utils.ToPtr(int32(8000)),
-					PeriodSeconds:             10,
-					TimeoutSeconds:            10,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  5,
-					ReadinessFailureThreshold: 10,
+					PeriodSeconds:             utils.ToPtr(int32(10)),
+					TimeoutSeconds:            utils.ToPtr(int32(10)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(5)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(10)),
 				},
 				Variables: []schema.TemplateVariable{
 					{

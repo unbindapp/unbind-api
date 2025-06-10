@@ -78,11 +78,11 @@ func formbricksTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/health",
 					Port:                      utils.ToPtr(int32(3000)),
-					PeriodSeconds:             10,
-					TimeoutSeconds:            60,
-					StartupFailureThreshold:   35,
-					LivenessFailureThreshold:  10,
-					ReadinessFailureThreshold: 20,
+					PeriodSeconds:             utils.ToPtr(int32(10)),
+					TimeoutSeconds:            utils.ToPtr(int32(60)),
+					StartupFailureThreshold:   utils.ToPtr(int32(35)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(10)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(20)),
 				},
 				Variables: []schema.TemplateVariable{
 					{

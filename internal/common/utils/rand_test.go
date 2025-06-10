@@ -68,32 +68,32 @@ func TestGenerateSlug(t *testing.T) {
 		{
 			name:        "Simple name",
 			displayName: "New Project",
-			wantPattern: "^new-project-[a-z0-9]{6}$",
+			wantPattern: "^new-project-[a-z0-9]{12}$",
 		},
 		{
 			name:        "Name with special characters",
 			displayName: "Hello World! @#$ 123",
-			wantPattern: "^hello-world-123-[a-z0-9]{6}$",
+			wantPattern: "^hello-world-123-[a-z0-9]{12}$",
 		},
 		{
 			name:        "Name with multiple spaces",
 			displayName: "  Multiple   Spaces  ",
-			wantPattern: "^multiple-spaces-[a-z0-9]{6}$",
+			wantPattern: "^multiple-spaces-[a-z0-9]{12}$",
 		},
 		{
 			name:        "Empty string",
 			displayName: "",
-			wantPattern: "^untitled-[a-z0-9]{6}$",
+			wantPattern: "^untitled-[a-z0-9]{12}$",
 		},
 		{
 			name:        "Non-ASCII characters",
 			displayName: "Café Résumé",
-			wantPattern: "^caf-r-sum-[a-z0-9]{6}$",
+			wantPattern: "^caf-r-sum-[a-z0-9]{12}$",
 		},
 		{
 			name:        "Only special characters",
 			displayName: "!@#$%^&*()",
-			wantPattern: "^untitled-[a-z0-9]{6}$",
+			wantPattern: "^untitled-[a-z0-9]{12}$",
 		},
 	}
 

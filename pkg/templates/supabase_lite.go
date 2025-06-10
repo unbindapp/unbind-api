@@ -1358,11 +1358,11 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/api/platform/profile",
 					Port:                      utils.ToPtr(int32(3000)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 5,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(5)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(3)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(5)),
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -1444,11 +1444,11 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/status",
 					Port:                      utils.ToPtr(int32(5000)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 5,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(5)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(3)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(5)),
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{
@@ -1527,11 +1527,11 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				HealthCheck: &schema.HealthCheck{
 					Type:                      schema.HealthCheckTypeExec,
 					Command:                   "mc ready local",
-					PeriodSeconds:             5,
-					TimeoutSeconds:            20,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  10,
-					ReadinessFailureThreshold: 5,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(20)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(10)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(5)),
 				},
 				Variables: []schema.TemplateVariable{
 					{
@@ -1617,11 +1617,11 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/health",
 					Port:                      utils.ToPtr(int32(9999)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            5,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  3,
-					ReadinessFailureThreshold: 5,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(5)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(3)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(5)),
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{

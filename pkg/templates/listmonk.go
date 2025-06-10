@@ -79,11 +79,11 @@ func listmonkTemplate() *schema.TemplateDefinition {
 					Type:                      schema.HealthCheckTypeHTTP,
 					Path:                      "/",
 					Port:                      utils.ToPtr(int32(9000)),
-					PeriodSeconds:             5,
-					TimeoutSeconds:            20,
-					StartupFailureThreshold:   10,
-					LivenessFailureThreshold:  10,
-					ReadinessFailureThreshold: 10,
+					PeriodSeconds:             utils.ToPtr(int32(5)),
+					TimeoutSeconds:            utils.ToPtr(int32(20)),
+					StartupFailureThreshold:   utils.ToPtr(int32(10)),
+					LivenessFailureThreshold:  utils.ToPtr(int32(10)),
+					ReadinessFailureThreshold: utils.ToPtr(int32(10)),
 				},
 				Variables: []schema.TemplateVariable{
 					{

@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -189,13 +190,42 @@ func (u HealthCheckType) Schema(r huma.Registry) *huma.Schema {
 type HealthCheck struct {
 	Type                      HealthCheckType `json:"type" required:"true"`
 	Path                      string          `json:"path,omitempty" required:"false" doc:"Path for http health checks"`
-	Port                      *int32          `json:"port,omitempty" required:"false" doc:"Port for http health checks"`
+	Port                      *int32          `json:"port,omitempty" required:"false" doc:"Port for http health checks" min:"1" max:"65535"`
 	Command                   string          `json:"command,omitempty" required:"false" doc:"Command for exec health checks"`
-	PeriodSeconds             int32           `json:"period_seconds" required:"true" default:"10" doc:"Period in seconds for health checks"`
-	TimeoutSeconds            int32           `json:"timeout_seconds" required:"true" default:"5" doc:"Timeout in seconds for health checks"`
-	StartupFailureThreshold   int32           `json:"startup_failure_threshold" required:"true" default:"5" doc:"Number of failures before the container is considered unhealthy"`
-	LivenessFailureThreshold  int32           `json:"liveness_failure_threshold" required:"true" default:"5" doc:"Number of failures before the container is considered unhealthy"`
-	ReadinessFailureThreshold int32           `json:"readiness_failure_threshold" required:"true" default:"3" doc:"Number of failures before the container is considered unhealthy"`
+	PeriodSeconds             *int32          `json:"period_seconds" required:"false" doc:"Period in seconds for health checks" min:"1"`
+	TimeoutSeconds            *int32          `json:"timeout_seconds" required:"false" doc:"Timeout in seconds for health checks" min:"1"`
+	StartupFailureThreshold   *int32          `json:"startup_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
+	LivenessFailureThreshold  *int32          `json:"liveness_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
+	ReadinessFailureThreshold *int32          `json:"readiness_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
+}
+
+func (self *HealthCheck) Validate() error {
+	self.ApplyDefaults()
+	if self.Type == HealthCheckTypeExec && self.Command == "" {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "command must be set for exec health checks")
+	}
+	if self.Type == HealthCheckTypeHTTP && (self.Path == "" || self.Port == nil) {
+		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "path and port must be set for http health checks")
+	}
+	return nil
+}
+
+func (self *HealthCheck) ApplyDefaults() {
+	if self.PeriodSeconds == nil {
+		self.PeriodSeconds = utils.ToPtr(int32(10))
+	}
+	if self.TimeoutSeconds == nil {
+		self.TimeoutSeconds = utils.ToPtr(int32(5))
+	}
+	if self.StartupFailureThreshold == nil {
+		self.StartupFailureThreshold = utils.ToPtr(int32(20))
+	}
+	if self.LivenessFailureThreshold == nil {
+		self.LivenessFailureThreshold = utils.ToPtr(int32(5))
+	}
+	if self.ReadinessFailureThreshold == nil {
+		self.ReadinessFailureThreshold = utils.ToPtr(int32(10))
+	}
 }
 
 func (self *HealthCheck) AsV1HealthCheck() *v1.HealthCheckSpec {
@@ -204,11 +234,11 @@ func (self *HealthCheck) AsV1HealthCheck() *v1.HealthCheckSpec {
 	}
 	healthCheck := &v1.HealthCheckSpec{
 		Type:                      string(self.Type),
-		PeriodSeconds:             utils.ToPtr(self.PeriodSeconds),
-		TimeoutSeconds:            utils.ToPtr(self.TimeoutSeconds),
-		StartupFailureThreshold:   utils.ToPtr(self.StartupFailureThreshold),
-		LivenessFailureThreshold:  utils.ToPtr(self.LivenessFailureThreshold),
-		ReadinessFailureThreshold: utils.ToPtr(self.ReadinessFailureThreshold),
+		PeriodSeconds:             self.PeriodSeconds,
+		TimeoutSeconds:            self.TimeoutSeconds,
+		StartupFailureThreshold:   self.StartupFailureThreshold,
+		LivenessFailureThreshold:  self.LivenessFailureThreshold,
+		ReadinessFailureThreshold: self.ReadinessFailureThreshold,
 		Port:                      self.Port,
 	}
 	if self.Path != "" {

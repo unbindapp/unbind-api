@@ -1,9 +1,10 @@
-.PHONY: migrate migrate-checksum help
+.PHONY: migrate migrate\:checksum interfaces help
 
 help:
 	@echo "Available commands:"
 	@echo "  make migrate NAME=initial_migration  - Create a new migration"
-	@echo "  make migrate-checksum               - Regenerate checksum"
+	@echo "  make migrate:checksum                - Regenerate checksum"
+	@echo "  make interfaces                      - Generate interfaces and mocks"
 
 migrate:
 	@if [ -z "$(NAME)" ]; then \
@@ -14,6 +15,16 @@ migrate:
 	@echo "Creating migration: $(NAME)"
 	@go run -mod=mod ./ent/migrate/main.go -name=$(NAME)
 
-migrate-checksum:
+migrate\:checksum:
 	@echo "Regenerating checksum..."
 	@go run -mod=mod ./ent/migrate/main.go -checksum
+
+interfaces:
+	@echo "Generating interfaces..."
+	@go generate ./internal/repositories/...
+	@echo "Generating mocks..."
+	@go run github.com/vektra/mockery/v2@latest
+
+ent:
+	@echo "Generating entities..."
+	@go generate ./ent/...
