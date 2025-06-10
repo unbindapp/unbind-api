@@ -26,7 +26,7 @@ func (self *TemplateRepository) UpsertPredefinedTemplates(ctx context.Context) (
 			DoNothing().
 			Exec(ctx)
 		if err != nil {
-			multierror.Append(result, err)
+			result = multierror.Append(result, err)
 		}
 	}
 

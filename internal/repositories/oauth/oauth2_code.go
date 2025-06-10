@@ -9,7 +9,13 @@ import (
 )
 
 func (self *OauthRepository) CreateAuthCode(ctx context.Context, code, clientID, scope string, user *ent.User, expiresAt time.Time) (*ent.Oauth2Code, error) {
-	return self.base.DB.Oauth2Code.Create().SetAuthCode(code).SetClientID(clientID).SetScope(scope).SetUser(user).SetExpiresAt(expiresAt).Save(ctx)
+	created, err := self.base.DB.Oauth2Code.Create().SetAuthCode(code).SetClientID(clientID).SetScope(scope).SetUser(user).SetExpiresAt(expiresAt).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	created.Edges.User = user
+
+	return created, nil
 }
 
 func (self *OauthRepository) DeleteAuthCode(ctx context.Context, code string) error {

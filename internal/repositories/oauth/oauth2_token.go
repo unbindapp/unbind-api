@@ -25,7 +25,14 @@ func (self *OauthRepository) CreateToken(ctx context.Context, accessToken, refre
 		}
 	}
 
-	return self.base.DB.Oauth2Token.Create().SetAccessToken(accessToken).SetRefreshToken(refreshToken).SetClientID(clientID).SetExpiresAt(expiresAt).SetScope(scope).SetUser(user).Save(ctx)
+	created, err := self.base.DB.Oauth2Token.Create().SetAccessToken(accessToken).SetRefreshToken(refreshToken).SetClientID(clientID).SetExpiresAt(expiresAt).SetScope(scope).SetUser(user).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	created.Edges.User = user
+
+	return created, nil
 }
 
 func (self *OauthRepository) RevokeAccessToken(ctx context.Context, accessToken string) error {
@@ -41,16 +48,17 @@ func (self *OauthRepository) RevokeRefreshToken(ctx context.Context, refreshToke
 func (self *OauthRepository) GetByAccessToken(ctx context.Context, accessToken string) (*ent.Oauth2Token, error) {
 	return self.base.DB.Oauth2Token.Query().Where(
 		oauth2token.AccessToken(accessToken),
-	).Only(ctx)
+	).WithUser().Only(ctx)
 }
 
 func (self *OauthRepository) GetByRefreshToken(ctx context.Context, refreshToken string) (*ent.Oauth2Token, error) {
 	return self.base.DB.Oauth2Token.Query().Where(
 		oauth2token.RefreshToken(refreshToken),
-	).Only(ctx)
+	).WithUser().Only(ctx)
 }
 
 func (self *OauthRepository) CleanTokenStore(ctx context.Context) (result error) {
+
 	_, err := self.base.DB.Oauth2Token.Delete().Where(
 		oauth2token.Or(
 			oauth2token.Revoked(true),
@@ -58,7 +66,7 @@ func (self *OauthRepository) CleanTokenStore(ctx context.Context) (result error)
 		),
 	).Exec(ctx)
 	if err != nil {
-		multierror.Append(result, err)
+		result = multierror.Append(result, err)
 	}
 
 	_, err = self.base.DB.Oauth2Code.Delete().Where(
@@ -66,7 +74,7 @@ func (self *OauthRepository) CleanTokenStore(ctx context.Context) (result error)
 	).Exec(ctx)
 
 	if err != nil {
-		multierror.Append(result, err)
+		result = multierror.Append(result, err)
 	}
 
 	return result

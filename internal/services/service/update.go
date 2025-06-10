@@ -159,7 +159,11 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 
 	// Verify backup sources (for databases)
 	// Make sure we can read and write to the S3 bucket provided
-	if service.Type == schema.ServiceTypeDatabase && input.S3BackupSourceID != nil && input.S3BackupBucket != nil {
+	if service.Type == schema.ServiceTypeDatabase &&
+		input.S3BackupSourceID != nil &&
+		*input.S3BackupSourceID != uuid.Nil &&
+		input.S3BackupBucket != nil &&
+		*input.S3BackupBucket != "" {
 		// Check if the S3 source exists
 		s3Source, err := self.repo.S3().GetByID(ctx, *input.S3BackupSourceID)
 		if err != nil {

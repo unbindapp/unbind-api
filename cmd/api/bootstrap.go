@@ -29,16 +29,16 @@ func (self *Bootstrapper) Sync(ctx context.Context) error {
 	var multierr error
 
 	// Sync system settings
-	multierror.Append(multierr, self.syncSystemSettings(ctx))
-	multierror.Append(multierr, self.syncBuildkitdSettings(ctx))
+	multierr = multierror.Append(multierr, self.syncSystemSettings(ctx))
+	multierr = multierror.Append(multierr, self.syncBuildkitdSettings(ctx))
 	// Bootstrap registry
-	multierror.Append(multierr, self.bootstrapRegistry(ctx))
+	multierr = multierror.Append(multierr, self.bootstrapRegistry(ctx))
 	// Bootstrap team
-	multierror.Append(multierr, self.bootstrapTeam(ctx))
+	multierr = multierror.Append(multierr, self.bootstrapTeam(ctx))
 	// Bootstrap groups and permissions
-	multierror.Append(multierr, self.bootstrapGroupsAndPermissions(ctx))
+	multierr = multierror.Append(multierr, self.bootstrapGroupsAndPermissions(ctx))
 	// Sync RBAC
-	multierror.Append(multierr, self.syncK8sRBAC(ctx))
+	multierr = multierror.Append(multierr, self.syncK8sRBAC(ctx))
 
 	return multierr
 }
