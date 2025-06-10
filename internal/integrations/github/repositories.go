@@ -527,6 +527,7 @@ func (self *GithubClient) GetCommitSummary(ctx context.Context, installation *en
 	var repoCommit *github.RepositoryCommit
 
 	if isCommitSHA {
+		commitSHA = branchOrSHA
 		// Get commit by SHA
 		repoCommit, _, err = authenticatedClient.Repositories.GetCommit(ctx, owner, repo, branchOrSHA, nil)
 		if err != nil {
@@ -539,7 +540,7 @@ func (self *GithubClient) GetCommitSummary(ctx context.Context, installation *en
 			return "", "", nil, fmt.Errorf("error getting branch %s for repository %s/%s: %v", branchOrSHA, owner, repo, err)
 		}
 		// Get the commit SHA from the branch
-		commitSHA := branchInfo.GetCommit().GetSHA()
+		commitSHA = branchInfo.GetCommit().GetSHA()
 		// Use the commit SHA to get the full commit information
 		repoCommit, _, err = authenticatedClient.Repositories.GetCommit(ctx, owner, repo, commitSHA, nil)
 		if err != nil {
@@ -550,7 +551,6 @@ func (self *GithubClient) GetCommitSummary(ctx context.Context, installation *en
 	commit := repoCommit.GetCommit()
 	author := repoCommit.GetAuthor()
 
-	commitSHA = commit.GetSHA()
 	commitMessage = commit.GetMessage()
 
 	if author != nil {
