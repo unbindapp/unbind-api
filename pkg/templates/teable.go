@@ -126,7 +126,7 @@ func teableTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/health",
 					Port:                      utils.ToPtr(int32(3000)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),

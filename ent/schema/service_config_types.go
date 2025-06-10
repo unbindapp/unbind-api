@@ -188,29 +188,32 @@ func (u HealthCheckType) Schema(r huma.Registry) *huma.Schema {
 }
 
 type HealthCheck struct {
-	Type                      HealthCheckType `json:"type" required:"true"`
-	Path                      string          `json:"path,omitempty" required:"false" doc:"Path for http health checks"`
-	Port                      *int32          `json:"port,omitempty" required:"false" doc:"Port for http health checks" min:"1" max:"65535"`
-	Command                   string          `json:"command,omitempty" required:"false" doc:"Command for exec health checks"`
-	PeriodSeconds             *int32          `json:"period_seconds" required:"false" doc:"Period in seconds for health checks" min:"1"`
-	TimeoutSeconds            *int32          `json:"timeout_seconds" required:"false" doc:"Timeout in seconds for health checks" min:"1"`
-	StartupFailureThreshold   *int32          `json:"startup_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
-	LivenessFailureThreshold  *int32          `json:"liveness_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
-	ReadinessFailureThreshold *int32          `json:"readiness_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
+	Type                      *HealthCheckType `json:"type,omitempty" required:"false"`
+	Path                      string           `json:"path,omitempty" required:"false" doc:"Path for http health checks"`
+	Port                      *int32           `json:"port,omitempty" required:"false" doc:"Port for http health checks" min:"1" max:"65535"`
+	Command                   string           `json:"command,omitempty" required:"false" doc:"Command for exec health checks"`
+	PeriodSeconds             *int32           `json:"period_seconds" required:"false" doc:"Period in seconds for health checks" min:"1"`
+	TimeoutSeconds            *int32           `json:"timeout_seconds" required:"false" doc:"Timeout in seconds for health checks" min:"1"`
+	StartupFailureThreshold   *int32           `json:"startup_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
+	LivenessFailureThreshold  *int32           `json:"liveness_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
+	ReadinessFailureThreshold *int32           `json:"readiness_failure_threshold" required:"false" doc:"Number of failures before the container is considered unhealthy" min:"1"`
 }
 
 func (self *HealthCheck) Validate() error {
 	self.ApplyDefaults()
-	if self.Type == HealthCheckTypeExec && self.Command == "" {
+	if *self.Type == HealthCheckTypeExec && self.Command == "" {
 		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "command must be set for exec health checks")
 	}
-	if self.Type == HealthCheckTypeHTTP && (self.Path == "" || self.Port == nil) {
+	if *self.Type == HealthCheckTypeHTTP && (self.Path == "" || self.Port == nil) {
 		return errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, "path and port must be set for http health checks")
 	}
 	return nil
 }
 
 func (self *HealthCheck) ApplyDefaults() {
+	if self.Type == nil {
+		self.Type = utils.ToPtr(HealthCheckTypeHTTP)
+	}
 	if self.PeriodSeconds == nil {
 		self.PeriodSeconds = utils.ToPtr(int32(10))
 	}
@@ -232,8 +235,11 @@ func (self *HealthCheck) AsV1HealthCheck() *v1.HealthCheckSpec {
 	if self == nil {
 		return nil
 	}
+	if self.Type == nil {
+		self.Type = utils.ToPtr(HealthCheckTypeHTTP)
+	}
 	healthCheck := &v1.HealthCheckSpec{
-		Type:                      string(self.Type),
+		Type:                      string(*self.Type),
 		PeriodSeconds:             self.PeriodSeconds,
 		TimeoutSeconds:            self.TimeoutSeconds,
 		StartupFailureThreshold:   self.StartupFailureThreshold,

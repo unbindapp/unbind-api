@@ -677,6 +677,11 @@ func (scu *ServiceConfigUpdate) check() error {
 			return &ValidationError{Name: "railpack_framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_framework": %w`, err)}
 		}
 	}
+	if v, ok := scu.mutation.HealthCheck(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "health_check", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.health_check": %w`, err)}
+		}
+	}
 	if scu.mutation.ServiceCleared() && len(scu.mutation.ServiceIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ServiceConfig.service"`)
 	}
@@ -1626,6 +1631,11 @@ func (scuo *ServiceConfigUpdateOne) check() error {
 	if v, ok := scuo.mutation.RailpackFramework(); ok {
 		if err := serviceconfig.RailpackFrameworkValidator(v); err != nil {
 			return &ValidationError{Name: "railpack_framework", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.railpack_framework": %w`, err)}
+		}
+	}
+	if v, ok := scuo.mutation.HealthCheck(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "health_check", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.health_check": %w`, err)}
 		}
 	}
 	if scuo.mutation.ServiceCleared() && len(scuo.mutation.ServiceIDs()) > 0 {

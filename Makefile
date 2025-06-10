@@ -1,10 +1,11 @@
-.PHONY: migrate migrate\:checksum interfaces help
+.PHONY: migrate migrate\:checksum interfaces ent help
 
 help:
 	@echo "Available commands:"
 	@echo "  make migrate NAME=initial_migration  - Create a new migration"
 	@echo "  make migrate:checksum                - Regenerate checksum"
 	@echo "  make interfaces                      - Generate interfaces and mocks"
+	@echo "  make ent                             - Generate entities"
 
 migrate:
 	@if [ -z "$(NAME)" ]; then \

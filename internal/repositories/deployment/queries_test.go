@@ -30,6 +30,8 @@ func (suite *DeploymentQueriesSuite) SetupTest() {
 	suite.testTeam = suite.DB.Team.Create().
 		SetName("test-team").
 		SetNamespace("test-namespace").
+		SetKubernetesName("test-team-k8s").
+		SetKubernetesSecret("test-secret").
 		SaveX(suite.Ctx)
 
 	suite.testProject = suite.DB.Project.Create().
@@ -43,12 +45,15 @@ func (suite *DeploymentQueriesSuite) SetupTest() {
 		SetName("test-environment").
 		SetKubernetesName("test-env-k8s").
 		SetProjectID(suite.testProject.ID).
+		SetKubernetesSecret("test-secret").
 		SaveX(suite.Ctx)
 
 	suite.testService = suite.DB.Service.Create().
 		SetName("test-service").
 		SetType(schema.ServiceTypeDockerimage).
 		SetEnvironmentID(suite.testEnvironment.ID).
+		SetKubernetesSecret("test-secret").
+		SetKubernetesName("test-service-k8s").
 		SaveX(suite.Ctx)
 
 	committer := &schema.GitCommitter{
@@ -82,8 +87,8 @@ func (suite *DeploymentQueriesSuite) TestGetByID() {
 		suite.NoError(err)
 		suite.NotNil(deployment)
 		suite.Equal(suite.testDeployment.ID, deployment.ID)
-		suite.Equal("abc123", deployment.CommitSha)
-		suite.Equal("Test commit", deployment.CommitMessage)
+		suite.Equal("abc123", *deployment.CommitSha)
+		suite.Equal("Test commit", *deployment.CommitMessage)
 		suite.Equal(schema.DeploymentStatusBuildQueued, deployment.Status)
 	})
 
@@ -116,6 +121,7 @@ func (suite *DeploymentQueriesSuite) TestExistsInEnvironment() {
 			SetName("another-environment").
 			SetKubernetesName("another-env-k8s").
 			SetProjectID(suite.testProject.ID).
+			SetKubernetesSecret("test-secret").
 			SaveX(suite.Ctx)
 
 		exists, err := suite.deploymentRepo.ExistsInEnvironment(suite.Ctx, suite.testDeployment.ID, anotherEnv.ID)
@@ -188,6 +194,8 @@ func (suite *DeploymentQueriesSuite) TestExistsInTeam() {
 		anotherTeam := suite.DB.Team.Create().
 			SetName("another-team").
 			SetNamespace("another-namespace").
+			SetKubernetesName("another-team-k8s").
+			SetKubernetesSecret("another-secret").
 			SaveX(suite.Ctx)
 
 		exists, err := suite.deploymentRepo.ExistsInTeam(suite.Ctx, suite.testDeployment.ID, anotherTeam.ID)
@@ -230,7 +238,7 @@ func (suite *DeploymentQueriesSuite) TestGetLastSuccessfulDeployment() {
 		suite.NoError(err)
 		suite.NotNil(deployment)
 		suite.Equal(successfulDeployment.ID, deployment.ID)
-		suite.Equal("def456", deployment.CommitSha)
+		suite.Equal("def456", *deployment.CommitSha)
 		suite.Equal(schema.DeploymentStatusBuildSucceeded, deployment.Status)
 	})
 
@@ -240,6 +248,8 @@ func (suite *DeploymentQueriesSuite) TestGetLastSuccessfulDeployment() {
 			SetName("new-service").
 			SetType(schema.ServiceTypeDockerimage).
 			SetEnvironmentID(suite.testEnvironment.ID).
+			SetKubernetesSecret("test-secret").
+			SetKubernetesName("new-service-k8s").
 			SaveX(suite.Ctx)
 
 		deployment, err := suite.deploymentRepo.GetLastSuccessfulDeployment(suite.Ctx, newService.ID)
@@ -277,7 +287,7 @@ func (suite *DeploymentQueriesSuite) TestGetLastSuccessfulDeployment() {
 		suite.NoError(err)
 		suite.NotNil(deployment)
 		suite.Equal(newerDeployment.ID, deployment.ID)
-		suite.Equal("newer456", deployment.CommitSha)
+		suite.Equal("newer456", *deployment.CommitSha)
 
 		// Ensure it's not the older one
 		suite.NotEqual(olderDeployment.ID, deployment.ID)
@@ -386,7 +396,7 @@ func (suite *DeploymentQueriesSuite) TestGetByServiceIDPaginated() {
 		// Get second page
 		jobs, nextCursor, err := suite.deploymentRepo.GetByServiceIDPaginated(suite.Ctx, suite.testService.ID, 3, firstCursor, nil)
 		suite.NoError(err)
-		suite.Len(jobs, 3)    // Should have 3 more (original test deployment + 2 remaining from our 5)
+		suite.Len(jobs, 2)    // Should have 2 more ( 5 total, 3 on first page, 2 on second page)
 		suite.Nil(nextCursor) // No more pages
 	})
 
@@ -417,6 +427,8 @@ func (suite *DeploymentQueriesSuite) TestGetByServiceIDPaginated() {
 			SetName("empty-service").
 			SetType(schema.ServiceTypeDockerimage).
 			SetEnvironmentID(suite.testEnvironment.ID).
+			SetKubernetesSecret("test-secret").
+			SetKubernetesName("empty-service-k8s").
 			SaveX(suite.Ctx)
 
 		jobs, nextCursor, err := suite.deploymentRepo.GetByServiceIDPaginated(suite.Ctx, newService.ID, 10, nil, nil)

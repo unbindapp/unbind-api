@@ -159,13 +159,6 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "githubinstallation_github_app_id",
-				Unique:  true,
-				Columns: []*schema.Column{GithubInstallationsColumns[12]},
-			},
-		},
 	}
 	// GroupsColumns holds the columns for the "groups" table.
 	GroupsColumns = []*schema.Column{

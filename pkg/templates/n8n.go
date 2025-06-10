@@ -76,7 +76,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/healthz/readiness",
 					Port:                      utils.ToPtr(int32(8000)),
 					PeriodSeconds:             utils.ToPtr(int32(30)),
@@ -187,7 +187,7 @@ func n8nTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/healthz",
 					Port:                      utils.ToPtr(int32(5678)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),

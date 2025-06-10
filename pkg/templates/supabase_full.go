@@ -1347,7 +1347,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/api/platform/profile",
 					Port:                      utils.ToPtr(int32(3000)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),
@@ -1433,7 +1433,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Image:     utils.ToPtr("supabase/logflare:1.14.2"),
 				DependsOn: []string{"service_postgresql"},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/health",
 					Port:                      utils.ToPtr(int32(4000)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),
@@ -1539,7 +1539,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/status",
 					Port:                      utils.ToPtr(int32(5000)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),
@@ -1619,7 +1619,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeExec,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeExec),
 					Command:                   "mc ready local",
 					PeriodSeconds:             utils.ToPtr(int32(5)),
 					TimeoutSeconds:            utils.ToPtr(int32(20)),
@@ -1700,7 +1700,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/health",
 					Port:                      utils.ToPtr(int32(9999)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),

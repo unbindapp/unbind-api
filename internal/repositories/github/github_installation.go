@@ -15,11 +15,10 @@ func (self *GithubRepository) GetInstallationByID(ctx context.Context, ID int64)
 }
 
 func (self *GithubRepository) GetInstallationsByCreator(ctx context.Context, createdBy uuid.UUID) ([]*ent.GithubInstallation, error) {
-	return self.base.DB.GithubInstallation.Query().WithGithubApp(func(gaq *ent.GithubAppQuery) {
-		gaq.Where(
-			githubapp.CreatedByEQ(createdBy),
-		)
-	}).All(ctx)
+	return self.base.DB.GithubApp.Query().
+		Where(githubapp.CreatedByEQ(createdBy)).
+		QueryInstallations().
+		WithGithubApp().All(ctx)
 }
 
 func (self *GithubRepository) GetInstallationsByAppID(ctx context.Context, appID int64) ([]*ent.GithubInstallation, error) {

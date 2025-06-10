@@ -72,7 +72,7 @@ func minioTemplate() *schema.TemplateDefinition {
 				},
 				RunCommand: utils.ToPtr("minio server /data --console-address ':9001'"),
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeExec,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeExec),
 					Command:                   "mc ready local",
 					PeriodSeconds:             utils.ToPtr(int32(5)),
 					TimeoutSeconds:            utils.ToPtr(int32(20)),

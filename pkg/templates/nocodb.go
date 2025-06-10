@@ -76,7 +76,7 @@ func nocodbTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/api/v1/health",
 					Port:                      utils.ToPtr(int32(8080)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),

@@ -58,7 +58,7 @@ func appsmithTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/",
 					Port:                      utils.ToPtr(int32(80)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),

@@ -58,7 +58,7 @@ func pocketBaseTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      schema.HealthCheckTypeHTTP,
+					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
 					Path:                      "/api/health",
 					Port:                      utils.ToPtr(int32(8090)),
 					PeriodSeconds:             utils.ToPtr(int32(5)),

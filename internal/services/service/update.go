@@ -246,6 +246,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		if input.HealthCheck != nil {
 			// Copy data from existing
 			if service.Edges.ServiceConfig.HealthCheck != nil {
+				input.HealthCheck.Type = service.Edges.ServiceConfig.HealthCheck.Type
 				input.HealthCheck.LivenessFailureThreshold = service.Edges.ServiceConfig.HealthCheck.LivenessFailureThreshold
 				input.HealthCheck.ReadinessFailureThreshold = service.Edges.ServiceConfig.HealthCheck.ReadinessFailureThreshold
 				input.HealthCheck.StartupFailureThreshold = service.Edges.ServiceConfig.HealthCheck.StartupFailureThreshold

@@ -540,6 +540,11 @@ func (scc *ServiceConfigCreate) check() error {
 	if _, ok := scc.mutation.BackupRetentionCount(); !ok {
 		return &ValidationError{Name: "backup_retention_count", err: errors.New(`ent: missing required field "ServiceConfig.backup_retention_count"`)}
 	}
+	if v, ok := scc.mutation.HealthCheck(); ok {
+		if err := v.Validate(); err != nil {
+			return &ValidationError{Name: "health_check", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.health_check": %w`, err)}
+		}
+	}
 	if len(scc.mutation.ServiceIDs()) == 0 {
 		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "ServiceConfig.service"`)}
 	}

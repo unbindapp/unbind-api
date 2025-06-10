@@ -6,7 +6,6 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"entgo.io/ent/schema/index"
 	"github.com/unbindapp/unbind-api/ent/schema/mixin"
 )
 
@@ -87,10 +86,7 @@ func (GithubInstallation) Edges() []ent.Edge {
 
 // Indexes of the GithubInstallation.
 func (GithubInstallation) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("github_app_id").
-			Unique(),
-	}
+	return nil
 }
 
 // Annotations of the GithubInstallation

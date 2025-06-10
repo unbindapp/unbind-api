@@ -287,7 +287,7 @@ func (self *ServiceRepository) UpdateConfig(
 	}
 
 	if input.HealthCheck != nil {
-		if input.HealthCheck.Type == schema.HealthCheckTypeNone {
+		if input.HealthCheck.Type == nil || *input.HealthCheck.Type == schema.HealthCheckTypeNone {
 			upd.ClearHealthCheck()
 		} else {
 			upd.SetHealthCheck(input.HealthCheck)

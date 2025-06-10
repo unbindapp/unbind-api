@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-github/v69/github"
 	"github.com/stretchr/testify/suite"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
 // mockGitHubClient is a mock implementation of the GitHub client
@@ -81,18 +82,18 @@ func (s *ReleaseTestSuite) SetupTest() {
 	mockClient := &mockGitHubClient{
 		listTagsFunc: func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error) {
 			return []*github.RepositoryTag{
-				{Name: github.Ptr("v0.0.1")},
-				{Name: github.Ptr("v0.0.2")},
-				{Name: github.Ptr("v0.0.3")},
-				{Name: github.Ptr("v0.1.0")},
+				{Name: utils.ToPtr("v0.0.1")},
+				{Name: utils.ToPtr("v0.0.2")},
+				{Name: utils.ToPtr("v0.0.3")},
+				{Name: utils.ToPtr("v0.1.0")},
 			}, nil, nil
 		},
 		listReleasesFunc: func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error) {
 			return []*github.RepositoryRelease{
-				{TagName: github.Ptr("v0.0.1")},
-				{TagName: github.Ptr("v0.0.2")},
-				{TagName: github.Ptr("v0.0.3")},
-				{TagName: github.Ptr("v0.1.0")},
+				{TagName: utils.ToPtr("v0.0.1")},
+				{TagName: utils.ToPtr("v0.0.2")},
+				{TagName: utils.ToPtr("v0.0.3")},
+				{TagName: utils.ToPtr("v0.1.0")},
 			}, nil, nil
 		},
 	}
@@ -181,16 +182,16 @@ func (s *ReleaseTestSuite) TestGetLatestVersion() {
 		{
 			name: "valid tags with releases",
 			mockTags: []*github.RepositoryTag{
-				{Name: github.Ptr("v0.0.1")},
-				{Name: github.Ptr("v0.0.2")},
-				{Name: github.Ptr("v0.0.3")},
-				{Name: github.Ptr("v0.1.0")},
+				{Name: utils.ToPtr("v0.0.1")},
+				{Name: utils.ToPtr("v0.0.2")},
+				{Name: utils.ToPtr("v0.0.3")},
+				{Name: utils.ToPtr("v0.1.0")},
 			},
 			mockReleases: []*github.RepositoryRelease{
-				{TagName: github.Ptr("v0.0.1")},
-				{TagName: github.Ptr("v0.0.2")},
-				{TagName: github.Ptr("v0.0.3")},
-				{TagName: github.Ptr("v0.1.0")},
+				{TagName: utils.ToPtr("v0.0.1")},
+				{TagName: utils.ToPtr("v0.0.2")},
+				{TagName: utils.ToPtr("v0.0.3")},
+				{TagName: utils.ToPtr("v0.1.0")},
 			},
 			expected:    "v0.1.0",
 			expectError: false,
@@ -204,7 +205,7 @@ func (s *ReleaseTestSuite) TestGetLatestVersion() {
 		},
 		{
 			name:         "only invalid tags",
-			mockTags:     []*github.RepositoryTag{{Name: github.Ptr("invalid-tag")}},
+			mockTags:     []*github.RepositoryTag{{Name: utils.ToPtr("invalid-tag")}},
 			mockReleases: []*github.RepositoryRelease{},
 			expected:     "",
 			expectError:  true,
@@ -212,8 +213,8 @@ func (s *ReleaseTestSuite) TestGetLatestVersion() {
 		{
 			name: "tags without releases",
 			mockTags: []*github.RepositoryTag{
-				{Name: github.Ptr("v0.0.1")},
-				{Name: github.Ptr("v0.0.2")},
+				{Name: utils.ToPtr("v0.0.1")},
+				{Name: utils.ToPtr("v0.0.2")},
 			},
 			mockReleases: []*github.RepositoryRelease{},
 			expected:     "",
@@ -307,18 +308,18 @@ func (s *ReleaseTestSuite) TestGetUpdatePath() {
 			// Reset mock client to default behavior for each test
 			s.manager.client.(*mockGitHubClient).listTagsFunc = func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryTag, *github.Response, error) {
 				return []*github.RepositoryTag{
-					{Name: github.Ptr("v0.0.1")},
-					{Name: github.Ptr("v0.0.2")},
-					{Name: github.Ptr("v0.0.3")},
-					{Name: github.Ptr("v0.1.0")},
+					{Name: utils.ToPtr("v0.0.1")},
+					{Name: utils.ToPtr("v0.0.2")},
+					{Name: utils.ToPtr("v0.0.3")},
+					{Name: utils.ToPtr("v0.1.0")},
 				}, nil, nil
 			}
 			s.manager.client.(*mockGitHubClient).listReleasesFunc = func(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error) {
 				return []*github.RepositoryRelease{
-					{TagName: github.Ptr("v0.0.1")},
-					{TagName: github.Ptr("v0.0.2")},
-					{TagName: github.Ptr("v0.0.3")},
-					{TagName: github.Ptr("v0.1.0")},
+					{TagName: utils.ToPtr("v0.0.1")},
+					{TagName: utils.ToPtr("v0.0.2")},
+					{TagName: utils.ToPtr("v0.0.3")},
+					{TagName: utils.ToPtr("v0.1.0")},
 				}, nil, nil
 			}
 
