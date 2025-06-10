@@ -214,6 +214,13 @@ func (self *HealthCheck) ApplyDefaults() {
 	if self.Type == nil {
 		self.Type = utils.ToPtr(HealthCheckTypeHTTP)
 	}
+	if *self.Type == HealthCheckTypeExec {
+		self.Path = ""
+		self.Port = nil
+	}
+	if *self.Type == HealthCheckTypeHTTP {
+		self.Command = ""
+	}
 	if self.PeriodSeconds == nil {
 		self.PeriodSeconds = utils.ToPtr(int32(10))
 	}
