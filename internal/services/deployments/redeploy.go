@@ -164,9 +164,14 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	// Get git information if applicable
 	var commitMessage string
 	var commitSha string
+	var gitBranch string
 
 	if deployment.CommitMessage != nil {
 		commitMessage = *deployment.CommitMessage
+	}
+
+	if deployment.GitBranch != nil {
+		gitBranch = *deployment.GitBranch
 	}
 
 	// Enqueue build job
@@ -186,6 +191,7 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 		Source:            schema.DeploymentSourceManual,
 		CommitSHA:         commitSha,
 		CommitMessage:     commitMessage,
+		GitBranch:         gitBranch,
 		Committer:         deployment.CommitAuthor,
 		DisableBuildCache: input.DisableBuildCache,
 	})

@@ -39,6 +39,8 @@ type Deployment struct {
 	CommitSha *string `json:"commit_sha,omitempty"`
 	// CommitMessage holds the value of the "commit_message" field.
 	CommitMessage *string `json:"commit_message,omitempty"`
+	// The git branch used for the deployment, if applicable
+	GitBranch *string `json:"git_branch,omitempty"`
 	// CommitAuthor holds the value of the "commit_author" field.
 	CommitAuthor *schema.GitCommitter `json:"commit_author,omitempty"`
 	// QueuedAt holds the value of the "queued_at" field.
@@ -92,7 +94,7 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case deployment.FieldAttempts:
 			values[i] = new(sql.NullInt64)
-		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus, deployment.FieldImage:
+		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldGitBranch, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus, deployment.FieldImage:
 			values[i] = new(sql.NullString)
 		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt, deployment.FieldQueuedAt, deployment.FieldStartedAt, deployment.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
@@ -168,6 +170,13 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				d.CommitMessage = new(string)
 				*d.CommitMessage = value.String
+			}
+		case deployment.FieldGitBranch:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field git_branch", values[i])
+			} else if value.Valid {
+				d.GitBranch = new(string)
+				*d.GitBranch = value.String
 			}
 		case deployment.FieldCommitAuthor:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -297,6 +306,11 @@ func (d *Deployment) String() string {
 	builder.WriteString(", ")
 	if v := d.CommitMessage; v != nil {
 		builder.WriteString("commit_message=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := d.GitBranch; v != nil {
+		builder.WriteString("git_branch=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

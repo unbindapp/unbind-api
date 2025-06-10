@@ -92,6 +92,7 @@ func (suite *DeploymentMutationsSuite) TestCreate() {
 			suite.testData.service.ID,
 			"def456",
 			"New feature commit",
+			"master",
 			committer,
 			schema.DeploymentSourceGit,
 			schema.DeploymentStatusBuildQueued,
@@ -102,6 +103,7 @@ func (suite *DeploymentMutationsSuite) TestCreate() {
 		suite.Equal(suite.testData.service.ID, deployment.ServiceID)
 		suite.Equal("def456", *deployment.CommitSha)
 		suite.Equal("New feature commit", *deployment.CommitMessage)
+		suite.Equal("master", *deployment.GitBranch)
 		suite.Equal(committer, deployment.CommitAuthor)
 		suite.Equal(schema.DeploymentSourceGit, deployment.Source)
 		suite.Equal(schema.DeploymentStatusBuildQueued, deployment.Status)
@@ -113,6 +115,7 @@ func (suite *DeploymentMutationsSuite) TestCreate() {
 			suite.Ctx,
 			nil,
 			suite.testData.service.ID,
+			"",
 			"",
 			"",
 			&schema.GitCommitter{
@@ -128,6 +131,7 @@ func (suite *DeploymentMutationsSuite) TestCreate() {
 		suite.Equal(suite.testData.service.ID, deployment.ServiceID)
 		suite.Nil(deployment.CommitSha)
 		suite.Nil(deployment.CommitMessage)
+		suite.Nil(deployment.GitBranch)
 		suite.Equal(schema.DeploymentSourceManual, deployment.Source)
 		suite.Equal(schema.DeploymentStatusBuildFailed, deployment.Status)
 		suite.Nil(deployment.QueuedAt) // Only set for BuildQueued status
@@ -141,6 +145,7 @@ func (suite *DeploymentMutationsSuite) TestCreate() {
 			invalidServiceID,
 			"abc123",
 			"Test commit",
+			"master",
 			&schema.GitCommitter{
 				Name:      "Test User",
 				AvatarURL: "https://github.com/test.png",
@@ -161,6 +166,7 @@ func (suite *DeploymentMutationsSuite) TestCreate() {
 			suite.testData.service.ID,
 			"abc123",
 			"Test commit",
+			"master",
 			&schema.GitCommitter{
 				Name:      "Test User",
 				AvatarURL: "https://github.com/test.png",

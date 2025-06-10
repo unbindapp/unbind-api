@@ -18,6 +18,7 @@ func (self *DeploymentRepository) Create(ctx context.Context,
 	serviceID uuid.UUID,
 	CommitSHA,
 	CommitMessage string,
+	GitBranch string,
 	committer *schema.GitCommitter,
 	source schema.DeploymentSource,
 	initialStatus schema.DeploymentStatus) (*ent.Deployment, error) {
@@ -36,6 +37,9 @@ func (self *DeploymentRepository) Create(ctx context.Context,
 	}
 	if CommitMessage != "" {
 		c.SetCommitMessage(CommitMessage)
+	}
+	if GitBranch != "" {
+		c.SetGitBranch(GitBranch)
 	}
 	if initialStatus == schema.DeploymentStatusBuildQueued {
 		c.SetQueuedAt(time.Now())

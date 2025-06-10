@@ -19,6 +19,7 @@ type DeploymentResponse struct {
 	Error            string                  `json:"error,omitempty"`
 	Attempts         int                     `json:"attempts"`
 	CommitSHA        *string                 `json:"commit_sha,omitempty" required:"false"`
+	GitBranch        *string                 `json:"git_branch,omitempty" required:"false"`
 	CommitMessage    *string                 `json:"commit_message,omitempty" required:"false"`
 	CommitAuthor     *schema.GitCommitter    `json:"commit_author,omitempty" required:"false"`
 	Image            *string                 `json:"image,omitempty" required:"false"`
@@ -42,6 +43,7 @@ func TransformDeploymentEntity(entity *ent.Deployment) *DeploymentResponse {
 			Attempts:        entity.Attempts,
 			CommitSHA:       entity.CommitSha,
 			CommitMessage:   entity.CommitMessage,
+			GitBranch:       entity.GitBranch,
 			CommitAuthor:    entity.CommitAuthor,
 			Image:           entity.Image,
 			CreatedAt:       entity.CreatedAt,

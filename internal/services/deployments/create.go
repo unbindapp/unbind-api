@@ -9,8 +9,8 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/models"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 func (self *DeploymentService) CreateManualDeployment(ctx context.Context, requesterUserId uuid.UUID, input *models.CreateDeploymentInput) (*models.DeploymentResponse, error) {
@@ -34,6 +34,7 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	var commitSHA string
 	var commitMessage string
 	var committer *schema.GitCommitter
+	var gitBranch string
 
 	if service.GithubInstallationID != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
 		// Get installation
@@ -47,7 +48,8 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 		}
 
 		// Branch or sha
-		summaryTarget := *service.Edges.ServiceConfig.GitBranch
+		gitBranch = *service.Edges.ServiceConfig.GitBranch
+		summaryTarget := gitBranch
 		isCommitHash := false
 		if input.GitSha != nil {
 			summaryTarget = *input.GitSha
@@ -80,6 +82,7 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 		Environment:   env,
 		Source:        schema.DeploymentSourceManual,
 		CommitSHA:     commitSHA,
+		GitBranch:     gitBranch,
 		CommitMessage: commitMessage,
 		Committer:     committer,
 	})
@@ -88,5 +91,4 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 	}
 
 	return models.TransformDeploymentEntity(job), nil
-
 }

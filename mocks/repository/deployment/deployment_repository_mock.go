@@ -155,9 +155,9 @@ func (_c *DeploymentRepositoryMock_AttachDeploymentMetadata_Call) RunAndReturn(r
 	return _c
 }
 
-// Create provides a mock function with given fields: ctx, tx, serviceID, CommitSHA, CommitMessage, committer, source, initialStatus
-func (_m *DeploymentRepositoryMock) Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA string, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource, initialStatus schema.DeploymentStatus) (*ent.Deployment, error) {
-	ret := _m.Called(ctx, tx, serviceID, CommitSHA, CommitMessage, committer, source, initialStatus)
+// Create provides a mock function with given fields: ctx, tx, serviceID, CommitSHA, CommitMessage, GitBranch, committer, source, initialStatus
+func (_m *DeploymentRepositoryMock) Create(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA string, CommitMessage string, GitBranch string, committer *schema.GitCommitter, source schema.DeploymentSource, initialStatus schema.DeploymentStatus) (*ent.Deployment, error) {
+	ret := _m.Called(ctx, tx, serviceID, CommitSHA, CommitMessage, GitBranch, committer, source, initialStatus)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
@@ -165,19 +165,19 @@ func (_m *DeploymentRepositoryMock) Create(ctx context.Context, tx repository.Tx
 
 	var r0 *ent.Deployment
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, uuid.UUID, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) (*ent.Deployment, error)); ok {
-		return rf(ctx, tx, serviceID, CommitSHA, CommitMessage, committer, source, initialStatus)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, uuid.UUID, string, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) (*ent.Deployment, error)); ok {
+		return rf(ctx, tx, serviceID, CommitSHA, CommitMessage, GitBranch, committer, source, initialStatus)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, uuid.UUID, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) *ent.Deployment); ok {
-		r0 = rf(ctx, tx, serviceID, CommitSHA, CommitMessage, committer, source, initialStatus)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, uuid.UUID, string, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) *ent.Deployment); ok {
+		r0 = rf(ctx, tx, serviceID, CommitSHA, CommitMessage, GitBranch, committer, source, initialStatus)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ent.Deployment)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.TxInterface, uuid.UUID, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) error); ok {
-		r1 = rf(ctx, tx, serviceID, CommitSHA, CommitMessage, committer, source, initialStatus)
+	if rf, ok := ret.Get(1).(func(context.Context, repository.TxInterface, uuid.UUID, string, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) error); ok {
+		r1 = rf(ctx, tx, serviceID, CommitSHA, CommitMessage, GitBranch, committer, source, initialStatus)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -196,16 +196,17 @@ type DeploymentRepositoryMock_Create_Call struct {
 //   - serviceID uuid.UUID
 //   - CommitSHA string
 //   - CommitMessage string
+//   - GitBranch string
 //   - committer *schema.GitCommitter
 //   - source schema.DeploymentSource
 //   - initialStatus schema.DeploymentStatus
-func (_e *DeploymentRepositoryMock_Expecter) Create(ctx interface{}, tx interface{}, serviceID interface{}, CommitSHA interface{}, CommitMessage interface{}, committer interface{}, source interface{}, initialStatus interface{}) *DeploymentRepositoryMock_Create_Call {
-	return &DeploymentRepositoryMock_Create_Call{Call: _e.mock.On("Create", ctx, tx, serviceID, CommitSHA, CommitMessage, committer, source, initialStatus)}
+func (_e *DeploymentRepositoryMock_Expecter) Create(ctx interface{}, tx interface{}, serviceID interface{}, CommitSHA interface{}, CommitMessage interface{}, GitBranch interface{}, committer interface{}, source interface{}, initialStatus interface{}) *DeploymentRepositoryMock_Create_Call {
+	return &DeploymentRepositoryMock_Create_Call{Call: _e.mock.On("Create", ctx, tx, serviceID, CommitSHA, CommitMessage, GitBranch, committer, source, initialStatus)}
 }
 
-func (_c *DeploymentRepositoryMock_Create_Call) Run(run func(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA string, CommitMessage string, committer *schema.GitCommitter, source schema.DeploymentSource, initialStatus schema.DeploymentStatus)) *DeploymentRepositoryMock_Create_Call {
+func (_c *DeploymentRepositoryMock_Create_Call) Run(run func(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, CommitSHA string, CommitMessage string, GitBranch string, committer *schema.GitCommitter, source schema.DeploymentSource, initialStatus schema.DeploymentStatus)) *DeploymentRepositoryMock_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.TxInterface), args[2].(uuid.UUID), args[3].(string), args[4].(string), args[5].(*schema.GitCommitter), args[6].(schema.DeploymentSource), args[7].(schema.DeploymentStatus))
+		run(args[0].(context.Context), args[1].(repository.TxInterface), args[2].(uuid.UUID), args[3].(string), args[4].(string), args[5].(string), args[6].(*schema.GitCommitter), args[7].(schema.DeploymentSource), args[8].(schema.DeploymentStatus))
 	})
 	return _c
 }
@@ -215,7 +216,7 @@ func (_c *DeploymentRepositoryMock_Create_Call) Return(_a0 *ent.Deployment, _a1 
 	return _c
 }
 
-func (_c *DeploymentRepositoryMock_Create_Call) RunAndReturn(run func(context.Context, repository.TxInterface, uuid.UUID, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) (*ent.Deployment, error)) *DeploymentRepositoryMock_Create_Call {
+func (_c *DeploymentRepositoryMock_Create_Call) RunAndReturn(run func(context.Context, repository.TxInterface, uuid.UUID, string, string, string, *schema.GitCommitter, schema.DeploymentSource, schema.DeploymentStatus) (*ent.Deployment, error)) *DeploymentRepositoryMock_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -30,6 +30,7 @@ var (
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "commit_sha", Type: field.TypeString, Nullable: true},
 		{Name: "commit_message", Type: field.TypeString, Nullable: true},
+		{Name: "git_branch", Type: field.TypeString, Nullable: true},
 		{Name: "commit_author", Type: field.TypeJSON, Nullable: true},
 		{Name: "queued_at", Type: field.TypeTime, Nullable: true},
 		{Name: "started_at", Type: field.TypeTime, Nullable: true},
@@ -49,7 +50,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "deployments_services_deployments",
-				Columns:    []*schema.Column{DeploymentsColumns[17]},
+				Columns:    []*schema.Column{DeploymentsColumns[18]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -58,7 +59,7 @@ var (
 			{
 				Name:    "deployment_service_id",
 				Unique:  false,
-				Columns: []*schema.Column{DeploymentsColumns[17]},
+				Columns: []*schema.Column{DeploymentsColumns[18]},
 			},
 			{
 				Name:    "deployment_created_at",
@@ -68,12 +69,12 @@ var (
 			{
 				Name:    "deployment_service_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeploymentsColumns[17], DeploymentsColumns[1]},
+				Columns: []*schema.Column{DeploymentsColumns[18], DeploymentsColumns[1]},
 			},
 			{
 				Name:    "deployment_service_id_status_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeploymentsColumns[17], DeploymentsColumns[3], DeploymentsColumns[1]},
+				Columns: []*schema.Column{DeploymentsColumns[18], DeploymentsColumns[3], DeploymentsColumns[1]},
 			},
 		},
 	}

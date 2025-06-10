@@ -38,6 +38,7 @@ type DeploymentJobRequest struct {
 	Source              schema.DeploymentSource `json:"source"`
 	CommitSHA           string                  `json:"commit_sha"`
 	CommitMessage       string                  `json:"commit_message"`
+	GitBranch           string                  `json:"git_branch"`
 	Environment         map[string]string       `json:"environment"`
 	Committer           *schema.GitCommitter    `json:"committer"`
 	DependsOnServiceIDs []uuid.UUID             `json:"depends_on_service_ids,omitempty"`
@@ -416,6 +417,7 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 			req.ServiceID,
 			req.CommitSHA,
 			req.CommitMessage,
+			req.GitBranch,
 			req.Committer,
 			req.Source,
 			schema.DeploymentStatusBuildQueued,
@@ -775,6 +777,7 @@ func (self *DeploymentController) EnqueueDependentDeployment(ctx context.Context
 		req.ServiceID,
 		req.CommitSHA,
 		req.CommitMessage,
+		req.GitBranch,
 		req.Committer,
 		req.Source,
 		schema.DeploymentStatusBuildPending)

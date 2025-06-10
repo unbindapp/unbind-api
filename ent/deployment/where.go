@@ -87,6 +87,11 @@ func CommitMessage(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldCommitMessage, v))
 }
 
+// GitBranch applies equality check predicate on the "git_branch" field. It's identical to GitBranchEQ.
+func GitBranch(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldGitBranch, v))
+}
+
 // QueuedAt applies equality check predicate on the "queued_at" field. It's identical to QueuedAtEQ.
 func QueuedAt(v time.Time) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldQueuedAt, v))
@@ -505,6 +510,81 @@ func CommitMessageEqualFold(v string) predicate.Deployment {
 // CommitMessageContainsFold applies the ContainsFold predicate on the "commit_message" field.
 func CommitMessageContainsFold(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldContainsFold(FieldCommitMessage, v))
+}
+
+// GitBranchEQ applies the EQ predicate on the "git_branch" field.
+func GitBranchEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldGitBranch, v))
+}
+
+// GitBranchNEQ applies the NEQ predicate on the "git_branch" field.
+func GitBranchNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldGitBranch, v))
+}
+
+// GitBranchIn applies the In predicate on the "git_branch" field.
+func GitBranchIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldGitBranch, vs...))
+}
+
+// GitBranchNotIn applies the NotIn predicate on the "git_branch" field.
+func GitBranchNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldGitBranch, vs...))
+}
+
+// GitBranchGT applies the GT predicate on the "git_branch" field.
+func GitBranchGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldGitBranch, v))
+}
+
+// GitBranchGTE applies the GTE predicate on the "git_branch" field.
+func GitBranchGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldGitBranch, v))
+}
+
+// GitBranchLT applies the LT predicate on the "git_branch" field.
+func GitBranchLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldGitBranch, v))
+}
+
+// GitBranchLTE applies the LTE predicate on the "git_branch" field.
+func GitBranchLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldGitBranch, v))
+}
+
+// GitBranchContains applies the Contains predicate on the "git_branch" field.
+func GitBranchContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldGitBranch, v))
+}
+
+// GitBranchHasPrefix applies the HasPrefix predicate on the "git_branch" field.
+func GitBranchHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldGitBranch, v))
+}
+
+// GitBranchHasSuffix applies the HasSuffix predicate on the "git_branch" field.
+func GitBranchHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldGitBranch, v))
+}
+
+// GitBranchIsNil applies the IsNil predicate on the "git_branch" field.
+func GitBranchIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldGitBranch))
+}
+
+// GitBranchNotNil applies the NotNil predicate on the "git_branch" field.
+func GitBranchNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldGitBranch))
+}
+
+// GitBranchEqualFold applies the EqualFold predicate on the "git_branch" field.
+func GitBranchEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldGitBranch, v))
+}
+
+// GitBranchContainsFold applies the ContainsFold predicate on the "git_branch" field.
+func GitBranchContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldGitBranch, v))
 }
 
 // CommitAuthorIsNil applies the IsNil predicate on the "commit_author" field.

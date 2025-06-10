@@ -33,6 +33,8 @@ const (
 	FieldCommitSha = "commit_sha"
 	// FieldCommitMessage holds the string denoting the commit_message field in the database.
 	FieldCommitMessage = "commit_message"
+	// FieldGitBranch holds the string denoting the git_branch field in the database.
+	FieldGitBranch = "git_branch"
 	// FieldCommitAuthor holds the string denoting the commit_author field in the database.
 	FieldCommitAuthor = "commit_author"
 	// FieldQueuedAt holds the string denoting the queued_at field in the database.
@@ -75,6 +77,7 @@ var Columns = []string{
 	FieldError,
 	FieldCommitSha,
 	FieldCommitMessage,
+	FieldGitBranch,
 	FieldCommitAuthor,
 	FieldQueuedAt,
 	FieldStartedAt,
@@ -177,6 +180,11 @@ func ByCommitSha(opts ...sql.OrderTermOption) OrderOption {
 // ByCommitMessage orders the results by the commit_message field.
 func ByCommitMessage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCommitMessage, opts...).ToFunc()
+}
+
+// ByGitBranch orders the results by the git_branch field.
+func ByGitBranch(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGitBranch, opts...).ToFunc()
 }
 
 // ByQueuedAt orders the results by the queued_at field.

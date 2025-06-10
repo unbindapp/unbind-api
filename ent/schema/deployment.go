@@ -138,6 +138,10 @@ func (Deployment) Fields() []ent.Field {
 		field.String("commit_message").
 			Optional().
 			Nillable(),
+		field.String("git_branch").
+			Optional().
+			Nillable().
+			Comment("The git branch used for the deployment, if applicable"),
 		field.JSON("commit_author", &GitCommitter{}).
 			Optional(),
 		field.Time("queued_at").

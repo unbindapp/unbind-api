@@ -362,6 +362,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				Source:        schema.DeploymentSourceGit,
 				CommitSHA:     commitSHA,
 				CommitMessage: commitMessage,
+				GitBranch:     ref,
 				Committer:     committer,
 			}
 			jobID, err := self.srv.DeploymentController.EnqueueDeploymentJob(

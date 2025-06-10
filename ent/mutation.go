@@ -414,6 +414,7 @@ type DeploymentMutation struct {
 	error                 *string
 	commit_sha            *string
 	commit_message        *string
+	git_branch            *string
 	commit_author         **schema.GitCommitter
 	queued_at             *time.Time
 	started_at            *time.Time
@@ -861,6 +862,55 @@ func (m *DeploymentMutation) CommitMessageCleared() bool {
 func (m *DeploymentMutation) ResetCommitMessage() {
 	m.commit_message = nil
 	delete(m.clearedFields, deployment.FieldCommitMessage)
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (m *DeploymentMutation) SetGitBranch(s string) {
+	m.git_branch = &s
+}
+
+// GitBranch returns the value of the "git_branch" field in the mutation.
+func (m *DeploymentMutation) GitBranch() (r string, exists bool) {
+	v := m.git_branch
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGitBranch returns the old "git_branch" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldGitBranch(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGitBranch is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGitBranch requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGitBranch: %w", err)
+	}
+	return oldValue.GitBranch, nil
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (m *DeploymentMutation) ClearGitBranch() {
+	m.git_branch = nil
+	m.clearedFields[deployment.FieldGitBranch] = struct{}{}
+}
+
+// GitBranchCleared returns if the "git_branch" field was cleared in this mutation.
+func (m *DeploymentMutation) GitBranchCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldGitBranch]
+	return ok
+}
+
+// ResetGitBranch resets all changes to the "git_branch" field.
+func (m *DeploymentMutation) ResetGitBranch() {
+	m.git_branch = nil
+	delete(m.clearedFields, deployment.FieldGitBranch)
 }
 
 // SetCommitAuthor sets the "commit_author" field.
@@ -1372,7 +1422,7 @@ func (m *DeploymentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeploymentMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 18)
 	if m.created_at != nil {
 		fields = append(fields, deployment.FieldCreatedAt)
 	}
@@ -1396,6 +1446,9 @@ func (m *DeploymentMutation) Fields() []string {
 	}
 	if m.commit_message != nil {
 		fields = append(fields, deployment.FieldCommitMessage)
+	}
+	if m.git_branch != nil {
+		fields = append(fields, deployment.FieldGitBranch)
 	}
 	if m.commit_author != nil {
 		fields = append(fields, deployment.FieldCommitAuthor)
@@ -1448,6 +1501,8 @@ func (m *DeploymentMutation) Field(name string) (ent.Value, bool) {
 		return m.CommitSha()
 	case deployment.FieldCommitMessage:
 		return m.CommitMessage()
+	case deployment.FieldGitBranch:
+		return m.GitBranch()
 	case deployment.FieldCommitAuthor:
 		return m.CommitAuthor()
 	case deployment.FieldQueuedAt:
@@ -1491,6 +1546,8 @@ func (m *DeploymentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCommitSha(ctx)
 	case deployment.FieldCommitMessage:
 		return m.OldCommitMessage(ctx)
+	case deployment.FieldGitBranch:
+		return m.OldGitBranch(ctx)
 	case deployment.FieldCommitAuthor:
 		return m.OldCommitAuthor(ctx)
 	case deployment.FieldQueuedAt:
@@ -1573,6 +1630,13 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCommitMessage(v)
+		return nil
+	case deployment.FieldGitBranch:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGitBranch(v)
 		return nil
 	case deployment.FieldCommitAuthor:
 		v, ok := value.(*schema.GitCommitter)
@@ -1691,6 +1755,9 @@ func (m *DeploymentMutation) ClearedFields() []string {
 	if m.FieldCleared(deployment.FieldCommitMessage) {
 		fields = append(fields, deployment.FieldCommitMessage)
 	}
+	if m.FieldCleared(deployment.FieldGitBranch) {
+		fields = append(fields, deployment.FieldGitBranch)
+	}
 	if m.FieldCleared(deployment.FieldCommitAuthor) {
 		fields = append(fields, deployment.FieldCommitAuthor)
 	}
@@ -1737,6 +1804,9 @@ func (m *DeploymentMutation) ClearField(name string) error {
 		return nil
 	case deployment.FieldCommitMessage:
 		m.ClearCommitMessage()
+		return nil
+	case deployment.FieldGitBranch:
+		m.ClearGitBranch()
 		return nil
 	case deployment.FieldCommitAuthor:
 		m.ClearCommitAuthor()
@@ -1793,6 +1863,9 @@ func (m *DeploymentMutation) ResetField(name string) error {
 		return nil
 	case deployment.FieldCommitMessage:
 		m.ResetCommitMessage()
+		return nil
+	case deployment.FieldGitBranch:
+		m.ResetGitBranch()
 		return nil
 	case deployment.FieldCommitAuthor:
 		m.ResetCommitAuthor()

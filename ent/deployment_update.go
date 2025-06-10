@@ -141,6 +141,26 @@ func (du *DeploymentUpdate) ClearCommitMessage() *DeploymentUpdate {
 	return du
 }
 
+// SetGitBranch sets the "git_branch" field.
+func (du *DeploymentUpdate) SetGitBranch(s string) *DeploymentUpdate {
+	du.mutation.SetGitBranch(s)
+	return du
+}
+
+// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableGitBranch(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetGitBranch(*s)
+	}
+	return du
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (du *DeploymentUpdate) ClearGitBranch() *DeploymentUpdate {
+	du.mutation.ClearGitBranch()
+	return du
+}
+
 // SetCommitAuthor sets the "commit_author" field.
 func (du *DeploymentUpdate) SetCommitAuthor(sc *schema.GitCommitter) *DeploymentUpdate {
 	du.mutation.SetCommitAuthor(sc)
@@ -421,6 +441,12 @@ func (du *DeploymentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if du.mutation.CommitMessageCleared() {
 		_spec.ClearField(deployment.FieldCommitMessage, field.TypeString)
 	}
+	if value, ok := du.mutation.GitBranch(); ok {
+		_spec.SetField(deployment.FieldGitBranch, field.TypeString, value)
+	}
+	if du.mutation.GitBranchCleared() {
+		_spec.ClearField(deployment.FieldGitBranch, field.TypeString)
+	}
 	if value, ok := du.mutation.CommitAuthor(); ok {
 		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)
 	}
@@ -631,6 +657,26 @@ func (duo *DeploymentUpdateOne) SetNillableCommitMessage(s *string) *DeploymentU
 // ClearCommitMessage clears the value of the "commit_message" field.
 func (duo *DeploymentUpdateOne) ClearCommitMessage() *DeploymentUpdateOne {
 	duo.mutation.ClearCommitMessage()
+	return duo
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (duo *DeploymentUpdateOne) SetGitBranch(s string) *DeploymentUpdateOne {
+	duo.mutation.SetGitBranch(s)
+	return duo
+}
+
+// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableGitBranch(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetGitBranch(*s)
+	}
+	return duo
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (duo *DeploymentUpdateOne) ClearGitBranch() *DeploymentUpdateOne {
+	duo.mutation.ClearGitBranch()
 	return duo
 }
 
@@ -943,6 +989,12 @@ func (duo *DeploymentUpdateOne) sqlSave(ctx context.Context) (_node *Deployment,
 	}
 	if duo.mutation.CommitMessageCleared() {
 		_spec.ClearField(deployment.FieldCommitMessage, field.TypeString)
+	}
+	if value, ok := duo.mutation.GitBranch(); ok {
+		_spec.SetField(deployment.FieldGitBranch, field.TypeString, value)
+	}
+	if duo.mutation.GitBranchCleared() {
+		_spec.ClearField(deployment.FieldGitBranch, field.TypeString)
 	}
 	if value, ok := duo.mutation.CommitAuthor(); ok {
 		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)

@@ -27,6 +27,7 @@ func (self *ServiceService) EnqueueFullBuildDeployments(ctx context.Context, ser
 		var commitSHA string
 		var commitMessage string
 		var committer *schema.GitCommitter
+		var gitBranch string
 
 		// Get git information if available
 		if service.GithubInstallationID != nil && service.GitRepository != nil && service.Edges.ServiceConfig.GitBranch != nil {
@@ -40,11 +41,12 @@ func (self *ServiceService) EnqueueFullBuildDeployments(ctx context.Context, ser
 				return err
 			}
 
+			gitBranch = *service.Edges.ServiceConfig.GitBranch
 			commitSHA, commitMessage, committer, err = self.githubClient.GetCommitSummary(ctx,
 				installation,
 				installation.AccountLogin,
 				*service.GitRepository,
-				*service.Edges.ServiceConfig.GitBranch,
+				gitBranch,
 				false)
 
 			if err != nil {
@@ -59,6 +61,7 @@ func (self *ServiceService) EnqueueFullBuildDeployments(ctx context.Context, ser
 			Source:        schema.DeploymentSourceManual,
 			CommitSHA:     commitSHA,
 			CommitMessage: commitMessage,
+			GitBranch:     gitBranch,
 			Committer:     committer,
 		})
 		if err != nil {
@@ -111,12 +114,17 @@ func (self *ServiceService) deployAdhocService(ctx context.Context, service *ent
 		}
 
 		var err error
+		var gitBranch string
+		if service.Edges.CurrentDeployment.GitBranch != nil {
+			gitBranch = *service.Edges.CurrentDeployment.GitBranch
+		}
 		newDeployment, err = self.repo.Deployment().Create(
 			ctx,
 			tx,
 			service.Edges.CurrentDeployment.ServiceID,
 			commitSha,
 			commitMessage,
+			gitBranch,
 			service.Edges.CurrentDeployment.CommitAuthor,
 			service.Edges.CurrentDeployment.Source,
 			schema.DeploymentStatusBuildQueued,

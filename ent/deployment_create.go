@@ -123,6 +123,20 @@ func (dc *DeploymentCreate) SetNillableCommitMessage(s *string) *DeploymentCreat
 	return dc
 }
 
+// SetGitBranch sets the "git_branch" field.
+func (dc *DeploymentCreate) SetGitBranch(s string) *DeploymentCreate {
+	dc.mutation.SetGitBranch(s)
+	return dc
+}
+
+// SetNillableGitBranch sets the "git_branch" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableGitBranch(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetGitBranch(*s)
+	}
+	return dc
+}
+
 // SetCommitAuthor sets the "commit_author" field.
 func (dc *DeploymentCreate) SetCommitAuthor(sc *schema.GitCommitter) *DeploymentCreate {
 	dc.mutation.SetCommitAuthor(sc)
@@ -406,6 +420,10 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 		_spec.SetField(deployment.FieldCommitMessage, field.TypeString, value)
 		_node.CommitMessage = &value
 	}
+	if value, ok := dc.mutation.GitBranch(); ok {
+		_spec.SetField(deployment.FieldGitBranch, field.TypeString, value)
+		_node.GitBranch = &value
+	}
 	if value, ok := dc.mutation.CommitAuthor(); ok {
 		_spec.SetField(deployment.FieldCommitAuthor, field.TypeJSON, value)
 		_node.CommitAuthor = value
@@ -610,6 +628,24 @@ func (u *DeploymentUpsert) UpdateCommitMessage() *DeploymentUpsert {
 // ClearCommitMessage clears the value of the "commit_message" field.
 func (u *DeploymentUpsert) ClearCommitMessage() *DeploymentUpsert {
 	u.SetNull(deployment.FieldCommitMessage)
+	return u
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (u *DeploymentUpsert) SetGitBranch(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldGitBranch, v)
+	return u
+}
+
+// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateGitBranch() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldGitBranch)
+	return u
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (u *DeploymentUpsert) ClearGitBranch() *DeploymentUpsert {
+	u.SetNull(deployment.FieldGitBranch)
 	return u
 }
 
@@ -942,6 +978,27 @@ func (u *DeploymentUpsertOne) UpdateCommitMessage() *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) ClearCommitMessage() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearCommitMessage()
+	})
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (u *DeploymentUpsertOne) SetGitBranch(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetGitBranch(v)
+	})
+}
+
+// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateGitBranch() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateGitBranch()
+	})
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (u *DeploymentUpsertOne) ClearGitBranch() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearGitBranch()
 	})
 }
 
@@ -1468,6 +1525,27 @@ func (u *DeploymentUpsertBulk) UpdateCommitMessage() *DeploymentUpsertBulk {
 func (u *DeploymentUpsertBulk) ClearCommitMessage() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearCommitMessage()
+	})
+}
+
+// SetGitBranch sets the "git_branch" field.
+func (u *DeploymentUpsertBulk) SetGitBranch(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetGitBranch(v)
+	})
+}
+
+// UpdateGitBranch sets the "git_branch" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateGitBranch() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateGitBranch()
+	})
+}
+
+// ClearGitBranch clears the value of the "git_branch" field.
+func (u *DeploymentUpsertBulk) ClearGitBranch() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearGitBranch()
 	})
 }
 
