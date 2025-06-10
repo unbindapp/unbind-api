@@ -2,6 +2,7 @@ package deployment_repo
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,7 +40,7 @@ func (self *DeploymentRepository) Create(ctx context.Context,
 		c.SetCommitMessage(CommitMessage)
 	}
 	if GitBranch != "" {
-		c.SetGitBranch(GitBranch)
+		c.SetGitBranch(strings.TrimPrefix(GitBranch, "refs/heads/"))
 	}
 	if initialStatus == schema.DeploymentStatusBuildQueued {
 		c.SetQueuedAt(time.Now())
