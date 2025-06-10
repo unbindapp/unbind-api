@@ -256,6 +256,19 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 				input.HealthCheck.StartupFailureThreshold = service.Edges.ServiceConfig.HealthCheck.StartupFailureThreshold
 				input.HealthCheck.PeriodSeconds = service.Edges.ServiceConfig.HealthCheck.PeriodSeconds
 				input.HealthCheck.TimeoutSeconds = service.Edges.ServiceConfig.HealthCheck.TimeoutSeconds
+				// Apply a default to port
+				if input.HealthCheck.Port == nil {
+					input.HealthCheck.Port = service.Edges.ServiceConfig.HealthCheck.Port
+				}
+			}
+			if input.HealthCheck.Port == nil && len(service.Edges.ServiceConfig.Ports) > 0 {
+				// Find first TCP port
+				for _, port := range service.Edges.ServiceConfig.Ports {
+					if port.Protocol == nil || *port.Protocol == schema.ProtocolTCP {
+						input.HealthCheck.Port = utils.ToPtr(port.Port)
+						break
+					}
+				}
 			}
 			if err := input.HealthCheck.Validate(); err != nil {
 				return err

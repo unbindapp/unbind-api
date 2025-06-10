@@ -154,13 +154,6 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		return nil, errdefs.NewCustomError(errdefs.ErrTypeInvalidInput, fmt.Sprintf("received unsupported service type %s", input.Type))
 	}
 
-	// Validate health check
-	if input.HealthCheck != nil {
-		if err := input.HealthCheck.Validate(); err != nil {
-			return nil, err
-		}
-	}
-
 	// PVC validation, requires a path
 	for _, volume := range input.Volumes {
 		if !utils.IsValidUnixPath(volume.MountPath) {
@@ -315,6 +308,23 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 				ports = append(ports, schema.PortSpec{
 					Port: int32(*analysisResult.Port),
 				})
+			}
+		}
+
+		// Validate health check
+		if input.HealthCheck != nil {
+			if input.HealthCheck.Port == nil && len(ports) > 0 {
+				// Find first TCP port
+				for _, port := range ports {
+					if port.Protocol == nil || *port.Protocol == schema.ProtocolTCP {
+						input.HealthCheck.Port = utils.ToPtr(port.Port)
+						break
+					}
+				}
+			}
+
+			if err := input.HealthCheck.Validate(); err != nil {
+				return err
 			}
 		}
 
