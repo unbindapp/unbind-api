@@ -16,7 +16,6 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/gorilla/schema"
@@ -351,8 +350,6 @@ func startAPI(cfg *config.Config) {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	r.Use(chiMiddleware.Recoverer)
-
 	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
@@ -380,6 +377,11 @@ func startAPI(cfg *config.Config) {
 		}
 		api := humachi.New(r, config)
 
+		// Create middleware
+		mw := middleware.NewMiddleware(cfg, repo, api)
+
+		api.UseMiddleware(mw.Recoverer)
+
 		r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write([]byte(`<!doctype html>
@@ -399,9 +401,6 @@ func startAPI(cfg *config.Config) {
 				</body>
 			</html>`))
 		})
-
-		// Create middleware
-		mw := middleware.NewMiddleware(cfg, repo, api)
 
 		// /setup group
 		setupGroup := huma.NewGroup(api, "/setup")

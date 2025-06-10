@@ -116,9 +116,9 @@ const (
 // Register enum in OpenAPI specification
 // https://github.com/danielgtaylor/huma/issues/621
 func (u CertManagerConditionType) Schema(r huma.Registry) *huma.Schema {
-	if r.Map()["CertManagerConditionType"] == nil {
-		schemaRef := r.Schema(reflect.TypeOf(""), true, "CertManagerConditionType")
-		schemaRef.Title = "CertManagerConditionType"
+	if r.Map()["CertManagerCondition"] == nil {
+		schemaRef := r.Schema(reflect.TypeOf(""), true, "CertManagerCondition")
+		schemaRef.Title = "CertManagerCondition"
 		schemaRef.Enum = append(schemaRef.Enum,
 			[]any{
 				string(CertificateRequestConditionReady),
@@ -127,7 +127,7 @@ func (u CertManagerConditionType) Schema(r huma.Registry) *huma.Schema {
 				string(CertificateRequestConditionDenied),
 			}...,
 		)
-		r.Map()["CertManagerConditionType"] = schemaRef
+		r.Map()["CertManagerCondition"] = schemaRef
 	}
-	return &huma.Schema{Ref: "#/components/schemas/CertManagerConditionType"}
+	return &huma.Schema{Ref: "#/components/schemas/CertManagerCondition"}
 }
