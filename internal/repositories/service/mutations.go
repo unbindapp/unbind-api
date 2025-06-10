@@ -242,7 +242,6 @@ func (self *ServiceRepository) UpdateConfig(
 		SetNillableIsPublic(input.Public).
 		SetNillableImage(input.Image).
 		SetNillableDefinitionVersion(input.CustomDefinitionVersion).
-		SetNillableS3BackupSourceID(input.S3BackupSourceID).
 		SetNillableBackupSchedule(input.BackupSchedule).
 		SetNillableBackupRetentionCount(input.BackupRetentionCount)
 
@@ -342,6 +341,14 @@ func (self *ServiceRepository) UpdateConfig(
 			upd.ClearS3BackupBucket()
 		} else {
 			upd.SetS3BackupBucket(*input.S3BackupBucket)
+		}
+	}
+
+	if input.S3BackupSourceID != nil {
+		if *input.S3BackupSourceID == uuid.Nil {
+			upd.ClearS3BackupSourceID()
+		} else {
+			upd.SetS3BackupSourceID(*input.S3BackupSourceID)
 		}
 	}
 

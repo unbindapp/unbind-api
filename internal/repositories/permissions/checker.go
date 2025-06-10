@@ -83,16 +83,17 @@ func (self *PermissionsRepository) checkComprehensivePermission(
 	resourceType entSchema.ResourceType,
 	resourceID uuid.UUID,
 ) (bool, error) {
-	// If resource ID is nil, deny access (nil UUIDs should not grant access to anything)
-	if resourceID == uuid.Nil {
-		return false, nil
-	}
-
 	// Get the resource hierarchy information
 	// This loads parent IDs and types that would grant permissions to this resource
-	hierarchyInfo, err := self.getResourceHierarchy(ctx, resourceType, resourceID)
-	if err != nil {
-		return false, fmt.Errorf("error getting resource hierarchy: %w", err)
+	var hierarchyInfo []ResourceHierarchyInfo
+	var err error
+
+	// Only get hierarchy if we have a specific resource ID
+	if resourceID != uuid.Nil {
+		hierarchyInfo, err = self.getResourceHierarchy(ctx, resourceType, resourceID)
+		if err != nil {
+			return false, fmt.Errorf("error getting resource hierarchy: %w", err)
+		}
 	}
 
 	// Determine which actions would satisfy this permission check
@@ -100,7 +101,7 @@ func (self *PermissionsRepository) checkComprehensivePermission(
 
 	// Build a query that handles:
 	// 1. Direct resource match
-	// 2. Resource hierarchy matches
+	// 2. Resource hierarchy matches (if applicable)
 	// 3. Implied permission matches
 
 	// Base query that handles user's groups
@@ -117,15 +118,18 @@ func (self *PermissionsRepository) checkComprehensivePermission(
 	}
 
 	// Build a predicate for the resource selector
-	resourcePredicates := []predicate.Permission{
-		// Access to specific resource ID
-		func(s *sql.Selector) {
+	var resourcePredicates []predicate.Permission
+
+	// Always check for superuser access for this resource type
+	resourcePredicates = append(resourcePredicates, func(s *sql.Selector) {
+		sqljson.ValueEQ(permission.FieldResourceSelector, true, sqljson.Path("superuser"))
+	})
+
+	// If we have a specific resource ID, also check for direct access to it
+	if resourceID != uuid.Nil {
+		resourcePredicates = append(resourcePredicates, func(s *sql.Selector) {
 			sqljson.ValueEQ(permission.FieldResourceSelector, resourceID.String(), sqljson.Path("id"))
-		},
-		// Or superuser access
-		func(s *sql.Selector) {
-			sqljson.ValueEQ(permission.FieldResourceSelector, true, sqljson.Path("superuser"))
-		},
+		})
 	}
 
 	// Add direct match with resource selector predicates
@@ -170,17 +174,23 @@ func (self *PermissionsRepository) checkComprehensivePermission(
 	for _, perm := range permissions {
 		// Check if this is a valid match
 		if perm.ResourceType == resourceType && contains(impliedActions, perm.Action) {
-			// Direct resource match
-			if perm.ResourceSelector.ID == resourceID || (perm.ResourceSelector.Superuser && perm.ResourceType == resourceType) {
+			// Check for superuser access (this covers global access regardless of resourceID)
+			if perm.ResourceSelector.Superuser {
+				return true, nil
+			}
+			// Check for direct resource match (only if we have a specific resource ID)
+			if resourceID != uuid.Nil && perm.ResourceSelector.ID == resourceID {
 				return true, nil
 			}
 		}
 
-		// Check hierarchy matches
-		for _, hierInfo := range hierarchyInfo {
-			if perm.ResourceType == hierInfo.ResourceType && contains(impliedActions, perm.Action) {
-				if perm.ResourceSelector.ID == hierInfo.ResourceID || (perm.ResourceSelector.Superuser && perm.ResourceType == hierInfo.ResourceType) {
-					return true, nil
+		// Check hierarchy matches (only if we have a specific resource ID)
+		if resourceID != uuid.Nil {
+			for _, hierInfo := range hierarchyInfo {
+				if perm.ResourceType == hierInfo.ResourceType && contains(impliedActions, perm.Action) {
+					if perm.ResourceSelector.Superuser || perm.ResourceSelector.ID == hierInfo.ResourceID {
+						return true, nil
+					}
 				}
 			}
 		}
