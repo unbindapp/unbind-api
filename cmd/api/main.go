@@ -397,7 +397,7 @@ func startAPI(cfg *config.Config) {
 					<script
 						id="api-reference"
 						data-url="/openapi.json"></script>
-					<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+					<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.29.3"></script>
 				</body>
 			</html>`))
 		})
