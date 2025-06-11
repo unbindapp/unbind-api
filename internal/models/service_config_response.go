@@ -12,8 +12,8 @@ type ServiceConfigResponse struct {
 	GitTag                        *string               `json:"git_tag,omitempty"`
 	Builder                       schema.ServiceBuilder `json:"builder"`
 	Icon                          string                `json:"icon"`
-	Host                          []schema.HostSpec     `json:"hosts,omitempty" nullable:"false"`
-	Port                          []schema.PortSpec     `json:"ports,omitempty" nullable:"false"`
+	Host                          []schema.HostSpec     `json:"hosts" nullable:"false"`
+	Port                          []schema.PortSpec     `json:"ports" nullable:"false"`
 	Replicas                      int32                 `json:"replicas"`
 	AutoDeploy                    bool                  `json:"auto_deploy"`
 	RailpackBuilderInstallCommand *string               `json:"railpack_builder_install_command,omitempty"`
