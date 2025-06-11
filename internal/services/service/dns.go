@@ -131,6 +131,9 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 					break
 				}
 			}
+			if exists {
+				break
+			}
 		}
 		if !exists {
 			endpoints.Internal = append(endpoints.Internal, models.ServiceEndpoint{
