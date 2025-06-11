@@ -2,6 +2,7 @@ package service_service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/schema"
@@ -107,7 +108,41 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 
 			endpoints.External = append(endpoints.External, newHost)
 		}
+	}
 
+	// Infer internal endpoints that should exist and merge with the discovered internal endpoints
+	for _, port := range service.Edges.ServiceConfig.Ports {
+		// ! Skipping node ports and UDP ports
+		if port.IsNodePort || (port.Protocol != nil && *port.Protocol == schema.ProtocolUDP) {
+			continue
+		}
+
+		endpoint := fmt.Sprintf("%s.%s:%d", service.KubernetesName, project.Edges.Team.Namespace, port.Port)
+		exists := false
+		for _, internalEndpoint := range endpoints.Internal {
+			if internalEndpoint.DNS == endpoint {
+				exists = true
+				break
+			}
+			// Fallback to checking if the port exists in the internal endpoint, we only allocate 1 service per port really
+			for _, port := range internalEndpoint.Ports {
+				if port.Port == port.Port && port.Protocol != nil && *port.Protocol != schema.ProtocolUDP {
+					exists = true
+					break
+				}
+			}
+		}
+		if !exists {
+			endpoints.Internal = append(endpoints.Internal, models.ServiceEndpoint{
+				DNS:            endpoint,
+				Ports:          []schema.PortSpec{port},
+				KubernetesName: service.KubernetesName,
+				TeamID:         project.Edges.Team.ID,
+				ProjectID:      project.ID,
+				EnvironmentID:  env.ID,
+				ServiceID:      serviceID,
+			})
+		}
 	}
 
 	return endpoints, nil

@@ -245,6 +245,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-[Report Bug](https://github.com/unbindapp/unbind-api/issues) • [Request Feature](https://github.com/unbindapp/unbind-api/issues) • [Join Discord](https://discord.gg/r8Q3zNTgbp)
+[Report Bug](https://github.com/unbindapp/unbind/issues) • [Request Feature](https://github.com/unbindapp/unbind/issues) • [Join Discord](https://discord.gg/r8Q3zNTgbp)
 
 </div>
