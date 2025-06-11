@@ -12,8 +12,8 @@ type ServiceConfigResponse struct {
 	GitTag                        *string               `json:"git_tag,omitempty"`
 	Builder                       schema.ServiceBuilder `json:"builder"`
 	Icon                          string                `json:"icon"`
-	Host                          []schema.HostSpec     `json:"hosts" nullable:"false"`
-	Port                          []schema.PortSpec     `json:"ports" nullable:"false"`
+	Hosts                         []schema.HostSpec     `json:"hosts" nullable:"false"`
+	Ports                         []schema.PortSpec     `json:"ports" nullable:"false"`
 	Replicas                      int32                 `json:"replicas"`
 	AutoDeploy                    bool                  `json:"auto_deploy"`
 	RailpackBuilderInstallCommand *string               `json:"railpack_builder_install_command,omitempty"`
@@ -54,8 +54,8 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 			GitTag:                        entity.GitTag,
 			Builder:                       entity.Builder,
 			Icon:                          entity.Icon,
-			Host:                          entity.Hosts,
-			Port:                          entity.Ports,
+			Hosts:                         entity.Hosts,
+			Ports:                         entity.Ports,
 			Replicas:                      entity.Replicas,
 			AutoDeploy:                    entity.AutoDeploy,
 			RailpackBuilderInstallCommand: entity.RailpackBuilderInstallCommand,
@@ -85,6 +85,12 @@ func TransformServiceConfigEntity(entity *ent.ServiceConfig) *ServiceConfigRespo
 		}
 		if response.InitContainers == nil {
 			response.InitContainers = []*schema.InitContainer{}
+		}
+		if response.Hosts == nil {
+			response.Hosts = []schema.HostSpec{}
+		}
+		if response.Ports == nil {
+			response.Ports = []schema.PortSpec{}
 		}
 	}
 	return response
