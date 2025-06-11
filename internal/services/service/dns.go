@@ -117,14 +117,10 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 			continue
 		}
 
-		endpoint := fmt.Sprintf("%s.%s:%d", service.KubernetesName, project.Edges.Team.Namespace, port.Port)
+		endpoint := fmt.Sprintf("%s.%s", service.KubernetesName, project.Edges.Team.Namespace)
 		exists := false
 		for _, internalEndpoint := range endpoints.Internal {
-			if internalEndpoint.DNS == endpoint {
-				exists = true
-				break
-			}
-			// Fallback to checking if the port exists in the internal endpoint, we only allocate 1 service per port really
+			// checking if the port exists in the internal endpoint, we only allocate 1 service per port really so this is enough
 			for _, port := range internalEndpoint.Ports {
 				if port.Port == port.Port && port.Protocol != nil && *port.Protocol != schema.ProtocolUDP {
 					exists = true
