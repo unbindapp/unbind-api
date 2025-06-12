@@ -238,5 +238,14 @@ func (self *DeploymentService) CreateCRDFromService(service *ent.Service) *ubv1.
 	crdToDeploy.Spec.Config.Public = service.Edges.ServiceConfig.IsPublic
 	crdToDeploy.Spec.Config.Volumes = schema.AsV1Volumes(service.Edges.ServiceConfig.Volumes)
 
+	// ! Prune hosts without a valid port
+	var prunedHosts []ubv1.HostSpec
+	for _, host := range crdToDeploy.Spec.Config.Hosts {
+		if host.Port != nil {
+			prunedHosts = append(prunedHosts, host)
+		}
+	}
+	crdToDeploy.Spec.Config.Hosts = prunedHosts
+
 	return crdToDeploy
 }
