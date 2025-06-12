@@ -228,6 +228,12 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		hostCollisionsToCheck = append(hostCollisionsToCheck, input.OverwriteHosts...)
 		hostCollisionsToCheck = append(hostCollisionsToCheck, input.UpsertHosts...)
 		for _, host := range hostCollisionsToCheck {
+			// Ignore hosts that are already in the service config
+			for _, existingHost := range service.Edges.ServiceConfig.Hosts {
+				if existingHost.Host == host.Host {
+					continue
+				}
+			}
 			// Count domain collisions
 			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host)
 			if err != nil {
