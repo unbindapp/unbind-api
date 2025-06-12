@@ -436,7 +436,7 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 			Image:     &newImage,
 		}
 
-		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, suite.testConfig, input)
+		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input)
 		suite.NoError(err)
 
 		// Verify the update
@@ -463,7 +463,7 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 			},
 		}
 
-		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, suite.testConfig, input)
+		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input)
 		suite.NoError(err)
 
 		// Verify the update
@@ -485,13 +485,13 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 	suite.Run("UpdateConfig Add/Remove Hosts", func() {
 		input := &MutateConfigInput{
 			ServiceID: suite.testService.ID,
-			AddHosts: []schema.HostSpec{
+			UpsertHosts: []schema.HostSpec{
 				{Host: "api.example.com", TargetPort: utils.ToPtr(int32(8080))},
 				{Host: "admin.example.com", TargetPort: utils.ToPtr(int32(9090))},
 			},
 		}
 
-		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, suite.testConfig, input)
+		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input)
 		suite.NoError(err)
 
 		// Verify the update
@@ -507,6 +507,52 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 		}
 		suite.Contains(hostNames, "api.example.com")
 		suite.Contains(hostNames, "admin.example.com")
+
+		// Test upsert behavior: update existing host with new port
+		input2 := &MutateConfigInput{
+			ServiceID: suite.testService.ID,
+			AddPorts: []schema.PortSpec{
+				{Port: 3000, Protocol: utils.ToPtr(schema.ProtocolTCP)},
+			},
+			UpsertHosts: []schema.HostSpec{
+				{Host: "api.example.com", TargetPort: utils.ToPtr(int32(3000))}, // Changed port
+			},
+		}
+
+		// Pass the updated config from the first call as existingConfig
+		err = suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input2)
+		suite.NoError(err)
+
+		// Verify upsert behavior: should still have 2 hosts, but api.example.com should have updated port
+		updated2, err := suite.DB.ServiceConfig.Query().
+			Where(serviceconfig.ServiceID(suite.testService.ID)).
+			Only(suite.Ctx)
+		suite.NoError(err)
+		suite.Len(updated2.Hosts, 2) // Should still be 2 hosts, not 3
+
+		// Verify the port was updated for api.example.com
+		var apiHost *schema.HostSpec
+		for _, host := range updated2.Hosts {
+			if host.Host == "api.example.com" {
+				apiHost = &host
+				break
+			}
+		}
+		suite.NotNil(apiHost, "api.example.com host should exist")
+		suite.NotNil(apiHost.TargetPort, "TargetPort should not be nil")
+		suite.Equal(int32(3000), *apiHost.TargetPort, "Port should be updated to 3000")
+
+		// Verify admin.example.com is unchanged
+		var adminHost *schema.HostSpec
+		for _, host := range updated2.Hosts {
+			if host.Host == "admin.example.com" {
+				adminHost = &host
+				break
+			}
+		}
+		suite.NotNil(adminHost, "admin.example.com host should exist")
+		suite.NotNil(adminHost.TargetPort, "TargetPort should not be nil")
+		suite.Equal(int32(9090), *adminHost.TargetPort, "Port should remain unchanged at 9090")
 	})
 
 	suite.Run("UpdateConfig Resources", func() {
@@ -522,7 +568,7 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 			Resources: resources,
 		}
 
-		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, suite.testConfig, input)
+		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input)
 		suite.NoError(err)
 
 		// Verify the update
@@ -551,7 +597,7 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 			Resources: resources,
 		}
 
-		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, suite.testConfig, input)
+		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input)
 		suite.NoError(err)
 
 		// Verify resources are cleared
@@ -568,7 +614,7 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 		}
 
 		suite.DB.Close()
-		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, suite.testConfig, input)
+		err := suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input)
 		suite.Error(err)
 		suite.ErrorContains(err, "database is closed")
 	})

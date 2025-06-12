@@ -198,7 +198,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		}
 
 		if len(service.Edges.ServiceConfig.Hosts) < 1 &&
-			input.IsPublic != nil && *input.IsPublic && len(input.OverwriteHosts) < 1 && len(input.AddHosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
+			input.IsPublic != nil && *input.IsPublic && len(input.OverwriteHosts) < 1 && len(input.UpsertHosts) < 1 && service.Type != schema.ServiceTypeDatabase &&
 			(len(input.OverwritePorts) > 0 || len(input.AddPorts) > 0 || len(service.Edges.ServiceConfig.Ports) > 0) {
 
 			// Figure out ports
@@ -226,7 +226,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		// Validate hosts
 		var hostCollisionsToCheck []schema.HostSpec
 		hostCollisionsToCheck = append(hostCollisionsToCheck, input.OverwriteHosts...)
-		hostCollisionsToCheck = append(hostCollisionsToCheck, input.AddHosts...)
+		hostCollisionsToCheck = append(hostCollisionsToCheck, input.UpsertHosts...)
 		for _, host := range hostCollisionsToCheck {
 			// Count domain collisions
 			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host)
@@ -241,7 +241,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		// Determine is public
 		if len(input.OverwritePorts) > 0 || len(input.AddPorts) > 0 || len(service.Edges.ServiceConfig.Ports) > 0 {
 			// Has ports, do we have hosts
-			if len(input.OverwriteHosts) > 0 || len(input.AddHosts) > 0 || len(service.Edges.ServiceConfig.Hosts) > 0 {
+			if len(input.OverwriteHosts) > 0 || len(input.UpsertHosts) > 0 || len(service.Edges.ServiceConfig.Hosts) > 0 {
 				input.IsPublic = utils.ToPtr(true)
 			}
 		}
@@ -302,7 +302,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			RemovePorts:                   input.RemovePorts,
 			OverwritePorts:                input.OverwritePorts,
 			OverwriteHosts:                input.OverwriteHosts,
-			AddHosts:                      input.AddHosts,
+			UpsertHosts:                   input.UpsertHosts,
 			RemoveHosts:                   input.RemoveHosts,
 			Replicas:                      input.Replicas,
 			AutoDeploy:                    input.AutoDeploy,
@@ -329,7 +329,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 			InitContainers:                input.InitContainers,
 			Resources:                     input.Resources,
 		}
-		if err := self.repo.Service().UpdateConfig(ctx, tx, service.Edges.ServiceConfig, updateInput); err != nil {
+		if err := self.repo.Service().UpdateConfig(ctx, tx, updateInput); err != nil {
 			return fmt.Errorf("failed to update service config: %w", err)
 		}
 

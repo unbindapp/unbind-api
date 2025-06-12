@@ -74,7 +74,7 @@ type MutateConfigInput struct {
 	AddPorts                      []schema.PortSpec
 	RemovePorts                   []schema.PortSpec
 	OverwriteHosts                []schema.HostSpec
-	AddHosts                      []schema.HostSpec
+	UpsertHosts                   []schema.HostSpec
 	RemoveHosts                   []schema.HostSpec
 	Replicas                      *int32
 	AutoDeploy                    *bool
@@ -226,7 +226,6 @@ func (self *ServiceRepository) Update(
 func (self *ServiceRepository) UpdateConfig(
 	ctx context.Context,
 	tx repository.TxInterface,
-	existingConfig *ent.ServiceConfig,
 	input *MutateConfigInput,
 ) error {
 	db := self.base.DB
@@ -234,8 +233,15 @@ func (self *ServiceRepository) UpdateConfig(
 		db = tx.Client()
 	}
 
-	upd := db.ServiceConfig.Update().
+	// Fetch existing service config to merge resources and other fields
+	existingConfig, err := db.ServiceConfig.Query().
 		Where(serviceconfig.ServiceID(input.ServiceID)).
+		Only(ctx)
+	if err != nil {
+		return err
+	}
+
+	upd := db.ServiceConfig.UpdateOneID(existingConfig.ID).
 		SetNillableBuilder(input.Builder).
 		SetNillableReplicas(input.Replicas).
 		SetNillableAutoDeploy(input.AutoDeploy).
@@ -473,15 +479,15 @@ func (self *ServiceRepository) UpdateConfig(
 
 	if len(input.OverwriteHosts) > 0 {
 		upd.SetHosts(input.OverwriteHosts)
-	} else if len(input.AddHosts) > 0 || len(input.RemoveHosts) > 0 {
+	} else if len(input.UpsertHosts) > 0 || len(input.RemoveHosts) > 0 {
 		hosts := existingConfig.Hosts
 
 		// Create a map of hosts to remove for efficient lookup
 		toRemove := make(map[string]bool)
 
-		// Add all AddHosts and RemoveHosts to the removal map to prevent duplicates
-		for _, addHost := range input.AddHosts {
-			toRemove[addHost.Host] = true
+		// Add all UpsertHosts and RemoveHosts to the removal map to prevent duplicates
+		for _, upsertHost := range input.UpsertHosts {
+			toRemove[upsertHost.Host] = true
 		}
 		for _, removeHost := range input.RemoveHosts {
 			toRemove[removeHost.Host] = true
@@ -496,7 +502,7 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 
 		// Append all AddHosts to the filtered list
-		filteredHosts = append(filteredHosts, input.AddHosts...)
+		filteredHosts = append(filteredHosts, input.UpsertHosts...)
 
 		if len(filteredHosts) == 0 {
 			upd.ClearHosts()
@@ -505,41 +511,33 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 	}
 
-	err := upd.Exec(ctx)
+	updatedConfig, err := upd.Save(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Re-fetch the service config
-	cfg, err := db.ServiceConfig.Query().
-		Where(serviceconfig.ServiceID(input.ServiceID)).
-		Only(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to re-fetch service config after update: %w", err)
-	}
-
 	// Synchronize target host ports
-	if len(cfg.Hosts) > 0 {
+	if len(updatedConfig.Hosts) > 0 {
 		needsUpdate := false
 		validPorts := make(map[int32]bool)
-		for _, port := range cfg.Ports {
+		for _, port := range updatedConfig.Ports {
 			if port.Protocol == nil || *port.Protocol == schema.ProtocolTCP {
 				validPorts[port.Port] = true
 			}
 		}
 
-		for i, host := range cfg.Hosts {
+		for i, host := range updatedConfig.Hosts {
 			if host.TargetPort != nil {
 				// If the target port is not valid, set it to nil
 				if _, exists := validPorts[*host.TargetPort]; !exists {
-					cfg.Hosts[i].TargetPort = nil
+					updatedConfig.Hosts[i].TargetPort = nil
 					needsUpdate = true
 				}
 			}
 		}
 		if needsUpdate {
-			_, err = db.ServiceConfig.UpdateOneID(cfg.ID).
-				SetHosts(cfg.Hosts).
+			_, err = db.ServiceConfig.UpdateOneID(updatedConfig.ID).
+				SetHosts(updatedConfig.Hosts).
 				Save(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to update service config hosts after port synchronization: %w", err)

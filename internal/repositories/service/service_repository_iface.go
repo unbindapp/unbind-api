@@ -21,7 +21,7 @@ type ServiceRepositoryInterface interface {
 	// Update the service
 	Update(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, name *string, description *string) error
 	// Update service config
-	UpdateConfig(ctx context.Context, tx repository.TxInterface, existingConfig *ent.ServiceConfig, input *MutateConfigInput) error
+	UpdateConfig(ctx context.Context, tx repository.TxInterface, input *MutateConfigInput) error
 	Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error
 	SetCurrentDeployment(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, deploymentID uuid.UUID) error
 	UpdateVariableMounts(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID, variableMounts []*schema.VariableMount) error

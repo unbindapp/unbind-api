@@ -1246,17 +1246,17 @@ func (_c *ServiceRepositoryMock_Update_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// UpdateConfig provides a mock function with given fields: ctx, tx, existingConfig, input
-func (_m *ServiceRepositoryMock) UpdateConfig(ctx context.Context, tx repository.TxInterface, existingConfig *ent.ServiceConfig, input *service_repo.MutateConfigInput) error {
-	ret := _m.Called(ctx, tx, existingConfig, input)
+// UpdateConfig provides a mock function with given fields: ctx, tx, input
+func (_m *ServiceRepositoryMock) UpdateConfig(ctx context.Context, tx repository.TxInterface, input *service_repo.MutateConfigInput) error {
+	ret := _m.Called(ctx, tx, input)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateConfig")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, *ent.ServiceConfig, *service_repo.MutateConfigInput) error); ok {
-		r0 = rf(ctx, tx, existingConfig, input)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, *service_repo.MutateConfigInput) error); ok {
+		r0 = rf(ctx, tx, input)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1272,15 +1272,14 @@ type ServiceRepositoryMock_UpdateConfig_Call struct {
 // UpdateConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tx repository.TxInterface
-//   - existingConfig *ent.ServiceConfig
 //   - input *service_repo.MutateConfigInput
-func (_e *ServiceRepositoryMock_Expecter) UpdateConfig(ctx interface{}, tx interface{}, existingConfig interface{}, input interface{}) *ServiceRepositoryMock_UpdateConfig_Call {
-	return &ServiceRepositoryMock_UpdateConfig_Call{Call: _e.mock.On("UpdateConfig", ctx, tx, existingConfig, input)}
+func (_e *ServiceRepositoryMock_Expecter) UpdateConfig(ctx interface{}, tx interface{}, input interface{}) *ServiceRepositoryMock_UpdateConfig_Call {
+	return &ServiceRepositoryMock_UpdateConfig_Call{Call: _e.mock.On("UpdateConfig", ctx, tx, input)}
 }
 
-func (_c *ServiceRepositoryMock_UpdateConfig_Call) Run(run func(ctx context.Context, tx repository.TxInterface, existingConfig *ent.ServiceConfig, input *service_repo.MutateConfigInput)) *ServiceRepositoryMock_UpdateConfig_Call {
+func (_c *ServiceRepositoryMock_UpdateConfig_Call) Run(run func(ctx context.Context, tx repository.TxInterface, input *service_repo.MutateConfigInput)) *ServiceRepositoryMock_UpdateConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.TxInterface), args[2].(*ent.ServiceConfig), args[3].(*service_repo.MutateConfigInput))
+		run(args[0].(context.Context), args[1].(repository.TxInterface), args[2].(*service_repo.MutateConfigInput))
 	})
 	return _c
 }
@@ -1290,7 +1289,7 @@ func (_c *ServiceRepositoryMock_UpdateConfig_Call) Return(_a0 error) *ServiceRep
 	return _c
 }
 
-func (_c *ServiceRepositoryMock_UpdateConfig_Call) RunAndReturn(run func(context.Context, repository.TxInterface, *ent.ServiceConfig, *service_repo.MutateConfigInput) error) *ServiceRepositoryMock_UpdateConfig_Call {
+func (_c *ServiceRepositoryMock_UpdateConfig_Call) RunAndReturn(run func(context.Context, repository.TxInterface, *service_repo.MutateConfigInput) error) *ServiceRepositoryMock_UpdateConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

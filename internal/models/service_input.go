@@ -71,7 +71,7 @@ type UpdateServiceInput struct {
 	GitTag                        *string                `json:"git_tag,omitempty" required:"false" doc:"Tag to build from, supports glob patterns"`
 	Builder                       *schema.ServiceBuilder `json:"builder,omitempty" required:"false"`
 	OverwriteHosts                []schema.HostSpec      `json:"overwrite_hosts,omitempty" required:"false"`
-	AddHosts                      []schema.HostSpec      `json:"add_hosts,omitempty" required:"false" doc:"Additional hosts to add, will not remove existing hosts"`
+	UpsertHosts                   []schema.HostSpec      `json:"upsert_hosts,omitempty" required:"false" doc:"Additional hosts to add, will not remove existing hosts"`
 	RemoveHosts                   []schema.HostSpec      `json:"remove_hosts,omitempty" required:"false" doc:"Hosts to remove"`
 	AddPorts                      []schema.PortSpec      `json:"add_ports,omitempty" required:"false" doc:"Additional ports to add, will not remove existing ports"`
 	RemovePorts                   []schema.PortSpec      `json:"remove_ports,omitempty" required:"false" doc:"Ports to remove"`
