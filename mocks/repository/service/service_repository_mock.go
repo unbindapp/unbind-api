@@ -34,9 +34,9 @@ func (_m *ServiceRepositoryMock) EXPECT() *ServiceRepositoryMock_Expecter {
 	return &ServiceRepositoryMock_Expecter{mock: &_m.Mock}
 }
 
-// CountDomainCollisons provides a mock function with given fields: ctx, tx, domain
-func (_m *ServiceRepositoryMock) CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error) {
-	ret := _m.Called(ctx, tx, domain)
+// CountDomainCollisons provides a mock function with given fields: ctx, tx, domain, excludingServiceID
+func (_m *ServiceRepositoryMock) CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string, excludingServiceID *uuid.UUID) (int, error) {
+	ret := _m.Called(ctx, tx, domain, excludingServiceID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CountDomainCollisons")
@@ -44,17 +44,17 @@ func (_m *ServiceRepositoryMock) CountDomainCollisons(ctx context.Context, tx re
 
 	var r0 int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, string) (int, error)); ok {
-		return rf(ctx, tx, domain)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, string, *uuid.UUID) (int, error)); ok {
+		return rf(ctx, tx, domain, excludingServiceID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, string) int); ok {
-		r0 = rf(ctx, tx, domain)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, string, *uuid.UUID) int); ok {
+		r0 = rf(ctx, tx, domain, excludingServiceID)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.TxInterface, string) error); ok {
-		r1 = rf(ctx, tx, domain)
+	if rf, ok := ret.Get(1).(func(context.Context, repository.TxInterface, string, *uuid.UUID) error); ok {
+		r1 = rf(ctx, tx, domain, excludingServiceID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -71,13 +71,14 @@ type ServiceRepositoryMock_CountDomainCollisons_Call struct {
 //   - ctx context.Context
 //   - tx repository.TxInterface
 //   - domain string
-func (_e *ServiceRepositoryMock_Expecter) CountDomainCollisons(ctx interface{}, tx interface{}, domain interface{}) *ServiceRepositoryMock_CountDomainCollisons_Call {
-	return &ServiceRepositoryMock_CountDomainCollisons_Call{Call: _e.mock.On("CountDomainCollisons", ctx, tx, domain)}
+//   - excludingServiceID *uuid.UUID
+func (_e *ServiceRepositoryMock_Expecter) CountDomainCollisons(ctx interface{}, tx interface{}, domain interface{}, excludingServiceID interface{}) *ServiceRepositoryMock_CountDomainCollisons_Call {
+	return &ServiceRepositoryMock_CountDomainCollisons_Call{Call: _e.mock.On("CountDomainCollisons", ctx, tx, domain, excludingServiceID)}
 }
 
-func (_c *ServiceRepositoryMock_CountDomainCollisons_Call) Run(run func(ctx context.Context, tx repository.TxInterface, domain string)) *ServiceRepositoryMock_CountDomainCollisons_Call {
+func (_c *ServiceRepositoryMock_CountDomainCollisons_Call) Run(run func(ctx context.Context, tx repository.TxInterface, domain string, excludingServiceID *uuid.UUID)) *ServiceRepositoryMock_CountDomainCollisons_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.TxInterface), args[2].(string))
+		run(args[0].(context.Context), args[1].(repository.TxInterface), args[2].(string), args[3].(*uuid.UUID))
 	})
 	return _c
 }
@@ -87,66 +88,7 @@ func (_c *ServiceRepositoryMock_CountDomainCollisons_Call) Return(_a0 int, _a1 e
 	return _c
 }
 
-func (_c *ServiceRepositoryMock_CountDomainCollisons_Call) RunAndReturn(run func(context.Context, repository.TxInterface, string) (int, error)) *ServiceRepositoryMock_CountDomainCollisons_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CountDomainCollisonsExcludingServiceID provides a mock function with given fields: ctx, tx, domain, serviceID
-func (_m *ServiceRepositoryMock) CountDomainCollisonsExcludingServiceID(ctx context.Context, tx repository.TxInterface, domain string, serviceID uuid.UUID) (int, error) {
-	ret := _m.Called(ctx, tx, domain, serviceID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CountDomainCollisonsExcludingServiceID")
-	}
-
-	var r0 int
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, string, uuid.UUID) (int, error)); ok {
-		return rf(ctx, tx, domain, serviceID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.TxInterface, string, uuid.UUID) int); ok {
-		r0 = rf(ctx, tx, domain, serviceID)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, repository.TxInterface, string, uuid.UUID) error); ok {
-		r1 = rf(ctx, tx, domain, serviceID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountDomainCollisonsExcludingServiceID'
-type ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call struct {
-	*mock.Call
-}
-
-// CountDomainCollisonsExcludingServiceID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - tx repository.TxInterface
-//   - domain string
-//   - serviceID uuid.UUID
-func (_e *ServiceRepositoryMock_Expecter) CountDomainCollisonsExcludingServiceID(ctx interface{}, tx interface{}, domain interface{}, serviceID interface{}) *ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call {
-	return &ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call{Call: _e.mock.On("CountDomainCollisonsExcludingServiceID", ctx, tx, domain, serviceID)}
-}
-
-func (_c *ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call) Run(run func(ctx context.Context, tx repository.TxInterface, domain string, serviceID uuid.UUID)) *ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.TxInterface), args[2].(string), args[3].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call) Return(_a0 int, _a1 error) *ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call) RunAndReturn(run func(context.Context, repository.TxInterface, string, uuid.UUID) (int, error)) *ServiceRepositoryMock_CountDomainCollisonsExcludingServiceID_Call {
+func (_c *ServiceRepositoryMock_CountDomainCollisons_Call) RunAndReturn(run func(context.Context, repository.TxInterface, string, *uuid.UUID) (int, error)) *ServiceRepositoryMock_CountDomainCollisons_Call {
 	_c.Call.Return(run)
 	return _c
 }

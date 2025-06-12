@@ -577,26 +577,32 @@ func (suite *ServiceQueriesSuite) TestCountDomainCollisions() {
 			}).
 			SaveX(suite.Ctx)
 
-		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "example.com")
+		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "example.com", nil)
 		suite.NoError(err)
 		suite.Equal(2, count) // Both services use example.com
 	})
 
 	suite.Run("CountDomainCollisions Case Insensitive", func() {
-		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "EXAMPLE.COM")
+		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "EXAMPLE.COM", nil)
 		suite.NoError(err)
 		suite.GreaterOrEqual(count, 1) // Should find our existing service
 	})
 
+	suite.Run("CountDomainCollisions excluding services", func() {
+		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "example.com", &suite.testService.ID)
+		suite.NoError(err)
+		suite.Equal(1, count) // Only the other service should be counted
+	})
+
 	suite.Run("CountDomainCollisions No Collisions", func() {
-		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "unique-domain.com")
+		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "unique-domain.com", nil)
 		suite.NoError(err)
 		suite.Equal(0, count)
 	})
 
 	suite.Run("CountDomainCollisions Error when DB closed", func() {
 		suite.DB.Close()
-		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "example.com")
+		count, err := suite.serviceRepo.CountDomainCollisons(suite.Ctx, nil, "example.com", nil)
 		suite.NoError(err) // This method handles DB errors gracefully
 		suite.Equal(0, count)
 	})

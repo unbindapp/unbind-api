@@ -194,7 +194,7 @@ func (self *ServiceRepository) GetGithubPrivateKey(ctx context.Context, serviceI
 	return app.PrivateKey, nil
 }
 
-func (self *ServiceRepository) CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error) {
+func (self *ServiceRepository) CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string, excludingServiceID *uuid.UUID) (int, error) {
 	db := self.base.DB
 	if tx != nil {
 		db = tx.Client()
@@ -204,52 +204,14 @@ func (self *ServiceRepository) CountDomainCollisons(ctx context.Context, tx repo
 	lowerDomain := strings.ToLower(domain)
 
 	// Get all services with non-empty hosts JSON field
-	configs, err := db.ServiceConfig.Query().
+	q := db.ServiceConfig.Query().
 		Where(
 			serviceconfig.HostsNotNil(),
-		).
-		All(ctx)
-
-	if err != nil {
-		// Return just the legacy count if we can't query the hosts field
-		return 0, nil
+		)
+	if excludingServiceID != nil {
+		q = q.Where(serviceconfig.ServiceIDNEQ(*excludingServiceID))
 	}
-
-	// Count matches in the hosts field manually
-	jsonCount := 0
-	for _, config := range configs {
-		// Skip empty hosts field
-		if len(config.Hosts) == 0 {
-			continue
-		}
-
-		// Check each host in the array
-		for _, host := range config.Hosts {
-			if strings.EqualFold(host.Host, lowerDomain) {
-				jsonCount++
-				break
-			}
-		}
-	}
-
-	return jsonCount, nil
-}
-
-func (self *ServiceRepository) CountDomainCollisonsExcludingServiceID(ctx context.Context, tx repository.TxInterface, domain string, serviceID uuid.UUID) (int, error) {
-	db := self.base.DB
-	if tx != nil {
-		db = tx.Client()
-	}
-
-	// Convert the domain to lowercase for case-insensitive comparison
-	lowerDomain := strings.ToLower(domain)
-
-	// Get all services with non-empty hosts JSON field
-	configs, err := db.ServiceConfig.Query().
-		Where(
-			serviceconfig.HostsNotNil(),
-			serviceconfig.ServiceIDNEQ(serviceID), // Exclude the current service
-		).
+	configs, err := q.
 		All(ctx)
 
 	if err != nil {

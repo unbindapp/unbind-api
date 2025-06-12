@@ -112,7 +112,7 @@ func (self *ServiceService) generateWildcardHost(ctx context.Context, tx reposit
 		return nil, fmt.Errorf("failed to generate subdomain: %w", err)
 	}
 
-	domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, domain)
+	domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, domain, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count domain collisions: %w", err)
 	}

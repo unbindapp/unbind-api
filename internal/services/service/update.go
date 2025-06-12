@@ -229,7 +229,7 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 		hostCollisionsToCheck = append(hostCollisionsToCheck, input.UpsertHosts...)
 		for _, host := range hostCollisionsToCheck {
 			// Count domain collisions
-			domainCount, err := self.repo.Service().CountDomainCollisonsExcludingServiceID(ctx, tx, host.Host, service.ID)
+			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host, utils.ToPtr(service.ID))
 			if err != nil {
 				return fmt.Errorf("failed to count domain collisions: %w", err)
 			}

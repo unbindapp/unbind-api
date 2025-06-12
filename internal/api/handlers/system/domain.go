@@ -49,7 +49,7 @@ func (self *HandlerGroup) GenerateWildcardDomain(ctx context.Context, input *Gen
 	}
 
 	// Check for collisions
-	domainCount, err := self.srv.Repository.Service().CountDomainCollisons(ctx, nil, domain)
+	domainCount, err := self.srv.Repository.Service().CountDomainCollisons(ctx, nil, domain, nil)
 	if err != nil {
 		log.Error("failed to count domain collisions", "error", err)
 		return nil, huma.Error500InternalServerError("An unknown error occured")
@@ -91,7 +91,7 @@ func (self *HandlerGroup) CheckForDomainCollision(ctx context.Context, input *Ch
 	}
 
 	// Check for collisions
-	domainCount, err := self.srv.Repository.Service().CountDomainCollisons(ctx, nil, cleanedDomain)
+	domainCount, err := self.srv.Repository.Service().CountDomainCollisons(ctx, nil, cleanedDomain, nil)
 	if err != nil {
 		log.Error("failed to count domain collisions", "error", err)
 		return nil, huma.Error500InternalServerError("An unknown error occured")

@@ -353,7 +353,7 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 		// Validate hosts
 		for _, host := range hosts {
 			// Count domain collisions
-			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host)
+			domainCount, err := self.repo.Service().CountDomainCollisons(ctx, tx, host.Host, nil)
 			if err != nil {
 				return fmt.Errorf("failed to count domain collisions: %w", err)
 			}

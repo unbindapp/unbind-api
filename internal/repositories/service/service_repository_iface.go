@@ -34,8 +34,7 @@ type ServiceRepositoryInterface interface {
 	GetByInstallationIDAndRepoName(ctx context.Context, installationID int64, repoName string) ([]*ent.Service, error)
 	GetByEnvironmentID(ctx context.Context, environmentID uuid.UUID, authPredicate predicate.Service, withLatestDeployment bool) ([]*ent.Service, error)
 	GetGithubPrivateKey(ctx context.Context, serviceID uuid.UUID) (string, error)
-	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string) (int, error)
-	CountDomainCollisonsExcludingServiceID(ctx context.Context, tx repository.TxInterface, domain string, serviceID uuid.UUID) (int, error)
+	CountDomainCollisons(ctx context.Context, tx repository.TxInterface, domain string, excludingServiceID *uuid.UUID) (int, error)
 	GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error)
 	// Summarize services in environment
 	SummarizeServices(ctx context.Context, environmentIDs []uuid.UUID) (counts map[uuid.UUID]int, icons map[uuid.UUID][]string, err error)
