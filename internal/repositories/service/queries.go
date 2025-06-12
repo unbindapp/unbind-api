@@ -234,6 +234,49 @@ func (self *ServiceRepository) CountDomainCollisons(ctx context.Context, tx repo
 
 	return jsonCount, nil
 }
+
+func (self *ServiceRepository) CountDomainCollisonsExcludingServiceID(ctx context.Context, tx repository.TxInterface, domain string, serviceID uuid.UUID) (int, error) {
+	db := self.base.DB
+	if tx != nil {
+		db = tx.Client()
+	}
+
+	// Convert the domain to lowercase for case-insensitive comparison
+	lowerDomain := strings.ToLower(domain)
+
+	// Get all services with non-empty hosts JSON field
+	configs, err := db.ServiceConfig.Query().
+		Where(
+			serviceconfig.HostsNotNil(),
+			serviceconfig.ServiceIDNEQ(serviceID), // Exclude the current service
+		).
+		All(ctx)
+
+	if err != nil {
+		// Return just the legacy count if we can't query the hosts field
+		return 0, nil
+	}
+
+	// Count matches in the hosts field manually
+	jsonCount := 0
+	for _, config := range configs {
+		// Skip empty hosts field
+		if len(config.Hosts) == 0 {
+			continue
+		}
+
+		// Check each host in the array
+		for _, host := range config.Hosts {
+			if strings.EqualFold(host.Host, lowerDomain) {
+				jsonCount++
+				break
+			}
+		}
+	}
+
+	return jsonCount, nil
+}
+
 func (self *ServiceRepository) GetDeploymentNamespace(ctx context.Context, serviceID uuid.UUID) (string, error) {
 	svc, err := self.base.DB.Service.Query().
 		Where(service.IDEQ(serviceID)).
