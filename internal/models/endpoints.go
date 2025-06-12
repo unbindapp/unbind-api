@@ -30,7 +30,7 @@ type IngressEndpoint struct {
 	IsIngress         bool             `json:"is_ingress"`
 	Host              string           `json:"host"`
 	Path              string           `json:"path"`
-	TargetPort        *schema.PortSpec `json:"target_port"`
+	TargetPort        *schema.PortSpec `json:"target_port,omitempty"`
 	DNSStatus         DNSStatus        `json:"dns_status"`
 	IsCloudflare      bool             `json:"is_cloudflare"`
 	TlsStatus         TlsStatus        `json:"tls_status"`
