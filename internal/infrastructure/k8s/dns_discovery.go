@@ -110,7 +110,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 							Host:           nodeIP,
 							Path:           "/",
 							DNSStatus:      models.DNSStatusUnknown,
-							Port: schema.PortSpec{
+							TargetPort: &schema.PortSpec{
 								IsNodePort: true,
 								Port:       port.NodePort,
 								NodePort:   utils.ToPtr(port.NodePort),
@@ -140,7 +140,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 									IsIngress:      false,
 									Host:           host,
 									Path:           "/",
-									Port: schema.PortSpec{
+									TargetPort: &schema.PortSpec{
 										IsNodePort: true,
 										Port:       port.NodePort,
 										NodePort:   utils.ToPtr(port.NodePort),
@@ -286,7 +286,7 @@ func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace
 					IsIngress:      true,
 					Host:           host,
 					Path:           path,
-					Port: schema.PortSpec{
+					TargetPort: &schema.PortSpec{
 						Port:     port,
 						Protocol: utils.ToPtr(schema.ProtocolTCP),
 					},

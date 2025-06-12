@@ -81,25 +81,25 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 			if path == "" {
 				path = "/"
 			}
-			var port int32 = 443
+			var targetPort *schema.PortSpec
 			if host.TargetPort != nil {
-				port = *host.TargetPort
+				targetPort = &schema.PortSpec{
+					Port:     *host.TargetPort,
+					Protocol: utils.ToPtr(schema.ProtocolTCP),
+				}
 			}
 			newHost := models.IngressEndpoint{
 				KubernetesName: service.KubernetesName,
 				IsIngress:      true,
 				Host:           host.Host,
 				Path:           path,
-				Port: schema.PortSpec{
-					Port:     port,
-					Protocol: utils.ToPtr(schema.ProtocolTCP),
-				},
-				DNSStatus:     models.DNSStatusUnknown,
-				TlsStatus:     models.TlsStatusPending,
-				TeamID:        project.Edges.Team.ID,
-				ProjectID:     project.ID,
-				EnvironmentID: env.ID,
-				ServiceID:     serviceID,
+				TargetPort:     targetPort,
+				DNSStatus:      models.DNSStatusUnknown,
+				TlsStatus:      models.TlsStatusPending,
+				TeamID:         project.Edges.Team.ID,
+				ProjectID:      project.ID,
+				EnvironmentID:  env.ID,
+				ServiceID:      serviceID,
 			}
 
 			if host.Path != "" {

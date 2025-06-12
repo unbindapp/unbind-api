@@ -505,7 +505,58 @@ func (self *ServiceRepository) UpdateConfig(
 		}
 	}
 
-	return upd.Exec(ctx)
+	err := upd.Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Re-fetch the service config
+	cfg, err := db.ServiceConfig.Query().
+		Where(serviceconfig.ServiceID(input.ServiceID)).
+		Only(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to re-fetch service config after update: %w", err)
+	}
+
+	// Synchronize target host ports
+	if len(cfg.Hosts) > 0 {
+		needsUpdate := false
+		validPorts := make(map[int32]bool)
+		for _, port := range cfg.Ports {
+			if port.Protocol == nil || *port.Protocol == schema.ProtocolTCP {
+				validPorts[port.Port] = true
+			}
+		}
+
+		for i, host := range cfg.Hosts {
+			if host.TargetPort != nil {
+				// If the target port is not valid, set it to nil
+				if _, exists := validPorts[*host.TargetPort]; !exists {
+					cfg.Hosts[i].TargetPort = nil
+					needsUpdate = true
+				}
+			} else {
+				// If the target port is nil, set it to the first valid port if available
+				for _, port := range cfg.Ports {
+					if port.Protocol == nil || *port.Protocol == schema.ProtocolTCP {
+						cfg.Hosts[i].TargetPort = &port.Port
+						needsUpdate = true
+						break
+					}
+				}
+			}
+		}
+		if needsUpdate {
+			_, err = db.ServiceConfig.UpdateOneID(cfg.ID).
+				SetHosts(cfg.Hosts).
+				Save(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to update service config hosts after port synchronization: %w", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (self *ServiceRepository) Delete(ctx context.Context, tx repository.TxInterface, serviceID uuid.UUID) error {
