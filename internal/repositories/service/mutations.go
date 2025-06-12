@@ -487,6 +487,10 @@ func (self *ServiceRepository) UpdateConfig(
 
 		// Add all UpsertHosts and RemoveHosts to the removal map to prevent duplicates
 		for _, upsertHost := range input.UpsertHosts {
+			if upsertHost.PrevHost != nil {
+				toRemove[*upsertHost.PrevHost] = true
+				continue
+			}
 			toRemove[upsertHost.Host] = true
 		}
 		for _, removeHost := range input.RemoveHosts {

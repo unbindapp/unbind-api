@@ -12,9 +12,10 @@ import (
 
 // * Custom kubernetes-like types
 type HostSpec struct {
-	Host       string `json:"host"`
-	Path       string `json:"path"`
-	TargetPort *int32 `json:"target_port,omitempty" required:"false"`
+	PrevHost   *string `json:"prev_host,omitempty" required:"false" doc:"Previous host for the service, used for upserting key"`
+	Host       string  `json:"host"`
+	Path       string  `json:"path"`
+	TargetPort *int32  `json:"target_port,omitempty" required:"false"`
 }
 
 func AsV1HostSpecs(hosts []HostSpec) []v1.HostSpec {

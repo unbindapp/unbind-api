@@ -565,6 +565,35 @@ func (suite *ServiceMutationsSuite) TestUpdateConfig() {
 		suite.NotNil(adminHost, "admin.example.com host should exist")
 		suite.NotNil(adminHost.TargetPort, "TargetPort should not be nil")
 		suite.Equal(int32(9090), *adminHost.TargetPort, "Port should remain unchanged at 9090")
+
+		// Test changing a host/upserting
+		input3 := &MutateConfigInput{
+			ServiceID: suite.testService.ID,
+			UpsertHosts: []schema.HostSpec{
+				{PrevHost: utils.ToPtr("api.example.com"), Host: "api2.example.com", TargetPort: utils.ToPtr(int32(3000))}, // Changed port
+			},
+		}
+		err = suite.serviceRepo.UpdateConfig(suite.Ctx, nil, input3)
+		suite.NoError(err)
+		// Verify api.example.com was changed to api2.example.com
+		updated3, err := suite.DB.ServiceConfig.Query().
+			Where(serviceconfig.ServiceID(suite.testService.ID)).
+			Only(suite.Ctx)
+		suite.NoError(err)
+		suite.Len(updated3.Hosts, 3) // Should still be 3 hosts
+		var api2Host *schema.HostSpec
+		for _, host := range updated3.Hosts {
+			if host.Host == "api2.example.com" {
+				api2Host = &host
+			}
+			if host.Host == "api.example.com" {
+				suite.Fail("api.example.com should have been updated to api2.example.com")
+			}
+		}
+		suite.NotNil(api2Host, "api2.example.com host should exist")
+		suite.NotNil(api2Host.TargetPort, "TargetPort for api2.example.com should not be nil")
+		suite.Equal(int32(3000), *api2Host.TargetPort, "Port for api2.example.com should be 3000")
+		suite.Equal("api2.example.com", api2Host.Host, "Host should be updated to api2.example.com")
 	})
 
 	suite.Run("UpdateConfig Resources", func() {
