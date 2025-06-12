@@ -535,15 +535,6 @@ func (self *ServiceRepository) UpdateConfig(
 					cfg.Hosts[i].TargetPort = nil
 					needsUpdate = true
 				}
-			} else {
-				// If the target port is nil, set it to the first valid port if available
-				for _, port := range cfg.Ports {
-					if port.Protocol == nil || *port.Protocol == schema.ProtocolTCP {
-						cfg.Hosts[i].TargetPort = &port.Port
-						needsUpdate = true
-						break
-					}
-				}
 			}
 		}
 		if needsUpdate {

@@ -335,8 +335,15 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	}
 
 	if len(service.Edges.ServiceConfig.Hosts) > 0 {
+		// ! Prune all hosts that don't have a target
+		prunedHosts := []schema.HostSpec{}
+		for _, host := range service.Edges.ServiceConfig.Hosts {
+			if host.TargetPort != nil {
+				prunedHosts = append(prunedHosts, host)
+			}
+		}
 		// Serialize
-		marshalled, err := json.Marshal(schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts))
+		marshalled, err := json.Marshal(schema.AsV1HostSpecs(prunedHosts))
 		if err != nil {
 			return nil, err
 		}
