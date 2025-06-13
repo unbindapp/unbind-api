@@ -223,13 +223,13 @@ func (self *HealthCheck) ApplyDefaults() {
 		self.Command = ""
 	}
 	if self.PeriodSeconds == nil {
-		self.PeriodSeconds = utils.ToPtr(int32(10))
+		self.PeriodSeconds = utils.ToPtr(int32(5))
 	}
 	if self.TimeoutSeconds == nil {
 		self.TimeoutSeconds = utils.ToPtr(int32(5))
 	}
 	if self.StartupFailureThreshold == nil {
-		self.StartupFailureThreshold = utils.ToPtr(int32(20))
+		self.StartupFailureThreshold = utils.ToPtr(int32(30))
 	}
 	if self.LivenessFailureThreshold == nil {
 		self.LivenessFailureThreshold = utils.ToPtr(int32(5))
