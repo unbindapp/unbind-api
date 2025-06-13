@@ -63,14 +63,15 @@ func wordPressTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
-					Path:                      "/",
-					Port:                      utils.ToPtr(int32(80)),
-					PeriodSeconds:             utils.ToPtr(int32(2)),
-					TimeoutSeconds:            utils.ToPtr(int32(10)),
-					StartupFailureThreshold:   utils.ToPtr(int32(10)),
-					LivenessFailureThreshold:  utils.ToPtr(int32(10)),
-					ReadinessFailureThreshold: utils.ToPtr(int32(3)),
+					Type:                    utils.ToPtr(schema.HealthCheckTypeHTTP),
+					Path:                    "/",
+					Port:                    utils.ToPtr(int32(80)),
+					StartupPeriodSeconds:    utils.ToPtr(int32(3)),
+					StartupTimeoutSeconds:   utils.ToPtr(int32(10)),
+					StartupFailureThreshold: utils.ToPtr(int32(10)),
+					HealthPeriodSeconds:     utils.ToPtr(int32(10)),
+					HealthTimeoutSeconds:    utils.ToPtr(int32(5)),
+					HealthFailureThreshold:  utils.ToPtr(int32(5)),
 				},
 				VariableReferences: []schema.TemplateVariableReference{
 					{

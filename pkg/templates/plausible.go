@@ -80,14 +80,15 @@ func plausibleTemplate() *schema.TemplateDefinition {
 					},
 				},
 				HealthCheck: &schema.HealthCheck{
-					Type:                      utils.ToPtr(schema.HealthCheckTypeHTTP),
-					Path:                      "/api/health",
-					Port:                      utils.ToPtr(int32(8000)),
-					PeriodSeconds:             utils.ToPtr(int32(10)),
-					TimeoutSeconds:            utils.ToPtr(int32(10)),
-					StartupFailureThreshold:   utils.ToPtr(int32(10)),
-					LivenessFailureThreshold:  utils.ToPtr(int32(5)),
-					ReadinessFailureThreshold: utils.ToPtr(int32(10)),
+					Type:                    utils.ToPtr(schema.HealthCheckTypeHTTP),
+					Path:                    "/api/health",
+					Port:                    utils.ToPtr(int32(8000)),
+					StartupPeriodSeconds:    utils.ToPtr(int32(10)),
+					StartupTimeoutSeconds:   utils.ToPtr(int32(10)),
+					StartupFailureThreshold: utils.ToPtr(int32(20)),
+					HealthPeriodSeconds:     utils.ToPtr(int32(10)),
+					HealthTimeoutSeconds:    utils.ToPtr(int32(5)),
+					HealthFailureThreshold:  utils.ToPtr(int32(5)),
 				},
 				Variables: []schema.TemplateVariable{
 					{
