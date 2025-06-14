@@ -424,7 +424,7 @@ type PodContainerStatus struct {
 type SimpleHealthStatus struct {
 	Health            InstanceHealth         `json:"health"`
 	ExpectedInstances int                    `json:"expected_instances"`
-	Instances         []SimpleInstanceStatus `json:"instances"`
+	Instances         []SimpleInstanceStatus `json:"instances" nullable:"false"`
 }
 
 type SimpleInstanceStatus struct {
