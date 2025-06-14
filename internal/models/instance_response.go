@@ -10,15 +10,15 @@ import (
 type EventType string
 
 const (
-	EventTypeOOMKilled        EventType = "OOMKilled"
-	EventTypeCrashLoopBackOff EventType = "CrashLoopBackOff"
-	EventTypeContainerCreated EventType = "ContainerCreated"
-	EventTypeContainerStarted EventType = "ContainerStarted"
-	EventTypeContainerStopped EventType = "ContainerStopped"
-	EventTypeImagePullBackOff EventType = "ImagePullBackOff"
-	EventTypeNodeNotReady     EventType = "NodeNotReady"
-	EventTypeSchedulingFailed EventType = "SchedulingFailed"
-	EventTypeUnknown          EventType = "Unknown"
+	EventTypeOOMKilled        EventType = "oom_killed"
+	EventTypeCrashLoopBackOff EventType = "crash_loop_back_off"
+	EventTypeContainerCreated EventType = "container_created"
+	EventTypeContainerStarted EventType = "container_started"
+	EventTypeContainerStopped EventType = "container_stopped"
+	EventTypeImagePullBackOff EventType = "image_pull_back_off"
+	EventTypeNodeNotReady     EventType = "node_not_ready"
+	EventTypeSchedulingFailed EventType = "scheduling_failed"
+	EventTypeUnknown          EventType = "unknown"
 )
 
 // Register enum in OpenAPI specification

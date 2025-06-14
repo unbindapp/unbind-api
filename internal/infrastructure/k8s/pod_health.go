@@ -277,7 +277,7 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 			status.State = ContainerStateRunning
 		} else {
 			// Container is running but not ready (likely failing readiness probes)
-			status.State = ContainerStateWaiting
+			status.State = ContainerStateNotReady
 			status.StateReason = "NotReady"
 			status.StateMessage = "Container is running but not ready (readiness probe may be failing)"
 		}
@@ -317,31 +317,49 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 		}
 
 	case container.State.Waiting != nil:
-		status.State = ContainerStateWaiting
 		status.StateReason = container.State.Waiting.Reason
 		status.StateMessage = container.State.Waiting.Message
 
+		// Map waiting reasons to more specific states
+		reasonLower := strings.ToLower(container.State.Waiting.Reason)
+		switch {
+		case strings.Contains(reasonLower, "crashloopbackoff"):
+			status.State = ContainerStateCrashing
+			status.IsCrashing = true
+			status.CrashLoopReason = container.State.Waiting.Message
+		case strings.Contains(reasonLower, "imagepullbackoff") || strings.Contains(reasonLower, "errimagepull"):
+			status.State = ContainerStateImagePullError
+		case strings.Contains(reasonLower, "containercreating"):
+			status.State = ContainerStateStarting
+		default:
+			status.State = ContainerStateWaiting
+		}
+
 		status.Events = append(status.Events, models.EventRecord{
-			Type:      models.EventTypeUnknown,
+			Type:      mapWaitingReasonToEventType(container.State.Waiting.Reason),
 			Timestamp: time.Now().Format(time.RFC3339),
 			Message:   fmt.Sprintf("Container %s is waiting: %s", container.Name, container.State.Waiting.Message),
 			Reason:    container.State.Waiting.Reason,
 		})
 
-		if strings.EqualFold(container.State.Waiting.Reason, "CrashLoopBackOff") {
-			status.IsCrashing = true
-			status.CrashLoopReason = container.State.Waiting.Message
-
-			if len(status.Events) > 0 {
-				status.Events[len(status.Events)-1].Type = models.EventTypeCrashLoopBackOff
-			}
-		}
-
 	case container.State.Terminated != nil:
-		status.State = ContainerStateTerminated
 		status.StateReason = container.State.Terminated.Reason
 		status.StateMessage = container.State.Terminated.Message
 		status.LastExitCode = container.State.Terminated.ExitCode
+
+		// Map termination reasons to more specific states
+		reasonLower := strings.ToLower(container.State.Terminated.Reason)
+		switch {
+		case strings.Contains(reasonLower, "oomkilled"):
+			status.State = ContainerStateOOMKilled
+		case container.State.Terminated.ExitCode != 0 && !strings.EqualFold(container.State.Terminated.Reason, "Completed"):
+			status.State = ContainerStateCrashing
+			status.IsCrashing = true
+			status.CrashLoopReason = fmt.Sprintf("Terminated with exit code: %d, reason: %s",
+				container.State.Terminated.ExitCode, container.State.Terminated.Reason)
+		default:
+			status.State = ContainerStateTerminated
+		}
 
 		terminatedEvent := models.EventRecord{
 			Timestamp: container.State.Terminated.FinishedAt.Format(time.RFC3339),
@@ -356,12 +374,6 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 		}
 
 		status.Events = append(status.Events, terminatedEvent)
-
-		if container.State.Terminated.ExitCode != 0 && !strings.EqualFold(container.State.Terminated.Reason, "Completed") {
-			status.IsCrashing = true
-			status.CrashLoopReason = fmt.Sprintf("Terminated with exit code: %d, reason: %s",
-				container.State.Terminated.ExitCode, container.State.Terminated.Reason)
-		}
 	}
 
 	if container.LastTerminationState.Terminated != nil {
@@ -390,6 +402,21 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 	}
 
 	return status
+}
+
+// mapWaitingReasonToEventType maps container waiting reasons to appropriate event types
+func mapWaitingReasonToEventType(reason string) models.EventType {
+	reasonLower := strings.ToLower(reason)
+	switch {
+	case strings.Contains(reasonLower, "crashloopbackoff"):
+		return models.EventTypeCrashLoopBackOff
+	case strings.Contains(reasonLower, "imagepullbackoff") || strings.Contains(reasonLower, "errimagepull"):
+		return models.EventTypeImagePullBackOff
+	case strings.Contains(reasonLower, "containercreating"):
+		return models.EventTypeContainerCreated
+	default:
+		return models.EventTypeUnknown
+	}
 }
 
 type InstanceStatus struct {
@@ -436,9 +463,14 @@ type SimpleInstanceStatus struct {
 type ContainerState string
 
 const (
-	ContainerStateRunning    ContainerState = "Running"
-	ContainerStateWaiting    ContainerState = "Waiting"
-	ContainerStateTerminated ContainerState = "Terminated"
+	ContainerStateRunning        ContainerState = "running"
+	ContainerStateWaiting        ContainerState = "waiting"
+	ContainerStateTerminated     ContainerState = "terminated"
+	ContainerStateCrashing       ContainerState = "crashing"         // CrashLoopBackOff or repeatedly failing
+	ContainerStateNotReady       ContainerState = "not_ready"        // Running but failing readiness probes
+	ContainerStateOOMKilled      ContainerState = "oom_killed"       // Killed due to out of memory
+	ContainerStateImagePullError ContainerState = "image_pull_error" // Cannot pull container image
+	ContainerStateStarting       ContainerState = "starting"         // Container is starting but not ready yet
 )
 
 func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
@@ -448,6 +480,11 @@ func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateRunning))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateWaiting))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateTerminated))
+		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateCrashing))
+		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateNotReady))
+		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateOOMKilled))
+		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateImagePullError))
+		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateStarting))
 		r.Map()["ContainerState"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/ContainerState"}
@@ -476,11 +513,11 @@ func (u InstanceHealth) Schema(r huma.Registry) *huma.Schema {
 type PodPhase string
 
 const (
-	PodPending   PodPhase = "Pending"
-	PodRunning   PodPhase = "Running"
-	PodSucceeded PodPhase = "Succeeded"
-	PodFailed    PodPhase = "Failed"
-	PodUnknown   PodPhase = "Unknown"
+	PodPending   PodPhase = "pending"
+	PodRunning   PodPhase = "running"
+	PodSucceeded PodPhase = "succeeded"
+	PodFailed    PodPhase = "failed"
+	PodUnknown   PodPhase = "unknown"
 )
 
 var allPodPhases = []corev1.PodPhase{
@@ -581,14 +618,25 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 				Events:         instance.Events,
 			})
 
-			// Count ready instances and detect pending states
-			if instance.IsCrashing {
+			// Count ready instances and detect pending/crashing states
+			switch instance.State {
+			case ContainerStateCrashing, ContainerStateOOMKilled:
 				hasCrashing = true
-			} else if instance.State == ContainerStateRunning && instance.Ready {
-				readyCount++
-			} else {
-				// Container is waiting, terminated, or running but not ready
+			case ContainerStateRunning:
+				if instance.Ready {
+					readyCount++
+				} else {
+					hasPending = true
+				}
+			case ContainerStateNotReady, ContainerStateWaiting, ContainerStateStarting, ContainerStateImagePullError:
 				hasPending = true
+			case ContainerStateTerminated:
+				// Terminated containers might be crashing if they have restart counts or failed
+				if instance.IsCrashing {
+					hasCrashing = true
+				} else {
+					hasPending = true
+				}
 			}
 		}
 	}
