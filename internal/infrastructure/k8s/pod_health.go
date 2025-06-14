@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -72,6 +73,9 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 			podStatus.StartTime = pod.Status.StartTime.Format(time.RFC3339)
 		}
 
+		// Set pod creation timestamp
+		podStatus.CreatedAt = pod.CreationTimestamp.Time
+
 		// Filter Kubernetes events for this specific pod if requested
 		var podEvents []models.EventRecord
 		if options.IncludeKubernetesEvents {
@@ -81,7 +85,7 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 		hasCrashing := false
 		for _, container := range pod.Status.ContainerStatuses {
 			// Always extract inferred events from container state (lightweight and reliable)
-			instanceStatus := extractContainerStatus(container, podStatus.IsTerminating)
+			instanceStatus := extractContainerStatus(container, podStatus.IsTerminating, podStatus.CreatedAt)
 
 			// Optionally append additional Kubernetes Events API events
 			if options.IncludeKubernetesEvents {
@@ -97,7 +101,7 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 
 		for _, container := range pod.Status.InitContainerStatuses {
 			// Always extract inferred events from container state
-			instanceStatus := extractContainerStatus(container, podStatus.IsTerminating)
+			instanceStatus := extractContainerStatus(container, podStatus.IsTerminating, podStatus.CreatedAt)
 
 			// Optionally append additional Kubernetes Events API events
 			if options.IncludeKubernetesEvents {
@@ -115,6 +119,11 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 
 		result = append(result, podStatus)
 	}
+
+	// Sort by creation time descending (newest first)
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].CreatedAt.After(result[j].CreatedAt)
+	})
 
 	return result, nil
 }
@@ -286,12 +295,13 @@ func filterEventsByContainer(events []models.EventRecord, containerName string) 
 }
 
 // extractContainerStatus infers some events from the container status, since Events API may not always have old events
-func extractContainerStatus(container corev1.ContainerStatus, isPodTerminating bool) InstanceStatus {
+func extractContainerStatus(container corev1.ContainerStatus, isPodTerminating bool, podCreatedAt time.Time) InstanceStatus {
 	status := InstanceStatus{
 		KubernetesName: container.Name,
 		Ready:          container.Ready,
 		RestartCount:   container.RestartCount,
 		IsCrashing:     false,
+		PodCreatedAt:   podCreatedAt,
 		Events:         []models.EventRecord{},
 	}
 
@@ -475,6 +485,7 @@ type InstanceStatus struct {
 	LastTermination string               `json:"last_termination,omitempty"`
 	IsCrashing      bool                 `json:"is_crashing"`
 	CrashLoopReason string               `json:"crash_loop_reason,omitempty"`
+	PodCreatedAt    time.Time            `json:"pod_created_at,omitempty"`
 	Events          []models.EventRecord `json:"events,omitempty" nullable:"false"`
 }
 
@@ -484,6 +495,7 @@ type PodContainerStatus struct {
 	Phase                PodPhase         `json:"phase"`
 	PodIP                string           `json:"pod_ip,omitempty"`
 	StartTime            string           `json:"start_time,omitempty"`
+	CreatedAt            time.Time        `json:"created_at,omitempty"`
 	HasCrashingInstances bool             `json:"has_crashing_instances"`
 	IsTerminating        bool             `json:"is_terminating"` // Added terminating detection
 	Instances            []InstanceStatus `json:"instances" nullable:"false"`
@@ -504,6 +516,7 @@ type SimpleInstanceStatus struct {
 	KubernetesName string               `json:"kubernetes_name"`
 	Status         ContainerState       `json:"status"`
 	RestartCount   int32                `json:"restart_count"`
+	PodCreatedAt   time.Time            `json:"pod_created_at,omitempty"`
 	Events         []models.EventRecord `json:"events,omitempty" nullable:"false"`
 }
 
@@ -676,6 +689,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 				KubernetesName: instance.KubernetesName,
 				Status:         instance.State,
 				RestartCount:   instance.RestartCount,
+				PodCreatedAt:   instance.PodCreatedAt,
 				Events:         instance.Events,
 			})
 
@@ -707,6 +721,7 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 				KubernetesName: instance.KubernetesName,
 				Status:         instance.State,
 				RestartCount:   instance.RestartCount,
+				PodCreatedAt:   instance.PodCreatedAt,
 				Events:         instance.Events,
 			})
 
@@ -742,6 +757,11 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 	default:
 		health = InstanceHealthActive
 	}
+
+	// Sort instances by pod creation time descending (newest first)
+	sort.Slice(allInstances, func(i, j int) bool {
+		return allInstances[i].PodCreatedAt.After(allInstances[j].PodCreatedAt)
+	})
 
 	return &SimpleHealthStatus{
 		Health:            health,
