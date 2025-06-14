@@ -169,6 +169,7 @@ func (self *DeploymentRepository) CreateCopy(ctx context.Context, tx repository.
 		SetStatus(schema.DeploymentStatusBuildQueued).
 		SetNillableCommitSha(deployment.CommitSha).
 		SetNillableCommitMessage(deployment.CommitMessage).
+		SetNillableGitBranch(deployment.GitBranch).
 		SetCommitAuthor(deployment.CommitAuthor).
 		SetResourceDefinition(deployment.ResourceDefinition).
 		SetSource(schema.DeploymentSourceManual).

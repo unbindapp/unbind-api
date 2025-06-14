@@ -224,12 +224,15 @@ func (self *DeploymentService) CreateCRDFromService(service *ent.Service) *ubv1.
 
 	// Update the Spec
 	var gitBranch string
+
+	// Preserve git branch from service config
 	if service.Edges.ServiceConfig.GitBranch != nil {
 		gitBranch = *service.Edges.ServiceConfig.GitBranch
 		if !strings.HasPrefix(gitBranch, "refs/heads/") {
 			gitBranch = fmt.Sprintf("refs/heads/%s", gitBranch)
 		}
 	}
+
 	crdToDeploy.Spec.Config.GitBranch = gitBranch
 	crdToDeploy.Spec.Config.Hosts = schema.AsV1HostSpecs(service.Edges.ServiceConfig.Hosts)
 	crdToDeploy.Spec.Config.Replicas = utils.ToPtr(service.Edges.ServiceConfig.Replicas)
