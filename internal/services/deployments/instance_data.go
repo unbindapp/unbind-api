@@ -141,16 +141,26 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 			// Always collect events from all containers
 			events = append(events, instance.Events...)
 
-			// Handle crashing containers
-			if instance.IsCrashing {
+			// Handle different container states more precisely
+			switch instance.State {
+			case k8s.ContainerStateCrashing:
 				hasCrashing = true
 				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
-			} else if instance.State == k8s.ContainerStateRunning && instance.Ready {
-				// Container is running and ready
-				readyCount++
-			} else {
-				// Container is waiting, terminated, or running but not ready
+			case k8s.ContainerStateRunning:
+				if instance.Ready {
+					readyCount++
+				} else {
+					// Running but not ready
+					hasPending = true
+				}
+			case k8s.ContainerStateNotReady, k8s.ContainerStateWaiting, k8s.ContainerStateStarting, k8s.ContainerStateImagePullError:
 				hasPending = true
+			case k8s.ContainerStateTerminated:
+				// Terminated containers might be crashing if they have restart counts or failed
+				if instance.IsCrashing {
+					hasCrashing = true
+					crashingReasons = append(crashingReasons, instance.CrashLoopReason)
+				}
 			}
 		}
 
@@ -158,18 +168,27 @@ func (self *DeploymentService) calculateInstanceData(statuses []k8s.PodContainer
 		for _, instance := range status.InstanceDependencies {
 			events = append(events, instance.Events...)
 
-			// Handle crashing init containers
-			if instance.IsCrashing {
+			// Handle different init container states
+			switch instance.State {
+			case k8s.ContainerStateCrashing:
 				hasCrashing = true
 				crashingReasons = append(crashingReasons, instance.CrashLoopReason)
+			case k8s.ContainerStateWaiting, k8s.ContainerStateStarting, k8s.ContainerStateImagePullError:
+				hasPending = true
+			case k8s.ContainerStateTerminated:
+				if instance.IsCrashing {
+					hasCrashing = true
+					crashingReasons = append(crashingReasons, instance.CrashLoopReason)
+				}
 			}
 		}
 	}
 
-	// Determine target status using simple 3-status logic:
+	// Determine target status with improved logic:
 	// 1. Crashing takes precedence over everything
-	// 2. Pending if any containers are not ready or we don't have enough instances
-	// 3. Active only if all expected instances are ready
+	// 2. Pending if any containers are actively starting/waiting or we don't have enough ready instances
+	//    (but exclude terminating containers from this check)
+	// 3. Active if we have enough ready instances and no pending containers
 	var targetStatus schema.DeploymentStatus
 	if hasCrashing {
 		targetStatus = schema.DeploymentStatusCrashing
