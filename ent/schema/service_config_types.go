@@ -193,12 +193,12 @@ type HealthCheck struct {
 	Path                    string           `json:"path,omitempty" required:"false" doc:"Path for http health checks"`
 	Port                    *int32           `json:"port,omitempty" required:"false" doc:"Port for http health checks" min:"1" max:"65535"`
 	Command                 string           `json:"command,omitempty" required:"false" doc:"Command for exec health checks"`
-	StartupPeriodSeconds    *int32           `json:"startup_period_seconds,omitempty" doc:"How often to perform the startup probe" min:"1"`
-	StartupTimeoutSeconds   *int32           `json:"startup_timeout_seconds,omitempty" doc:"How long to wait before marking the startup probe as failed" min:"1"`
-	StartupFailureThreshold *int32           `json:"startup_failure_threshold,omitempty" doc:"Failure threshold for startup probes" min:"1"`
-	HealthPeriodSeconds     *int32           `json:"health_period_seconds,omitempty" doc:"How often to perform the health probe" min:"1"`
-	HealthTimeoutSeconds    *int32           `json:"health_timeout_seconds,omitempty" doc:"How long to wait before marking the health probe as failed" min:"1"`
-	HealthFailureThreshold  *int32           `json:"health_failure_threshold,omitempty" doc:"Failure threshold for health probes" min:"1"`
+	StartupPeriodSeconds    *int32           `json:"startup_period_seconds,omitempty" doc:"How often to perform the startup probe"`
+	StartupTimeoutSeconds   *int32           `json:"startup_timeout_seconds,omitempty" doc:"How long to wait before marking the startup probe as failed"`
+	StartupFailureThreshold *int32           `json:"startup_failure_threshold,omitempty" doc:"Failure threshold for startup probes"`
+	HealthPeriodSeconds     *int32           `json:"health_period_seconds,omitempty" doc:"How often to perform the health probe"`
+	HealthTimeoutSeconds    *int32           `json:"health_timeout_seconds,omitempty" doc:"How long to wait before marking the health probe as failed"`
+	HealthFailureThreshold  *int32           `json:"health_failure_threshold,omitempty" doc:"Failure threshold for health probes"`
 }
 
 func (self *HealthCheck) Validate() error {

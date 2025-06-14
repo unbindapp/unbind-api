@@ -264,21 +264,34 @@ func (self *ServiceService) UpdateService(ctx context.Context, requesterUserID u
 				}
 				if input.HealthCheck.StartupPeriodSeconds == nil {
 					input.HealthCheck.StartupPeriodSeconds = service.Edges.ServiceConfig.HealthCheck.StartupPeriodSeconds
+				} else if *input.HealthCheck.StartupPeriodSeconds < 1 {
+					// Setting these to nil will cause the default values to be used
+					input.HealthCheck.StartupPeriodSeconds = nil
 				}
 				if input.HealthCheck.StartupTimeoutSeconds == nil {
 					input.HealthCheck.StartupTimeoutSeconds = service.Edges.ServiceConfig.HealthCheck.StartupTimeoutSeconds
+				} else if *input.HealthCheck.StartupTimeoutSeconds < 1 {
+					input.HealthCheck.StartupTimeoutSeconds = nil
 				}
 				if input.HealthCheck.StartupFailureThreshold == nil {
 					input.HealthCheck.StartupFailureThreshold = service.Edges.ServiceConfig.HealthCheck.StartupFailureThreshold
+				} else if *input.HealthCheck.StartupFailureThreshold < 1 {
+					input.HealthCheck.StartupFailureThreshold = nil
 				}
 				if input.HealthCheck.HealthPeriodSeconds == nil {
 					input.HealthCheck.HealthPeriodSeconds = service.Edges.ServiceConfig.HealthCheck.HealthPeriodSeconds
+				} else if *input.HealthCheck.HealthPeriodSeconds < 1 {
+					input.HealthCheck.HealthPeriodSeconds = nil
 				}
 				if input.HealthCheck.HealthTimeoutSeconds == nil {
 					input.HealthCheck.HealthTimeoutSeconds = service.Edges.ServiceConfig.HealthCheck.HealthTimeoutSeconds
+				} else if *input.HealthCheck.HealthTimeoutSeconds < 1 {
+					input.HealthCheck.HealthTimeoutSeconds = nil
 				}
 				if input.HealthCheck.HealthFailureThreshold == nil {
 					input.HealthCheck.HealthFailureThreshold = service.Edges.ServiceConfig.HealthCheck.HealthFailureThreshold
+				} else if *input.HealthCheck.HealthFailureThreshold < 1 {
+					input.HealthCheck.HealthFailureThreshold = nil
 				}
 			}
 			if input.HealthCheck.Port == nil && len(service.Edges.ServiceConfig.Ports) > 0 {
