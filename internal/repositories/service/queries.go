@@ -17,6 +17,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent/service"
 	"github.com/unbindapp/unbind-api/ent/serviceconfig"
 	"github.com/unbindapp/unbind-api/ent/team"
+	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
@@ -312,6 +313,22 @@ const (
 func (self *ServiceRepository) NeedsDeployment(ctx context.Context, service *ent.Service) (NeedsDeploymentResponse, error) {
 	if service.Edges.CurrentDeployment == nil || service.Edges.CurrentDeployment.ResourceDefinition == nil {
 		return NoDeploymentNeeded, nil
+	}
+
+	// Re-consider CurrentDeployment if one is currently being built
+	activeBuilds, err := self.base.DB.Deployment.Query().
+		Where(
+			deployment.ServiceIDEQ(service.ID),
+			deployment.StatusIn(schema.DeploymentStatusBuildPending, schema.DeploymentStatusBuildQueued, schema.DeploymentStatusBuildRunning),
+		).Order(ent.Desc(deployment.FieldCreatedAt)).
+		Limit(1).
+		All(ctx)
+	if err != nil {
+		log.Errorf("Failed to query active builds for service %s: %v", service.ID, err)
+	} else {
+		if len(activeBuilds) > 0 {
+			service.Edges.CurrentDeployment = activeBuilds[0]
+		}
 	}
 	// See if a deployment is needed
 	// Create a an object with only fields we care to compare

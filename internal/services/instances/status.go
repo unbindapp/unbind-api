@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
@@ -64,6 +65,11 @@ func (self *InstanceService) GetInstanceHealth(ctx context.Context, requesterUse
 		return nil, err
 	}
 
-	// Override the expected replicas
-	return self.k8s.GetSimpleHealthStatus(ctx, team.Namespace, labels, utils.ToPtr(int(service.Edges.ServiceConfig.Replicas)), client)
+	// Override the expected replicas for not databases
+	// This will override checking kubernetes state for replicas (DBs are complicated and may not match)
+	var expectedReplicas *int
+	if service.Type != schema.ServiceTypeDatabase {
+		expectedReplicas = utils.ToPtr(int(service.Edges.ServiceConfig.Replicas))
+	}
+	return self.k8s.GetSimpleHealthStatus(ctx, team.Namespace, labels, expectedReplicas, client)
 }
