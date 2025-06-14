@@ -759,6 +759,7 @@ func (self *DeploymentController) AreDependenciesReady(ctx context.Context, req 
 			map[string]string{
 				"unbind-service": depServiceID.String(),
 			},
+			nil,
 			self.k8s.GetInternalClient(),
 		)
 		if err != nil {

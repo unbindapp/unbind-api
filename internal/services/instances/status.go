@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
+	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
@@ -63,5 +64,6 @@ func (self *InstanceService) GetInstanceHealth(ctx context.Context, requesterUse
 		return nil, err
 	}
 
-	return self.k8s.GetSimpleHealthStatus(ctx, team.Namespace, labels, client)
+	// Override the expected replicas
+	return self.k8s.GetSimpleHealthStatus(ctx, team.Namespace, labels, utils.ToPtr(int(service.Edges.ServiceConfig.Replicas)), client)
 }

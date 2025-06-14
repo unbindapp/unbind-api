@@ -65,6 +65,7 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 			ProjectID:            projectID,
 			EnvironmentID:        environmentID,
 			ServiceID:            serviceID,
+			IsTerminating:        isPodTerminating(pod), // Add terminating detection
 		}
 
 		if pod.Status.StartTime != nil {
@@ -80,7 +81,7 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 		hasCrashing := false
 		for _, container := range pod.Status.ContainerStatuses {
 			// Always extract inferred events from container state (lightweight and reliable)
-			instanceStatus := extractContainerStatus(container)
+			instanceStatus := extractContainerStatus(container, podStatus.IsTerminating)
 
 			// Optionally append additional Kubernetes Events API events
 			if options.IncludeKubernetesEvents {
@@ -96,7 +97,7 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 
 		for _, container := range pod.Status.InitContainerStatuses {
 			// Always extract inferred events from container state
-			instanceStatus := extractContainerStatus(container)
+			instanceStatus := extractContainerStatus(container, podStatus.IsTerminating)
 
 			// Optionally append additional Kubernetes Events API events
 			if options.IncludeKubernetesEvents {
@@ -116,6 +117,30 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 	}
 
 	return result, nil
+}
+
+// isPodTerminating checks if a pod is in the process of being terminated
+func isPodTerminating(pod corev1.Pod) bool {
+	// Pod has a deletion timestamp - it's being terminated
+	if pod.DeletionTimestamp != nil {
+		return true
+	}
+
+	// Pod phase is failed and it's being cleaned up
+	if pod.Status.Phase == corev1.PodFailed {
+		return false // Failed pods are not terminating, they're already failed
+	}
+
+	// Check if pod has terminating conditions
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == corev1.PodReady &&
+			condition.Status == corev1.ConditionFalse &&
+			strings.Contains(strings.ToLower(condition.Reason), "terminat") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // getBatchPodEvents efficiently fetches events for multiple pods in a single API call
@@ -261,7 +286,7 @@ func filterEventsByContainer(events []models.EventRecord, containerName string) 
 }
 
 // extractContainerStatus infers some events from the container status, since Events API may not always have old events
-func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
+func extractContainerStatus(container corev1.ContainerStatus, isPodTerminating bool) InstanceStatus {
 	status := InstanceStatus{
 		KubernetesName: container.Name,
 		Ready:          container.Ready,
@@ -272,47 +297,50 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 
 	switch {
 	case container.State.Running != nil:
-		// Container is running, but check if it's ready
-		if container.Ready {
-			status.State = ContainerStateRunning
-		} else {
-			// Container is running but not ready (likely failing readiness probes)
-			status.State = ContainerStateNotReady
-			status.StateReason = "NotReady"
-			status.StateMessage = "Container is running but not ready (readiness probe may be failing)"
-		}
+		// If pod is terminating, container should be marked as terminating even if running
+		if isPodTerminating {
+			status.State = ContainerStateTerminating
+			status.StateReason = "Terminating"
+			status.StateMessage = "Container is being terminated"
 
-		if container.State.Running.StartedAt.Time != (time.Time{}) {
-			if container.Ready {
+			status.Events = append(status.Events, models.EventRecord{
+				Type:      models.EventTypeContainerStopped,
+				Timestamp: time.Now().Format(time.RFC3339),
+				Message:   fmt.Sprintf("Container %s is being terminated", container.Name),
+				Reason:    "Terminating",
+			})
+		} else if container.Ready {
+			status.State = ContainerStateRunning
+
+			if container.State.Running.StartedAt.Time != (time.Time{}) {
 				status.Events = append(status.Events, models.EventRecord{
 					Type:      models.EventTypeContainerStarted,
 					Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
 					Message:   fmt.Sprintf("Container %s started at %s", container.Name, container.State.Running.StartedAt.Format(time.RFC3339)),
 					Reason:    "Started",
 				})
-			} else {
-				status.Events = append(status.Events, models.EventRecord{
-					Type:      models.EventTypeUnknown,
-					Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
-					Message:   fmt.Sprintf("Container %s started but not ready (readiness probe failing)", container.Name),
-					Reason:    "NotReady",
-				})
 			}
+		} else {
+			// Container is running but not ready (likely failing readiness probes)
+			status.State = ContainerStateNotReady
+			status.StateReason = "NotReady"
+			status.StateMessage = "Container is running but not ready (readiness probe may be failing)"
+
+			status.Events = append(status.Events, models.EventRecord{
+				Type:      models.EventTypeUnknown,
+				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
+				Message:   fmt.Sprintf("Container %s started but not ready (readiness probe failing)", container.Name),
+				Reason:    "NotReady",
+			})
 		}
 
-		if container.RestartCount > 0 {
+		// Add restart event if applicable
+		if container.RestartCount > 0 && !isPodTerminating {
 			status.Events = append(status.Events, models.EventRecord{
 				Type:      models.EventTypeContainerCreated,
 				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
 				Message:   fmt.Sprintf("Container %s restarted (restart count: %d)", container.Name, container.RestartCount),
-				Reason:    "Created",
-			})
-		} else {
-			status.Events = append(status.Events, models.EventRecord{
-				Type:      models.EventTypeContainerCreated,
-				Timestamp: container.State.Running.StartedAt.Format(time.RFC3339),
-				Message:   fmt.Sprintf("Container %s created and started", container.Name),
-				Reason:    "Created",
+				Reason:    "Restarted",
 			})
 		}
 
@@ -331,6 +359,9 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 			status.State = ContainerStateImagePullError
 		case strings.Contains(reasonLower, "containercreating"):
 			status.State = ContainerStateStarting
+		case isPodTerminating:
+			// If pod is terminating and container is waiting, it's likely terminating
+			status.State = ContainerStateTerminating
 		default:
 			status.State = ContainerStateWaiting
 		}
@@ -351,13 +382,26 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 		reasonLower := strings.ToLower(container.State.Terminated.Reason)
 		switch {
 		case strings.Contains(reasonLower, "oomkilled"):
-			status.State = ContainerStateOOMKilled
+			// OOM killed containers are considered crashing unless pod is terminating gracefully
+			if isPodTerminating {
+				status.State = ContainerStateTerminated
+			} else {
+				status.State = ContainerStateCrashing
+				status.IsCrashing = true
+				status.CrashLoopReason = fmt.Sprintf("OOMKilled: %s", container.State.Terminated.Message)
+			}
 		case container.State.Terminated.ExitCode != 0 && !strings.EqualFold(container.State.Terminated.Reason, "Completed"):
-			status.State = ContainerStateCrashing
-			status.IsCrashing = true
-			status.CrashLoopReason = fmt.Sprintf("Terminated with exit code: %d, reason: %s",
-				container.State.Terminated.ExitCode, container.State.Terminated.Reason)
+			// Non-zero exit code (except for completed jobs) indicates crashing, unless gracefully terminating
+			if isPodTerminating {
+				status.State = ContainerStateTerminated
+			} else {
+				status.State = ContainerStateCrashing
+				status.IsCrashing = true
+				status.CrashLoopReason = fmt.Sprintf("Terminated with exit code: %d, reason: %s",
+					container.State.Terminated.ExitCode, container.State.Terminated.Reason)
+			}
 		default:
+			// All other terminated containers (including graceful shutdowns, completed jobs, etc.)
 			status.State = ContainerStateTerminated
 		}
 
@@ -376,6 +420,7 @@ func extractContainerStatus(container corev1.ContainerStatus) InstanceStatus {
 		status.Events = append(status.Events, terminatedEvent)
 	}
 
+	// Handle last termination state
 	if container.LastTerminationState.Terminated != nil {
 		term := container.LastTerminationState.Terminated
 		status.LastTermination = fmt.Sprintf(
@@ -440,6 +485,7 @@ type PodContainerStatus struct {
 	PodIP                string           `json:"pod_ip,omitempty"`
 	StartTime            string           `json:"start_time,omitempty"`
 	HasCrashingInstances bool             `json:"has_crashing_instances"`
+	IsTerminating        bool             `json:"is_terminating"` // Added terminating detection
 	Instances            []InstanceStatus `json:"instances" nullable:"false"`
 	InstanceDependencies []InstanceStatus `json:"instance_dependencies" nullable:"false"`
 	TeamID               uuid.UUID        `json:"team_id"`
@@ -457,6 +503,7 @@ type SimpleHealthStatus struct {
 type SimpleInstanceStatus struct {
 	KubernetesName string               `json:"kubernetes_name"`
 	Status         ContainerState       `json:"status"`
+	RestartCount   int32                `json:"restart_count"`
 	Events         []models.EventRecord `json:"events,omitempty" nullable:"false"`
 }
 
@@ -466,9 +513,9 @@ const (
 	ContainerStateRunning        ContainerState = "running"
 	ContainerStateWaiting        ContainerState = "waiting"
 	ContainerStateTerminated     ContainerState = "terminated"
+	ContainerStateTerminating    ContainerState = "terminating"      // Pod is being terminated (e.g., during scaling down)
 	ContainerStateCrashing       ContainerState = "crashing"         // CrashLoopBackOff or repeatedly failing
 	ContainerStateNotReady       ContainerState = "not_ready"        // Running but failing readiness probes
-	ContainerStateOOMKilled      ContainerState = "oom_killed"       // Killed due to out of memory
 	ContainerStateImagePullError ContainerState = "image_pull_error" // Cannot pull container image
 	ContainerStateStarting       ContainerState = "starting"         // Container is starting but not ready yet
 )
@@ -480,9 +527,9 @@ func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateRunning))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateWaiting))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateTerminated))
+		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateTerminating))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateCrashing))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateNotReady))
-		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateOOMKilled))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateImagePullError))
 		schemaRef.Enum = append(schemaRef.Enum, string(ContainerStateStarting))
 		r.Map()["ContainerState"] = schemaRef
@@ -493,9 +540,10 @@ func (u ContainerState) Schema(r huma.Registry) *huma.Schema {
 type InstanceHealth string
 
 const (
-	InstanceHealthPending  InstanceHealth = "pending"  // Waiting to be scheduled, or running but not ready yet
-	InstanceHealthCrashing InstanceHealth = "crashing" // Has crashing instances
-	InstanceHealthActive   InstanceHealth = "active"   // All instances running and healthy
+	InstanceHealthPending     InstanceHealth = "pending"     // Waiting to be scheduled, or running but not ready yet
+	InstanceHealthCrashing    InstanceHealth = "crashing"    // Has crashing instances
+	InstanceHealthActive      InstanceHealth = "active"      // All instances running and healthy
+	InstanceHealthTerminating InstanceHealth = "terminating" // Pod is being gracefully terminated
 )
 
 func (u InstanceHealth) Schema(r huma.Registry) *huma.Schema {
@@ -505,6 +553,7 @@ func (u InstanceHealth) Schema(r huma.Registry) *huma.Schema {
 		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthPending))
 		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthCrashing))
 		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthActive))
+		schemaRef.Enum = append(schemaRef.Enum, string(InstanceHealthTerminating))
 		r.Map()["InstanceHealth"] = schemaRef
 	}
 	return &huma.Schema{Ref: "#/components/schemas/InstanceHealth"}
@@ -581,7 +630,7 @@ func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string,
 	return 1, nil
 }
 
-func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*SimpleHealthStatus, error) {
+func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client *kubernetes.Clientset) (*SimpleHealthStatus, error) {
 	podStatuses, err := self.GetPodContainerStatusByLabels(ctx, namespace, labels, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pod statuses: %w", err)
@@ -595,17 +644,28 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 		}, nil
 	}
 
-	expectedInstances, err := self.GetExpectedInstances(ctx, podStatuses[0].Namespace, podStatuses[0].KubernetesName, client)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get expected instances: %w", err)
+	var expectedInstances int
+	if expectedReplicas != nil {
+		expectedInstances = *expectedReplicas
+	} else {
+		expectedInstances, err = self.GetExpectedInstances(ctx, podStatuses[0].Namespace, podStatuses[0].KubernetesName, client)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get expected instances: %w", err)
+		}
 	}
 
 	hasCrashing := false
 	hasPending := false
+	hasTerminating := false
 	readyCount := 0
 	allInstances := make([]SimpleInstanceStatus, 0)
 
 	for _, podStatus := range podStatuses {
+		// Check if pod itself is terminating
+		if podStatus.IsTerminating {
+			hasTerminating = true
+		}
+
 		// Check if any containers are crashing
 		if podStatus.HasCrashingInstances {
 			hasCrashing = true
@@ -615,13 +675,16 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 			allInstances = append(allInstances, SimpleInstanceStatus{
 				KubernetesName: instance.KubernetesName,
 				Status:         instance.State,
+				RestartCount:   instance.RestartCount,
 				Events:         instance.Events,
 			})
 
-			// Count ready instances and detect pending/crashing states
+			// Count ready instances and detect pending/crashing/terminating states
 			switch instance.State {
-			case ContainerStateCrashing, ContainerStateOOMKilled:
+			case ContainerStateCrashing:
 				hasCrashing = true
+			case ContainerStateTerminating:
+				hasTerminating = true
 			case ContainerStateRunning:
 				if instance.Ready {
 					readyCount++
@@ -634,23 +697,49 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 				// Terminated containers might be crashing if they have restart counts or failed
 				if instance.IsCrashing {
 					hasCrashing = true
-				} else {
-					hasPending = true
+				}
+			}
+		}
+
+		// Also check init containers
+		for _, instance := range podStatus.InstanceDependencies {
+			allInstances = append(allInstances, SimpleInstanceStatus{
+				KubernetesName: instance.KubernetesName,
+				Status:         instance.State,
+				RestartCount:   instance.RestartCount,
+				Events:         instance.Events,
+			})
+
+			// Init containers failing can affect overall health
+			switch instance.State {
+			case ContainerStateCrashing:
+				hasCrashing = true
+			case ContainerStateTerminating:
+				hasTerminating = true
+			case ContainerStateWaiting, ContainerStateStarting, ContainerStateImagePullError:
+				hasPending = true
+			case ContainerStateTerminated:
+				if instance.IsCrashing {
+					hasCrashing = true
 				}
 			}
 		}
 	}
 
 	// Determine health status based on priority:
-	// 1. Crashing takes precedence over everything
-	// 2. Pending if any containers are not ready or we don't have enough instances
-	// 3. Active only if all expected instances are ready
+	// 1. Crashing takes precedence over everything (indicates real problems)
+	// 2. Terminating comes next (planned shutdown/scaling)
+	// 3. Pending if any containers are not ready or we don't have enough instances
+	// 4. Active only if all expected instances are ready and running
 	var health InstanceHealth
-	if hasCrashing {
+	switch {
+	case hasCrashing:
 		health = InstanceHealthCrashing
-	} else if hasPending || readyCount < expectedInstances {
+	case hasTerminating:
+		health = InstanceHealthTerminating
+	case hasPending || readyCount < expectedInstances:
 		health = InstanceHealthPending
-	} else {
+	default:
 		health = InstanceHealthActive
 	}
 
