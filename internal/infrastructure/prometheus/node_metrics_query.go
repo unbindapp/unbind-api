@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -174,11 +175,7 @@ func buildLabelValueFilter(label string, values []string) string {
 		return fmt.Sprintf(`, %s="%s"`, label, values[0])
 	}
 
-	filter := fmt.Sprintf(`, %s=~"%s"`, label, values[0])
-	for i := 1; i < len(values); i++ {
-		filter += fmt.Sprintf("|%s", values[i])
-	}
-	filter += `"`
-
-	return filter
+	// Create regex pattern with all values joined by |
+	regexPattern := strings.Join(values, "|")
+	return fmt.Sprintf(`, %s=~"%s"`, label, regexPattern)
 }

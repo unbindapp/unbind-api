@@ -28,6 +28,15 @@ type RepositoriesServiceInterface interface {
 	ListReleases(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error)
 }
 
+// ManagerInterface defines the interface for release management operations
+type ManagerInterface interface {
+	AvailableUpdates(ctx context.Context, currentVersion string) ([]string, error)
+	GetLatestVersion(ctx context.Context) (string, error)
+	GetUpdatePath(ctx context.Context, currentVersion, targetVersion string) ([]string, error)
+	GetNextAvailableVersion(ctx context.Context, currentVersion string) (string, error)
+	GetRepositoryInfo() (string, string)
+}
+
 // Manager handles release management functionality
 type Manager struct {
 	client      GitHubClientInterface

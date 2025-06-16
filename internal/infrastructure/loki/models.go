@@ -21,12 +21,13 @@ const (
 
 // LokiLogStreamOptions represents options for filtering and streaming logs from Loki
 type LokiLogStreamOptions struct {
-	Label      LokiLabelName // Label to filter logs by
-	LabelValue string        // Value of the label to filter logs by
-	RawFilter  string        // Raw logql filter string
-	Since      time.Duration // Get logs from this time ago
-	Limit      int           // Number of log lines to get
-	Start      time.Time     // Get logs from a specific time
+	Label             LokiLabelName // Label to filter logs by
+	LabelValue        string        // Value of the label to filter logs by
+	RawFilter         string        // Raw logql filter string
+	Since             time.Duration // Get logs from this time ago
+	Limit             int           // Number of log lines to get
+	Start             time.Time     // Get logs from a specific time
+	HeartbeatInterval time.Duration // Interval for sending heartbeat messages (defaults to 10s if not set)
 }
 
 // LokiLogOptions represents options for querying logs from Loki query and query_range APIs

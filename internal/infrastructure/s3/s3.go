@@ -23,6 +23,14 @@ import (
 	"github.com/unbindapp/unbind-api/internal/models"
 )
 
+// S3APIInterface defines the interface for S3 operations we need
+type S3APIInterface interface {
+	ListBuckets(ctx context.Context, params *s3.ListBucketsInput, optFns ...func(*s3.Options)) (*s3.ListBucketsOutput, error)
+	PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	HeadObject(ctx context.Context, params *s3.HeadObjectInput, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
+	DeleteObject(ctx context.Context, params *s3.DeleteObjectInput, optFns ...func(*s3.Options)) (*s3.DeleteObjectOutput, error)
+}
+
 func NewHttpClient() aws.HTTPClient {
 	return awshttp.NewBuildableClient().
 		WithTimeout(5 * time.Second).
@@ -55,7 +63,7 @@ func fastHTTP() aws.HTTPClient {
 
 // S3Client provides methods to interact with S3-compatible storage.
 type S3Client struct {
-	client *s3.Client
+	client S3APIInterface
 }
 
 // NewS3Client creates a new S3Client with the provided credentials.
@@ -88,6 +96,11 @@ func NewS3Client(ctx context.Context, endpoint, region, accessKeyID, secretKey s
 	})
 
 	return &S3Client{client: client}, nil
+}
+
+// NewS3ClientWithAPI creates a new S3Client with a custom S3 API implementation (useful for testing)
+func NewS3ClientWithAPI(api S3APIInterface) *S3Client {
+	return &S3Client{client: api}
 }
 
 // ListBuckets lists all S3 buckets in the configured account.

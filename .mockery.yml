@@ -159,6 +159,15 @@ packages:
           filename: kubeclient_mock.go
           mockname: KubeClientMock
           outpkg: mocks_infrastructure_k8s
+  github.com/unbindapp/unbind-api/internal/infrastructure/prometheus:
+    config:
+      dir: ./mocks/promapi
+    interfaces:
+      PromAPIInterface:
+        config:
+          filename: promapi_mock.go
+          mockname: PromAPIInterfaceMock
+          outpkg: mocks_promapi
   github.com/unbindapp/unbind-api/internal/repositories/repositories:
     config:
       dir: ./mocks/repositories

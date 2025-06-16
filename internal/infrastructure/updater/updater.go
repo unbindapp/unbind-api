@@ -24,9 +24,9 @@ import (
 // Updater handles the update process for the application
 type Updater struct {
 	cfg            *config.Config
-	releaseManager *release.Manager
+	releaseManager release.ManagerInterface
 	CurrentVersion string
-	k8sClient      *k8s.KubeClient
+	k8sClient      k8s.KubeClientInterface
 	httpClient     *http.Client
 
 	// Cache for updates
@@ -39,7 +39,7 @@ type UpdateCacheItem struct {
 }
 
 // New creates a new updater instance
-func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, redisClient *redis.Client) *Updater {
+func New(cfg *config.Config, currentVersion string, k8sClient k8s.KubeClientInterface, redisClient *redis.Client) *Updater {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -53,6 +53,25 @@ func New(cfg *config.Config, currentVersion string, k8sClient *k8s.KubeClient, r
 	return &Updater{
 		cfg:            cfg,
 		releaseManager: release.NewManager(NewGitHubClientWrapper(githubClient), cfg.ReleaseRepoOverride),
+		CurrentVersion: currentVersion,
+		k8sClient:      k8sClient,
+		httpClient:     httpClient,
+		redisCache:     redisCache,
+	}
+}
+
+// NewWithReleaseManager creates a new updater instance with a custom release manager (useful for testing)
+func NewWithReleaseManager(cfg *config.Config, currentVersion string, k8sClient k8s.KubeClientInterface, redisClient *redis.Client, releaseManager release.ManagerInterface) *Updater {
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	// Create string cache
+	redisCache := cache.NewCache[*UpdateCacheItem](redisClient, "unbind-updater")
+
+	return &Updater{
+		cfg:            cfg,
+		releaseManager: releaseManager,
 		CurrentVersion: currentVersion,
 		k8sClient:      k8sClient,
 		httpClient:     httpClient,

@@ -125,7 +125,7 @@ func alignTimeToStep(t time.Time, step time.Duration) time.Time {
 	// Round down to the nearest step boundary
 	alignedNanos := (nanos / stepNanos) * stepNanos
 
-	return time.Unix(0, alignedNanos)
+	return time.Unix(0, alignedNanos).In(t.Location())
 }
 
 // calculateNetworkWindow determines the appropriate time window for network rate calculations

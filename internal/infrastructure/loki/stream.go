@@ -142,7 +142,11 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	defer pingTicker.Stop()
 
 	// Initialize a heartbeat ticker to send empty messages periodically to client
-	heartbeatTicker := time.NewTicker(10 * time.Second)
+	heartbeatInterval := opts.HeartbeatInterval
+	if heartbeatInterval <= 0 {
+		heartbeatInterval = 10 * time.Second // Default to 10 seconds
+	}
+	heartbeatTicker := time.NewTicker(heartbeatInterval)
 	defer heartbeatTicker.Stop()
 
 	// Main loop for handling the WebSocket connection

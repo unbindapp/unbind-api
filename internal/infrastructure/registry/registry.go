@@ -17,12 +17,12 @@ import (
 type RegistryTester struct {
 	cfg        *config.Config
 	repo       repositories.RepositoriesInterface
-	kubeClient *k8s.KubeClient
+	kubeClient k8s.KubeClientInterface
 	httpClient *http.Client
 }
 
 // NewRegistryTester creates a new RegistryTester instance (renamed from NewImageChecker)
-func NewRegistryTester(cfg *config.Config, repo repositories.RepositoriesInterface, kubeClient *k8s.KubeClient) *RegistryTester {
+func NewRegistryTester(cfg *config.Config, repo repositories.RepositoriesInterface, kubeClient k8s.KubeClientInterface) *RegistryTester {
 	return &RegistryTester{
 		cfg:        cfg,
 		repo:       repo,
