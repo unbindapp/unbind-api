@@ -91,7 +91,7 @@ func (self *VariablesService) ResolveAllReferences(ctx context.Context, serviceI
 	return result, nil
 }
 
-func (self *VariablesService) resolveSourceValue(ctx context.Context, client *kubernetes.Clientset, namespace string, source schema.VariableReferenceSource) (string, error) {
+func (self *VariablesService) resolveSourceValue(ctx context.Context, client kubernetes.Interface, namespace string, source schema.VariableReferenceSource) (string, error) {
 	switch source.Type {
 	case schema.VariableReferenceTypeVariable:
 		// Get from kubernetes secret
@@ -143,7 +143,7 @@ func (self *VariablesService) resolveSourceValue(ctx context.Context, client *ku
 }
 
 // Helper function to resolve internal endpoint URL
-func (self *VariablesService) resolveInternalEndpointURL(ctx context.Context, client *kubernetes.Clientset, namespace string, source schema.VariableReferenceSource, endpoint models.ServiceEndpoint) (string, error) {
+func (self *VariablesService) resolveInternalEndpointURL(ctx context.Context, client kubernetes.Interface, namespace string, source schema.VariableReferenceSource, endpoint models.ServiceEndpoint) (string, error) {
 	// Figure out port
 	var targetPort *schema.PortSpec
 	for _, port := range endpoint.Ports {
@@ -173,7 +173,7 @@ func (self *VariablesService) resolveInternalEndpointURL(ctx context.Context, cl
 }
 
 // resolve reference template
-func (self *VariablesService) resolveReference(ctx context.Context, client *kubernetes.Clientset, namespace string, reference *ent.VariableReference) (string, error) {
+func (self *VariablesService) resolveReference(ctx context.Context, client kubernetes.Interface, namespace string, reference *ent.VariableReference) (string, error) {
 	sourceValues := make(map[string]string)
 	for _, source := range reference.Sources {
 		// The key we want to replace in our template

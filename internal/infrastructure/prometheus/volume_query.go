@@ -30,7 +30,7 @@ type VolumeStatsWithHistory struct {
 
 // GetPVCsVolumeStats queries Prometheus for volume usage and gets all PVC info from Kubernetes.
 // Returns stats for all requested PVCs from K8s, with UsedGB attached from Prometheus when available.
-func (self *PrometheusClient) GetPVCsVolumeStats(ctx context.Context, pvcNames []string, namespace string, client *kubernetes.Clientset) ([]*PVCVolumeStats, error) {
+func (self *PrometheusClient) GetPVCsVolumeStats(ctx context.Context, pvcNames []string, namespace string, client kubernetes.Interface) ([]*PVCVolumeStats, error) {
 	if len(pvcNames) == 0 {
 		return []*PVCVolumeStats{}, nil
 	}
@@ -126,7 +126,7 @@ func (self *PrometheusClient) getPrometheusUsageStats(ctx context.Context, pvcNa
 }
 
 // Helper function to get PVC capacities from Kubernetes API for multiple PVCs
-func (self *PrometheusClient) getPVCsFromK8s(ctx context.Context, namespace string, pvcNames []string, client *kubernetes.Clientset) (map[string]*float64, error) {
+func (self *PrometheusClient) getPVCsFromK8s(ctx context.Context, namespace string, pvcNames []string, client kubernetes.Interface) (map[string]*float64, error) {
 	results := make(map[string]*float64)
 
 	// Create a set of requested PVC names for efficient lookup
@@ -183,7 +183,7 @@ func (self *PrometheusClient) GetVolumeStatsWithHistory(
 	end time.Time,
 	step time.Duration,
 	namespace string,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 ) (*VolumeStatsWithHistory, error) {
 	// First try to get current stats using existing method (works for attached volumes)
 	stats, err := self.GetPVCsVolumeStats(ctx, []string{pvcName}, namespace, client)

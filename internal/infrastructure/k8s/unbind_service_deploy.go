@@ -65,6 +65,10 @@ func updateExistingServiceCR(ctx context.Context, client *KubeClient, gvr schema
 
 // convertToUnstructured converts a runtime.Object to an Unstructured object
 func convertToUnstructured(obj runtime.Object) (*unstructured.Unstructured, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("cannot convert nil object to unstructured")
+	}
+
 	// Create a new unstructured object
 	unstructuredObj := &unstructured.Unstructured{}
 

@@ -44,7 +44,7 @@ func (k *KubeClient) GetNamespaces(ctx context.Context, namespaceNames []string,
 }
 
 // CreateNamespace creates a new namespace in the Kubernetes cluster
-func (k *KubeClient) CreateNamespace(ctx context.Context, namespaceName string, client *kubernetes.Clientset) (*corev1.Namespace, error) {
+func (k *KubeClient) CreateNamespace(ctx context.Context, namespaceName string, client kubernetes.Interface) (*corev1.Namespace, error) {
 	// Define the namespace object
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{

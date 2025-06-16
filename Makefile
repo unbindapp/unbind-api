@@ -1,7 +1,8 @@
-.PHONY: migrate migrate\:checksum interfaces ent help
+.PHONY: migrate migrate\:checksum interfaces ent tests help
 
 help:
 	@echo "Available commands:"
+	@echo "  make tests                           - Run tests"
 	@echo "  make migrate NAME=initial_migration  - Create a new migration"
 	@echo "  make migrate:checksum                - Regenerate checksum"
 	@echo "  make interfaces                      - Generate interfaces and mocks"
@@ -32,3 +33,7 @@ interfaces:
 ent:
 	@echo "Generating entities..."
 	@go generate ./ent/...
+
+tests:
+	@echo "Running tests..."
+	@go test -v ./...

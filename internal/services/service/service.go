@@ -131,7 +131,7 @@ func (self *ServiceService) generateWildcardHost(ctx context.Context, tx reposit
 	}, nil
 }
 
-func (self *ServiceService) verifyS3Access(ctx context.Context, s3Source *ent.S3, bucket string, namespace string, client *kubernetes.Clientset) error {
+func (self *ServiceService) verifyS3Access(ctx context.Context, s3Source *ent.S3, bucket string, namespace string, client kubernetes.Interface) error {
 	// Retrieve secret from kubernetes
 	secret, err := self.k8s.GetSecret(ctx, s3Source.KubernetesSecret, namespace, client)
 	if err != nil {
@@ -165,7 +165,7 @@ func (self *ServiceService) verifyS3Access(ctx context.Context, s3Source *ent.S3
 	return nil
 }
 
-func (self *ServiceService) validatePVC(ctx context.Context, teamID, projectID, environmentID uuid.UUID, name, namespace string, client *kubernetes.Clientset) error {
+func (self *ServiceService) validatePVC(ctx context.Context, teamID, projectID, environmentID uuid.UUID, name, namespace string, client kubernetes.Interface) error {
 	isInUse, err := self.repo.Service().IsVolumeInUse(ctx, name)
 	if err != nil {
 		return err

@@ -31,7 +31,7 @@ func (self *KubeClient) CreatePersistentVolumeClaim(
 	storageRequest string,
 	accessModes []corev1.PersistentVolumeAccessMode,
 	storageClassName *string,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 ) (*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
@@ -88,7 +88,7 @@ func (self *KubeClient) UpdatePersistentVolumeClaim(
 	namespace string,
 	pvcName string,
 	newSize *string,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 ) (*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
@@ -125,7 +125,7 @@ func (self *KubeClient) UpdatePersistentVolumeClaim(
 }
 
 // GetPersistentVolumeClaim retrieves a specific PersistentVolumeClaim by its name and namespace.
-func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) (*models.PVCInfo, error) {
+func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) (*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -333,7 +333,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 }
 
 // ListPersistentVolumeClaims lists all PersistentVolumeClaims in a given namespace, optionally filtered by a label selector,
-func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]*models.PVCInfo, error) {
+func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) ([]*models.PVCInfo, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -577,7 +577,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 }
 
 // DeletePersistentVolumeClaim deletes a specific PersistentVolumeClaim by its name and namespace.
-func (self *KubeClient) DeletePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) error {
+func (self *KubeClient) DeletePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) error {
 	if namespace == "" {
 		return fmt.Errorf("namespace cannot be empty")
 	}
@@ -621,7 +621,7 @@ func (self *KubeClient) DeletePersistentVolumeClaim(ctx context.Context, namespa
 }
 
 // GetPodsUsingPVC finds all pods in a given namespace that are mounting the specified PVC.
-func (self *KubeClient) GetPodsUsingPVC(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) ([]corev1.Pod, error) {
+func (self *KubeClient) GetPodsUsingPVC(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) ([]corev1.Pod, error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}

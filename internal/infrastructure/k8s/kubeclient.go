@@ -28,8 +28,8 @@ import (
 //go:generate go run -mod=mod github.com/vburenin/ifacemaker -f "*.go" -i KubeClientInterface -p k8s -s KubeClient -o kubeclient_iface.go
 type KubeClient struct {
 	config            config.ConfigInterface
-	client            *dynamic.DynamicClient
-	clientset         *kubernetes.Clientset
+	client            dynamic.Interface
+	clientset         kubernetes.Interface
 	certmanagerclient *certmanagerclientset.Clientset
 	dnsChecker        *utils.DNSChecker
 	httpClient        *http.Client
@@ -83,11 +83,11 @@ func NewKubeClient(cfg config.ConfigInterface, repo repositories.RepositoriesInt
 }
 
 // This function is used to manage unbind-system resources
-func (self *KubeClient) GetInternalClient() *kubernetes.Clientset {
+func (self *KubeClient) GetInternalClient() kubernetes.Interface {
 	return self.clientset
 }
 
-func (self *KubeClient) CreateClientWithToken(token string) (*kubernetes.Clientset, error) {
+func (self *KubeClient) CreateClientWithToken(token string) (kubernetes.Interface, error) {
 	config := &rest.Config{
 		Host:        self.config.GetKubeProxyURL(),
 		BearerToken: token,

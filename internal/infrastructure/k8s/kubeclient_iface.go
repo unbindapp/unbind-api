@@ -30,22 +30,22 @@ type KubeClientInterface interface {
 	CheckDeploymentsReady(ctx context.Context, version string) (bool, error)
 	// DiscoverEndpointsByLabels returns both internal (services) and external (ingresses) endpoints
 	// matching the provided labels in a namespace
-	DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client *kubernetes.Clientset) (*models.EndpointDiscovery, error)
+	DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client kubernetes.Interface) (*models.EndpointDiscovery, error)
 	// CreateVerificationIngress creates an ingress with a configuration snippet to help verify
 	// that a domain is pointing to the Kubernetes cluster
-	CreateVerificationIngress(ctx context.Context, domain string, client *kubernetes.Clientset) (*networkingv1.Ingress, string, error)
+	CreateVerificationIngress(ctx context.Context, domain string, client kubernetes.Interface) (*networkingv1.Ingress, string, error)
 	// DeleteVerificationIngress deletes the verification ingress for a domain
-	DeleteVerificationIngress(ctx context.Context, ingressName string, client *kubernetes.Clientset) error
+	DeleteVerificationIngress(ctx context.Context, ingressName string, client kubernetes.Interface) error
 	// DeleteOldVerificationIngresses deletes verification ingresses created more than 10 minutes ago
-	DeleteOldVerificationIngresses(ctx context.Context, client *kubernetes.Clientset) error
+	DeleteOldVerificationIngresses(ctx context.Context, client kubernetes.Interface) error
 	CreateDeployment(ctx context.Context, deploymentID string, env map[string]string) (jobName string, err error)
 	// For canceling jobs.
 	CancelJobsByServiceID(ctx context.Context, serviceID string) error
 	CountActiveDeploymentJobs(ctx context.Context) (int, error)
 	GetJobStatus(ctx context.Context, jobName string) (JobStatus, error)
 	// This function is used to manage unbind-system resources
-	GetInternalClient() *kubernetes.Clientset
-	CreateClientWithToken(token string) (*kubernetes.Clientset, error)
+	GetInternalClient() kubernetes.Interface
+	CreateClientWithToken(token string) (kubernetes.Interface, error)
 	// ApplyYAML applies a YAML document to the cluster
 	ApplyYAML(ctx context.Context, yaml []byte) error
 	// GetLoadBalancerIPs returns the external IP addresses for load balancer services
@@ -56,58 +56,58 @@ type KubeClientInterface interface {
 	// GetUnusedNodePort returns an unused NodePort, determined by letting kubernetes allocate one then deleting the temp service
 	GetUnusedNodePort(ctx context.Context) (int32, error)
 	// StreamPodLogs streams logs from a pod to the provided writer with filtering
-	StreamPodLogs(ctx context.Context, namespace string, opts loki.LokiLogStreamOptions, meta loki.LogMetadata, client *kubernetes.Clientset, eventChan chan<- loki.LogEvents) error
+	StreamPodLogs(ctx context.Context, namespace string, opts loki.LokiLogStreamOptions, meta loki.LogMetadata, client kubernetes.Interface, eventChan chan<- loki.LogEvents) error
 	// CreatePersistentVolumeClaim creates a new PersistentVolumeClaim in the specified namespace.
-	CreatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, displayName string, labels map[string]string, storageRequest string, accessModes []corev1.PersistentVolumeAccessMode, storageClassName *string, client *kubernetes.Clientset) (*models.PVCInfo, error)
+	CreatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, displayName string, labels map[string]string, storageRequest string, accessModes []corev1.PersistentVolumeAccessMode, storageClassName *string, client kubernetes.Interface) (*models.PVCInfo, error)
 	// UpdatePersistentVolumeClaim updates an existing PersistentVolumeClaim with new parameters (size, name)
-	UpdatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, newSize *string, client *kubernetes.Clientset) (*models.PVCInfo, error)
+	UpdatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, newSize *string, client kubernetes.Interface) (*models.PVCInfo, error)
 	// GetPersistentVolumeClaim retrieves a specific PersistentVolumeClaim by its name and namespace.
-	GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) (*models.PVCInfo, error)
+	GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) (*models.PVCInfo, error)
 	// ListPersistentVolumeClaims lists all PersistentVolumeClaims in a given namespace, optionally filtered by a label selector,
-	ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]*models.PVCInfo, error)
+	ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) ([]*models.PVCInfo, error)
 	// DeletePersistentVolumeClaim deletes a specific PersistentVolumeClaim by its name and namespace.
-	DeletePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) error
+	DeletePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) error
 	// GetPodsUsingPVC finds all pods in a given namespace that are mounting the specified PVC.
-	GetPodsUsingPVC(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) ([]corev1.Pod, error)
+	GetPodsUsingPVC(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) ([]corev1.Pod, error)
 	// GetPodContainerStatusByLabels efficiently fetches pod status with inferred events from container state
-	GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]PodContainerStatus, error)
+	GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) ([]PodContainerStatus, error)
 	// GetPodContainerStatusByLabelsWithOptions efficiently fetches pod status with configurable options
 	// Container state events are always inferred (lightweight and reliable)
-	GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset, options PodStatusOptions) ([]PodContainerStatus, error)
-	GetExpectedInstances(ctx context.Context, namespace string, podName string, client *kubernetes.Clientset) (int, error)
-	GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client *kubernetes.Clientset) (*SimpleHealthStatus, error)
+	GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface, options PodStatusOptions) ([]PodContainerStatus, error)
+	GetExpectedInstances(ctx context.Context, namespace string, podName string, client kubernetes.Interface) (int, error)
+	GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client kubernetes.Interface) (*SimpleHealthStatus, error)
 	// GetPodsByLabels returns pods matching the provided labels in a namespace
-	GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*corev1.PodList, error)
+	GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) (*corev1.PodList, error)
 	// RollingRestartPodsByLabel performs a rolling restart of all pods with a specific label
 	// regardless of whether they're part of Deployments, StatefulSets, or standalone pods.
-	RollingRestartPodsByLabel(ctx context.Context, namespace string, labelKey string, labelValue string, client *kubernetes.Clientset) error
+	RollingRestartPodsByLabel(ctx context.Context, namespace string, labelKey string, labelValue string, client kubernetes.Interface) error
 	// DeleteStatefulSetsWithOrphanCascade deletes StatefulSets matching the label selector with orphan cascade
-	DeleteStatefulSetsWithOrphanCascade(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) error
+	DeleteStatefulSetsWithOrphanCascade(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) error
 	// CreateMultiRegistryCredentials creates or updates a kubernetes.io/dockerconfigjson secret for multiple container registries
-	CreateMultiRegistryCredentials(ctx context.Context, name, namespace string, credentials []RegistryCredential, client *kubernetes.Clientset) (*corev1.Secret, error)
+	CreateMultiRegistryCredentials(ctx context.Context, name, namespace string, credentials []RegistryCredential, client kubernetes.Interface) (*corev1.Secret, error)
 	// After you've retrieved the credentials Secret
 	ParseRegistryCredentials(secret *corev1.Secret) (string, string, error)
 	// GetOrCreateSecret retrieves an existing secret or creates a new one if it doesn't exist
 	// Returns the secret and a boolean indicating if it was created (true) or retrieved (false)
-	GetOrCreateSecret(ctx context.Context, name, namespace string, client *kubernetes.Clientset) (*corev1.Secret, bool, error)
+	GetOrCreateSecret(ctx context.Context, name, namespace string, client kubernetes.Interface) (*corev1.Secret, bool, error)
 	// GetSecret retrieves a secret by name in the given namespace
-	GetSecret(ctx context.Context, name, namespace string, client *kubernetes.Clientset) (*corev1.Secret, error)
+	GetSecret(ctx context.Context, name, namespace string, client kubernetes.Interface) (*corev1.Secret, error)
 	// UpdateSecret updates an existing secret with new data
-	UpdateSecret(ctx context.Context, name, namespace string, data map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error)
+	UpdateSecret(ctx context.Context, name, namespace string, data map[string][]byte, client kubernetes.Interface) (*corev1.Secret, error)
 	// GetSecretValue retrieves a specific key from a secret
-	GetSecretValue(ctx context.Context, name, namespace, key string, client *kubernetes.Clientset) ([]byte, error)
+	GetSecretValue(ctx context.Context, name, namespace, key string, client kubernetes.Interface) ([]byte, error)
 	// GetSecretMap retrieves all key-value pairs from a secret as a map
-	GetSecretMap(ctx context.Context, name, namespace string, client *kubernetes.Clientset) (map[string][]byte, error)
+	GetSecretMap(ctx context.Context, name, namespace string, client kubernetes.Interface) (map[string][]byte, error)
 	// DeleteSecret deletes a secret by name in the given namespace
-	DeleteSecret(ctx context.Context, name, namespace string, client *kubernetes.Clientset) error
+	DeleteSecret(ctx context.Context, name, namespace string, client kubernetes.Interface) error
 	// UpsertSecretValues adds or updates specific keys in a secret without affecting other keys
-	UpsertSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error)
+	UpsertSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client kubernetes.Interface) (*corev1.Secret, error)
 	// OverwriteSecretValues overwrites all values in a secret with new values
-	OverwriteSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*corev1.Secret, error)
+	OverwriteSecretValues(ctx context.Context, name, namespace string, values map[string][]byte, client kubernetes.Interface) (*corev1.Secret, error)
 	// GetAllSecrets retrieves all secrets for the team hierarchy concurrently and returns them with just their keys
-	GetAllSecrets(ctx context.Context, teamID uuid.UUID, teamSecret string, projectID uuid.UUID, projectSecret string, environmentID uuid.UUID, environmentSecret string, serviceSecrets map[uuid.UUID]string, client *kubernetes.Clientset, namespace string) ([]models.SecretData, error)
+	GetAllSecrets(ctx context.Context, teamID uuid.UUID, teamSecret string, projectID uuid.UUID, projectSecret string, environmentID uuid.UUID, environmentSecret string, serviceSecrets map[uuid.UUID]string, client kubernetes.Interface, namespace string) ([]models.SecretData, error)
 	// CopySecret copies a secret from one namespace to another
-	CopySecret(ctx context.Context, secretName string, sourceNamespace string, targetNamespace string, client *kubernetes.Clientset) (*corev1.Secret, error)
+	CopySecret(ctx context.Context, secretName string, sourceNamespace string, targetNamespace string, client kubernetes.Interface) (*corev1.Secret, error)
 	// AvailableStorageBytes inspects the default StorageClass and returns
 	// capacity / sizing metadata
 	//
@@ -126,7 +126,7 @@ type KubeClientInterface interface {
 	// Gets specified namespaces
 	GetNamespaces(ctx context.Context, namespaceNames []string, bearerToken string) ([]*corev1.Namespace, error)
 	// CreateNamespace creates a new namespace in the Kubernetes cluster
-	CreateNamespace(ctx context.Context, namespaceName string, client *kubernetes.Clientset) (*corev1.Namespace, error)
+	CreateNamespace(ctx context.Context, namespaceName string, client kubernetes.Interface) (*corev1.Namespace, error)
 	// Delete a custom unbind service CRD
 	DeleteUnbindService(ctx context.Context, namespace, name string) error
 	// DeployImage creates (or replaces) the service resource in the target namespace

@@ -17,7 +17,7 @@ import (
 )
 
 // GetPodContainerStatusByLabels efficiently fetches pod status with inferred events from container state
-func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]PodContainerStatus, error) {
+func (self *KubeClient) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) ([]PodContainerStatus, error) {
 	return self.GetPodContainerStatusByLabelsWithOptions(ctx, namespace, labels, client, PodStatusOptions{
 		IncludeKubernetesEvents: false, // Only inferred events by default
 	})
@@ -30,7 +30,7 @@ type PodStatusOptions struct {
 
 // GetPodContainerStatusByLabelsWithOptions efficiently fetches pod status with configurable options
 // Container state events are always inferred (lightweight and reliable)
-func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset, options PodStatusOptions) ([]PodContainerStatus, error) {
+func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface, options PodStatusOptions) ([]PodContainerStatus, error) {
 	pods, err := self.GetPodsByLabels(ctx, namespace, labels, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pods: %w", err)
@@ -58,7 +58,7 @@ func (self *KubeClient) GetPodContainerStatusByLabelsWithOptions(ctx context.Con
 		podStatus := PodContainerStatus{
 			KubernetesName:       pod.Name,
 			Namespace:            pod.Namespace,
-			Phase:                PodPhase(pod.Status.Phase),
+			Phase:                mapKubernetesPodPhase(pod.Status.Phase),
 			PodIP:                pod.Status.PodIP,
 			Instances:            make([]InstanceStatus, 0, len(pod.Status.ContainerStatuses)),
 			InstanceDependencies: make([]InstanceStatus, 0, len(pod.Status.InitContainerStatuses)),
@@ -153,7 +153,7 @@ func isPodTerminating(pod corev1.Pod) bool {
 }
 
 // getBatchPodEvents efficiently fetches events for multiple pods in a single API call
-func (self *KubeClient) getBatchPodEvents(ctx context.Context, namespace string, pods []corev1.Pod, client *kubernetes.Clientset) ([]models.EventRecord, error) {
+func (self *KubeClient) getBatchPodEvents(ctx context.Context, namespace string, pods []corev1.Pod, client kubernetes.Interface) ([]models.EventRecord, error) {
 	result := make([]models.EventRecord, 0)
 
 	// Single API call to get all events in the namespace
@@ -602,7 +602,7 @@ func (u PodPhase) Schema(r huma.Registry) *huma.Schema {
 	return &huma.Schema{Ref: "#/components/schemas/PodPhase"}
 }
 
-func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string, podName string, client *kubernetes.Clientset) (int, error) {
+func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string, podName string, client kubernetes.Interface) (int, error) {
 	pod, err := client.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
 		return 0, fmt.Errorf("failed to get pod: %w", err)
@@ -643,7 +643,7 @@ func (k *KubeClient) GetExpectedInstances(ctx context.Context, namespace string,
 	return 1, nil
 }
 
-func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client *kubernetes.Clientset) (*SimpleHealthStatus, error) {
+func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client kubernetes.Interface) (*SimpleHealthStatus, error) {
 	podStatuses, err := self.GetPodContainerStatusByLabels(ctx, namespace, labels, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pod statuses: %w", err)
@@ -768,4 +768,22 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 		ExpectedInstances: expectedInstances,
 		Instances:         allInstances,
 	}, nil
+}
+
+// mapKubernetesPodPhase converts Kubernetes PodPhase to our PodPhase constants
+func mapKubernetesPodPhase(kubePhase corev1.PodPhase) PodPhase {
+	switch kubePhase {
+	case corev1.PodPending:
+		return PodPending
+	case corev1.PodRunning:
+		return PodRunning
+	case corev1.PodSucceeded:
+		return PodSucceeded
+	case corev1.PodFailed:
+		return PodFailed
+	case corev1.PodUnknown:
+		return PodUnknown
+	default:
+		return PodUnknown
+	}
 }

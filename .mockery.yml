@@ -204,3 +204,12 @@ packages:
           filename: deployctl_mock.go
           mockname: DeploymentControllerMock
           outpkg: mocks_deployctl
+  github.com/unbindapp/unbind-api/config:
+    config:
+      dir: ./mocks/config
+    interfaces:
+      ConfigInterface:
+        config:
+          filename: config_mock.go
+          mockname: ConfigMock
+          outpkg: mocks_config

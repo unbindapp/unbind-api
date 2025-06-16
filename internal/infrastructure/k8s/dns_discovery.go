@@ -22,7 +22,7 @@ import (
 
 // DiscoverEndpointsByLabels returns both internal (services) and external (ingresses) endpoints
 // matching the provided labels in a namespace
-func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client *kubernetes.Clientset) (*models.EndpointDiscovery, error) {
+func (self *KubeClient) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client kubernetes.Interface) (*models.EndpointDiscovery, error) {
 	// Convert the labels map to a selector string
 	var labelSelectors []string
 	for key, value := range labels {
@@ -388,7 +388,7 @@ func isCertificateIssued(secret *corev1.Secret) bool {
 func (self *KubeClient) CreateVerificationIngress(
 	ctx context.Context,
 	domain string,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 ) (*networkingv1.Ingress, string, error) {
 	pathType := networkingv1.PathTypeImplementationSpecific
 	ingressClassName := "nginx"
@@ -457,7 +457,7 @@ add_header Content-Type text/plain;
 func (self *KubeClient) DeleteVerificationIngress(
 	ctx context.Context,
 	ingressName string,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 ) error {
 	// Delete the ingress
 	err := client.NetworkingV1().Ingresses(self.config.GetSystemNamespace()).Delete(ctx, ingressName, metav1.DeleteOptions{})
@@ -471,7 +471,7 @@ func (self *KubeClient) DeleteVerificationIngress(
 // DeleteOldVerificationIngresses deletes verification ingresses created more than 10 minutes ago
 func (self *KubeClient) DeleteOldVerificationIngresses(
 	ctx context.Context,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 ) error {
 	// Create a label selector for the verification ingresses
 	labelSelector := "app=unbind-verification,type=domain-verification,temporary=true"

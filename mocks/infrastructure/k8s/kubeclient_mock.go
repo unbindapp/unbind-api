@@ -251,7 +251,7 @@ func (_c *KubeClientMock_CheckDeploymentsReady_Call) RunAndReturn(run func(conte
 }
 
 // CopySecret provides a mock function with given fields: ctx, secretName, sourceNamespace, targetNamespace, client
-func (_m *KubeClientMock) CopySecret(ctx context.Context, secretName string, sourceNamespace string, targetNamespace string, client *kubernetes.Clientset) (*v1.Secret, error) {
+func (_m *KubeClientMock) CopySecret(ctx context.Context, secretName string, sourceNamespace string, targetNamespace string, client kubernetes.Interface) (*v1.Secret, error) {
 	ret := _m.Called(ctx, secretName, sourceNamespace, targetNamespace, client)
 
 	if len(ret) == 0 {
@@ -260,10 +260,10 @@ func (_m *KubeClientMock) CopySecret(ctx context.Context, secretName string, sou
 
 	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, *kubernetes.Clientset) (*v1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, kubernetes.Interface) (*v1.Secret, error)); ok {
 		return rf(ctx, secretName, sourceNamespace, targetNamespace, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, *kubernetes.Clientset) *v1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, kubernetes.Interface) *v1.Secret); ok {
 		r0 = rf(ctx, secretName, sourceNamespace, targetNamespace, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -271,7 +271,7 @@ func (_m *KubeClientMock) CopySecret(ctx context.Context, secretName string, sou
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, secretName, sourceNamespace, targetNamespace, client)
 	} else {
 		r1 = ret.Error(1)
@@ -290,14 +290,14 @@ type KubeClientMock_CopySecret_Call struct {
 //   - secretName string
 //   - sourceNamespace string
 //   - targetNamespace string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) CopySecret(ctx interface{}, secretName interface{}, sourceNamespace interface{}, targetNamespace interface{}, client interface{}) *KubeClientMock_CopySecret_Call {
 	return &KubeClientMock_CopySecret_Call{Call: _e.mock.On("CopySecret", ctx, secretName, sourceNamespace, targetNamespace, client)}
 }
 
-func (_c *KubeClientMock_CopySecret_Call) Run(run func(ctx context.Context, secretName string, sourceNamespace string, targetNamespace string, client *kubernetes.Clientset)) *KubeClientMock_CopySecret_Call {
+func (_c *KubeClientMock_CopySecret_Call) Run(run func(ctx context.Context, secretName string, sourceNamespace string, targetNamespace string, client kubernetes.Interface)) *KubeClientMock_CopySecret_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -307,7 +307,7 @@ func (_c *KubeClientMock_CopySecret_Call) Return(_a0 *v1.Secret, _a1 error) *Kub
 	return _c
 }
 
-func (_c *KubeClientMock_CopySecret_Call) RunAndReturn(run func(context.Context, string, string, string, *kubernetes.Clientset) (*v1.Secret, error)) *KubeClientMock_CopySecret_Call {
+func (_c *KubeClientMock_CopySecret_Call) RunAndReturn(run func(context.Context, string, string, string, kubernetes.Interface) (*v1.Secret, error)) *KubeClientMock_CopySecret_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -369,23 +369,23 @@ func (_c *KubeClientMock_CountActiveDeploymentJobs_Call) RunAndReturn(run func(c
 }
 
 // CreateClientWithToken provides a mock function with given fields: token
-func (_m *KubeClientMock) CreateClientWithToken(token string) (*kubernetes.Clientset, error) {
+func (_m *KubeClientMock) CreateClientWithToken(token string) (kubernetes.Interface, error) {
 	ret := _m.Called(token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateClientWithToken")
 	}
 
-	var r0 *kubernetes.Clientset
+	var r0 kubernetes.Interface
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*kubernetes.Clientset, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (kubernetes.Interface, error)); ok {
 		return rf(token)
 	}
-	if rf, ok := ret.Get(0).(func(string) *kubernetes.Clientset); ok {
+	if rf, ok := ret.Get(0).(func(string) kubernetes.Interface); ok {
 		r0 = rf(token)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*kubernetes.Clientset)
+			r0 = ret.Get(0).(kubernetes.Interface)
 		}
 	}
 
@@ -416,12 +416,12 @@ func (_c *KubeClientMock_CreateClientWithToken_Call) Run(run func(token string))
 	return _c
 }
 
-func (_c *KubeClientMock_CreateClientWithToken_Call) Return(_a0 *kubernetes.Clientset, _a1 error) *KubeClientMock_CreateClientWithToken_Call {
+func (_c *KubeClientMock_CreateClientWithToken_Call) Return(_a0 kubernetes.Interface, _a1 error) *KubeClientMock_CreateClientWithToken_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *KubeClientMock_CreateClientWithToken_Call) RunAndReturn(run func(string) (*kubernetes.Clientset, error)) *KubeClientMock_CreateClientWithToken_Call {
+func (_c *KubeClientMock_CreateClientWithToken_Call) RunAndReturn(run func(string) (kubernetes.Interface, error)) *KubeClientMock_CreateClientWithToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -485,7 +485,7 @@ func (_c *KubeClientMock_CreateDeployment_Call) RunAndReturn(run func(context.Co
 }
 
 // CreateMultiRegistryCredentials provides a mock function with given fields: ctx, name, namespace, credentials, client
-func (_m *KubeClientMock) CreateMultiRegistryCredentials(ctx context.Context, name string, namespace string, credentials []k8s.RegistryCredential, client *kubernetes.Clientset) (*v1.Secret, error) {
+func (_m *KubeClientMock) CreateMultiRegistryCredentials(ctx context.Context, name string, namespace string, credentials []k8s.RegistryCredential, client kubernetes.Interface) (*v1.Secret, error) {
 	ret := _m.Called(ctx, name, namespace, credentials, client)
 
 	if len(ret) == 0 {
@@ -494,10 +494,10 @@ func (_m *KubeClientMock) CreateMultiRegistryCredentials(ctx context.Context, na
 
 	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []k8s.RegistryCredential, *kubernetes.Clientset) (*v1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []k8s.RegistryCredential, kubernetes.Interface) (*v1.Secret, error)); ok {
 		return rf(ctx, name, namespace, credentials, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, []k8s.RegistryCredential, *kubernetes.Clientset) *v1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []k8s.RegistryCredential, kubernetes.Interface) *v1.Secret); ok {
 		r0 = rf(ctx, name, namespace, credentials, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -505,7 +505,7 @@ func (_m *KubeClientMock) CreateMultiRegistryCredentials(ctx context.Context, na
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, []k8s.RegistryCredential, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, []k8s.RegistryCredential, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, name, namespace, credentials, client)
 	} else {
 		r1 = ret.Error(1)
@@ -524,14 +524,14 @@ type KubeClientMock_CreateMultiRegistryCredentials_Call struct {
 //   - name string
 //   - namespace string
 //   - credentials []k8s.RegistryCredential
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) CreateMultiRegistryCredentials(ctx interface{}, name interface{}, namespace interface{}, credentials interface{}, client interface{}) *KubeClientMock_CreateMultiRegistryCredentials_Call {
 	return &KubeClientMock_CreateMultiRegistryCredentials_Call{Call: _e.mock.On("CreateMultiRegistryCredentials", ctx, name, namespace, credentials, client)}
 }
 
-func (_c *KubeClientMock_CreateMultiRegistryCredentials_Call) Run(run func(ctx context.Context, name string, namespace string, credentials []k8s.RegistryCredential, client *kubernetes.Clientset)) *KubeClientMock_CreateMultiRegistryCredentials_Call {
+func (_c *KubeClientMock_CreateMultiRegistryCredentials_Call) Run(run func(ctx context.Context, name string, namespace string, credentials []k8s.RegistryCredential, client kubernetes.Interface)) *KubeClientMock_CreateMultiRegistryCredentials_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]k8s.RegistryCredential), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]k8s.RegistryCredential), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -541,13 +541,13 @@ func (_c *KubeClientMock_CreateMultiRegistryCredentials_Call) Return(_a0 *v1.Sec
 	return _c
 }
 
-func (_c *KubeClientMock_CreateMultiRegistryCredentials_Call) RunAndReturn(run func(context.Context, string, string, []k8s.RegistryCredential, *kubernetes.Clientset) (*v1.Secret, error)) *KubeClientMock_CreateMultiRegistryCredentials_Call {
+func (_c *KubeClientMock_CreateMultiRegistryCredentials_Call) RunAndReturn(run func(context.Context, string, string, []k8s.RegistryCredential, kubernetes.Interface) (*v1.Secret, error)) *KubeClientMock_CreateMultiRegistryCredentials_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateNamespace provides a mock function with given fields: ctx, namespaceName, client
-func (_m *KubeClientMock) CreateNamespace(ctx context.Context, namespaceName string, client *kubernetes.Clientset) (*v1.Namespace, error) {
+func (_m *KubeClientMock) CreateNamespace(ctx context.Context, namespaceName string, client kubernetes.Interface) (*v1.Namespace, error) {
 	ret := _m.Called(ctx, namespaceName, client)
 
 	if len(ret) == 0 {
@@ -556,10 +556,10 @@ func (_m *KubeClientMock) CreateNamespace(ctx context.Context, namespaceName str
 
 	var r0 *v1.Namespace
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *kubernetes.Clientset) (*v1.Namespace, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, kubernetes.Interface) (*v1.Namespace, error)); ok {
 		return rf(ctx, namespaceName, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *kubernetes.Clientset) *v1.Namespace); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, kubernetes.Interface) *v1.Namespace); ok {
 		r0 = rf(ctx, namespaceName, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -567,7 +567,7 @@ func (_m *KubeClientMock) CreateNamespace(ctx context.Context, namespaceName str
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespaceName, client)
 	} else {
 		r1 = ret.Error(1)
@@ -584,14 +584,14 @@ type KubeClientMock_CreateNamespace_Call struct {
 // CreateNamespace is a helper method to define mock.On call
 //   - ctx context.Context
 //   - namespaceName string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) CreateNamespace(ctx interface{}, namespaceName interface{}, client interface{}) *KubeClientMock_CreateNamespace_Call {
 	return &KubeClientMock_CreateNamespace_Call{Call: _e.mock.On("CreateNamespace", ctx, namespaceName, client)}
 }
 
-func (_c *KubeClientMock_CreateNamespace_Call) Run(run func(ctx context.Context, namespaceName string, client *kubernetes.Clientset)) *KubeClientMock_CreateNamespace_Call {
+func (_c *KubeClientMock_CreateNamespace_Call) Run(run func(ctx context.Context, namespaceName string, client kubernetes.Interface)) *KubeClientMock_CreateNamespace_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -601,13 +601,13 @@ func (_c *KubeClientMock_CreateNamespace_Call) Return(_a0 *v1.Namespace, _a1 err
 	return _c
 }
 
-func (_c *KubeClientMock_CreateNamespace_Call) RunAndReturn(run func(context.Context, string, *kubernetes.Clientset) (*v1.Namespace, error)) *KubeClientMock_CreateNamespace_Call {
+func (_c *KubeClientMock_CreateNamespace_Call) RunAndReturn(run func(context.Context, string, kubernetes.Interface) (*v1.Namespace, error)) *KubeClientMock_CreateNamespace_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreatePersistentVolumeClaim provides a mock function with given fields: ctx, namespace, pvcName, displayName, labels, storageRequest, accessModes, storageClassName, client
-func (_m *KubeClientMock) CreatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, displayName string, labels map[string]string, storageRequest string, accessModes []v1.PersistentVolumeAccessMode, storageClassName *string, client *kubernetes.Clientset) (*models.PVCInfo, error) {
+func (_m *KubeClientMock) CreatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, displayName string, labels map[string]string, storageRequest string, accessModes []v1.PersistentVolumeAccessMode, storageClassName *string, client kubernetes.Interface) (*models.PVCInfo, error) {
 	ret := _m.Called(ctx, namespace, pvcName, displayName, labels, storageRequest, accessModes, storageClassName, client)
 
 	if len(ret) == 0 {
@@ -616,10 +616,10 @@ func (_m *KubeClientMock) CreatePersistentVolumeClaim(ctx context.Context, names
 
 	var r0 *models.PVCInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, *kubernetes.Clientset) (*models.PVCInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, kubernetes.Interface) (*models.PVCInfo, error)); ok {
 		return rf(ctx, namespace, pvcName, displayName, labels, storageRequest, accessModes, storageClassName, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, *kubernetes.Clientset) *models.PVCInfo); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, kubernetes.Interface) *models.PVCInfo); ok {
 		r0 = rf(ctx, namespace, pvcName, displayName, labels, storageRequest, accessModes, storageClassName, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -627,7 +627,7 @@ func (_m *KubeClientMock) CreatePersistentVolumeClaim(ctx context.Context, names
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, pvcName, displayName, labels, storageRequest, accessModes, storageClassName, client)
 	} else {
 		r1 = ret.Error(1)
@@ -650,14 +650,14 @@ type KubeClientMock_CreatePersistentVolumeClaim_Call struct {
 //   - storageRequest string
 //   - accessModes []v1.PersistentVolumeAccessMode
 //   - storageClassName *string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) CreatePersistentVolumeClaim(ctx interface{}, namespace interface{}, pvcName interface{}, displayName interface{}, labels interface{}, storageRequest interface{}, accessModes interface{}, storageClassName interface{}, client interface{}) *KubeClientMock_CreatePersistentVolumeClaim_Call {
 	return &KubeClientMock_CreatePersistentVolumeClaim_Call{Call: _e.mock.On("CreatePersistentVolumeClaim", ctx, namespace, pvcName, displayName, labels, storageRequest, accessModes, storageClassName, client)}
 }
 
-func (_c *KubeClientMock_CreatePersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, displayName string, labels map[string]string, storageRequest string, accessModes []v1.PersistentVolumeAccessMode, storageClassName *string, client *kubernetes.Clientset)) *KubeClientMock_CreatePersistentVolumeClaim_Call {
+func (_c *KubeClientMock_CreatePersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, displayName string, labels map[string]string, storageRequest string, accessModes []v1.PersistentVolumeAccessMode, storageClassName *string, client kubernetes.Interface)) *KubeClientMock_CreatePersistentVolumeClaim_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(map[string]string), args[5].(string), args[6].([]v1.PersistentVolumeAccessMode), args[7].(*string), args[8].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(map[string]string), args[5].(string), args[6].([]v1.PersistentVolumeAccessMode), args[7].(*string), args[8].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -667,13 +667,13 @@ func (_c *KubeClientMock_CreatePersistentVolumeClaim_Call) Return(_a0 *models.PV
 	return _c
 }
 
-func (_c *KubeClientMock_CreatePersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, *kubernetes.Clientset) (*models.PVCInfo, error)) *KubeClientMock_CreatePersistentVolumeClaim_Call {
+func (_c *KubeClientMock_CreatePersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, string, map[string]string, string, []v1.PersistentVolumeAccessMode, *string, kubernetes.Interface) (*models.PVCInfo, error)) *KubeClientMock_CreatePersistentVolumeClaim_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateVerificationIngress provides a mock function with given fields: ctx, domain, client
-func (_m *KubeClientMock) CreateVerificationIngress(ctx context.Context, domain string, client *kubernetes.Clientset) (*networkingv1.Ingress, string, error) {
+func (_m *KubeClientMock) CreateVerificationIngress(ctx context.Context, domain string, client kubernetes.Interface) (*networkingv1.Ingress, string, error) {
 	ret := _m.Called(ctx, domain, client)
 
 	if len(ret) == 0 {
@@ -683,10 +683,10 @@ func (_m *KubeClientMock) CreateVerificationIngress(ctx context.Context, domain 
 	var r0 *networkingv1.Ingress
 	var r1 string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *kubernetes.Clientset) (*networkingv1.Ingress, string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, kubernetes.Interface) (*networkingv1.Ingress, string, error)); ok {
 		return rf(ctx, domain, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *kubernetes.Clientset) *networkingv1.Ingress); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, kubernetes.Interface) *networkingv1.Ingress); ok {
 		r0 = rf(ctx, domain, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -694,13 +694,13 @@ func (_m *KubeClientMock) CreateVerificationIngress(ctx context.Context, domain 
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, *kubernetes.Clientset) string); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, kubernetes.Interface) string); ok {
 		r1 = rf(ctx, domain, client)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, string, kubernetes.Interface) error); ok {
 		r2 = rf(ctx, domain, client)
 	} else {
 		r2 = ret.Error(2)
@@ -717,14 +717,14 @@ type KubeClientMock_CreateVerificationIngress_Call struct {
 // CreateVerificationIngress is a helper method to define mock.On call
 //   - ctx context.Context
 //   - domain string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) CreateVerificationIngress(ctx interface{}, domain interface{}, client interface{}) *KubeClientMock_CreateVerificationIngress_Call {
 	return &KubeClientMock_CreateVerificationIngress_Call{Call: _e.mock.On("CreateVerificationIngress", ctx, domain, client)}
 }
 
-func (_c *KubeClientMock_CreateVerificationIngress_Call) Run(run func(ctx context.Context, domain string, client *kubernetes.Clientset)) *KubeClientMock_CreateVerificationIngress_Call {
+func (_c *KubeClientMock_CreateVerificationIngress_Call) Run(run func(ctx context.Context, domain string, client kubernetes.Interface)) *KubeClientMock_CreateVerificationIngress_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -734,13 +734,13 @@ func (_c *KubeClientMock_CreateVerificationIngress_Call) Return(_a0 *networkingv
 	return _c
 }
 
-func (_c *KubeClientMock_CreateVerificationIngress_Call) RunAndReturn(run func(context.Context, string, *kubernetes.Clientset) (*networkingv1.Ingress, string, error)) *KubeClientMock_CreateVerificationIngress_Call {
+func (_c *KubeClientMock_CreateVerificationIngress_Call) RunAndReturn(run func(context.Context, string, kubernetes.Interface) (*networkingv1.Ingress, string, error)) *KubeClientMock_CreateVerificationIngress_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteOldVerificationIngresses provides a mock function with given fields: ctx, client
-func (_m *KubeClientMock) DeleteOldVerificationIngresses(ctx context.Context, client *kubernetes.Clientset) error {
+func (_m *KubeClientMock) DeleteOldVerificationIngresses(ctx context.Context, client kubernetes.Interface) error {
 	ret := _m.Called(ctx, client)
 
 	if len(ret) == 0 {
@@ -748,7 +748,7 @@ func (_m *KubeClientMock) DeleteOldVerificationIngresses(ctx context.Context, cl
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, kubernetes.Interface) error); ok {
 		r0 = rf(ctx, client)
 	} else {
 		r0 = ret.Error(0)
@@ -764,14 +764,14 @@ type KubeClientMock_DeleteOldVerificationIngresses_Call struct {
 
 // DeleteOldVerificationIngresses is a helper method to define mock.On call
 //   - ctx context.Context
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) DeleteOldVerificationIngresses(ctx interface{}, client interface{}) *KubeClientMock_DeleteOldVerificationIngresses_Call {
 	return &KubeClientMock_DeleteOldVerificationIngresses_Call{Call: _e.mock.On("DeleteOldVerificationIngresses", ctx, client)}
 }
 
-func (_c *KubeClientMock_DeleteOldVerificationIngresses_Call) Run(run func(ctx context.Context, client *kubernetes.Clientset)) *KubeClientMock_DeleteOldVerificationIngresses_Call {
+func (_c *KubeClientMock_DeleteOldVerificationIngresses_Call) Run(run func(ctx context.Context, client kubernetes.Interface)) *KubeClientMock_DeleteOldVerificationIngresses_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -781,13 +781,13 @@ func (_c *KubeClientMock_DeleteOldVerificationIngresses_Call) Return(_a0 error) 
 	return _c
 }
 
-func (_c *KubeClientMock_DeleteOldVerificationIngresses_Call) RunAndReturn(run func(context.Context, *kubernetes.Clientset) error) *KubeClientMock_DeleteOldVerificationIngresses_Call {
+func (_c *KubeClientMock_DeleteOldVerificationIngresses_Call) RunAndReturn(run func(context.Context, kubernetes.Interface) error) *KubeClientMock_DeleteOldVerificationIngresses_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeletePersistentVolumeClaim provides a mock function with given fields: ctx, namespace, pvcName, client
-func (_m *KubeClientMock) DeletePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) error {
+func (_m *KubeClientMock) DeletePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) error {
 	ret := _m.Called(ctx, namespace, pvcName, client)
 
 	if len(ret) == 0 {
@@ -795,7 +795,7 @@ func (_m *KubeClientMock) DeletePersistentVolumeClaim(ctx context.Context, names
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r0 = rf(ctx, namespace, pvcName, client)
 	} else {
 		r0 = ret.Error(0)
@@ -813,14 +813,14 @@ type KubeClientMock_DeletePersistentVolumeClaim_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - pvcName string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) DeletePersistentVolumeClaim(ctx interface{}, namespace interface{}, pvcName interface{}, client interface{}) *KubeClientMock_DeletePersistentVolumeClaim_Call {
 	return &KubeClientMock_DeletePersistentVolumeClaim_Call{Call: _e.mock.On("DeletePersistentVolumeClaim", ctx, namespace, pvcName, client)}
 }
 
-func (_c *KubeClientMock_DeletePersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset)) *KubeClientMock_DeletePersistentVolumeClaim_Call {
+func (_c *KubeClientMock_DeletePersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface)) *KubeClientMock_DeletePersistentVolumeClaim_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -830,13 +830,13 @@ func (_c *KubeClientMock_DeletePersistentVolumeClaim_Call) Return(_a0 error) *Ku
 	return _c
 }
 
-func (_c *KubeClientMock_DeletePersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) error) *KubeClientMock_DeletePersistentVolumeClaim_Call {
+func (_c *KubeClientMock_DeletePersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) error) *KubeClientMock_DeletePersistentVolumeClaim_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteSecret provides a mock function with given fields: ctx, name, namespace, client
-func (_m *KubeClientMock) DeleteSecret(ctx context.Context, name string, namespace string, client *kubernetes.Clientset) error {
+func (_m *KubeClientMock) DeleteSecret(ctx context.Context, name string, namespace string, client kubernetes.Interface) error {
 	ret := _m.Called(ctx, name, namespace, client)
 
 	if len(ret) == 0 {
@@ -844,7 +844,7 @@ func (_m *KubeClientMock) DeleteSecret(ctx context.Context, name string, namespa
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r0 = rf(ctx, name, namespace, client)
 	} else {
 		r0 = ret.Error(0)
@@ -862,14 +862,14 @@ type KubeClientMock_DeleteSecret_Call struct {
 //   - ctx context.Context
 //   - name string
 //   - namespace string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) DeleteSecret(ctx interface{}, name interface{}, namespace interface{}, client interface{}) *KubeClientMock_DeleteSecret_Call {
 	return &KubeClientMock_DeleteSecret_Call{Call: _e.mock.On("DeleteSecret", ctx, name, namespace, client)}
 }
 
-func (_c *KubeClientMock_DeleteSecret_Call) Run(run func(ctx context.Context, name string, namespace string, client *kubernetes.Clientset)) *KubeClientMock_DeleteSecret_Call {
+func (_c *KubeClientMock_DeleteSecret_Call) Run(run func(ctx context.Context, name string, namespace string, client kubernetes.Interface)) *KubeClientMock_DeleteSecret_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -879,13 +879,13 @@ func (_c *KubeClientMock_DeleteSecret_Call) Return(_a0 error) *KubeClientMock_De
 	return _c
 }
 
-func (_c *KubeClientMock_DeleteSecret_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) error) *KubeClientMock_DeleteSecret_Call {
+func (_c *KubeClientMock_DeleteSecret_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) error) *KubeClientMock_DeleteSecret_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteStatefulSetsWithOrphanCascade provides a mock function with given fields: ctx, namespace, labels, client
-func (_m *KubeClientMock) DeleteStatefulSetsWithOrphanCascade(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) error {
+func (_m *KubeClientMock) DeleteStatefulSetsWithOrphanCascade(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) error {
 	ret := _m.Called(ctx, namespace, labels, client)
 
 	if len(ret) == 0 {
@@ -893,7 +893,7 @@ func (_m *KubeClientMock) DeleteStatefulSetsWithOrphanCascade(ctx context.Contex
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface) error); ok {
 		r0 = rf(ctx, namespace, labels, client)
 	} else {
 		r0 = ret.Error(0)
@@ -911,14 +911,14 @@ type KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - labels map[string]string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) DeleteStatefulSetsWithOrphanCascade(ctx interface{}, namespace interface{}, labels interface{}, client interface{}) *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call {
 	return &KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call{Call: _e.mock.On("DeleteStatefulSetsWithOrphanCascade", ctx, namespace, labels, client)}
 }
 
-func (_c *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset)) *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call {
+func (_c *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface)) *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -928,7 +928,7 @@ func (_c *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call) Return(_a0 er
 	return _c
 }
 
-func (_c *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call) RunAndReturn(run func(context.Context, string, map[string]string, *kubernetes.Clientset) error) *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call {
+func (_c *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call) RunAndReturn(run func(context.Context, string, map[string]string, kubernetes.Interface) error) *KubeClientMock_DeleteStatefulSetsWithOrphanCascade_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -982,7 +982,7 @@ func (_c *KubeClientMock_DeleteUnbindService_Call) RunAndReturn(run func(context
 }
 
 // DeleteVerificationIngress provides a mock function with given fields: ctx, ingressName, client
-func (_m *KubeClientMock) DeleteVerificationIngress(ctx context.Context, ingressName string, client *kubernetes.Clientset) error {
+func (_m *KubeClientMock) DeleteVerificationIngress(ctx context.Context, ingressName string, client kubernetes.Interface) error {
 	ret := _m.Called(ctx, ingressName, client)
 
 	if len(ret) == 0 {
@@ -990,7 +990,7 @@ func (_m *KubeClientMock) DeleteVerificationIngress(ctx context.Context, ingress
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, kubernetes.Interface) error); ok {
 		r0 = rf(ctx, ingressName, client)
 	} else {
 		r0 = ret.Error(0)
@@ -1007,14 +1007,14 @@ type KubeClientMock_DeleteVerificationIngress_Call struct {
 // DeleteVerificationIngress is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ingressName string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) DeleteVerificationIngress(ctx interface{}, ingressName interface{}, client interface{}) *KubeClientMock_DeleteVerificationIngress_Call {
 	return &KubeClientMock_DeleteVerificationIngress_Call{Call: _e.mock.On("DeleteVerificationIngress", ctx, ingressName, client)}
 }
 
-func (_c *KubeClientMock_DeleteVerificationIngress_Call) Run(run func(ctx context.Context, ingressName string, client *kubernetes.Clientset)) *KubeClientMock_DeleteVerificationIngress_Call {
+func (_c *KubeClientMock_DeleteVerificationIngress_Call) Run(run func(ctx context.Context, ingressName string, client kubernetes.Interface)) *KubeClientMock_DeleteVerificationIngress_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1024,7 +1024,7 @@ func (_c *KubeClientMock_DeleteVerificationIngress_Call) Return(_a0 error) *Kube
 	return _c
 }
 
-func (_c *KubeClientMock_DeleteVerificationIngress_Call) RunAndReturn(run func(context.Context, string, *kubernetes.Clientset) error) *KubeClientMock_DeleteVerificationIngress_Call {
+func (_c *KubeClientMock_DeleteVerificationIngress_Call) RunAndReturn(run func(context.Context, string, kubernetes.Interface) error) *KubeClientMock_DeleteVerificationIngress_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1098,7 +1098,7 @@ func (_c *KubeClientMock_DeployUnbindService_Call) RunAndReturn(run func(context
 }
 
 // DiscoverEndpointsByLabels provides a mock function with given fields: ctx, namespace, labels, checkDNS, client
-func (_m *KubeClientMock) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client *kubernetes.Clientset) (*models.EndpointDiscovery, error) {
+func (_m *KubeClientMock) DiscoverEndpointsByLabels(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client kubernetes.Interface) (*models.EndpointDiscovery, error) {
 	ret := _m.Called(ctx, namespace, labels, checkDNS, client)
 
 	if len(ret) == 0 {
@@ -1107,10 +1107,10 @@ func (_m *KubeClientMock) DiscoverEndpointsByLabels(ctx context.Context, namespa
 
 	var r0 *models.EndpointDiscovery
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, bool, *kubernetes.Clientset) (*models.EndpointDiscovery, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, bool, kubernetes.Interface) (*models.EndpointDiscovery, error)); ok {
 		return rf(ctx, namespace, labels, checkDNS, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, bool, *kubernetes.Clientset) *models.EndpointDiscovery); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, bool, kubernetes.Interface) *models.EndpointDiscovery); ok {
 		r0 = rf(ctx, namespace, labels, checkDNS, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -1118,7 +1118,7 @@ func (_m *KubeClientMock) DiscoverEndpointsByLabels(ctx context.Context, namespa
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, bool, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, bool, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, labels, checkDNS, client)
 	} else {
 		r1 = ret.Error(1)
@@ -1137,14 +1137,14 @@ type KubeClientMock_DiscoverEndpointsByLabels_Call struct {
 //   - namespace string
 //   - labels map[string]string
 //   - checkDNS bool
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) DiscoverEndpointsByLabels(ctx interface{}, namespace interface{}, labels interface{}, checkDNS interface{}, client interface{}) *KubeClientMock_DiscoverEndpointsByLabels_Call {
 	return &KubeClientMock_DiscoverEndpointsByLabels_Call{Call: _e.mock.On("DiscoverEndpointsByLabels", ctx, namespace, labels, checkDNS, client)}
 }
 
-func (_c *KubeClientMock_DiscoverEndpointsByLabels_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client *kubernetes.Clientset)) *KubeClientMock_DiscoverEndpointsByLabels_Call {
+func (_c *KubeClientMock_DiscoverEndpointsByLabels_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, checkDNS bool, client kubernetes.Interface)) *KubeClientMock_DiscoverEndpointsByLabels_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(bool), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(bool), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1154,13 +1154,13 @@ func (_c *KubeClientMock_DiscoverEndpointsByLabels_Call) Return(_a0 *models.Endp
 	return _c
 }
 
-func (_c *KubeClientMock_DiscoverEndpointsByLabels_Call) RunAndReturn(run func(context.Context, string, map[string]string, bool, *kubernetes.Clientset) (*models.EndpointDiscovery, error)) *KubeClientMock_DiscoverEndpointsByLabels_Call {
+func (_c *KubeClientMock_DiscoverEndpointsByLabels_Call) RunAndReturn(run func(context.Context, string, map[string]string, bool, kubernetes.Interface) (*models.EndpointDiscovery, error)) *KubeClientMock_DiscoverEndpointsByLabels_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAllSecrets provides a mock function with given fields: ctx, teamID, teamSecret, projectID, projectSecret, environmentID, environmentSecret, serviceSecrets, client, namespace
-func (_m *KubeClientMock) GetAllSecrets(ctx context.Context, teamID uuid.UUID, teamSecret string, projectID uuid.UUID, projectSecret string, environmentID uuid.UUID, environmentSecret string, serviceSecrets map[uuid.UUID]string, client *kubernetes.Clientset, namespace string) ([]models.SecretData, error) {
+func (_m *KubeClientMock) GetAllSecrets(ctx context.Context, teamID uuid.UUID, teamSecret string, projectID uuid.UUID, projectSecret string, environmentID uuid.UUID, environmentSecret string, serviceSecrets map[uuid.UUID]string, client kubernetes.Interface, namespace string) ([]models.SecretData, error) {
 	ret := _m.Called(ctx, teamID, teamSecret, projectID, projectSecret, environmentID, environmentSecret, serviceSecrets, client, namespace)
 
 	if len(ret) == 0 {
@@ -1169,10 +1169,10 @@ func (_m *KubeClientMock) GetAllSecrets(ctx context.Context, teamID uuid.UUID, t
 
 	var r0 []models.SecretData
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, *kubernetes.Clientset, string) ([]models.SecretData, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, kubernetes.Interface, string) ([]models.SecretData, error)); ok {
 		return rf(ctx, teamID, teamSecret, projectID, projectSecret, environmentID, environmentSecret, serviceSecrets, client, namespace)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, *kubernetes.Clientset, string) []models.SecretData); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, kubernetes.Interface, string) []models.SecretData); ok {
 		r0 = rf(ctx, teamID, teamSecret, projectID, projectSecret, environmentID, environmentSecret, serviceSecrets, client, namespace)
 	} else {
 		if ret.Get(0) != nil {
@@ -1180,7 +1180,7 @@ func (_m *KubeClientMock) GetAllSecrets(ctx context.Context, teamID uuid.UUID, t
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, *kubernetes.Clientset, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, kubernetes.Interface, string) error); ok {
 		r1 = rf(ctx, teamID, teamSecret, projectID, projectSecret, environmentID, environmentSecret, serviceSecrets, client, namespace)
 	} else {
 		r1 = ret.Error(1)
@@ -1203,15 +1203,15 @@ type KubeClientMock_GetAllSecrets_Call struct {
 //   - environmentID uuid.UUID
 //   - environmentSecret string
 //   - serviceSecrets map[uuid.UUID]string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 //   - namespace string
 func (_e *KubeClientMock_Expecter) GetAllSecrets(ctx interface{}, teamID interface{}, teamSecret interface{}, projectID interface{}, projectSecret interface{}, environmentID interface{}, environmentSecret interface{}, serviceSecrets interface{}, client interface{}, namespace interface{}) *KubeClientMock_GetAllSecrets_Call {
 	return &KubeClientMock_GetAllSecrets_Call{Call: _e.mock.On("GetAllSecrets", ctx, teamID, teamSecret, projectID, projectSecret, environmentID, environmentSecret, serviceSecrets, client, namespace)}
 }
 
-func (_c *KubeClientMock_GetAllSecrets_Call) Run(run func(ctx context.Context, teamID uuid.UUID, teamSecret string, projectID uuid.UUID, projectSecret string, environmentID uuid.UUID, environmentSecret string, serviceSecrets map[uuid.UUID]string, client *kubernetes.Clientset, namespace string)) *KubeClientMock_GetAllSecrets_Call {
+func (_c *KubeClientMock_GetAllSecrets_Call) Run(run func(ctx context.Context, teamID uuid.UUID, teamSecret string, projectID uuid.UUID, projectSecret string, environmentID uuid.UUID, environmentSecret string, serviceSecrets map[uuid.UUID]string, client kubernetes.Interface, namespace string)) *KubeClientMock_GetAllSecrets_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(string), args[3].(uuid.UUID), args[4].(string), args[5].(uuid.UUID), args[6].(string), args[7].(map[uuid.UUID]string), args[8].(*kubernetes.Clientset), args[9].(string))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(string), args[3].(uuid.UUID), args[4].(string), args[5].(uuid.UUID), args[6].(string), args[7].(map[uuid.UUID]string), args[8].(kubernetes.Interface), args[9].(string))
 	})
 	return _c
 }
@@ -1221,13 +1221,13 @@ func (_c *KubeClientMock_GetAllSecrets_Call) Return(_a0 []models.SecretData, _a1
 	return _c
 }
 
-func (_c *KubeClientMock_GetAllSecrets_Call) RunAndReturn(run func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, *kubernetes.Clientset, string) ([]models.SecretData, error)) *KubeClientMock_GetAllSecrets_Call {
+func (_c *KubeClientMock_GetAllSecrets_Call) RunAndReturn(run func(context.Context, uuid.UUID, string, uuid.UUID, string, uuid.UUID, string, map[uuid.UUID]string, kubernetes.Interface, string) ([]models.SecretData, error)) *KubeClientMock_GetAllSecrets_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetExpectedInstances provides a mock function with given fields: ctx, namespace, podName, client
-func (_m *KubeClientMock) GetExpectedInstances(ctx context.Context, namespace string, podName string, client *kubernetes.Clientset) (int, error) {
+func (_m *KubeClientMock) GetExpectedInstances(ctx context.Context, namespace string, podName string, client kubernetes.Interface) (int, error) {
 	ret := _m.Called(ctx, namespace, podName, client)
 
 	if len(ret) == 0 {
@@ -1236,16 +1236,16 @@ func (_m *KubeClientMock) GetExpectedInstances(ctx context.Context, namespace st
 
 	var r0 int
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) (int, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) (int, error)); ok {
 		return rf(ctx, namespace, podName, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) int); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) int); ok {
 		r0 = rf(ctx, namespace, podName, client)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, podName, client)
 	} else {
 		r1 = ret.Error(1)
@@ -1263,14 +1263,14 @@ type KubeClientMock_GetExpectedInstances_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - podName string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetExpectedInstances(ctx interface{}, namespace interface{}, podName interface{}, client interface{}) *KubeClientMock_GetExpectedInstances_Call {
 	return &KubeClientMock_GetExpectedInstances_Call{Call: _e.mock.On("GetExpectedInstances", ctx, namespace, podName, client)}
 }
 
-func (_c *KubeClientMock_GetExpectedInstances_Call) Run(run func(ctx context.Context, namespace string, podName string, client *kubernetes.Clientset)) *KubeClientMock_GetExpectedInstances_Call {
+func (_c *KubeClientMock_GetExpectedInstances_Call) Run(run func(ctx context.Context, namespace string, podName string, client kubernetes.Interface)) *KubeClientMock_GetExpectedInstances_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1280,7 +1280,7 @@ func (_c *KubeClientMock_GetExpectedInstances_Call) Return(_a0 int, _a1 error) *
 	return _c
 }
 
-func (_c *KubeClientMock_GetExpectedInstances_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) (int, error)) *KubeClientMock_GetExpectedInstances_Call {
+func (_c *KubeClientMock_GetExpectedInstances_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) (int, error)) *KubeClientMock_GetExpectedInstances_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1344,19 +1344,19 @@ func (_c *KubeClientMock_GetIngressNginxIP_Call) RunAndReturn(run func(context.C
 }
 
 // GetInternalClient provides a mock function with no fields
-func (_m *KubeClientMock) GetInternalClient() *kubernetes.Clientset {
+func (_m *KubeClientMock) GetInternalClient() kubernetes.Interface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInternalClient")
 	}
 
-	var r0 *kubernetes.Clientset
-	if rf, ok := ret.Get(0).(func() *kubernetes.Clientset); ok {
+	var r0 kubernetes.Interface
+	if rf, ok := ret.Get(0).(func() kubernetes.Interface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*kubernetes.Clientset)
+			r0 = ret.Get(0).(kubernetes.Interface)
 		}
 	}
 
@@ -1380,12 +1380,12 @@ func (_c *KubeClientMock_GetInternalClient_Call) Run(run func()) *KubeClientMock
 	return _c
 }
 
-func (_c *KubeClientMock_GetInternalClient_Call) Return(_a0 *kubernetes.Clientset) *KubeClientMock_GetInternalClient_Call {
+func (_c *KubeClientMock_GetInternalClient_Call) Return(_a0 kubernetes.Interface) *KubeClientMock_GetInternalClient_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *KubeClientMock_GetInternalClient_Call) RunAndReturn(run func() *kubernetes.Clientset) *KubeClientMock_GetInternalClient_Call {
+func (_c *KubeClientMock_GetInternalClient_Call) RunAndReturn(run func() kubernetes.Interface) *KubeClientMock_GetInternalClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1567,7 +1567,7 @@ func (_c *KubeClientMock_GetNamespaces_Call) RunAndReturn(run func(context.Conte
 }
 
 // GetOrCreateSecret provides a mock function with given fields: ctx, name, namespace, client
-func (_m *KubeClientMock) GetOrCreateSecret(ctx context.Context, name string, namespace string, client *kubernetes.Clientset) (*v1.Secret, bool, error) {
+func (_m *KubeClientMock) GetOrCreateSecret(ctx context.Context, name string, namespace string, client kubernetes.Interface) (*v1.Secret, bool, error) {
 	ret := _m.Called(ctx, name, namespace, client)
 
 	if len(ret) == 0 {
@@ -1577,10 +1577,10 @@ func (_m *KubeClientMock) GetOrCreateSecret(ctx context.Context, name string, na
 	var r0 *v1.Secret
 	var r1 bool
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) (*v1.Secret, bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) (*v1.Secret, bool, error)); ok {
 		return rf(ctx, name, namespace, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) *v1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) *v1.Secret); ok {
 		r0 = rf(ctx, name, namespace, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -1588,13 +1588,13 @@ func (_m *KubeClientMock) GetOrCreateSecret(ctx context.Context, name string, na
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *kubernetes.Clientset) bool); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, kubernetes.Interface) bool); ok {
 		r1 = rf(ctx, name, namespace, client)
 	} else {
 		r1 = ret.Get(1).(bool)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r2 = rf(ctx, name, namespace, client)
 	} else {
 		r2 = ret.Error(2)
@@ -1612,14 +1612,14 @@ type KubeClientMock_GetOrCreateSecret_Call struct {
 //   - ctx context.Context
 //   - name string
 //   - namespace string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetOrCreateSecret(ctx interface{}, name interface{}, namespace interface{}, client interface{}) *KubeClientMock_GetOrCreateSecret_Call {
 	return &KubeClientMock_GetOrCreateSecret_Call{Call: _e.mock.On("GetOrCreateSecret", ctx, name, namespace, client)}
 }
 
-func (_c *KubeClientMock_GetOrCreateSecret_Call) Run(run func(ctx context.Context, name string, namespace string, client *kubernetes.Clientset)) *KubeClientMock_GetOrCreateSecret_Call {
+func (_c *KubeClientMock_GetOrCreateSecret_Call) Run(run func(ctx context.Context, name string, namespace string, client kubernetes.Interface)) *KubeClientMock_GetOrCreateSecret_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1629,13 +1629,13 @@ func (_c *KubeClientMock_GetOrCreateSecret_Call) Return(_a0 *v1.Secret, _a1 bool
 	return _c
 }
 
-func (_c *KubeClientMock_GetOrCreateSecret_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) (*v1.Secret, bool, error)) *KubeClientMock_GetOrCreateSecret_Call {
+func (_c *KubeClientMock_GetOrCreateSecret_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) (*v1.Secret, bool, error)) *KubeClientMock_GetOrCreateSecret_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPersistentVolumeClaim provides a mock function with given fields: ctx, namespace, pvcName, client
-func (_m *KubeClientMock) GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) (*models.PVCInfo, error) {
+func (_m *KubeClientMock) GetPersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) (*models.PVCInfo, error) {
 	ret := _m.Called(ctx, namespace, pvcName, client)
 
 	if len(ret) == 0 {
@@ -1644,10 +1644,10 @@ func (_m *KubeClientMock) GetPersistentVolumeClaim(ctx context.Context, namespac
 
 	var r0 *models.PVCInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) (*models.PVCInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) (*models.PVCInfo, error)); ok {
 		return rf(ctx, namespace, pvcName, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) *models.PVCInfo); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) *models.PVCInfo); ok {
 		r0 = rf(ctx, namespace, pvcName, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -1655,7 +1655,7 @@ func (_m *KubeClientMock) GetPersistentVolumeClaim(ctx context.Context, namespac
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, pvcName, client)
 	} else {
 		r1 = ret.Error(1)
@@ -1673,14 +1673,14 @@ type KubeClientMock_GetPersistentVolumeClaim_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - pvcName string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetPersistentVolumeClaim(ctx interface{}, namespace interface{}, pvcName interface{}, client interface{}) *KubeClientMock_GetPersistentVolumeClaim_Call {
 	return &KubeClientMock_GetPersistentVolumeClaim_Call{Call: _e.mock.On("GetPersistentVolumeClaim", ctx, namespace, pvcName, client)}
 }
 
-func (_c *KubeClientMock_GetPersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset)) *KubeClientMock_GetPersistentVolumeClaim_Call {
+func (_c *KubeClientMock_GetPersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface)) *KubeClientMock_GetPersistentVolumeClaim_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1690,13 +1690,13 @@ func (_c *KubeClientMock_GetPersistentVolumeClaim_Call) Return(_a0 *models.PVCIn
 	return _c
 }
 
-func (_c *KubeClientMock_GetPersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) (*models.PVCInfo, error)) *KubeClientMock_GetPersistentVolumeClaim_Call {
+func (_c *KubeClientMock_GetPersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) (*models.PVCInfo, error)) *KubeClientMock_GetPersistentVolumeClaim_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPodContainerStatusByLabels provides a mock function with given fields: ctx, namespace, labels, client
-func (_m *KubeClientMock) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]k8s.PodContainerStatus, error) {
+func (_m *KubeClientMock) GetPodContainerStatusByLabels(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) ([]k8s.PodContainerStatus, error) {
 	ret := _m.Called(ctx, namespace, labels, client)
 
 	if len(ret) == 0 {
@@ -1705,10 +1705,10 @@ func (_m *KubeClientMock) GetPodContainerStatusByLabels(ctx context.Context, nam
 
 	var r0 []k8s.PodContainerStatus
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset) ([]k8s.PodContainerStatus, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface) ([]k8s.PodContainerStatus, error)); ok {
 		return rf(ctx, namespace, labels, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset) []k8s.PodContainerStatus); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface) []k8s.PodContainerStatus); ok {
 		r0 = rf(ctx, namespace, labels, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -1716,7 +1716,7 @@ func (_m *KubeClientMock) GetPodContainerStatusByLabels(ctx context.Context, nam
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, labels, client)
 	} else {
 		r1 = ret.Error(1)
@@ -1734,14 +1734,14 @@ type KubeClientMock_GetPodContainerStatusByLabels_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - labels map[string]string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetPodContainerStatusByLabels(ctx interface{}, namespace interface{}, labels interface{}, client interface{}) *KubeClientMock_GetPodContainerStatusByLabels_Call {
 	return &KubeClientMock_GetPodContainerStatusByLabels_Call{Call: _e.mock.On("GetPodContainerStatusByLabels", ctx, namespace, labels, client)}
 }
 
-func (_c *KubeClientMock_GetPodContainerStatusByLabels_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset)) *KubeClientMock_GetPodContainerStatusByLabels_Call {
+func (_c *KubeClientMock_GetPodContainerStatusByLabels_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface)) *KubeClientMock_GetPodContainerStatusByLabels_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1751,13 +1751,13 @@ func (_c *KubeClientMock_GetPodContainerStatusByLabels_Call) Return(_a0 []k8s.Po
 	return _c
 }
 
-func (_c *KubeClientMock_GetPodContainerStatusByLabels_Call) RunAndReturn(run func(context.Context, string, map[string]string, *kubernetes.Clientset) ([]k8s.PodContainerStatus, error)) *KubeClientMock_GetPodContainerStatusByLabels_Call {
+func (_c *KubeClientMock_GetPodContainerStatusByLabels_Call) RunAndReturn(run func(context.Context, string, map[string]string, kubernetes.Interface) ([]k8s.PodContainerStatus, error)) *KubeClientMock_GetPodContainerStatusByLabels_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPodContainerStatusByLabelsWithOptions provides a mock function with given fields: ctx, namespace, labels, client, options
-func (_m *KubeClientMock) GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset, options k8s.PodStatusOptions) ([]k8s.PodContainerStatus, error) {
+func (_m *KubeClientMock) GetPodContainerStatusByLabelsWithOptions(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface, options k8s.PodStatusOptions) ([]k8s.PodContainerStatus, error) {
 	ret := _m.Called(ctx, namespace, labels, client, options)
 
 	if len(ret) == 0 {
@@ -1766,10 +1766,10 @@ func (_m *KubeClientMock) GetPodContainerStatusByLabelsWithOptions(ctx context.C
 
 	var r0 []k8s.PodContainerStatus
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset, k8s.PodStatusOptions) ([]k8s.PodContainerStatus, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface, k8s.PodStatusOptions) ([]k8s.PodContainerStatus, error)); ok {
 		return rf(ctx, namespace, labels, client, options)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset, k8s.PodStatusOptions) []k8s.PodContainerStatus); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface, k8s.PodStatusOptions) []k8s.PodContainerStatus); ok {
 		r0 = rf(ctx, namespace, labels, client, options)
 	} else {
 		if ret.Get(0) != nil {
@@ -1777,7 +1777,7 @@ func (_m *KubeClientMock) GetPodContainerStatusByLabelsWithOptions(ctx context.C
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, *kubernetes.Clientset, k8s.PodStatusOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, kubernetes.Interface, k8s.PodStatusOptions) error); ok {
 		r1 = rf(ctx, namespace, labels, client, options)
 	} else {
 		r1 = ret.Error(1)
@@ -1795,15 +1795,15 @@ type KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - labels map[string]string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 //   - options k8s.PodStatusOptions
 func (_e *KubeClientMock_Expecter) GetPodContainerStatusByLabelsWithOptions(ctx interface{}, namespace interface{}, labels interface{}, client interface{}, options interface{}) *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call {
 	return &KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call{Call: _e.mock.On("GetPodContainerStatusByLabelsWithOptions", ctx, namespace, labels, client, options)}
 }
 
-func (_c *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset, options k8s.PodStatusOptions)) *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call {
+func (_c *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface, options k8s.PodStatusOptions)) *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(*kubernetes.Clientset), args[4].(k8s.PodStatusOptions))
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(kubernetes.Interface), args[4].(k8s.PodStatusOptions))
 	})
 	return _c
 }
@@ -1813,13 +1813,13 @@ func (_c *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call) Return(_
 	return _c
 }
 
-func (_c *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call) RunAndReturn(run func(context.Context, string, map[string]string, *kubernetes.Clientset, k8s.PodStatusOptions) ([]k8s.PodContainerStatus, error)) *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call {
+func (_c *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call) RunAndReturn(run func(context.Context, string, map[string]string, kubernetes.Interface, k8s.PodStatusOptions) ([]k8s.PodContainerStatus, error)) *KubeClientMock_GetPodContainerStatusByLabelsWithOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPodsByLabels provides a mock function with given fields: ctx, namespace, labels, client
-func (_m *KubeClientMock) GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*v1.PodList, error) {
+func (_m *KubeClientMock) GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) (*v1.PodList, error) {
 	ret := _m.Called(ctx, namespace, labels, client)
 
 	if len(ret) == 0 {
@@ -1828,10 +1828,10 @@ func (_m *KubeClientMock) GetPodsByLabels(ctx context.Context, namespace string,
 
 	var r0 *v1.PodList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset) (*v1.PodList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface) (*v1.PodList, error)); ok {
 		return rf(ctx, namespace, labels, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset) *v1.PodList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface) *v1.PodList); ok {
 		r0 = rf(ctx, namespace, labels, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -1839,7 +1839,7 @@ func (_m *KubeClientMock) GetPodsByLabels(ctx context.Context, namespace string,
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, labels, client)
 	} else {
 		r1 = ret.Error(1)
@@ -1857,14 +1857,14 @@ type KubeClientMock_GetPodsByLabels_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - labels map[string]string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetPodsByLabels(ctx interface{}, namespace interface{}, labels interface{}, client interface{}) *KubeClientMock_GetPodsByLabels_Call {
 	return &KubeClientMock_GetPodsByLabels_Call{Call: _e.mock.On("GetPodsByLabels", ctx, namespace, labels, client)}
 }
 
-func (_c *KubeClientMock_GetPodsByLabels_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset)) *KubeClientMock_GetPodsByLabels_Call {
+func (_c *KubeClientMock_GetPodsByLabels_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface)) *KubeClientMock_GetPodsByLabels_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1874,13 +1874,13 @@ func (_c *KubeClientMock_GetPodsByLabels_Call) Return(_a0 *v1.PodList, _a1 error
 	return _c
 }
 
-func (_c *KubeClientMock_GetPodsByLabels_Call) RunAndReturn(run func(context.Context, string, map[string]string, *kubernetes.Clientset) (*v1.PodList, error)) *KubeClientMock_GetPodsByLabels_Call {
+func (_c *KubeClientMock_GetPodsByLabels_Call) RunAndReturn(run func(context.Context, string, map[string]string, kubernetes.Interface) (*v1.PodList, error)) *KubeClientMock_GetPodsByLabels_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPodsUsingPVC provides a mock function with given fields: ctx, namespace, pvcName, client
-func (_m *KubeClientMock) GetPodsUsingPVC(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset) ([]v1.Pod, error) {
+func (_m *KubeClientMock) GetPodsUsingPVC(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface) ([]v1.Pod, error) {
 	ret := _m.Called(ctx, namespace, pvcName, client)
 
 	if len(ret) == 0 {
@@ -1889,10 +1889,10 @@ func (_m *KubeClientMock) GetPodsUsingPVC(ctx context.Context, namespace string,
 
 	var r0 []v1.Pod
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) ([]v1.Pod, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) ([]v1.Pod, error)); ok {
 		return rf(ctx, namespace, pvcName, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) []v1.Pod); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) []v1.Pod); ok {
 		r0 = rf(ctx, namespace, pvcName, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -1900,7 +1900,7 @@ func (_m *KubeClientMock) GetPodsUsingPVC(ctx context.Context, namespace string,
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, pvcName, client)
 	} else {
 		r1 = ret.Error(1)
@@ -1918,14 +1918,14 @@ type KubeClientMock_GetPodsUsingPVC_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - pvcName string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetPodsUsingPVC(ctx interface{}, namespace interface{}, pvcName interface{}, client interface{}) *KubeClientMock_GetPodsUsingPVC_Call {
 	return &KubeClientMock_GetPodsUsingPVC_Call{Call: _e.mock.On("GetPodsUsingPVC", ctx, namespace, pvcName, client)}
 }
 
-func (_c *KubeClientMock_GetPodsUsingPVC_Call) Run(run func(ctx context.Context, namespace string, pvcName string, client *kubernetes.Clientset)) *KubeClientMock_GetPodsUsingPVC_Call {
+func (_c *KubeClientMock_GetPodsUsingPVC_Call) Run(run func(ctx context.Context, namespace string, pvcName string, client kubernetes.Interface)) *KubeClientMock_GetPodsUsingPVC_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1935,13 +1935,13 @@ func (_c *KubeClientMock_GetPodsUsingPVC_Call) Return(_a0 []v1.Pod, _a1 error) *
 	return _c
 }
 
-func (_c *KubeClientMock_GetPodsUsingPVC_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) ([]v1.Pod, error)) *KubeClientMock_GetPodsUsingPVC_Call {
+func (_c *KubeClientMock_GetPodsUsingPVC_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) ([]v1.Pod, error)) *KubeClientMock_GetPodsUsingPVC_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSecret provides a mock function with given fields: ctx, name, namespace, client
-func (_m *KubeClientMock) GetSecret(ctx context.Context, name string, namespace string, client *kubernetes.Clientset) (*v1.Secret, error) {
+func (_m *KubeClientMock) GetSecret(ctx context.Context, name string, namespace string, client kubernetes.Interface) (*v1.Secret, error) {
 	ret := _m.Called(ctx, name, namespace, client)
 
 	if len(ret) == 0 {
@@ -1950,10 +1950,10 @@ func (_m *KubeClientMock) GetSecret(ctx context.Context, name string, namespace 
 
 	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) (*v1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) (*v1.Secret, error)); ok {
 		return rf(ctx, name, namespace, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) *v1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) *v1.Secret); ok {
 		r0 = rf(ctx, name, namespace, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -1961,7 +1961,7 @@ func (_m *KubeClientMock) GetSecret(ctx context.Context, name string, namespace 
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, name, namespace, client)
 	} else {
 		r1 = ret.Error(1)
@@ -1979,14 +1979,14 @@ type KubeClientMock_GetSecret_Call struct {
 //   - ctx context.Context
 //   - name string
 //   - namespace string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetSecret(ctx interface{}, name interface{}, namespace interface{}, client interface{}) *KubeClientMock_GetSecret_Call {
 	return &KubeClientMock_GetSecret_Call{Call: _e.mock.On("GetSecret", ctx, name, namespace, client)}
 }
 
-func (_c *KubeClientMock_GetSecret_Call) Run(run func(ctx context.Context, name string, namespace string, client *kubernetes.Clientset)) *KubeClientMock_GetSecret_Call {
+func (_c *KubeClientMock_GetSecret_Call) Run(run func(ctx context.Context, name string, namespace string, client kubernetes.Interface)) *KubeClientMock_GetSecret_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -1996,13 +1996,13 @@ func (_c *KubeClientMock_GetSecret_Call) Return(_a0 *v1.Secret, _a1 error) *Kube
 	return _c
 }
 
-func (_c *KubeClientMock_GetSecret_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) (*v1.Secret, error)) *KubeClientMock_GetSecret_Call {
+func (_c *KubeClientMock_GetSecret_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) (*v1.Secret, error)) *KubeClientMock_GetSecret_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSecretMap provides a mock function with given fields: ctx, name, namespace, client
-func (_m *KubeClientMock) GetSecretMap(ctx context.Context, name string, namespace string, client *kubernetes.Clientset) (map[string][]byte, error) {
+func (_m *KubeClientMock) GetSecretMap(ctx context.Context, name string, namespace string, client kubernetes.Interface) (map[string][]byte, error) {
 	ret := _m.Called(ctx, name, namespace, client)
 
 	if len(ret) == 0 {
@@ -2011,10 +2011,10 @@ func (_m *KubeClientMock) GetSecretMap(ctx context.Context, name string, namespa
 
 	var r0 map[string][]byte
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) (map[string][]byte, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) (map[string][]byte, error)); ok {
 		return rf(ctx, name, namespace, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *kubernetes.Clientset) map[string][]byte); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, kubernetes.Interface) map[string][]byte); ok {
 		r0 = rf(ctx, name, namespace, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2022,7 +2022,7 @@ func (_m *KubeClientMock) GetSecretMap(ctx context.Context, name string, namespa
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, name, namespace, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2040,14 +2040,14 @@ type KubeClientMock_GetSecretMap_Call struct {
 //   - ctx context.Context
 //   - name string
 //   - namespace string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetSecretMap(ctx interface{}, name interface{}, namespace interface{}, client interface{}) *KubeClientMock_GetSecretMap_Call {
 	return &KubeClientMock_GetSecretMap_Call{Call: _e.mock.On("GetSecretMap", ctx, name, namespace, client)}
 }
 
-func (_c *KubeClientMock_GetSecretMap_Call) Run(run func(ctx context.Context, name string, namespace string, client *kubernetes.Clientset)) *KubeClientMock_GetSecretMap_Call {
+func (_c *KubeClientMock_GetSecretMap_Call) Run(run func(ctx context.Context, name string, namespace string, client kubernetes.Interface)) *KubeClientMock_GetSecretMap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2057,13 +2057,13 @@ func (_c *KubeClientMock_GetSecretMap_Call) Return(_a0 map[string][]byte, _a1 er
 	return _c
 }
 
-func (_c *KubeClientMock_GetSecretMap_Call) RunAndReturn(run func(context.Context, string, string, *kubernetes.Clientset) (map[string][]byte, error)) *KubeClientMock_GetSecretMap_Call {
+func (_c *KubeClientMock_GetSecretMap_Call) RunAndReturn(run func(context.Context, string, string, kubernetes.Interface) (map[string][]byte, error)) *KubeClientMock_GetSecretMap_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSecretValue provides a mock function with given fields: ctx, name, namespace, key, client
-func (_m *KubeClientMock) GetSecretValue(ctx context.Context, name string, namespace string, key string, client *kubernetes.Clientset) ([]byte, error) {
+func (_m *KubeClientMock) GetSecretValue(ctx context.Context, name string, namespace string, key string, client kubernetes.Interface) ([]byte, error) {
 	ret := _m.Called(ctx, name, namespace, key, client)
 
 	if len(ret) == 0 {
@@ -2072,10 +2072,10 @@ func (_m *KubeClientMock) GetSecretValue(ctx context.Context, name string, names
 
 	var r0 []byte
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, *kubernetes.Clientset) ([]byte, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, kubernetes.Interface) ([]byte, error)); ok {
 		return rf(ctx, name, namespace, key, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, *kubernetes.Clientset) []byte); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, kubernetes.Interface) []byte); ok {
 		r0 = rf(ctx, name, namespace, key, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2083,7 +2083,7 @@ func (_m *KubeClientMock) GetSecretValue(ctx context.Context, name string, names
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, name, namespace, key, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2102,14 +2102,14 @@ type KubeClientMock_GetSecretValue_Call struct {
 //   - name string
 //   - namespace string
 //   - key string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetSecretValue(ctx interface{}, name interface{}, namespace interface{}, key interface{}, client interface{}) *KubeClientMock_GetSecretValue_Call {
 	return &KubeClientMock_GetSecretValue_Call{Call: _e.mock.On("GetSecretValue", ctx, name, namespace, key, client)}
 }
 
-func (_c *KubeClientMock_GetSecretValue_Call) Run(run func(ctx context.Context, name string, namespace string, key string, client *kubernetes.Clientset)) *KubeClientMock_GetSecretValue_Call {
+func (_c *KubeClientMock_GetSecretValue_Call) Run(run func(ctx context.Context, name string, namespace string, key string, client kubernetes.Interface)) *KubeClientMock_GetSecretValue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2119,13 +2119,13 @@ func (_c *KubeClientMock_GetSecretValue_Call) Return(_a0 []byte, _a1 error) *Kub
 	return _c
 }
 
-func (_c *KubeClientMock_GetSecretValue_Call) RunAndReturn(run func(context.Context, string, string, string, *kubernetes.Clientset) ([]byte, error)) *KubeClientMock_GetSecretValue_Call {
+func (_c *KubeClientMock_GetSecretValue_Call) RunAndReturn(run func(context.Context, string, string, string, kubernetes.Interface) ([]byte, error)) *KubeClientMock_GetSecretValue_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSimpleHealthStatus provides a mock function with given fields: ctx, namespace, labels, expectedReplicas, client
-func (_m *KubeClientMock) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client *kubernetes.Clientset) (*k8s.SimpleHealthStatus, error) {
+func (_m *KubeClientMock) GetSimpleHealthStatus(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client kubernetes.Interface) (*k8s.SimpleHealthStatus, error) {
 	ret := _m.Called(ctx, namespace, labels, expectedReplicas, client)
 
 	if len(ret) == 0 {
@@ -2134,10 +2134,10 @@ func (_m *KubeClientMock) GetSimpleHealthStatus(ctx context.Context, namespace s
 
 	var r0 *k8s.SimpleHealthStatus
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *int, *kubernetes.Clientset) (*k8s.SimpleHealthStatus, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *int, kubernetes.Interface) (*k8s.SimpleHealthStatus, error)); ok {
 		return rf(ctx, namespace, labels, expectedReplicas, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *int, *kubernetes.Clientset) *k8s.SimpleHealthStatus); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *int, kubernetes.Interface) *k8s.SimpleHealthStatus); ok {
 		r0 = rf(ctx, namespace, labels, expectedReplicas, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2145,7 +2145,7 @@ func (_m *KubeClientMock) GetSimpleHealthStatus(ctx context.Context, namespace s
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, *int, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, *int, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, labels, expectedReplicas, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2164,14 +2164,14 @@ type KubeClientMock_GetSimpleHealthStatus_Call struct {
 //   - namespace string
 //   - labels map[string]string
 //   - expectedReplicas *int
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) GetSimpleHealthStatus(ctx interface{}, namespace interface{}, labels interface{}, expectedReplicas interface{}, client interface{}) *KubeClientMock_GetSimpleHealthStatus_Call {
 	return &KubeClientMock_GetSimpleHealthStatus_Call{Call: _e.mock.On("GetSimpleHealthStatus", ctx, namespace, labels, expectedReplicas, client)}
 }
 
-func (_c *KubeClientMock_GetSimpleHealthStatus_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client *kubernetes.Clientset)) *KubeClientMock_GetSimpleHealthStatus_Call {
+func (_c *KubeClientMock_GetSimpleHealthStatus_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, expectedReplicas *int, client kubernetes.Interface)) *KubeClientMock_GetSimpleHealthStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(*int), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(*int), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2181,7 +2181,7 @@ func (_c *KubeClientMock_GetSimpleHealthStatus_Call) Return(_a0 *k8s.SimpleHealt
 	return _c
 }
 
-func (_c *KubeClientMock_GetSimpleHealthStatus_Call) RunAndReturn(run func(context.Context, string, map[string]string, *int, *kubernetes.Clientset) (*k8s.SimpleHealthStatus, error)) *KubeClientMock_GetSimpleHealthStatus_Call {
+func (_c *KubeClientMock_GetSimpleHealthStatus_Call) RunAndReturn(run func(context.Context, string, map[string]string, *int, kubernetes.Interface) (*k8s.SimpleHealthStatus, error)) *KubeClientMock_GetSimpleHealthStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2243,7 +2243,7 @@ func (_c *KubeClientMock_GetUnusedNodePort_Call) RunAndReturn(run func(context.C
 }
 
 // ListPersistentVolumeClaims provides a mock function with given fields: ctx, namespace, labels, client
-func (_m *KubeClientMock) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) ([]*models.PVCInfo, error) {
+func (_m *KubeClientMock) ListPersistentVolumeClaims(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) ([]*models.PVCInfo, error) {
 	ret := _m.Called(ctx, namespace, labels, client)
 
 	if len(ret) == 0 {
@@ -2252,10 +2252,10 @@ func (_m *KubeClientMock) ListPersistentVolumeClaims(ctx context.Context, namesp
 
 	var r0 []*models.PVCInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset) ([]*models.PVCInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface) ([]*models.PVCInfo, error)); ok {
 		return rf(ctx, namespace, labels, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, *kubernetes.Clientset) []*models.PVCInfo); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, map[string]string, kubernetes.Interface) []*models.PVCInfo); ok {
 		r0 = rf(ctx, namespace, labels, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2263,7 +2263,7 @@ func (_m *KubeClientMock) ListPersistentVolumeClaims(ctx context.Context, namesp
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, map[string]string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, labels, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2281,14 +2281,14 @@ type KubeClientMock_ListPersistentVolumeClaims_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - labels map[string]string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) ListPersistentVolumeClaims(ctx interface{}, namespace interface{}, labels interface{}, client interface{}) *KubeClientMock_ListPersistentVolumeClaims_Call {
 	return &KubeClientMock_ListPersistentVolumeClaims_Call{Call: _e.mock.On("ListPersistentVolumeClaims", ctx, namespace, labels, client)}
 }
 
-func (_c *KubeClientMock_ListPersistentVolumeClaims_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset)) *KubeClientMock_ListPersistentVolumeClaims_Call {
+func (_c *KubeClientMock_ListPersistentVolumeClaims_Call) Run(run func(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface)) *KubeClientMock_ListPersistentVolumeClaims_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(map[string]string), args[3].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2298,13 +2298,13 @@ func (_c *KubeClientMock_ListPersistentVolumeClaims_Call) Return(_a0 []*models.P
 	return _c
 }
 
-func (_c *KubeClientMock_ListPersistentVolumeClaims_Call) RunAndReturn(run func(context.Context, string, map[string]string, *kubernetes.Clientset) ([]*models.PVCInfo, error)) *KubeClientMock_ListPersistentVolumeClaims_Call {
+func (_c *KubeClientMock_ListPersistentVolumeClaims_Call) RunAndReturn(run func(context.Context, string, map[string]string, kubernetes.Interface) ([]*models.PVCInfo, error)) *KubeClientMock_ListPersistentVolumeClaims_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // OverwriteSecretValues provides a mock function with given fields: ctx, name, namespace, values, client
-func (_m *KubeClientMock) OverwriteSecretValues(ctx context.Context, name string, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*v1.Secret, error) {
+func (_m *KubeClientMock) OverwriteSecretValues(ctx context.Context, name string, namespace string, values map[string][]byte, client kubernetes.Interface) (*v1.Secret, error) {
 	ret := _m.Called(ctx, name, namespace, values, client)
 
 	if len(ret) == 0 {
@@ -2313,10 +2313,10 @@ func (_m *KubeClientMock) OverwriteSecretValues(ctx context.Context, name string
 
 	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) (*v1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) (*v1.Secret, error)); ok {
 		return rf(ctx, name, namespace, values, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) *v1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) *v1.Secret); ok {
 		r0 = rf(ctx, name, namespace, values, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2324,7 +2324,7 @@ func (_m *KubeClientMock) OverwriteSecretValues(ctx context.Context, name string
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, name, namespace, values, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2343,14 +2343,14 @@ type KubeClientMock_OverwriteSecretValues_Call struct {
 //   - name string
 //   - namespace string
 //   - values map[string][]byte
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) OverwriteSecretValues(ctx interface{}, name interface{}, namespace interface{}, values interface{}, client interface{}) *KubeClientMock_OverwriteSecretValues_Call {
 	return &KubeClientMock_OverwriteSecretValues_Call{Call: _e.mock.On("OverwriteSecretValues", ctx, name, namespace, values, client)}
 }
 
-func (_c *KubeClientMock_OverwriteSecretValues_Call) Run(run func(ctx context.Context, name string, namespace string, values map[string][]byte, client *kubernetes.Clientset)) *KubeClientMock_OverwriteSecretValues_Call {
+func (_c *KubeClientMock_OverwriteSecretValues_Call) Run(run func(ctx context.Context, name string, namespace string, values map[string][]byte, client kubernetes.Interface)) *KubeClientMock_OverwriteSecretValues_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(map[string][]byte), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(map[string][]byte), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2360,7 +2360,7 @@ func (_c *KubeClientMock_OverwriteSecretValues_Call) Return(_a0 *v1.Secret, _a1 
 	return _c
 }
 
-func (_c *KubeClientMock_OverwriteSecretValues_Call) RunAndReturn(run func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) (*v1.Secret, error)) *KubeClientMock_OverwriteSecretValues_Call {
+func (_c *KubeClientMock_OverwriteSecretValues_Call) RunAndReturn(run func(context.Context, string, string, map[string][]byte, kubernetes.Interface) (*v1.Secret, error)) *KubeClientMock_OverwriteSecretValues_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2429,7 +2429,7 @@ func (_c *KubeClientMock_ParseRegistryCredentials_Call) RunAndReturn(run func(*v
 }
 
 // RollingRestartPodsByLabel provides a mock function with given fields: ctx, namespace, labelKey, labelValue, client
-func (_m *KubeClientMock) RollingRestartPodsByLabel(ctx context.Context, namespace string, labelKey string, labelValue string, client *kubernetes.Clientset) error {
+func (_m *KubeClientMock) RollingRestartPodsByLabel(ctx context.Context, namespace string, labelKey string, labelValue string, client kubernetes.Interface) error {
 	ret := _m.Called(ctx, namespace, labelKey, labelValue, client)
 
 	if len(ret) == 0 {
@@ -2437,7 +2437,7 @@ func (_m *KubeClientMock) RollingRestartPodsByLabel(ctx context.Context, namespa
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, kubernetes.Interface) error); ok {
 		r0 = rf(ctx, namespace, labelKey, labelValue, client)
 	} else {
 		r0 = ret.Error(0)
@@ -2456,14 +2456,14 @@ type KubeClientMock_RollingRestartPodsByLabel_Call struct {
 //   - namespace string
 //   - labelKey string
 //   - labelValue string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) RollingRestartPodsByLabel(ctx interface{}, namespace interface{}, labelKey interface{}, labelValue interface{}, client interface{}) *KubeClientMock_RollingRestartPodsByLabel_Call {
 	return &KubeClientMock_RollingRestartPodsByLabel_Call{Call: _e.mock.On("RollingRestartPodsByLabel", ctx, namespace, labelKey, labelValue, client)}
 }
 
-func (_c *KubeClientMock_RollingRestartPodsByLabel_Call) Run(run func(ctx context.Context, namespace string, labelKey string, labelValue string, client *kubernetes.Clientset)) *KubeClientMock_RollingRestartPodsByLabel_Call {
+func (_c *KubeClientMock_RollingRestartPodsByLabel_Call) Run(run func(ctx context.Context, namespace string, labelKey string, labelValue string, client kubernetes.Interface)) *KubeClientMock_RollingRestartPodsByLabel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2473,13 +2473,13 @@ func (_c *KubeClientMock_RollingRestartPodsByLabel_Call) Return(_a0 error) *Kube
 	return _c
 }
 
-func (_c *KubeClientMock_RollingRestartPodsByLabel_Call) RunAndReturn(run func(context.Context, string, string, string, *kubernetes.Clientset) error) *KubeClientMock_RollingRestartPodsByLabel_Call {
+func (_c *KubeClientMock_RollingRestartPodsByLabel_Call) RunAndReturn(run func(context.Context, string, string, string, kubernetes.Interface) error) *KubeClientMock_RollingRestartPodsByLabel_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // StreamPodLogs provides a mock function with given fields: ctx, namespace, opts, meta, client, eventChan
-func (_m *KubeClientMock) StreamPodLogs(ctx context.Context, namespace string, opts loki.LokiLogStreamOptions, meta loki.LogMetadata, client *kubernetes.Clientset, eventChan chan<- loki.LogEvents) error {
+func (_m *KubeClientMock) StreamPodLogs(ctx context.Context, namespace string, opts loki.LokiLogStreamOptions, meta loki.LogMetadata, client kubernetes.Interface, eventChan chan<- loki.LogEvents) error {
 	ret := _m.Called(ctx, namespace, opts, meta, client, eventChan)
 
 	if len(ret) == 0 {
@@ -2487,7 +2487,7 @@ func (_m *KubeClientMock) StreamPodLogs(ctx context.Context, namespace string, o
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, loki.LokiLogStreamOptions, loki.LogMetadata, *kubernetes.Clientset, chan<- loki.LogEvents) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, loki.LokiLogStreamOptions, loki.LogMetadata, kubernetes.Interface, chan<- loki.LogEvents) error); ok {
 		r0 = rf(ctx, namespace, opts, meta, client, eventChan)
 	} else {
 		r0 = ret.Error(0)
@@ -2506,15 +2506,15 @@ type KubeClientMock_StreamPodLogs_Call struct {
 //   - namespace string
 //   - opts loki.LokiLogStreamOptions
 //   - meta loki.LogMetadata
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 //   - eventChan chan<- loki.LogEvents
 func (_e *KubeClientMock_Expecter) StreamPodLogs(ctx interface{}, namespace interface{}, opts interface{}, meta interface{}, client interface{}, eventChan interface{}) *KubeClientMock_StreamPodLogs_Call {
 	return &KubeClientMock_StreamPodLogs_Call{Call: _e.mock.On("StreamPodLogs", ctx, namespace, opts, meta, client, eventChan)}
 }
 
-func (_c *KubeClientMock_StreamPodLogs_Call) Run(run func(ctx context.Context, namespace string, opts loki.LokiLogStreamOptions, meta loki.LogMetadata, client *kubernetes.Clientset, eventChan chan<- loki.LogEvents)) *KubeClientMock_StreamPodLogs_Call {
+func (_c *KubeClientMock_StreamPodLogs_Call) Run(run func(ctx context.Context, namespace string, opts loki.LokiLogStreamOptions, meta loki.LogMetadata, client kubernetes.Interface, eventChan chan<- loki.LogEvents)) *KubeClientMock_StreamPodLogs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(loki.LokiLogStreamOptions), args[3].(loki.LogMetadata), args[4].(*kubernetes.Clientset), args[5].(chan<- loki.LogEvents))
+		run(args[0].(context.Context), args[1].(string), args[2].(loki.LokiLogStreamOptions), args[3].(loki.LogMetadata), args[4].(kubernetes.Interface), args[5].(chan<- loki.LogEvents))
 	})
 	return _c
 }
@@ -2524,7 +2524,7 @@ func (_c *KubeClientMock_StreamPodLogs_Call) Return(_a0 error) *KubeClientMock_S
 	return _c
 }
 
-func (_c *KubeClientMock_StreamPodLogs_Call) RunAndReturn(run func(context.Context, string, loki.LokiLogStreamOptions, loki.LogMetadata, *kubernetes.Clientset, chan<- loki.LogEvents) error) *KubeClientMock_StreamPodLogs_Call {
+func (_c *KubeClientMock_StreamPodLogs_Call) RunAndReturn(run func(context.Context, string, loki.LokiLogStreamOptions, loki.LogMetadata, kubernetes.Interface, chan<- loki.LogEvents) error) *KubeClientMock_StreamPodLogs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2717,7 +2717,7 @@ func (_c *KubeClientMock_UpdateDeploymentImages_Call) RunAndReturn(run func(cont
 }
 
 // UpdatePersistentVolumeClaim provides a mock function with given fields: ctx, namespace, pvcName, newSize, client
-func (_m *KubeClientMock) UpdatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, newSize *string, client *kubernetes.Clientset) (*models.PVCInfo, error) {
+func (_m *KubeClientMock) UpdatePersistentVolumeClaim(ctx context.Context, namespace string, pvcName string, newSize *string, client kubernetes.Interface) (*models.PVCInfo, error) {
 	ret := _m.Called(ctx, namespace, pvcName, newSize, client)
 
 	if len(ret) == 0 {
@@ -2726,10 +2726,10 @@ func (_m *KubeClientMock) UpdatePersistentVolumeClaim(ctx context.Context, names
 
 	var r0 *models.PVCInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *string, *kubernetes.Clientset) (*models.PVCInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *string, kubernetes.Interface) (*models.PVCInfo, error)); ok {
 		return rf(ctx, namespace, pvcName, newSize, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, *string, *kubernetes.Clientset) *models.PVCInfo); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *string, kubernetes.Interface) *models.PVCInfo); ok {
 		r0 = rf(ctx, namespace, pvcName, newSize, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2737,7 +2737,7 @@ func (_m *KubeClientMock) UpdatePersistentVolumeClaim(ctx context.Context, names
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, *string, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, *string, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, namespace, pvcName, newSize, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2756,14 +2756,14 @@ type KubeClientMock_UpdatePersistentVolumeClaim_Call struct {
 //   - namespace string
 //   - pvcName string
 //   - newSize *string
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) UpdatePersistentVolumeClaim(ctx interface{}, namespace interface{}, pvcName interface{}, newSize interface{}, client interface{}) *KubeClientMock_UpdatePersistentVolumeClaim_Call {
 	return &KubeClientMock_UpdatePersistentVolumeClaim_Call{Call: _e.mock.On("UpdatePersistentVolumeClaim", ctx, namespace, pvcName, newSize, client)}
 }
 
-func (_c *KubeClientMock_UpdatePersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, newSize *string, client *kubernetes.Clientset)) *KubeClientMock_UpdatePersistentVolumeClaim_Call {
+func (_c *KubeClientMock_UpdatePersistentVolumeClaim_Call) Run(run func(ctx context.Context, namespace string, pvcName string, newSize *string, client kubernetes.Interface)) *KubeClientMock_UpdatePersistentVolumeClaim_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*string), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(*string), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2773,13 +2773,13 @@ func (_c *KubeClientMock_UpdatePersistentVolumeClaim_Call) Return(_a0 *models.PV
 	return _c
 }
 
-func (_c *KubeClientMock_UpdatePersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, *string, *kubernetes.Clientset) (*models.PVCInfo, error)) *KubeClientMock_UpdatePersistentVolumeClaim_Call {
+func (_c *KubeClientMock_UpdatePersistentVolumeClaim_Call) RunAndReturn(run func(context.Context, string, string, *string, kubernetes.Interface) (*models.PVCInfo, error)) *KubeClientMock_UpdatePersistentVolumeClaim_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateSecret provides a mock function with given fields: ctx, name, namespace, data, client
-func (_m *KubeClientMock) UpdateSecret(ctx context.Context, name string, namespace string, data map[string][]byte, client *kubernetes.Clientset) (*v1.Secret, error) {
+func (_m *KubeClientMock) UpdateSecret(ctx context.Context, name string, namespace string, data map[string][]byte, client kubernetes.Interface) (*v1.Secret, error) {
 	ret := _m.Called(ctx, name, namespace, data, client)
 
 	if len(ret) == 0 {
@@ -2788,10 +2788,10 @@ func (_m *KubeClientMock) UpdateSecret(ctx context.Context, name string, namespa
 
 	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) (*v1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) (*v1.Secret, error)); ok {
 		return rf(ctx, name, namespace, data, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) *v1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) *v1.Secret); ok {
 		r0 = rf(ctx, name, namespace, data, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2799,7 +2799,7 @@ func (_m *KubeClientMock) UpdateSecret(ctx context.Context, name string, namespa
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, name, namespace, data, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2818,14 +2818,14 @@ type KubeClientMock_UpdateSecret_Call struct {
 //   - name string
 //   - namespace string
 //   - data map[string][]byte
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) UpdateSecret(ctx interface{}, name interface{}, namespace interface{}, data interface{}, client interface{}) *KubeClientMock_UpdateSecret_Call {
 	return &KubeClientMock_UpdateSecret_Call{Call: _e.mock.On("UpdateSecret", ctx, name, namespace, data, client)}
 }
 
-func (_c *KubeClientMock_UpdateSecret_Call) Run(run func(ctx context.Context, name string, namespace string, data map[string][]byte, client *kubernetes.Clientset)) *KubeClientMock_UpdateSecret_Call {
+func (_c *KubeClientMock_UpdateSecret_Call) Run(run func(ctx context.Context, name string, namespace string, data map[string][]byte, client kubernetes.Interface)) *KubeClientMock_UpdateSecret_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(map[string][]byte), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(map[string][]byte), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2835,13 +2835,13 @@ func (_c *KubeClientMock_UpdateSecret_Call) Return(_a0 *v1.Secret, _a1 error) *K
 	return _c
 }
 
-func (_c *KubeClientMock_UpdateSecret_Call) RunAndReturn(run func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) (*v1.Secret, error)) *KubeClientMock_UpdateSecret_Call {
+func (_c *KubeClientMock_UpdateSecret_Call) RunAndReturn(run func(context.Context, string, string, map[string][]byte, kubernetes.Interface) (*v1.Secret, error)) *KubeClientMock_UpdateSecret_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpsertSecretValues provides a mock function with given fields: ctx, name, namespace, values, client
-func (_m *KubeClientMock) UpsertSecretValues(ctx context.Context, name string, namespace string, values map[string][]byte, client *kubernetes.Clientset) (*v1.Secret, error) {
+func (_m *KubeClientMock) UpsertSecretValues(ctx context.Context, name string, namespace string, values map[string][]byte, client kubernetes.Interface) (*v1.Secret, error) {
 	ret := _m.Called(ctx, name, namespace, values, client)
 
 	if len(ret) == 0 {
@@ -2850,10 +2850,10 @@ func (_m *KubeClientMock) UpsertSecretValues(ctx context.Context, name string, n
 
 	var r0 *v1.Secret
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) (*v1.Secret, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) (*v1.Secret, error)); ok {
 		return rf(ctx, name, namespace, values, client)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) *v1.Secret); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) *v1.Secret); ok {
 		r0 = rf(ctx, name, namespace, values, client)
 	} else {
 		if ret.Get(0) != nil {
@@ -2861,7 +2861,7 @@ func (_m *KubeClientMock) UpsertSecretValues(ctx context.Context, name string, n
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, map[string][]byte, kubernetes.Interface) error); ok {
 		r1 = rf(ctx, name, namespace, values, client)
 	} else {
 		r1 = ret.Error(1)
@@ -2880,14 +2880,14 @@ type KubeClientMock_UpsertSecretValues_Call struct {
 //   - name string
 //   - namespace string
 //   - values map[string][]byte
-//   - client *kubernetes.Clientset
+//   - client kubernetes.Interface
 func (_e *KubeClientMock_Expecter) UpsertSecretValues(ctx interface{}, name interface{}, namespace interface{}, values interface{}, client interface{}) *KubeClientMock_UpsertSecretValues_Call {
 	return &KubeClientMock_UpsertSecretValues_Call{Call: _e.mock.On("UpsertSecretValues", ctx, name, namespace, values, client)}
 }
 
-func (_c *KubeClientMock_UpsertSecretValues_Call) Run(run func(ctx context.Context, name string, namespace string, values map[string][]byte, client *kubernetes.Clientset)) *KubeClientMock_UpsertSecretValues_Call {
+func (_c *KubeClientMock_UpsertSecretValues_Call) Run(run func(ctx context.Context, name string, namespace string, values map[string][]byte, client kubernetes.Interface)) *KubeClientMock_UpsertSecretValues_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(map[string][]byte), args[4].(*kubernetes.Clientset))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(map[string][]byte), args[4].(kubernetes.Interface))
 	})
 	return _c
 }
@@ -2897,7 +2897,7 @@ func (_c *KubeClientMock_UpsertSecretValues_Call) Return(_a0 *v1.Secret, _a1 err
 	return _c
 }
 
-func (_c *KubeClientMock_UpsertSecretValues_Call) RunAndReturn(run func(context.Context, string, string, map[string][]byte, *kubernetes.Clientset) (*v1.Secret, error)) *KubeClientMock_UpsertSecretValues_Call {
+func (_c *KubeClientMock_UpsertSecretValues_Call) RunAndReturn(run func(context.Context, string, string, map[string][]byte, kubernetes.Interface) (*v1.Secret, error)) *KubeClientMock_UpsertSecretValues_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -21,7 +21,7 @@ func (self *KubeClient) StreamPodLogs(
 	namespace string,
 	opts loki.LokiLogStreamOptions,
 	meta loki.LogMetadata,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 	eventChan chan<- loki.LogEvents,
 ) error {
 	// Get pods for labels
@@ -107,7 +107,7 @@ func (self *KubeClient) StreamPodLogs(
 		batch = batch[:0] // Clear the batch
 	}
 
-	// Make sure we start the timer from “now”
+	// Make sure we start the timer from "now"
 	if !timer.Stop() {
 		<-timer.C
 	}
@@ -159,7 +159,7 @@ func (self *KubeClient) StreamPodLogs(
 					timestamp = t
 					message = msgCandidate
 				} else {
-					// Couldn’t parse, treat entire thing as message
+					// Couldn't parse, treat entire thing as message
 					message = line
 				}
 			} else {

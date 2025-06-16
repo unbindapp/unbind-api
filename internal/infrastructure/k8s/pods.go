@@ -15,7 +15,7 @@ import (
 )
 
 // GetPodsByLabels returns pods matching the provided labels in a namespace
-func (k *KubeClient) GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) (*corev1.PodList, error) {
+func (k *KubeClient) GetPodsByLabels(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) (*corev1.PodList, error) {
 	// Convert the labels map to a selector string
 	var labelSelectors []string
 	for key, value := range labels {
@@ -35,7 +35,7 @@ func (k *KubeClient) RollingRestartPodsByLabel(
 	namespace string,
 	labelKey string,
 	labelValue string,
-	client *kubernetes.Clientset,
+	client kubernetes.Interface,
 ) error {
 	// Create labels map for the selector
 	labels := map[string]string{
@@ -109,7 +109,7 @@ func (k *KubeClient) RollingRestartPodsByLabel(
 }
 
 // Helper function to get the top-level owner of a pod
-func getTopLevelOwner(ctx context.Context, pod corev1.Pod, client *kubernetes.Clientset, namespace string) *metav1.OwnerReference {
+func getTopLevelOwner(ctx context.Context, pod corev1.Pod, client kubernetes.Interface, namespace string) *metav1.OwnerReference {
 	if len(pod.OwnerReferences) == 0 {
 		return nil
 	}
@@ -132,7 +132,7 @@ func getTopLevelOwner(ctx context.Context, pod corev1.Pod, client *kubernetes.Cl
 }
 
 // Restart a Deployment by patching it with a restart annotation
-func (k *KubeClient) restartDeployment(ctx context.Context, namespace, name string, client *kubernetes.Clientset) error {
+func (k *KubeClient) restartDeployment(ctx context.Context, namespace, name string, client kubernetes.Interface) error {
 	// Adding this annotation triggers pod restarts
 	patchData := fmt.Sprintf(`{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"%s"}}}}}`, time.Now().Format(time.RFC3339))
 
@@ -141,7 +141,7 @@ func (k *KubeClient) restartDeployment(ctx context.Context, namespace, name stri
 }
 
 // Restart a StatefulSet by patching it with a restart annotation
-func (k *KubeClient) restartStatefulSet(ctx context.Context, namespace, name string, client *kubernetes.Clientset) error {
+func (k *KubeClient) restartStatefulSet(ctx context.Context, namespace, name string, client kubernetes.Interface) error {
 	// Adding this annotation triggers pod restarts
 	patchData := fmt.Sprintf(`{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"%s"}}}}}`, time.Now().Format(time.RFC3339))
 
@@ -150,7 +150,7 @@ func (k *KubeClient) restartStatefulSet(ctx context.Context, namespace, name str
 }
 
 // Restart a DaemonSet by patching it with a restart annotation
-func (k *KubeClient) restartDaemonSet(ctx context.Context, namespace, name string, client *kubernetes.Clientset) error {
+func (k *KubeClient) restartDaemonSet(ctx context.Context, namespace, name string, client kubernetes.Interface) error {
 	// Adding this annotation triggers pod restarts
 	patchData := fmt.Sprintf(`{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"%s"}}}}}`, time.Now().Format(time.RFC3339))
 
@@ -159,12 +159,12 @@ func (k *KubeClient) restartDaemonSet(ctx context.Context, namespace, name strin
 }
 
 // Delete a standalone pod
-func (k *KubeClient) deletePod(ctx context.Context, namespace, name string, client *kubernetes.Clientset) error {
+func (k *KubeClient) deletePod(ctx context.Context, namespace, name string, client kubernetes.Interface) error {
 	return client.CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 }
 
 // DeleteStatefulSetsWithOrphanCascade deletes StatefulSets matching the label selector with orphan cascade
-func (self *KubeClient) DeleteStatefulSetsWithOrphanCascade(ctx context.Context, namespace string, labels map[string]string, client *kubernetes.Clientset) error {
+func (self *KubeClient) DeleteStatefulSetsWithOrphanCascade(ctx context.Context, namespace string, labels map[string]string, client kubernetes.Interface) error {
 	// Convert the labels map to a selector string
 	var labelSelectors []string
 	for key, value := range labels {
