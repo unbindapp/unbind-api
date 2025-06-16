@@ -23,6 +23,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// KubeClient handles Kubernetes operations
+//
+//go:generate go run -mod=mod github.com/vburenin/ifacemaker -f "*.go" -i KubeClientInterface -p k8s -s KubeClient -o kubeclient_iface.go
 type KubeClient struct {
 	config            config.ConfigInterface
 	client            *dynamic.DynamicClient

@@ -9,19 +9,19 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/prometheus"
+	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // Integrate metrics management with internal permissions and kubernetes RBAC
 type MetricsService struct {
 	promClient *prometheus.PrometheusClient
 	repo       repositories.RepositoriesInterface
-	k8s        *k8s.KubeClient
+	k8s        k8s.KubeClientInterface
 }
 
-func NewMetricService(promClient *prometheus.PrometheusClient, repo repositories.RepositoriesInterface, k8s *k8s.KubeClient) *MetricsService {
+func NewMetricService(promClient *prometheus.PrometheusClient, repo repositories.RepositoriesInterface, k8s k8s.KubeClientInterface) *MetricsService {
 	return &MetricsService{
 		promClient: promClient,
 		repo:       repo,

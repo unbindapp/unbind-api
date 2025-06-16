@@ -20,12 +20,12 @@ import (
 type StorageService struct {
 	cfg        *config.Config
 	repo       repositories.RepositoriesInterface
-	k8s        *k8s.KubeClient
+	k8s        k8s.KubeClientInterface
 	promClient *prometheus.PrometheusClient
 	svcService *service_service.ServiceService
 }
 
-func NewStorageService(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient, promClient *prometheus.PrometheusClient, svcService *service_service.ServiceService) *StorageService {
+func NewStorageService(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient k8s.KubeClientInterface, promClient *prometheus.PrometheusClient, svcService *service_service.ServiceService) *StorageService {
 	return &StorageService{
 		cfg:        cfg,
 		repo:       repo,

@@ -46,29 +46,31 @@ type DeploymentJobRequest struct {
 }
 
 // Handles triggering builds for services
+//
+//go:generate go run -mod=mod github.com/vburenin/ifacemaker -f "*.go" -i DeploymentControllerInterface -p deployctl -s DeploymentController -o deployctl_iface.go
 type DeploymentController struct {
 	cfg             *config.Config
-	k8s             *k8s.KubeClient
+	k8s             k8s.KubeClientInterface
 	jobQueue        *queue.Queue[DeploymentJobRequest]
 	dependentQueue  *queue.Queue[DeploymentJobRequest]
 	ctx             context.Context
 	cancelFunc      context.CancelFunc
-	repo            *repositories.Repositories
-	githubClient    *github.GithubClient
-	webhookService  *webhooks_service.WebhooksService
-	variableService *variables_service.VariablesService
+	repo            repositories.RepositoriesInterface
+	githubClient    github.GithubClientInterface
+	webhookService  webhooks_service.WebhooksServiceInterface
+	variableService variables_service.VariablesServiceInterface
 }
 
 func NewDeploymentController(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	cfg *config.Config,
-	k8s *k8s.KubeClient,
+	k8s k8s.KubeClientInterface,
 	redisClient *redis.Client,
-	repositories *repositories.Repositories,
-	githubClient *github.GithubClient,
-	webeehookService *webhooks_service.WebhooksService,
-	variableService *variables_service.VariablesService) *DeploymentController {
+	repositories repositories.RepositoriesInterface,
+	githubClient github.GithubClientInterface,
+	webeehookService webhooks_service.WebhooksServiceInterface,
+	variableService variables_service.VariablesServiceInterface) *DeploymentController {
 	jobQueue := queue.NewQueue[DeploymentJobRequest](redisClient, BUILDER_QUEUE_KEY)
 	dependentQueue := queue.NewQueue[DeploymentJobRequest](redisClient, DEPENDENT_SERVICES_QUEUE_KEY)
 

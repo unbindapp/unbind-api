@@ -17,12 +17,12 @@ import (
 type TemplatesService struct {
 	cfg        *config.Config
 	repo       repositories.RepositoriesInterface
-	k8s        *k8s.KubeClient
+	k8s        k8s.KubeClientInterface
 	dbProvider *databases.DatabaseProvider
 	deployCtl  *deployctl.DeploymentController
 }
 
-func NewTemplatesService(cfg *config.Config, repo repositories.RepositoriesInterface, k8s *k8s.KubeClient, dbProvider *databases.DatabaseProvider, deployCtl *deployctl.DeploymentController) *TemplatesService {
+func NewTemplatesService(cfg *config.Config, repo repositories.RepositoriesInterface, k8s k8s.KubeClientInterface, dbProvider *databases.DatabaseProvider, deployCtl *deployctl.DeploymentController) *TemplatesService {
 	return &TemplatesService{
 		cfg:        cfg,
 		repo:       repo,

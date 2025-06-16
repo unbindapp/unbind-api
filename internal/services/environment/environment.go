@@ -14,11 +14,11 @@ import (
 // Integrate environment management with internal permissions and kubernetes RBAC
 type EnvironmentService struct {
 	repo      repositories.RepositoriesInterface
-	k8s       *k8s.KubeClient
-	deployCtl *deployctl.DeploymentController
+	k8s       k8s.KubeClientInterface
+	deployCtl deployctl.DeploymentControllerInterface
 }
 
-func NewEnvironmentService(repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient, deployCtl *deployctl.DeploymentController) *EnvironmentService {
+func NewEnvironmentService(repo repositories.RepositoriesInterface, k8sClient k8s.KubeClientInterface, deployCtl deployctl.DeploymentControllerInterface) *EnvironmentService {
 	return &EnvironmentService{
 		repo:      repo,
 		k8s:       k8sClient,

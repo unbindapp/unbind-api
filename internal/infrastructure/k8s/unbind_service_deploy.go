@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	// Import the operator API package
-	v1 "github.com/unbindapp/unbind-operator/api/v1"
+	unbindv1 "github.com/unbindapp/unbind-operator/api/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -15,7 +15,7 @@ import (
 
 // DeployImage creates (or replaces) the service resource in the target namespace
 // for deployment after a successful build job.
-func (self *KubeClient) DeployUnbindService(ctx context.Context, service *v1.Service) (*unstructured.Unstructured, *v1.Service, error) {
+func (self *KubeClient) DeployUnbindService(ctx context.Context, service *unbindv1.Service) (*unstructured.Unstructured, *unbindv1.Service, error) {
 	// Convert to unstructured for the dynamic client
 	unstructuredObj, err := convertToUnstructured(service)
 	if err != nil {

@@ -8,10 +8,10 @@ import (
 // Integrate team management with internal permissions and kubernetes RBAC
 type TeamService struct {
 	repo repositories.RepositoriesInterface
-	k8s  *k8s.KubeClient
+	k8s  k8s.KubeClientInterface
 }
 
-func NewTeamService(repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient) *TeamService {
+func NewTeamService(repo repositories.RepositoriesInterface, k8sClient k8s.KubeClientInterface) *TeamService {
 	return &TeamService{
 		repo: repo,
 		k8s:  k8sClient,

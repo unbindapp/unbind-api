@@ -12,12 +12,14 @@ import (
 )
 
 // Integrate variables management with internal permissions and kubernetes RBAC
+//
+//go:generate go run -mod=mod github.com/vburenin/ifacemaker -f "*.go" -i VariablesServiceInterface -p variables_service -s VariablesService -o variables_service_iface.go
 type VariablesService struct {
 	repo repositories.RepositoriesInterface
-	k8s  *k8s.KubeClient
+	k8s  k8s.KubeClientInterface
 }
 
-func NewVariablesService(repo repositories.RepositoriesInterface, k8s *k8s.KubeClient) *VariablesService {
+func NewVariablesService(repo repositories.RepositoriesInterface, k8s k8s.KubeClientInterface) *VariablesService {
 	return &VariablesService{
 		repo: repo,
 		k8s:  k8s,

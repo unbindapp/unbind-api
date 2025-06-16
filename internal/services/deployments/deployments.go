@@ -10,15 +10,15 @@ import (
 	"github.com/unbindapp/unbind-api/internal/infrastructure/loki"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/registry"
 	"github.com/unbindapp/unbind-api/internal/integrations/github"
-	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	"github.com/unbindapp/unbind-api/internal/models"
+	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 )
 
 // Integrate builds management with internal permissions and kubernetes RBAC
 type DeploymentService struct {
 	repo                 repositories.RepositoriesInterface
-	k8s                  *k8s.KubeClient
+	k8s                  k8s.KubeClientInterface
 	deploymentController *deployctl.DeploymentController
 	githubClient         *github.GithubClient
 	lokiQuerier          *loki.LokiLogQuerier
@@ -26,7 +26,7 @@ type DeploymentService struct {
 	variableService      *variables_service.VariablesService
 }
 
-func NewDeploymentService(repo repositories.RepositoriesInterface, k8s *k8s.KubeClient, deploymentController *deployctl.DeploymentController, githubClient *github.GithubClient, lokiQuerier *loki.LokiLogQuerier, registryTester *registry.RegistryTester, variableService *variables_service.VariablesService) *DeploymentService {
+func NewDeploymentService(repo repositories.RepositoriesInterface, k8s k8s.KubeClientInterface, deploymentController *deployctl.DeploymentController, githubClient *github.GithubClient, lokiQuerier *loki.LokiLogQuerier, registryTester *registry.RegistryTester, variableService *variables_service.VariablesService) *DeploymentService {
 	return &DeploymentService{
 		repo:                 repo,
 		k8s:                  k8s,

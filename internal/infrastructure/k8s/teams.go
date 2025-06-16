@@ -7,20 +7,20 @@ import (
 	"fmt"
 
 	"github.com/unbindapp/unbind-api/internal/common/log"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 // Gets specified namespaces
-func (k *KubeClient) GetNamespaces(ctx context.Context, namespaceNames []string, bearerToken string) ([]*v1.Namespace, error) {
+func (k *KubeClient) GetNamespaces(ctx context.Context, namespaceNames []string, bearerToken string) ([]*corev1.Namespace, error) {
 	client, err := k.CreateClientWithToken(bearerToken)
 	if err != nil {
 		log.Errorf("Error creating client with token: %v", err)
 		return nil, fmt.Errorf("error creating client with token: %v", err)
 	}
 
-	namespaces := make([]*v1.Namespace, 0, len(namespaceNames))
+	namespaces := make([]*corev1.Namespace, 0, len(namespaceNames))
 
 	// Get each namespace by name instead of listing all
 	for i, namespaceName := range namespaceNames {
@@ -44,9 +44,9 @@ func (k *KubeClient) GetNamespaces(ctx context.Context, namespaceNames []string,
 }
 
 // CreateNamespace creates a new namespace in the Kubernetes cluster
-func (k *KubeClient) CreateNamespace(ctx context.Context, namespaceName string, client *kubernetes.Clientset) (*v1.Namespace, error) {
+func (k *KubeClient) CreateNamespace(ctx context.Context, namespaceName string, client *kubernetes.Clientset) (*corev1.Namespace, error) {
 	// Define the namespace object
-	namespace := &v1.Namespace{
+	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespaceName,
 		},

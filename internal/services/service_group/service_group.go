@@ -16,11 +16,11 @@ import (
 type ServiceGroupService struct {
 	cfg       *config.Config
 	repo      repositories.RepositoriesInterface
-	k8s       *k8s.KubeClient
+	k8s       k8s.KubeClientInterface
 	deployCtl *deployctl.DeploymentController
 }
 
-func NewServiceGroupService(cfg *config.Config, repo repositories.RepositoriesInterface, k8s *k8s.KubeClient, deployCtl *deployctl.DeploymentController) *ServiceGroupService {
+func NewServiceGroupService(cfg *config.Config, repo repositories.RepositoriesInterface, k8s k8s.KubeClientInterface, deployCtl *deployctl.DeploymentController) *ServiceGroupService {
 	return &ServiceGroupService{
 		cfg:       cfg,
 		repo:      repo,

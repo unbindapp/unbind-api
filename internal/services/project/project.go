@@ -12,12 +12,12 @@ import (
 type ProjectService struct {
 	cfg            *config.Config
 	repo           repositories.RepositoriesInterface
-	k8s            *k8s.KubeClient
+	k8s            k8s.KubeClientInterface
 	webhookService *webhooks_service.WebhooksService
 	deployCtl      *deployctl.DeploymentController
 }
 
-func NewProjectService(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient, webhookService *webhooks_service.WebhooksService, deployCtl *deployctl.DeploymentController) *ProjectService {
+func NewProjectService(cfg *config.Config, repo repositories.RepositoriesInterface, k8sClient k8s.KubeClientInterface, webhookService *webhooks_service.WebhooksService, deployCtl *deployctl.DeploymentController) *ProjectService {
 	return &ProjectService{
 		cfg:            cfg,
 		repo:           repo,

@@ -150,6 +150,15 @@ packages:
           filename: webhook_repository_mock.go
           mockname: WebhookRepositoryMock
           outpkg: mocks_repository_webhook
+  github.com/unbindapp/unbind-api/internal/infrastructure/k8s:
+    config:
+      dir: ./mocks/infrastructure/k8s
+    interfaces:
+      KubeClientInterface:
+        config:
+          filename: kubeclient_mock.go
+          mockname: KubeClientMock
+          outpkg: mocks_infrastructure_k8s
   github.com/unbindapp/unbind-api/internal/repositories/repositories:
     config:
       dir: ./mocks/repositories
@@ -159,3 +168,39 @@ packages:
           filename: repositories_mock.go
           mockname: RepositoriesMock
           outpkg: mocks_repositories
+  github.com/unbindapp/unbind-api/internal/integrations/github:
+    config:
+      dir: ./mocks/integrations/github
+    interfaces:
+      GithubClientInterface:
+        config:
+          filename: github_client_mock.go
+          mockname: GithubClientMock
+          outpkg: mocks_integrations_github
+  github.com/unbindapp/unbind-api/internal/services/webooks:
+    config:
+      dir: ./mocks/services/webhooks
+    interfaces:
+      WebhooksServiceInterface:
+        config:
+          filename: webhooks_service_mock.go
+          mockname: WebhooksServiceMock
+          outpkg: mocks_services_webhooks
+  github.com/unbindapp/unbind-api/internal/services/variables:
+    config:
+      dir: ./mocks/services/variables
+    interfaces:
+      VariablesServiceInterface:
+        config:
+          filename: variables_service_mock.go
+          mockname: VariablesServiceMock
+          outpkg: mocks_services_variables
+  github.com/unbindapp/unbind-api/internal/deployctl:
+    config:
+      dir: ./mocks/deployctl
+    interfaces:
+      DeploymentControllerInterface:
+        config:
+          filename: deployctl_mock.go
+          mockname: DeploymentControllerMock
+          outpkg: mocks_deployctl

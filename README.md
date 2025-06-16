@@ -4,7 +4,7 @@
 
 ![GitHub License](https://img.shields.io/github/license/unbindapp/unbind-api?style=for-the-badge&color=blue)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/unbindapp/unbind-api?style=for-the-badge&color=00ADD8)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/unbindapp/unbind-api/ci_master.yml?style=for-the-badge&label=BUILD)
+![GitHub Workflow Test Status](https://img.shields.io/github/actions/workflow/status/unbindapp/unbind-api/ci_test.yml?style=for-the-badge&label=TESTS)
 ![GitHub Stars](https://img.shields.io/github/stars/unbindapp/unbind-api?style=for-the-badge&color=gold)
 ![GitHub Issues](https://img.shields.io/github/issues/unbindapp/unbind-api?style=for-the-badge&color=red)
 ![GitHub Pull Requests](https://img.shields.io/github/issues-pr/unbindapp/unbind-api?style=for-the-badge&color=purple)

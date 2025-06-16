@@ -12,7 +12,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/models"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -100,7 +99,7 @@ func (self *KubeClient) CreateMultiRegistryCredentials(ctx context.Context, name
 }
 
 // After you've retrieved the credentials Secret
-func (self *KubeClient) ParseRegistryCredentials(secret *v1.Secret) (string, string, error) {
+func (self *KubeClient) ParseRegistryCredentials(secret *corev1.Secret) (string, string, error) {
 	// Check if this is a dockerconfigjson type secret
 	if dockerConfigJSON, ok := secret.Data[".dockerconfigjson"]; ok {
 		// Parse the Docker config JSON

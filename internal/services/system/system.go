@@ -14,10 +14,10 @@ type SystemService struct {
 	repo            repositories.RepositoriesInterface
 	buildkitManager *buildkitd.BuildkitSettingsManager
 	registryTester  *registry.RegistryTester
-	k8s             *k8s.KubeClient
+	k8s             k8s.KubeClientInterface
 }
 
-func NewSystemService(cfg *config.Config, repo repositories.RepositoriesInterface, buildkitManager *buildkitd.BuildkitSettingsManager, registryTester *registry.RegistryTester, k8s *k8s.KubeClient) *SystemService {
+func NewSystemService(cfg *config.Config, repo repositories.RepositoriesInterface, buildkitManager *buildkitd.BuildkitSettingsManager, registryTester *registry.RegistryTester, k8s k8s.KubeClientInterface) *SystemService {
 	return &SystemService{
 		cfg:             cfg,
 		repo:            repo,

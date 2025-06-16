@@ -1,0 +1,25 @@
+name: Run tests
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: environment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Execute tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go with cache
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+
+      - name: Run tests
+        run: |
+          go test -v ./...

@@ -12,6 +12,9 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 )
 
+// GithubClient handles GitHub integration operations
+//
+//go:generate go run -mod=mod github.com/vburenin/ifacemaker -f "*.go" -i GithubClientInterface -p github -s GithubClient -o github_client_iface.go
 type GithubClient struct {
 	cfg    *config.Config
 	client *github.Client

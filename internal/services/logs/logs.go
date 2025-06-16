@@ -17,11 +17,11 @@ import (
 // Integrate logs management with internal permissions and kubernetes RBAC
 type LogsService struct {
 	repo        repositories.RepositoriesInterface
-	k8s         *k8s.KubeClient
+	k8s         k8s.KubeClientInterface
 	lokiQuerier *loki.LokiLogQuerier
 }
 
-func NewLogsService(repo repositories.RepositoriesInterface, k8sClient *k8s.KubeClient, lokiQuerier *loki.LokiLogQuerier) *LogsService {
+func NewLogsService(repo repositories.RepositoriesInterface, k8sClient k8s.KubeClientInterface, lokiQuerier *loki.LokiLogQuerier) *LogsService {
 	return &LogsService{
 		repo:        repo,
 		k8s:         k8sClient,

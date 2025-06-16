@@ -31,7 +31,7 @@ type ServiceService struct {
 	cfg                  *config.Config
 	repo                 repositories.RepositoriesInterface
 	githubClient         *github.GithubClient
-	k8s                  *k8s.KubeClient
+	k8s                  k8s.KubeClientInterface
 	deploymentController *deployctl.DeploymentController
 	dbProvider           *databases.DatabaseProvider
 	webhookService       *webhooks_service.WebhooksService
@@ -43,7 +43,7 @@ type ServiceService struct {
 func NewServiceService(cfg *config.Config,
 	repo repositories.RepositoriesInterface,
 	githubClient *github.GithubClient,
-	k8s *k8s.KubeClient,
+	k8s k8s.KubeClientInterface,
 	deploymentController *deployctl.DeploymentController,
 	dbProvider *databases.DatabaseProvider,
 	webhookService *webhooks_service.WebhooksService,

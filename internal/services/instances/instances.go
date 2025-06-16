@@ -9,19 +9,19 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
+	"github.com/unbindapp/unbind-api/internal/models"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/repositories/repositories"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 // Integrate instance (pods) management with internal permissions and kubernetes RBAC
 type InstanceService struct {
 	cfg  *config.Config
 	repo repositories.RepositoriesInterface
-	k8s  *k8s.KubeClient
+	k8s  k8s.KubeClientInterface
 }
 
-func NewInstanceService(cfg *config.Config, repo repositories.RepositoriesInterface, k8s *k8s.KubeClient) *InstanceService {
+func NewInstanceService(cfg *config.Config, repo repositories.RepositoriesInterface, k8s k8s.KubeClientInterface) *InstanceService {
 	return &InstanceService{
 		cfg:  cfg,
 		repo: repo,
