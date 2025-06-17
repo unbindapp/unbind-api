@@ -326,6 +326,120 @@ func (du *DeploymentUpdate) ClearResourceDefinition() *DeploymentUpdate {
 	return du
 }
 
+// SetBuilder sets the "builder" field.
+func (du *DeploymentUpdate) SetBuilder(sb schema.ServiceBuilder) *DeploymentUpdate {
+	du.mutation.SetBuilder(sb)
+	return du
+}
+
+// SetNillableBuilder sets the "builder" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableBuilder(sb *schema.ServiceBuilder) *DeploymentUpdate {
+	if sb != nil {
+		du.SetBuilder(*sb)
+	}
+	return du
+}
+
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (du *DeploymentUpdate) SetRailpackBuilderInstallCommand(s string) *DeploymentUpdate {
+	du.mutation.SetRailpackBuilderInstallCommand(s)
+	return du
+}
+
+// SetNillableRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableRailpackBuilderInstallCommand(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetRailpackBuilderInstallCommand(*s)
+	}
+	return du
+}
+
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (du *DeploymentUpdate) ClearRailpackBuilderInstallCommand() *DeploymentUpdate {
+	du.mutation.ClearRailpackBuilderInstallCommand()
+	return du
+}
+
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (du *DeploymentUpdate) SetRailpackBuilderBuildCommand(s string) *DeploymentUpdate {
+	du.mutation.SetRailpackBuilderBuildCommand(s)
+	return du
+}
+
+// SetNillableRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableRailpackBuilderBuildCommand(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetRailpackBuilderBuildCommand(*s)
+	}
+	return du
+}
+
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (du *DeploymentUpdate) ClearRailpackBuilderBuildCommand() *DeploymentUpdate {
+	du.mutation.ClearRailpackBuilderBuildCommand()
+	return du
+}
+
+// SetRunCommand sets the "run_command" field.
+func (du *DeploymentUpdate) SetRunCommand(s string) *DeploymentUpdate {
+	du.mutation.SetRunCommand(s)
+	return du
+}
+
+// SetNillableRunCommand sets the "run_command" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableRunCommand(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetRunCommand(*s)
+	}
+	return du
+}
+
+// ClearRunCommand clears the value of the "run_command" field.
+func (du *DeploymentUpdate) ClearRunCommand() *DeploymentUpdate {
+	du.mutation.ClearRunCommand()
+	return du
+}
+
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (du *DeploymentUpdate) SetDockerBuilderDockerfilePath(s string) *DeploymentUpdate {
+	du.mutation.SetDockerBuilderDockerfilePath(s)
+	return du
+}
+
+// SetNillableDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableDockerBuilderDockerfilePath(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetDockerBuilderDockerfilePath(*s)
+	}
+	return du
+}
+
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (du *DeploymentUpdate) ClearDockerBuilderDockerfilePath() *DeploymentUpdate {
+	du.mutation.ClearDockerBuilderDockerfilePath()
+	return du
+}
+
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (du *DeploymentUpdate) SetDockerBuilderBuildContext(s string) *DeploymentUpdate {
+	du.mutation.SetDockerBuilderBuildContext(s)
+	return du
+}
+
+// SetNillableDockerBuilderBuildContext sets the "docker_builder_build_context" field if the given value is not nil.
+func (du *DeploymentUpdate) SetNillableDockerBuilderBuildContext(s *string) *DeploymentUpdate {
+	if s != nil {
+		du.SetDockerBuilderBuildContext(*s)
+	}
+	return du
+}
+
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (du *DeploymentUpdate) ClearDockerBuilderBuildContext() *DeploymentUpdate {
+	du.mutation.ClearDockerBuilderBuildContext()
+	return du
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (du *DeploymentUpdate) SetService(s *Service) *DeploymentUpdate {
 	return du.SetServiceID(s.ID)
@@ -388,6 +502,11 @@ func (du *DeploymentUpdate) check() error {
 	if v, ok := du.mutation.Source(); ok {
 		if err := deployment.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Deployment.source": %w`, err)}
+		}
+	}
+	if v, ok := du.mutation.Builder(); ok {
+		if err := deployment.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Deployment.builder": %w`, err)}
 		}
 	}
 	if du.mutation.ServiceCleared() && len(du.mutation.ServiceIDs()) > 0 {
@@ -500,6 +619,39 @@ func (du *DeploymentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if du.mutation.ResourceDefinitionCleared() {
 		_spec.ClearField(deployment.FieldResourceDefinition, field.TypeJSON)
+	}
+	if value, ok := du.mutation.Builder(); ok {
+		_spec.SetField(deployment.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := du.mutation.RailpackBuilderInstallCommand(); ok {
+		_spec.SetField(deployment.FieldRailpackBuilderInstallCommand, field.TypeString, value)
+	}
+	if du.mutation.RailpackBuilderInstallCommandCleared() {
+		_spec.ClearField(deployment.FieldRailpackBuilderInstallCommand, field.TypeString)
+	}
+	if value, ok := du.mutation.RailpackBuilderBuildCommand(); ok {
+		_spec.SetField(deployment.FieldRailpackBuilderBuildCommand, field.TypeString, value)
+	}
+	if du.mutation.RailpackBuilderBuildCommandCleared() {
+		_spec.ClearField(deployment.FieldRailpackBuilderBuildCommand, field.TypeString)
+	}
+	if value, ok := du.mutation.RunCommand(); ok {
+		_spec.SetField(deployment.FieldRunCommand, field.TypeString, value)
+	}
+	if du.mutation.RunCommandCleared() {
+		_spec.ClearField(deployment.FieldRunCommand, field.TypeString)
+	}
+	if value, ok := du.mutation.DockerBuilderDockerfilePath(); ok {
+		_spec.SetField(deployment.FieldDockerBuilderDockerfilePath, field.TypeString, value)
+	}
+	if du.mutation.DockerBuilderDockerfilePathCleared() {
+		_spec.ClearField(deployment.FieldDockerBuilderDockerfilePath, field.TypeString)
+	}
+	if value, ok := du.mutation.DockerBuilderBuildContext(); ok {
+		_spec.SetField(deployment.FieldDockerBuilderBuildContext, field.TypeString, value)
+	}
+	if du.mutation.DockerBuilderBuildContextCleared() {
+		_spec.ClearField(deployment.FieldDockerBuilderBuildContext, field.TypeString)
 	}
 	if du.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -845,6 +997,120 @@ func (duo *DeploymentUpdateOne) ClearResourceDefinition() *DeploymentUpdateOne {
 	return duo
 }
 
+// SetBuilder sets the "builder" field.
+func (duo *DeploymentUpdateOne) SetBuilder(sb schema.ServiceBuilder) *DeploymentUpdateOne {
+	duo.mutation.SetBuilder(sb)
+	return duo
+}
+
+// SetNillableBuilder sets the "builder" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableBuilder(sb *schema.ServiceBuilder) *DeploymentUpdateOne {
+	if sb != nil {
+		duo.SetBuilder(*sb)
+	}
+	return duo
+}
+
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (duo *DeploymentUpdateOne) SetRailpackBuilderInstallCommand(s string) *DeploymentUpdateOne {
+	duo.mutation.SetRailpackBuilderInstallCommand(s)
+	return duo
+}
+
+// SetNillableRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableRailpackBuilderInstallCommand(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetRailpackBuilderInstallCommand(*s)
+	}
+	return duo
+}
+
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (duo *DeploymentUpdateOne) ClearRailpackBuilderInstallCommand() *DeploymentUpdateOne {
+	duo.mutation.ClearRailpackBuilderInstallCommand()
+	return duo
+}
+
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (duo *DeploymentUpdateOne) SetRailpackBuilderBuildCommand(s string) *DeploymentUpdateOne {
+	duo.mutation.SetRailpackBuilderBuildCommand(s)
+	return duo
+}
+
+// SetNillableRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableRailpackBuilderBuildCommand(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetRailpackBuilderBuildCommand(*s)
+	}
+	return duo
+}
+
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (duo *DeploymentUpdateOne) ClearRailpackBuilderBuildCommand() *DeploymentUpdateOne {
+	duo.mutation.ClearRailpackBuilderBuildCommand()
+	return duo
+}
+
+// SetRunCommand sets the "run_command" field.
+func (duo *DeploymentUpdateOne) SetRunCommand(s string) *DeploymentUpdateOne {
+	duo.mutation.SetRunCommand(s)
+	return duo
+}
+
+// SetNillableRunCommand sets the "run_command" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableRunCommand(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetRunCommand(*s)
+	}
+	return duo
+}
+
+// ClearRunCommand clears the value of the "run_command" field.
+func (duo *DeploymentUpdateOne) ClearRunCommand() *DeploymentUpdateOne {
+	duo.mutation.ClearRunCommand()
+	return duo
+}
+
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (duo *DeploymentUpdateOne) SetDockerBuilderDockerfilePath(s string) *DeploymentUpdateOne {
+	duo.mutation.SetDockerBuilderDockerfilePath(s)
+	return duo
+}
+
+// SetNillableDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableDockerBuilderDockerfilePath(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetDockerBuilderDockerfilePath(*s)
+	}
+	return duo
+}
+
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (duo *DeploymentUpdateOne) ClearDockerBuilderDockerfilePath() *DeploymentUpdateOne {
+	duo.mutation.ClearDockerBuilderDockerfilePath()
+	return duo
+}
+
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (duo *DeploymentUpdateOne) SetDockerBuilderBuildContext(s string) *DeploymentUpdateOne {
+	duo.mutation.SetDockerBuilderBuildContext(s)
+	return duo
+}
+
+// SetNillableDockerBuilderBuildContext sets the "docker_builder_build_context" field if the given value is not nil.
+func (duo *DeploymentUpdateOne) SetNillableDockerBuilderBuildContext(s *string) *DeploymentUpdateOne {
+	if s != nil {
+		duo.SetDockerBuilderBuildContext(*s)
+	}
+	return duo
+}
+
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (duo *DeploymentUpdateOne) ClearDockerBuilderBuildContext() *DeploymentUpdateOne {
+	duo.mutation.ClearDockerBuilderBuildContext()
+	return duo
+}
+
 // SetService sets the "service" edge to the Service entity.
 func (duo *DeploymentUpdateOne) SetService(s *Service) *DeploymentUpdateOne {
 	return duo.SetServiceID(s.ID)
@@ -920,6 +1186,11 @@ func (duo *DeploymentUpdateOne) check() error {
 	if v, ok := duo.mutation.Source(); ok {
 		if err := deployment.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Deployment.source": %w`, err)}
+		}
+	}
+	if v, ok := duo.mutation.Builder(); ok {
+		if err := deployment.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Deployment.builder": %w`, err)}
 		}
 	}
 	if duo.mutation.ServiceCleared() && len(duo.mutation.ServiceIDs()) > 0 {
@@ -1049,6 +1320,39 @@ func (duo *DeploymentUpdateOne) sqlSave(ctx context.Context) (_node *Deployment,
 	}
 	if duo.mutation.ResourceDefinitionCleared() {
 		_spec.ClearField(deployment.FieldResourceDefinition, field.TypeJSON)
+	}
+	if value, ok := duo.mutation.Builder(); ok {
+		_spec.SetField(deployment.FieldBuilder, field.TypeEnum, value)
+	}
+	if value, ok := duo.mutation.RailpackBuilderInstallCommand(); ok {
+		_spec.SetField(deployment.FieldRailpackBuilderInstallCommand, field.TypeString, value)
+	}
+	if duo.mutation.RailpackBuilderInstallCommandCleared() {
+		_spec.ClearField(deployment.FieldRailpackBuilderInstallCommand, field.TypeString)
+	}
+	if value, ok := duo.mutation.RailpackBuilderBuildCommand(); ok {
+		_spec.SetField(deployment.FieldRailpackBuilderBuildCommand, field.TypeString, value)
+	}
+	if duo.mutation.RailpackBuilderBuildCommandCleared() {
+		_spec.ClearField(deployment.FieldRailpackBuilderBuildCommand, field.TypeString)
+	}
+	if value, ok := duo.mutation.RunCommand(); ok {
+		_spec.SetField(deployment.FieldRunCommand, field.TypeString, value)
+	}
+	if duo.mutation.RunCommandCleared() {
+		_spec.ClearField(deployment.FieldRunCommand, field.TypeString)
+	}
+	if value, ok := duo.mutation.DockerBuilderDockerfilePath(); ok {
+		_spec.SetField(deployment.FieldDockerBuilderDockerfilePath, field.TypeString, value)
+	}
+	if duo.mutation.DockerBuilderDockerfilePathCleared() {
+		_spec.ClearField(deployment.FieldDockerBuilderDockerfilePath, field.TypeString)
+	}
+	if value, ok := duo.mutation.DockerBuilderBuildContext(); ok {
+		_spec.SetField(deployment.FieldDockerBuilderBuildContext, field.TypeString, value)
+	}
+	if duo.mutation.DockerBuilderBuildContextCleared() {
+		_spec.ClearField(deployment.FieldDockerBuilderBuildContext, field.TypeString)
 	}
 	if duo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{

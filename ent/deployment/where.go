@@ -127,6 +127,31 @@ func Image(v string) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldImage, v))
 }
 
+// RailpackBuilderInstallCommand applies equality check predicate on the "railpack_builder_install_command" field. It's identical to RailpackBuilderInstallCommandEQ.
+func RailpackBuilderInstallCommand(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderBuildCommand applies equality check predicate on the "railpack_builder_build_command" field. It's identical to RailpackBuilderBuildCommandEQ.
+func RailpackBuilderBuildCommand(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RunCommand applies equality check predicate on the "run_command" field. It's identical to RunCommandEQ.
+func RunCommand(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldRunCommand, v))
+}
+
+// DockerBuilderDockerfilePath applies equality check predicate on the "docker_builder_dockerfile_path" field. It's identical to DockerBuilderDockerfilePathEQ.
+func DockerBuilderDockerfilePath(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderBuildContext applies equality check predicate on the "docker_builder_build_context" field. It's identical to DockerBuilderBuildContextEQ.
+func DockerBuilderBuildContext(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldDockerBuilderBuildContext, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Deployment {
 	return predicate.Deployment(sql.FieldEQ(FieldCreatedAt, v))
@@ -1020,6 +1045,411 @@ func ResourceDefinitionIsNil() predicate.Deployment {
 // ResourceDefinitionNotNil applies the NotNil predicate on the "resource_definition" field.
 func ResourceDefinitionNotNil() predicate.Deployment {
 	return predicate.Deployment(sql.FieldNotNull(FieldResourceDefinition))
+}
+
+// BuilderEQ applies the EQ predicate on the "builder" field.
+func BuilderEQ(v schema.ServiceBuilder) predicate.Deployment {
+	vc := v
+	return predicate.Deployment(sql.FieldEQ(FieldBuilder, vc))
+}
+
+// BuilderNEQ applies the NEQ predicate on the "builder" field.
+func BuilderNEQ(v schema.ServiceBuilder) predicate.Deployment {
+	vc := v
+	return predicate.Deployment(sql.FieldNEQ(FieldBuilder, vc))
+}
+
+// BuilderIn applies the In predicate on the "builder" field.
+func BuilderIn(vs ...schema.ServiceBuilder) predicate.Deployment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Deployment(sql.FieldIn(FieldBuilder, v...))
+}
+
+// BuilderNotIn applies the NotIn predicate on the "builder" field.
+func BuilderNotIn(vs ...schema.ServiceBuilder) predicate.Deployment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Deployment(sql.FieldNotIn(FieldBuilder, v...))
+}
+
+// RailpackBuilderInstallCommandEQ applies the EQ predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandNEQ applies the NEQ predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandIn applies the In predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldRailpackBuilderInstallCommand, vs...))
+}
+
+// RailpackBuilderInstallCommandNotIn applies the NotIn predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldRailpackBuilderInstallCommand, vs...))
+}
+
+// RailpackBuilderInstallCommandGT applies the GT predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandGTE applies the GTE predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandLT applies the LT predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandLTE applies the LTE predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandContains applies the Contains predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandHasPrefix applies the HasPrefix predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandHasSuffix applies the HasSuffix predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandIsNil applies the IsNil predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldRailpackBuilderInstallCommand))
+}
+
+// RailpackBuilderInstallCommandNotNil applies the NotNil predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldRailpackBuilderInstallCommand))
+}
+
+// RailpackBuilderInstallCommandEqualFold applies the EqualFold predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderInstallCommandContainsFold applies the ContainsFold predicate on the "railpack_builder_install_command" field.
+func RailpackBuilderInstallCommandContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldRailpackBuilderInstallCommand, v))
+}
+
+// RailpackBuilderBuildCommandEQ applies the EQ predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandNEQ applies the NEQ predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandIn applies the In predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldRailpackBuilderBuildCommand, vs...))
+}
+
+// RailpackBuilderBuildCommandNotIn applies the NotIn predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldRailpackBuilderBuildCommand, vs...))
+}
+
+// RailpackBuilderBuildCommandGT applies the GT predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandGTE applies the GTE predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandLT applies the LT predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandLTE applies the LTE predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandContains applies the Contains predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandHasPrefix applies the HasPrefix predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandHasSuffix applies the HasSuffix predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandIsNil applies the IsNil predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldRailpackBuilderBuildCommand))
+}
+
+// RailpackBuilderBuildCommandNotNil applies the NotNil predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldRailpackBuilderBuildCommand))
+}
+
+// RailpackBuilderBuildCommandEqualFold applies the EqualFold predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RailpackBuilderBuildCommandContainsFold applies the ContainsFold predicate on the "railpack_builder_build_command" field.
+func RailpackBuilderBuildCommandContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldRailpackBuilderBuildCommand, v))
+}
+
+// RunCommandEQ applies the EQ predicate on the "run_command" field.
+func RunCommandEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldRunCommand, v))
+}
+
+// RunCommandNEQ applies the NEQ predicate on the "run_command" field.
+func RunCommandNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldRunCommand, v))
+}
+
+// RunCommandIn applies the In predicate on the "run_command" field.
+func RunCommandIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldRunCommand, vs...))
+}
+
+// RunCommandNotIn applies the NotIn predicate on the "run_command" field.
+func RunCommandNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldRunCommand, vs...))
+}
+
+// RunCommandGT applies the GT predicate on the "run_command" field.
+func RunCommandGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldRunCommand, v))
+}
+
+// RunCommandGTE applies the GTE predicate on the "run_command" field.
+func RunCommandGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldRunCommand, v))
+}
+
+// RunCommandLT applies the LT predicate on the "run_command" field.
+func RunCommandLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldRunCommand, v))
+}
+
+// RunCommandLTE applies the LTE predicate on the "run_command" field.
+func RunCommandLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldRunCommand, v))
+}
+
+// RunCommandContains applies the Contains predicate on the "run_command" field.
+func RunCommandContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldRunCommand, v))
+}
+
+// RunCommandHasPrefix applies the HasPrefix predicate on the "run_command" field.
+func RunCommandHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldRunCommand, v))
+}
+
+// RunCommandHasSuffix applies the HasSuffix predicate on the "run_command" field.
+func RunCommandHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldRunCommand, v))
+}
+
+// RunCommandIsNil applies the IsNil predicate on the "run_command" field.
+func RunCommandIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldRunCommand))
+}
+
+// RunCommandNotNil applies the NotNil predicate on the "run_command" field.
+func RunCommandNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldRunCommand))
+}
+
+// RunCommandEqualFold applies the EqualFold predicate on the "run_command" field.
+func RunCommandEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldRunCommand, v))
+}
+
+// RunCommandContainsFold applies the ContainsFold predicate on the "run_command" field.
+func RunCommandContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldRunCommand, v))
+}
+
+// DockerBuilderDockerfilePathEQ applies the EQ predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathNEQ applies the NEQ predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathIn applies the In predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldDockerBuilderDockerfilePath, vs...))
+}
+
+// DockerBuilderDockerfilePathNotIn applies the NotIn predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldDockerBuilderDockerfilePath, vs...))
+}
+
+// DockerBuilderDockerfilePathGT applies the GT predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathGTE applies the GTE predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathLT applies the LT predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathLTE applies the LTE predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathContains applies the Contains predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathHasPrefix applies the HasPrefix predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathHasSuffix applies the HasSuffix predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathIsNil applies the IsNil predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldDockerBuilderDockerfilePath))
+}
+
+// DockerBuilderDockerfilePathNotNil applies the NotNil predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldDockerBuilderDockerfilePath))
+}
+
+// DockerBuilderDockerfilePathEqualFold applies the EqualFold predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderDockerfilePathContainsFold applies the ContainsFold predicate on the "docker_builder_dockerfile_path" field.
+func DockerBuilderDockerfilePathContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldDockerBuilderDockerfilePath, v))
+}
+
+// DockerBuilderBuildContextEQ applies the EQ predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEQ(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextNEQ applies the NEQ predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextNEQ(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNEQ(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextIn applies the In predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldIn(FieldDockerBuilderBuildContext, vs...))
+}
+
+// DockerBuilderBuildContextNotIn applies the NotIn predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextNotIn(vs ...string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotIn(FieldDockerBuilderBuildContext, vs...))
+}
+
+// DockerBuilderBuildContextGT applies the GT predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextGT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGT(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextGTE applies the GTE predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextGTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldGTE(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextLT applies the LT predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextLT(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLT(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextLTE applies the LTE predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextLTE(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldLTE(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextContains applies the Contains predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextContains(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContains(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextHasPrefix applies the HasPrefix predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextHasPrefix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasPrefix(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextHasSuffix applies the HasSuffix predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextHasSuffix(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldHasSuffix(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextIsNil applies the IsNil predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextIsNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldIsNull(FieldDockerBuilderBuildContext))
+}
+
+// DockerBuilderBuildContextNotNil applies the NotNil predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextNotNil() predicate.Deployment {
+	return predicate.Deployment(sql.FieldNotNull(FieldDockerBuilderBuildContext))
+}
+
+// DockerBuilderBuildContextEqualFold applies the EqualFold predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextEqualFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldEqualFold(FieldDockerBuilderBuildContext, v))
+}
+
+// DockerBuilderBuildContextContainsFold applies the ContainsFold predicate on the "docker_builder_build_context" field.
+func DockerBuilderBuildContextContainsFold(v string) predicate.Deployment {
+	return predicate.Deployment(sql.FieldContainsFold(FieldDockerBuilderBuildContext, v))
 }
 
 // HasService applies the HasEdge predicate on the "service" edge.

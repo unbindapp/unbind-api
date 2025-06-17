@@ -40,6 +40,12 @@ var (
 		{Name: "attempts", Type: field.TypeInt, Default: 0},
 		{Name: "image", Type: field.TypeString, Nullable: true},
 		{Name: "resource_definition", Type: field.TypeJSON, Nullable: true},
+		{Name: "builder", Type: field.TypeEnum, Enums: []string{"railpack", "docker", "database"}},
+		{Name: "railpack_builder_install_command", Type: field.TypeString, Nullable: true},
+		{Name: "railpack_builder_build_command", Type: field.TypeString, Nullable: true},
+		{Name: "run_command", Type: field.TypeString, Nullable: true},
+		{Name: "docker_builder_dockerfile_path", Type: field.TypeString, Nullable: true},
+		{Name: "docker_builder_build_context", Type: field.TypeString, Nullable: true},
 		{Name: "service_id", Type: field.TypeUUID},
 	}
 	// DeploymentsTable holds the schema information for the "deployments" table.
@@ -50,7 +56,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "deployments_services_deployments",
-				Columns:    []*schema.Column{DeploymentsColumns[18]},
+				Columns:    []*schema.Column{DeploymentsColumns[24]},
 				RefColumns: []*schema.Column{ServicesColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -59,7 +65,7 @@ var (
 			{
 				Name:    "deployment_service_id",
 				Unique:  false,
-				Columns: []*schema.Column{DeploymentsColumns[18]},
+				Columns: []*schema.Column{DeploymentsColumns[24]},
 			},
 			{
 				Name:    "deployment_created_at",
@@ -69,12 +75,12 @@ var (
 			{
 				Name:    "deployment_service_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeploymentsColumns[18], DeploymentsColumns[1]},
+				Columns: []*schema.Column{DeploymentsColumns[24], DeploymentsColumns[1]},
 			},
 			{
 				Name:    "deployment_service_id_status_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeploymentsColumns[18], DeploymentsColumns[3], DeploymentsColumns[1]},
+				Columns: []*schema.Column{DeploymentsColumns[24], DeploymentsColumns[3], DeploymentsColumns[1]},
 			},
 		},
 	}

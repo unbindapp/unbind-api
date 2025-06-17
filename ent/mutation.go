@@ -404,33 +404,39 @@ func (m *BootstrapMutation) ResetEdge(name string) error {
 // DeploymentMutation represents an operation that mutates the Deployment nodes in the graph.
 type DeploymentMutation struct {
 	config
-	op                    Op
-	typ                   string
-	id                    *uuid.UUID
-	created_at            *time.Time
-	updated_at            *time.Time
-	status                *schema.DeploymentStatus
-	source                *schema.DeploymentSource
-	error                 *string
-	commit_sha            *string
-	commit_message        *string
-	git_branch            *string
-	commit_author         **schema.GitCommitter
-	queued_at             *time.Time
-	started_at            *time.Time
-	completed_at          *time.Time
-	kubernetes_job_name   *string
-	kubernetes_job_status *string
-	attempts              *int
-	addattempts           *int
-	image                 *string
-	resource_definition   **v1.Service
-	clearedFields         map[string]struct{}
-	service               *uuid.UUID
-	clearedservice        bool
-	done                  bool
-	oldValue              func(context.Context) (*Deployment, error)
-	predicates            []predicate.Deployment
+	op                               Op
+	typ                              string
+	id                               *uuid.UUID
+	created_at                       *time.Time
+	updated_at                       *time.Time
+	status                           *schema.DeploymentStatus
+	source                           *schema.DeploymentSource
+	error                            *string
+	commit_sha                       *string
+	commit_message                   *string
+	git_branch                       *string
+	commit_author                    **schema.GitCommitter
+	queued_at                        *time.Time
+	started_at                       *time.Time
+	completed_at                     *time.Time
+	kubernetes_job_name              *string
+	kubernetes_job_status            *string
+	attempts                         *int
+	addattempts                      *int
+	image                            *string
+	resource_definition              **v1.Service
+	builder                          *schema.ServiceBuilder
+	railpack_builder_install_command *string
+	railpack_builder_build_command   *string
+	run_command                      *string
+	docker_builder_dockerfile_path   *string
+	docker_builder_build_context     *string
+	clearedFields                    map[string]struct{}
+	service                          *uuid.UUID
+	clearedservice                   bool
+	done                             bool
+	oldValue                         func(context.Context) (*Deployment, error)
+	predicates                       []predicate.Deployment
 }
 
 var _ ent.Mutation = (*DeploymentMutation)(nil)
@@ -1361,6 +1367,287 @@ func (m *DeploymentMutation) ResetResourceDefinition() {
 	delete(m.clearedFields, deployment.FieldResourceDefinition)
 }
 
+// SetBuilder sets the "builder" field.
+func (m *DeploymentMutation) SetBuilder(sb schema.ServiceBuilder) {
+	m.builder = &sb
+}
+
+// Builder returns the value of the "builder" field in the mutation.
+func (m *DeploymentMutation) Builder() (r schema.ServiceBuilder, exists bool) {
+	v := m.builder
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBuilder returns the old "builder" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldBuilder(ctx context.Context) (v schema.ServiceBuilder, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBuilder is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBuilder requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBuilder: %w", err)
+	}
+	return oldValue.Builder, nil
+}
+
+// ResetBuilder resets all changes to the "builder" field.
+func (m *DeploymentMutation) ResetBuilder() {
+	m.builder = nil
+}
+
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (m *DeploymentMutation) SetRailpackBuilderInstallCommand(s string) {
+	m.railpack_builder_install_command = &s
+}
+
+// RailpackBuilderInstallCommand returns the value of the "railpack_builder_install_command" field in the mutation.
+func (m *DeploymentMutation) RailpackBuilderInstallCommand() (r string, exists bool) {
+	v := m.railpack_builder_install_command
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRailpackBuilderInstallCommand returns the old "railpack_builder_install_command" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldRailpackBuilderInstallCommand(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRailpackBuilderInstallCommand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRailpackBuilderInstallCommand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRailpackBuilderInstallCommand: %w", err)
+	}
+	return oldValue.RailpackBuilderInstallCommand, nil
+}
+
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (m *DeploymentMutation) ClearRailpackBuilderInstallCommand() {
+	m.railpack_builder_install_command = nil
+	m.clearedFields[deployment.FieldRailpackBuilderInstallCommand] = struct{}{}
+}
+
+// RailpackBuilderInstallCommandCleared returns if the "railpack_builder_install_command" field was cleared in this mutation.
+func (m *DeploymentMutation) RailpackBuilderInstallCommandCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldRailpackBuilderInstallCommand]
+	return ok
+}
+
+// ResetRailpackBuilderInstallCommand resets all changes to the "railpack_builder_install_command" field.
+func (m *DeploymentMutation) ResetRailpackBuilderInstallCommand() {
+	m.railpack_builder_install_command = nil
+	delete(m.clearedFields, deployment.FieldRailpackBuilderInstallCommand)
+}
+
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (m *DeploymentMutation) SetRailpackBuilderBuildCommand(s string) {
+	m.railpack_builder_build_command = &s
+}
+
+// RailpackBuilderBuildCommand returns the value of the "railpack_builder_build_command" field in the mutation.
+func (m *DeploymentMutation) RailpackBuilderBuildCommand() (r string, exists bool) {
+	v := m.railpack_builder_build_command
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRailpackBuilderBuildCommand returns the old "railpack_builder_build_command" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldRailpackBuilderBuildCommand(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRailpackBuilderBuildCommand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRailpackBuilderBuildCommand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRailpackBuilderBuildCommand: %w", err)
+	}
+	return oldValue.RailpackBuilderBuildCommand, nil
+}
+
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (m *DeploymentMutation) ClearRailpackBuilderBuildCommand() {
+	m.railpack_builder_build_command = nil
+	m.clearedFields[deployment.FieldRailpackBuilderBuildCommand] = struct{}{}
+}
+
+// RailpackBuilderBuildCommandCleared returns if the "railpack_builder_build_command" field was cleared in this mutation.
+func (m *DeploymentMutation) RailpackBuilderBuildCommandCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldRailpackBuilderBuildCommand]
+	return ok
+}
+
+// ResetRailpackBuilderBuildCommand resets all changes to the "railpack_builder_build_command" field.
+func (m *DeploymentMutation) ResetRailpackBuilderBuildCommand() {
+	m.railpack_builder_build_command = nil
+	delete(m.clearedFields, deployment.FieldRailpackBuilderBuildCommand)
+}
+
+// SetRunCommand sets the "run_command" field.
+func (m *DeploymentMutation) SetRunCommand(s string) {
+	m.run_command = &s
+}
+
+// RunCommand returns the value of the "run_command" field in the mutation.
+func (m *DeploymentMutation) RunCommand() (r string, exists bool) {
+	v := m.run_command
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRunCommand returns the old "run_command" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldRunCommand(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRunCommand is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRunCommand requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRunCommand: %w", err)
+	}
+	return oldValue.RunCommand, nil
+}
+
+// ClearRunCommand clears the value of the "run_command" field.
+func (m *DeploymentMutation) ClearRunCommand() {
+	m.run_command = nil
+	m.clearedFields[deployment.FieldRunCommand] = struct{}{}
+}
+
+// RunCommandCleared returns if the "run_command" field was cleared in this mutation.
+func (m *DeploymentMutation) RunCommandCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldRunCommand]
+	return ok
+}
+
+// ResetRunCommand resets all changes to the "run_command" field.
+func (m *DeploymentMutation) ResetRunCommand() {
+	m.run_command = nil
+	delete(m.clearedFields, deployment.FieldRunCommand)
+}
+
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (m *DeploymentMutation) SetDockerBuilderDockerfilePath(s string) {
+	m.docker_builder_dockerfile_path = &s
+}
+
+// DockerBuilderDockerfilePath returns the value of the "docker_builder_dockerfile_path" field in the mutation.
+func (m *DeploymentMutation) DockerBuilderDockerfilePath() (r string, exists bool) {
+	v := m.docker_builder_dockerfile_path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDockerBuilderDockerfilePath returns the old "docker_builder_dockerfile_path" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldDockerBuilderDockerfilePath(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDockerBuilderDockerfilePath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDockerBuilderDockerfilePath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDockerBuilderDockerfilePath: %w", err)
+	}
+	return oldValue.DockerBuilderDockerfilePath, nil
+}
+
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (m *DeploymentMutation) ClearDockerBuilderDockerfilePath() {
+	m.docker_builder_dockerfile_path = nil
+	m.clearedFields[deployment.FieldDockerBuilderDockerfilePath] = struct{}{}
+}
+
+// DockerBuilderDockerfilePathCleared returns if the "docker_builder_dockerfile_path" field was cleared in this mutation.
+func (m *DeploymentMutation) DockerBuilderDockerfilePathCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldDockerBuilderDockerfilePath]
+	return ok
+}
+
+// ResetDockerBuilderDockerfilePath resets all changes to the "docker_builder_dockerfile_path" field.
+func (m *DeploymentMutation) ResetDockerBuilderDockerfilePath() {
+	m.docker_builder_dockerfile_path = nil
+	delete(m.clearedFields, deployment.FieldDockerBuilderDockerfilePath)
+}
+
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (m *DeploymentMutation) SetDockerBuilderBuildContext(s string) {
+	m.docker_builder_build_context = &s
+}
+
+// DockerBuilderBuildContext returns the value of the "docker_builder_build_context" field in the mutation.
+func (m *DeploymentMutation) DockerBuilderBuildContext() (r string, exists bool) {
+	v := m.docker_builder_build_context
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDockerBuilderBuildContext returns the old "docker_builder_build_context" field's value of the Deployment entity.
+// If the Deployment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeploymentMutation) OldDockerBuilderBuildContext(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDockerBuilderBuildContext is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDockerBuilderBuildContext requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDockerBuilderBuildContext: %w", err)
+	}
+	return oldValue.DockerBuilderBuildContext, nil
+}
+
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (m *DeploymentMutation) ClearDockerBuilderBuildContext() {
+	m.docker_builder_build_context = nil
+	m.clearedFields[deployment.FieldDockerBuilderBuildContext] = struct{}{}
+}
+
+// DockerBuilderBuildContextCleared returns if the "docker_builder_build_context" field was cleared in this mutation.
+func (m *DeploymentMutation) DockerBuilderBuildContextCleared() bool {
+	_, ok := m.clearedFields[deployment.FieldDockerBuilderBuildContext]
+	return ok
+}
+
+// ResetDockerBuilderBuildContext resets all changes to the "docker_builder_build_context" field.
+func (m *DeploymentMutation) ResetDockerBuilderBuildContext() {
+	m.docker_builder_build_context = nil
+	delete(m.clearedFields, deployment.FieldDockerBuilderBuildContext)
+}
+
 // ClearService clears the "service" edge to the Service entity.
 func (m *DeploymentMutation) ClearService() {
 	m.clearedservice = true
@@ -1422,7 +1709,7 @@ func (m *DeploymentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeploymentMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 24)
 	if m.created_at != nil {
 		fields = append(fields, deployment.FieldCreatedAt)
 	}
@@ -1477,6 +1764,24 @@ func (m *DeploymentMutation) Fields() []string {
 	if m.resource_definition != nil {
 		fields = append(fields, deployment.FieldResourceDefinition)
 	}
+	if m.builder != nil {
+		fields = append(fields, deployment.FieldBuilder)
+	}
+	if m.railpack_builder_install_command != nil {
+		fields = append(fields, deployment.FieldRailpackBuilderInstallCommand)
+	}
+	if m.railpack_builder_build_command != nil {
+		fields = append(fields, deployment.FieldRailpackBuilderBuildCommand)
+	}
+	if m.run_command != nil {
+		fields = append(fields, deployment.FieldRunCommand)
+	}
+	if m.docker_builder_dockerfile_path != nil {
+		fields = append(fields, deployment.FieldDockerBuilderDockerfilePath)
+	}
+	if m.docker_builder_build_context != nil {
+		fields = append(fields, deployment.FieldDockerBuilderBuildContext)
+	}
 	return fields
 }
 
@@ -1521,6 +1826,18 @@ func (m *DeploymentMutation) Field(name string) (ent.Value, bool) {
 		return m.Image()
 	case deployment.FieldResourceDefinition:
 		return m.ResourceDefinition()
+	case deployment.FieldBuilder:
+		return m.Builder()
+	case deployment.FieldRailpackBuilderInstallCommand:
+		return m.RailpackBuilderInstallCommand()
+	case deployment.FieldRailpackBuilderBuildCommand:
+		return m.RailpackBuilderBuildCommand()
+	case deployment.FieldRunCommand:
+		return m.RunCommand()
+	case deployment.FieldDockerBuilderDockerfilePath:
+		return m.DockerBuilderDockerfilePath()
+	case deployment.FieldDockerBuilderBuildContext:
+		return m.DockerBuilderBuildContext()
 	}
 	return nil, false
 }
@@ -1566,6 +1883,18 @@ func (m *DeploymentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldImage(ctx)
 	case deployment.FieldResourceDefinition:
 		return m.OldResourceDefinition(ctx)
+	case deployment.FieldBuilder:
+		return m.OldBuilder(ctx)
+	case deployment.FieldRailpackBuilderInstallCommand:
+		return m.OldRailpackBuilderInstallCommand(ctx)
+	case deployment.FieldRailpackBuilderBuildCommand:
+		return m.OldRailpackBuilderBuildCommand(ctx)
+	case deployment.FieldRunCommand:
+		return m.OldRunCommand(ctx)
+	case deployment.FieldDockerBuilderDockerfilePath:
+		return m.OldDockerBuilderDockerfilePath(ctx)
+	case deployment.FieldDockerBuilderBuildContext:
+		return m.OldDockerBuilderBuildContext(ctx)
 	}
 	return nil, fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1701,6 +2030,48 @@ func (m *DeploymentMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetResourceDefinition(v)
 		return nil
+	case deployment.FieldBuilder:
+		v, ok := value.(schema.ServiceBuilder)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBuilder(v)
+		return nil
+	case deployment.FieldRailpackBuilderInstallCommand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRailpackBuilderInstallCommand(v)
+		return nil
+	case deployment.FieldRailpackBuilderBuildCommand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRailpackBuilderBuildCommand(v)
+		return nil
+	case deployment.FieldRunCommand:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRunCommand(v)
+		return nil
+	case deployment.FieldDockerBuilderDockerfilePath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDockerBuilderDockerfilePath(v)
+		return nil
+	case deployment.FieldDockerBuilderBuildContext:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDockerBuilderBuildContext(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)
 }
@@ -1782,6 +2153,21 @@ func (m *DeploymentMutation) ClearedFields() []string {
 	if m.FieldCleared(deployment.FieldResourceDefinition) {
 		fields = append(fields, deployment.FieldResourceDefinition)
 	}
+	if m.FieldCleared(deployment.FieldRailpackBuilderInstallCommand) {
+		fields = append(fields, deployment.FieldRailpackBuilderInstallCommand)
+	}
+	if m.FieldCleared(deployment.FieldRailpackBuilderBuildCommand) {
+		fields = append(fields, deployment.FieldRailpackBuilderBuildCommand)
+	}
+	if m.FieldCleared(deployment.FieldRunCommand) {
+		fields = append(fields, deployment.FieldRunCommand)
+	}
+	if m.FieldCleared(deployment.FieldDockerBuilderDockerfilePath) {
+		fields = append(fields, deployment.FieldDockerBuilderDockerfilePath)
+	}
+	if m.FieldCleared(deployment.FieldDockerBuilderBuildContext) {
+		fields = append(fields, deployment.FieldDockerBuilderBuildContext)
+	}
 	return fields
 }
 
@@ -1831,6 +2217,21 @@ func (m *DeploymentMutation) ClearField(name string) error {
 		return nil
 	case deployment.FieldResourceDefinition:
 		m.ClearResourceDefinition()
+		return nil
+	case deployment.FieldRailpackBuilderInstallCommand:
+		m.ClearRailpackBuilderInstallCommand()
+		return nil
+	case deployment.FieldRailpackBuilderBuildCommand:
+		m.ClearRailpackBuilderBuildCommand()
+		return nil
+	case deployment.FieldRunCommand:
+		m.ClearRunCommand()
+		return nil
+	case deployment.FieldDockerBuilderDockerfilePath:
+		m.ClearDockerBuilderDockerfilePath()
+		return nil
+	case deployment.FieldDockerBuilderBuildContext:
+		m.ClearDockerBuilderBuildContext()
 		return nil
 	}
 	return fmt.Errorf("unknown Deployment nullable field %s", name)
@@ -1893,6 +2294,24 @@ func (m *DeploymentMutation) ResetField(name string) error {
 		return nil
 	case deployment.FieldResourceDefinition:
 		m.ResetResourceDefinition()
+		return nil
+	case deployment.FieldBuilder:
+		m.ResetBuilder()
+		return nil
+	case deployment.FieldRailpackBuilderInstallCommand:
+		m.ResetRailpackBuilderInstallCommand()
+		return nil
+	case deployment.FieldRailpackBuilderBuildCommand:
+		m.ResetRailpackBuilderBuildCommand()
+		return nil
+	case deployment.FieldRunCommand:
+		m.ResetRunCommand()
+		return nil
+	case deployment.FieldDockerBuilderDockerfilePath:
+		m.ResetDockerBuilderDockerfilePath()
+		return nil
+	case deployment.FieldDockerBuilderBuildContext:
+		m.ResetDockerBuilderBuildContext()
 		return nil
 	}
 	return fmt.Errorf("unknown Deployment field %s", name)

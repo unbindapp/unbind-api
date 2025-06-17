@@ -123,7 +123,8 @@ func (self *DeploymentController) startStatusSynchronizer() {
 }
 
 // Populate build environment, take tag separately so we can use it to build from tag
-func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string) (map[string]string, error) {
+// If deployment is provided, use stored deployment values for build configuration instead of service config values
+func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string, deployment *ent.Deployment) (map[string]string, error) {
 	// Get the service
 	service, err := self.repo.Service().GetByID(ctx, serviceID)
 	if err != nil {
@@ -244,19 +245,46 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		}
 	}
 
+	// Use deployment values for build configuration if available (for redeployments)
+	// Otherwise fall back to service config values (for new deployments)
+	var builder schema.ServiceBuilder
+	var dockerfilePath *string
+	var buildContext *string
+	var railpackInstallCommand *string
+	var railpackBuildCommand *string
+	var runCommand *string
+
+	if deployment != nil {
+		// Use stored deployment build configuration
+		builder = deployment.Builder
+		dockerfilePath = deployment.DockerBuilderDockerfilePath
+		buildContext = deployment.DockerBuilderBuildContext
+		railpackInstallCommand = deployment.RailpackBuilderInstallCommand
+		railpackBuildCommand = deployment.RailpackBuilderBuildCommand
+		runCommand = deployment.RunCommand
+	} else {
+		// Use current service configuration
+		builder = service.Edges.ServiceConfig.Builder
+		dockerfilePath = service.Edges.ServiceConfig.DockerBuilderDockerfilePath
+		buildContext = service.Edges.ServiceConfig.DockerBuilderBuildContext
+		railpackInstallCommand = service.Edges.ServiceConfig.RailpackBuilderInstallCommand
+		railpackBuildCommand = service.Edges.ServiceConfig.RailpackBuilderBuildCommand
+		runCommand = service.Edges.ServiceConfig.RunCommand
+	}
+
 	// Add docker image override
 	if service.Edges.ServiceConfig.Image != "" {
 		env["SERVICE_IMAGE"] = service.Edges.ServiceConfig.Image
 	}
 
 	// Add dockerfile override
-	if service.Edges.ServiceConfig.DockerBuilderDockerfilePath != nil {
-		env["SERVICE_DOCKER_BUILDER_DOCKERFILE_PATH"] = *service.Edges.ServiceConfig.DockerBuilderDockerfilePath
+	if dockerfilePath != nil {
+		env["SERVICE_DOCKER_BUILDER_DOCKERFILE_PATH"] = *dockerfilePath
 	}
 
 	// Also don't set context if it's the default
-	if service.Edges.ServiceConfig.DockerBuilderBuildContext != nil && *service.Edges.ServiceConfig.DockerBuilderBuildContext != "." {
-		env["SERVICE_DOCKER_BUILDER_BUILD_CONTEXT"] = *service.Edges.ServiceConfig.DockerBuilderBuildContext
+	if buildContext != nil && *buildContext != "." {
+		env["SERVICE_DOCKER_BUILDER_BUILD_CONTEXT"] = *buildContext
 	}
 
 	// Add Github fields
@@ -319,8 +347,8 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_FRAMEWORK"] = string(*service.Edges.ServiceConfig.RailpackFramework)
 	}
 
-	if service.Edges.ServiceConfig.Builder != schema.ServiceBuilder("") {
-		env["SERVICE_BUILDER"] = string(service.Edges.ServiceConfig.Builder)
+	if builder != schema.ServiceBuilder("") {
+		env["SERVICE_BUILDER"] = string(builder)
 	}
 
 	if len(service.Edges.ServiceConfig.Ports) > 0 {
@@ -352,16 +380,16 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 		env["SERVICE_HOSTS"] = string(marshalled)
 	}
 
-	if service.Edges.ServiceConfig.RailpackBuilderInstallCommand != nil {
-		env["RAILPACK_INSTALL_CMD"] = *service.Edges.ServiceConfig.RailpackBuilderInstallCommand
+	if railpackInstallCommand != nil {
+		env["RAILPACK_INSTALL_CMD"] = *railpackInstallCommand
 	}
 
-	if service.Edges.ServiceConfig.RailpackBuilderBuildCommand != nil {
-		env["RAILPACK_BUILD_CMD"] = *service.Edges.ServiceConfig.RailpackBuilderBuildCommand
+	if railpackBuildCommand != nil {
+		env["RAILPACK_BUILD_CMD"] = *railpackBuildCommand
 	}
 
-	if service.Edges.ServiceConfig.RunCommand != nil {
-		env["SERVICE_RUN_COMMAND"] = *service.Edges.ServiceConfig.RunCommand
+	if runCommand != nil {
+		env["SERVICE_RUN_COMMAND"] = *runCommand
 	}
 
 	if service.Edges.ServiceConfig.SecurityContext != nil {

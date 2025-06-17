@@ -2,6 +2,7 @@ package deployment_repo
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/deployment"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/ent/service"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	v1 "github.com/unbindapp/unbind-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,11 +30,39 @@ func (self *DeploymentRepository) Create(ctx context.Context,
 		db = tx.Client()
 	}
 
+	// Fetch service to get build configuration
+	service, err := db.Service.Query().
+		Where(service.ID(serviceID)).
+		WithServiceConfig().
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch service for build config: %w", err)
+	}
+
 	c := db.Deployment.Create().
 		SetServiceID(serviceID).
 		SetStatus(initialStatus).
 		SetSource(source).
 		SetCommitAuthor(committer)
+
+	// Store build-related values from service config to preserve for redeployments
+	c.SetBuilder(service.Edges.ServiceConfig.Builder)
+	if service.Edges.ServiceConfig.RailpackBuilderInstallCommand != nil {
+		c.SetRailpackBuilderInstallCommand(*service.Edges.ServiceConfig.RailpackBuilderInstallCommand)
+	}
+	if service.Edges.ServiceConfig.RailpackBuilderBuildCommand != nil {
+		c.SetRailpackBuilderBuildCommand(*service.Edges.ServiceConfig.RailpackBuilderBuildCommand)
+	}
+	if service.Edges.ServiceConfig.RunCommand != nil {
+		c.SetRunCommand(*service.Edges.ServiceConfig.RunCommand)
+	}
+	if service.Edges.ServiceConfig.DockerBuilderDockerfilePath != nil {
+		c.SetDockerBuilderDockerfilePath(*service.Edges.ServiceConfig.DockerBuilderDockerfilePath)
+	}
+	if service.Edges.ServiceConfig.DockerBuilderBuildContext != nil {
+		c.SetDockerBuilderBuildContext(*service.Edges.ServiceConfig.DockerBuilderBuildContext)
+	}
+
 	if CommitSHA != "" {
 		c.SetCommitSha(CommitSHA)
 	}
@@ -174,5 +204,12 @@ func (self *DeploymentRepository) CreateCopy(ctx context.Context, tx repository.
 		SetResourceDefinition(deployment.ResourceDefinition).
 		SetSource(schema.DeploymentSourceManual).
 		SetNillableImage(deployment.Image).
+		// Copy build-related fields to preserve build configuration for redeployments
+		SetBuilder(deployment.Builder).
+		SetNillableRailpackBuilderInstallCommand(deployment.RailpackBuilderInstallCommand).
+		SetNillableRailpackBuilderBuildCommand(deployment.RailpackBuilderBuildCommand).
+		SetNillableRunCommand(deployment.RunCommand).
+		SetNillableDockerBuilderDockerfilePath(deployment.DockerBuilderDockerfilePath).
+		SetNillableDockerBuilderBuildContext(deployment.DockerBuilderBuildContext).
 		Save(ctx)
 }

@@ -16,7 +16,8 @@ type DeploymentControllerInterface interface {
 	// Stop stops the deployment manager
 	Stop()
 	// Populate build environment, take tag separately so we can use it to build from tag
-	PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string) (map[string]string, error)
+	// If deployment is provided, use stored deployment values for build configuration instead of service config values
+	PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string, deployment *ent.Deployment) (map[string]string, error)
 	// EnqueueDeploymentJob adds a deployment to the queue
 	EnqueueDeploymentJob(ctx context.Context, req DeploymentJobRequest) (job *ent.Deployment, err error)
 	// cancelExistingJobs marks all pending jobs for a service as cancelled in the DB

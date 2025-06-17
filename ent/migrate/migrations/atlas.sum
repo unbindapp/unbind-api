@@ -1,4 +1,4 @@
-h1:Kk/gc03qKA5FWK+Rx0vkpVMk0rujb2oZO+BOJ+7VnII=
+h1:yHgLWdH1ccrRiflipG9zaNMgWDNLr6gg06QCfOwQEjY=
 20250519010757_initial_migration.sql h1:94lMwKemoNX/ichD+2Vzb7GmOHXVj4qVTfeBInQAe0g=
 20250519163449_add_init_containers.sql h1:7bt+zCbtmlYr1QDztgka0R5wUxdjD7XYUkrhL9GYYIQ=
 20250521202532_non_nillable_kubernetes_secret.sql h1:eDpMWyeBXh5cG4poavaUMeYs5QXddFBBIyYlxc+nq64=
@@ -11,3 +11,4 @@ h1:Kk/gc03qKA5FWK+Rx0vkpVMk0rujb2oZO+BOJ+7VnII=
 20250606001240_add_template_resources.sql h1:PvZSYfmY1RmSq33tkvh741Se7eB1wJuYrZ0l5N3HYPc=
 20250610151603_drop_github_constraint.sql h1:SaohOh4UquASdmjFnu4jJjFUjiL3SIhdj3nTzPWQWJk=
 20250610220451_add_deployment_git_branch.sql h1:7BinbzWTC7PAWXx0gGqZxfe8ZjOvbA4KwoGZKySIZos=
+20250617210240_add_deployment_build_fields.sql h1:D4xipE5uYNEhWHCYq+ND4DnKErui/3r88TVVwnZFlN8=

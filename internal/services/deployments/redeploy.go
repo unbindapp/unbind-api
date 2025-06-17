@@ -175,7 +175,7 @@ func (self *DeploymentService) CreateRedeployment(ctx context.Context, requester
 	}
 
 	// Enqueue build job
-	env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID, nil)
+	env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID, nil, deployment)
 	if err != nil {
 		return nil, err
 	}

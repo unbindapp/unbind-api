@@ -69,7 +69,7 @@ func (self *DeploymentService) CreateManualDeployment(ctx context.Context, reque
 		}
 	}
 	// Enqueue build job
-	env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID, nil)
+	env, err := self.deploymentController.PopulateBuildEnvironment(ctx, input.ServiceID, nil, nil)
 	if err != nil {
 		return nil, err
 	}

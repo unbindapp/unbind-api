@@ -168,6 +168,29 @@ func (Deployment) Fields() []ent.Field {
 		field.JSON("resource_definition", &v1.Service{}).
 			Optional().
 			Comment("The Kubernetes resource definition for the deployment"),
+		// Build-related fields to preserve for redeployment
+		field.Enum("builder").GoType(ServiceBuilder("")).
+			Comment("Builder used for this deployment"),
+		field.String("railpack_builder_install_command").
+			Optional().
+			Nillable().
+			Comment("Custom install command used for this deployment (railpack only)"),
+		field.String("railpack_builder_build_command").
+			Optional().
+			Nillable().
+			Comment("Custom build command used for this deployment (railpack only)"),
+		field.String("run_command").
+			Optional().
+			Nillable().
+			Comment("Custom run command used for this deployment"),
+		field.String("docker_builder_dockerfile_path").
+			Optional().
+			Nillable().
+			Comment("Path to Dockerfile used for this deployment (docker builder only)"),
+		field.String("docker_builder_build_context").
+			Optional().
+			Nillable().
+			Comment("Build context path used for this deployment (docker builder only)"),
 	}
 }
 

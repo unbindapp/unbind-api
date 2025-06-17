@@ -349,7 +349,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 				continue
 			}
 
-			env, err := self.srv.DeploymentController.PopulateBuildEnvironment(ctx, service.ID, tagName)
+			env, err := self.srv.DeploymentController.PopulateBuildEnvironment(ctx, service.ID, tagName, nil)
 			if err != nil {
 				log.Error("Error populating build environment", "err", err)
 				return nil, huma.Error500InternalServerError("Failed to populate build environment")

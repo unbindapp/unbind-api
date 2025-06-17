@@ -247,6 +247,82 @@ func (dc *DeploymentCreate) SetResourceDefinition(v *v1.Service) *DeploymentCrea
 	return dc
 }
 
+// SetBuilder sets the "builder" field.
+func (dc *DeploymentCreate) SetBuilder(sb schema.ServiceBuilder) *DeploymentCreate {
+	dc.mutation.SetBuilder(sb)
+	return dc
+}
+
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (dc *DeploymentCreate) SetRailpackBuilderInstallCommand(s string) *DeploymentCreate {
+	dc.mutation.SetRailpackBuilderInstallCommand(s)
+	return dc
+}
+
+// SetNillableRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableRailpackBuilderInstallCommand(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetRailpackBuilderInstallCommand(*s)
+	}
+	return dc
+}
+
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (dc *DeploymentCreate) SetRailpackBuilderBuildCommand(s string) *DeploymentCreate {
+	dc.mutation.SetRailpackBuilderBuildCommand(s)
+	return dc
+}
+
+// SetNillableRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableRailpackBuilderBuildCommand(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetRailpackBuilderBuildCommand(*s)
+	}
+	return dc
+}
+
+// SetRunCommand sets the "run_command" field.
+func (dc *DeploymentCreate) SetRunCommand(s string) *DeploymentCreate {
+	dc.mutation.SetRunCommand(s)
+	return dc
+}
+
+// SetNillableRunCommand sets the "run_command" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableRunCommand(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetRunCommand(*s)
+	}
+	return dc
+}
+
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (dc *DeploymentCreate) SetDockerBuilderDockerfilePath(s string) *DeploymentCreate {
+	dc.mutation.SetDockerBuilderDockerfilePath(s)
+	return dc
+}
+
+// SetNillableDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableDockerBuilderDockerfilePath(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetDockerBuilderDockerfilePath(*s)
+	}
+	return dc
+}
+
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (dc *DeploymentCreate) SetDockerBuilderBuildContext(s string) *DeploymentCreate {
+	dc.mutation.SetDockerBuilderBuildContext(s)
+	return dc
+}
+
+// SetNillableDockerBuilderBuildContext sets the "docker_builder_build_context" field if the given value is not nil.
+func (dc *DeploymentCreate) SetNillableDockerBuilderBuildContext(s *string) *DeploymentCreate {
+	if s != nil {
+		dc.SetDockerBuilderBuildContext(*s)
+	}
+	return dc
+}
+
 // SetID sets the "id" field.
 func (dc *DeploymentCreate) SetID(u uuid.UUID) *DeploymentCreate {
 	dc.mutation.SetID(u)
@@ -352,6 +428,14 @@ func (dc *DeploymentCreate) check() error {
 	}
 	if _, ok := dc.mutation.Attempts(); !ok {
 		return &ValidationError{Name: "attempts", err: errors.New(`ent: missing required field "Deployment.attempts"`)}
+	}
+	if _, ok := dc.mutation.Builder(); !ok {
+		return &ValidationError{Name: "builder", err: errors.New(`ent: missing required field "Deployment.builder"`)}
+	}
+	if v, ok := dc.mutation.Builder(); ok {
+		if err := deployment.BuilderValidator(v); err != nil {
+			return &ValidationError{Name: "builder", err: fmt.Errorf(`ent: validator failed for field "Deployment.builder": %w`, err)}
+		}
 	}
 	if len(dc.mutation.ServiceIDs()) == 0 {
 		return &ValidationError{Name: "service", err: errors.New(`ent: missing required edge "Deployment.service"`)}
@@ -459,6 +543,30 @@ func (dc *DeploymentCreate) createSpec() (*Deployment, *sqlgraph.CreateSpec) {
 	if value, ok := dc.mutation.ResourceDefinition(); ok {
 		_spec.SetField(deployment.FieldResourceDefinition, field.TypeJSON, value)
 		_node.ResourceDefinition = value
+	}
+	if value, ok := dc.mutation.Builder(); ok {
+		_spec.SetField(deployment.FieldBuilder, field.TypeEnum, value)
+		_node.Builder = value
+	}
+	if value, ok := dc.mutation.RailpackBuilderInstallCommand(); ok {
+		_spec.SetField(deployment.FieldRailpackBuilderInstallCommand, field.TypeString, value)
+		_node.RailpackBuilderInstallCommand = &value
+	}
+	if value, ok := dc.mutation.RailpackBuilderBuildCommand(); ok {
+		_spec.SetField(deployment.FieldRailpackBuilderBuildCommand, field.TypeString, value)
+		_node.RailpackBuilderBuildCommand = &value
+	}
+	if value, ok := dc.mutation.RunCommand(); ok {
+		_spec.SetField(deployment.FieldRunCommand, field.TypeString, value)
+		_node.RunCommand = &value
+	}
+	if value, ok := dc.mutation.DockerBuilderDockerfilePath(); ok {
+		_spec.SetField(deployment.FieldDockerBuilderDockerfilePath, field.TypeString, value)
+		_node.DockerBuilderDockerfilePath = &value
+	}
+	if value, ok := dc.mutation.DockerBuilderBuildContext(); ok {
+		_spec.SetField(deployment.FieldDockerBuilderBuildContext, field.TypeString, value)
+		_node.DockerBuilderBuildContext = &value
 	}
 	if nodes := dc.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -808,6 +916,108 @@ func (u *DeploymentUpsert) UpdateResourceDefinition() *DeploymentUpsert {
 // ClearResourceDefinition clears the value of the "resource_definition" field.
 func (u *DeploymentUpsert) ClearResourceDefinition() *DeploymentUpsert {
 	u.SetNull(deployment.FieldResourceDefinition)
+	return u
+}
+
+// SetBuilder sets the "builder" field.
+func (u *DeploymentUpsert) SetBuilder(v schema.ServiceBuilder) *DeploymentUpsert {
+	u.Set(deployment.FieldBuilder, v)
+	return u
+}
+
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateBuilder() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldBuilder)
+	return u
+}
+
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (u *DeploymentUpsert) SetRailpackBuilderInstallCommand(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldRailpackBuilderInstallCommand, v)
+	return u
+}
+
+// UpdateRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateRailpackBuilderInstallCommand() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldRailpackBuilderInstallCommand)
+	return u
+}
+
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (u *DeploymentUpsert) ClearRailpackBuilderInstallCommand() *DeploymentUpsert {
+	u.SetNull(deployment.FieldRailpackBuilderInstallCommand)
+	return u
+}
+
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (u *DeploymentUpsert) SetRailpackBuilderBuildCommand(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldRailpackBuilderBuildCommand, v)
+	return u
+}
+
+// UpdateRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateRailpackBuilderBuildCommand() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldRailpackBuilderBuildCommand)
+	return u
+}
+
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (u *DeploymentUpsert) ClearRailpackBuilderBuildCommand() *DeploymentUpsert {
+	u.SetNull(deployment.FieldRailpackBuilderBuildCommand)
+	return u
+}
+
+// SetRunCommand sets the "run_command" field.
+func (u *DeploymentUpsert) SetRunCommand(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldRunCommand, v)
+	return u
+}
+
+// UpdateRunCommand sets the "run_command" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateRunCommand() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldRunCommand)
+	return u
+}
+
+// ClearRunCommand clears the value of the "run_command" field.
+func (u *DeploymentUpsert) ClearRunCommand() *DeploymentUpsert {
+	u.SetNull(deployment.FieldRunCommand)
+	return u
+}
+
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (u *DeploymentUpsert) SetDockerBuilderDockerfilePath(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldDockerBuilderDockerfilePath, v)
+	return u
+}
+
+// UpdateDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateDockerBuilderDockerfilePath() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldDockerBuilderDockerfilePath)
+	return u
+}
+
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (u *DeploymentUpsert) ClearDockerBuilderDockerfilePath() *DeploymentUpsert {
+	u.SetNull(deployment.FieldDockerBuilderDockerfilePath)
+	return u
+}
+
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (u *DeploymentUpsert) SetDockerBuilderBuildContext(v string) *DeploymentUpsert {
+	u.Set(deployment.FieldDockerBuilderBuildContext, v)
+	return u
+}
+
+// UpdateDockerBuilderBuildContext sets the "docker_builder_build_context" field to the value that was provided on create.
+func (u *DeploymentUpsert) UpdateDockerBuilderBuildContext() *DeploymentUpsert {
+	u.SetExcluded(deployment.FieldDockerBuilderBuildContext)
+	return u
+}
+
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (u *DeploymentUpsert) ClearDockerBuilderBuildContext() *DeploymentUpsert {
+	u.SetNull(deployment.FieldDockerBuilderBuildContext)
 	return u
 }
 
@@ -1188,6 +1398,125 @@ func (u *DeploymentUpsertOne) UpdateResourceDefinition() *DeploymentUpsertOne {
 func (u *DeploymentUpsertOne) ClearResourceDefinition() *DeploymentUpsertOne {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearResourceDefinition()
+	})
+}
+
+// SetBuilder sets the "builder" field.
+func (u *DeploymentUpsertOne) SetBuilder(v schema.ServiceBuilder) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetBuilder(v)
+	})
+}
+
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateBuilder() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateBuilder()
+	})
+}
+
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (u *DeploymentUpsertOne) SetRailpackBuilderInstallCommand(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetRailpackBuilderInstallCommand(v)
+	})
+}
+
+// UpdateRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateRailpackBuilderInstallCommand() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateRailpackBuilderInstallCommand()
+	})
+}
+
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (u *DeploymentUpsertOne) ClearRailpackBuilderInstallCommand() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearRailpackBuilderInstallCommand()
+	})
+}
+
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (u *DeploymentUpsertOne) SetRailpackBuilderBuildCommand(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetRailpackBuilderBuildCommand(v)
+	})
+}
+
+// UpdateRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateRailpackBuilderBuildCommand() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateRailpackBuilderBuildCommand()
+	})
+}
+
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (u *DeploymentUpsertOne) ClearRailpackBuilderBuildCommand() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearRailpackBuilderBuildCommand()
+	})
+}
+
+// SetRunCommand sets the "run_command" field.
+func (u *DeploymentUpsertOne) SetRunCommand(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetRunCommand(v)
+	})
+}
+
+// UpdateRunCommand sets the "run_command" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateRunCommand() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateRunCommand()
+	})
+}
+
+// ClearRunCommand clears the value of the "run_command" field.
+func (u *DeploymentUpsertOne) ClearRunCommand() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearRunCommand()
+	})
+}
+
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (u *DeploymentUpsertOne) SetDockerBuilderDockerfilePath(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetDockerBuilderDockerfilePath(v)
+	})
+}
+
+// UpdateDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateDockerBuilderDockerfilePath() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateDockerBuilderDockerfilePath()
+	})
+}
+
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (u *DeploymentUpsertOne) ClearDockerBuilderDockerfilePath() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearDockerBuilderDockerfilePath()
+	})
+}
+
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (u *DeploymentUpsertOne) SetDockerBuilderBuildContext(v string) *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetDockerBuilderBuildContext(v)
+	})
+}
+
+// UpdateDockerBuilderBuildContext sets the "docker_builder_build_context" field to the value that was provided on create.
+func (u *DeploymentUpsertOne) UpdateDockerBuilderBuildContext() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateDockerBuilderBuildContext()
+	})
+}
+
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (u *DeploymentUpsertOne) ClearDockerBuilderBuildContext() *DeploymentUpsertOne {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearDockerBuilderBuildContext()
 	})
 }
 
@@ -1735,6 +2064,125 @@ func (u *DeploymentUpsertBulk) UpdateResourceDefinition() *DeploymentUpsertBulk 
 func (u *DeploymentUpsertBulk) ClearResourceDefinition() *DeploymentUpsertBulk {
 	return u.Update(func(s *DeploymentUpsert) {
 		s.ClearResourceDefinition()
+	})
+}
+
+// SetBuilder sets the "builder" field.
+func (u *DeploymentUpsertBulk) SetBuilder(v schema.ServiceBuilder) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetBuilder(v)
+	})
+}
+
+// UpdateBuilder sets the "builder" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateBuilder() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateBuilder()
+	})
+}
+
+// SetRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field.
+func (u *DeploymentUpsertBulk) SetRailpackBuilderInstallCommand(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetRailpackBuilderInstallCommand(v)
+	})
+}
+
+// UpdateRailpackBuilderInstallCommand sets the "railpack_builder_install_command" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateRailpackBuilderInstallCommand() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateRailpackBuilderInstallCommand()
+	})
+}
+
+// ClearRailpackBuilderInstallCommand clears the value of the "railpack_builder_install_command" field.
+func (u *DeploymentUpsertBulk) ClearRailpackBuilderInstallCommand() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearRailpackBuilderInstallCommand()
+	})
+}
+
+// SetRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field.
+func (u *DeploymentUpsertBulk) SetRailpackBuilderBuildCommand(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetRailpackBuilderBuildCommand(v)
+	})
+}
+
+// UpdateRailpackBuilderBuildCommand sets the "railpack_builder_build_command" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateRailpackBuilderBuildCommand() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateRailpackBuilderBuildCommand()
+	})
+}
+
+// ClearRailpackBuilderBuildCommand clears the value of the "railpack_builder_build_command" field.
+func (u *DeploymentUpsertBulk) ClearRailpackBuilderBuildCommand() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearRailpackBuilderBuildCommand()
+	})
+}
+
+// SetRunCommand sets the "run_command" field.
+func (u *DeploymentUpsertBulk) SetRunCommand(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetRunCommand(v)
+	})
+}
+
+// UpdateRunCommand sets the "run_command" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateRunCommand() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateRunCommand()
+	})
+}
+
+// ClearRunCommand clears the value of the "run_command" field.
+func (u *DeploymentUpsertBulk) ClearRunCommand() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearRunCommand()
+	})
+}
+
+// SetDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field.
+func (u *DeploymentUpsertBulk) SetDockerBuilderDockerfilePath(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetDockerBuilderDockerfilePath(v)
+	})
+}
+
+// UpdateDockerBuilderDockerfilePath sets the "docker_builder_dockerfile_path" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateDockerBuilderDockerfilePath() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateDockerBuilderDockerfilePath()
+	})
+}
+
+// ClearDockerBuilderDockerfilePath clears the value of the "docker_builder_dockerfile_path" field.
+func (u *DeploymentUpsertBulk) ClearDockerBuilderDockerfilePath() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearDockerBuilderDockerfilePath()
+	})
+}
+
+// SetDockerBuilderBuildContext sets the "docker_builder_build_context" field.
+func (u *DeploymentUpsertBulk) SetDockerBuilderBuildContext(v string) *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.SetDockerBuilderBuildContext(v)
+	})
+}
+
+// UpdateDockerBuilderBuildContext sets the "docker_builder_build_context" field to the value that was provided on create.
+func (u *DeploymentUpsertBulk) UpdateDockerBuilderBuildContext() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.UpdateDockerBuilderBuildContext()
+	})
+}
+
+// ClearDockerBuilderBuildContext clears the value of the "docker_builder_build_context" field.
+func (u *DeploymentUpsertBulk) ClearDockerBuilderBuildContext() *DeploymentUpsertBulk {
+	return u.Update(func(s *DeploymentUpsert) {
+		s.ClearDockerBuilderBuildContext()
 	})
 }
 

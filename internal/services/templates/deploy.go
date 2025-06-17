@@ -572,7 +572,7 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 		dbService := dbServiceMap[service.ID]
 
 		// Populate build environment
-		env, err := self.deployCtl.PopulateBuildEnvironment(ctx, dbService.ID, nil)
+		env, err := self.deployCtl.PopulateBuildEnvironment(ctx, dbService.ID, nil, nil)
 		if err != nil {
 			return nil, err
 		}

@@ -238,9 +238,9 @@ func (_c *DeploymentControllerMock_EnqueueDeploymentJob_Call) RunAndReturn(run f
 	return _c
 }
 
-// PopulateBuildEnvironment provides a mock function with given fields: ctx, serviceID, gitTag
-func (_m *DeploymentControllerMock) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string) (map[string]string, error) {
-	ret := _m.Called(ctx, serviceID, gitTag)
+// PopulateBuildEnvironment provides a mock function with given fields: ctx, serviceID, gitTag, deployment
+func (_m *DeploymentControllerMock) PopulateBuildEnvironment(ctx context.Context, serviceID uuid.UUID, gitTag *string, deployment *ent.Deployment) (map[string]string, error) {
+	ret := _m.Called(ctx, serviceID, gitTag, deployment)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PopulateBuildEnvironment")
@@ -248,19 +248,19 @@ func (_m *DeploymentControllerMock) PopulateBuildEnvironment(ctx context.Context
 
 	var r0 map[string]string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *string) (map[string]string, error)); ok {
-		return rf(ctx, serviceID, gitTag)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *string, *ent.Deployment) (map[string]string, error)); ok {
+		return rf(ctx, serviceID, gitTag, deployment)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *string) map[string]string); ok {
-		r0 = rf(ctx, serviceID, gitTag)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *string, *ent.Deployment) map[string]string); ok {
+		r0 = rf(ctx, serviceID, gitTag, deployment)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]string)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, *string) error); ok {
-		r1 = rf(ctx, serviceID, gitTag)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, *string, *ent.Deployment) error); ok {
+		r1 = rf(ctx, serviceID, gitTag, deployment)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -277,13 +277,14 @@ type DeploymentControllerMock_PopulateBuildEnvironment_Call struct {
 //   - ctx context.Context
 //   - serviceID uuid.UUID
 //   - gitTag *string
-func (_e *DeploymentControllerMock_Expecter) PopulateBuildEnvironment(ctx interface{}, serviceID interface{}, gitTag interface{}) *DeploymentControllerMock_PopulateBuildEnvironment_Call {
-	return &DeploymentControllerMock_PopulateBuildEnvironment_Call{Call: _e.mock.On("PopulateBuildEnvironment", ctx, serviceID, gitTag)}
+//   - deployment *ent.Deployment
+func (_e *DeploymentControllerMock_Expecter) PopulateBuildEnvironment(ctx interface{}, serviceID interface{}, gitTag interface{}, deployment interface{}) *DeploymentControllerMock_PopulateBuildEnvironment_Call {
+	return &DeploymentControllerMock_PopulateBuildEnvironment_Call{Call: _e.mock.On("PopulateBuildEnvironment", ctx, serviceID, gitTag, deployment)}
 }
 
-func (_c *DeploymentControllerMock_PopulateBuildEnvironment_Call) Run(run func(ctx context.Context, serviceID uuid.UUID, gitTag *string)) *DeploymentControllerMock_PopulateBuildEnvironment_Call {
+func (_c *DeploymentControllerMock_PopulateBuildEnvironment_Call) Run(run func(ctx context.Context, serviceID uuid.UUID, gitTag *string, deployment *ent.Deployment)) *DeploymentControllerMock_PopulateBuildEnvironment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(*string))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(*string), args[3].(*ent.Deployment))
 	})
 	return _c
 }

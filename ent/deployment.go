@@ -59,6 +59,18 @@ type Deployment struct {
 	Image *string `json:"image,omitempty"`
 	// The Kubernetes resource definition for the deployment
 	ResourceDefinition *v1.Service `json:"resource_definition,omitempty"`
+	// Builder used for this deployment
+	Builder schema.ServiceBuilder `json:"builder,omitempty"`
+	// Custom install command used for this deployment (railpack only)
+	RailpackBuilderInstallCommand *string `json:"railpack_builder_install_command,omitempty"`
+	// Custom build command used for this deployment (railpack only)
+	RailpackBuilderBuildCommand *string `json:"railpack_builder_build_command,omitempty"`
+	// Custom run command used for this deployment
+	RunCommand *string `json:"run_command,omitempty"`
+	// Path to Dockerfile used for this deployment (docker builder only)
+	DockerBuilderDockerfilePath *string `json:"docker_builder_dockerfile_path,omitempty"`
+	// Build context path used for this deployment (docker builder only)
+	DockerBuilderBuildContext *string `json:"docker_builder_build_context,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DeploymentQuery when eager-loading is set.
 	Edges        DeploymentEdges `json:"edges"`
@@ -94,7 +106,7 @@ func (*Deployment) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case deployment.FieldAttempts:
 			values[i] = new(sql.NullInt64)
-		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldGitBranch, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus, deployment.FieldImage:
+		case deployment.FieldStatus, deployment.FieldSource, deployment.FieldError, deployment.FieldCommitSha, deployment.FieldCommitMessage, deployment.FieldGitBranch, deployment.FieldKubernetesJobName, deployment.FieldKubernetesJobStatus, deployment.FieldImage, deployment.FieldBuilder, deployment.FieldRailpackBuilderInstallCommand, deployment.FieldRailpackBuilderBuildCommand, deployment.FieldRunCommand, deployment.FieldDockerBuilderDockerfilePath, deployment.FieldDockerBuilderBuildContext:
 			values[i] = new(sql.NullString)
 		case deployment.FieldCreatedAt, deployment.FieldUpdatedAt, deployment.FieldQueuedAt, deployment.FieldStartedAt, deployment.FieldCompletedAt:
 			values[i] = new(sql.NullTime)
@@ -240,6 +252,47 @@ func (d *Deployment) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field resource_definition: %w", err)
 				}
 			}
+		case deployment.FieldBuilder:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field builder", values[i])
+			} else if value.Valid {
+				d.Builder = schema.ServiceBuilder(value.String)
+			}
+		case deployment.FieldRailpackBuilderInstallCommand:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field railpack_builder_install_command", values[i])
+			} else if value.Valid {
+				d.RailpackBuilderInstallCommand = new(string)
+				*d.RailpackBuilderInstallCommand = value.String
+			}
+		case deployment.FieldRailpackBuilderBuildCommand:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field railpack_builder_build_command", values[i])
+			} else if value.Valid {
+				d.RailpackBuilderBuildCommand = new(string)
+				*d.RailpackBuilderBuildCommand = value.String
+			}
+		case deployment.FieldRunCommand:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field run_command", values[i])
+			} else if value.Valid {
+				d.RunCommand = new(string)
+				*d.RunCommand = value.String
+			}
+		case deployment.FieldDockerBuilderDockerfilePath:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field docker_builder_dockerfile_path", values[i])
+			} else if value.Valid {
+				d.DockerBuilderDockerfilePath = new(string)
+				*d.DockerBuilderDockerfilePath = value.String
+			}
+		case deployment.FieldDockerBuilderBuildContext:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field docker_builder_build_context", values[i])
+			} else if value.Valid {
+				d.DockerBuilderBuildContext = new(string)
+				*d.DockerBuilderBuildContext = value.String
+			}
 		default:
 			d.selectValues.Set(columns[i], values[i])
 		}
@@ -348,6 +401,34 @@ func (d *Deployment) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("resource_definition=")
 	builder.WriteString(fmt.Sprintf("%v", d.ResourceDefinition))
+	builder.WriteString(", ")
+	builder.WriteString("builder=")
+	builder.WriteString(fmt.Sprintf("%v", d.Builder))
+	builder.WriteString(", ")
+	if v := d.RailpackBuilderInstallCommand; v != nil {
+		builder.WriteString("railpack_builder_install_command=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := d.RailpackBuilderBuildCommand; v != nil {
+		builder.WriteString("railpack_builder_build_command=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := d.RunCommand; v != nil {
+		builder.WriteString("run_command=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := d.DockerBuilderDockerfilePath; v != nil {
+		builder.WriteString("docker_builder_dockerfile_path=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := d.DockerBuilderBuildContext; v != nil {
+		builder.WriteString("docker_builder_build_context=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

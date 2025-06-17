@@ -19,7 +19,7 @@ import (
 func (self *ServiceService) EnqueueFullBuildDeployments(ctx context.Context, services []*ent.Service) error {
 	for _, service := range services {
 		// Populate build environment
-		env, err := self.deploymentController.PopulateBuildEnvironment(ctx, service.ID, nil)
+		env, err := self.deploymentController.PopulateBuildEnvironment(ctx, service.ID, nil, nil)
 		if err != nil {
 			return fmt.Errorf("failed to populate build environment for service %s: %w", service.ID, err)
 		}

@@ -53,6 +53,18 @@ const (
 	FieldImage = "image"
 	// FieldResourceDefinition holds the string denoting the resource_definition field in the database.
 	FieldResourceDefinition = "resource_definition"
+	// FieldBuilder holds the string denoting the builder field in the database.
+	FieldBuilder = "builder"
+	// FieldRailpackBuilderInstallCommand holds the string denoting the railpack_builder_install_command field in the database.
+	FieldRailpackBuilderInstallCommand = "railpack_builder_install_command"
+	// FieldRailpackBuilderBuildCommand holds the string denoting the railpack_builder_build_command field in the database.
+	FieldRailpackBuilderBuildCommand = "railpack_builder_build_command"
+	// FieldRunCommand holds the string denoting the run_command field in the database.
+	FieldRunCommand = "run_command"
+	// FieldDockerBuilderDockerfilePath holds the string denoting the docker_builder_dockerfile_path field in the database.
+	FieldDockerBuilderDockerfilePath = "docker_builder_dockerfile_path"
+	// FieldDockerBuilderBuildContext holds the string denoting the docker_builder_build_context field in the database.
+	FieldDockerBuilderBuildContext = "docker_builder_build_context"
 	// EdgeService holds the string denoting the service edge name in mutations.
 	EdgeService = "service"
 	// Table holds the table name of the deployment in the database.
@@ -87,6 +99,12 @@ var Columns = []string{
 	FieldAttempts,
 	FieldImage,
 	FieldResourceDefinition,
+	FieldBuilder,
+	FieldRailpackBuilderInstallCommand,
+	FieldRailpackBuilderBuildCommand,
+	FieldRunCommand,
+	FieldDockerBuilderDockerfilePath,
+	FieldDockerBuilderBuildContext,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -131,6 +149,16 @@ func SourceValidator(s schema.DeploymentSource) error {
 		return nil
 	default:
 		return fmt.Errorf("deployment: invalid enum value for source field: %q", s)
+	}
+}
+
+// BuilderValidator is a validator for the "builder" field enum values. It is called by the builders before save.
+func BuilderValidator(b schema.ServiceBuilder) error {
+	switch b {
+	case "railpack", "docker", "database":
+		return nil
+	default:
+		return fmt.Errorf("deployment: invalid enum value for builder field: %q", b)
 	}
 }
 
@@ -220,6 +248,36 @@ func ByAttempts(opts ...sql.OrderTermOption) OrderOption {
 // ByImage orders the results by the image field.
 func ByImage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImage, opts...).ToFunc()
+}
+
+// ByBuilder orders the results by the builder field.
+func ByBuilder(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBuilder, opts...).ToFunc()
+}
+
+// ByRailpackBuilderInstallCommand orders the results by the railpack_builder_install_command field.
+func ByRailpackBuilderInstallCommand(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRailpackBuilderInstallCommand, opts...).ToFunc()
+}
+
+// ByRailpackBuilderBuildCommand orders the results by the railpack_builder_build_command field.
+func ByRailpackBuilderBuildCommand(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRailpackBuilderBuildCommand, opts...).ToFunc()
+}
+
+// ByRunCommand orders the results by the run_command field.
+func ByRunCommand(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRunCommand, opts...).ToFunc()
+}
+
+// ByDockerBuilderDockerfilePath orders the results by the docker_builder_dockerfile_path field.
+func ByDockerBuilderDockerfilePath(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDockerBuilderDockerfilePath, opts...).ToFunc()
+}
+
+// ByDockerBuilderBuildContext orders the results by the docker_builder_build_context field.
+func ByDockerBuilderBuildContext(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDockerBuilderBuildContext, opts...).ToFunc()
 }
 
 // ByServiceField orders the results by service field.
