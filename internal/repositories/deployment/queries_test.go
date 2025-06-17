@@ -67,6 +67,7 @@ func (suite *DeploymentQueriesSuite) SetupTest() {
 		SetCommitAuthor(committer).
 		SetSource(schema.DeploymentSourceGit).
 		SetStatus(schema.DeploymentStatusBuildQueued).
+		SetBuilder(schema.ServiceBuilderDocker).
 		SetQueuedAt(time.Now()).
 		SaveX(suite.Ctx)
 }
@@ -229,6 +230,7 @@ func (suite *DeploymentQueriesSuite) TestGetLastSuccessfulDeployment() {
 			SetCommitAuthor(&schema.GitCommitter{Name: "Test User"}).
 			SetSource(schema.DeploymentSourceGit).
 			SetStatus(schema.DeploymentStatusBuildSucceeded).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetQueuedAt(time.Now().Add(-2 * time.Hour)).
 			SetStartedAt(time.Now().Add(-90 * time.Minute)).
 			SetCompletedAt(time.Now().Add(-time.Hour)).
@@ -268,6 +270,7 @@ func (suite *DeploymentQueriesSuite) TestGetLastSuccessfulDeployment() {
 			SetStatus(schema.DeploymentStatusBuildSucceeded).
 			SetQueuedAt(time.Now().Add(-4 * time.Hour)).
 			SetStartedAt(time.Now().Add(-210 * time.Minute)).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCompletedAt(time.Now().Add(-3 * time.Hour)).
 			SaveX(suite.Ctx)
 
@@ -281,6 +284,7 @@ func (suite *DeploymentQueriesSuite) TestGetLastSuccessfulDeployment() {
 			SetQueuedAt(time.Now().Add(-30 * time.Minute)).
 			SetStartedAt(time.Now().Add(-25 * time.Minute)).
 			SetCompletedAt(time.Now().Add(-20 * time.Minute)).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SaveX(suite.Ctx)
 
 		deployment, err := suite.deploymentRepo.GetLastSuccessfulDeployment(suite.Ctx, suite.testService.ID)
@@ -312,6 +316,7 @@ func (suite *DeploymentQueriesSuite) TestGetJobsByStatus() {
 			SetCommitAuthor(&schema.GitCommitter{Name: "Test User"}).
 			SetSource(schema.DeploymentSourceGit).
 			SetStatus(schema.DeploymentStatusBuildQueued).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetQueuedAt(time.Now()).
 			SaveX(suite.Ctx)
 
@@ -323,6 +328,7 @@ func (suite *DeploymentQueriesSuite) TestGetJobsByStatus() {
 			SetSource(schema.DeploymentSourceGit).
 			SetStatus(schema.DeploymentStatusBuildRunning).
 			SetQueuedAt(time.Now().Add(-time.Minute)).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetStartedAt(time.Now()).
 			SaveX(suite.Ctx)
 
@@ -373,6 +379,7 @@ func (suite *DeploymentQueriesSuite) TestGetByServiceIDPaginated() {
 			SetStatus(schema.DeploymentStatusBuildQueued).
 			SetQueuedAt(baseTime.Add(time.Duration(i) * time.Hour)).
 			SetCreatedAt(baseTime.Add(time.Duration(i) * time.Hour)).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SaveX(suite.Ctx)
 	}
 
@@ -410,6 +417,7 @@ func (suite *DeploymentQueriesSuite) TestGetByServiceIDPaginated() {
 			SetSource(schema.DeploymentSourceGit).
 			SetStatus(schema.DeploymentStatusBuildSucceeded).
 			SetQueuedAt(time.Now()).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SaveX(suite.Ctx)
 
 		statusFilter := []schema.DeploymentStatus{schema.DeploymentStatusBuildQueued}

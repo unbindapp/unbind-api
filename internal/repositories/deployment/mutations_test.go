@@ -60,6 +60,11 @@ func (suite *DeploymentMutationsSuite) SetupTest() {
 		SetEnvironmentID(suite.testData.environment.ID).
 		SetKubernetesSecret("test-service-secret").
 		SaveX(suite.Ctx)
+	suite.DB.ServiceConfig.Create().
+		SetBuilder(schema.ServiceBuilderDocker).
+		SetServiceID(suite.testData.service.ID).
+		SetBuilder(schema.ServiceBuilderRailpack).
+		SetIcon("database").SaveX(suite.Ctx)
 
 	suite.testData.deployment = suite.DB.Deployment.Create().
 		SetServiceID(suite.testData.service.ID).
@@ -71,6 +76,7 @@ func (suite *DeploymentMutationsSuite) SetupTest() {
 			Name:      "Test User",
 			AvatarURL: "https://github.com/test.png",
 		}).
+		SetBuilder(schema.ServiceBuilderDocker).
 		SaveX(suite.Ctx)
 }
 
@@ -155,7 +161,7 @@ func (suite *DeploymentMutationsSuite) TestCreate() {
 		)
 
 		suite.Error(err)
-		suite.ErrorContains(err, "constraint failed")
+		suite.True(ent.IsNotFound(err), "Expected not found error for invalid service ID")
 	})
 
 	suite.Run("Create Error when DB closed", func() {
@@ -295,6 +301,7 @@ func (suite *DeploymentMutationsSuite) TestMarkFailed() {
 			SetServiceID(suite.testData.service.ID).
 			SetStatus(schema.DeploymentStatusBuildSucceeded).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitAuthor(&schema.GitCommitter{
 				Name:      "Test User",
 				AvatarURL: "https://github.com/test.png",
@@ -394,6 +401,7 @@ func (suite *DeploymentMutationsSuite) TestMarkCancelledExcept() {
 			SetServiceID(suite.testData.service.ID).
 			SetStatus(schema.DeploymentStatusBuildQueued).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitAuthor(&schema.GitCommitter{
 				Name:      "Test User",
 				AvatarURL: "https://github.com/test.png",
@@ -404,6 +412,7 @@ func (suite *DeploymentMutationsSuite) TestMarkCancelledExcept() {
 			SetServiceID(suite.testData.service.ID).
 			SetStatus(schema.DeploymentStatusBuildRunning).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitAuthor(&schema.GitCommitter{
 				Name:      "Test User",
 				AvatarURL: "https://github.com/test.png",
@@ -457,6 +466,7 @@ func (suite *DeploymentMutationsSuite) TestMarkAsCancelled() {
 			SetServiceID(suite.testData.service.ID).
 			SetStatus(schema.DeploymentStatusBuildQueued).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitAuthor(&schema.GitCommitter{
 				Name:      "Test User",
 				AvatarURL: "https://github.com/test.png",
@@ -485,6 +495,7 @@ func (suite *DeploymentMutationsSuite) TestMarkAsCancelled() {
 			SetServiceID(suite.testData.service.ID).
 			SetStatus(schema.DeploymentStatusBuildRunning).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitAuthor(&schema.GitCommitter{
 				Name:      "Test User",
 				AvatarURL: "https://github.com/test.png",

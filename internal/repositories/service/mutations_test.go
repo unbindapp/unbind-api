@@ -104,6 +104,7 @@ func (suite *ServiceMutationsSuite) SetupTest() {
 		SetSource(schema.DeploymentSourceManual).
 		SetCommitSha("abc123").
 		SetCommitMessage("Initial commit").
+		SetBuilder(schema.ServiceBuilderRailpack).
 		SetCommitAuthor(&schema.GitCommitter{
 			Name:      "Test User",
 			AvatarURL: "https://github.com/test.png",

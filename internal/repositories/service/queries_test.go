@@ -143,6 +143,7 @@ func (suite *ServiceQueriesSuite) SetupTest() {
 		SetSource(schema.DeploymentSourceManual).
 		SetCommitSha("abc123").
 		SetCommitMessage("Initial commit").
+		SetBuilder(schema.ServiceBuilderDocker).
 		SetCommitAuthor(&schema.GitCommitter{
 			Name:      "Test User",
 			AvatarURL: "https://github.com/test.png",
@@ -223,6 +224,7 @@ func (suite *ServiceQueriesSuite) TestGetByID() {
 			SetServiceID(suite.testService.ID).
 			SetStatus(schema.DeploymentStatusBuildFailed).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitSha("def456").
 			SetCommitMessage("Failed commit").
 			SetCommitAuthor(&schema.GitCommitter{
@@ -474,6 +476,7 @@ func (suite *ServiceQueriesSuite) TestGetByEnvironmentID() {
 			SetServiceID(suite.testService.ID).
 			SetStatus(schema.DeploymentStatusBuildRunning).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitSha("recent123").
 			SetCommitMessage("Recent commit").
 			SetCommitAuthor(&schema.GitCommitter{
@@ -728,6 +731,7 @@ func (suite *ServiceQueriesSuite) TestNeedsDeployment() {
 			SetServiceID(suite.testService.ID).
 			SetStatus(schema.DeploymentStatusBuildSucceeded).
 			SetSource(schema.DeploymentSourceManual).
+			SetBuilder(schema.ServiceBuilderDocker).
 			SetCommitSha("nodef123").
 			SetCommitMessage("No definition").
 			SetCommitAuthor(&schema.GitCommitter{

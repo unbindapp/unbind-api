@@ -2,7 +2,6 @@ package deployment_repo
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -36,7 +35,7 @@ func (self *DeploymentRepository) Create(ctx context.Context,
 		WithServiceConfig().
 		Only(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch service for build config: %w", err)
+		return nil, err
 	}
 
 	c := db.Deployment.Create().
