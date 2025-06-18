@@ -670,8 +670,8 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 	hasCrashing := false
 	hasPending := false
 	hasTerminating := false
-	readyCount := 0
-	allInstances := make([]SimpleInstanceStatus, 0)
+	readyPodCount := 0
+	allInstances := make([]SimpleInstanceStatus, 0, len(podStatuses))
 
 	for _, podStatus := range podStatuses {
 		// Check if pod itself is terminating
@@ -684,75 +684,138 @@ func (self *KubeClient) GetSimpleHealthStatus(ctx context.Context, namespace str
 			hasCrashing = true
 		}
 
-		for _, instance := range podStatus.Instances {
-			allInstances = append(allInstances, SimpleInstanceStatus{
-				KubernetesName: instance.KubernetesName,
-				Status:         instance.State,
-				RestartCount:   instance.RestartCount,
-				PodCreatedAt:   instance.PodCreatedAt,
-				Events:         instance.Events,
-			})
+		// For grouping logic - track pod-level health
+		podHasCrashing := false
+		podHasPending := false
+		podHasTerminating := false
+		podReadyContainers := 0
+		podTotalMainContainers := len(podStatus.Instances)
+		var podState ContainerState
+		var podEvents []models.EventRecord
+		var maxRestartCount int32
 
-			// Count ready instances and detect pending/crashing/terminating states
+		// Process main containers
+		for _, instance := range podStatus.Instances {
+			// Collect all events from all containers in this pod
+			podEvents = append(podEvents, instance.Events...)
+
+			// Track highest restart count
+			if instance.RestartCount > maxRestartCount {
+				maxRestartCount = instance.RestartCount
+			}
+
+			// Track pod-level states
 			switch instance.State {
 			case ContainerStateCrashing:
+				podHasCrashing = true
 				hasCrashing = true
+				podState = ContainerStateCrashing // Crashing takes precedence
 			case ContainerStateTerminating:
+				podHasTerminating = true
 				hasTerminating = true
+				if podState != ContainerStateCrashing {
+					podState = ContainerStateTerminating
+				}
 			case ContainerStateRunning:
 				if instance.Ready {
-					readyCount++
+					podReadyContainers++
 				} else {
+					podHasPending = true
 					hasPending = true
+					if podState != ContainerStateCrashing && podState != ContainerStateTerminating {
+						podState = ContainerStateNotReady
+					}
 				}
 			case ContainerStateNotReady, ContainerStateWaiting, ContainerStateStarting, ContainerStateImagePullError:
+				podHasPending = true
 				hasPending = true
+				if podState != ContainerStateCrashing && podState != ContainerStateTerminating {
+					podState = instance.State
+				}
 			case ContainerStateTerminated:
 				// Terminated containers might be crashing if they have restart counts or failed
 				if instance.IsCrashing {
+					podHasCrashing = true
 					hasCrashing = true
+					podState = ContainerStateCrashing
+				} else if podState == "" {
+					podState = ContainerStateTerminated
 				}
 			}
 		}
 
-		// Also check init containers
+		// Process init containers but filter out terminated ones
 		for _, instance := range podStatus.InstanceDependencies {
-			allInstances = append(allInstances, SimpleInstanceStatus{
-				KubernetesName: instance.KubernetesName,
-				Status:         instance.State,
-				RestartCount:   instance.RestartCount,
-				PodCreatedAt:   instance.PodCreatedAt,
-				Events:         instance.Events,
-			})
+			// Skip terminated init containers as they're expected to be terminated after successful completion
+			if instance.State == ContainerStateTerminated && !instance.IsCrashing {
+				continue
+			}
+
+			// Collect events from init containers that are still relevant
+			podEvents = append(podEvents, instance.Events...)
+
+			// Track highest restart count including init containers
+			if instance.RestartCount > maxRestartCount {
+				maxRestartCount = instance.RestartCount
+			}
 
 			// Init containers failing can affect overall health
 			switch instance.State {
 			case ContainerStateCrashing:
+				podHasCrashing = true
 				hasCrashing = true
+				podState = ContainerStateCrashing
 			case ContainerStateTerminating:
+				podHasTerminating = true
 				hasTerminating = true
+				if podState != ContainerStateCrashing {
+					podState = ContainerStateTerminating
+				}
 			case ContainerStateWaiting, ContainerStateStarting, ContainerStateImagePullError:
+				podHasPending = true
 				hasPending = true
+				if podState != ContainerStateCrashing && podState != ContainerStateTerminating {
+					podState = instance.State
+				}
 			case ContainerStateTerminated:
 				if instance.IsCrashing {
+					podHasCrashing = true
 					hasCrashing = true
+					podState = ContainerStateCrashing
 				}
 			}
 		}
+
+		// Determine final pod state - if all main containers are ready and running, pod is running
+		if !podHasCrashing && !podHasTerminating && !podHasPending && podReadyContainers == podTotalMainContainers && podTotalMainContainers > 0 {
+			podState = ContainerStateRunning
+			readyPodCount++
+		}
+
+		// Create a single SimpleInstanceStatus representing the entire pod
+		podInstanceStatus := SimpleInstanceStatus{
+			KubernetesName: podStatus.KubernetesName, // Use pod name instead of container name
+			Status:         podState,
+			RestartCount:   maxRestartCount, // Use highest restart count from all containers
+			PodCreatedAt:   podStatus.CreatedAt,
+			Events:         podEvents, // Combine events from all containers
+		}
+
+		allInstances = append(allInstances, podInstanceStatus)
 	}
 
 	// Determine health status based on priority:
 	// 1. Crashing takes precedence over everything (indicates real problems)
 	// 2. Terminating comes next (planned shutdown/scaling)
-	// 3. Pending if any containers are not ready or we don't have enough instances
-	// 4. Active only if all expected instances are ready and running
+	// 3. Pending if any containers are not ready or we don't have enough pod replicas
+	// 4. Active only if all expected pod replicas are ready and running
 	var health InstanceHealth
 	switch {
 	case hasCrashing:
 		health = InstanceHealthCrashing
 	case hasTerminating:
 		health = InstanceHealthTerminating
-	case hasPending || readyCount < expectedInstances:
+	case hasPending || readyPodCount < expectedInstances:
 		health = InstanceHealthPending
 	default:
 		health = InstanceHealthActive
