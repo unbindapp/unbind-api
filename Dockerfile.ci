@@ -2,7 +2,7 @@
 FROM stablecog/ubuntu:22.04
 
 # Install mise for railpack
-ARG MISE_VERSION=2025.5.8
+ARG MISE_VERSION=2025.6.1
 ARG MISE_DIR=/tmp/railpack/mise
 ARG MISE_BIN=${MISE_DIR}/mise-${MISE_VERSION}
 
