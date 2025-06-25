@@ -2,4 +2,4 @@
 
 rm -r ./.data/postgres/*
 rm -r ./.data/redis/*
-rm -r ./.data/authentik/*
+rm -r ./.data/dex/*
