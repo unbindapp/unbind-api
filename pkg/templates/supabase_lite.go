@@ -1342,7 +1342,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Studio",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/studio:2025.06.02-sha-8f2993d"),
+				Image:     utils.ToPtr("supabase/studio:2025.06.30-sha-6f5982d"),
 				DependsOn: []string{"service_postgresql", "service_kong"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 50,
@@ -1429,7 +1429,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Storage",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/storage-api:v1.23.0"),
+				Image:     utils.ToPtr("supabase/storage-api:v1.24.7"),
 				DependsOn: []string{"service_postgresql", "service_minio"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 30,
@@ -1604,7 +1604,7 @@ alter function pg_catalog.lo_import(text, oid) owner to postgres;
 				Name:      "Auth",
 				Type:      schema.ServiceTypeDockerimage,
 				Builder:   schema.ServiceBuilderDocker,
-				Image:     utils.ToPtr("supabase/gotrue:v2.174.0"),
+				Image:     utils.ToPtr("supabase/gotrue:v2.176.1"),
 				DependsOn: []string{"service_postgresql"},
 				Resources: &schema.Resources{
 					CPURequestsMillicores: 20,
