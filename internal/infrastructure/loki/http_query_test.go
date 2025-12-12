@@ -479,7 +479,7 @@ func (suite *HTTPQueryTestSuite) TestQueryLokiLogs_ErrorResponse() {
 	_, err := suite.querier.QueryLokiLogs(context.Background(), opts)
 
 	suite.Error(err)
-	suite.Contains(err.Error(), "Loki query returned error")
+	suite.Contains(err.Error(), "loki query returned error")
 	suite.Contains(err.Error(), "bad_data")
 	suite.Contains(err.Error(), "parse error")
 }
@@ -495,7 +495,7 @@ func (suite *HTTPQueryTestSuite) TestQueryLokiLogs_HTTPError() {
 	_, err := suite.querier.QueryLokiLogs(context.Background(), opts)
 
 	suite.Error(err)
-	suite.Contains(err.Error(), "Loki query failed with status 500")
+	suite.Contains(err.Error(), "loki query failed with status 500")
 	suite.Contains(err.Error(), "Internal Server Error")
 }
 
@@ -637,7 +637,7 @@ func (suite *HTTPQueryTestSuite) TestQueryLokiLogs_InvalidURL() {
 	_, err := suite.querier.QueryLokiLogs(context.Background(), opts)
 
 	suite.Error(err)
-	suite.Contains(err.Error(), "Unable to parse loki query URL")
+	suite.Contains(err.Error(), "unable to parse loki query URL")
 }
 
 func (suite *HTTPQueryTestSuite) TestParseStreamsResult_EmptyInstance() {

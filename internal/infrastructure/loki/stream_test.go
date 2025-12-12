@@ -882,7 +882,7 @@ func (suite *StreamTestSuite) TestStreamLokiPodLogs_InvalidURL() {
 	err := suite.querier.StreamLokiPodLogs(ctx, opts, eventChan)
 
 	suite.Error(err)
-	suite.Contains(err.Error(), "Unable to parse loki query URL")
+	suite.Contains(err.Error(), "unable to parse loki query URL")
 	close(eventChan)
 }
 

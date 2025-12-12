@@ -40,7 +40,7 @@ func (suite *LokiTestSuite) TestNewLokiLogger_InvalidURL() {
 
 	suite.Error(err)
 	suite.Nil(querier)
-	suite.Contains(err.Error(), "Unable to construct loki query URL")
+	suite.Contains(err.Error(), "unable to construct loki query URL")
 }
 
 func (suite *LokiTestSuite) TestNewLokiLogger_EmptyURL() {
