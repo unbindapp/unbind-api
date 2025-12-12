@@ -183,13 +183,14 @@ func (self *cli) createTeam(name, displayName string) {
 		if err != nil {
 			return fmt.Errorf("error creating secret: %v", err)
 		}
-		team, err = db.Team.Create().
+		var createErr error
+		team, createErr = db.Team.Create().
 			SetKubernetesName(name).
 			SetName(displayName).
 			SetNamespace(strings.ToLower(name)).
 			SetKubernetesSecret(secret.Name).Save(ctx)
 
-		return nil
+		return createErr
 	}); err != nil {
 		fmt.Printf("Error creating team: %v\n", err)
 		return
@@ -519,14 +520,14 @@ func (self *cli) createUser(email, password string) {
 	}
 
 	// Check if username already exists
-	u, err := self.repository.User().GetByEmail(context.Background(), email)
-	if err != nil {
-		if !ent.IsNotFound(err) {
-			log.Errorf("Error checking if user exists: %v", err)
+	_, checkErr := self.repository.User().GetByEmail(context.Background(), email)
+	if checkErr != nil {
+		if !ent.IsNotFound(checkErr) {
+			log.Errorf("Error checking if user exists: %v", checkErr)
 			return
 		}
 	}
-	if err == nil {
+	if checkErr == nil {
 		log.Errorf("Error: Email '%s' already exists", email)
 		return
 	}
@@ -539,7 +540,7 @@ func (self *cli) createUser(email, password string) {
 	}
 
 	// Create the user
-	u, err = self.repository.Ent().User.Create().
+	u, err := self.repository.Ent().User.Create().
 		SetEmail(email).
 		SetPasswordHash(string(hashedPassword)).
 		Save(context.Background())

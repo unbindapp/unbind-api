@@ -69,7 +69,7 @@ func (pd *PortDetector) scanElixirFiles(root string) (*int, error) {
 		}
 
 		ext := filepath.Ext(path)
-		if !(ext == ".ex" || ext == ".exs" || ext == ".sh" || ext == ".env") &&
+		if ext != ".ex" && ext != ".exs" && ext != ".sh" && ext != ".env" &&
 			d.Name() != "Dockerfile" && d.Name() != "Procfile" {
 			return nil
 		}

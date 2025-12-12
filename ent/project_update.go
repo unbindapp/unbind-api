@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent/environment"
@@ -112,6 +113,24 @@ func (pu *ProjectUpdate) SetNillableTeamID(u *uuid.UUID) *ProjectUpdate {
 	if u != nil {
 		pu.SetTeamID(*u)
 	}
+	return pu
+}
+
+// SetTags sets the "tags" field.
+func (pu *ProjectUpdate) SetTags(s []string) *ProjectUpdate {
+	pu.mutation.SetTags(s)
+	return pu
+}
+
+// AppendTags appends s to the "tags" field.
+func (pu *ProjectUpdate) AppendTags(s []string) *ProjectUpdate {
+	pu.mutation.AppendTags(s)
+	return pu
+}
+
+// ClearTags clears the value of the "tags" field.
+func (pu *ProjectUpdate) ClearTags() *ProjectUpdate {
+	pu.mutation.ClearTags()
 	return pu
 }
 
@@ -332,6 +351,17 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.Status(); ok {
 		_spec.SetField(project.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.Tags(); ok {
+		_spec.SetField(project.FieldTags, field.TypeJSON, value)
+	}
+	if value, ok := pu.mutation.AppendedTags(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, project.FieldTags, value)
+		})
+	}
+	if pu.mutation.TagsCleared() {
+		_spec.ClearField(project.FieldTags, field.TypeJSON)
 	}
 	if value, ok := pu.mutation.KubernetesSecret(); ok {
 		_spec.SetField(project.FieldKubernetesSecret, field.TypeString, value)
@@ -588,6 +618,24 @@ func (puo *ProjectUpdateOne) SetNillableTeamID(u *uuid.UUID) *ProjectUpdateOne {
 	return puo
 }
 
+// SetTags sets the "tags" field.
+func (puo *ProjectUpdateOne) SetTags(s []string) *ProjectUpdateOne {
+	puo.mutation.SetTags(s)
+	return puo
+}
+
+// AppendTags appends s to the "tags" field.
+func (puo *ProjectUpdateOne) AppendTags(s []string) *ProjectUpdateOne {
+	puo.mutation.AppendTags(s)
+	return puo
+}
+
+// ClearTags clears the value of the "tags" field.
+func (puo *ProjectUpdateOne) ClearTags() *ProjectUpdateOne {
+	puo.mutation.ClearTags()
+	return puo
+}
+
 // SetDefaultEnvironmentID sets the "default_environment_id" field.
 func (puo *ProjectUpdateOne) SetDefaultEnvironmentID(u uuid.UUID) *ProjectUpdateOne {
 	puo.mutation.SetDefaultEnvironmentID(u)
@@ -835,6 +883,17 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	}
 	if value, ok := puo.mutation.Status(); ok {
 		_spec.SetField(project.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Tags(); ok {
+		_spec.SetField(project.FieldTags, field.TypeJSON, value)
+	}
+	if value, ok := puo.mutation.AppendedTags(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, project.FieldTags, value)
+		})
+	}
+	if puo.mutation.TagsCleared() {
+		_spec.ClearField(project.FieldTags, field.TypeJSON)
 	}
 	if value, ok := puo.mutation.KubernetesSecret(); ok {
 		_spec.SetField(project.FieldKubernetesSecret, field.TypeString, value)

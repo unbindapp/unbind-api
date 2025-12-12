@@ -121,8 +121,8 @@ func (self *ServiceService) GetDNSForService(ctx context.Context, requesterUserI
 		exists := false
 		for _, internalEndpoint := range endpoints.Internal {
 			// checking if the port exists in the internal endpoint, we only allocate 1 service per port really so this is enough
-			for _, port := range internalEndpoint.Ports {
-				if port.Port == port.Port && port.Protocol != nil && *port.Protocol != schema.ProtocolUDP {
+			for _, existingPort := range internalEndpoint.Ports {
+				if existingPort.Port == port.Port && existingPort.Protocol != nil && *existingPort.Protocol != schema.ProtocolUDP {
 					exists = true
 					break
 				}

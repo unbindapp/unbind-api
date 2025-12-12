@@ -26,7 +26,7 @@ type Bootstrapper struct {
 }
 
 func (self *Bootstrapper) Sync(ctx context.Context) error {
-	var multierr error
+	var multierr *multierror.Error
 
 	// Sync system settings
 	multierr = multierror.Append(multierr, self.syncSystemSettings(ctx))
@@ -40,7 +40,7 @@ func (self *Bootstrapper) Sync(ctx context.Context) error {
 	// Sync RBAC
 	multierr = multierror.Append(multierr, self.syncK8sRBAC(ctx))
 
-	return multierr
+	return multierr.ErrorOrNil()
 }
 
 // * System settings
@@ -97,7 +97,7 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 		}
 
 		log.Infof("Creating buildkitd settings in DB: replicas=%d, parallelism=%d", replicas, parallelism)
-		settings, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
+		_, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
 			BuildkitSettings: &schema.BuildkitSettings{
 				Replicas:       replicas,
 				MaxParallelism: parallelism,
@@ -129,7 +129,7 @@ func (self *Bootstrapper) syncBuildkitdSettings(ctx context.Context) error {
 	if settings.BuildkitSettings == nil || settings.BuildkitSettings.MaxParallelism != parallelism || settings.BuildkitSettings.Replicas != replicas {
 		// Update record
 		log.Infof("Updating buildkitd settings in DB: replicas=%d, parallelism=%d", replicas, parallelism)
-		settings, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
+		_, err = self.repos.System().UpdateSystemSettings(ctx, &system_repo.SystemSettingUpdateInput{
 			BuildkitSettings: &schema.BuildkitSettings{
 				Replicas:       replicas,
 				MaxParallelism: parallelism,

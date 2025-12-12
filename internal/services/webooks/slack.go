@@ -34,7 +34,7 @@ func (self *WebhooksService) sendSlackWebhook(level WebhookLevel, event schema.W
 		TitleLink:   &data.Url,
 		Text:        &data.Description,
 		SlackFields: fields,
-		Footer:      utils.ToPtr(fmt.Sprintf("%s", event)),
+		Footer:      utils.ToPtr(string(event)),
 		Timestamp:   &timestamp,
 		MarkdownIn:  &[]string{"text", "fields"},
 	}

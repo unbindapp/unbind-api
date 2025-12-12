@@ -31,7 +31,7 @@ func (self *LokiLogQuerier) QueryLokiLogs(
 	// Build the request URL with parameters
 	reqURL, err := url.Parse(self.endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse loki query URL: %v", err)
+		return nil, fmt.Errorf("unable to parse loki query URL: %v", err)
 	}
 
 	// Set the appropriate endpoint path
@@ -89,7 +89,7 @@ func (self *LokiLogQuerier) QueryLokiLogs(
 	// Check response status
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Loki query failed with status %d: %s", resp.StatusCode, string(bodyBytes))
+		return nil, fmt.Errorf("loki query failed with status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	// Process the query result
@@ -111,7 +111,7 @@ func ParseLokiResponse(resp *http.Response, opts LokiLogHTTPOptions) ([]LogEvent
 
 	// Check response status
 	if queryResp.Status != "success" {
-		return nil, fmt.Errorf("Loki query returned error: %s - %s", queryResp.ErrorType, queryResp.Error)
+		return nil, fmt.Errorf("loki query returned error: %s - %s", queryResp.ErrorType, queryResp.Error)
 	}
 
 	// Process the query result based on result type
@@ -167,14 +167,14 @@ func parseStreamsResult(streams []Stream) []LogEvent {
 
 	for _, stream := range streams {
 		// Extract metadata from stream labels
-		instance, _ := stream.Stream["instance"]
-		environmentID, _ := stream.Stream[string(LokiLabelEnvironment)]
-		teamID, _ := stream.Stream[string(LokiLabelTeam)]
-		projectID, _ := stream.Stream[string(LokiLabelProject)]
-		serviceID, _ := stream.Stream[string(LokiLabelService)]
+		instance := stream.Stream["instance"]
+		environmentID := stream.Stream[string(LokiLabelEnvironment)]
+		teamID := stream.Stream[string(LokiLabelTeam)]
+		projectID := stream.Stream[string(LokiLabelProject)]
+		serviceID := stream.Stream[string(LokiLabelService)]
 		deploymentID, ok := stream.Stream[string(LokiLabelDeployment)]
 		if !ok {
-			deploymentID, _ = stream.Stream[string(LokiLabelBuild)]
+			deploymentID = stream.Stream[string(LokiLabelBuild)]
 		}
 
 		// Process each log entry
@@ -224,12 +224,12 @@ func parseMatrixResult(matrixValues []MatrixValue) []LogEvent {
 
 	for _, series := range matrixValues {
 		// Extract metadata from metric labels
-		instance, _ := series.Metric["instance"]
-		environmentID, _ := series.Metric[string(LokiLabelEnvironment)]
-		teamID, _ := series.Metric[string(LokiLabelTeam)]
-		projectID, _ := series.Metric[string(LokiLabelProject)]
-		serviceID, _ := series.Metric[string(LokiLabelService)]
-		deploymentID, _ := series.Metric[string(LokiLabelDeployment)]
+		instance := series.Metric["instance"]
+		environmentID := series.Metric[string(LokiLabelEnvironment)]
+		teamID := series.Metric[string(LokiLabelTeam)]
+		projectID := series.Metric[string(LokiLabelProject)]
+		serviceID := series.Metric[string(LokiLabelService)]
+		deploymentID := series.Metric[string(LokiLabelDeployment)]
 
 		// For each sample in the series, create a log event
 		for _, sample := range series.Values {
@@ -265,12 +265,12 @@ func parseVectorResult(vectorValues []VectorValue) []LogEvent {
 
 	for _, sample := range vectorValues {
 		// Extract metadata from metric labels
-		instance, _ := sample.Metric["instance"]
-		environmentID, _ := sample.Metric[string(LokiLabelEnvironment)]
-		teamID, _ := sample.Metric[string(LokiLabelTeam)]
-		projectID, _ := sample.Metric[string(LokiLabelProject)]
-		serviceID, _ := sample.Metric[string(LokiLabelService)]
-		deploymentID, _ := sample.Metric[string(LokiLabelDeployment)]
+		instance := sample.Metric["instance"]
+		environmentID := sample.Metric[string(LokiLabelEnvironment)]
+		teamID := sample.Metric[string(LokiLabelTeam)]
+		projectID := sample.Metric[string(LokiLabelProject)]
+		serviceID := sample.Metric[string(LokiLabelService)]
+		deploymentID := sample.Metric[string(LokiLabelDeployment)]
 
 		// Create a timestamp from the sample
 		timestamp := time.Unix(0, sample.Value.Timestamp)

@@ -213,7 +213,7 @@ func TestDefinitionRendering(t *testing.T) {
 					AdditionalProperties: &ParameterProperty{
 						Type: "string",
 					},
-					Default: map[string]interface{}{},
+					Default: map[string]any{},
 				},
 			},
 			Required: []string{"common"},
@@ -375,8 +375,8 @@ spec:
 			Name:      "test-postgres",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 3,
 				},
 			},
@@ -433,8 +433,8 @@ spec:
 			Name:      "test-postgres-additional-db",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 1,
 				},
 				"defaultDatabaseName": "myapp",
@@ -468,11 +468,11 @@ spec:
 			Name:      "test-postgres-env",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 2,
 				},
-				"environment": map[string]interface{}{
+				"environment": map[string]any{
 					"POSTGRES_LOG_STATEMENT": "all",
 					"PGAUDIT_LOG":            "DDL",
 					"MAX_CONNECTIONS":        "100",
@@ -521,8 +521,8 @@ spec:
 			Name:      "test-postgres-docker",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 2,
 				},
 				"version":     "15",                     // Using a different PostgreSQL version
@@ -554,11 +554,11 @@ spec:
 			Name:      "test-postgres-s3",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 2,
 				},
-				"s3": map[string]interface{}{
+				"s3": map[string]any{
 					"enabled":    true,
 					"bucket":     "test-bucket",
 					"secretName": "s3-secret",
@@ -610,11 +610,11 @@ spec:
 			Name:      "test-postgres-restore",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 2,
 				},
-				"restore": map[string]interface{}{
+				"restore": map[string]any{
 					"enabled":      true,
 					"bucket":       "restore-bucket",
 					"cluster":      "source-cluster",
@@ -668,18 +668,18 @@ spec:
 			Name:      "test-postgres-s3-restore",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 2,
 				},
-				"s3": map[string]interface{}{
+				"s3": map[string]any{
 					"enabled":    true,
 					"bucket":     "backup-bucket",
 					"secretName": "s3-secret",
 					"accessKey":  "S3_ACCESS_KEY",
 					"secretKey":  "S3_SECRET_KEY",
 				},
-				"restore": map[string]interface{}{
+				"restore": map[string]any{
 					"enabled":    true,
 					"bucket":     "restore-bucket",
 					"cluster":    "source-cluster",
@@ -731,11 +731,11 @@ spec:
 			Name:      "test-postgres-custom-backup-restore",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 2,
 				},
-				"s3": map[string]interface{}{
+				"s3": map[string]any{
 					"enabled":         true,
 					"bucket":          "backup-bucket",
 					"secretName":      "s3-secret",
@@ -747,7 +747,7 @@ spec:
 					"backupSchedule":  "0 0 * * *",
 					"backupPrefix":    "prefix/path",
 				},
-				"restore": map[string]interface{}{
+				"restore": map[string]any{
 					"enabled":      true,
 					"bucket":       "restore-bucket",
 					"cluster":      "source-cluster",
@@ -801,8 +801,8 @@ spec:
 			Name:      "test-postgres-dollar",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas": 1,
 				},
 				"initDB": `-- Test dollar-quoted strings
@@ -1053,10 +1053,10 @@ replica:
 			Name:      "test-redis",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "redis-secret",
 				"secretKey":  "redis-password",
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 1, // Standalone mode
 				},
 			},
@@ -1104,10 +1104,10 @@ replica:
 			Name:      "test-redis-replication",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "redis-secret",
 				"secretKey":  "redis-password",
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 3, // Replication mode with 3 nodes (1 master + 2 replicas)
 					"storage":  "5Gi",
 				},
@@ -1144,13 +1144,13 @@ replica:
 			Name:      "test-redis-labels",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "redis-secret",
 				"secretKey":  "redis-password",
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 1,
 				},
-				"labels": map[string]interface{}{
+				"labels": map[string]any{
 					"environment": "production",
 					"app":         "my-redis-app",
 					"tier":        "cache",
@@ -1190,18 +1190,18 @@ replica:
 			Name:      "test-redis-resources",
 			Namespace: "default",
 			TeamID:    "team1",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "redis-secret",
 				"secretKey":  "redis-password",
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 1,
 					"storage":  "10Gi",
-					"resources": map[string]interface{}{
-						"requests": map[string]interface{}{
+					"resources": map[string]any{
+						"requests": map[string]any{
 							"cpu":    "200m",
 							"memory": "256Mi",
 						},
-						"limits": map[string]interface{}{
+						"limits": map[string]any{
 							"cpu":    "1000m",
 							"memory": "512Mi",
 						},
@@ -1430,7 +1430,7 @@ func TestMySQLRendering(t *testing.T) {
 					AdditionalProperties: &ParameterProperty{
 						Type: "string",
 					},
-					Default: map[string]interface{}{},
+					Default: map[string]any{},
 				},
 			},
 			Required: []string{"secretName"}, // Added secretName as required based on schema
@@ -1647,9 +1647,9 @@ spec:
 			Name:      "test-mysql",
 			Namespace: "test-ns",
 			TeamID:    "team-moco", // Not directly used by MOCO template, but good practice
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "mysql-creds", // Required parameter
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 3,
 					"storage":  "10Gi",
 				},
@@ -1696,12 +1696,12 @@ spec:
 		ctx := &RenderContext{
 			Name:      "test-mysql-backup",
 			Namespace: "backup-ns",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "mysql-creds-backup",
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 1,
 				},
-				"s3": map[string]interface{}{
+				"s3": map[string]any{
 					"enabled":    true,
 					"bucket":     "mysql-backup-bucket",
 					"secretName": "backup-s3-secret",
@@ -1749,12 +1749,12 @@ spec:
 		ctx := &RenderContext{
 			Name:      "test-mysql-restore",
 			Namespace: "restore-ns",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "mysql-creds-restore",
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 1,
 				},
-				"restore": map[string]interface{}{
+				"restore": map[string]any{
 					"enabled":    true,
 					"cluster":    "source-mysql-cluster",
 					"bucket":     "restore-from-bucket",
@@ -1803,8 +1803,8 @@ spec:
 		ctx := &RenderContext{
 			Name:      "test-mysql-external",
 			Namespace: "external-ns",
-			Parameters: map[string]interface{}{
-				"common": map[string]interface{}{
+			Parameters: map[string]any{
+				"common": map[string]any{
 					"replicas":       1,
 					"exposeExternal": true,
 				},
@@ -1845,16 +1845,16 @@ spec:
 		ctx := &RenderContext{
 			Name:      "test-mysql-custom",
 			Namespace: "custom-ns",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"secretName": "mysql-creds-custom",
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 1,
 				},
-				"labels": map[string]interface{}{
+				"labels": map[string]any{
 					"app.kubernetes.io/component": "database",
 					"environment":                 "staging",
 				},
-				"environment": map[string]interface{}{
+				"environment": map[string]any{
 					"MYSQL_MAX_CONNECTIONS":         "500",
 					"MYSQL_INNODB_BUFFER_POOL_SIZE": "1G",
 				},
@@ -1891,17 +1891,17 @@ spec:
 		ctx := &RenderContext{
 			Name:      "test-mysql-resources",
 			Namespace: "resource-ns",
-			Parameters: map[string]interface{}{
+			Parameters: map[string]any{
 				"version": "8.0.41", // Custom version
-				"common": map[string]interface{}{
+				"common": map[string]any{
 					"replicas": 2,
 					"storage":  "50Gi",
-					"resources": map[string]interface{}{
-						"requests": map[string]interface{}{
+					"resources": map[string]any{
+						"requests": map[string]any{
 							"cpu":    "500m",
 							"memory": "1Gi",
 						},
-						"limits": map[string]interface{}{
+						"limits": map[string]any{
 							"cpu":    "2000m",
 							"memory": "4Gi",
 						},

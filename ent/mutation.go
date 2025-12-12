@@ -9466,6 +9466,8 @@ type ProjectMutation struct {
 	name                       *string
 	description                *string
 	status                     *string
+	tags                       *[]string
+	appendtags                 []string
 	kubernetes_secret          *string
 	clearedFields              map[string]struct{}
 	team                       *uuid.UUID
@@ -9852,6 +9854,71 @@ func (m *ProjectMutation) ResetTeamID() {
 	m.team = nil
 }
 
+// SetTags sets the "tags" field.
+func (m *ProjectMutation) SetTags(s []string) {
+	m.tags = &s
+	m.appendtags = nil
+}
+
+// Tags returns the value of the "tags" field in the mutation.
+func (m *ProjectMutation) Tags() (r []string, exists bool) {
+	v := m.tags
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTags returns the old "tags" field's value of the Project entity.
+// If the Project object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProjectMutation) OldTags(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTags is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTags requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTags: %w", err)
+	}
+	return oldValue.Tags, nil
+}
+
+// AppendTags adds s to the "tags" field.
+func (m *ProjectMutation) AppendTags(s []string) {
+	m.appendtags = append(m.appendtags, s...)
+}
+
+// AppendedTags returns the list of values that were appended to the "tags" field in this mutation.
+func (m *ProjectMutation) AppendedTags() ([]string, bool) {
+	if len(m.appendtags) == 0 {
+		return nil, false
+	}
+	return m.appendtags, true
+}
+
+// ClearTags clears the value of the "tags" field.
+func (m *ProjectMutation) ClearTags() {
+	m.tags = nil
+	m.appendtags = nil
+	m.clearedFields[project.FieldTags] = struct{}{}
+}
+
+// TagsCleared returns if the "tags" field was cleared in this mutation.
+func (m *ProjectMutation) TagsCleared() bool {
+	_, ok := m.clearedFields[project.FieldTags]
+	return ok
+}
+
+// ResetTags resets all changes to the "tags" field.
+func (m *ProjectMutation) ResetTags() {
+	m.tags = nil
+	m.appendtags = nil
+	delete(m.clearedFields, project.FieldTags)
+}
+
 // SetDefaultEnvironmentID sets the "default_environment_id" field.
 func (m *ProjectMutation) SetDefaultEnvironmentID(u uuid.UUID) {
 	m.default_environment = &u
@@ -10133,7 +10200,7 @@ func (m *ProjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProjectMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, project.FieldCreatedAt)
 	}
@@ -10154,6 +10221,9 @@ func (m *ProjectMutation) Fields() []string {
 	}
 	if m.team != nil {
 		fields = append(fields, project.FieldTeamID)
+	}
+	if m.tags != nil {
+		fields = append(fields, project.FieldTags)
 	}
 	if m.default_environment != nil {
 		fields = append(fields, project.FieldDefaultEnvironmentID)
@@ -10183,6 +10253,8 @@ func (m *ProjectMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case project.FieldTeamID:
 		return m.TeamID()
+	case project.FieldTags:
+		return m.Tags()
 	case project.FieldDefaultEnvironmentID:
 		return m.DefaultEnvironmentID()
 	case project.FieldKubernetesSecret:
@@ -10210,6 +10282,8 @@ func (m *ProjectMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldStatus(ctx)
 	case project.FieldTeamID:
 		return m.OldTeamID(ctx)
+	case project.FieldTags:
+		return m.OldTags(ctx)
 	case project.FieldDefaultEnvironmentID:
 		return m.OldDefaultEnvironmentID(ctx)
 	case project.FieldKubernetesSecret:
@@ -10272,6 +10346,13 @@ func (m *ProjectMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTeamID(v)
 		return nil
+	case project.FieldTags:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTags(v)
+		return nil
 	case project.FieldDefaultEnvironmentID:
 		v, ok := value.(uuid.UUID)
 		if !ok {
@@ -10319,6 +10400,9 @@ func (m *ProjectMutation) ClearedFields() []string {
 	if m.FieldCleared(project.FieldDescription) {
 		fields = append(fields, project.FieldDescription)
 	}
+	if m.FieldCleared(project.FieldTags) {
+		fields = append(fields, project.FieldTags)
+	}
 	if m.FieldCleared(project.FieldDefaultEnvironmentID) {
 		fields = append(fields, project.FieldDefaultEnvironmentID)
 	}
@@ -10338,6 +10422,9 @@ func (m *ProjectMutation) ClearField(name string) error {
 	switch name {
 	case project.FieldDescription:
 		m.ClearDescription()
+		return nil
+	case project.FieldTags:
+		m.ClearTags()
 		return nil
 	case project.FieldDefaultEnvironmentID:
 		m.ClearDefaultEnvironmentID()
@@ -10370,6 +10457,9 @@ func (m *ProjectMutation) ResetField(name string) error {
 		return nil
 	case project.FieldTeamID:
 		m.ResetTeamID()
+		return nil
+	case project.FieldTags:
+		m.ResetTags()
 		return nil
 	case project.FieldDefaultEnvironmentID:
 		m.ResetDefaultEnvironmentID()

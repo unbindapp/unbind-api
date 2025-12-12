@@ -77,7 +77,7 @@ type LogFormatter interface {
 // LogEntry records the final log when a request completes.
 // See defaultLogEntry for an example implementation.
 type LogEntry interface {
-	Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{})
+	Write(status, bytes int, header http.Header, elapsed time.Duration, extra any)
 }
 
 // GetLogEntry returns the in-context LogEntry for a request.
@@ -134,7 +134,7 @@ type defaultLogEntry struct {
 	useColor bool
 }
 
-func (l *defaultLogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
+func (l *defaultLogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra any) {
 	switch {
 	case status < 200:
 		cW(l.buf, l.useColor, bBlue, "%03d", status)
@@ -152,23 +152,20 @@ func (l *defaultLogEntry) Write(status, bytes int, header http.Header, elapsed t
 
 	l.buf.WriteString(" in ")
 
-	elapsedMillis := elapsed.Truncate(time.Millisecond)
+	elapsedTrunc := elapsed.Truncate(time.Millisecond)
 
 	if elapsed < 500*time.Millisecond {
-		cW(l.buf, l.useColor, nGreen, "%s", elapsedMillis)
+		cW(l.buf, l.useColor, nGreen, "%s", elapsedTrunc)
 	} else if elapsed < 5*time.Second {
-		cW(l.buf, l.useColor, nYellow, "%s", elapsedMillis)
+		cW(l.buf, l.useColor, nYellow, "%s", elapsedTrunc)
 	} else {
-		cW(l.buf, l.useColor, nRed, "%s", elapsedMillis)
+		cW(l.buf, l.useColor, nRed, "%s", elapsedTrunc)
 	}
 
 	log.Infof("%s", l.buf.String())
 }
 
 func init() {
-	color := true
-	if runtime.GOOS == "windows" {
-		color = false
-	}
-	DefaultLogger = RequestLogger(&DefaultLogFormatter{NoColor: !color})
+	useColor := runtime.GOOS != "windows"
+	DefaultLogger = RequestLogger(&DefaultLogFormatter{NoColor: !useColor})
 }

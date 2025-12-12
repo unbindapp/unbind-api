@@ -1,4 +1,4 @@
-.PHONY: migrate migrate\:checksum interfaces ent tests help
+.PHONY: migrate migrate\:checksum interfaces ent tests fmt help
 
 help:
 	@echo "Available commands:"
@@ -33,6 +33,10 @@ interfaces:
 ent:
 	@echo "Generating entities..."
 	@go generate ./ent/...
+
+fmt:
+	@echo "Formatting Go code..."
+	@go fmt ./...
 
 tests:
 	@echo "Running tests..."

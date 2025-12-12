@@ -100,7 +100,7 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 			case <-streamCtx.Done():
 				return
 			default:
-				send.Data(loki.LogEvents{
+				_ = send.Data(loki.LogEvents{
 					MessageType:  loki.LogEventsMessageTypeError,
 					ErrorMessage: fmt.Sprintf("Error streaming logs: %v", err),
 				})
@@ -113,7 +113,7 @@ func (self *LogsService) StreamLogs(ctx context.Context, requesterUserID uuid.UU
 	for {
 		select {
 		case event := <-eventChan:
-			send.Data(event)
+			_ = send.Data(event)
 		case <-ctx.Done():
 			return nil
 		}

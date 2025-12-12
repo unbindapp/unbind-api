@@ -115,7 +115,7 @@ func (s *RedisQueueTestSuite) TestEnqueue_MultipleItems() {
 	for i, item := range items {
 		err := s.queue.Enqueue(s.ctx, item.id, item.data)
 		s.NoError(err)
-		
+
 		if i < len(items)-1 {
 			time.Sleep(10 * time.Millisecond) // Ensure different timestamps
 		}
@@ -128,7 +128,7 @@ func (s *RedisQueueTestSuite) TestEnqueue_MultipleItems() {
 
 func (s *RedisQueueTestSuite) TestEnqueue_InvalidContext() {
 	data := s.createTestData("test-item", 42)
-	
+
 	// Create a cancelled context
 	cancelledCtx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -178,7 +178,7 @@ func (s *RedisQueueTestSuite) TestDequeue_FIFO() {
 	for i, item := range items {
 		err := s.queue.Enqueue(s.ctx, item.id, item.data)
 		s.NoError(err)
-		
+
 		if i < len(items)-1 {
 			time.Sleep(10 * time.Millisecond) // Ensure different timestamps
 		}
@@ -639,7 +639,7 @@ func (s *RedisQueueTestSuite) TestStartProcessor_ContextCancellation() {
 
 	// Enqueue item after context should be cancelled
 	time.Sleep(150 * time.Millisecond)
-	
+
 	data := s.createTestData("late-item", 42)
 	err := s.queue.Enqueue(s.ctx, "late-id", data)
 	s.NoError(err)

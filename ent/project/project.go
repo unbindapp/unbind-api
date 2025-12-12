@@ -29,6 +29,8 @@ const (
 	FieldStatus = "status"
 	// FieldTeamID holds the string denoting the team_id field in the database.
 	FieldTeamID = "team_id"
+	// FieldTags holds the string denoting the tags field in the database.
+	FieldTags = "tags"
 	// FieldDefaultEnvironmentID holds the string denoting the default_environment_id field in the database.
 	FieldDefaultEnvironmentID = "default_environment_id"
 	// FieldKubernetesSecret holds the string denoting the kubernetes_secret field in the database.
@@ -83,6 +85,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldStatus,
 	FieldTeamID,
+	FieldTags,
 	FieldDefaultEnvironmentID,
 	FieldKubernetesSecret,
 }

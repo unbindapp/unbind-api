@@ -118,7 +118,7 @@ func main() {
 		Description: "Create a new user",
 		FlagSet:     userCreateFlagSet,
 		Handler: func() {
-			userCreateFlagSet.Parse(os.Args[2:])
+			_ = userCreateFlagSet.Parse(os.Args[2:])
 
 			if *email == "" || *password == "" {
 				fmt.Println("Error: email and password are required")
@@ -135,7 +135,7 @@ func main() {
 		Description: "Change password for a user",
 		FlagSet:     userChangePasswordFlagSet,
 		Handler: func() {
-			userChangePasswordFlagSet.Parse(os.Args[2:])
+			_ = userChangePasswordFlagSet.Parse(os.Args[2:])
 			if *email == "" || *password == "" {
 				fmt.Println("Error: email and password are required")
 				userChangePasswordFlagSet.Usage()
@@ -158,7 +158,7 @@ func main() {
 		Description: "Create a new group",
 		FlagSet:     groupCreateFlagSet,
 		Handler: func() {
-			groupCreateFlagSet.Parse(os.Args[2:])
+			_ = groupCreateFlagSet.Parse(os.Args[2:])
 
 			if *groupName == "" || *groupDescription == "" {
 				fmt.Println("Error: name and description are required")
@@ -175,7 +175,7 @@ func main() {
 		Description: "Add a user to a group",
 		FlagSet:     groupAddUserFlagSet,
 		Handler: func() {
-			groupAddUserFlagSet.Parse(os.Args[2:])
+			_ = groupAddUserFlagSet.Parse(os.Args[2:])
 
 			if *addUserEmail == "" || *addUserGroupName == "" {
 				fmt.Println("Error: email and group-name are required")
@@ -192,7 +192,7 @@ func main() {
 		Description: "List permissions for a group",
 		FlagSet:     groupListPermissionsFlagSet,
 		Handler: func() {
-			groupListPermissionsFlagSet.Parse(os.Args[2:])
+			_ = groupListPermissionsFlagSet.Parse(os.Args[2:])
 
 			if *listPermGroupName == "" {
 				fmt.Println("Error: group-name is required")
@@ -209,7 +209,7 @@ func main() {
 		Description: "Grant permissions to a group",
 		FlagSet:     groupGrantPermissionFlagSet,
 		Handler: func() {
-			groupGrantPermissionFlagSet.Parse(os.Args[2:])
+			_ = groupGrantPermissionFlagSet.Parse(os.Args[2:])
 
 			if *grantGroupName == "" || *grantAction == "" || *grantResourceType == "" || *grantResourceID == "" {
 				fmt.Println("Error: group-name, action, resource-type, and resource-id are required")
@@ -227,7 +227,7 @@ func main() {
 		Description: "Create a new team",
 		FlagSet:     teamCreateFlagSet,
 		Handler: func() {
-			teamCreateFlagSet.Parse(os.Args[2:])
+			_ = teamCreateFlagSet.Parse(os.Args[2:])
 
 			if *teamName == "" || *teamDisplayName == "" {
 				fmt.Println("Error: name and displayname are required")

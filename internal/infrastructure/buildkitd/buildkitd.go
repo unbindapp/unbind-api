@@ -134,7 +134,7 @@ func (self *BuildkitSettingsManager) GetCurrentMaxParallelism(ctx context.Contex
 func (self *BuildkitSettingsManager) UpdateReplicas(ctx context.Context, replicas int) error {
 	// Create a patch operation to update the replicas
 	replicasInt32 := int32(replicas)
-	patchBytes, err := json.Marshal([]map[string]interface{}{
+	patchBytes, err := json.Marshal([]map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/spec/replicas",

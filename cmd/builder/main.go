@@ -136,10 +136,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	godotenv.Load()
+	_ = godotenv.Load()
 
 	cfg := config.NewConfig()
-	os.Setenv("BUILDKIT_HOST", cfg.BuildkitHost)
+	_ = os.Setenv("BUILDKIT_HOST", cfg.BuildkitHost)
 
 	log.Infof("Unbind builder %s...", Version)
 	log.Info("--------------")
@@ -342,7 +342,7 @@ func main() {
 
 	// Database doesn't need a build, so bypass
 	if dockerImg == "" && cfg.ServiceType != schema.ServiceTypeDatabase {
-		if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, fmt.Sprintf("no output image generated"), cfg.ServiceDeploymentID); err != nil {
+		if err := markDeploymentFailed(ctx, cfg, webhooksService, repo, "no output image generated", cfg.ServiceDeploymentID); err != nil {
 			log.Errorf("Failed to mark deployment as failed: %v", err)
 		}
 		log.Error("Failed to build image to deploy!")

@@ -28,7 +28,7 @@ func TestGenerateGithubJWT(t *testing.T) {
 	assert.NotEmpty(t, token, "Generated token should not be empty")
 
 	// Verify the token
-	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		// Validate the algorithm
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -129,7 +129,7 @@ func TestGenerateGithubJWT_TimeConsistency(t *testing.T) {
 	afterTokenTime := time.Now()
 
 	// Parse token to extract issuedAt claim
-	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
 		return &privateKey.PublicKey, nil
 	})
 	assert.NoError(t, err, "Token should be parsable")

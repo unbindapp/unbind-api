@@ -99,7 +99,7 @@ var urlEncodedFormat = huma.Format{
 		// However, gorilla/schema requires a struct for decoding, so we need to map `url.Values` to a
 		// `map[string]any` if this happens.
 		// See: https://github.com/danielgtaylor/huma/blob/main/huma.go#L1264
-		if vPtr, ok := v.(*interface{}); ok {
+		if vPtr, ok := v.(*any); ok {
 			m := map[string]any{}
 			for k, v := range values {
 				if len(v) > 1 {
@@ -353,12 +353,12 @@ func startAPI(cfg *config.Config) {
 	r.Get("/version", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"version": "` + Version + `"}`))
+		_, _ = w.Write([]byte(`{"version": "` + Version + `"}`))
 	})
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	r.Group(func(r chi.Router) {
@@ -370,7 +370,7 @@ func startAPI(cfg *config.Config) {
 
 		config := NewHumaConfig("Unbind API", "1.0.0")
 		config.DocsPath = ""
-		config.OpenAPI.Servers = []*huma.Server{
+		config.Servers = []*huma.Server{
 			{
 				URL: cfg.ExternalAPIURL,
 			},
@@ -384,7 +384,7 @@ func startAPI(cfg *config.Config) {
 
 		r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "text/html")
-			w.Write([]byte(`<!doctype html>
+			_, _ = w.Write([]byte(`<!doctype html>
 			<html>
 				<head>
 					<title>API Reference</title>
@@ -621,6 +621,9 @@ func startAPI(cfg *config.Config) {
 			ctx,
 		),
 	)
+	if err != nil {
+		log.Fatal("Failed to create database sync job", "err", err)
+	}
 
 	// Start the scheduler
 	scheduler.Start()

@@ -41,7 +41,7 @@ func (self *GithubClient) ReadUserAdminRepositories(ctx context.Context, install
 		g.Go(func() error {
 			authenticatedClient, err := self.GetAuthenticatedClient(gctx, inst.GithubAppID, inst.ID, inst.Edges.GithubApp.PrivateKey)
 			if err != nil {
-				return fmt.Errorf("Error getting authenticated client for %s: %v", inst.AccountLogin, err)
+				return fmt.Errorf("error getting authenticated client for %s: %v", inst.AccountLogin, err)
 			}
 			defer authenticatedClient.Client().CloseIdleConnections()
 
@@ -105,7 +105,7 @@ func (self *GithubClient) fetchUserAdminRepos(ctx context.Context, client *githu
 		// Get user's repositories with pagination
 		ghRepositories, resp, err := client.Repositories.ListByUser(ctx, inst.AccountLogin, opts)
 		if err != nil {
-			return nil, fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
+			return nil, fmt.Errorf("error getting repositories for user %s: %v", inst.AccountLogin, err)
 		}
 
 		// Filter admin repositories
@@ -164,7 +164,7 @@ func (self *GithubClient) fetchOrganizationAdminRepos(ctx context.Context, clien
 		// Get user's repositories with pagination
 		ghRepositories, resp, err := client.Repositories.ListByOrg(ctx, inst.AccountLogin, opts)
 		if err != nil {
-			return nil, fmt.Errorf("Error getting repositories for user %s: %v", inst.AccountLogin, err)
+			return nil, fmt.Errorf("error getting repositories for user %s: %v", inst.AccountLogin, err)
 		}
 
 		// Filter admin repositories

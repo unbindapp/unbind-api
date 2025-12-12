@@ -35,14 +35,14 @@ func TestDeleteUnbindService(t *testing.T) {
 			serviceName: "test-service",
 			existingResources: []runtime.Object{
 				&unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "unbind.unbind.app/v1",
 						"kind":       "Service",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name":      "test-service",
 							"namespace": "test-namespace",
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"image": "nginx:latest",
 						},
 					},
@@ -65,14 +65,14 @@ func TestDeleteUnbindService(t *testing.T) {
 			serviceName: "test-service",
 			existingResources: []runtime.Object{
 				&unstructured.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "unbind.unbind.app/v1",
 						"kind":       "Service",
-						"metadata": map[string]interface{}{
+						"metadata": map[string]any{
 							"name":      "test-service",
 							"namespace": "test-namespace", // Different namespace
 						},
-						"spec": map[string]interface{}{
+						"spec": map[string]any{
 							"image": "nginx:latest",
 						},
 					},

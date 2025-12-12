@@ -379,7 +379,7 @@ func TestJSONValueCoder(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Verify it's valid JSON
-	var decodedMap map[string]interface{}
+	var decodedMap map[string]any
 	err = json.Unmarshal([]byte(encoded), &decodedMap)
 	assert.NoError(t, err)
 	assert.Equal(t, float64(123), decodedMap["id"])

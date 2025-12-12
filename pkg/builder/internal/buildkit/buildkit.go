@@ -48,7 +48,7 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 			// For Docker Hub, we expect the format: username/repository:tag
 			// Don't prepend docker.io to the image name
 			if !strings.Contains(imageName, "/") {
-				return fmt.Errorf("Docker Hub requires image name in format: username/repository[:tag]")
+				return fmt.Errorf("docker hub requires image name in format: username/repository[:tag]")
 			}
 		} else {
 			// For other registries, prepend registry URL if needed

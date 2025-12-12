@@ -11,12 +11,12 @@ import (
 func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) {
 	authHeader := ctx.Header("Authorization")
 	if authHeader == "" {
-		huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Authorization header required")
+		_ = huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Authorization header required")
 		return
 	}
 
 	if !strings.HasPrefix(authHeader, "Bearer ") {
-		huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Authorization header must be a Bearer token")
+		_ = huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Authorization header must be a Bearer token")
 		return
 	}
 
@@ -27,7 +27,7 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 		user, err := self.repository.User().GetByEmail(ctx.Context(), "admin@unbind.app")
 		if err != nil {
 			log.Errorf("Failed to process user: %v", err)
-			huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")
+			_ = huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")
 			return
 		}
 		ctx = huma.WithValue(ctx, "user", user)
@@ -38,12 +38,12 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 	verifier, err := self.getVerifier()
 	if err != nil {
 		log.Errorf("Failed to get verifier: %v", err)
-		huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to get verifier")
+		_ = huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to get verifier")
 		return
 	}
 	token, err := verifier.Verify(ctx.Context(), bearerToken)
 	if err != nil {
-		huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Invalid token")
+		_ = huma.WriteErr(self.api, ctx, http.StatusUnauthorized, "Invalid token")
 		return
 	}
 
@@ -54,7 +54,7 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 	}
 	if err := token.Claims(&claims); err != nil {
 		log.Errorf("Failed to parse claims: %v", err)
-		huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to parse claims")
+		_ = huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to parse claims")
 		return
 	}
 
@@ -62,7 +62,7 @@ func (self *Middleware) Authenticate(ctx huma.Context, next func(huma.Context)) 
 	user, err := self.repository.User().GetByEmail(ctx.Context(), claims.Email)
 	if err != nil {
 		log.Errorf("Failed to process user: %v", err)
-		huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")
+		_ = huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Failed to process user")
 		return
 	}
 

@@ -33,14 +33,14 @@ type DefinitionImport struct {
 type DefinitionParameterSchema struct {
 	Properties map[string]ParameterProperty `yaml:"properties" json:"properties"`
 	Required   []string                     `yaml:"required,omitempty" json:"required,omitempty"`
-	Imports    map[string]interface{}       `json:"-" yaml:"-"` // For resolved imports
+	Imports    map[string]any               `json:"-" yaml:"-"` // For resolved imports
 }
 
 // ParameterProperty defines a single parameter's schema
 type ParameterProperty struct {
 	Type                 string                       `yaml:"type" json:"type"`
 	Description          string                       `yaml:"description,omitempty" json:"description,omitempty"`
-	Default              interface{}                  `yaml:"default,omitempty" json:"default,omitempty"`
+	Default              any                          `yaml:"default,omitempty" json:"default,omitempty"`
 	Enum                 []string                     `yaml:"enum,omitempty" json:"enum,omitempty"`
 	Properties           map[string]ParameterProperty `yaml:"properties,omitempty" json:"properties,omitempty"`
 	AdditionalProperties *ParameterProperty           `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`

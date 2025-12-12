@@ -2,7 +2,6 @@ package logs_handler
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -33,10 +32,10 @@ func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, s
 
 	if !found {
 		log.Error("Error getting user from context")
-		send.Data(
+		_ = send.Data(
 			loki.LogEvents{
 				MessageType:  loki.LogEventsMessageTypeError,
-				ErrorMessage: fmt.Sprintf("unauthorized"),
+				ErrorMessage: "unauthorized",
 			},
 		)
 	}

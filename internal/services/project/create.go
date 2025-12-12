@@ -10,9 +10,9 @@ import (
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/models"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 )
 
@@ -111,6 +111,10 @@ func (self *ProjectService) CreateProject(ctx context.Context, requesterUserID u
 
 		// Get project with edges
 		project, err := self.repo.Project().GetByID(context.Background(), project.ID)
+		if err != nil {
+			log.Errorf("Failed to get project %s: %v", project.ID.String(), err)
+			return
+		}
 
 		// Construct URL
 		url, _ := utils.JoinURLPaths(self.cfg.ExternalUIUrl, project.TeamID.String(), "project", project.ID.String())

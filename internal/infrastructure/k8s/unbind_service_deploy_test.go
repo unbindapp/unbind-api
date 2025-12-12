@@ -46,15 +46,15 @@ func TestDeployUnbindService_Create(t *testing.T) {
 
 func TestDeployUnbindService_Update(t *testing.T) {
 	existingResource := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "unbind.unbind.app/v1",
 			"kind":       "Service",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":            "existing-service",
 				"namespace":       "test-namespace",
 				"resourceVersion": "123",
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"enabled": true,
 			},
 		},

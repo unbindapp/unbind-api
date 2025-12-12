@@ -65,7 +65,7 @@ func (pd *PortDetector) scanGoFiles(root string) (*int, error) {
 
 		// ── choose only the files we care about
 		ext := filepath.Ext(path)
-		if !(ext == ".go" || ext == ".sh" || ext == ".mk" || ext == ".bash") &&
+		if ext != ".go" && ext != ".sh" && ext != ".mk" && ext != ".bash" &&
 			d.Name() != "Dockerfile" && d.Name() != "Procfile" {
 			return nil
 		}

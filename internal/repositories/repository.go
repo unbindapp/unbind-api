@@ -41,7 +41,7 @@ func (r *BaseRepository) WithTx(ctx context.Context, fn func(tx TxInterface) err
 	defer func() {
 		if v := recover(); v != nil {
 			log.Errorf("Panic caught in WithTX: %v", string(debug.Stack()))
-			tx.Rollback()
+			_ = tx.Rollback()
 			// Re-panic to pass upstream
 			panic(v)
 		}

@@ -36,8 +36,11 @@ func IsValidGlobPattern(pattern string) bool {
 
 	// Check for invalid characters
 	for _, c := range pattern {
-		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-			(c >= '0' && c <= '9') || c == '_' || c == '-' || c == '*' || c == '.') {
+		isLower := c >= 'a' && c <= 'z'
+		isUpper := c >= 'A' && c <= 'Z'
+		isDigit := c >= '0' && c <= '9'
+		isSpecial := c == '_' || c == '-' || c == '*' || c == '.'
+		if !isLower && !isUpper && !isDigit && !isSpecial {
 			return false
 		}
 	}

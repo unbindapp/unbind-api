@@ -103,8 +103,7 @@ func (self *HandlerGroup) HandleGithubAppSave(ctx context.Context, input *Handle
 	}
 
 	// Redirect URL - this is where GitHub will send users to install your app
-	var installationURL string
-	installationURL = fmt.Sprintf(
+	installationURL := fmt.Sprintf(
 		"https://github.com/apps/%s/installations/new?state=%s",
 		url.QueryEscape(ghApp.Name),
 		url.QueryEscape(state),
@@ -203,10 +202,7 @@ func (self *HandlerGroup) HandleGithubWebhook(ctx context.Context, input *Github
 			}
 
 			// Get events
-			events := make([]string, 0)
-			for _, event := range installation.Events {
-				events = append(events, event)
-			}
+			events := append([]string{}, installation.Events...)
 
 			// Create or update installation in database
 			_, err = self.srv.Repository.Github().UpsertInstallation(

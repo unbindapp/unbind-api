@@ -91,7 +91,7 @@ func (self *PrometheusClient) getPrometheusUsageStats(ctx context.Context, pvcNa
 
 	result, _, err := self.api.Query(ctx, query, time.Now())
 	if err != nil {
-		return nil, fmt.Errorf("Prometheus query failed for PVC usage stats: %w", err)
+		return nil, fmt.Errorf("prometheus query failed for PVC usage stats: %w", err)
 	}
 
 	vectorData, ok := result.(model.Vector)

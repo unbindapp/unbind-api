@@ -40,7 +40,7 @@ func (self *Oauth2Server) HandleUserinfo(w http.ResponseWriter, r *http.Request)
 	// Return user info
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"sub":   u.ID.String(),
 		"email": u.Email,
 	})

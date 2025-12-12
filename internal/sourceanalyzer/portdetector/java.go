@@ -68,9 +68,9 @@ func (pd *PortDetector) scanJavaFiles(root string) (*int, error) {
 		}
 
 		ext := filepath.Ext(path)
-		if !(ext == ".java" || ext == ".kt" || ext == ".groovy" ||
-			ext == ".sh" || ext == ".cmd" || ext == ".bat" ||
-			ext == ".properties" || ext == ".yml" || ext == ".yaml") &&
+		if ext != ".java" && ext != ".kt" && ext != ".groovy" &&
+			ext != ".sh" && ext != ".cmd" && ext != ".bat" &&
+			ext != ".properties" && ext != ".yml" && ext != ".yaml" &&
 			d.Name() != "Dockerfile" && d.Name() != "Procfile" {
 			return nil
 		}

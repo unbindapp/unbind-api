@@ -32,10 +32,10 @@ type DatabaseRenderer struct {
 func NewDatabaseRenderer() *DatabaseRenderer {
 	// Create a new scheme that includes the core Kubernetes types
 	s := runtime.NewScheme()
-	scheme.AddToScheme(s)
+	_ = scheme.AddToScheme(s)
 
 	// Add CRD types to the scheme
-	apiextensionsv1.AddToScheme(s)
+	_ = apiextensionsv1.AddToScheme(s)
 
 	r := &DatabaseRenderer{
 		scheme: s,
@@ -93,7 +93,7 @@ type RenderContext struct {
 	Definition Definition
 
 	// Parameters from service
-	Parameters map[string]interface{}
+	Parameters map[string]any
 
 	// RFC3339 time format constant for templates
 	RFC3339 string
@@ -173,7 +173,7 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 	}
 
 	// Parse the rendered values YAML
-	values := make(map[string]interface{})
+	values := make(map[string]any)
 	err = yaml.Unmarshal(buf.Bytes(), &values)
 	if err != nil {
 		return "", fmt.Errorf("error parsing Helm values: %w", err)
@@ -198,10 +198,10 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 	}
 
 	// Create a Helm release custom resource
-	helmRelease := map[string]interface{}{
+	helmRelease := map[string]any{
 		"apiVersion": "helm.toolkit.fluxcd.io/v2",
 		"kind":       "HelmRelease",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name":      context.Name,
 			"namespace": context.Namespace,
 			"labels": map[string]string{
@@ -210,12 +210,12 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 				"unbind/usd-category": "databases",
 			},
 		},
-		"spec": map[string]interface{}{
-			"chart": map[string]interface{}{
-				"spec": map[string]interface{}{
+		"spec": map[string]any{
+			"chart": map[string]any{
+				"spec": map[string]any{
 					"chart":   chartName,
 					"version": chartVersion,
-					"sourceRef": map[string]interface{}{
+					"sourceRef": map[string]any{
 						"kind": "HelmRepository",
 						"name": repositoryName,
 					},
@@ -226,7 +226,7 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 		},
 	}
 
-	helmRepoSpec := map[string]interface{}{
+	helmRepoSpec := map[string]any{
 		"url":      repositoryURL,
 		"interval": "1h",
 	}
@@ -236,10 +236,10 @@ func (r *DatabaseRenderer) renderHelmChart(unbindDefinition *Definition, context
 	}
 
 	// Add the Helm repository CR
-	helmRepo := map[string]interface{}{
+	helmRepo := map[string]any{
 		"apiVersion": "source.toolkit.fluxcd.io/v1",
 		"kind":       "HelmRepository",
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name":      repositoryName,
 			"namespace": context.Namespace,
 		},
@@ -326,7 +326,7 @@ func (r *DatabaseRenderer) RegisterCRD(gvk schema.GroupVersionKind, obj runtime.
 }
 
 // Validate validates parameters against the schema
-func (r *DatabaseRenderer) Validate(params map[string]interface{}, schema DefinitionParameterSchema) error {
+func (r *DatabaseRenderer) Validate(params map[string]any, schema DefinitionParameterSchema) error {
 	// Check required fields
 	for _, required := range schema.Required {
 		if _, ok := params[required]; !ok {
@@ -350,7 +350,7 @@ func (r *DatabaseRenderer) Validate(params map[string]interface{}, schema Defini
 }
 
 // validateProperty validates a property against its schema
-func (r *DatabaseRenderer) validateProperty(name string, value interface{}, prop ParameterProperty) error {
+func (r *DatabaseRenderer) validateProperty(name string, value any, prop ParameterProperty) error {
 	// Skip validation if value is nil
 	if value == nil {
 		return nil
@@ -407,7 +407,7 @@ func (r *DatabaseRenderer) validateProperty(name string, value interface{}, prop
 			return fmt.Errorf("field %s must be a boolean", name)
 		}
 	case "object":
-		objValue, ok := value.(map[string]interface{})
+		objValue, ok := value.(map[string]any)
 		if !ok {
 			return fmt.Errorf("field %s must be an object", name)
 		}
@@ -445,8 +445,8 @@ func (r *DatabaseRenderer) validateProperty(name string, value interface{}, prop
 }
 
 // applyDefaults applies default values from the schema
-func (r *DatabaseRenderer) applyDefaults(params map[string]interface{}, schema DefinitionParameterSchema) map[string]interface{} {
-	result := make(map[string]interface{})
+func (r *DatabaseRenderer) applyDefaults(params map[string]any, schema DefinitionParameterSchema) map[string]any {
+	result := make(map[string]any)
 
 	// Copy all provided parameters
 	for k, v := range params {
@@ -460,7 +460,7 @@ func (r *DatabaseRenderer) applyDefaults(params map[string]interface{}, schema D
 }
 
 // applyDefaultsRecursive applies defaults recursively
-func (r *DatabaseRenderer) applyDefaultsRecursive(params map[string]interface{}, properties map[string]ParameterProperty, prefix string) {
+func (r *DatabaseRenderer) applyDefaultsRecursive(params map[string]any, properties map[string]ParameterProperty, prefix string) {
 	for name, prop := range properties {
 		fullName := name
 		if prefix != "" {
@@ -476,11 +476,11 @@ func (r *DatabaseRenderer) applyDefaultsRecursive(params map[string]interface{},
 
 			// Create path if it doesn't exist
 			if _, exists := paramMap[part]; !exists {
-				paramMap[part] = make(map[string]interface{})
+				paramMap[part] = make(map[string]any)
 			}
 
 			var ok bool
-			paramMap, ok = paramMap[part].(map[string]interface{})
+			paramMap, ok = paramMap[part].(map[string]any)
 			if !ok {
 				// If it's not a map, we can't proceed further with this path
 				break
@@ -498,11 +498,11 @@ func (r *DatabaseRenderer) applyDefaultsRecursive(params map[string]interface{},
 		if prop.Type == "object" && prop.Properties != nil {
 			// Ensure the object exists
 			if _, exists := paramMap[lastPart]; !exists {
-				paramMap[lastPart] = make(map[string]interface{})
+				paramMap[lastPart] = make(map[string]any)
 			}
 
 			// Get the nested object
-			if nestedMap, ok := paramMap[lastPart].(map[string]interface{}); ok {
+			if nestedMap, ok := paramMap[lastPart].(map[string]any); ok {
 				r.applyDefaultsRecursive(nestedMap, prop.Properties, "")
 			}
 		}

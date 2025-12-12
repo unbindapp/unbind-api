@@ -66,7 +66,7 @@ func (pd *PortDetector) scanPHPFiles(root string) (*int, error) {
 		}
 
 		ext := filepath.Ext(path)
-		if !(ext == ".php" || ext == ".sh" || ext == ".env") &&
+		if ext != ".php" && ext != ".sh" && ext != ".env" &&
 			d.Name() != "Dockerfile" && d.Name() != "Procfile" {
 			return nil
 		}

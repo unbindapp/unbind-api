@@ -133,6 +133,9 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 
 	// Get deployment namespace
 	namespace, err := self.repo.Service().GetDeploymentNamespace(ctx, service.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get deployment namespace: %w", err)
+	}
 
 	// Get build secrets
 	buildSecrets, err := self.k8s.GetSecretMap(ctx, service.KubernetesSecret, namespace, self.k8s.GetInternalClient())
@@ -210,7 +213,7 @@ func (self *DeploymentController) PopulateBuildEnvironment(ctx context.Context, 
 	if service.Type == schema.ServiceTypeDatabase {
 		if service.Database == nil ||
 			service.Edges.ServiceConfig.DefinitionVersion == nil {
-			return nil, fmt.Errorf("Service database name or definition is nil")
+			return nil, fmt.Errorf("service database name or definition is nil")
 		}
 
 		var config *v1.DatabaseConfigSpec
@@ -434,7 +437,8 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 
 	// Create a record in the database
 	if req.ExistingJobID != nil {
-		job, err = self.repo.Deployment().GetByID(ctx, *req.ExistingJobID)
+		// Verify the deployment exists
+		_, err := self.repo.Deployment().GetByID(ctx, *req.ExistingJobID)
 		if err != nil {
 			if ent.IsNotFound(err) {
 				return nil, errdefs.NewCustomError(errdefs.ErrTypeNotFound, "Deployment not found")
@@ -443,9 +447,10 @@ func (self *DeploymentController) EnqueueDeploymentJob(ctx context.Context, req 
 		}
 
 		// Update the job status as queued
-		job, err = self.repo.Deployment().MarkQueued(ctx, nil, *req.ExistingJobID, time.Now())
-		if err != nil {
-			return nil, fmt.Errorf("failed to mark job as queued: %w", err)
+		var markErr error
+		job, markErr = self.repo.Deployment().MarkQueued(ctx, nil, *req.ExistingJobID, time.Now())
+		if markErr != nil {
+			return nil, fmt.Errorf("failed to mark job as queued: %w", markErr)
 		}
 	} else {
 		job, err = self.repo.Deployment().Create(

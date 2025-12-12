@@ -7,9 +7,9 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
+	"github.com/unbindapp/unbind-api/internal/models"
 	repository "github.com/unbindapp/unbind-api/internal/repositories"
 	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
-	"github.com/unbindapp/unbind-api/internal/models"
 )
 
 func (self *ServiceGroupService) DeleteServiceGroup(ctx context.Context, requesterUserID uuid.UUID, bearerToken string, input *models.DeleteServiceGroupInput) error {

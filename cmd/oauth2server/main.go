@@ -53,9 +53,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, redis *redis.Clie
 		log.Fatalf("Failed to get private key: %v", err)
 	}
 
-	// Use our custom token store
-	clientStoreCache := cache.NewCache[CacheClientInto](redis, "auth")
-	clientStore := NewDBClientStore(ctx, clientStoreCache)
+	clientStore := NewClientStore()
 	tokenStore := NewCustomTokenStore(clientStore, repo)
 	manager.MapTokenStorage(tokenStore)
 	manager.MapClientStorage(clientStore)
@@ -137,7 +135,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, redis *redis.Clie
 		return true, nil
 	})
 
-	srv.SetExtensionFieldsHandler(func(ti oauth2.TokenInfo) map[string]interface{} {
+	srv.SetExtensionFieldsHandler(func(ti oauth2.TokenInfo) map[string]any {
 		// Only produce an ID token if the request included the "openid" scope,
 		hasOpenid := false
 		for _, scope := range strings.Split(ti.GetScope(), " ") {
@@ -158,7 +156,7 @@ func setupOAuthServer(ctx context.Context, cfg *config.Config, redis *redis.Clie
 		}
 
 		// Return an extra field "id_token"
-		return map[string]interface{}{
+		return map[string]any{
 			"id_token": idToken,
 		}
 	})
@@ -214,7 +212,7 @@ func StartOauth2Server(cfg *config.Config) {
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	r.Group(func(r chi.Router) {
@@ -247,6 +245,9 @@ func StartOauth2Server(cfg *config.Config) {
 			ctx,
 		),
 	)
+	if err != nil {
+		log.Fatal("Failed to create token cleanup job", "err", err)
+	}
 	// Start the scheduler
 	scheduler.Start()
 	defer func() {

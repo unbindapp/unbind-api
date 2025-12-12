@@ -65,7 +65,6 @@ func (self *TemplatesService) DeployTemplate(ctx context.Context, requesterUserI
 	}
 
 	// Validate template inputs and handle hosts
-	validatedInputs := make(map[string]string)
 	hostInputMap, validatedInputs, err := self.resolveHostInputs(ctx, &template.Definition, input.Inputs)
 	if err != nil {
 		return nil, err

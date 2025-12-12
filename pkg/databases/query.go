@@ -37,10 +37,7 @@ func (self *DatabaseProvider) ListDatabases(ctx context.Context, tagVersion stri
 	dbList := []string{}
 	for _, category := range index.Categories {
 		if category.Name == DB_CATEGORY {
-			for _, template := range category.Templates {
-				// Add the template to the list
-				dbList = append(dbList, template)
-			}
+			dbList = append(dbList, category.Templates...)
 			break
 		}
 	}

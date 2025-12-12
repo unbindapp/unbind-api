@@ -71,7 +71,7 @@ func (pd *PortDetector) scanRubyFiles(root string) (*int, error) {
 		}
 
 		ext := filepath.Ext(path)
-		if !(ext == ".rb" || ext == ".sh" || ext == ".env" || ext == ".rake") &&
+		if ext != ".rb" && ext != ".sh" && ext != ".env" && ext != ".rake" &&
 			d.Name() != "Dockerfile" && d.Name() != "Procfile" && d.Name() != "Gemfile" {
 			return nil
 		}

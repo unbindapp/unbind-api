@@ -23,7 +23,7 @@ func NewLokiLogger(cfg *config.Config) (*LokiLogQuerier, error) {
 	// Construct endpoint
 	reqURLStr, err := utils.JoinURLPaths(cfg.LokiEndpoint, "loki", "api", "v1", "tail")
 	if err != nil {
-		return nil, fmt.Errorf("Unable to construct loki query URL: %v", err)
+		return nil, fmt.Errorf("unable to construct loki query URL: %v", err)
 	}
 
 	return &LokiLogQuerier{

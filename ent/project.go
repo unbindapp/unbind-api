@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -35,6 +36,8 @@ type Project struct {
 	Status string `json:"status,omitempty"`
 	// TeamID holds the value of the "team_id" field.
 	TeamID uuid.UUID `json:"team_id,omitempty"`
+	// Tags holds the value of the "tags" field.
+	Tags []string `json:"tags,omitempty"`
 	// DefaultEnvironmentID holds the value of the "default_environment_id" field.
 	DefaultEnvironmentID *uuid.UUID `json:"default_environment_id,omitempty"`
 	// Kubernetes secret for this project
@@ -107,6 +110,8 @@ func (*Project) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case project.FieldDefaultEnvironmentID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case project.FieldTags:
+			values[i] = new([]byte)
 		case project.FieldKubernetesName, project.FieldName, project.FieldDescription, project.FieldStatus, project.FieldKubernetesSecret:
 			values[i] = new(sql.NullString)
 		case project.FieldCreatedAt, project.FieldUpdatedAt:
@@ -176,6 +181,14 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field team_id", values[i])
 			} else if value != nil {
 				pr.TeamID = *value
+			}
+		case project.FieldTags:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field tags", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &pr.Tags); err != nil {
+					return fmt.Errorf("unmarshal field tags: %w", err)
+				}
 			}
 		case project.FieldDefaultEnvironmentID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -268,6 +281,9 @@ func (pr *Project) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("team_id=")
 	builder.WriteString(fmt.Sprintf("%v", pr.TeamID))
+	builder.WriteString(", ")
+	builder.WriteString("tags=")
+	builder.WriteString(fmt.Sprintf("%v", pr.Tags))
 	builder.WriteString(", ")
 	if v := pr.DefaultEnvironmentID; v != nil {
 		builder.WriteString("default_environment_id=")

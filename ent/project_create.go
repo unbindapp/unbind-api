@@ -101,6 +101,12 @@ func (pc *ProjectCreate) SetTeamID(u uuid.UUID) *ProjectCreate {
 	return pc
 }
 
+// SetTags sets the "tags" field.
+func (pc *ProjectCreate) SetTags(s []string) *ProjectCreate {
+	pc.mutation.SetTags(s)
+	return pc
+}
+
 // SetDefaultEnvironmentID sets the "default_environment_id" field.
 func (pc *ProjectCreate) SetDefaultEnvironmentID(u uuid.UUID) *ProjectCreate {
 	pc.mutation.SetDefaultEnvironmentID(u)
@@ -319,6 +325,10 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		_spec.SetField(project.FieldStatus, field.TypeString, value)
 		_node.Status = value
 	}
+	if value, ok := pc.mutation.Tags(); ok {
+		_spec.SetField(project.FieldTags, field.TypeJSON, value)
+		_node.Tags = value
+	}
 	if value, ok := pc.mutation.KubernetesSecret(); ok {
 		_spec.SetField(project.FieldKubernetesSecret, field.TypeString, value)
 		_node.KubernetesSecret = value
@@ -519,6 +529,24 @@ func (u *ProjectUpsert) UpdateTeamID() *ProjectUpsert {
 	return u
 }
 
+// SetTags sets the "tags" field.
+func (u *ProjectUpsert) SetTags(v []string) *ProjectUpsert {
+	u.Set(project.FieldTags, v)
+	return u
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *ProjectUpsert) UpdateTags() *ProjectUpsert {
+	u.SetExcluded(project.FieldTags)
+	return u
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *ProjectUpsert) ClearTags() *ProjectUpsert {
+	u.SetNull(project.FieldTags)
+	return u
+}
+
 // SetDefaultEnvironmentID sets the "default_environment_id" field.
 func (u *ProjectUpsert) SetDefaultEnvironmentID(v uuid.UUID) *ProjectUpsert {
 	u.Set(project.FieldDefaultEnvironmentID, v)
@@ -688,6 +716,27 @@ func (u *ProjectUpsertOne) SetTeamID(v uuid.UUID) *ProjectUpsertOne {
 func (u *ProjectUpsertOne) UpdateTeamID() *ProjectUpsertOne {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateTeamID()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *ProjectUpsertOne) SetTags(v []string) *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *ProjectUpsertOne) UpdateTags() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *ProjectUpsertOne) ClearTags() *ProjectUpsertOne {
+	return u.Update(func(s *ProjectUpsert) {
+		s.ClearTags()
 	})
 }
 
@@ -1032,6 +1081,27 @@ func (u *ProjectUpsertBulk) SetTeamID(v uuid.UUID) *ProjectUpsertBulk {
 func (u *ProjectUpsertBulk) UpdateTeamID() *ProjectUpsertBulk {
 	return u.Update(func(s *ProjectUpsert) {
 		s.UpdateTeamID()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *ProjectUpsertBulk) SetTags(v []string) *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *ProjectUpsertBulk) UpdateTags() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.UpdateTags()
+	})
+}
+
+// ClearTags clears the value of the "tags" field.
+func (u *ProjectUpsertBulk) ClearTags() *ProjectUpsertBulk {
+	return u.Update(func(s *ProjectUpsert) {
+		s.ClearTags()
 	})
 }
 

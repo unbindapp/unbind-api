@@ -34,10 +34,6 @@ type StorageMetadata struct {
 //
 // Anything else falls through with UnableToDetectAllocatable=true.
 func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMetadata, error) {
-	const (
-		giB = 1 << 30 // 1 GiB  = 1 073 741 824 bytes
-		tiB = 1 << 40 // 1 TiB  = 1 099 511 627 776 bytes
-	)
 	resp := &StorageMetadata{UnableToDetectAllocatable: true}
 
 	scList, err := self.clientset.StorageV1().StorageClasses().List(ctx, meta.ListOptions{})
@@ -75,7 +71,7 @@ func (self *KubeClient) AvailableStorageBytes(ctx context.Context) (*StorageMeta
 				// .status.diskStatus is a map keyed by disk UUID
 				disks, _, _ := unstructured.NestedMap(u.Object, "status", "diskStatus")
 				for _, v := range disks {
-					if disk, ok := v.(map[string]interface{}); ok {
+					if disk, ok := v.(map[string]any); ok {
 						switch x := disk["storageAvailable"].(type) {
 						case int64:
 							nodeTotal.Add(*resource.NewQuantity(x, resource.BinarySI))

@@ -10,8 +10,8 @@ import (
 	// entProject "github.com/unbindapp/unbind-api/ent/project" // No longer needed directly here
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 	"github.com/unbindapp/unbind-api/internal/models"
+	permissions_repo "github.com/unbindapp/unbind-api/internal/repositories/permissions"
 )
 
 func (self *ProjectService) GetProjectsInTeam(ctx context.Context, requesterUserID uuid.UUID, teamID uuid.UUID, sortBy models.SortByField, sortOrder models.SortOrder) ([]*models.ProjectResponse, error) {

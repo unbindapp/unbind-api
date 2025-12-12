@@ -471,6 +471,16 @@ func TeamIDNotIn(vs ...uuid.UUID) predicate.Project {
 	return predicate.Project(sql.FieldNotIn(FieldTeamID, vs...))
 }
 
+// TagsIsNil applies the IsNil predicate on the "tags" field.
+func TagsIsNil() predicate.Project {
+	return predicate.Project(sql.FieldIsNull(FieldTags))
+}
+
+// TagsNotNil applies the NotNil predicate on the "tags" field.
+func TagsNotNil() predicate.Project {
+	return predicate.Project(sql.FieldNotNull(FieldTags))
+}
+
 // DefaultEnvironmentIDEQ applies the EQ predicate on the "default_environment_id" field.
 func DefaultEnvironmentIDEQ(v uuid.UUID) predicate.Project {
 	return predicate.Project(sql.FieldEQ(FieldDefaultEnvironmentID, v))

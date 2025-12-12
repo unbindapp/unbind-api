@@ -11,7 +11,6 @@ import (
 	"github.com/unbindapp/unbind-api/ent/schema"
 	"github.com/unbindapp/unbind-api/internal/models"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -144,7 +143,7 @@ func (self *KubeClient) ParseRegistryCredentials(secret *corev1.Secret) (string,
 func (self *KubeClient) GetOrCreateSecret(ctx context.Context, name, namespace string, client kubernetes.Interface) (*corev1.Secret, bool, error) {
 	secret, err := self.GetSecret(ctx, name, namespace, client)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			// Secret doesn't exist, create it
 			secret = &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{

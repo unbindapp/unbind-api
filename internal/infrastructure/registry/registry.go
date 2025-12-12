@@ -129,7 +129,7 @@ func (self *RegistryTester) CanPullImage(ctx context.Context, image string) (boo
 // checkImageExistsInRegistry checks if an image exists in a specific registry using the registry API
 func (self *RegistryTester) checkImageExistsInRegistry(ctx context.Context, registryHost, imageName, tag, username, password string) (bool, error) {
 	// Normalize Docker Hub registry URL
-	registryURL := registryHost
+	var registryURL string
 	if registryHost == "docker.io" {
 		registryURL = "https://index.docker.io/v2"
 	} else if !strings.HasPrefix(registryHost, "http") {
@@ -266,7 +266,7 @@ func (self *RegistryTester) TestRegistryCredentials(ctx context.Context, registr
 		return self.checkManifestWithBasicAuth(ctx, registryURL, testImage, testTag, username, password)
 	default:
 		// For arbitrary registries, try to access a manifest for a common image
-		registryURL := registryHost
+		var registryURL string
 		if !strings.HasPrefix(registryHost, "http") {
 			registryURL = "https://" + registryHost + "/v2"
 		} else {

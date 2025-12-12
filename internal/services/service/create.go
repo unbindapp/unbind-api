@@ -364,11 +364,11 @@ func (self *ServiceService) CreateService(ctx context.Context, requesterUserID u
 
 		if project == nil {
 			log.Errorf("Project not found")
-			return fmt.Errorf("Project not found")
+			return fmt.Errorf("project not found")
 		}
 		if project.Edges.Team == nil {
 			log.Errorf("Team not found")
-			return fmt.Errorf("Team not found")
+			return fmt.Errorf("team not found")
 		}
 		// Create kubernetes secrets
 		secret, _, err := self.k8s.GetOrCreateSecret(ctx, kubernetesName, project.Edges.Team.Namespace, client)

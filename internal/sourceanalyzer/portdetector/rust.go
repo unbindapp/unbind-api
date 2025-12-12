@@ -86,7 +86,7 @@ func (pd *PortDetector) scanRustFiles(root string) (*int, error) {
 		}
 
 		ext := filepath.Ext(path)
-		if !(ext == ".rs" || ext == ".sh" || ext == ".env" || ext == ".toml") &&
+		if ext != ".rs" && ext != ".sh" && ext != ".env" && ext != ".toml" &&
 			d.Name() != "Dockerfile" && d.Name() != "Procfile" && d.Name() != "Rocket.toml" {
 			return nil
 		}

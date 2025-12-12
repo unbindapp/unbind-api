@@ -222,7 +222,7 @@ func (self *HandlerGroup) HandleGetGithubApp(ctx context.Context, input *GithubA
 
 func transformGithubAppEntity(entity *ent.GithubApp) *GithubAppAPIResponse {
 	installations := []*GithubInstallationAPIResponse{}
-	if entity.Edges.Installations != nil && len(entity.Edges.Installations) > 0 {
+	if len(entity.Edges.Installations) > 0 {
 		for _, installation := range entity.Edges.Installations {
 			// Add app to edge
 			installation.Edges.GithubApp = entity

@@ -70,7 +70,7 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 	}
 
 	// Store the state in cache to prevent double submission
-	self.StringCache.SetWithExpiration(self.Ctx, pageKey, "1", 30*time.Minute)
+	_ = self.StringCache.SetWithExpiration(self.Ctx, pageKey, "1", 30*time.Minute)
 
 	// Set content type and render template
 	w.Header().Set("Content-Type", "text/html")
@@ -83,7 +83,7 @@ func (self *Oauth2Server) HandleLoginPage(w http.ResponseWriter, r *http.Request
 func loadHtmlTemplate(name string) (*template.Template, error) {
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
-		return nil, fmt.Errorf("Failed to get current file")
+		return nil, fmt.Errorf("failed to get current file")
 	}
 	filePath := path.Join(path.Dir(thisFile), "template", name)
 
@@ -94,7 +94,7 @@ func loadHtmlTemplate(name string) (*template.Template, error) {
 		filePath = path.Join("app", "template", name)
 		tmpl, err = template.ParseFiles(filePath)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to parse template %s: %w", name, err)
+			return nil, fmt.Errorf("failed to parse template %s: %w", name, err)
 		}
 	}
 

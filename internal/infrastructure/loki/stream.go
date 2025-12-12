@@ -31,13 +31,14 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 	// Build the request URL with parameters
 	reqURL, err := url.Parse(self.endpoint)
 	if err != nil {
-		return fmt.Errorf("Unable to parse loki query URL: %v", err)
+		return fmt.Errorf("unable to parse loki query URL: %v", err)
 	}
 
 	// Change protocol from http to ws
-	if reqURL.Scheme == "http" {
+	switch reqURL.Scheme {
+	case "http":
 		reqURL.Scheme = "ws"
-	} else if reqURL.Scheme == "https" {
+	case "https":
 		reqURL.Scheme = "wss"
 	}
 
@@ -117,12 +118,11 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 
 	// Set the pong handler to reset the read deadline when a pong is received
 	wsConn.SetPongHandler(func(string) error {
-		wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		return nil
+		return wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	})
 
 	// Initial read deadline - this will be extended by pongs and successful reads
-	wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	_ = wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
 	// Setup context cancellation
 	done := make(chan struct{})
@@ -130,7 +130,7 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		<-ctx.Done()
 		log.Info("Context done, closing WebSocket connection")
 		// Close the connection gracefully when context is done
-		wsConn.WriteControl(websocket.CloseMessage,
+		_ = wsConn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
 			time.Now().Add(5*time.Second))
 		wsConn.Close()
@@ -205,7 +205,7 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 				}
 
 				// Reset the read deadline and continue
-				wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+				_ = wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 				continue
 			}
 
@@ -215,7 +215,7 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 		}
 
 		// Reset read deadline after successful read
-		wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		_ = wsConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
 		// Parse the message
 		var streamResp LokiStreamResponse
@@ -233,13 +233,13 @@ func (self *LokiLogQuerier) StreamLokiPodLogs(
 			if !ok {
 				log.Warnf("Stream missing instance label: %s", stream.Stream)
 			}
-			environmentID, _ := stream.Stream[string(LokiLabelEnvironment)]
-			teamID, _ := stream.Stream[string(LokiLabelTeam)]
-			projectID, _ := stream.Stream[string(LokiLabelProject)]
-			serviceID, _ := stream.Stream[string(LokiLabelService)]
+			environmentID := stream.Stream[string(LokiLabelEnvironment)]
+			teamID := stream.Stream[string(LokiLabelTeam)]
+			projectID := stream.Stream[string(LokiLabelProject)]
+			serviceID := stream.Stream[string(LokiLabelService)]
 			deploymentID, ok := stream.Stream[string(LokiLabelDeployment)]
 			if !ok {
-				deploymentID, _ = stream.Stream[string(LokiLabelBuild)]
+				deploymentID = stream.Stream[string(LokiLabelBuild)]
 			}
 
 			for _, entry := range stream.Values {

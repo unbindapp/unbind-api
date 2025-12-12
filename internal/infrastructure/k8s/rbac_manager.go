@@ -107,12 +107,12 @@ func (self *RBACManager) createOrUpdateRole(ctx context.Context, roleName, names
 	}
 
 	// Build rules for the Role
-	var rules []interface{}
+	var rules []any
 
 	// Core API group ("") resources
 	if len(filterResourcesByAPIGroup(resources, "")) > 0 {
-		rules = append(rules, map[string]interface{}{
-			"apiGroups": []interface{}{""},
+		rules = append(rules, map[string]any{
+			"apiGroups": []any{""},
 			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "")),
 			"verbs":     interfaceFromStrings(verbs),
 		})
@@ -120,8 +120,8 @@ func (self *RBACManager) createOrUpdateRole(ctx context.Context, roleName, names
 
 	// Apps API group resources
 	if len(filterResourcesByAPIGroup(resources, "apps")) > 0 {
-		rules = append(rules, map[string]interface{}{
-			"apiGroups": []interface{}{"apps"},
+		rules = append(rules, map[string]any{
+			"apiGroups": []any{"apps"},
 			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "apps")),
 			"verbs":     interfaceFromStrings(verbs),
 		})
@@ -129,8 +129,8 @@ func (self *RBACManager) createOrUpdateRole(ctx context.Context, roleName, names
 
 	// Batch API group resources
 	if len(filterResourcesByAPIGroup(resources, "batch")) > 0 {
-		rules = append(rules, map[string]interface{}{
-			"apiGroups": []interface{}{"batch"},
+		rules = append(rules, map[string]any{
+			"apiGroups": []any{"batch"},
 			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "batch")),
 			"verbs":     interfaceFromStrings(verbs),
 		})
@@ -138,8 +138,8 @@ func (self *RBACManager) createOrUpdateRole(ctx context.Context, roleName, names
 
 	// Networking API group resources
 	if len(filterResourcesByAPIGroup(resources, "networking.k8s.io")) > 0 {
-		rules = append(rules, map[string]interface{}{
-			"apiGroups": []interface{}{"networking.k8s.io"},
+		rules = append(rules, map[string]any{
+			"apiGroups": []any{"networking.k8s.io"},
 			"resources": interfaceFromStrings(filterResourcesByAPIGroup(resources, "networking.k8s.io")),
 			"verbs":     interfaceFromStrings(verbs),
 		})
@@ -147,13 +147,13 @@ func (self *RBACManager) createOrUpdateRole(ctx context.Context, roleName, names
 
 	// Define the Role
 	role := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "rbac.authorization.k8s.io/v1",
 			"kind":       "Role",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      roleName,
 				"namespace": namespace,
-				"labels": map[string]interface{}{
+				"labels": map[string]any{
 					"app.kubernetes.io/managed-by": "unbind",
 					"unbind.app/group-name":        grroupName,
 				},
@@ -254,25 +254,25 @@ func filterResourcesByAPIGroup(resources []string, apiGroup string) []string {
 func (self *RBACManager) createOrUpdateRoleBinding(ctx context.Context, roleName, bindingName, namespace, groupName string) error {
 	// Define the RoleBinding
 	rb := &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "rbac.authorization.k8s.io/v1",
 			"kind":       "RoleBinding",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name":      bindingName,
 				"namespace": namespace,
-				"labels": map[string]interface{}{
+				"labels": map[string]any{
 					"app.kubernetes.io/managed-by": "unbind",
 					"unbind.app/group-name":        groupName,
 				},
 			},
-			"subjects": []interface{}{
-				map[string]interface{}{
+			"subjects": []any{
+				map[string]any{
 					"kind":     "Group",
 					"name":     "oidc:" + groupName,
 					"apiGroup": "rbac.authorization.k8s.io",
 				},
 			},
-			"roleRef": map[string]interface{}{
+			"roleRef": map[string]any{
 				"kind":     "Role",
 				"name":     roleName,
 				"apiGroup": "rbac.authorization.k8s.io",
@@ -407,8 +407,8 @@ func (self *RBACManager) DeleteK8sRBAC(ctx context.Context, group *ent.Group) er
 }
 
 // Helper function to convert a string slice to an interface slice
-func interfaceFromStrings(strings []string) []interface{} {
-	interfaces := make([]interface{}, len(strings))
+func interfaceFromStrings(strings []string) []any {
+	interfaces := make([]any, len(strings))
 	for i, s := range strings {
 		interfaces[i] = s
 	}

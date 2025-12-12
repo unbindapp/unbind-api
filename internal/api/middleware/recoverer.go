@@ -31,7 +31,7 @@ func (self *Middleware) Recoverer(ctx huma.Context, next func(huma.Context)) {
 
 			// Skip WebSocket/upgrade connections, just like chi.
 			if ctx.Header("Connection") != "Upgrade" {
-				huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Internal server error")
+				_ = huma.WriteErr(self.api, ctx, http.StatusInternalServerError, "Internal server error")
 			}
 		}
 	}()
@@ -43,21 +43,20 @@ func (self *Middleware) Recoverer(ctx huma.Context, next func(huma.Context)) {
 
 var recovererErrorWriter io.Writer = os.Stderr
 
-func PrintPrettyStack(rvr interface{}) {
+func PrintPrettyStack(rvr any) {
 	debugStack := debug.Stack()
 	s := prettyStack{}
 	out, err := s.parse(debugStack, rvr)
 	if err == nil {
-		recovererErrorWriter.Write(out)
+		_, _ = recovererErrorWriter.Write(out)
 	} else {
-		// Fallback to the raw stack.
-		os.Stderr.Write(debugStack)
+		_, _ = os.Stderr.Write(debugStack)
 	}
 }
 
 type prettyStack struct{}
 
-func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
+func (s prettyStack) parse(debugStack []byte, rvr any) ([]byte, error) {
 	var err error
 	useColor := true
 	buf := &bytes.Buffer{}

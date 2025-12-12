@@ -181,10 +181,7 @@ func (self *KubeClient) GetPersistentVolumeClaim(ctx context.Context, namespace 
 	}
 	gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
 	sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
-	// if gbValue is a whole number, remove .00
-	if strings.HasSuffix(sizeGBValueStr, ".00") {
-		sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
-	}
+	sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
 	sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse sizeGBValue '%s': %w", sizeGBValueStr, err)
@@ -392,10 +389,6 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 
 		projectIDStr := pvcLabels[projectLabel]
 		environmentIDStr := pvcLabels[environmentLabel]
-		displayName := pvcLabels["pvc-display-name"]
-		if displayName == "" {
-			displayName = pvc.Name
-		}
 		sizeGBValueStr := ""
 		var sizeGBValue float64
 		var bytesValueCapacity int64
@@ -415,10 +408,7 @@ func (self *KubeClient) ListPersistentVolumeClaims(ctx context.Context, namespac
 		}
 		gbValue := float64(bytesValue) / (1024 * 1024 * 1024)
 		sizeGBValueStr = fmt.Sprintf("%.2f", gbValue) // Format to 2 decimal places
-		// if gbValue is a whole number, remove .00
-		if strings.HasSuffix(sizeGBValueStr, ".00") {
-			sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
-		}
+		sizeGBValueStr = strings.TrimSuffix(sizeGBValueStr, ".00")
 		sizeGBValue, err = strconv.ParseFloat(sizeGBValueStr, 64)
 		if err != nil {
 			continue

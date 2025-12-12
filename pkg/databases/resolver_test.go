@@ -114,8 +114,8 @@ func TestFetchDatabase(t *testing.T) {
 			assert.Equal(t, "string", envProp.AdditionalProperties.Type)
 		}
 		assert.NotNil(t, envProp.Default)
-		assert.IsType(t, map[string]interface{}{}, envProp.Default) // Check it's a map
-		assert.Empty(t, envProp.Default)                            // Check it's empty
+		assert.IsType(t, map[string]any{}, envProp.Default) // Check it's a map
+		assert.Empty(t, envProp.Default)                    // Check it's empty
 	}
 
 	// Check common property
@@ -405,7 +405,7 @@ func TestFetchDatabase_MySQL(t *testing.T) {
 			assert.Equal(t, "string", envProp.AdditionalProperties.Type)
 		}
 		assert.NotNil(t, envProp.Default)
-		assert.IsType(t, map[string]interface{}{}, envProp.Default)
+		assert.IsType(t, map[string]any{}, envProp.Default)
 		assert.Empty(t, envProp.Default)
 	}
 }
@@ -515,7 +515,7 @@ func TestFetchDatabase_MongoDB(t *testing.T) {
 			assert.Equal(t, "string", envProp.AdditionalProperties.Type)
 		}
 		assert.NotNil(t, envProp.Default)
-		assert.IsType(t, map[string]interface{}{}, envProp.Default)
+		assert.IsType(t, map[string]any{}, envProp.Default)
 		assert.Empty(t, envProp.Default)
 	}
 }

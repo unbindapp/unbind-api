@@ -11,7 +11,7 @@ import (
 
 // FetchDatabaseDefinition downloads the metadata/definition for the requested
 // database, resolves $ref imports, converts every YAML map to
-// map[string]interface{}, and returns a Definition ready for Huma to marshal.
+// map[string]any, and returns a Definition ready for Huma to marshal.
 func (p *DatabaseProvider) FetchDatabaseDefinition(
 	ctx context.Context,
 	tagVersion, dbType string,
@@ -43,7 +43,7 @@ func (p *DatabaseProvider) FetchDatabaseDefinition(
 	if err := yaml.Unmarshal(metadataBytes, &metadata); err != nil {
 		return nil, fmt.Errorf("failed to parse metadata: %w", err)
 	}
-	metadata.Schema.Imports = make(map[string]interface{})
+	metadata.Schema.Imports = make(map[string]any)
 
 	//----------------------------------------------------------------------
 	// 3. Pull in declared imports
@@ -58,7 +58,7 @@ func (p *DatabaseProvider) FetchDatabaseDefinition(
 			return nil, fmt.Errorf("failed to fetch import %s: %w", imp.Path, err)
 		}
 
-		var importYAML interface{}
+		var importYAML any
 		if err := yaml.Unmarshal(importBytes, &importYAML); err != nil {
 			return nil, fmt.Errorf("failed to parse import %s: %w", imp.Path, err)
 		}
@@ -117,12 +117,12 @@ func (p *DatabaseProvider) FetchDatabaseDefinition(
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
 
-// convertToJSONCompatible recursively converts every map[interface{}]interface{}
-// or []interface{} element into JSON-safe forms.
-func convertToJSONCompatible(in interface{}) (interface{}, error) {
+// convertToJSONCompatible recursively converts every map[any]any
+// or []any element into JSON-safe forms.
+func convertToJSONCompatible(in any) (any, error) {
 	switch v := in.(type) {
-	case map[interface{}]interface{}:
-		out := make(map[string]interface{}, len(v))
+	case map[any]any:
+		out := make(map[string]any, len(v))
 		for k, val := range v {
 			ks, ok := k.(string)
 			if !ok {
@@ -136,8 +136,8 @@ func convertToJSONCompatible(in interface{}) (interface{}, error) {
 		}
 		return out, nil
 
-	case []interface{}:
-		out := make([]interface{}, len(v))
+	case []any:
+		out := make([]any, len(v))
 		for i, val := range v {
 			conv, err := convertToJSONCompatible(val)
 			if err != nil {
@@ -153,7 +153,7 @@ func convertToJSONCompatible(in interface{}) (interface{}, error) {
 }
 
 // makeSchemaJSONSafe converts the whole DefinitionParameterSchema into a YAML
-// blob, loads it back as an arbitrary interface{}, runs convertToJSONCompatible
+// blob, loads it back as an arbitrary any, runs convertToJSONCompatible
 // on that, then re-unmarshals it into the strongly typed struct.  That way we
 // don't need to know which fields your ParameterProperty actually has.
 func makeSchemaJSONSafe(
@@ -165,13 +165,13 @@ func makeSchemaJSONSafe(
 		return s, err
 	}
 
-	// 2. Load the YAML into an arbitrary interface{}
-	var asAny interface{}
+	// 2. Load the YAML into an arbitrary any
+	var asAny any
 	if err := yaml.Unmarshal(yamlBytes, &asAny); err != nil {
 		return s, err
 	}
 
-	// 3. Convert every map to map[string]interface{}
+	// 3. Convert every map to map[string]any
 	conv, err := convertToJSONCompatible(asAny)
 	if err != nil {
 		return s, err

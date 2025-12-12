@@ -65,7 +65,7 @@ func (self *HandlerGroup) handleErr(err error) error {
 
 func (self *HandlerGroup) handleSSEErr(err error, send sse.Sender) {
 	if errors.Is(err, errdefs.ErrInvalidInput) {
-		send.Data(
+		_ = send.Data(
 			loki.LogEvents{
 				MessageType:  loki.LogEventsMessageTypeError,
 				ErrorMessage: fmt.Sprintf("invalid input %v", err.Error()),
@@ -73,7 +73,7 @@ func (self *HandlerGroup) handleSSEErr(err error, send sse.Sender) {
 		)
 	}
 	if errors.Is(err, errdefs.ErrUnauthorized) {
-		send.Data(
+		_ = send.Data(
 			loki.LogEvents{
 				MessageType:  loki.LogEventsMessageTypeError,
 				ErrorMessage: fmt.Sprintf("unauthorized %v", err.Error()),
@@ -81,7 +81,7 @@ func (self *HandlerGroup) handleSSEErr(err error, send sse.Sender) {
 		)
 	}
 	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
-		send.Data(
+		_ = send.Data(
 			loki.LogEvents{
 				MessageType:  loki.LogEventsMessageTypeError,
 				ErrorMessage: fmt.Sprintf("entity not found %v", err.Error()),
@@ -89,7 +89,7 @@ func (self *HandlerGroup) handleSSEErr(err error, send sse.Sender) {
 		)
 	}
 	log.Error("Unknown error streaming logs", "err", err)
-	send.Data(
+	_ = send.Data(
 		loki.LogEvents{
 			MessageType:  loki.LogEventsMessageTypeError,
 			ErrorMessage: "An unexpected error occurred",

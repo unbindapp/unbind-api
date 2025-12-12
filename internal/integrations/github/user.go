@@ -12,19 +12,19 @@ import (
 
 func (self *GithubClient) ReadUserAdminOrganizations(ctx context.Context, installation *ent.GithubInstallation) ([]*github.Organization, error) {
 	if installation == nil || installation.AccountType != githubinstallation.AccountTypeUser || installation.Edges.GithubApp == nil {
-		return nil, fmt.Errorf("Invalid installation")
+		return nil, fmt.Errorf("invalid installation")
 	}
 
 	// Get authenticated client
 	authenticatedClient, err := self.GetAuthenticatedClient(ctx, installation.GithubAppID, installation.ID, installation.Edges.GithubApp.PrivateKey)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting authenticated client: %v", err)
+		return nil, fmt.Errorf("error getting authenticated client: %v", err)
 	}
 
 	// Get user's organizations
 	orgs, _, err := authenticatedClient.Organizations.ListOrgMemberships(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting user organizations: %v", err)
+		return nil, fmt.Errorf("error getting user organizations: %v", err)
 	}
 
 	for _, o := range orgs {
