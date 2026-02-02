@@ -188,7 +188,7 @@ func BuilderValidator(b schema.ServiceBuilder) error {
 // RailpackProviderValidator is a validator for the "railpack_provider" field enum values. It is called by the builders before save.
 func RailpackProviderValidator(rp enum.Provider) error {
 	switch rp {
-	case "node", "deno", "bun", "go", "java", "php", "python", "ruby", "rust", "elixir", "staticfile", "unknown":
+	case "node", "deno", "bun", "go", "java", "php", "python", "ruby", "rust", "elixir", "staticfile", "dotnet", "cpp", "gleam", "shell", "unknown":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for railpack_provider field: %q", rp)
@@ -198,7 +198,7 @@ func RailpackProviderValidator(rp enum.Provider) error {
 // RailpackFrameworkValidator is a validator for the "railpack_framework" field enum values. It is called by the builders before save.
 func RailpackFrameworkValidator(rf enum.Framework) error {
 	switch rf {
-	case "next", "astro", "vite", "cra", "angular", "remix", "bun", "express", "sveltekit", "svelte", "solid", "hono", "tanstack-start", "python", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "rocket", "unknown":
+	case "next", "nuxt", "astro", "vite", "cra", "angular", "remix", "tanstack-start", "react-router", "bun", "static", "sveltekit", "svelte", "solid", "hono", "express", "django", "flask", "fastapi", "fasthtml", "gin", "spring-boot", "laravel", "rails", "rocket", "unknown":
 		return nil
 	default:
 		return fmt.Errorf("serviceconfig: invalid enum value for railpack_framework field: %q", rf)

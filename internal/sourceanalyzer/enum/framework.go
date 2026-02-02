@@ -8,84 +8,75 @@ import (
 	"github.com/railwayapp/railpack/core/generate"
 )
 
-// Detect framework based on provider and plan
 func DetectFramework(provider Provider, ctx *generate.GenerateContext) Framework {
 	switch provider {
-	// Node frameworks
 	case Node:
 		framework, ok := ctx.Metadata.Properties["nodeRuntime"]
-		if ok {
-			switch framework {
-			case "next":
-				return Next
-			case "astro":
-				return Astro
-			case "vite":
-				return Vite
-			case "cra":
-				return CRA
-			case "angular":
-				return Angular
-			case "remix":
-				return Remix
-			case "bun":
-				return BunFW
-			case "express":
-				return Express
-			}
+		if !ok {
+			return UnknownFramework
 		}
-	// Python frameworks
+		switch framework {
+		case "next":
+			return Next
+		case "nuxt":
+			return Nuxt
+		case "astro":
+			return Astro
+		case "vite":
+			return Vite
+		case "cra":
+			return CRA
+		case "angular":
+			return Angular
+		case "remix":
+			return Remix
+		case "tanstack-start":
+			return TanstackStart
+		case "react-router":
+			return ReactRouter
+		case "bun":
+			return BunFW
+		case "static":
+			return StaticFW
+		}
 	case Python:
 		framework, ok := ctx.Metadata.Properties["pythonRuntime"]
-		if ok {
-			switch framework {
-			case "python":
-				return PythonFramework
-			case "django":
-				return Django
-			case "flask":
-				return Flask
-			case "fastapi":
-				return FastAPI
-			case "fasthtml":
-				return FastHTML
-			}
+		if !ok {
+			return UnknownFramework
 		}
-	// Go frameworks
+		switch framework {
+		case "django":
+			return Django
+		case "flask":
+			return Flask
+		case "fastapi":
+			return FastAPI
+		case "fasthtml":
+			return FastHTML
+		}
 	case Go:
-		gin, ok := ctx.Metadata.Properties["goGin"]
-		if ok && gin == "true" {
+		if ctx.Metadata.Properties["goGin"] == "true" {
 			return Gin
 		}
-	// Java frameworks
 	case Java:
-		javaFramework, ok := ctx.Metadata.Properties["javaFramework"]
-		if ok {
-			switch javaFramework {
-			case "spring-boot":
-				return SpringBoot
-			}
+		if ctx.Metadata.Properties["javaFramework"] == "spring-boot" {
+			return SpringBoot
 		}
-	// PHP frameworks
 	case PHP:
-		for _, log := range ctx.Logger.Logs {
-			if strings.Contains(strings.ToLower(log.Msg), "laravel") {
-				return Laravel
-			}
+		if ctx.Metadata.Properties["phpLaravel"] == "true" {
+			return Laravel
 		}
-	// Ruby frameworks
 	case Ruby:
-		railsFramework, ok := ctx.Metadata.Properties["rubyRails"]
-		if ok && railsFramework == "true" {
+		if ctx.Metadata.Properties["rubyRails"] == "true" {
 			return Rails
 		}
-		// Rust frameworks
 	case Rust:
-		if ctx.Deploy != nil {
-			for _, variable := range ctx.Deploy.Variables {
-				if strings.EqualFold(variable, "rocket_address") {
-					return Rocket
-				}
+		if ctx.Deploy == nil {
+			return UnknownFramework
+		}
+		for _, variable := range ctx.Deploy.Variables {
+			if strings.EqualFold(variable, "rocket_address") {
+				return Rocket
 			}
 		}
 	}
@@ -97,43 +88,38 @@ func DetectFramework(provider Provider, ctx *generate.GenerateContext) Framework
 type Framework string
 
 const (
-	// * node frameworks
-	Next          Framework = "next"
-	Astro         Framework = "astro"
-	Vite          Framework = "vite"
-	CRA           Framework = "cra"
-	Angular       Framework = "angular"
-	Remix         Framework = "remix"
-	BunFW         Framework = "bun"
-	Express       Framework = "express"
-	Sveltekit     Framework = "sveltekit"
-	Svelte        Framework = "svelte"
-	Solid         Framework = "solid"
-	Hono          Framework = "hono"
-	TanstackStart Framework = "tanstack-start"
-	// * python frameworks
-	PythonFramework Framework = "python" // Sometimes detected as a framework
-	Django          Framework = "django"
-	Flask           Framework = "flask"
-	FastAPI         Framework = "fastapi"
-	FastHTML        Framework = "fasthtml"
-	// * GO frameworks
-	Gin Framework = "gin"
-	// * Java frameworks
-	SpringBoot Framework = "spring-boot"
-	// * PHP frameworks
-	Laravel Framework = "laravel"
-	// * Ruby frameworks
-	Rails Framework = "rails"
-	// * Rust frameworks
-	Rocket Framework = "rocket"
-	// * not detected
+	Next             Framework = "next"
+	Nuxt             Framework = "nuxt"
+	Astro            Framework = "astro"
+	Vite             Framework = "vite"
+	CRA              Framework = "cra"
+	Angular          Framework = "angular"
+	Remix            Framework = "remix"
+	TanstackStart    Framework = "tanstack-start"
+	ReactRouter      Framework = "react-router"
+	BunFW            Framework = "bun"
+	StaticFW         Framework = "static"
+	Sveltekit        Framework = "sveltekit"
+	Svelte           Framework = "svelte"
+	Solid            Framework = "solid"
+	Hono             Framework = "hono"
+	Express          Framework = "express"
+	Django           Framework = "django"
+	Flask            Framework = "flask"
+	FastAPI          Framework = "fastapi"
+	FastHTML         Framework = "fasthtml"
+	Gin              Framework = "gin"
+	SpringBoot       Framework = "spring-boot"
+	Laravel          Framework = "laravel"
+	Rails            Framework = "rails"
+	Rocket           Framework = "rocket"
 	UnknownFramework Framework = "unknown"
 )
 
 var allFrameworks = []Framework{
-	Next, Astro, Vite, CRA, Angular, Remix, BunFW, Express, Sveltekit, Svelte, Solid, Hono, TanstackStart,
-	PythonFramework, Django, Flask, FastAPI, FastHTML,
+	Next, Nuxt, Astro, Vite, CRA, Angular, Remix, TanstackStart, ReactRouter, BunFW, StaticFW,
+	Sveltekit, Svelte, Solid, Hono, Express,
+	Django, Flask, FastAPI, FastHTML,
 	Gin,
 	SpringBoot,
 	Laravel,

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containerd/platforms"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
 	"github.com/moby/buildkit/client"
@@ -15,6 +16,7 @@ import (
 	"github.com/moby/buildkit/session/auth/authprovider"
 	"github.com/moby/buildkit/session/secrets/secretsprovider"
 	"github.com/moby/buildkit/util/appcontext"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	rpBuildkit "github.com/railwayapp/railpack/buildkit"
 	"github.com/railwayapp/railpack/core/plan"
 	"github.com/tonistiigi/fsutil"
@@ -25,7 +27,7 @@ import (
 type BuildWithBuildkitClientOptions struct {
 	ImageName         string
 	RailpackBuildPlan *plan.BuildPlan
-	Platform          rpBuildkit.BuildPlatform
+	Platform          specs.Platform
 	SecretsHash       string
 	Secrets           map[string]string
 	CacheKey          string
@@ -80,8 +82,8 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 	}
 
 	buildPlatform := opts.Platform
-	if (buildPlatform == rpBuildkit.BuildPlatform{}) {
-		buildPlatform = rpBuildkit.DetermineBuildPlatformFromHost()
+	if buildPlatform.OS == "" {
+		buildPlatform, _ = rpBuildkit.ParsePlatformWithDefaults("")
 	}
 
 	// Setup channel for progress monitoring
@@ -114,7 +116,7 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 		return fmt.Errorf("error creating context FS: %w", err)
 	}
 
-	log.Infof("Building image for %s with BuildKit %s", buildPlatform.String(), info.BuildkitVersion.Version)
+	log.Infof("Building image for %s with BuildKit %s", platforms.Format(buildPlatform), info.BuildkitVersion.Version)
 	log.Infof("Using context path: %s", contextPath)
 
 	secretsMap := make(map[string][]byte)
@@ -149,7 +151,7 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 
 		// Create the auth provider configuration
 		authProviderCfg := authprovider.DockerAuthProviderConfig{
-			ConfigFile: configFile,
+			AuthConfigProvider: authprovider.LoadAuthConfig(configFile),
 		}
 
 		sessionAttachables = append(sessionAttachables, authprovider.NewDockerAuthProvider(authProviderCfg))
@@ -205,13 +207,12 @@ func BuildWithBuildkitClient(cfg *config.Config, appDir string, opts BuildWithBu
 			"filename": dockerfileBasename,
 		}
 	} else if opts.RailpackBuildPlan != nil {
-		// Using RailPack BuildPlan
 		buildPlatform := opts.Platform
-		if (buildPlatform == rpBuildkit.BuildPlatform{}) {
-			buildPlatform = rpBuildkit.DetermineBuildPlatformFromHost()
+		if buildPlatform.OS == "" {
+			buildPlatform, _ = rpBuildkit.ParsePlatformWithDefaults("")
 		}
 
-		log.Infof("Building image for %s with BuildKit %s", buildPlatform.String(), info.BuildkitVersion.Version)
+		log.Infof("Building image for %s with BuildKit %s", platforms.Format(buildPlatform), info.BuildkitVersion.Version)
 
 		llbState, image, err := rpBuildkit.ConvertPlanToLLB(opts.RailpackBuildPlan, rpBuildkit.ConvertPlanOptions{
 			BuildPlatform: buildPlatform,
