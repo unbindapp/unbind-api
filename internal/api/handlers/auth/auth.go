@@ -12,45 +12,29 @@ type HandlerGroup struct {
 }
 
 func RegisterHandlers(server *server.Server, grp *huma.Group) {
-	handlers := &HandlerGroup{
-		srv: server,
-	}
+	handlers := &HandlerGroup{srv: server}
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "login",
-			Summary:     "Login",
-			Description: "Login",
-			Path:        "/login",
-			Method:      http.MethodPost,
-		},
-		handlers.LoginSubmit,
-	)
+	huma.Register(grp, huma.Operation{
+		OperationID: "login",
+		Summary:     "Login",
+		Description: "Authenticate with email and password, returns session cookies",
+		Path:        "/login",
+		Method:      http.MethodPost,
+	}, handlers.Login)
 
-	if server.Cfg.EnableDevLoginPage {
-		huma.Register(
-			grp,
-			huma.Operation{
-				OperationID: "dev_login",
-				Summary:     "Dev Login",
-				Description: "Dev Login",
-				Path:        "/dev_login",
-				Method:      http.MethodGet,
-			},
-			handlers.DevLogin,
-		)
-	}
+	huma.Register(grp, huma.Operation{
+		OperationID: "refresh",
+		Summary:     "Refresh",
+		Description: "Exchange the refresh cookie for a new session",
+		Path:        "/refresh",
+		Method:      http.MethodPost,
+	}, handlers.Refresh)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "callback",
-			Summary:     "Callback",
-			Description: "Callback",
-			Path:        "/callback",
-			Method:      http.MethodGet,
-		},
-		handlers.Callback,
-	)
+	huma.Register(grp, huma.Operation{
+		OperationID: "logout",
+		Summary:     "Logout",
+		Description: "Revoke the session and clear cookies",
+		Path:        "/logout",
+		Method:      http.MethodPost,
+	}, handlers.Logout)
 }

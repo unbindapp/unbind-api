@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -45,6 +44,7 @@ import (
 	webhook_handler "github.com/unbindapp/unbind-api/internal/api/handlers/webhook"
 	"github.com/unbindapp/unbind-api/internal/api/middleware"
 	"github.com/unbindapp/unbind-api/internal/api/server"
+	"github.com/unbindapp/unbind-api/internal/auth"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
@@ -77,7 +77,6 @@ import (
 	_ "go.uber.org/automaxprocs"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"golang.org/x/oauth2"
 )
 
 var Version = "development"
@@ -284,18 +283,12 @@ func startAPI(cfg *config.Config) {
 
 	stringCache := cache.NewStringCache(redisClient, "unbind")
 
-	// Create OAuth2 config
-
-	oauthConfig := &oauth2.Config{
-		ClientID:     cfg.DexClientID,
-		ClientSecret: cfg.DexClientSecret,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  cfg.DexIssuerUrlExternal + "/auth",
-			TokenURL: cfg.DexIssuerURL + "/token",
-		},
-		RedirectURL: fmt.Sprintf("%s/auth/callback", cfg.ExternalAPIURL),
-		Scopes:      []string{"openid", "profile", "email", "offline_access", "groups"},
+	pkey, _, err := repo.Oauth().GetOrGenerateJWTPrivateKey(ctx)
+	if err != nil {
+		log.Fatalf("Failed to load JWT signing key: %v", err)
 	}
+	tokenManager := auth.NewTokenManager(pkey, cfg.ExternalOauth2URL, cfg.TokenAudience)
+	oidcHandler := auth.NewOIDCHandler(tokenManager)
 
 	// Implementation
 	srvImpl := &server.Server{
@@ -323,7 +316,7 @@ func startAPI(cfg *config.Config) {
 		StorageService:       storageService,
 		TemplateService:      templateService,
 		ServiceGroupService:  serviceGroupService,
-		OauthConfig:          oauthConfig,
+		TokenManager:         tokenManager,
 	}
 
 	// New chi router
@@ -361,6 +354,11 @@ func startAPI(cfg *config.Config) {
 		_, _ = w.Write([]byte("OK"))
 	})
 
+	// OIDC discovery + JWKS for kube-oidc-proxy. The ingress routes the issuer
+	// path (/api/oauth2) here.
+	r.Get("/.well-known/openid-configuration", oidcHandler.HandleOpenIDConfiguration)
+	r.Get("/.well-known/jwks.json", oidcHandler.HandleJWKS)
+
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RealIP)
 		r.Use(middleware.Logger)
@@ -378,7 +376,7 @@ func startAPI(cfg *config.Config) {
 		api := humachi.New(r, config)
 
 		// Create middleware
-		mw := middleware.NewMiddleware(cfg, repo, api)
+		mw := middleware.NewMiddleware(cfg, repo, api, tokenManager)
 
 		api.UseMiddleware(mw.Recoverer)
 

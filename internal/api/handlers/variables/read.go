@@ -2,7 +2,6 @@ package variables_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -29,7 +28,7 @@ func (self *HandlerGroup) ListVariables(ctx context.Context, input *ListVariable
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	// Get variables
 	variableMap, err := self.srv.VariablesService.GetVariables(

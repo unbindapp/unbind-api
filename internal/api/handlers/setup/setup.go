@@ -10,8 +10,7 @@ import (
 )
 
 type HandlerGroup struct {
-	srv       *server.Server
-	setupDone bool
+	srv *server.Server
 }
 
 func RegisterHandlers(server *server.Server, grp *huma.Group) {

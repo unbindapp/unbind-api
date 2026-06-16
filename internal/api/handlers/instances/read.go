@@ -2,7 +2,6 @@ package instances_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -32,7 +31,7 @@ func (self *HandlerGroup) ListInstances(ctx context.Context, input *ListInstance
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	containers, err := self.srv.InstanceService.GetInstanceStatuses(
 		ctx,
@@ -70,7 +69,7 @@ func (self *HandlerGroup) GetInstanceHealth(ctx context.Context, input *GetInsta
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	health, err := self.srv.InstanceService.GetInstanceHealth(
 		ctx,

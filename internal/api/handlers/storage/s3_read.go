@@ -2,7 +2,6 @@ package storage_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -31,7 +30,7 @@ func (self *HandlerGroup) GetS3SourceByID(ctx context.Context, input *GetS3Sourc
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	s3Source, err := self.srv.StorageService.GetS3StorageByID(
 		ctx,
@@ -69,7 +68,7 @@ func (self *HandlerGroup) ListS3Source(ctx context.Context, input *ListS3SourceI
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	s3Sources, err := self.srv.StorageService.ListS3StorageBackends(
 		ctx,

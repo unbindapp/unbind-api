@@ -3,79 +3,71 @@ package auth_handler
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/unbindapp/unbind-api/internal/oauth2server"
+	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/auth"
 )
 
-type LoginForm struct {
-	Username      string `schema:"username"  json:"username"  form:"username"  minLength:"1"`
-	Password      string `schema:"password"  json:"password"  form:"password"  minLength:"1"`
-	ClientID      string `schema:"client_id" json:"client_id" form:"client_id" minLength:"1"`
-	RedirectURI   string `schema:"redirect_uri" json:"redirect_uri" form:"redirect_uri" format:"uri"`
-	ResponseType  string `schema:"response_type" json:"response_type" form:"response_type" default:"code"`
-	State         string `schema:"state" json:"state" form:"state"`
-	Scope         string `schema:"scope" json:"scope" form:"scope"`
-	PageKey       string `schema:"page_key" json:"page_key" form:"page_key"`
-	InitiatingURL string `schema:"initiating_url" json:"initiating_url" form:"initiating_url"`
+type LoginInput struct {
+	Body struct {
+		Email    string `json:"email" format:"email" required:"true"`
+		Password string `json:"password" required:"true" minLength:"1"`
+	}
 }
 
-type LoginSubmitInput struct {
-	Body LoginForm
+type SessionUser struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
 }
 
-type LoginSubmitResponse struct {
-	Status   int
-	Location string `header:"Location"`
+type SessionResponse struct {
+	SetCookie []http.Cookie `header:"Set-Cookie"`
+	Body      struct {
+		Data SessionUser `json:"data" nullable:"false"`
+	}
 }
 
-func (h *HandlerGroup) LoginSubmit(
-	ctx context.Context,
-	input *LoginSubmitInput,
-) (*LoginSubmitResponse, error) {
-	user, err := h.srv.Repository.User().
-		Authenticate(ctx, input.Body.Username, input.Body.Password)
+func (self *HandlerGroup) Login(ctx context.Context, input *LoginInput) (*SessionResponse, error) {
+	user, err := self.srv.Repository.User().Authenticate(ctx, input.Body.Email, input.Body.Password)
 	if err != nil {
-		redirectUrl, err := oauth2server.BuildOauthRedirect(
-			h.srv.Cfg, oauth2server.RedirectLogin,
-			map[string]string{
-				"client_id":      input.Body.ClientID,
-				"redirect_uri":   input.Body.RedirectURI,
-				"response_type":  input.Body.ResponseType,
-				"state":          input.Body.State,
-				"scope":          input.Body.Scope,
-				"page_key":       input.Body.PageKey,
-				"initiating_url": input.Body.InitiatingURL,
-				"error":          "invalid_credentials",
-			})
-		if err != nil {
-			return nil, huma.Error500InternalServerError(
-				"could not create login redirect", err)
-		}
-		return &LoginSubmitResponse{
-			Status:   http.StatusFound,
-			Location: redirectUrl,
-		}, nil
+		return nil, huma.Error401Unauthorized("Invalid email or password")
 	}
 
-	authorizeURL, err := oauth2server.BuildOauthRedirect(
-		h.srv.Cfg, oauth2server.RedirectAuthorize,
-		map[string]string{
-			"client_id":      input.Body.ClientID,
-			"redirect_uri":   input.Body.RedirectURI,
-			"response_type":  input.Body.ResponseType,
-			"state":          input.Body.State,
-			"scope":          input.Body.Scope,
-			"user_id":        user.Email,
-			"initiating_url": input.Body.InitiatingURL,
-		})
+	return self.issueSession(ctx, user)
+}
+
+// issueSession mints an access token, persists a rotating refresh token, and
+// returns the session cookies.
+func (self *HandlerGroup) issueSession(ctx context.Context, user *ent.User) (*SessionResponse, error) {
+	groups, err := self.srv.Repository.User().GetGroups(ctx, user.ID)
 	if err != nil {
-		return nil, huma.Error500InternalServerError(
-			"could not create authorize redirect", err)
+		return nil, huma.Error500InternalServerError("Failed to load groups", err)
 	}
 
-	return &LoginSubmitResponse{
-		Status:   http.StatusFound,
-		Location: authorizeURL,
-	}, nil
+	accessToken, accessExpiresAt, err := self.srv.TokenManager.MintAccessToken(user, groups)
+	if err != nil {
+		return nil, huma.Error500InternalServerError("Failed to issue token", err)
+	}
+
+	refreshToken := auth.NewRefreshToken()
+	_, err = self.srv.Repository.Oauth().CreateToken(
+		ctx,
+		accessToken,
+		refreshToken,
+		self.srv.Cfg.TokenAudience,
+		auth.TokenScope,
+		time.Now().Add(auth.RefreshTokenTTL),
+		user,
+	)
+	if err != nil {
+		return nil, huma.Error500InternalServerError("Failed to persist session", err)
+	}
+
+	resp := &SessionResponse{
+		SetCookie: auth.SessionCookies(accessToken, accessExpiresAt, refreshToken, self.srv.Cfg.CookieSecure),
+	}
+	resp.Body.Data = SessionUser{ID: user.ID.String(), Email: user.Email}
+	return resp, nil
 }

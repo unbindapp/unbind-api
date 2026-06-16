@@ -43,7 +43,7 @@ func (suite *BootstrapQueriesSuite) TestIsBootstrapped() {
 		suite.False(isBootstrapped)
 	})
 
-	suite.Run("IsBootstrapped Users Exist No Bootstrap", func() {
+	suite.Run("IsBootstrapped Users Exist No Bootstrap Row", func() {
 		// Clean up any existing data
 		suite.DB.User.Delete().ExecX(suite.Ctx)
 		suite.DB.Bootstrap.Delete().ExecX(suite.Ctx)
@@ -54,10 +54,11 @@ func (suite *BootstrapQueriesSuite) TestIsBootstrapped() {
 			SetPasswordHash("hash").
 			SaveX(suite.Ctx)
 
+		// A user existing implies bootstrap completed, even without a Bootstrap row.
 		userExists, isBootstrapped, err := suite.bootstrapRepo.IsBootstrapped(suite.Ctx, nil)
 		suite.NoError(err)
 		suite.True(userExists)
-		suite.False(isBootstrapped)
+		suite.True(isBootstrapped)
 	})
 
 	suite.Run("IsBootstrapped No Users But Bootstrap Flag Set", func() {
@@ -116,7 +117,7 @@ func (suite *BootstrapQueriesSuite) TestIsBootstrapped() {
 		userExists, isBootstrapped, err := suite.bootstrapRepo.IsBootstrapped(suite.Ctx, tx)
 		suite.NoError(err)
 		suite.True(userExists)
-		suite.False(isBootstrapped)
+		suite.True(isBootstrapped)
 	})
 
 	suite.Run("IsBootstrapped Error when DB closed", func() {

@@ -2,7 +2,6 @@ package service_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -28,7 +27,7 @@ func (self *HandlerGroup) CreateService(ctx context.Context, input *CreateServic
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	if input.Body == nil {
 		return nil, huma.Error400BadRequest("Missing body")

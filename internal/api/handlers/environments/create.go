@@ -2,7 +2,6 @@ package environments_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -29,7 +28,7 @@ func (self *HandlerGroup) CreateEnvironment(ctx context.Context, input *CreateEn
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	createdEnvironment, err := self.srv.EnvironmentService.CreateEnvironment(ctx, user.ID, input.Body, bearerToken)
 	if err != nil {

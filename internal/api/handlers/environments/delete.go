@@ -2,7 +2,6 @@ package environments_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -32,7 +31,7 @@ func (self *HandlerGroup) DeleteEnvironment(ctx context.Context, input *DeleteEn
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	err := self.srv.EnvironmentService.DeleteEnvironmentByID(ctx, user.ID, bearerToken, input.Body.TeamID, input.Body.ProjectID, input.Body.EnvironmentID)
 	if err != nil {

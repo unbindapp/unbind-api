@@ -48,11 +48,10 @@ type Config struct {
 	PostgresSSLMode  string `env:"POSTGRES_SSL_MODE" envDefault:"disable"`
 	// Redis
 	RedisURL string `env:"REDIS_URL" envDefault:"localhost:6379"`
-	// Dex (OIDC provider)
-	DexIssuerURL         string `env:"DEX_ISSUER_URL"`
-	DexIssuerUrlExternal string `env:"DEX_ISSUER_URL_EXTERNAL"`
-	DexClientID          string `env:"DEX_CLIENT_ID"`
-	DexClientSecret      string `env:"DEX_CLIENT_SECRET"`
+	// Auth tokens. TokenAudience is the JWT "aud" and must match the kube-oidc-proxy clientId.
+	TokenAudience string `env:"TOKEN_AUDIENCE" envDefault:"unbind-api"`
+	// CookieSecure should be false only for local http development.
+	CookieSecure bool `env:"COOKIE_SECURE" envDefault:"true"`
 	// Kubernetes config, optional - if in cluster it will use the in-cluster config
 	KubeConfig string `env:"KUBECONFIG"`
 	// kube-oidc-proxy
@@ -67,17 +66,11 @@ type Config struct {
 	LokiEndpoint string `env:"LOKI_ENDPOINT" envDefault:"http://loki-unbind-gateway.unbind-system.svc.cluster.local"`
 	// Metrics
 	PrometheusEndpoint string `env:"PROMETHEUS_ENDPOINT" envDefault:"http://kube-prometheus-stack-prometheus.monitoring:9090"`
-	// Oauth
-	DexConnectorSecret string `env:"DEX_CONNECTOR_SECRET" envDefault:"dex-secret"`
 	// Dev origins will inject localhost:3000 into cors, etc.
 	InjectDevOrigins bool `env:"INJECT_DEV_ORIGINS" envDefault:"false"`
-	// ! TODO - remove me some day, for bypassing oauth
-	AdminTesterToken string `env:"ADMIN_TESTER_TOKEN"`
-	SkipBootstrap    bool   `env:"SKIP_BOOTSTRAP" envDefault:"false"`
+	SkipBootstrap    bool `env:"SKIP_BOOTSTRAP" envDefault:"false"`
 	// Builder to pass around
 	BuildImage string
-	// Enable dev login page
-	EnableDevLoginPage bool `env:"ENABLE_DEV_LOGIN_PAGE" envDefault:"false"`
 	// Override the release repository for testing
 	ReleaseRepoOverride string `env:"RELEASE_REPO_OVERRIDE"`
 }

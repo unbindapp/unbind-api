@@ -2,7 +2,6 @@ package storage_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/unbindapp/unbind-api/internal/api/server"
@@ -28,7 +27,7 @@ func (self *HandlerGroup) CreateS3(ctx context.Context, input *CreateS3Input) (*
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	s3source, err := self.srv.StorageService.CreateS3StorageBackend(
 		ctx,

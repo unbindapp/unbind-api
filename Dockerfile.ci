@@ -29,13 +29,10 @@ RUN apt-get update && \
     apt-get purge -y --auto-remove curl && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./internal/oauth2server/template/* /app/template/
 COPY ./ent/migrate/migrations/* /app/migrations/
 COPY ./cmd/api/api /app/api
-COPY ./cmd/oauth2server/oauth2server /app/oauth2server
 COPY ./cmd/cli/cli /app/cli
 
 EXPOSE 8089
-EXPOSE 8090
 
 CMD ["/app/server"]

@@ -16,7 +16,6 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/log v0.4.2
 	github.com/containerd/platforms v1.0.0-rc.2
-	github.com/coreos/go-oidc/v3 v3.17.0
 	github.com/cybozu-go/moco v0.33.0
 	github.com/danielgtaylor/huma/v2 v2.35.0
 	github.com/docker/cli v29.2.0+incompatible
@@ -42,7 +41,6 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tonistiigi/fsutil v0.0.0-20251211185533-a2aa163d723f
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/oauth2 v0.34.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.35.0
 	k8s.io/apimachinery v0.35.0
@@ -217,6 +215,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	golang.org/x/oauth2 v0.34.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
@@ -247,7 +246,6 @@ require (
 	github.com/fluxcd/source-controller/api v1.7.4
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-chi/cors v1.2.2
-	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-openapi/inflect v0.21.5 // indirect

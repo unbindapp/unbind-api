@@ -2,7 +2,6 @@ package projects_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -32,7 +31,7 @@ func (self *HandlerGroup) DeleteProject(ctx context.Context, input *DeleteProjec
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	err := self.srv.ProjectService.DeleteProject(ctx, user.ID, &project_service.DeleteProjectInput{
 		TeamID:    input.Body.TeamID,

@@ -2,7 +2,6 @@ package variables_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -30,7 +29,7 @@ func (self *HandlerGroup) DeleteVariables(ctx context.Context, input *DeleteVari
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	variableMap, err := self.srv.VariablesService.DeleteVariablesByKey(
 		ctx,

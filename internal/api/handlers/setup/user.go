@@ -27,11 +27,6 @@ type CreateUserResponse struct {
 }
 
 func (self *HandlerGroup) CreateUser(ctx context.Context, input *CreateUserInput) (*CreateUserResponse, error) {
-	if self.setupDone {
-		return nil, huma.Error400BadRequest("Already setup")
-	}
-
-	// Create user
 	user, err := self.srv.Repository.Bootstrap().CreateUser(
 		ctx,
 		input.Body.Email,

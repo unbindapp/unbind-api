@@ -54,6 +54,11 @@ func (self *BootstrapRepository) CreateUser(ctx context.Context, email, password
 			return err
 		}
 
+		if _, err := tx.Client().Bootstrap.Create().SetIsBootstrapped(true).Save(ctx); err != nil {
+			log.Errorf("Error marking bootstrapped: %v\n", err)
+			return err
+		}
+
 		return nil
 	}); err != nil {
 		return nil, err

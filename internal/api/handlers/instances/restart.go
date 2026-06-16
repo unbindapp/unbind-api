@@ -2,7 +2,6 @@ package instances_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -39,7 +38,7 @@ func (self *HandlerGroup) RestartInstances(ctx context.Context, input *RestartIn
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	err := self.srv.ServiceService.RestartServiceByID(
 		ctx,

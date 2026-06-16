@@ -2,7 +2,6 @@ package teams_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -26,7 +25,7 @@ func (self *HandlerGroup) ListTeams(ctx context.Context, input *server.BaseAuthI
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
 	// Get token
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	teams, err := self.srv.TeamService.ListTeams(ctx, user.ID, bearerToken)
 	if err != nil {

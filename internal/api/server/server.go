@@ -6,6 +6,7 @@ import (
 
 	"github.com/unbindapp/unbind-api/config"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/auth"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
 	"github.com/unbindapp/unbind-api/internal/deployctl"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/cache"
@@ -28,16 +29,14 @@ import (
 	variables_service "github.com/unbindapp/unbind-api/internal/services/variables"
 	webhooks_service "github.com/unbindapp/unbind-api/internal/services/webooks"
 	"github.com/unbindapp/unbind-api/pkg/databases"
-	"golang.org/x/oauth2"
 )
 
 // EmptyInput can be used when no input is needed.
 type EmptyInput struct{}
 
-// BaseAuthInput can be used when no input is needed and the user must be authenticated.
-type BaseAuthInput struct {
-	Authorization string `header:"Authorization" doc:"Bearer token" required:"true"`
-}
+// BaseAuthInput marks an authenticated endpoint. The token is resolved by the
+// auth middleware; handlers read it via GetBearerTokenFromContext.
+type BaseAuthInput struct{}
 
 // DeletedResponse is used to return a deleted response.
 type DeletedResponse struct {
@@ -56,7 +55,7 @@ type Server struct {
 	DeploymentController *deployctl.DeploymentController
 	DatabaseProvider     *databases.DatabaseProvider
 	DNSChecker           *utils.DNSChecker
-	OauthConfig          *oauth2.Config
+	TokenManager         *auth.TokenManager
 	UpdateManager        *updater.Updater
 	// Services
 	TeamService         *team_service.TeamService
@@ -78,4 +77,11 @@ type Server struct {
 func (self *Server) GetUserFromContext(ctx context.Context) (user *ent.User, found bool) {
 	user, found = ctx.Value("user").(*ent.User)
 	return user, found
+}
+
+// GetBearerTokenFromContext returns the validated access token, forwarded to
+// kube-oidc-proxy for per-user Kubernetes operations.
+func (self *Server) GetBearerTokenFromContext(ctx context.Context) (token string, found bool) {
+	token, found = ctx.Value("bearer_token").(string)
+	return token, found
 }

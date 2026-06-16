@@ -2,7 +2,6 @@ package logs_handler
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2/sse"
@@ -28,7 +27,7 @@ type GetLogInput struct {
 func (self *HandlerGroup) GetLogsfunc(ctx context.Context, input *GetLogInput, send sse.Sender) {
 	// Get caller
 	user, found := self.srv.GetUserFromContext(ctx)
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	if !found {
 		log.Error("Error getting user from context")

@@ -20,24 +20,10 @@ type SetupStatusResponse struct {
 }
 
 func (self *HandlerGroup) GetStatus(ctx context.Context, input *server.EmptyInput) (*SetupStatusResponse, error) {
-	if self.setupDone {
-		resp := &SetupStatusResponse{}
-		resp.Body.Data = &SetupData{
-			IsFirstUserCreated: true,
-			IsBootstrapped:     true,
-		}
-		return resp, nil
-	}
-
-	// Get bootstrapped
 	userExists, bootstrapped, err := self.srv.Repository.Bootstrap().IsBootstrapped(ctx, nil)
 	if err != nil {
 		log.Error("Error checking if bootstrapped", "err", err)
 		return nil, huma.Error500InternalServerError("Error checking if bootstrapped")
-	}
-
-	if bootstrapped {
-		self.setupDone = true
 	}
 
 	resp := &SetupStatusResponse{}

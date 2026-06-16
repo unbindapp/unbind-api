@@ -53,32 +53,6 @@ func (suite *OAuth2TokenSuite) TestCreateToken() {
 	suite.WithinDuration(expiresAt, token.ExpiresAt, time.Second)
 	suite.False(token.Revoked) // Should default to false
 	suite.NotEqual(uuid.Nil, token.ID)
-
-	// Verify bootstrap entry was created
-	bootstrap, err := suite.DB.Bootstrap.Query().First(suite.Ctx)
-	suite.NoError(err)
-	suite.True(bootstrap.IsBootstrapped)
-}
-
-func (suite *OAuth2TokenSuite) TestCreateTokenBootstrapExists() {
-	// Pre-create bootstrap entry
-	suite.DB.Bootstrap.Create().SetIsBootstrapped(true).SaveX(suite.Ctx)
-
-	accessToken := "access-token-existing-bootstrap"
-	refreshToken := "refresh-token-existing-bootstrap"
-	clientID := "test-client"
-	scope := "read"
-	expiresAt := time.Now().Add(1 * time.Hour)
-
-	token, err := suite.oauthRepo.CreateToken(suite.Ctx, accessToken, refreshToken, clientID, scope, expiresAt, suite.testUser)
-	suite.NoError(err)
-	suite.NotNil(token)
-	suite.Equal(accessToken, token.AccessToken)
-
-	// Should still only have one bootstrap entry
-	bootstraps, err := suite.DB.Bootstrap.Query().All(suite.Ctx)
-	suite.NoError(err)
-	suite.Len(bootstraps, 1)
 }
 
 func (suite *OAuth2TokenSuite) TestCreateTokenDifferentScopes() {

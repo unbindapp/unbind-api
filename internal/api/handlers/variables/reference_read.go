@@ -2,7 +2,6 @@ package variables_handler
 
 import (
 	"context"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
@@ -33,7 +32,7 @@ func (self *HandlerGroup) ListReferenceableVariables(ctx context.Context, input 
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	// Get team variables
 	references, err := self.srv.VariablesService.GetAvailableVariableReferences(ctx, user.ID, bearerToken, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
@@ -65,7 +64,7 @@ func (self *HandlerGroup) ResolveAvailableVariableReference(ctx context.Context,
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	resolved, err := self.srv.VariablesService.ResolveAvailableReferenceValue(ctx, user.ID, bearerToken, &input.ResolveVariableReferenceInput)
 	if err != nil {
@@ -97,7 +96,7 @@ func (self *HandlerGroup) ResolveVariableReference(ctx context.Context, input *R
 		log.Error("Error getting user from context")
 		return nil, huma.Error401Unauthorized("Unable to retrieve user")
 	}
-	bearerToken := strings.TrimPrefix(input.Authorization, "Bearer ")
+	bearerToken, _ := self.srv.GetBearerTokenFromContext(ctx)
 
 	resolved, err := self.srv.VariablesService.ResolveSingleReference(ctx, user.ID, bearerToken, input.ServiceID, input.ReferenceID)
 	if err != nil {
