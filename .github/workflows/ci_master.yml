@@ -17,11 +17,13 @@ jobs:
         run: echo "SHORT_SHA=`echo ${GITHUB_SHA::7}`" >> $GITHUB_ENV
 
       - name: Put commit msg in environment
-        run: echo "COMMIT_MSG=${{ github.event.head_commit.message }}" >> $GITHUB_ENV
-
-      - name: Escape commit message
+        env:
+          HEAD_COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          echo "COMMIT_MSG=$(echo $COMMIT_MSG | tr -d \'\\\")" >> $GITHUB_ENV
+          # Subject line only, stripped of " ' \ (octal 042 047 134) so it is safe
+          # for a single-line $GITHUB_ENV value and the build ldflags.
+          MSG=$(printf '%s\n' "$HEAD_COMMIT_MSG" | head -n1 | tr -d '\042\047\134')
+          echo "COMMIT_MSG=$MSG" >> "$GITHUB_ENV"
 
       - name: Get branch name (merge)
         if: github.event_name != 'pull_request'
