@@ -343,6 +343,7 @@ func startAPI(cfg *config.Config) {
 	if cfg.InjectDevOrigins {
 		allowedOrigins = append(allowedOrigins, []string{
 			"http://localhost:3000",
+			"http://localhost:5173",
 			"*.unbind.app",
 		}...)
 	}
