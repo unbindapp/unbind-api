@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
@@ -29,7 +30,7 @@ func (self *HandlerGroup) CreatePVC(ctx context.Context, input *CreatePVCInput) 
 
 	pvc, err := self.srv.StorageService.CreatePVC(ctx, user.ID, bearerToken, input.Body)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	response := &CreatePVCResponse{}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
@@ -29,7 +30,7 @@ func (self *HandlerGroup) CreateRegistry(ctx context.Context, input *CreateRegis
 
 	registry, err := self.srv.SystemService.CreateRegistry(ctx, user.ID, input.Body)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &CreateRegistryResponse{}
@@ -52,7 +53,7 @@ func (self *HandlerGroup) DeleteRegistry(ctx context.Context, input *DeleteRegis
 
 	err := self.srv.SystemService.DeleteRegistry(ctx, user.ID, input.Body)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	return &server.DeletedResponse{
@@ -82,7 +83,7 @@ func (self *HandlerGroup) GetRegistry(ctx context.Context, input *GetRegistryInp
 
 	registry, err := self.srv.SystemService.GetRegistry(ctx, user.ID, input.GetRegistryInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetRegistryResponse{}
@@ -106,7 +107,7 @@ func (self *HandlerGroup) ListRegistries(ctx context.Context, input *server.Base
 
 	registries, err := self.srv.SystemService.ListRegistries(ctx, user.ID)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ListRegistriesResponse{}
@@ -135,7 +136,7 @@ func (self *HandlerGroup) SetDefaultRegistry(ctx context.Context, input *SetDefa
 
 	registry, err := self.srv.SystemService.SetDefaultRegistry(ctx, user.ID, input.Body)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &SetDefaultRegistryResponse{}

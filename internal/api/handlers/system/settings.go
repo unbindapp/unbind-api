@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/common/utils"
@@ -73,7 +74,7 @@ func (self *HandlerGroup) UpdateBuildkitSettings(ctx context.Context, input *Set
 
 	settings, err := self.srv.SystemService.UpdateSettings(ctx, user.ID, input.Body)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 	resp := &SettingsResponse{}
 	resp.Body.Data = settings

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -33,7 +34,7 @@ func (self *HandlerGroup) CreateNewRedeployment(ctx context.Context, input *Rede
 	// Create deployment
 	deployment, err := self.srv.DeploymentService.CreateRedeployment(ctx, user.ID, &input.Body.RedeployExistingDeploymentInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &RedeployOutput{}

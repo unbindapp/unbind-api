@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -35,7 +36,7 @@ func (self *HandlerGroup) CreateService(ctx context.Context, input *CreateServic
 
 	createdService, err := self.srv.ServiceService.CreateService(ctx, user.ID, input.Body, bearerToken)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &CreateServiceResponse{}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -37,7 +38,7 @@ func (self *HandlerGroup) ListReferenceableVariables(ctx context.Context, input 
 	// Get team variables
 	references, err := self.srv.VariablesService.GetAvailableVariableReferences(ctx, user.ID, bearerToken, input.TeamID, input.ProjectID, input.EnvironmentID, input.ServiceID)
 	if err != nil {
-		return nil, handleVariablesErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ReferenceableVariablesResponse{}
@@ -68,7 +69,7 @@ func (self *HandlerGroup) ResolveAvailableVariableReference(ctx context.Context,
 
 	resolved, err := self.srv.VariablesService.ResolveAvailableReferenceValue(ctx, user.ID, bearerToken, &input.ResolveVariableReferenceInput)
 	if err != nil {
-		return nil, handleVariablesErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ResolveAvailableVariableReferenceResponse{}
@@ -100,7 +101,7 @@ func (self *HandlerGroup) ResolveVariableReference(ctx context.Context, input *R
 
 	resolved, err := self.srv.VariablesService.ResolveSingleReference(ctx, user.ID, bearerToken, input.ServiceID, input.ReferenceID)
 	if err != nil {
-		return nil, handleVariablesErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ResolveVariableReferenceResponse{}

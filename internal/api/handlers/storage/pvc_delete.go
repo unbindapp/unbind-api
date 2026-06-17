@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/models"
 )
@@ -29,7 +30,7 @@ func (self *HandlerGroup) DeletePVC(ctx context.Context, input *DeletePVCInput) 
 
 	err := self.srv.StorageService.DeletePVC(ctx, user.ID, bearerToken, input.Body)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	response := &DeletePVCResponse{}

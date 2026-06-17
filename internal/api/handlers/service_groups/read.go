@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -35,7 +36,7 @@ func (self *HandlerGroup) ListServiceGroups(ctx context.Context, input *ListServ
 		&input.ListServiceGroupsInput,
 	)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ListServiceGroupResponse{}
@@ -70,7 +71,7 @@ func (self *HandlerGroup) GetServiceGroup(ctx context.Context, input *GetService
 		&input.GetServiceGroupInput,
 	)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetServiceGroupResponse{}

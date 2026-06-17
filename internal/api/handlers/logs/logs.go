@@ -8,6 +8,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/sse"
 	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/errdefs"
 	"github.com/unbindapp/unbind-api/internal/common/log"
@@ -23,44 +24,27 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		srv: server,
 	}
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "query-logs",
-			Summary:     "Query Logs",
-			Description: "Query logs for a team, project, environment, or service",
-			Path:        "/query",
-			Method:      http.MethodGet,
-		},
-		handlers.QueryLogs,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "query-logs",
+		Summary:     "Query Logs",
+		Description: "Query historical logs for a team, project, environment, service, or deployment.",
+		Path:        "/query",
+		Method:      http.MethodGet,
+	}, handlers.QueryLogs)
 
-	sse.Register(grp, huma.Operation{
+	// SSE doesn't go through huma.Register, so apply the same docs manually.
+	streamOp := huma.Operation{
 		OperationID: "stream-logs",
 		Method:      http.MethodGet,
 		Path:        "/stream",
 		Summary:     "Stream Logs",
-		Description: "Stream logs for a team, project, environment, or service",
-	}, map[string]any{
+		Description: "Stream live logs over Server-Sent Events. Errors are delivered as `message` events with an error type, not HTTP status codes.",
+	}
+	oapi.Apply(oapi.Read, &streamOp)
+	sse.Register(grp, streamOp, map[string]any{
 		// Mapping of event type name to Go struct for that event.
 		"message": loki.LogEvents{},
-	},
-		handlers.GetLogsfunc,
-	)
-}
-
-func (self *HandlerGroup) handleErr(err error) error {
-	if errors.Is(err, errdefs.ErrInvalidInput) {
-		return huma.Error400BadRequest("invalid input", err)
-	}
-	if errors.Is(err, errdefs.ErrUnauthorized) {
-		return huma.Error403Forbidden("Unauthorized")
-	}
-	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
-		return huma.Error404NotFound("entity not found", err)
-	}
-	log.Error("Unexpected error in logs service", "err", err)
-	return huma.Error500InternalServerError("An unexpected error occurred")
+	}, handlers.GetLogsfunc)
 }
 
 func (self *HandlerGroup) handleSSEErr(err error, send sse.Sender) {

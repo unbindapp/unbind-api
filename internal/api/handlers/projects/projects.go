@@ -1,14 +1,11 @@
 package projects_handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
-	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
 type HandlerGroup struct {
@@ -20,73 +17,43 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		srv: server,
 	}
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "create-project",
-			Summary:     "Create Project",
-			Description: "Create a project",
-			Path:        "/create",
-			Method:      http.MethodPost,
-		},
-		handlers.CreateProject,
-	)
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "list-projects",
-			Summary:     "List Projects",
-			Description: "List all projects",
-			Path:        "/list",
-			Method:      http.MethodGet,
-		},
-		handlers.ListProjects,
-	)
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "get-project",
-			Summary:     "Get Project",
-			Description: "Get a project by ID",
-			Path:        "/get",
-			Method:      http.MethodGet,
-		},
-		handlers.GetProject,
-	)
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "update-project",
-			Summary:     "Update Project",
-			Description: "Update a project",
-			Path:        "/update",
-			Method:      http.MethodPut,
-		},
-		handlers.UpdateProject,
-	)
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "delete-project",
-			Summary:     "Delete Project",
-			Description: "Delete a project",
-			Path:        "/delete",
-			Method:      http.MethodDelete,
-		},
-		handlers.DeleteProject,
-	)
-}
+	oapi.Register(grp, oapi.Create, huma.Operation{
+		OperationID: "create-project",
+		Summary:     "Create Project",
+		Description: "Create a project within a team.",
+		Path:        "/create",
+		Method:      http.MethodPost,
+	}, handlers.CreateProject)
 
-func (self *HandlerGroup) handleErr(err error) error {
-	if errors.Is(err, errdefs.ErrInvalidInput) {
-		return huma.Error400BadRequest("invalid input", err)
-	}
-	if errors.Is(err, errdefs.ErrUnauthorized) {
-		return huma.Error403Forbidden("Unauthorized")
-	}
-	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
-		return huma.Error404NotFound("entity not found", err)
-	}
-	log.Error("Error updating project", "err", err)
-	return huma.Error500InternalServerError("Unable to delete project")
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "list-projects",
+		Summary:     "List Projects",
+		Description: "List all projects in a team.",
+		Path:        "/list",
+		Method:      http.MethodGet,
+	}, handlers.ListProjects)
+
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "get-project",
+		Summary:     "Get Project",
+		Description: "Get a single project by ID.",
+		Path:        "/get",
+		Method:      http.MethodGet,
+	}, handlers.GetProject)
+
+	oapi.Register(grp, oapi.Update, huma.Operation{
+		OperationID: "update-project",
+		Summary:     "Update Project",
+		Description: "Update a project's name, description, or default environment.",
+		Path:        "/update",
+		Method:      http.MethodPut,
+	}, handlers.UpdateProject)
+
+	oapi.Register(grp, oapi.Delete, huma.Operation{
+		OperationID: "delete-project",
+		Summary:     "Delete Project",
+		Description: "Permanently delete a project and every environment, service, and deployment inside it.",
+		Path:        "/delete",
+		Method:      http.MethodDelete,
+	}, handlers.DeleteProject)
 }

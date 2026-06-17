@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -38,7 +39,7 @@ func (self *HandlerGroup) ListVariables(ctx context.Context, input *ListVariable
 		input.BaseVariablesInput,
 	)
 	if err != nil {
-		return nil, handleVariablesErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &VariablesResponse{}

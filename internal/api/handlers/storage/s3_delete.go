@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 )
@@ -40,7 +41,7 @@ func (self *HandlerGroup) DeleteS3Source(ctx context.Context, input *DeleteS3Sou
 		input.Body.ID,
 	)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &DeleteS3SourceByIDOutput{}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -32,7 +33,7 @@ func (self *HandlerGroup) CreateProject(ctx context.Context, input *CreateProjec
 
 	createdProject, err := self.srv.ProjectService.CreateProject(ctx, user.ID, input.Body, bearerToken)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &CreateProjectResponse{}

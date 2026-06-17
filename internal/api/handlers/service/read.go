@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -40,7 +41,7 @@ func (self *HandlerGroup) ListServices(ctx context.Context, input *ListServiceIn
 		input.EnvironmentID,
 	)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ListServiceResponse{}
@@ -82,7 +83,7 @@ func (self *HandlerGroup) GetService(ctx context.Context, input *GetServiceInput
 		input.ServiceID,
 	)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetServiceResponse{}

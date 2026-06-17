@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -30,7 +31,7 @@ func (self *HandlerGroup) GetMetrics(ctx context.Context, input *GetMetricsInput
 
 	metrics, err := self.srv.MetricsService.GetMetrics(ctx, user.ID, &input.MetricsQueryInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetMetricsResponse{}
@@ -61,7 +62,7 @@ func (self *HandlerGroup) GetNodeMetrics(ctx context.Context, input *GetNodeMetr
 
 	metrics, err := self.srv.MetricsService.GetNodeMetrics(ctx, user.ID, &input.NodeMetricsQueryInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetNodeMetricsResponse{}
@@ -91,7 +92,7 @@ func (self *HandlerGroup) GetVolumeMetrics(ctx context.Context, input *GetVolume
 
 	metrics, err := self.srv.MetricsService.GetVolumeMetrics(ctx, user.ID, &input.MetricsVolumeQueryInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetVolumeMetricsResponse{}

@@ -1,14 +1,11 @@
 package system_handler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/unbindapp/unbind-api/ent"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
-	"github.com/unbindapp/unbind-api/internal/common/errdefs"
-	"github.com/unbindapp/unbind-api/internal/common/log"
 )
 
 type HandlerGroup struct {
@@ -20,173 +17,107 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 		srv: server,
 	}
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "get-system-information",
-			Summary:     "Get System Information",
-			Description: "Get system information such as external load balancer IP for DNS configurations.",
-			Path:        "/get",
-			Method:      http.MethodGet,
-		},
-		handlers.GetSystemInformation,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "get-system-information",
+		Summary:     "Get System Information",
+		Description: "Get system information such as the external load balancer IP, used for DNS configuration.",
+		Path:        "/get",
+		Method:      http.MethodGet,
+	}, handlers.GetSystemInformation)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "update-system-settings",
-			Summary:     "Update System Settings",
-			Description: "Update system settings such as wild card domain, buildkit, etc.",
-			Path:        "/settings/update",
-			Method:      http.MethodPut,
-		},
-		handlers.UpdateBuildkitSettings,
-	)
+	oapi.Register(grp, oapi.Update, huma.Operation{
+		OperationID: "update-system-settings",
+		Summary:     "Update System Settings",
+		Description: "Update system-wide settings such as the wildcard domain and buildkit configuration.",
+		Path:        "/settings/update",
+		Method:      http.MethodPut,
+	}, handlers.UpdateBuildkitSettings)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "check-dns-resolution",
-			Summary:     "Check DNS Resolution",
-			Description: "Check if the domain is pointing to the correct IP address.",
-			Path:        "/dns/check",
-			Method:      http.MethodGet,
-		},
-		handlers.CheckDNSResolution,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "check-dns-resolution",
+		Summary:     "Check DNS Resolution",
+		Description: "Check whether a domain resolves to this cluster's ingress IP.",
+		Path:        "/dns/check",
+		Method:      http.MethodGet,
+	}, handlers.CheckDNSResolution, oapi.OpenWorld)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "check-for-updates",
-			Summary:     "Check for Updates",
-			Description: "Check for updates to the system.",
-			Path:        "/update/check",
-			Method:      http.MethodGet,
-		},
-		handlers.CheckForUpdates,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "check-for-updates",
+		Summary:     "Check for Updates",
+		Description: "Check whether a newer Unbind release is available.",
+		Path:        "/update/check",
+		Method:      http.MethodGet,
+	}, handlers.CheckForUpdates, oapi.OpenWorld)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "apply-update",
-			Summary:     "Apply Update",
-			Description: "Apply an update to the system.",
-			Path:        "/update/apply",
-			Method:      http.MethodPost,
-		},
-		handlers.ApplyUpdate,
-	)
+	oapi.Register(grp, oapi.Invoke, huma.Operation{
+		OperationID: "apply-update",
+		Summary:     "Apply Update",
+		Description: "Upgrade Unbind to a target version. Pulls new images and restarts system components; expect downtime.",
+		Path:        "/update/apply",
+		Method:      http.MethodPost,
+	}, handlers.ApplyUpdate, oapi.OpenWorld, oapi.Confirm, oapi.Risk("high"))
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "get-update-status",
-			Summary:     "Get Update Status",
-			Description: "Get the status of the update.",
-			Path:        "/update/status",
-			Method:      http.MethodGet,
-		},
-		handlers.GetUpdateStatus,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "get-update-status",
+		Summary:     "Get Update Status",
+		Description: "Get the status of an in-progress or completed system update.",
+		Path:        "/update/status",
+		Method:      http.MethodGet,
+	}, handlers.GetUpdateStatus)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "generate-wildcard-domain",
-			Summary:     "Generate Wildcard Domain",
-			Description: "Generate a wildcard domain for the system - given a base name.",
-			Path:        "/domain/generate",
-			Method:      http.MethodPost,
-		},
-		handlers.GenerateWildcardDomain,
-	)
+	oapi.Register(grp, oapi.Invoke, huma.Operation{
+		OperationID: "generate-wildcard-domain",
+		Summary:     "Generate Wildcard Domain",
+		Description: "Generate an unbind.app wildcard subdomain from a base name.",
+		Path:        "/domain/generate",
+		Method:      http.MethodPost,
+	}, handlers.GenerateWildcardDomain)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "check-unique-domain",
-			Summary:     "Check Unique Domain",
-			Description: "Check if the domain is unique within our system.",
-			Path:        "/domain/check",
-			Method:      http.MethodGet,
-		},
-		handlers.CheckForDomainCollision,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "check-unique-domain",
+		Summary:     "Check Unique Domain",
+		Description: "Check whether a domain is already in use within this system.",
+		Path:        "/domain/check",
+		Method:      http.MethodGet,
+	}, handlers.CheckForDomainCollision)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "create-registry",
-			Summary:     "Create Registry",
-			Description: "Create a new registry.",
-			Path:        "/registries/create",
-			Method:      http.MethodPost,
-		},
-		handlers.CreateRegistry,
-	)
+	oapi.Register(grp, oapi.Create, huma.Operation{
+		OperationID: "create-registry",
+		Summary:     "Create Registry",
+		Description: "Add a container registry the system can push and pull images from.",
+		Path:        "/registries/create",
+		Method:      http.MethodPost,
+	}, handlers.CreateRegistry, oapi.OpenWorld)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "delete-registry",
-			Summary:     "Delete Registry",
-			Description: "Delete a registry.",
-			Path:        "/registries/delete",
-			Method:      http.MethodDelete,
-		},
-		handlers.DeleteRegistry,
-	)
+	oapi.Register(grp, oapi.Delete, huma.Operation{
+		OperationID: "delete-registry",
+		Summary:     "Delete Registry",
+		Description: "Remove a container registry.",
+		Path:        "/registries/delete",
+		Method:      http.MethodDelete,
+	}, handlers.DeleteRegistry)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "get-registry",
-			Summary:     "Get Registry",
-			Description: "Get a registry.",
-			Path:        "/registries/get",
-			Method:      http.MethodGet,
-		},
-		handlers.GetRegistry,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "get-registry",
+		Summary:     "Get Registry",
+		Description: "Get a single container registry by ID.",
+		Path:        "/registries/get",
+		Method:      http.MethodGet,
+	}, handlers.GetRegistry)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "list-registries",
-			Summary:     "List Registries",
-			Description: "List all registries.",
-			Path:        "/registries/list",
-			Method:      http.MethodGet,
-		},
-		handlers.ListRegistries,
-	)
+	oapi.Register(grp, oapi.Read, huma.Operation{
+		OperationID: "list-registries",
+		Summary:     "List Registries",
+		Description: "List all configured container registries.",
+		Path:        "/registries/list",
+		Method:      http.MethodGet,
+	}, handlers.ListRegistries)
 
-	huma.Register(
-		grp,
-		huma.Operation{
-			OperationID: "set-default-registry",
-			Summary:     "Set Default Registry",
-			Description: "Set the default registry.",
-			Path:        "/registries/set-default",
-			Method:      http.MethodPost,
-		},
-		handlers.SetDefaultRegistry,
-	)
-}
-
-func (self *HandlerGroup) handleErr(err error) error {
-	if errors.Is(err, errdefs.ErrInvalidInput) {
-		return huma.Error400BadRequest("invalid input", err)
-	}
-	if errors.Is(err, errdefs.ErrUnauthorized) {
-		return huma.Error403Forbidden("Unauthorized")
-	}
-	if ent.IsNotFound(err) || errors.Is(err, errdefs.ErrNotFound) {
-		return huma.Error404NotFound("entity not found", err)
-	}
-	log.Error("Unexpected system error", "err", err)
-	return huma.Error500InternalServerError("Unexpected error occured")
+	oapi.Register(grp, oapi.Update, huma.Operation{
+		OperationID: "set-default-registry",
+		Summary:     "Set Default Registry",
+		Description: "Set which registry new builds push to by default.",
+		Path:        "/registries/set-default",
+		Method:      http.MethodPost,
+	}, handlers.SetDefaultRegistry)
 }

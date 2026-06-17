@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/infrastructure/k8s"
@@ -59,7 +60,7 @@ func (self *HandlerGroup) GetSystemInformation(ctx context.Context, input *serve
 	settings, err := self.srv.SystemService.GetSettings(ctx, user.ID)
 	if err != nil {
 		log.Error("Error getting buildkit settings", "err", err)
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 	meta.SystemSettings = settings
 

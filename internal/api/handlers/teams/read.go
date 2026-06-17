@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -29,7 +30,7 @@ func (self *HandlerGroup) ListTeams(ctx context.Context, input *server.BaseAuthI
 
 	teams, err := self.srv.TeamService.ListTeams(ctx, user.ID, bearerToken)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &TeamResponse{}
@@ -60,7 +61,7 @@ func (self *HandlerGroup) GetTeam(ctx context.Context, input *GetTeamInput) (*Ge
 
 	team, err := self.srv.TeamService.GetTeamByID(ctx, user.ID, input.TeamID)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetTeamResponse{}

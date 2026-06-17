@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -36,7 +37,7 @@ func (self *HandlerGroup) ListDeployments(ctx context.Context, input *ListDeploy
 
 	response, currentDeployment, metadata, err := self.srv.DeploymentService.GetDeploymentsForService(ctx, user.ID, &input.GetDeploymentsInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	return &ListDeploymentsResponse{
@@ -74,7 +75,7 @@ func (self *HandlerGroup) GetDeploymentByID(ctx context.Context, input *GetDeplo
 
 	deployment, err := self.srv.DeploymentService.GetDeploymentByID(ctx, user.ID, &input.GetDeploymentByIDInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	return &GetDeploymentResponse{

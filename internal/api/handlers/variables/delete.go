@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/unbindapp/unbind-api/ent"
 	"github.com/unbindapp/unbind-api/ent/schema"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -40,7 +41,7 @@ func (self *HandlerGroup) DeleteVariables(ctx context.Context, input *DeleteVari
 		input.Body.VariableReferenceIDs,
 	)
 	if err != nil {
-		return nil, handleVariablesErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	// If any references were updated, we need a new deployment

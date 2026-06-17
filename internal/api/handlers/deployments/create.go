@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -33,7 +34,7 @@ func (self *HandlerGroup) CreateDeployment(ctx context.Context, input *CreateBui
 	// Create build job
 	buildJob, err := self.srv.DeploymentService.CreateManualDeployment(ctx, user.ID, &input.Body.CreateDeploymentInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &CreateBuildOutput{}

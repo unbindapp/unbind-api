@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -35,7 +36,7 @@ func (self *HandlerGroup) ListWebhooks(ctx context.Context, input *ListWebhooksI
 		&input.WebhookListInput,
 	)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ListWebhooksResponse{}
@@ -70,7 +71,7 @@ func (self *HandlerGroup) GetWebhook(ctx context.Context, input *GetWebhookInput
 		&input.WebhookGetInput,
 	)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetWebhookResponse{}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	project_service "github.com/unbindapp/unbind-api/internal/services/project"
@@ -38,7 +39,7 @@ func (self *HandlerGroup) DeleteProject(ctx context.Context, input *DeleteProjec
 		ProjectID: input.Body.ProjectID,
 	}, bearerToken)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &DeleteProjectResponse{}

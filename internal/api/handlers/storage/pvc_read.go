@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -31,7 +32,7 @@ func (self *HandlerGroup) ListPVCs(ctx context.Context, input *ListPVCInput) (*L
 
 	pvcs, err := self.srv.StorageService.ListPVCs(ctx, user.ID, bearerToken, &input.ListPVCInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 	if len(pvcs) == 0 {
 		pvcs = []*models.PVCInfo{}
@@ -65,7 +66,7 @@ func (self *HandlerGroup) GetPVC(ctx context.Context, input *GetPVCInput) (*GetP
 
 	pvc, err := self.srv.StorageService.GetPVC(ctx, user.ID, bearerToken, &input.GetPVCInput)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	response := &GetPVCResponse{}

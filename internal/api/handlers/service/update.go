@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -31,7 +32,7 @@ func (self *HandlerGroup) UpdateService(ctx context.Context, input *UpdateServic
 
 	service, err := self.srv.ServiceService.UpdateService(ctx, user.ID, bearerToken, input.Body)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &UpdatServiceResponse{}

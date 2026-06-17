@@ -131,6 +131,20 @@ func NewHumaConfig(title, version string) huma.Config {
 			},
 			Components: &huma.Components{
 				Schemas: registry,
+				SecuritySchemes: map[string]*huma.SecurityScheme{
+					"cookieAuth": {
+						Type:        "apiKey",
+						In:          "cookie",
+						Name:        auth.AccessTokenCookie,
+						Description: "Session cookie set by /auth/login. Sent automatically by browsers.",
+					},
+					"bearerAuth": {
+						Type:         "http",
+						Scheme:       "bearer",
+						BearerFormat: "JWT",
+						Description:  "Access token passed as `Authorization: Bearer <token>`.",
+					},
+				},
 			},
 		},
 		OpenAPIPath:   "/openapi",
@@ -400,171 +414,46 @@ func startAPI(cfg *config.Config) {
 			</html>`))
 		})
 
-		// /setup group
-		setupGroup := huma.NewGroup(api, "/setup")
-		setupGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Setup"}
-			next(op)
-		})
-		setup_handler.RegisterHandlers(srvImpl, setupGroup)
+		// Each group gets a tag for docs grouping, and authenticated groups
+		// advertise the cookie/bearer security requirement on every operation.
+		authSecurity := []map[string][]string{
+			{"cookieAuth": {}},
+			{"bearerAuth": {}},
+		}
+		register := func(prefix, tag string, authed bool, fn func(*server.Server, *huma.Group)) {
+			grp := huma.NewGroup(api, prefix)
+			if authed {
+				grp.UseMiddleware(mw.Authenticate)
+			}
+			grp.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
+				op.Tags = []string{tag}
+				if authed {
+					op.Security = authSecurity
+				}
+				next(op)
+			})
+			fn(srvImpl, grp)
+		}
 
-		// /auth group
-		authGroup := huma.NewGroup(api, "/auth")
-		authGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Auth"}
-			next(op)
-		})
-		auth_handler.RegisterHandlers(srvImpl, authGroup)
-
-		// /system group
-		systemGroup := huma.NewGroup(api, "/system")
-		systemGroup.UseMiddleware(mw.Authenticate)
-		systemGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"System"}
-			next(op)
-		})
-		system_handler.RegisterHandlers(srvImpl, systemGroup)
-
-		// /users group
-		userGroup := huma.NewGroup(api, "/users")
-		userGroup.UseMiddleware(mw.Authenticate)
-		userGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Users"}
-			next(op)
-		})
-		user_handler.RegisterHandlers(srvImpl, userGroup)
-
-		ghGroup := huma.NewGroup(api, "/github")
-		ghGroup.UseMiddleware(mw.Authenticate)
-		ghGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"GitHub"}
-			next(op)
-		})
-		github_handler.RegisterHandlers(srvImpl, ghGroup)
-
-		webhookGroup := huma.NewGroup(api, "/webhook")
-		webhookGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Webhook"}
-			next(op)
-		})
-		webhook_handler.RegisterHandlers(srvImpl, webhookGroup)
-
-		// /teams
-		teamsGroup := huma.NewGroup(api, "/teams")
-		teamsGroup.UseMiddleware(mw.Authenticate)
-		teamsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Teams"}
-			next(op)
-		})
-		teams_handler.RegisterHandlers(srvImpl, teamsGroup)
-
-		// /projects group
-		projectsGroup := huma.NewGroup(api, "/projects")
-		projectsGroup.UseMiddleware(mw.Authenticate)
-		projectsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Projects"}
-			next(op)
-		})
-		projects_handler.RegisterHandlers(srvImpl, projectsGroup)
-
-		// /environments group
-		environmentsGroup := huma.NewGroup(api, "/environments")
-		environmentsGroup.UseMiddleware(mw.Authenticate)
-		environmentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Environments"}
-			next(op)
-		})
-		environments_handler.RegisterHandlers(srvImpl, environmentsGroup)
-
-		// /service_groups group
-		serviceGroupsGroup := huma.NewGroup(api, "/service_groups")
-		serviceGroupsGroup.UseMiddleware(mw.Authenticate)
-		serviceGroupsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Service Groups"}
-			next(op)
-		})
-		servicegroups_handler.RegisterHandlers(srvImpl, serviceGroupsGroup)
-
-		// /services group
-		servicesGroup := huma.NewGroup(api, "/services")
-		servicesGroup.UseMiddleware(mw.Authenticate)
-		servicesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Services"}
-			next(op)
-		})
-		service_handler.RegisterHandlers(srvImpl, servicesGroup)
-
-		// /variables group
-		variablesGroup := huma.NewGroup(api, "/variables")
-		variablesGroup.UseMiddleware(mw.Authenticate)
-		variablesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Variables"}
-			next(op)
-		})
-		variables_handler.RegisterHandlers(srvImpl, variablesGroup)
-
-		// /logs group
-		logsGroup := huma.NewGroup(api, "/logs")
-		logsGroup.UseMiddleware(mw.Authenticate)
-		logsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Logs"}
-			next(op)
-		})
-		logs_handler.RegisterHandlers(srvImpl, logsGroup)
-
-		// /deployments group
-		deploymentsGroup := huma.NewGroup(api, "/deployments")
-		deploymentsGroup.UseMiddleware(mw.Authenticate)
-		deploymentsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Deployments"}
-			next(op)
-		})
-		deployments_handler.RegisterHandlers(srvImpl, deploymentsGroup)
-
-		// /metrics group
-		metricsGroup := huma.NewGroup(api, "/metrics")
-		metricsGroup.UseMiddleware(mw.Authenticate)
-		metricsGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Metrics"}
-			next(op)
-		})
-		metrics_handler.RegisterHandlers(srvImpl, metricsGroup)
-
-		// /unbindwebhooks group
-		unbindwebhooksGroup := huma.NewGroup(api, "/unbindwebhooks")
-		unbindwebhooksGroup.UseMiddleware(mw.Authenticate)
-		unbindwebhooksGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Unbind Webhooks"}
-			next(op)
-		})
-		unbindwebhooks_handler.RegisterHandlers(srvImpl, unbindwebhooksGroup)
-
-		// /instances group
-		instancesGroup := huma.NewGroup(api, "/instances")
-		instancesGroup.UseMiddleware(mw.Authenticate)
-		instancesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Instances"}
-			next(op)
-		})
-		instances_handler.RegisterHandlers(srvImpl, instancesGroup)
-
-		// /storage group
-		storageGroup := huma.NewGroup(api, "/storage")
-		storageGroup.UseMiddleware(mw.Authenticate)
-		storageGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Storage"}
-			next(op)
-		})
-		storage_handler.RegisterHandlers(srvImpl, storageGroup)
-
-		// /templates group
-		templatesGroup := huma.NewGroup(api, "/templates")
-		templatesGroup.UseMiddleware(mw.Authenticate)
-		templatesGroup.UseModifier(func(op *huma.Operation, next func(*huma.Operation)) {
-			op.Tags = []string{"Templates"}
-			next(op)
-		})
-		template_handler.RegisterHandlers(srvImpl, templatesGroup)
+		register("/setup", "Setup", false, setup_handler.RegisterHandlers)
+		register("/auth", "Auth", false, auth_handler.RegisterHandlers)
+		register("/webhook", "Webhook", false, webhook_handler.RegisterHandlers)
+		register("/system", "System", true, system_handler.RegisterHandlers)
+		register("/users", "Users", true, user_handler.RegisterHandlers)
+		register("/github", "GitHub", true, github_handler.RegisterHandlers)
+		register("/teams", "Teams", true, teams_handler.RegisterHandlers)
+		register("/projects", "Projects", true, projects_handler.RegisterHandlers)
+		register("/environments", "Environments", true, environments_handler.RegisterHandlers)
+		register("/service_groups", "Service Groups", true, servicegroups_handler.RegisterHandlers)
+		register("/services", "Services", true, service_handler.RegisterHandlers)
+		register("/variables", "Variables", true, variables_handler.RegisterHandlers)
+		register("/logs", "Logs", true, logs_handler.RegisterHandlers)
+		register("/deployments", "Deployments", true, deployments_handler.RegisterHandlers)
+		register("/metrics", "Metrics", true, metrics_handler.RegisterHandlers)
+		register("/unbindwebhooks", "Unbind Webhooks", true, unbindwebhooks_handler.RegisterHandlers)
+		register("/instances", "Instances", true, instances_handler.RegisterHandlers)
+		register("/storage", "Storage", true, storage_handler.RegisterHandlers)
+		register("/templates", "Templates", true, template_handler.RegisterHandlers)
 	})
 
 	// Start the server

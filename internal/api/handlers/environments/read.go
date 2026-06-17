@@ -5,6 +5,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
+	"github.com/unbindapp/unbind-api/internal/api/oapi"
 	"github.com/unbindapp/unbind-api/internal/api/server"
 	"github.com/unbindapp/unbind-api/internal/common/log"
 	"github.com/unbindapp/unbind-api/internal/models"
@@ -34,7 +35,7 @@ func (self *HandlerGroup) GetEnvironment(ctx context.Context, input *GetEnvironm
 	// Get environment
 	environment, err := self.srv.EnvironmentService.GetEnvironmentByID(ctx, user.ID, input.TeamID, input.ProjectID, input.ID)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &GetEnvironmentOutput{}
@@ -66,7 +67,7 @@ func (self *HandlerGroup) ListEnvironments(ctx context.Context, input *ListEnvir
 	// Get environments
 	environments, err := self.srv.EnvironmentService.GetEnvironmentsByProjectID(ctx, user.ID, input.TeamID, input.ProjectID)
 	if err != nil {
-		return nil, self.handleErr(err)
+		return nil, oapi.MapError(err)
 	}
 
 	resp := &ListEnvironmentsOutput{}
