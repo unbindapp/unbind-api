@@ -17,6 +17,10 @@ func SessionCookies(accessToken string, accessExpiresAt time.Time, refreshToken 
 	}
 }
 
+func AccessCookie(accessToken string, accessExpiresAt time.Time, secure bool) http.Cookie {
+	return newCookie(AccessTokenCookie, accessToken, accessExpiresAt, secure)
+}
+
 func ClearedSessionCookies(secure bool) []http.Cookie {
 	expired := time.Unix(0, 0)
 	return []http.Cookie{

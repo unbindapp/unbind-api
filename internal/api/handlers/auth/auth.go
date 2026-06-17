@@ -23,14 +23,6 @@ func RegisterHandlers(server *server.Server, grp *huma.Group) {
 	}, handlers.Login)
 
 	huma.Register(grp, huma.Operation{
-		OperationID: "refresh",
-		Summary:     "Refresh",
-		Description: "Exchange the refresh cookie for a new session",
-		Path:        "/refresh",
-		Method:      http.MethodPost,
-	}, handlers.Refresh)
-
-	huma.Register(grp, huma.Operation{
 		OperationID: "logout",
 		Summary:     "Logout",
 		Description: "Revoke the session and clear cookies",

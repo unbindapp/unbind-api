@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: end-of-file-fixer
+  - repo: local
+    hooks:
+      - id: go-mod-tidy
+        name: go mod tidy
+        entry: bash -c 'go mod tidy'
+        language: system
+        files: \.(go|mod|sum)$
+        pass_filenames: false
+      - id: go-fmt
+        name: gofmt -s
+        entry: bash -c 'out=$(gofmt -s -l .) && [ -z "$out" ] || { echo "$out"; exit 1; }'
+        language: system
+        files: \.go$
+        pass_filenames: false
+      - id: go-vet
+        name: go vet
+        entry: bash -c 'CGO_ENABLED=0 go vet ./...'
+        language: system
+        files: \.go$
+        pass_filenames: false
+      - id: go-test
+        name: go test
+        entry: bash -c 'CGO_ENABLED=0 go test ./...'
+        language: system
+        files: \.(go|mod|sum)$
+        pass_filenames: false
