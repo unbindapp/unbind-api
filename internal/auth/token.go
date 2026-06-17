@@ -62,7 +62,6 @@ func (self *TokenManager) MintAccessToken(user *ent.User, groups []*ent.Group) (
 		"groups":         groupClaims,
 		"iat":            now.Unix(),
 		"exp":            expiresAt.Unix(),
-		"jti":            uuid.NewString(),
 	}
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
